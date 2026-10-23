@@ -8,7 +8,7 @@
 1. **Same moment, same effect.** A special changes the round for every roster player at the same instant and in the same way (owner, decision 6). It never depends on who a player is, how well they are doing, their team or their connection.
 2. **One clock.** Every special timer counts from the round's `opensAt` on the server clock. Its due times are fixed when the round opens: `opensAt + k × interval`.
 3. **One queue.** When a special is due, the scheduler puts it into the round's queue, the same single queue that guesses go through ([04](04-software-architecture.md) §5.2). It takes effect at that position. Every guess processed before it sees the old state, and every guess after it sees the new state, for everyone alike.
-4. **One frame.** The change reaches all watchers in one broadcast frame of the round room ([06](06-data-model-api-realtime.md) §4.2). In individual mode, the per-player parts go out in the same processing step.
+4. **One frame.** The change reaches all watchers in one broadcast frame of the match room (`special.fired`, [06](06-data-model-api-realtime.md) §4.4). In individual mode, the per-player parts go out in the same processing step.
 5. **One seed.** Every random choice a special makes (which numbers fall, where a halving window sits) comes from the round seed ([04](04-software-architecture.md) §5.4). It is never made by `Math.random` and never by a client. With the fairness proof on, it can be checked afterwards ([02](02-game-guess-the-number.md) §10).
 6. **Several at once.** If several specials are due at the same instant, they are processed in this order, in one step: halving, Leaf Fall, Heatwave (*proposal*).
 
