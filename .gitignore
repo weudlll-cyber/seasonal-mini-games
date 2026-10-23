@@ -1,0 +1,23 @@
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+# Test output
+test-results/
+playwright-report/
+# Local environment files hold secrets and never go into git
+.env
+.env.*
+!.env.example
+# Committed templates with placeholder values, e.g. ops/.env.dev.example
+!.env.*.example
+# Night runs (docs/NIGHT-RUN.md): the run log and the task text stay local
+logs/
+night-task.md
+# One-off scripts of a run, deleted when the step is done
+tmp/
+# Screenshots of the latest browser-test run (e2e/screens.ts and the specs write them)
+reports/screens/latest/
+# Editor and OS noise
+.DS_Store
+Thumbs.db
