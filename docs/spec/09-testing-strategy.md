@@ -51,7 +51,7 @@
 - **S3 Leaf Fall.** No fall removes any secret of the round. All players see the same removed set. Each fall removes `count` numbers, or fewer only at the `minRemaining` stop.
 - **S4 Frost.** Each answer is delivered `delay` after its receive time. Metamorphic: the same inputs with and without Frost give the same order, winner and placings.
 - **S5 Halving.** Every range always contains its secret. Sizes halve (rounded up) at each due time until the minimum. All players have the same size at the same time.
-- **S6 Teams.** Teams never change during a round. Team points follow `teams.scoring`. Team standings are a total order.
+- **S6 Teams.** Teams never change during a round. The winner's team gets exactly 1 point per round, and no other team gets any. Team standings are a total order.
 - **S7 Simultaneity.** Specials due at the same instant run in the order halving → Leaf Fall → Heatwave, in one step.
 - **S8 In Season.** A feed answer older than `staleAfterH` is never used for a round.
 

@@ -5,31 +5,31 @@
 
 ## 1. The game in one paragraph
 
-The server picks a secret whole number in a range (default 1–1 000, *proposal*). Players type guesses. After each guess the server answers whether the secret is higher or lower (*proposal*, §6). A player may guess whenever they want, and after each accepted guess a waiting time, the **cooldown**, applies to that player (owner, decision 3). With a **shared secret** everyone searches the same number, and the first correct guess the server receives wins. With an **individual secret** every player has their own number, and placings follow the order in which players solve them (owner, decisions 4 and 5).
+The server picks a secret whole number in a range (default 1–1 000). Players type guesses. After each guess the server answers whether the secret is higher or lower (§6). A player may guess whenever they want, and after each accepted guess a waiting time, the **cooldown**, applies to that player (owner, decision 3). With a **shared secret** everyone searches the same number, and the first correct guess the server receives wins. With an **individual secret** every player has their own number, and placings follow the order in which players solve them (owner, decisions 4 and 5).
 
 **Fast mode** is the timing class of this game: per-player cooldown, no global tick. The platform enforces cooldowns for every game that declares this timing class ([04](04-software-architecture.md) §4.3). Long-running games keep their own timing (owner, decision 3) and are not part of v1.
 
 ## 2. Matches and rounds
 
 - A host (permission `match.create`) opens a **match** for the game `guess-the-number`. The match lifecycle is Bingo's (Bingo 01 §7.6 start rules, Bingo 01 §13 cancelled-match page), with one difference: a match is not a fixed tournament. It is a lobby in which the host runs **rounds**, one after another, until the host closes it.
-- Players join the match from the lobby. Joining the match does not put a player into a round that is already running. They watch it and play from the next round (*proposal*).
+- Players join the match from the lobby. Joining the match does not put a player into a round that is already running. They watch it and play from the next round.
 - Before each round the host sets the round's settings (§3). They are frozen when the round is created and never change while it runs. The only exceptions are changes made by a special, which apply to everyone at once ([03](03-seasonal-specials.md)).
-- Players needed to start a round: 2 (*proposal*, `match.minPlayersPerRound`). Players per match: at most 500 (*proposal*, `match.maxPlayers`).
+- Players needed to start a round: 2 (`match.minPlayersPerRound`). Players per match: at most 500 (`match.maxPlayers`).
 
 ## 3. Round settings (chosen by the host per round)
 
 | Setting | Values | Default | Source |
 |---|---|---|---|
-| Secret mode | `shared` or `individual` | `shared` (*proposal*) | Owner, decision 5: chosen per round |
-| Cooldown | 3 s – 60 s, whole seconds, the same for every player | 10 s (*proposal*) | Owner, decision 3: range 3–60 s |
-| Range | lowest and highest number, both inclusive | 1–1 000 (*proposal*) | Setting |
+| Secret mode | `shared` or `individual` | `shared` | Owner, decision 5: chosen per round |
+| Cooldown | 3 s – 60 s, whole seconds, the same for every player | 10 s | Owner, decision 3: range 3–60 s |
+| Range | lowest and highest number, both inclusive | 1–1 000 | Setting |
 | Season | `inSeason` (follow the website) or one of the four seasons | `inSeason` when the feed is available, otherwise the host must pick | Owner, decision 6 ([03](03-seasonal-specials.md) §3) |
 | Season special | on or off | on | [03](03-seasonal-specials.md) §2 |
 | Halving round | on or off; offered only on a halving day | off | [03](03-seasonal-specials.md) §4 |
 | Season teams | on or off; shared mode only | on | [03](03-seasonal-specials.md) §5 |
-| Feedback visibility | `own`, `numbers` or `full`; shared mode only | `own` (*proposal*, §6.2) | Setting |
-| Countdown before opening | 3 s – 30 s | 5 s (*proposal*) | Setting |
-| Longest round | 1 min – 60 min | 10 min (*proposal*) | Setting |
+| Feedback visibility | `own`, `numbers` or `full`; shared mode only | `full` (§6.2) | Owner, decision 8: default `full`, host may change it per round |
+| Countdown before opening | 3 s – 30 s | 5 s | Setting |
+| Longest round | 1 min – 60 min | 10 min | Setting |
 
 The host's form offers only values inside the bounds an admin set ([08](08-admin-settings.md)). The server checks them again.
 
@@ -44,7 +44,7 @@ The host's form offers only values inside the bounds an admin set ([08](08-admin
 | State | Entered when | What happens |
 |---|---|---|
 | `created` | The host submits the round form. | Settings are frozen. The server generates the round seed and derives the secret or secrets from it ([04](04-software-architecture.md) §5.4). If the fairness proof is on, it publishes the commitment (§10). |
-| `countdown` | The host presses **Start round**, or immediately after creation if the host chose "start now". | The **roster** is frozen: every match player except the host who has an open connection to the match at that moment (*proposal*; a player who drops later stays on the roster). The server announces `opensAt` as an absolute server time = now + countdown. Spring Herald's free hint is delivered at `opensAt` ([03](03-seasonal-specials.md) §2.1). |
+| `countdown` | The host presses **Start round**, or immediately after creation if the host chose "start now". | The **roster** is frozen: every match player except the host who has an open connection to the match at that moment (a player who drops later stays on the roster). The server announces `opensAt` as an absolute server time = now + countdown. Spring Herald's free hint is delivered at `opensAt` ([03](03-seasonal-specials.md) §2.1). |
 | `open` | The server clock reaches `opensAt`. | Guesses are accepted (§5). Special timers start counting from `opensAt`. |
 | `ended` | An end condition is met (§8). | No more guesses are accepted. The secret is revealed, placings are fixed and standings are updated (§9). |
 | `aborted` | The host aborts, or the system does (for example a shutdown that could not resume the round). | No placings, no points. The round shows its own end page with the reason and who ended it (Bingo D17 wording). |
@@ -62,7 +62,7 @@ A guess is accepted only if all of these hold, checked in this order. The first 
 3. In individual mode, the guesser has not solved their number yet (`ALREADY_SOLVED`).
 4. The value is a whole number inside the round's **current** range ([03](03-seasonal-specials.md) §4 can shrink it) (`OUT_OF_RANGE`).
 5. The value has not been removed by Leaf Fall (`NUMBER_REMOVED`).
-6. The guesser has not guessed this value before in this round (`ALREADY_GUESSED`) (*proposal*: a repeat costs nothing and tells nothing).
+6. The guesser has not guessed this value before in this round (`ALREADY_GUESSED`) (a repeat costs nothing and tells nothing).
 7. The guesser's cooldown has ended (`COOLDOWN_ACTIVE`, with the time it ends).
 
 A rejected guess does not start a cooldown, is not counted, and is not shown to anyone but the guesser. A guess that fails a check is never held back and retried later. The client sends it again if the player wants.
@@ -73,7 +73,7 @@ The server puts every guess of a round into **one queue for that round**, in the
 
 ## 6. Feedback
 
-### 6.1 The feedback rule (*proposal*)
+### 6.1 The feedback rule
 
 For an accepted guess `g` and the guesser's secret `s`:
 
@@ -85,15 +85,15 @@ For an accepted guess `g` and the guesser's secret `s`:
 
 Feedback goes to the guesser. Without Frost it is sent as soon as the guess is processed. With Frost it is sent after the Frost delay ([03](03-seasonal-specials.md) §2.4). The guesser's screen keeps the narrowed range ("between 413 and 731") computed **by the server** from their own feedback. The client renders it and never derives it.
 
-### 6.2 What other players learn in shared mode (*proposal*)
+### 6.2 What other players learn in shared mode
 
-Setting `feedbackVisibility`, chosen per round:
+Setting `feedbackVisibility`, chosen by the host per round. The default is `full` (owner, decision 8):
 
 | Value | Every other player sees for each accepted guess |
 |---|---|
-| `own` (default) | That a player guessed, and that it was not correct. Not the number. |
+| `own` | That a player guessed, and that it was not correct. Not the number. |
 | `numbers` | The player and the number guessed. Not the feedback. |
-| `full` | The player, the number and the feedback. The search becomes a fully shared one. |
+| `full` (default) | The player, the number and the feedback. The search becomes a fully shared one: everyone narrows the range together, and the server sends every player the shared band (the intersection of all feedback so far) along with their own. |
 
 In individual mode other players always see only that a player guessed, plus their solve and placing. Their numbers and feedback mean nothing for anyone else.
 
@@ -111,14 +111,14 @@ In individual mode other players always see only that a player guessed, plus the
 
 - The winner is the player whose correct guess has the lowest receive number. Ties cannot happen: receive numbers are unique per round.
 - The round ends at that guess. Guesses behind it in the queue are answered `ROUND_OVER`, as are guesses received later.
-- **Placings (*proposal*):** the winner is 1st. Everyone else on the roster is listed below as "took part", with their number of guesses and without a place. A round without a correct guess has no winner.
+- **Placings:** the winner is 1st. Everyone else on the roster is listed below as "took part", with their number of guesses and without a place. A round without a correct guess has no winner.
 
 ### 8.2 Individual secret (owner, decision 5)
 
 - A player who guesses their own number has **solved** it. Their placing is the order of their correct guess in the round's receive order: the first solver is 1st, the next 2nd, and so on. Ties cannot happen.
 - A solved player cannot guess again in the round. They watch the rest as a spectator, still seeing their own result.
 - The round ends when every roster player has solved, when the longest round time is reached, or when the host ends it.
-- **Players who did not solve (*proposal*):** listed after the placed players as "not solved", without a place.
+- **Players who did not solve:** listed after the placed players as "not solved", without a place.
 
 ### 8.3 Other end conditions (both modes)
 
@@ -132,11 +132,11 @@ In individual mode other players always see only that a player guessed, plus the
 ## 9. After the round
 
 - **Reveal:** shared mode shows the secret to everyone. Individual mode shows every player their own number and lists every player's number in the result. If the fairness proof is on (§10), the round seed is published as well.
-- **Result screen:** the end reason in plain words ("Walter found 731 first — after 9 guesses"), placings (§8), the viewer's own line highlighted, team standing when teams are on ([03](03-seasonal-specials.md) §5), and the match standings. The host sees **Next round** with the last settings prefilled.
-- **Points (*proposal*):** placings give match points from a table (`points.placement`, [08](08-admin-settings.md)): shared winner 10; individual 10, 7, 5, 3 for places 1–4 and 1 for every further solver. Match standings are the sum over the match's rounds. Ties are ordered by number of wins, then by the earliest win's receive time.
+- **Result screen:** the end reason in plain words ("Walter found 731 first — after 9 guesses"), placings (§8), in shared mode the **winning margin** (owner, decision 13: how much earlier the winning guess arrived than the next correct one, "found it 0.4 s before Anna"; the round closes at the winning guess, so the server keeps noting correct guesses that it answers `ROUND_OVER` for `round.marginWindowS` (*proposal*, default 2 s, 0.5–10 s) after it; the first one sets the margin, and without one the result says "nobody else was close"), the viewer's own line highlighted, team standing when teams are on ([03](03-seasonal-specials.md) §5), and the match standings. The host sees **Next round** with the last settings prefilled.
+- **Points:** placings give match points from a table (`points.placement`, [08](08-admin-settings.md)): shared winner 10; individual 10, 7, 5, 3 for places 1–4 and 1 for every further solver. Match standings are the sum over the match's rounds. Ties are ordered by number of wins, then by the earliest win's receive time.
 - **Leaderboard:** adopted from Bingo 01 §10 (season board per calendar quarter, all-time board), with league points from match standings. The flag `countsForLeaderboard` is set per match (Bingo 01 §3a.3), default on.
 
-## 10. Fairness proof (*proposal*, owner question (a))
+## 10. Fairness proof (owner, decision 9)
 
 When `fairness.commitReveal` is on (default on), the server publishes `sha256(roundSeed)` at round creation and the seed itself at round end. Anyone can recompute the secret or secrets, Spring Herald's hint, Leaf Fall's removals and the halving windows from the seed and the published settings ([04](04-software-architecture.md) §5.4). This is the same commit-reveal scheme as Bingo 01 §9, applied per round instead of per match.
 

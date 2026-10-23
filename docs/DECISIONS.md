@@ -13,6 +13,14 @@ Owner decisions, technical decisions with their reasons, security decisions, and
 | O5 | Two secret modes, chosen by the host per round: shared secret (all players search the same number; the main purpose of the platform is playing together) and individual secret (each player has their own number). In individual mode, placings follow the order in which players solve their own number. | 02 §3, §8 |
 | O6 | Seasonal specials, all applying to every player at the same moment and equally. Season rounds: each round belongs to one of the four seasons. Spring "Spring Herald": every player receives one free hint at round start (e.g. odd/even). Summer "Heatwave": the cooldown shrinks step by step for everyone, never below 3 s. Autumn "Leaf Fall": at intervals, some wrong numbers are removed from the range, visible to all. Winter "Frost": hints are delivered with a delay of a few seconds. In Season: the active season can follow the token currently in season (fed from the Seasonal Entertainment website); otherwise the host picks the season manually. Halving round: on a real halving day, a special round in which the number range halves at intervals. Season teams: in shared mode players join one of four season teams; the leaderboard also shows a team standing. Visuals: each round uses its token's original colours and icon (assets as in the Bingo repo). | 03 |
 | O7 | Specification first, code afterwards (architect decision). | 01 §2, 10 §5 |
+| O8 | Feedback visibility in shared mode defaults to `full`. The host can change it per round. | 02 §3, §6.2, 05 §7, 08 §3 |
+| O9 | The fairness proof (commit-reveal) is on: `fairness.commitReveal` defaults to on. | 02 §10, 08 §3 |
+| O10 | Anti-multi-account: both settings (minimum account age, linked Telegram or Discord) are built, and both are off by default. | 05 §6, 08 §6 |
+| O11 | Placings, points and the leaderboard are as proposed in the first draft: in shared mode only the winner is placed and the others are listed as "took part"; in individual mode unsolved players are listed as "not solved" without a place; points 10 for the shared winner, 10 / 7 / 5 / 3 for individual places 1–4 and 1 for every further solver; league points only from matches with at least 4 distinct players. | 02 §8, §9, 08 §3, §4 |
+| O12 | Team scoring is `wins`: the winner's team gets 1 point per round win. | 03 §5, 08 §3 |
+| O13 | The winning margin is shown in the result. | 02 §9, 05 §7 |
+| O14 | The product facts from Bingo apply: no prizes of monetary value, standalone and embeddable, English UI. | 01 §2 |
+| O15 | All other first-draft proposals are accepted as written: the feedback rule (higher, lower, correct), repeated guesses refused without cost, the roster rule and player limits, the details of the seasonal specials, the default numbers of the settings catalogue, and the sizing of 500 players per round and 1 000 per server. | 01 §2, 02, 03, 08 |
 
 ## 2. Technical decisions
 
@@ -24,7 +32,7 @@ Owner decisions, technical decisions with their reasons, security decisions, and
 | T4 | One round actor per open round, on one instance, with a FIFO queue. Intents are appended synchronously in socket read order. `receiveSeq` is assigned when the actor takes an item. | Gives O4 exactly one ordering point. No `await` between read and append means no reordering inside the process. |
 | T5 | Group commit: events are written in batches (20 ms or 200 events). Acknowledgements and broadcasts are sent only after commit. | One transaction per guess would cost a round trip per guess at about 170 guesses a second. Batching keeps that low, while sending after commit means a crash can never undo an announced winner. |
 | T6 | Cooldown is a stored end time per player, checked in the queue. There is no timer per player. | O3's "no global tick" in code. Constant work per guess, nothing to schedule, trivially restart-safe. |
-| T7 | Per-round 256-bit seed from the CSPRNG. Bingo's HMAC-SHA256 counter DRBG with labels. Secrets derived and never stored. Seed encrypted with `SMG_ROUND_KEY`. | Reproducible and verifiable (the fairness proposal needs it), nothing secret in a dump, one proven generator reused from Bingo. One key for seeds follows Bingo's built `SBR_SEED_KEY`. |
+| T7 | Per-round 256-bit seed from the CSPRNG. Bingo's HMAC-SHA256 counter DRBG with labels. Secrets derived and never stored. Seed encrypted with `SMG_ROUND_KEY`. | Reproducible and verifiable (the fairness proof, O9, needs it), nothing secret in a dump, one proven generator reused from Bingo. One key for seeds follows Bingo's built `SBR_SEED_KEY`. |
 | T8 | Game-module contract in `packages/game-sdk`. Games live in `games/<game>`. `games/registry.ts` is the only place that names a game. Winning and placings stay in the platform. | Maintainability (priority 1): adding a game touches no platform code. O4 and O5 are inherited by every later game unchanged. |
 | T9 | Load tests use a Node.js driver with `socket.io-client` (`load/guessStorm.mjs`), not k6. | Bingo specified k6 but built a Node.js driver (`load/drawLatency.mjs`), which worked. k6 needs an extension for the Socket.IO protocol. One language for all code. |
 | T10 | The event log is per round (`round_events`), with snapshots every 200 events and compaction of guess events after 90 days. | Rounds are the unit of play and of recovery. Matches can run for hours, and a per-match log would grow without bound. |
@@ -36,8 +44,9 @@ Owner decisions, technical decisions with their reasons, security decisions, and
 | T16 | Client clock offset from `time.sync`, for display only. | Cooldown rings and countdowns look right on devices with a wrong clock. The server never uses it. |
 | T17 | `match_players` and `round_results` use a text `player_key` (account id, or `bot-NN` in development). | Bingo's built tables use this pattern (`player_id`) so that bots fit. Bingo 04 §3.3 states an `account_id` key, which cannot hold bots. The built version is the one that works. |
 | T18 | A match is a lobby in which the host runs rounds one after another, with settings frozen per round. | O5 and O6 set mode and season per round. A fixed tournament structure, as in Bingo, would add rules nobody asked for. |
-| T19 | Sizing target 500 per round and 1 000 per server, as a load gate (09 §5); the target itself is a proposal (OPEN.md). | A shared round is the main use, so it must hold a large crowd. The numbers set what is tested. |
+| T19 | Sizing target 500 per round and 1 000 per server, as a load gate (09 §5); the target itself is owner decision O15. | A shared round is the main use, so it must hold a large crowd. The numbers set what is tested. |
 | T20 | Round seeds use their own key `SMG_ROUND_KEY`. `SMG_MASTER_KEY` comes only when TOTP or OIDC secrets are built. | Same as Bingo's built server, and no unused secret. |
+| T21 | Whether Guess The Number, Seasonal Safecracker, Seasonal Bomb Defusal and Seasonal Target share one guess engine (secret, guess and feedback rule) is decided when the second of those games starts. Until then R7 stands. | An architect decision (2026-10-24). One game gives no evidence of what is really shared, and a second one will. Guess The Number keeps secret, guess and feedback in separate files so that extracting them later stays a small change. |
 
 ## 3. Security decisions
 
@@ -63,7 +72,8 @@ Owner decisions, technical decisions with their reasons, security decisions, and
 | R4 | Storing secrets in a column, even encrypted | Deriving them from the encrypted seed leaves nothing extra to leak or keep in sync. |
 | R5 | Bingo's off-the-aggregate path for high-frequency input (marks recorded outside the match queue) | A shared-secret win needs one total order over all guesses (O4). |
 | R6 | Forwarding intents between instances | A second ordering point (T13). |
-| R7 | Building a general guess engine now | It depends on owner question (c). Simplicity until a second game needs it (01 §3). |
+| R7 | Building a general guess engine now | Decided when the second game starts (T21). Simplicity until a second game needs it (01 §3). |
+| R13 | A `perMember` team scoring option | The owner decided `wins` with 1 point (O12); a second formula would be unused code. |
 | R8 | k6 for load tests | See T9. |
 | R9 | Client-side cooldown or feedback computation | Server authority (S1, Bingo 03 §1). |
 | R10 | One service per game | A modular monolith is enough and is simpler to run (Bingo 02 §1). |

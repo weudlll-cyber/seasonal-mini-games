@@ -73,10 +73,10 @@ The round queue is bounded at 5 000 items. Beyond that, new guesses are refused 
 
 **Baseline controls (adopted):** e-mail verification before ranked play, sign-up limits per IP, heuristics that flag accounts sharing an IP prefix or device when they join one match (flag only, never an automatic ban), and league points only from matches with enough distinct verified players (Bingo 03 §11). Moderators can remove a round's result for an account.
 
-**Proposal (owner question (b)):** in shared mode, a player may join a round's roster only if:
+**Optional rules (owner, decision 10: both built, both off by default):** in shared mode, a player may join a round's roster only if:
 
-- the account is at least `antiMulti.minAccountAgeH` hours old (*proposal*, default 0 = off, max 720), and/or
-- in website installs, the account is linked to Telegram or Discord on the website, as reported in the handoff token's claims (`antiMulti.requireLinkedChat`, *proposal*, default off).
+- the account is at least `antiMulti.minAccountAgeH` hours old (default 0 = off, max 720), and/or
+- in website installs, the account is linked to Telegram or Discord on the website, as reported in the handoff token's claims (`antiMulti.requireLinkedChat`, default off).
 
 Both can only be checked on a fact the server holds. Standalone installs have no Telegram or Discord link, so there the second rule cannot be switched on.
 
@@ -87,9 +87,9 @@ Both can only be checked on a fact the server holds. Standalone installs have no
 The owner's rule is that the server's receive order decides (decision 4). This is fair in the sense that the rule is the same for everyone and cannot be manipulated by a client. It is **not** fair in the sense that every player has the same chance when two of them send the right number at nearly the same moment:
 
 - A guess travels from the player's device to the server. A player 20 ms away beats a player 200 ms away if both press Guess within about 180 ms of each other. Wi-Fi, mobile networks, VPNs and distance all add to this, and so does the HTTP fallback, which is slower than the WebSocket.
-- **When it matters:** only when two correct guesses arrive within a fraction of a second of each other. With `feedbackVisibility = own` (default) that is rare, because players narrow down separately. With `full`, the shared answers can make the secret obvious to many players at the same moment, and the last step then becomes a pure latency race. That is one reason `own` is the default.
+- **When it matters:** only when two correct guesses arrive within a fraction of a second of each other. With `feedbackVisibility = full`, which is the default (owner, decision 8), every player sees every answer. Once the shared band has shrunk to one number, many players know the secret at the same moment, and **the last step is then a pure latency race**. Players closer to the server win those races more often. With `own` this is rare, because players narrow down separately. The host can pick `own` or `numbers` per round when a crowd with very different connections plays.
 - **What is not done:** there is no latency compensation. Any compensation would trust client-reported times or measured round trips that a client can inflate, which would turn a physical disadvantage into a manipulable one (DECISIONS R3).
-- **What is done:** receive time is taken at the server's process. The path is the same for everyone (Caddy → app, no queue in front of the round actor). The receive gap to the next correct guess, if there was one, is stored with the result (*proposal*: shown as "found it 0.4 s before Anna"). The latency of each socket is measured (Socket.IO ping) and exported as a metric, so the operator can see how large the spread actually is.
+- **What is done:** receive time is taken at the server's process. The path is the same for everyone (Caddy → app, no queue in front of the round actor). The receive gap to the next correct guess, if one arrives within `round.marginWindowS`, is stored with the result and shown as the winning margin (owner, decision 13: "found it 0.4 s before Anna", 02 §9). The latency of each socket is measured (Socket.IO ping) and exported as a metric, so the operator can see how large the spread actually is.
 - **Bots:** a script can binary-search perfectly and send each guess the instant its cooldown ends. The cooldown limits its rate exactly like a human's, so its edge is reaction time and accuracy. Guesses that repeatedly arrive within a few milliseconds of `cooldownEndsAt` raise the abuse score for moderator review (no automatic sanction).
 
 ## 8. Admin audit log
@@ -112,7 +112,7 @@ Method and Bingo's threats T1–T28 are adopted (Bingo 13 §1–§4; trust bound
 | M2 | 1 | T | Manipulating the client timer or clock | 3 | 1 | Server ignores client time; check at `receivedAt` (§2) |
 | M3 | 1 | I | Reading the secret from a view, frame, error, log or state answer | 2 | 3 | Derived secrets, per-viewer views with schemas, sentinel conformance test, redaction (§3) |
 | M4 | 1 | I | Predicting the secret | 1 | 3 | CSPRNG seed per round, DRBG, commitment only (§4) |
-| M5 | 1 | E | Several accounts in one shared round | 3 | 2 | Baseline controls; owner question (b) (§6) |
+| M5 | 1 | E | Several accounts in one shared round | 3 | 2 | Baseline controls; optional account-age and linked-chat rules (§6) |
 | M6 | 1 | T | Winning by low latency or by a bot | 3 | 1 | Stated rule, no compensation, metrics, abuse score (§7) |
 | M7 | 1 | D | Guess flood against one round's queue | 2 | 3 | Per-account and per-socket limits, bounded queue, Caddy limits (§5) |
 | M8 | 1 | T | Replayed or duplicated guess intents | 2 | 1 | Per-socket `seq` (Bingo 06 §4); `ALREADY_GUESSED` (02 §5.1) |

@@ -1,7 +1,7 @@
 # 11 — Roadmap
 
 > Part of the Seasonal Mini Games specification. Index: [README](README.md).
-> Phases are ordered by dependency. Each phase ends with something the owner can see in the browser, except Phase 0. Work packages with acceptance criteria are written per phase when that phase starts, as Bingo's 15 did for Bingo. Proposals are built as written unless the owner changes them ([OPEN.md](../OPEN.md)), and the questions that touch a phase should be answered before it starts.
+> Phases are ordered by dependency. Each phase ends with something the owner can see in the browser, except Phase 0. Work packages with acceptance criteria are written per phase when that phase starts, as Bingo's 15 did for Bingo. The owner answered the first draft's questions on 2026-10-24 (DECISIONS O8–O15). New proposals are built as written unless the owner changes them ([OPEN.md](../OPEN.md)).
 
 ## 1. Phases
 
@@ -11,18 +11,16 @@ Monorepo and tooling taken over from Bingo and renamed (pnpm workspaces includin
 
 ### Phase 1 — One round on one screen
 `game-sdk` (contract, DRBG, range helpers, conformance suite), the platform round rules in `domain` (lifecycle, roster, cooldown, receive order, placings), and the Guess The Number module with feedback. A **Quick Test** in development builds: one player against bots in a shared or individual round, with a seed field.
-**Done when:** the owner plays a shared and an individual round against bots in the browser, the cooldown blocks guesses, and the same seed gives the same round. Owner questions about feedback, visibility and placings ([OPEN.md](../OPEN.md)) should be answered before this phase ends.
-
+**Done when:** the owner plays a shared and an individual round against bots in the browser, the cooldown blocks guesses, and the same seed gives the same round.
 ### Phase 2 — Real players, together
 Accounts and sessions (Bingo's built auth adopted), matches and the lobby, the round actor with group commit and restart recovery, the WebSocket gateway with guess intents, clock offset and per-player rooms, the host console (create, start, end and abort rounds), the result screen, and reconnect.
 **Done when:** several browsers play one shared round together; a server restart during a round loses no acknowledged guess and keeps every cooldown.
 
 ### Phase 3 — Seasons
 Season rounds with all four specials, the halving round with the admin halving-day list, season teams with team standing, token visuals in light and dark, and In Season with a manually configured feed URL.
-**Done when:** the owner sees each special in a round, a halving round on a test day, and the team standing after a round. Owner questions (a), (d) and the special details should be answered before this phase starts.
-
+**Done when:** the owner sees each special in a round, a halving round on a test day, and the team standing after a round.
 ### Phase 4 — Standings and leaderboards
-Match standings, season and all-time boards with team standing, profiles, and the fairness verification page (if question (a) keeps the proof).
+Match standings, season and all-time boards with team standing, profiles, and the fairness verification page (decision O9).
 **Done when:** points from several matches add up on the season board with the team board beside it.
 
 ### Phase 5 — Chat and moderation
@@ -56,4 +54,4 @@ Listed in the order of the vision. Each one starts only after an owner decision 
 5. Seasonal Higher Or Lower
 6. Seasonal Mystery Object
 
-Owner question (c), whether Guess The Number, Safecracker, Bomb Defusal and Seasonal Target share one guess engine, is decided before the first of them starts. Until then, Guess The Number is built without that generalisation (simplicity, [01](01-vision.md) §3), but it does not rule it out: secret, guess and feedback live in their own files of the game module.
+Whether Guess The Number, Safecracker, Bomb Defusal and Seasonal Target share one guess engine is an architect decision, taken when the second of these games starts (DECISIONS T21). Until then, Guess The Number is built without that generalisation (simplicity, [01](01-vision.md) §3), but it does not rule it out: secret, guess and feedback live in their own files of the game module.

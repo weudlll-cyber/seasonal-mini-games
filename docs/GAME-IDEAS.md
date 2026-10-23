@@ -34,9 +34,9 @@ A candidate is assessed in this order. A higher criterion outweighs every lower 
 
 | Candidate | Status | Note |
 |---|---|---|
-| Seasonal Target | Vision; not designed | Named in owner question (c) as a possible user of a shared guess engine |
-| Seasonal Safecracker | Vision; not designed | Named in owner question (c) |
-| Seasonal Bomb Defusal | Vision; not designed | Named in owner question (c) |
+| Seasonal Target | Vision; not designed | Possible user of a shared guess engine (DECISIONS T21) |
+| Seasonal Safecracker | Vision; not designed | Possible user of a shared guess engine (T21) |
+| Seasonal Bomb Defusal | Vision; not designed | Possible user of a shared guess engine (T21) |
 | Seasonal Prediction | Vision; not designed | — |
 | Seasonal Higher Or Lower | Vision; not designed | — |
 | Seasonal Mystery Object | Vision; not designed | — |

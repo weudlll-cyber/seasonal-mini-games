@@ -81,19 +81,19 @@
 
 `round_id`, `player_key` (account id, or `bot-NN` in development), `place int NULL` (NULL = took part / not solved), `solved bool`, `solve_receive_seq bigint NULL`, `solve_at timestamptz NULL`, `guesses int`, `team text NULL`, `points int`, `secret int NULL` (individual mode, written at the end only). PK `(round_id, player_key)`. UNIQUE `(round_id, place)` WHERE `place IS NOT NULL`, so two players can never share a place. Written in the transaction that appends `RoundEnded`.
 
-**round_team_results** — `round_id`, `team`, `members int`, `points numeric(10,4)`, `won bool`. PK `(round_id, team)`.
+**round_team_results** — `round_id`, `team`, `members int`, `points int`, `won bool`. PK `(round_id, team)`.
 
 ### 2.5 Projections and scheduling
 
 - **match_standings** — `match_id`, `player_key`, `points`, `wins`, `first_win_at NULL`, `rank`. PK `(match_id, player_key)`. Updated with `RoundEnded`.
-- **match_team_standings** — `match_id`, `team`, `points numeric(10,4)`, `wins`, `first_win_at NULL`, `rank`. PK `(match_id, team)`.
+- **match_team_standings** — `match_id`, `team`, `points int`, `wins`, `first_win_at NULL`, `rank`. PK `(match_id, team)`.
 - **scheduled_actions** (Bingo 04 §3.3) — `kind` values: `round_open`, `special` (payload: special and index), `round_time_up`, `match_autostart`.
 
 ### 2.6 Seasons and leaderboard additions
 
 - **season_feed_state** — single row: `season text NULL`, `token text NULL`, `since timestamptz NULL`, `fetched_at timestamptz NULL`, `last_error text NULL`.
 - **halving_days** — `day date`, `token text`, `source` (`feed` / `admin`), `created_by NULL`, `created_at`. PK `(day, token)`. Edits are audited.
-- **team_league_entries** — `period_id`, `team`, `points numeric(12,4)`, `wins int`, `updated_at`. PK `(period_id, team)`.
+- **team_league_entries** — `period_id`, `team`, `points int`, `wins int`, `updated_at`. PK `(period_id, team)`.
 
 ### 2.7 Round event types (platform)
 

@@ -86,7 +86,7 @@ apps/admin            Admin client (as Bingo). apps/embed-loader: embed.js (as B
 - `game-sdk` ← `domain` ← `application` ← `apps/server`. `contracts` may be imported by `application`, `apps/*` and `games/*/web`.
 - `games/<game>/src` may import `game-sdk` and zod only. `games/<game>/web` may import `game-sdk`, `ui`, React and its own `src`.
 - No platform package imports `games/<game>` directly. Only `apps/server` and `apps/web` import `games/registry.ts`.
-- No game imports another game. Shared code between games goes into `game-sdk` (decided per case; owner question (c) is about one shared guess engine).
+- No game imports another game. Shared code between games goes into `game-sdk` (decided per case; whether there is one shared guess engine is decided when the second game that could use it starts, DECISIONS T21).
 
 ## 4. The game-module contract
 

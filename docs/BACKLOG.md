@@ -6,8 +6,7 @@ The authoritative list. `OPEN.md` is the short page over it and is aligned after
 
 ### Specification
 
-- Review of branch `spec/v1` and merge into `master` (the review comes first; the branch is not merged before it)
-- Owner questions (a)–(p): listed in [OPEN.md](OPEN.md); each is a proposal in the spec until answered
+- Owner question (q), winning-margin window: listed in [OPEN.md](OPEN.md); a proposal in the spec until answered
 - Work packages with acceptance criteria, written per phase when the phase starts (spec/11-roadmap.md)
 
 ### Implementation (roadmap phases, spec/11-roadmap.md)
@@ -49,4 +48,7 @@ For Phase 7:
 | Repository `weudlll-cyber/seasonal-mini-games` created (public, AGPL-3.0-or-later); initial commit with LICENSE, README and .gitignore | master, initial commit | 2026-10-24 |
 | Owner decisions O1–O7 recorded | docs/DECISIONS.md §1 | 2026-10-24 |
 | CLAUDE.md working rules adapted from Bingo | Branch spec/v1 | 2026-10-24 |
-| Specification v1, sections 01–11, with DECISIONS, OPEN, BACKLOG and GAME-IDEAS | Branch spec/v1 (review pending) | 2026-10-24 |
+| Specification v1, sections 01–11, with DECISIONS, OPEN, BACKLOG and GAME-IDEAS | Branch spec/v1 | 2026-10-24 |
+| Owner questions (a) fairness proof, (b) anti-multi-account, (d) team scoring, (e) feedback rule, (f) shared-mode visibility, (g) shared placings, (h) unsolved players, (i) points and leaderboard, (j) repeated guesses, (k) roster and limits, (l) special details, (m) default numbers, (n) sizing, (o) product facts, (p) winning margin | Owner answers, DECISIONS O8–O15; spec 01, 02, 03, 05, 08 updated | 2026-10-24 |
+| Owner question (c) shared guess engine | Architect decision DECISIONS T21 (decided when the second such game starts; R7 stays) | 2026-10-24 |
+| Review of branch spec/v1 and merge into master | Merge commit on master (no-ff) | 2026-10-24 |

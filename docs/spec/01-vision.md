@@ -17,10 +17,10 @@ The first game is **Guess The Number** ([02](02-game-guess-the-number.md)). Late
 | The platform foundation is adopted from Seasonal Bingo Royale: stack, layering, working rules, installer, identity adapters, embedding, chat providers, file header and size limits. | Owner, 2026-10-24 (decision 1) |
 | The first game is Guess The Number. The other vision games are in the roadmap only. | Owner, 2026-10-24 (decision 2) |
 | Specification first, code afterwards. | Owner, 2026-10-24 (decision 7) |
-| No prizes of monetary value: no payouts, wagers, purchases, wallets or token transfers. Players compete for placings and leaderboard rank. The data model has no currency, balance or wallet fields. | Adopted with the foundation (Bingo 01 §1.1); see the owner question in [OPEN.md](../OPEN.md) |
-| Standalone product that can also be embedded in the Seasonal Entertainment website. | Adopted with the foundation (Bingo 01 §1.1, Bingo 07) |
+| No prizes of monetary value: no payouts, wagers, purchases, wallets or token transfers. Players compete for placings and leaderboard rank. The data model has no currency, balance or wallet fields. | Owner, 2026-10-24 (decision 14; as Bingo 01 §1.1) |
+| Standalone product that can also be embedded in the Seasonal Entertainment website. | Owner, 2026-10-24 (decision 14; as Bingo 01 §1.1, Bingo 07) |
 | Everything in the repository is English; the player-facing UI is English. | Standing rule |
-| Launch sizing: up to 500 concurrent players in one round, 1 000 on one server across rounds. | **Proposal** (Bingo was sized for ~200; a shared round is the main use, so this platform is sized higher). Load gate in [09](09-testing-strategy.md) §5 |
+| Launch sizing: up to 500 concurrent players in one round, 1 000 on one server across rounds. | Owner, 2026-10-24 (decision 15). Load gate in [09](09-testing-strategy.md) §5 |
 
 Nothing of value can be won or bought, so the games stay games without stake, as in Bingo. Any later change that adds a stake or a prize of value is a separate project that starts with a legal review.
 
