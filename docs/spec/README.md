@@ -33,4 +33,4 @@ Bingo spec files: 01 game design, 02 software architecture, 03 security architec
 - Owner decisions (2026-10-24) are recorded in [DECISIONS.md](../DECISIONS.md) §1 and applied throughout. In this spec they are marked **(owner)**.
 - Anything that changes what players experience but was not decided by the owner is marked **proposal**. A proposal is built as written unless the owner changes it. Each one is listed as an owner question in [OPEN.md](../OPEN.md).
 - Every number the owner did not give is an admin setting with a default, a minimum and a maximum, marked *proposal* in [08](08-admin-settings.md).
-- Purely technical choices are recorded with their reasons in [DECISIONS.md](../DECISIONS.md) §2 and §4.
+- Purely technical choices are recorded with their reasons in [DECISIONS.md](../DECISIONS.md): technical decisions T1–T20 (§2), security decisions S1–S9 (§3), rejected approaches R1–R12 (§4).
