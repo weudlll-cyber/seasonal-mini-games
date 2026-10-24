@@ -65,7 +65,9 @@ Each row is built as Bingo specifies, with the names of §2.2. "Difference" list
 
 ```
 packages/game-sdk     The game-module contract (types) and pure helpers every game may use:
-                      DRBG integer draws, range arithmetic, view helpers. Depends only on zod.
+                      setting definitions, range arithmetic, view helpers. Free of node:crypto.
+                      Its second entry @smg/game-sdk/crypto holds the DRBG and the commitment
+                      for the platform (a game only receives a RoundRng). Depends only on zod.
 packages/domain       Platform rules: match and round lifecycle, roster, cooldown, receive order,
                       placings, season and special scheduling, teams, standings. Pure.
 packages/application  Use cases and ports (Clock, SecureRandom, RoundStore, Scheduler, EventBus,
@@ -74,10 +76,12 @@ packages/contracts    Zod schemas for every platform wire shape and settings doc
 packages/ui           Shared React components and design tokens.
 games/<game>/src      One game's rules, settings schema and views. Pure. Implements game-sdk.
 games/<game>/web      That game's screen (React). Depends on game-sdk, ui and its own src.
-games/registry.ts     The list of installed game modules: the only place that names them.
+games/registry        The list of installed game modules (package @smg-game/registry; src/ for
+                      the server, web/ for the player client): the only place that names them.
+                      Game packages are named @smg-game/<game> (DECISIONS T22).
 apps/server           Adapters (Fastify, Socket.IO, Postgres, identity, scheduler, feed client) and
-                      the composition root. Imports games/registry.ts, never a game directly.
-apps/web              Player client. Renders a game through games/registry.ts (web entries).
+                      the composition root. Imports games/registry, never a game directly.
+apps/web              Player client. Renders a game through games/registry (web entries).
 apps/admin            Admin client (as Bingo). apps/embed-loader: embed.js (as Bingo).
 ```
 
@@ -85,7 +89,7 @@ apps/admin            Admin client (as Bingo). apps/embed-loader: embed.js (as B
 
 - `game-sdk` ← `domain` ← `application` ← `apps/server`. `contracts` may be imported by `application`, `apps/*` and `games/*/web`.
 - `games/<game>/src` may import `game-sdk` and zod only. `games/<game>/web` may import `game-sdk`, `ui`, React and its own `src`.
-- No platform package imports `games/<game>` directly. Only `apps/server` and `apps/web` import `games/registry.ts`.
+- No platform package imports `games/<game>` directly. Only `apps/server` and `apps/web` import `games/registry` (its `src` and its `web` half respectively).
 - No game imports another game. Shared code between games goes into `game-sdk` (decided per case; whether there is one shared guess engine is decided when the second game that could use it starts, DECISIONS T21).
 
 ## 4. The game-module contract
@@ -163,12 +167,12 @@ A season whose special the game does not implement still runs as a season round 
 
 ### 4.5 Rules every game module must pass
 
-The platform runs one shared conformance test suite against every module in `games/registry.ts` ([09](09-testing-strategy.md) §3, invariants P1–P6): determinism from the seed, no secret in any player or spectator view, views valid against `viewSchemas`, rejections free of side effects, `evolve` replay equal to live state, and special hooks that change the same things for every player.
+The platform runs one shared conformance test suite against every module in `games/registry` ([09](09-testing-strategy.md) §3, invariants P1–P6): determinism from the seed, no secret in any player or spectator view, views valid against `viewSchemas`, rejections free of side effects, `evolve` replay equal to live state, and special hooks that change the same things for every player.
 
 ### 4.6 Adding a game
 
 1. Create `games/<game>/` with `src/` (module, settings defaults, tests) and `web/` (screen, strings).
-2. Add one line to `games/registry.ts`.
+2. Add one line to each half of `games/registry` (`src/index.ts` and `web/index.ts`).
 3. Add its settings to [08](08-admin-settings.md) and its rules to a new spec section.
 
 No file in `packages/` or `apps/` changes. If a game needs something the contract does not offer, the contract is changed first in its own task with its own spec change, and is never worked around inside the game.

@@ -1,0 +1,15 @@
+/**
+ * @file   packages/application/tsconfig.json
+ * @module application
+ * @brief  TypeScript settings for @smg/application.
+ *
+ * Responsibility: extend the shared strict base and limit the program to src/.
+ * Spec:           docs/spec/10-repository-structure.md §2
+ */
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

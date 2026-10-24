@@ -7,7 +7,7 @@
 - The admin app, its navigation model, and forms generated from the same zod schemas the server validates with (defaults, bounds and help text from schema metadata) are as in Bingo 11 §1.
 - Every change is a new version of its settings document, with history, diff and rollback, and is audited ([05](05-security-threat-model.md) §8). Confirm dialogs and 2FA step-up apply as in Bingo 11 §1.
 - Bingo's settings documents `security`, `rate_limits`, `branding`, `theme`, `notifications`, `features` and `chat` are adopted with their keys (Bingo 11 §4). This catalogue lists only the keys that are new or different.
-- Defaults live in `packages/contracts/src/settings/defaults/` (platform) and `games/guess-the-number/src/settings/defaults.ts` (game). The tables below are the specification of those files.
+- Definitions with their defaults live in `packages/contracts/src/settings/` (platform) and `games/guess-the-number/src/settings/` (game). The tables below are the specification of those files. A document stores only what an admin changed: per key a new default and, for numbers, narrowed bounds (never wider than the table).
 - Navigation differs from Bingo 11 §2: **Game rules** becomes **Games** (per-game settings and bounds), and a new **Seasons** area holds the feed status and halving days.
 
 ## 2. How to read the tables
@@ -80,13 +80,13 @@ The host form shows each host-chosen value with its default preselected and refu
 |---|---|---|---|---|---|---|
 | `antiMulti.minAccountAgeH` | 0 (off) | 0 | 720 | owner (O10) | security admin | next: read when a roster freezes |
 | `antiMulti.requireLinkedChat` | false | — | — | owner (O10); website installs only | security admin | next: read when a roster freezes |
-| `rate_limits.ws.guessPerAccount` | 4 / s, burst 4 | 1 / s | 10 / s | technical | security admin | immediate |
-| `rate_limits.http.guessPerSession` | 1 / s | 1 / 5 s | 4 / s | technical | security admin | immediate |
-| `rate_limits.ws.teamChoose` | 1 / 5 s | 1 / 60 s | 1 / s | technical | security admin | immediate |
-| `rate_limits.host.roundCommands` | 1 / 2 s | 1 / 10 s | 2 / s | technical | security admin | immediate |
-| `rate_limits.round.queueBound` | 5 000 | 1 000 | 20 000 | technical | security admin | immediate |
-| `security.abuse.cooldownRejectsPerMin` | 20 | 5 | 200 | technical | security admin | immediate |
-| `security.abuse.botTimingWindowMs` | 30 | 5 | 200 | technical: guesses this close to `cooldownEndsAt`, repeatedly, raise the abuse score | security admin | immediate |
+| `rate.guessPerAccountPerS` | 4 / s | 1 / s | 10 / s | technical | security admin | immediate |
+| `rate.httpGuessPerSessionPerMin` | 60 / min | 12 / min | 240 / min | technical | security admin | immediate |
+| `rate.teamChoosePerMin` | 12 / min | 1 / min | 60 / min | technical | security admin | immediate |
+| `rate.hostRoundCommandsPerMin` | 30 / min | 6 / min | 120 / min | technical | security admin | immediate |
+| `rate.roundQueueBound` | 5 000 | 1 000 | 20 000 | technical | security admin | immediate |
+| `abuse.cooldownRejectsPerMin` | 20 | 5 | 200 | technical | security admin | immediate |
+| `abuse.botTimingWindowMs` | 30 | 5 | 200 | technical: guesses this close to `cooldownEndsAt`, repeatedly, raise the abuse score | security admin | immediate |
 
 All Bingo security and rate-limit keys (Bingo 03 §13, Bingo 11 §3.10) keep their defaults and bounds. Loosening beyond a shipped default shows a warning, as in Bingo.
 

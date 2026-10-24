@@ -1,0 +1,39 @@
+/**
+ * @file   tsconfig.base.json
+ * @brief  Strict TypeScript base shared by every workspace project.
+ *
+ * Responsibility: one set of compiler checks for the whole repo; NodeNext resolution for
+ *                 the server and the shared packages. Browser projects use tsconfig.bundler.json.
+ * Used by:        tsconfig.bundler.json, packages/{game-sdk,domain,application,contracts},
+ *                 games/*, apps/server
+ * Spec:           Bingo 02 §9, docs/spec/10-repository-structure.md §2
+ */
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "verbatimModuleSyntax": true,
+    "isolatedModules": true,
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true,
+    // No ambient @types leak into a project; each one opts in to what it needs (e.g. node).
+    "types": [],
+    // Packages are consumed as source until a build step exists. The aliases also let ESLint's
+    // boundaries rule resolve "@smg/<name>" and "@smg-game/<game>" imports and check them
+    // against the layer rules (docs/spec/04-software-architecture.md §3, DECISIONS T22).
+    "paths": {
+      "@smg/game-sdk/crypto": ["./packages/game-sdk/src/crypto.ts"],
+      "@smg/*": ["./packages/*/src/index.ts"],
+      "@smg-game/*/web": ["./games/*/web/index.ts"],
+      "@smg-game/*": ["./games/*/src/index.ts"]
+    }
+  }
+}

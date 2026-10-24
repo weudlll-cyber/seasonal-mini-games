@@ -15,7 +15,8 @@ seasonal-mini-games/
 ├─ .vscode/  .github/                                        as Bingo (workflows, shared setup action, PR template)
 ├─ assets/                                                   copied from Bingo assets/ with its manifest (03 §6)
 ├─ packages/
-│  ├─ game-sdk/src/        contract.ts (GameModule and its types), drbg.ts, range.ts, views.ts, conformance/
+│  ├─ game-sdk/src/        contract.ts (GameModule and its types), random.ts, settings.ts, range.ts,
+│  │                       crypto.ts (entry @smg/game-sdk/crypto: drbg.ts, commitment.ts), conformance/
 │  ├─ domain/src/          match/, round/ (lifecycle, roster, cooldown, order, placings), specials/
 │  │                       (scheduling, Heatwave, Frost), teams/, seasons/, standings/
 │  ├─ application/src/     round/ (engine.ts: the round actor, batcher.ts, queue.ts), match/, seasons/,
@@ -23,7 +24,7 @@ seasonal-mini-games/
 │  ├─ contracts/src/       http/, ws/, events/, settings/ (schemas and defaults/), errors.ts
 │  └─ ui/                  shared React components, design tokens (as Bingo)
 ├─ games/
-│  ├─ registry.ts          the list of installed game modules (04 §3)
+│  ├─ registry/            src/index.ts (modules), web/index.ts (screens): the installed games (04 §3)
 │  └─ guess-the-number/
 │     ├─ src/              module.ts, feedback.ts, hints.ts, leafFall.ts, halving.ts, views.ts, events.ts,
 │     │                    settings/ (schema.ts, defaults.ts), *.test.ts
@@ -46,7 +47,7 @@ seasonal-mini-games/
 
 ## 2. Size and structure rules (adopted)
 
-As Bingo 10 §2, enforced by ESLint and `tsc`: file ≤ 300 lines (tests ≤ 400), function ≤ 60 lines, complexity ≤ 12, at most 4 parameters, layer boundaries from [04](04-software-architecture.md) §3 (`eslint-plugin-boundaries`, with zones for `game-sdk`, `games/*/src`, `games/*/web` and `games/registry.ts`), no default exports, no `any`, no non-null `!`, no unused variables or imports. In addition, `Math.random` is forbidden in `packages/` and `games/*/src` ([05](05-security-threat-model.md) §4).
+As Bingo 10 §2, enforced by ESLint and `tsc`: file ≤ 300 lines (tests ≤ 400), function ≤ 60 lines, complexity ≤ 12, at most 4 parameters, layer boundaries from [04](04-software-architecture.md) §3 (`eslint-plugin-boundaries`, with zones for `game-sdk`, `games/*/src`, `games/*/web` and the two halves of `games/registry`), no default exports, no `any`, no non-null `!`, no unused variables or imports. In addition, `Math.random` is forbidden in `packages/` and `games/*/src` ([05](05-security-threat-model.md) §4).
 
 ## 3. Standard file header (adopted from Bingo 10 §3)
 

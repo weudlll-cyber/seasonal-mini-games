@@ -1,0 +1,129 @@
+/**
+ * @file   apps/web/src/shell/AppShell.tsx
+ * @module web/shell
+ * @brief  The player client's frame: top bar, navigation, account, screens.
+ *
+ * Responsibility: show the Seasonal Entertainment emblem with the "Seasonal Mini Games"
+ *                 wordmark, the light/dark toggle, the navigation and the account
+ *                 ("Signed in as <name> (host|player)", Account, Sign out) or, signed out,
+ *                 "Sign in" and "Register". Below the bar, the screen of the current route.
+ *                 In development also the "Dev sign-in" menu (./DevTools), loaded on demand so
+ *                 a production build (Vite's DEV false) leaves it out; `dev` decides whether
+ *                 it shows. Bingo's shell, without its game screens.
+ * Depends on:     react, ./router, ./session, ./ThemeToggle, ./DevTools (lazy, development
+ *                 only), ../lobby/Lobby, ../account/*, ./shell.css, assets/brand/emblem.webp
+ * Used by:        ../main
+ * Spec:           Bingo 01 §13; Bingo 05 §2.1
+ */
+import { lazy, Suspense, type ReactElement } from 'react';
+
+import emblem from '../../../../assets/brand/emblem.webp';
+import { AccountPage } from '../account/AccountPage.js';
+import { Register } from '../account/Register.js';
+import { SignIn } from '../account/SignIn.js';
+import { Lobby } from '../lobby/Lobby.js';
+import { hrefOf, useRoute, type Route } from './router.js';
+import { useSession } from './session.js';
+import { ThemeToggle } from './ThemeToggle.js';
+import './shell.css';
+
+// Development tools load on demand. A production build replaces import.meta.env.DEV with
+// false, so this import and everything behind it stay out of the bundle.
+const DevSignIn = import.meta.env.DEV
+  ? lazy(() => import('./DevTools.js').then((m) => ({ default: m.DevSignIn })))
+  : null;
+
+export function AppShell({ dev }: { readonly dev: boolean }): ReactElement {
+  const route = useRoute();
+  return (
+    <>
+      <header className="shell-bar">
+        <a className="shell-brand" href={hrefOf({ name: 'lobby' })}>
+          <img src={emblem} alt="" width="42" height="37" />
+          <span>
+            Seasonal Mini Games
+            <small>Seasonal Entertainment</small>
+          </span>
+        </a>
+        {/* Beside the account on wide screens, beside the brand on phones (shell.css). */}
+        <ThemeToggle />
+        <Nav route={route} />
+        <Account dev={dev} />
+      </header>
+      <main className="shell-main">
+        <Screen route={route} />
+      </main>
+    </>
+  );
+}
+
+function Nav({ route }: { readonly route: Route }): ReactElement {
+  return (
+    <nav className="shell-nav" aria-label="Main">
+      <a
+        href={hrefOf({ name: 'lobby' })}
+        aria-current={route.name === 'lobby' ? 'page' : undefined}
+      >
+        Play
+      </a>
+    </nav>
+  );
+}
+
+function Account({ dev }: { readonly dev: boolean }): ReactElement {
+  const { session, signOut, can } = useSession();
+  return (
+    <div className="shell-account" data-testid="account">
+      {session?.account ? (
+        <>
+          <a className="smg-chip" href={hrefOf({ name: 'account' })} data-testid="signed-in-as">
+            <span className="chip-prefix">Signed in as </span>
+            {session.account.displayName} ({can('match.create') ? 'host' : 'player'})
+          </a>
+          <button
+            type="button"
+            className="smg-btn"
+            data-testid="sign-out"
+            onClick={() => void signOut()}
+          >
+            Sign out
+          </button>
+        </>
+      ) : null}
+      {session !== null && session.account === null ? (
+        <>
+          <a
+            className="smg-btn smg-btn--primary"
+            href={hrefOf({ name: 'signIn' })}
+            data-testid="open-sign-in"
+          >
+            Sign in
+          </a>
+          <a className="smg-btn" href={hrefOf({ name: 'register' })} data-testid="open-register">
+            Register
+          </a>
+        </>
+      ) : null}
+      {dev && DevSignIn !== null ? (
+        <Suspense fallback={null}>
+          <DevSignIn />
+        </Suspense>
+      ) : null}
+    </div>
+  );
+}
+
+// Keyed by account: a sign-in as someone else mounts the screen fresh.
+function Screen({ route }: { readonly route: Route }): ReactElement {
+  const who = useSession().session?.account?.id ?? 'guest';
+  switch (route.name) {
+    case 'lobby':
+      return <Lobby key={who} />;
+    case 'signIn':
+      return <SignIn />;
+    case 'register':
+      return <Register />;
+    case 'account':
+      return <AccountPage key={who} />;
+  }
+}

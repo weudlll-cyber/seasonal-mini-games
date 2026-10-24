@@ -1,0 +1,21 @@
+{
+  "name": "@smg/application",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@smg/contracts": "workspace:*",
+    "@smg/domain": "workspace:*",
+    "@smg/game-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "fast-check": "4.10.2"
+  }
+}

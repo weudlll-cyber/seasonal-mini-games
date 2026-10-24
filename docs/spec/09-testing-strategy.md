@@ -17,7 +17,7 @@
 | Level | Scope |
 |---|---|
 | Unit and property | `domain` (lifecycle, cooldown, ordering, placings, teams, special scheduling), `game-sdk` (DRBG helpers, range arithmetic), `games/guess-the-number/src` (feedback, hints, Leaf Fall, halving) |
-| Conformance | One shared suite run against every module in `games/registry.ts` (invariants P1–P6). A new game is green only when it passes. |
+| Conformance | One shared suite run against every module in `games/registry` (invariants P1–P6). A new game is green only when it passes. |
 | Engine integration | The round actor with real Postgres: group commit, restart recovery, scheduler precision, Frost after restart |
 | Component | Range bar, cooldown ring, guess list, roster, team standing, result screen |
 | E2E | Journeys in §4 |

@@ -1,0 +1,39 @@
+{
+  "name": "seasonal-mini-games",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "packageManager": "pnpm@12.14.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @smg/server --filter @smg/web --filter @smg/admin run dev",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p e2e/tsconfig.json && pnpm -r typecheck",
+    "test": "vitest run",
+    "test:unit": "vitest run --project @smg/game-sdk --project @smg/domain --project @smg/application --project @smg/contracts --project @smg-game/guess-the-number",
+    "test:coverage": "vitest run packages/game-sdk packages/domain packages/application games --coverage",
+    "e2e": "playwright test -c e2e/playwright.config.ts",
+    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.1",
+    "@smg/contracts": "workspace:*",
+    "@types/node": "22.20.5",
+    "@vitest/coverage-v8": "5.0.5",
+    "eslint": "10.13.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-import-resolver-typescript": "4.4.5",
+    "eslint-plugin-boundaries": "7.2.0",
+    "lefthook": "2.2.2",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.71.2",
+    "vitest": "5.0.5"
+  }
+}
