@@ -10,14 +10,16 @@
  *                 in individual mode solve order is place order (O4, O5). After a shared
  *                 win, a would-be correct guess inside the margin window sets the winning
  *                 margin (O13) and is still answered ROUND_OVER. A rejection emits nothing.
- * Depends on:     ./lifecycle, ./types
+ * Depends on:     @smg/game-sdk (types), ./builder, ./lifecycle, ./specials (Frost), ./types
  * Used by:        ./step
  * Spec:           docs/spec/02-game-guess-the-number.md §5, §7, §8, §9;
  *                 docs/spec/04-software-architecture.md §4.2, §5.2, §5.5
  */
 import type { Decision, PlayerAction } from '@smg/game-sdk';
 
-import { catchUp, endRound, fail, type Step } from './lifecycle.js';
+import { fail, type Step } from './builder.js';
+import { catchUp, endRound } from './lifecycle.js';
+import { frostDelay } from './specials.js';
 import type { Reply, RoundState } from './types.js';
 
 interface GuessCmd<A> {
@@ -77,15 +79,15 @@ export function guess<S, A, E, Cfg, Sec>(step: Step<S, A, E, Cfg, Sec>, cmd: Gue
   const cooldownEndsAt = cmd.receivedAt + s.cooldownMs;
   const { playerId, receivedAt, action } = cmd;
   step.emit({ type: 'GuessAccepted', playerId, receiveSeq, receivedAt, action, cooldownEndsAt });
+  // Frost holds answers back; order, signals and the cooldown are not delayed (03 §2.4).
+  const delay = frostDelay(s);
+  const held = delay === null ? null : receivedAt + delay;
   for (const e of tried.decision.events) {
-    step.emit({
-      type: 'Game',
-      audience: e.audience,
-      feedback: e.feedback === true,
-      event: e.event,
-    });
+    const feedback = e.feedback === true;
+    const deliverAt = feedback ? held : null;
+    step.emit({ type: 'Game', audience: e.audience, feedback, deliverAt, event: e.event });
   }
-  applySignals(step, tried.decision, receiveSeq, cmd.receivedAt);
+  applySignals(step, tried.decision, receiveSeq, { at: receivedAt, deliverAt: held });
   return { ok: true, receiveSeq, cooldownEndsAt };
 }
 
@@ -93,8 +95,9 @@ function applySignals<S, A, E, Cfg, Sec>(
   step: Step<S, A, E, Cfg, Sec>,
   decision: Accepted<E>,
   receiveSeq: number,
-  at: number,
+  when: { at: number; deliverAt: number | null },
 ): void {
+  const { at, deliverAt } = when;
   for (const signal of decision.signals) {
     const s = step.state;
     if (s.status !== 'open') return;
@@ -106,10 +109,18 @@ function applySignals<S, A, E, Cfg, Sec>(
     if (entry === undefined || entry.solvedSeq !== null) continue;
     const shared = s.config.secretMode === 'shared';
     const place = shared ? 1 : s.solvedCount + 1;
-    step.emit({ type: 'PlayerSolved', playerId: signal.playerId, receiveSeq, at, place });
-    if (shared) endRound(step, at, 'solved');
-    else if (step.state.solvedCount === Object.keys(s.roster).length)
-      endRound(step, at, 'allSolved');
+    step.emit({
+      type: 'PlayerSolved',
+      playerId: signal.playerId,
+      receiveSeq,
+      at,
+      place,
+      deliverAt,
+    });
+    if (shared) endRound(step, at, 'solved', deliverAt);
+    else if (step.state.solvedCount === Object.keys(s.roster).length) {
+      endRound(step, at, 'allSolved', deliverAt);
+    }
   }
 }
 

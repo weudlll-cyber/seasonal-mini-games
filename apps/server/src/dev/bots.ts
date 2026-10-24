@@ -22,10 +22,11 @@ import type { LiveRound } from '../round/liveRound.js';
 const pause = () => 200 + randomInt(1_301);
 
 export function runBots(round: LiveRound, keys: readonly string[], bot: DevBot<unknown>): void {
+  // A bot never keeps the process alive; after shutdown its round refuses it anyway.
   const later = (key: string, ms: number): void => {
     setTimeout(() => {
       turn(key);
-    }, ms);
+    }, ms).unref();
   };
   const turn = (key: string): void => {
     const status = round.status();

@@ -15,7 +15,7 @@
 import { GAMES } from '@smg-game/registry';
 import type { DevBot, GameEntry } from '@smg/game-sdk';
 
-import type { ActorOptions } from './actor.js';
+import type { ActorOptions, Delivery } from './actor.js';
 import { GameRunner, type NewRound } from './gameRunner.js';
 import type { LiveRound } from './liveRound.js';
 import type { LoadedRound, PgRoundStore, StoredEvent } from './pgRoundStore.js';
@@ -34,7 +34,7 @@ interface Runner {
   recover(loaded: LoadedRound): LiveRound;
 }
 
-type Listener = (round: LiveRound, events: readonly StoredEvent[]) => void;
+type Listener = (round: LiveRound, events: readonly StoredEvent[], how: Delivery) => void;
 
 export class Rounds {
   private readonly runners = new Map<string, Runner>();
@@ -52,8 +52,8 @@ export class Rounds {
     const runner = new GameRunner(entry, {
       store: this.store,
       options,
-      committed: (round, events) => {
-        for (const l of this.listeners) l(round, events);
+      committed: (round, events, how) => {
+        for (const l of this.listeners) l(round, events, how);
       },
     });
     const { meta } = entry.module;
@@ -113,7 +113,8 @@ export class Rounds {
     this.listeners.push(listener);
   }
 
+  // Shutdown: every open batch is written, then no timer of a round fires any more.
   async drainAll(): Promise<void> {
-    await Promise.all([...this.live.values()].map((r) => r.drain()));
+    await Promise.all([...this.live.values()].map((r) => r.close()));
   }
 }

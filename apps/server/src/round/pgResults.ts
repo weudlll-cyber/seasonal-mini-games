@@ -5,8 +5,8 @@
  *
  * Responsibility: in the transaction that appends RoundEnded (06 §2.4): one row per roster
  *                 player (a place only for placed players, unique per round), one per team,
- *                 and the match standings recomputed over every ended round of the match with
- *                 the domain's tie order (02 §9).
+ *                 and the match and team standings recomputed over every ended round of the
+ *                 match with the domain's tie order (02 §9, 03 §5).
  * Depends on:     pg, @smg/domain (results, standings)
  * Used by:        ./pgRoundStore
  * Spec:           docs/spec/06-data-model-api-realtime.md §2.4, §2.5; docs/spec/02-game-guess-the-number.md §9
@@ -47,6 +47,7 @@ export async function writeResults(
     );
   }
   await refreshStandings(c, matchId);
+  await refreshTeamStandings(c, matchId);
 }
 
 // Match standings over every ended round of the match (06 §2.5), recomputed in full.
@@ -75,6 +76,29 @@ async function refreshStandings(c: pg.PoolClient, matchId: string) {
   for (const s of standings(scoredPlayers(results))) {
     await c.query(
       `INSERT INTO smg.match_standings (match_id, player_key, points, wins, first_win_at, rank)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [matchId, s.key, s.points, s.wins, ts(s.firstWinAt), s.rank],
+    );
+  }
+}
+
+// Team standings: 1 point per round win (O12), ties by wins, then by the earliest win (03 §5).
+async function refreshTeamStandings(c: pg.PoolClient, matchId: string) {
+  const rows = await c.query<{ team: string; points: number; won: boolean; ended_at: Date | null }>(
+    `SELECT t.team, t.points, t.won, r.ended_at FROM smg.round_team_results t
+     JOIN smg.rounds r ON r.id = t.round_id WHERE r.match_id = $1`,
+    [matchId],
+  );
+  const scores = rows.rows.map((r) => ({
+    key: r.team,
+    points: r.points,
+    won: r.won,
+    at: r.ended_at?.getTime() ?? null,
+  }));
+  await c.query('DELETE FROM smg.match_team_standings WHERE match_id = $1', [matchId]);
+  for (const s of standings(scores)) {
+    await c.query(
+      `INSERT INTO smg.match_team_standings (match_id, team, points, wins, first_win_at, rank)
        VALUES ($1, $2, $3, $4, $5, $6)`,
       [matchId, s.key, s.points, s.wins, ts(s.firstWinAt), s.rank],
     );

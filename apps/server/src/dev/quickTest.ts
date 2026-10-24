@@ -33,6 +33,9 @@ export interface QuickTestInput {
   readonly cooldownS: number;
   readonly visibility: 'own' | 'numbers' | 'full';
   readonly rangeHigh: number;
+  readonly fast: boolean;
+  // A halving round; only on a halving day, as for every round.
+  readonly halving: boolean;
   readonly seedText?: string | undefined;
   readonly season?: Season | undefined;
 }
@@ -78,9 +81,11 @@ export async function startQuickTest(
       'round.feedbackVisibility': input.visibility,
       'round.rangeLow': 1,
       'round.rangeHigh': input.rangeHigh,
+      'round.halving': input.halving,
     },
     season,
     seed,
+    fast: input.fast,
   });
   const roster = [input.playerId, ...bots].map((playerId) => ({ playerId, team: null }));
   await play.startRound(match, round, roster);

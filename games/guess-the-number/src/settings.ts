@@ -3,8 +3,9 @@
  * @module games/guess-the-number
  * @brief  The game's own keys of document `game.guess-the-number` and its frozen config.
  *
- * Responsibility: range, feedback visibility and the repeated-guess rule (08 §3) as setting
- *                 definitions; reading frozen values into the config; the cross-key rule
+ * Responsibility: range, feedback visibility, the repeated-guess rule and the game's parts of
+ *                 the specials (Spring Herald's hint type, where Leaf Fall and halving stop)
+ *                 (08 §3) as setting definitions; reading frozen values into the config; the cross-key rule
  *                 that a range holds at least 10 numbers (`rangeHigh` ≥ `rangeLow` + 9).
  *                 The platform's round keys come first in the document (game-sdk).
  * Depends on:     @smg/game-sdk (SettingDef, GameSettings)
@@ -20,11 +21,15 @@ export interface GtnConfig {
   readonly rangeHigh: number;
   readonly feedbackVisibility: Visibility;
   readonly repeatGuessRejected: boolean;
+  readonly springHintType: 'parity' | 'half';
+  readonly autumnMinRemaining: number;
+  readonly halvingMinRangeSize: number;
 }
 
 const GAME_ADMIN = 'settings.game.edit';
 const host = { editPermission: GAME_ADMIN, hostChooses: true, running: 'frozen' } as const;
 const owner = (decision: string) => ({ status: 'owner', decision, spec: '08 §3' }) as const;
+const admin = { editPermission: GAME_ADMIN, hostChooses: false, running: 'frozen' } as const;
 
 const defs: readonly SettingDef[] = [
   {
@@ -68,9 +73,41 @@ const defs: readonly SettingDef[] = [
     help: 'A number the player already guessed is refused without cost.',
     default: true,
     ...owner('O15'),
-    editPermission: GAME_ADMIN,
-    hostChooses: false,
-    running: 'frozen',
+    ...admin,
+  },
+  {
+    key: 'spring.hintType',
+    kind: 'enum',
+    label: 'Spring Herald hint',
+    help: 'parity: odd or even; half: lower or upper half of the range.',
+    default: 'parity',
+    options: ['parity', 'half'],
+    ...owner('O15'),
+    ...admin,
+  },
+  {
+    key: 'autumn.minRemaining',
+    kind: 'int',
+    label: 'Leaf Fall stops at',
+    help: 'Falls stop when fewer numbers than this would be left in the range.',
+    default: 10,
+    min: 2,
+    max: 1_000,
+    unit: '',
+    ...owner('O15'),
+    ...admin,
+  },
+  {
+    key: 'halving.minRangeSize',
+    kind: 'int',
+    label: 'Halving stops at',
+    help: 'The range is not halved any more once it holds this many numbers or fewer.',
+    default: 8,
+    min: 2,
+    max: 100,
+    unit: '',
+    ...owner('O15'),
+    ...admin,
   },
 ];
 
@@ -81,6 +118,9 @@ export const gtnSettings: GameSettings<GtnConfig> = {
     rangeHigh: values['round.rangeHigh'] as number,
     feedbackVisibility: values['round.feedbackVisibility'] as Visibility,
     repeatGuessRejected: values['round.repeatGuessRejected'] as boolean,
+    springHintType: values['spring.hintType'] as 'parity' | 'half',
+    autumnMinRemaining: values['autumn.minRemaining'] as number,
+    halvingMinRangeSize: values['halving.minRangeSize'] as number,
   }),
   problem: (cfg) =>
     cfg.rangeHigh >= cfg.rangeLow + 9

@@ -4,14 +4,15 @@
  * @brief  The match and round use cases the routes and intents share.
  *
  * Responsibility: a host creates a round (one at a time, ROUND_RUNNING; settings from the
- *                 game's document and the host's choices, ROUND_SETTINGS_INVALID; a season the
- *                 host picks while In Season is not available, IN_SEASON_UNAVAILABLE; a
+ *                 game's document and the host's choices, ROUND_SETTINGS_INVALID; the host's
+ *                 season or In Season while it is usable, IN_SEASON_UNAVAILABLE otherwise; a
  *                 halving round only on a halving day, NOT_A_HALVING_DAY) and starts it with
  *                 the players connected right now, the host excluded (02 §4); host end and
  *                 abort; team choice, locked while a round counts down or runs (TEAMS_LOCKED);
  *                 joining and leaving (leaving ends a round whose roster all left, "no players
  *                 left"); every change of players, teams or status is told to listeners.
- * Depends on:     node:crypto, @smg/application (settings), ../round/*, ./matches, ./presence, ../db/pool
+ * Depends on:     node:crypto, @smg/application (settings), ../round/*, ../seasons/seasons,
+ *                 ./matches, ./presence, ../db/pool
  * Used by:        ../http/routes/*, ../realtime/intents, ../dev/quickTest
  * Spec:           docs/spec/02-game-guess-the-number.md §2–§4, §8.3; docs/spec/06-data-model-api-realtime.md §3.1
  */
@@ -36,6 +37,7 @@ import {
   type MatchRow,
   type Team,
 } from './matches.js';
+import type { Seasons } from '../seasons/seasons.js';
 import type { Presence } from './presence.js';
 
 export type PlayCode =
@@ -58,8 +60,9 @@ export class PlayError extends Error {
 export interface RoundRequest {
   readonly choices: Readonly<Record<string, unknown>>;
   readonly season?: Season | undefined;
-  // Development Quick Test only: a fixed seed.
+  // Development Quick Test only: a fixed seed, and the fast test profile (09 §4).
   readonly seed?: Uint8Array | undefined;
+  readonly fast?: boolean | undefined;
 }
 
 const RUNNING = new Set(['created', 'countdown', 'open']);
@@ -67,12 +70,18 @@ const RUNNING = new Set(['created', 'countdown', 'open']);
 export class Play {
   private readonly matchListeners: ((matchId: string) => void)[] = [];
 
+  readonly presence: Presence;
+  private readonly seasons: Seasons;
+
   constructor(
     private readonly pool: DbPool,
     readonly rounds: Rounds,
     private readonly settings: SettingsService,
-    readonly presence: Presence,
-  ) {}
+    live: { readonly presence: Presence; readonly seasons: Seasons },
+  ) {
+    this.presence = live.presence;
+    this.seasons = live.seasons;
+  }
 
   // Players, teams or status of a match changed: the gateway tells its room.
   onMatchChanged(listener: (matchId: string) => void): void {
@@ -98,24 +107,37 @@ export class Play {
     return round !== null && RUNNING.has(round.status()) ? round : null;
   }
 
+  // The round's season: the one the host picked, else In Season while it is usable (03 §3).
+  private async seasonOf(
+    req: RoundRequest,
+  ): Promise<{ season: Season; source: 'inSeason' | 'manual' }> {
+    if (req.season !== undefined) return { season: req.season, source: 'manual' };
+    const now = await this.seasons.inSeason();
+    if (now === null) throw new PlayError('IN_SEASON_UNAVAILABLE');
+    return { season: now.season, source: 'inSeason' };
+  }
+
   async createRound(match: MatchRow, hostId: string, req: RoundRequest): Promise<LiveRound> {
-    if (match.status === 'closed' || match.status === 'aborted')
+    if (match.status === 'closed' || match.status === 'aborted') {
       throw new PlayError('MATCH_CLOSED');
+    }
     if ((await this.runningRound(match)) !== null) throw new PlayError('ROUND_RUNNING');
-    // Halving days and the In Season feed join with the seasons work: until then there is
-    // no halving day, and the host picks the season.
-    if (req.choices['round.halving'] === true) throw new PlayError('NOT_A_HALVING_DAY');
-    if (req.season === undefined) throw new PlayError('IN_SEASON_UNAVAILABLE');
+    // A halving round only on a real halving day, checked again here (03 §4).
+    if (req.choices['round.halving'] === true && (await this.seasons.halvingToday()) === null) {
+      throw new PlayError('NOT_A_HALVING_DAY');
+    }
+    const { season, source } = await this.seasonOf(req);
     const doc = await this.settings.view(`game.${match.gameId}`, []);
     try {
       const round = await this.rounds.create(match.gameId, {
         matchId: match.id,
         overrides: doc.overrides,
-        choices: { ...req.choices, 'round.seasonSource': 'manual' },
-        season: req.season,
-        seasonSource: 'manual',
+        choices: { ...req.choices, 'round.seasonSource': source },
+        season,
+        seasonSource: source,
         createdBy: hostId,
         seed: req.seed ?? new Uint8Array(randomBytes(SEED_BYTES)),
+        fast: req.fast === true,
       });
       if (match.status === 'lobby') await setMatchStatus(this.pool, match.id, 'open');
       return round;

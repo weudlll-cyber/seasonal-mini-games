@@ -12,7 +12,7 @@
  */
 import type { GameModule, RosterPlayer, RoundInput } from '@smg/game-sdk';
 
-import type { RosterEntry, RoundEvent, RoundState } from './types.js';
+import type { RosterEntry, RoundEvent, RoundState, SpecialName } from './types.js';
 
 // The input a game gets once the roster is frozen (04 §4.1).
 export function roundInput<S, Cfg>(
@@ -54,12 +54,8 @@ export function evolveRound<S, A, E, Cfg, Sec>(
   event: RoundEvent<E, A, Cfg>,
 ): RoundState<S, Cfg> {
   switch (event.type) {
-    case 'RoundCreated':
-      return state;
     case 'CountdownStarted':
       return countdown(module, state, event);
-    case 'RoundOpened':
-      return { ...state, status: 'open' };
     case 'GuessAccepted':
       return accepted(state, event);
     case 'Game':
@@ -68,13 +64,46 @@ export function evolveRound<S, A, E, Cfg, Sec>(
         : { ...state, game: module.evolve(state.game, event.event) };
     case 'PlayerSolved':
       return solved(state, event);
+    case 'SpecialFired':
+      return fired(state, event);
+    default:
+      return lifecycle(state, event);
+  }
+}
+
+// The events that change only the round's own fields.
+function lifecycle<S, A, E, Cfg>(
+  state: RoundState<S, Cfg>,
+  event: Exclude<
+    RoundEvent<E, A, Cfg>,
+    { type: 'CountdownStarted' | 'GuessAccepted' | 'Game' | 'PlayerSolved' | 'SpecialFired' }
+  >,
+): RoundState<S, Cfg> {
+  switch (event.type) {
+    case 'RoundCreated':
+    case 'HeldDelivered':
+      return state;
+    case 'RoundOpened':
+      return { ...state, status: 'open' };
     case 'RoundEnded':
       return { ...state, status: 'ended', endedAt: event.at, endReason: event.reason };
     case 'RoundAborted':
       return { ...state, status: 'aborted', endedAt: event.at, abortReason: event.reason };
     case 'MarginNoted':
       return { ...state, margin: { playerId: event.playerId, ms: event.ms } };
+    case 'CooldownChanged':
+      return { ...state, cooldownMs: event.cooldownMs };
   }
+}
+
+function fired<S, Cfg>(
+  state: RoundState<S, Cfg>,
+  e: { special: SpecialName; index: number; last: boolean },
+): RoundState<S, Cfg> {
+  if (e.special === 'springHerald') return state;
+  const specialIndex = { ...state.specialIndex, [e.special]: e.index };
+  const specialsOver = e.last ? [...state.specialsOver, e.special] : state.specialsOver;
+  return { ...state, specialIndex, specialsOver };
 }
 
 // One more guess for the player, their cooldown from its receive time, the last number used.
@@ -140,6 +169,8 @@ export function initialRound<S, A, E, Cfg>(
     endReason: null,
     abortReason: null,
     margin: null,
+    specialIndex: { halving: 0, leafFall: 0, heatwave: 0 },
+    specialsOver: [],
     game: null,
   };
 }

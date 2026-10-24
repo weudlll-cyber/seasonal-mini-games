@@ -73,7 +73,23 @@ export interface LoadedRound {
   readonly seed: Uint8Array;
   readonly snapshot: { readonly seq: number; readonly state: unknown } | null;
   readonly events: readonly StoredEvent[];
+  // Frost: held events not yet delivered (after the last HeldDelivered).
+  readonly undelivered: readonly StoredEvent[];
 }
+
+interface EventRow {
+  seq: string;
+  type: string;
+  payload: unknown;
+  at: Date;
+}
+
+const stored = (e: EventRow): StoredEvent => ({
+  seq: Number(e.seq),
+  at: e.at.getTime(),
+  type: e.type,
+  event: e.payload,
+});
 
 export class PgRoundStore {
   constructor(
@@ -154,10 +170,18 @@ export class PgRoundStore {
     const snapRow = snap.rows[0];
     const snapshot =
       snapRow === undefined ? null : { seq: Number(snapRow.seq), state: snapRow.state };
-    const events = await this.pool.query<{ seq: string; type: string; payload: unknown; at: Date }>(
+    const events = await this.pool.query<EventRow>(
       `SELECT seq, type, payload, occurred_at AS at FROM smg.round_events
        WHERE round_id = $1 AND seq > $2 ORDER BY seq`,
       [roundId, snapshot?.seq ?? 0],
+    );
+    const undelivered = await this.pool.query<EventRow>(
+      `WITH last AS (SELECT coalesce(max((payload->>'upTo')::bigint), 0) AS up
+                     FROM smg.round_events WHERE round_id = $1 AND type = 'HeldDelivered')
+       SELECT seq, type, payload, occurred_at AS at FROM smg.round_events, last
+       WHERE round_id = $1 AND seq > last.up AND jsonb_typeof(payload->'deliverAt') = 'number'
+       ORDER BY seq`,
+      [roundId],
     );
     return {
       id: roundId,
@@ -165,27 +189,18 @@ export class PgRoundStore {
       gameId: row.game_id,
       seed: openSeed(row.seed_enc, this.key),
       snapshot,
-      events: events.rows.map((e) => ({
-        seq: Number(e.seq),
-        at: e.at.getTime(),
-        type: e.type,
-        event: e.payload,
-      })),
+      events: events.rows.map(stored),
+      undelivered: undelivered.rows.map(stored),
     };
   }
 
   // The whole log, for the verification route and tests.
   async log(roundId: string): Promise<StoredEvent[]> {
-    const events = await this.pool.query<{ seq: string; type: string; payload: unknown; at: Date }>(
+    const events = await this.pool.query<EventRow>(
       'SELECT seq, type, payload, occurred_at AS at FROM smg.round_events WHERE round_id = $1 ORDER BY seq',
       [roundId],
     );
-    return events.rows.map((e) => ({
-      seq: Number(e.seq),
-      at: e.at.getTime(),
-      type: e.type,
-      event: e.payload,
-    }));
+    return events.rows.map(stored);
   }
 
   // Rounds that were running when the server stopped (recovery at start, 04 §5.3).

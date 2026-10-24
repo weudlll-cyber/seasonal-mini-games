@@ -19,9 +19,9 @@ import { randomUUID } from 'node:crypto';
 
 import { chooseRoundSettings, RoundSession } from '@smg/application';
 import type { RoundEvent, RoundState } from '@smg/domain';
-import type { GameEntry, Season, SettingOverride } from '@smg/game-sdk';
+import type { GameEntry, PlatformRoundConfig, Season, SettingOverride } from '@smg/game-sdk';
 
-import { RoundActor, type ActorOptions } from './actor.js';
+import { RoundActor, type ActorOptions, type Delivery } from './actor.js';
 import { liveRound, type LiveRound } from './liveRound.js';
 import type { LoadedRound, PgRoundStore, StoredEvent } from './pgRoundStore.js';
 
@@ -33,12 +33,30 @@ export interface NewRound {
   readonly seasonSource: 'inSeason' | 'manual';
   readonly createdBy: string | null;
   readonly seed: Uint8Array;
+  // Development only: the fast test profile (09 §4).
+  readonly fast: boolean;
+}
+
+// The fast test profile of development builds (09 §4): specials every few seconds and a
+// short countdown; the cooldown stays as chosen, so Heatwave has room to step down.
+// Published defaults are untouched.
+function fastProfile(p: PlatformRoundConfig): PlatformRoundConfig {
+  return {
+    ...p,
+    countdownMs: 3_000,
+    specials: {
+      heatwave: { stepMs: 1_000, intervalMs: 5_000 },
+      frostDelayMs: 3_000,
+      leafFall: { intervalMs: 5_000, count: p.specials.leafFall.count },
+      halvingIntervalMs: 6_000,
+    },
+  };
 }
 
 export interface RunnerDeps {
   readonly store: PgRoundStore;
   readonly options: ActorOptions;
-  readonly committed: (round: LiveRound, events: readonly StoredEvent[]) => void;
+  readonly committed: (round: LiveRound, events: readonly StoredEvent[], how: Delivery) => void;
 }
 
 export class GameRunner<S, A, E, Cfg, Sec> {
@@ -51,7 +69,8 @@ export class GameRunner<S, A, E, Cfg, Sec> {
   async create(round: NewRound): Promise<LiveRound> {
     const module = this.entry.module;
     const id = randomUUID();
-    const settings = chooseRoundSettings(module, round.overrides, round.choices);
+    const chosen = chooseRoundSettings(module, round.overrides, round.choices);
+    const settings = round.fast ? { ...chosen, platform: fastProfile(chosen.platform) } : chosen;
     const { session, event } = RoundSession.create(module, {
       roundId: id,
       settings,
@@ -78,12 +97,17 @@ export class GameRunner<S, A, E, Cfg, Sec> {
       },
       { seq: 1, at: this.deps.options.now(), type: event.type, event },
     );
-    return this.live(id, round.matchId, session, 1);
+    return this.live({ id, matchId: round.matchId }, session, 1);
   }
 
   recover(loaded: LoadedRound): LiveRound {
     const { session, lastSeq } = this.sessionFrom(loaded);
-    return this.live(loaded.id, loaded.matchId, session, lastSeq);
+    return this.live(
+      { id: loaded.id, matchId: loaded.matchId },
+      session,
+      lastSeq,
+      loaded.undelivered,
+    );
   }
 
   private sessionFrom(loaded: LoadedRound) {
@@ -102,18 +126,19 @@ export class GameRunner<S, A, E, Cfg, Sec> {
   }
 
   private live(
-    id: string,
-    matchId: string,
+    ids: { readonly id: string; readonly matchId: string },
     session: RoundSession<S, A, E, Cfg, Sec>,
     lastSeq: number,
+    undelivered: readonly StoredEvent[] = [],
   ): LiveRound {
     const { store, options } = this.deps;
     let round: LiveRound | null = null;
+    const { id, matchId } = ids;
     const actor = new RoundActor({ roundId: id, matchId }, session, lastSeq, {
       store,
       options,
-      committed: (events) => {
-        if (round !== null) this.deps.committed(round, events);
+      committed: (events, how) => {
+        if (round !== null) this.deps.committed(round, events, how);
       },
       reload: async () => {
         const loaded = await store.load(id);
@@ -122,6 +147,7 @@ export class GameRunner<S, A, E, Cfg, Sec> {
       },
     });
     round = liveRound(this.entry, actor);
+    actor.restoreHeld(undelivered);
     return round;
   }
 }

@@ -32,6 +32,9 @@ export const gtnConformance: ConformanceKit<GuessAction, GtnConfig, Secrets> = {
       rangeHigh: 1_000_000,
       feedbackVisibility: 'full',
       repeatGuessRejected: true,
+      springHintType: 'parity',
+      autumnMinRemaining: 10,
+      halvingMinRangeSize: 8,
     },
   }),
   sentinels: (input) => {

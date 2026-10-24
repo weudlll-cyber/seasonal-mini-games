@@ -40,6 +40,7 @@ describe('player view', () => {
       removed: [],
       band: { low: 301, high: 1_000 },
       guesses: [{ receiveSeq: 1, value: 300, feedback: 'higher' }],
+      hint: null,
     });
     const frosted = views.player(t.state, 'a', { releasedBefore: 1_000 });
     expect(frosted).toMatchObject({ band: { low: 1, high: 1_000 }, guesses: [{ feedback: null }] });

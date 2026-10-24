@@ -106,6 +106,19 @@ export interface GameViews<S, Sec> {
   readonly result: (state: S, secrets: Sec) => unknown;
 }
 
+// The specials a game implements (04 §4.4). One call is one firing; every random choice
+// comes from `ctx.rng` under the special's label (04 §5.4). An empty list from `leafFall` or
+// `halving` means the special has run its course in this round.
+export interface SpecialHooks<S, E, Sec> {
+  readonly springHerald: (state: S, ctx: GameCtx<Sec>) => readonly Emitted<E>[];
+  readonly leafFall: (
+    state: S,
+    ctx: GameCtx<Sec>,
+    fall: { readonly index: number; readonly count: number },
+  ) => readonly Emitted<E>[];
+  readonly halving: (state: S, ctx: GameCtx<Sec>, index: number) => readonly Emitted<E>[];
+}
+
 export interface GameModule<S, A, E, Cfg, Sec> {
   readonly meta: GameMeta;
   readonly settings: GameSettings<Cfg>;
@@ -122,6 +135,8 @@ export interface GameModule<S, A, E, Cfg, Sec> {
     readonly spectator: ZodType;
     readonly result: ZodType;
   };
+  // A season whose special the game does not implement runs without it (04 §4.4).
+  readonly specials?: Partial<SpecialHooks<S, E, Sec>>;
 }
 
 // What a game gives the platform's conformance suite (04 §4.5, 09 §2): a round input, secrets

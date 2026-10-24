@@ -71,10 +71,20 @@ describe('a round session', () => {
     expect(log[0]).toMatchObject({ type: 'RoundCreated', commitment: hex(commitSeed(seed)) });
     expect(s.result()).toBeNull();
     expect(s.revealedSeed()).toBeNull();
+    expect(s.nextDue()).toBeNull();
     run({ type: 'startCountdown', at: 0, roster: [{ playerId: 'a', team: null }], minPlayers: 1 });
+    expect(s.nextDue()).toBe(3_000);
     const verified = verifyRound(findGame, [
       ...log,
-      { type: 'RoundEnded', at: 1, reason: 'host', results: [], teams: [], seed: hex(seed) },
+      {
+        type: 'RoundEnded',
+        at: 1,
+        reason: 'host',
+        results: [],
+        teams: [],
+        seed: hex(seed),
+        deliverAt: null,
+      },
     ]);
     const secret = verified.ok ? verified.secrets.a : undefined;
     expect(secret).toBeDefined();
@@ -107,8 +117,10 @@ describe('a round session', () => {
     const next = { type: 'guess', playerId: 'b', receivedAt: 3_001, action: { value: 0 } } as const;
     expect(back.handle(next)).toEqual(s.handle(next));
   });
+});
 
-  it('refuses a seed of the wrong size', () => {
+describe('a round session refuses', () => {
+  it('a seed of the wrong size', () => {
     const settings = chooseRoundSettings(findGame, {}, {});
     expect(() =>
       RoundSession.create(findGame, {

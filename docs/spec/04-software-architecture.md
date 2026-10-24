@@ -160,9 +160,9 @@ The registry lists each game as one entry `{ module, conformance, devBot }`, whe
 |---|---|---|
 | Heatwave | Platform | Changes the round's cooldown value. The game sees it only through `ctx`. |
 | Frost | Platform | Delays delivery of events marked `feedback: true` by `winter.delayS`. Signals and order are not delayed ([03](03-seasonal-specials.md) §2.4). |
-| Spring Herald | Game hook `springHerald(state, ctx) → E[]` | Returns one hint event per player (or one room event in shared mode). |
-| Leaf Fall | Game hook `leafFall(state, ctx, count) → E[]` | Removes `count` values that are no one's secret. |
-| Halving | Game hook `halving(state, ctx) → E[]` | Halves the range around each secret. |
+| Spring Herald | Game hook `springHerald(state, ctx) → Emitted<E>[]` | Returns one hint event per player (or one room event in shared mode). |
+| Leaf Fall | Game hook `leafFall(state, ctx, { index, count }) → Emitted<E>[]` | Removes `count` values that are no one's secret; an empty list ends the falls. |
+| Halving | Game hook `halving(state, ctx, index) → Emitted<E>[]` | Halves the range around each secret; an empty list ends the halving. |
 
 A season whose special the game does not implement still runs as a season round without a special. The host form says "This game has no Autumn special". The halving option is offered only for games that implement `halving`.
 

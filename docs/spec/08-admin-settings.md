@@ -100,4 +100,5 @@ These are operator settings in `/etc/smg/<env>.env`, validated at start ([10](10
 | `SMG_ENGINE_BATCH_MS` | 20 | 5 | 100 | technical: group-commit window ([04](04-software-architecture.md) §5.3) |
 | `SMG_ENGINE_BATCH_MAX` | 200 | 50 | 1 000 | technical |
 | `SMG_SCHEDULER_POLL_MS` | 100 | 50 | 1 000 | technical |
+| `SMG_DEV_FEED_URL` | unset | — | — | technical: development builds only, a local In Season feed (DECISIONS T42) |
 | Others (`SMG_PUBLIC_URL`, `SMG_BASE_PATH`, `SMG_TRUSTED_PROXIES`, `DATABASE_URL`, …) | as Bingo's `SBR_*` counterparts | | | adopted (Bingo 08 §5, 09 §1) |

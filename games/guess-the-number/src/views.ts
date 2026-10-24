@@ -20,19 +20,32 @@ import type { Guess, GtnState } from './state.js';
 
 const range = z.object({ low: z.number().int(), high: z.number().int() }).strict();
 const feedback = z.enum(['higher', 'lower', 'correct']);
+const hint = z
+  .discriminatedUnion('kind', [
+    z.object({ kind: z.literal('parity'), odd: z.boolean() }).strict(),
+    z.object({ kind: z.literal('half'), low: z.number().int(), high: z.number().int() }).strict(),
+  ])
+  .nullable();
 const ownGuess = z
   .object({ receiveSeq: z.number().int(), value: z.number().int(), feedback: feedback.nullable() })
   .strict();
 
 export const viewSchemas = {
   player: z
-    .object({ range, removed: z.array(z.number().int()), band: range, guesses: z.array(ownGuess) })
+    .object({
+      range,
+      removed: z.array(z.number().int()),
+      band: range,
+      guesses: z.array(ownGuess),
+      hint,
+    })
     .strict(),
   spectator: z
     .object({
       range,
       removed: z.array(z.number().int()),
       sharedBand: range.nullable(),
+      hint,
       players: z.array(
         z
           .object({
@@ -70,17 +83,21 @@ function sharedBand(state: GtnState, ctx: ViewCtx): Range | null {
   const answers = Object.values(state.players).flatMap((p) =>
     p.guesses.filter((g) => released(g, ctx)),
   );
-  return band(state.initial, answers);
+  return band(state.range, answers);
 }
+
+// Removed numbers outside a range drop out of view (03 §4).
+const within = (removed: readonly number[], r: Range) =>
+  removed.filter((v) => v >= r.low && v <= r.high);
 
 export const views: GameViews<GtnState, Secrets> = {
   player: (state, playerId, ctx) => {
     const p = state.players[playerId];
     const own = p?.guesses ?? [];
-    const playerRange = p?.range ?? state.initial;
+    const playerRange = p?.range ?? state.range;
     return {
       range: playerRange,
-      removed: state.removed,
+      removed: within(state.removed, playerRange),
       band: band(
         playerRange,
         own.filter((g) => released(g, ctx)),
@@ -90,6 +107,7 @@ export const views: GameViews<GtnState, Secrets> = {
         value: g.value,
         feedback: shownFeedback(g, ctx),
       })),
+      hint: state.mode === 'shared' ? state.hint : (p?.hint ?? null),
     };
   },
   spectator: (state, ctx) => {
@@ -97,9 +115,11 @@ export const views: GameViews<GtnState, Secrets> = {
     const numbers = shared && state.visibility !== 'own';
     const full = shared && state.visibility === 'full';
     return {
-      range: state.initial,
-      removed: state.removed,
+      range: state.range,
+      removed: within(state.removed, state.range),
       sharedBand: sharedBand(state, ctx),
+      // An individual hint is about a player's own number: spectators never see it (02 §11).
+      hint: shared ? state.hint : null,
       players: Object.entries(state.players).map(([playerId, p]) => ({
         playerId,
         guesses: p.guesses.length,

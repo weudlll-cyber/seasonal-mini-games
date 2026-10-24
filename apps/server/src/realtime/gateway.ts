@@ -81,10 +81,12 @@ export function attachGateway(server: HttpServer, deps: GatewayDeps): Server {
   play.on('connection', (socket) => {
     connect(socket, deps);
   });
-  deps.play.rounds.onCommitted((round, events) => {
-    const frames = round.frames(events);
+  deps.play.rounds.onCommitted((round, events, how) => {
+    const frames = round.frames(events, how.held);
     const s = events.at(-1)?.seq ?? 0;
-    play.to(`match:${round.matchId}`).emit('events', { roundId: round.id, s, events: frames.room });
+    // Released Frost events repeat earlier seqs: `late` tells the client they are no gap.
+    const room = { roundId: round.id, s, events: frames.room, ...(how.late ? { late: true } : {}) };
+    play.to(`match:${round.matchId}`).emit('events', room);
     for (const [key, own] of frames.players) {
       play
         .to(`match:${round.matchId}:player:${key}`)

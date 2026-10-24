@@ -103,11 +103,11 @@ describe('shared rounds', () => {
 
   it('give the winner team its point', () => {
     const d = new PickDriver();
-    const t = d.start(['a', 'b', 'c'], ['red', 'blue', 'red']);
+    const t = d.start(['a', 'b', 'c'], ['spring', 'summer', 'spring']);
     d.guess('b', 7, t);
     expect(lastResults(d).teams).toEqual([
-      { team: 'blue', members: 1, points: 1, won: true },
-      { team: 'red', members: 2, points: 0, won: false },
+      { team: 'spring', members: 2, points: 0, won: false },
+      { team: 'summer', members: 1, points: 1, won: true },
     ]);
   });
 });

@@ -25,6 +25,9 @@ const body = z
     visibility: z.enum(['own', 'numbers', 'full']).default('full'),
     // A short search for a quick look: 1 to this (at least 10 numbers).
     rangeHigh: z.number().int().min(10).max(1_000_000).default(1_000),
+    // The fast test profile (09 §4): specials every few seconds. On by default here.
+    fast: z.boolean().default(true),
+    halving: z.boolean().default(false),
     seedText: z.string().trim().min(1).max(64).optional(),
     season: z.enum(['spring', 'summer', 'autumn', 'winter']).optional(),
   })

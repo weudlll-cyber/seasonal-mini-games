@@ -3,39 +3,22 @@
  * @module domain/round
  * @brief  Round lifecycle: create, countdown with the frozen roster, open, end, abort.
  *
- * Responsibility: the state machine of 02 §4. A step folds each event as it emits it, so a
- *                 later rule in the same step sees the effect of an earlier one. `catchUp`
- *                 opens a round whose `opensAt` has passed and ends one whose time is up
- *                 before any command runs, so a late scheduler firing never lets a guess in
- *                 early or late.
- * Depends on:     @smg/game-sdk (types), ./evolve, ./results, ./types
+ * Responsibility: the state machine of 02 §4. The countdown freezes the roster and puts
+ *                 players without a season team into the smallest team (03 §5). `catchUp`
+ *                 opens a round whose `opensAt` has passed (Spring Herald with it), fires the
+ *                 specials that are due and ends a round whose time is up, before any command
+ *                 runs, so a late timer never lets a guess in early or late (T32).
+ * Depends on:     @smg/game-sdk (types), ./builder, ./evolve, ./results, ./specials, ./types
  * Used by:        ./guess, ./step, ../index
  * Spec:           docs/spec/02-game-guess-the-number.md §4, §8; docs/spec/04-software-architecture.md §5.1
  */
-import type { PlatformRoundConfig, RosterPlayer, Season } from '@smg/game-sdk';
+import type { PlatformRoundConfig, RosterPlayer, RoundRng, Season } from '@smg/game-sdk';
 
-import { evolveRound, initialRound } from './evolve.js';
+import { fail, Step } from './builder.js';
+import { initialRound } from './evolve.js';
 import { playerResults, teamResults } from './results.js';
-import type { EndReason, Reply, RoundDeps, RoundEvent, RoundState, StepResult } from './types.js';
-
-// Collects the events of one step, folding each into the state as it is emitted.
-export class Step<S, A, E, Cfg, Sec> {
-  private readonly emitted: RoundEvent<E, A, Cfg>[] = [];
-
-  constructor(
-    readonly deps: RoundDeps<S, A, E, Cfg, Sec>,
-    public state: RoundState<S, Cfg>,
-  ) {}
-
-  emit(event: RoundEvent<E, A, Cfg>): void {
-    this.emitted.push(event);
-    this.state = evolveRound(this.deps.module, this.state, event);
-  }
-
-  done(reply: Reply): StepResult<S, A, E, Cfg> {
-    return { state: this.state, events: this.emitted, reply };
-  }
-}
+import { fireDue, springHerald } from './specials.js';
+import type { EndReason, Reply, RoundEvent, RoundState } from './types.js';
 
 export interface NewRound<Cfg> {
   readonly roundId: string;
@@ -53,14 +36,15 @@ export function createRound<S, A, E, Cfg>(
   return { state: initialRound<S, A, E, Cfg>(event), event };
 }
 
-export const fail = (code: string, until?: number): Reply =>
-  until === undefined ? { ok: false, code } : { ok: false, code, until };
-
 export function catchUp<S, A, E, Cfg, Sec>(step: Step<S, A, E, Cfg, Sec>, at: number): void {
-  const { status, opensAt, endsAt } = step.state;
+  const { status, opensAt } = step.state;
   if (status === 'countdown' && opensAt !== null && at >= opensAt) {
     step.emit({ type: 'RoundOpened', at: opensAt });
+    springHerald(step, opensAt);
   }
+  // Specials due before the end fire first, in their order (03 §1).
+  if (step.state.status === 'open') fireDue(step, at);
+  const { endsAt } = step.state;
   if (step.state.status === 'open' && endsAt !== null && at >= endsAt) {
     endRound(step, endsAt, 'timeUp');
   }
@@ -70,6 +54,7 @@ export function endRound<S, A, E, Cfg, Sec>(
   step: Step<S, A, E, Cfg, Sec>,
   at: number,
   reason: EndReason,
+  deliverAt: number | null = null,
 ): void {
   const s = step.state;
   step.emit({
@@ -79,6 +64,7 @@ export function endRound<S, A, E, Cfg, Sec>(
     results: playerResults(s),
     teams: teamResults(s),
     seed: s.config.commitReveal ? step.deps.seed : null,
+    deliverAt,
   });
 }
 
@@ -91,13 +77,14 @@ export function startCountdown<S, A, E, Cfg, Sec>(
   if (s.status !== 'created') return fail('ROUND_STATE_INVALID');
   const teams = s.config.teamsOn && s.config.secretMode === 'shared';
   const seen = new Set<string>();
-  const roster: RosterPlayer[] = [];
+  const unique: RosterPlayer[] = [];
   for (const p of cmd.roster) {
     if (seen.has(p.playerId)) continue;
     seen.add(p.playerId);
-    roster.push({ playerId: p.playerId, team: teams ? p.team : null });
+    unique.push({ playerId: p.playerId, team: teams ? p.team : null });
   }
-  if (roster.length < Math.max(1, cmd.minPlayers)) return fail('NOT_ENOUGH_PLAYERS');
+  if (unique.length < Math.max(1, cmd.minPlayers)) return fail('NOT_ENOUGH_PLAYERS');
+  const roster = teams ? withTeams(unique, step.deps.rng) : unique;
   const opensAt = cmd.at + s.config.countdownMs;
   step.emit({
     type: 'CountdownStarted',
@@ -106,6 +93,25 @@ export function startCountdown<S, A, E, Cfg, Sec>(
     endsAt: opensAt + s.config.maxDurationMs,
   });
   return { ok: true };
+}
+
+const TEAMS = ['spring', 'summer', 'autumn', 'winter'] as const;
+
+// A roster player without a season team joins the smallest team; ties are broken with the
+// round seed (label teams/tiebreak), so anyone can recompute it (03 §5).
+function withTeams(roster: readonly RosterPlayer[], rng: RoundRng): RosterPlayer[] {
+  const isTeam = (t: string | null): t is (typeof TEAMS)[number] => TEAMS.some((x) => x === t);
+  const size = new Map<string, number>(TEAMS.map((t) => [t, 0]));
+  for (const p of roster) if (isTeam(p.team)) size.set(p.team, (size.get(p.team) ?? 0) + 1);
+  const draw = rng.child('teams', 'tiebreak');
+  return roster.map((p) => {
+    if (isTeam(p.team)) return p;
+    const least = Math.min(...size.values());
+    const smallest = TEAMS.filter((t) => size.get(t) === least);
+    const team = smallest[draw.nextInt(smallest.length)] ?? 'spring';
+    size.set(team, least + 1);
+    return { ...p, team };
+  });
 }
 
 export function hostEnd<S, A, E, Cfg, Sec>(

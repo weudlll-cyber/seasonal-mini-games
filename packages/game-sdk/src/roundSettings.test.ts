@@ -34,6 +34,12 @@ describe('platform round settings', () => {
       halving: false,
       commitReveal: true,
       points: { sharedWinner: 10, individualPlaces: [10, 7, 5, 3], individualOtherSolver: 1 },
+      specials: {
+        heatwave: { stepMs: 1_000, intervalMs: 30_000 },
+        frostDelayMs: 3_000,
+        leafFall: { intervalMs: 20_000, count: 10 },
+        halvingIntervalMs: 60_000,
+      },
     });
   });
 });

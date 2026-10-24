@@ -23,6 +23,9 @@ export const defaultConfig: GtnConfig = {
   rangeHigh: 1_000,
   feedbackVisibility: 'full',
   repeatGuessRejected: true,
+  springHintType: 'parity',
+  autumnMinRemaining: 10,
+  halvingMinRangeSize: 8,
 };
 
 export function input(

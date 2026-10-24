@@ -14,7 +14,7 @@
  * Spec:           docs/spec/04-software-architecture.md §5.2; docs/spec/06-data-model-api-realtime.md §3.1, §4.3
  */
 import { verifyRound, type Verified } from '@smg/application';
-import type { Reply, RoundEvent, RoundStatus } from '@smg/domain';
+import { frostDelay, type Reply, type RoundEvent, type RoundStatus } from '@smg/domain';
 import type { GameEntry, RosterPlayer } from '@smg/game-sdk';
 
 import type { RoundActor } from './actor.js';
@@ -44,9 +44,11 @@ export interface LiveRound {
   // The game's own player view of a roster player while the round runs (development bots).
   playerView(playerKey: string): unknown;
   cooldownEndsAt(playerKey: string): number | null;
-  frames(events: readonly StoredEvent[]): Frames;
+  frames(events: readonly StoredEvent[], held: ReadonlySet<number>): Frames;
   verify(log: readonly StoredEvent[]): Verified<unknown>;
   drain(): Promise<void>;
+  // Drains and stops the round's timers (shutdown).
+  close(): Promise<void>;
 }
 
 export function liveRound<S, A, E, Cfg, Sec>(
@@ -72,19 +74,27 @@ export function liveRound<S, A, E, Cfg, Sec>(
       }));
     },
     run: (cmd) => actor.submit((now) => ({ ...cmd, at: now })),
-    view: (viewerKey) => roundView(actor.current, module.views, viewerKey, actor.seq),
+    view: (viewerKey) =>
+      roundView(actor.current, module.views, { key: viewerKey, now: Date.now() }, actor.seq),
     playerView: (playerKey) => {
       const s = state();
       if (s.game === null || s.status !== 'open' || s.roster[playerKey] === undefined) return null;
-      return module.views.player(s.game, playerKey, { releasedBefore: Infinity });
+      // A bot sees an answer when a person would: after Frost's delay.
+      const delay = frostDelay(s);
+      const releasedBefore = delay === null ? Infinity : Date.now() - delay;
+      return module.views.player(s.game, playerKey, { releasedBefore });
     },
     cooldownEndsAt: (playerKey) => state().roster[playerKey]?.cooldownEndsAt ?? null,
-    frames: (events) => framesOf(events, () => actor.current.result()),
+    frames: (events, held) => framesOf(events, held, () => actor.current.result()),
     verify: (log) =>
       verifyRound(
         module,
         log.map((e) => e.event as RoundEvent<E, A, Cfg>),
       ),
     drain: () => actor.drain(),
+    close: async () => {
+      await actor.drain();
+      actor.stop();
+    },
   };
 }

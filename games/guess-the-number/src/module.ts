@@ -5,7 +5,8 @@
  *
  * Responsibility: put the game's parts together behind the contract of 04 §4, so the
  *                 platform runs it without knowing anything else about it.
- * Depends on:     zod, @smg/game-sdk (GameModule), ./rules, ./secrets, ./settings, ./state, ./views
+ * Depends on:     zod, @smg/game-sdk (GameModule), ./rules, ./secrets, ./settings, ./specials,
+ *                 ./state, ./views
  * Used by:        ./index, games/registry
  * Spec:           docs/spec/02-game-guess-the-number.md, docs/spec/04-software-architecture.md §4
  */
@@ -15,6 +16,7 @@ import { z } from 'zod';
 import { decide, validate, type GuessAction } from './rules.js';
 import { deriveSecrets, type Secrets } from './secrets.js';
 import { gtnSettings, type GtnConfig } from './settings.js';
+import { gtnSpecials } from './specials.js';
 import { createState, evolve, type GtnEvent, type GtnState } from './state.js';
 import { views, viewSchemas } from './views.js';
 
@@ -37,4 +39,5 @@ export const guessTheNumber: GameModule<GtnState, GuessAction, GtnEvent, GtnConf
   evolve,
   views,
   viewSchemas,
+  specials: gtnSpecials,
 };

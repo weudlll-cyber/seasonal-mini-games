@@ -15,6 +15,7 @@
 import {
   createRound,
   evolveRound,
+  nextDue,
   replayRound,
   roundInput,
   rosterPlayers,
@@ -108,6 +109,11 @@ export class RoundSession<S, A, E, Cfg, Sec> {
     const { status, game } = this.current;
     if (status !== 'ended' || game === null || this.secrets === null) return null;
     return this.module.views.result(game, this.secrets);
+  }
+
+  // When the round next has to run without any player action (open, special, end).
+  nextDue(): number | null {
+    return nextDue(this.current, this.module);
   }
 
   // The seed (hex) once the round has ended with the fairness proof on (02 §10).

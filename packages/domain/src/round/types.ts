@@ -36,6 +36,12 @@ export interface RosterEntry {
   readonly place: number | null;
 }
 
+// The specials that fire at intervals after the open (03 §1 rule 2), in the order they run
+// when due at the same instant (03 §1 rule 6).
+export const INTERVAL_SPECIALS = ['halving', 'leafFall', 'heatwave'] as const;
+export type IntervalSpecial = (typeof INTERVAL_SPECIALS)[number];
+export type SpecialName = IntervalSpecial | 'springHerald';
+
 export interface Margin {
   readonly playerId: string;
   readonly ms: number;
@@ -62,6 +68,9 @@ export interface RoundState<S, Cfg> {
   readonly endReason: EndReason | null;
   readonly abortReason: string | null;
   readonly margin: Margin | null;
+  // How often each interval special has fired, and which have run their course.
+  readonly specialIndex: Readonly<Record<IntervalSpecial, number>>;
+  readonly specialsOver: readonly IntervalSpecial[];
   // Created when the roster is frozen; null before the countdown.
   readonly game: S | null;
 }
@@ -112,14 +121,27 @@ export type RoundEvent<E, A, Cfg> =
       readonly type: 'Game';
       readonly audience: Audience;
       readonly feedback: boolean;
+      // Frost: the event reaches its audience only at this time (03 §2.4); null = at once.
+      readonly deliverAt: number | null;
       readonly event: E;
     }
+  | {
+      readonly type: 'SpecialFired';
+      readonly special: SpecialName;
+      readonly index: number;
+      readonly at: number;
+      readonly summary: unknown;
+      // The special has run its course (nothing more falls, the range is small enough).
+      readonly last: boolean;
+    }
+  | { readonly type: 'CooldownChanged'; readonly cooldownMs: number; readonly at: number }
   | {
       readonly type: 'PlayerSolved';
       readonly playerId: string;
       readonly receiveSeq: number;
       readonly at: number;
       readonly place: number;
+      readonly deliverAt: number | null;
     }
   | {
       readonly type: 'RoundEnded';
@@ -129,6 +151,8 @@ export type RoundEvent<E, A, Cfg> =
       readonly teams: readonly TeamResult[];
       // The round seed (hex) when the fairness proof is on.
       readonly seed: string | null;
+      // Frost: a win is announced at the winning guess's receive time plus the delay.
+      readonly deliverAt: number | null;
     }
   | {
       readonly type: 'RoundAborted';
@@ -136,7 +160,10 @@ export type RoundEvent<E, A, Cfg> =
       readonly reason: string;
       readonly by: string;
     }
-  | { readonly type: 'MarginNoted'; readonly playerId: string; readonly ms: number };
+  | { readonly type: 'MarginNoted'; readonly playerId: string; readonly ms: number }
+  // Frost: every held event up to this log seq has reached its audience (06 §2.7). Written by
+  // the round actor, which numbers the log; it changes no state.
+  | { readonly type: 'HeldDelivered'; readonly upTo: number; readonly at: number };
 
 export type RoundCommand<A> =
   | {
@@ -146,6 +173,8 @@ export type RoundCommand<A> =
       readonly minPlayers: number;
     }
   | { readonly type: 'open'; readonly at: number }
+  // Whatever is due by `at` happens (a special, the open, the end); nothing else.
+  | { readonly type: 'tick'; readonly at: number }
   | {
       readonly type: 'guess';
       readonly playerId: string;

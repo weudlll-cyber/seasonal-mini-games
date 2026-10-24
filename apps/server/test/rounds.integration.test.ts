@@ -168,6 +168,13 @@ async function checkStorage(roundId: string, code: string, winner: string) {
     [code],
   );
   expect(standing.rows[0]).toEqual({ player_key: winner, points: 10, rank: 1 });
+  // Players without a team were put into teams; the winner's team scored 1 (03 §5, O12).
+  const teams = await pool.query<{ points: number; rank: number }>(
+    `SELECT t.points, t.rank FROM smg.match_team_standings t JOIN smg.matches m ON m.id = t.match_id
+     WHERE m.code = $1 ORDER BY rank, team`,
+    [code],
+  );
+  expect(teams.rows[0]).toEqual({ points: 1, rank: 1 });
 }
 
 async function checkFrames(s: Record<'host' | 'player-1', Socket>, roundId: string, p1: string) {

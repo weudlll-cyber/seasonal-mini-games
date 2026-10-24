@@ -4,8 +4,7 @@
  * @brief  Public entry point of @smg/domain: the platform's pure rules.
  *
  * Responsibility: the audit hash chain and the round rules (lifecycle, receive order,
- *                 cooldown, placings, points, standings); seasonal specials join with the
- *                 seasons work (04 §3).
+ *                 cooldown, placings, points, standings, seasonal specials and teams) (04 §3).
  * Depends on:     ./audit/hashChain, ./round/*
  * Used by:        packages/application, apps/server
  * Spec:           docs/spec/04-software-architecture.md §3, §5
@@ -32,9 +31,11 @@ export {
   type Scored,
   type StandingRow,
 } from './round/results.js';
+export { frostDelay, nextDue } from './round/specials.js';
 export { stepRound } from './round/step.js';
 export type {
   EndReason,
+  IntervalSpecial,
   Margin,
   PlayerResult,
   Reply,
@@ -45,6 +46,7 @@ export type {
   RoundEvent,
   RoundState,
   RoundStatus,
+  SpecialName,
   StepResult,
   TeamResult,
 } from './round/types.js';

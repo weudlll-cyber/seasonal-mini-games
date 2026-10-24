@@ -77,6 +77,8 @@ async function hostOf(request: FastifyRequest, reply: FastifyReply, match: Match
   return actor;
 }
 
+const announced = (round: LiveRound) => (round.view(null) as { role: string }).role === 'result';
+
 export function registerRoundRoutes(app: FastifyInstance, deps: RoundRouteDeps): void {
   registerHostRoutes(app, deps);
   registerReadRoutes(app, deps);
@@ -159,14 +161,16 @@ function registerReadRoutes(app: FastifyInstance, deps: RoundRouteDeps): void {
   app.get('/api/v1/rounds/:id/result', async (request, reply) => {
     const round = await roundOr404(deps, request, reply);
     if (round === null) return reply;
-    if (round.status() !== 'ended') return reply.status(409).send({ code: 'ROUND_NOT_ENDED' });
+    // Ended and announced: under Frost a win is shown only after the delay (03 §2.4).
+    if (!announced(round)) return reply.status(409).send({ code: 'ROUND_NOT_ENDED' });
     return round.view(null);
   });
 
   app.get('/api/v1/rounds/:id/verify', async (request, reply) => {
     const round = await roundOr404(deps, request, reply);
     if (round === null) return reply;
-    if (round.status() !== 'ended') return reply.status(409).send({ code: 'ROUND_NOT_ENDED' });
+    // Ended and announced: under Frost a win is shown only after the delay (03 §2.4).
+    if (!announced(round)) return reply.status(409).send({ code: 'ROUND_NOT_ENDED' });
     const log = await deps.store.log(round.id);
     const verified = round.verify(log);
     if (!verified.ok) return reply.status(409).send({ code: 'NO_PROOF', detail: verified.problem });

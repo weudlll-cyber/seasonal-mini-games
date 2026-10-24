@@ -25,6 +25,7 @@ import { Presence } from '../match/presence.js';
 import { GuessLimits } from './guessLimits.js';
 import { PgRoundStore } from './pgRoundStore.js';
 import { Rounds } from './rounds.js';
+import { Seasons } from '../seasons/seasons.js';
 import { RoundScheduler } from './scheduler.js';
 
 // Every registered game's settings document (08 §1: id `game.<gameId>`).
@@ -39,6 +40,7 @@ export interface RoundRuntime {
   readonly rounds: Rounds;
   readonly play: Play;
   readonly limits: GuessLimits;
+  readonly seasons: Seasons;
   start(): Promise<number>;
   stop(): Promise<void>;
 }
@@ -56,21 +58,26 @@ export function createRoundRuntime(
     queueBound: () => limits.queueBound(),
     now: () => Date.now(),
   });
-  const play = new Play(pool, rounds, settings, new Presence());
+  const devFeed = env.SMG_DEV ? (env.SMG_DEV_FEED_URL ?? null) : null;
+  const seasons = new Seasons(pool, settings, devFeed);
+  const play = new Play(pool, rounds, settings, { presence: new Presence(), seasons });
   const scheduler = new RoundScheduler(pool, rounds, env.SMG_SCHEDULER_POLL_MS);
   return {
     store,
     rounds,
     play,
     limits,
+    seasons,
     start: async () => {
       limits.start();
+      seasons.start();
       const recovered = await rounds.recoverRunning();
       scheduler.start();
       return recovered;
     },
     stop: async () => {
       limits.stop();
+      seasons.stop();
       await scheduler.stop();
       await rounds.drainAll();
     },

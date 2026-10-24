@@ -29,10 +29,12 @@ export type {
   Season,
   SecretMode,
   Signal,
+  SpecialHooks,
   ViewCtx,
 } from './module.js';
 export { inRange, intersect, rangeSize, type Range } from './range.js';
 export type { Drbg, RoundRng } from './random.js';
+export { HEATWAVE_FLOOR_MS, type SpecialTiming } from './specialSettings.js';
 export {
   PLATFORM_ROUND_SETTINGS,
   readPlatformRound,

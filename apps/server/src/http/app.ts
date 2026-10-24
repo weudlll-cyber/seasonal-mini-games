@@ -36,6 +36,7 @@ import { registerAdminSettings } from './routes/adminSettings.js';
 import { registerMatchRoutes } from './routes/matches.js';
 import { registerQuickTest } from './routes/quickTest.js';
 import { registerRoundRoutes } from './routes/rounds.js';
+import { registerSeasonRoutes } from './routes/seasons.js';
 import { registerAuthRoutes } from './routes/auth.js';
 import { registerDevSignIn } from './routes/devSignIn.js';
 import { registerHealth } from './routes/health.js';
@@ -123,6 +124,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   const { play, limits, store } = runtime;
   registerMatchRoutes(fastify, { play, settings, pool: deps.pool });
   registerRoundRoutes(fastify, { play, limits, store, pool: deps.pool });
+  registerSeasonRoutes(fastify, { pool: deps.pool, seasons: runtime.seasons, audit });
   if (isDev) registerQuickTest(fastify, { play, pool: deps.pool });
   fastify.addHook('onClose', () => runtime.stop());
   return { fastify, metrics, settings, audit, sessionEnds, runtime, cookieName: cookie.name };

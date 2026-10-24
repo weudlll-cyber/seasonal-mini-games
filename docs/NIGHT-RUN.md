@@ -9,9 +9,9 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 | P1 Record O8–O15, T21; spec updated | done               | `eaeadd5` on master (spec/v1 merged and deleted) |
 | P2 Foundation                       | done               | `e9936aa`                                        |
 | P3 GTN domain and application       | done               | `42e2cb8`                                        |
-| P4 Server                           | done               | see `git log` on this branch                     |
-| P5 Seasonal specials                | running            |                                                  |
-| P6 Player and host client           | open (needs P4)    |                                                  |
+| P4 Server                           | done               | `9804e36`                                        |
+| P5 Seasonal specials                | done               | see `git log` on this branch                     |
+| P6 Player and host client           | running            |                                                  |
 | P7 Admin client                     | open (needs P4)    |                                                  |
 | P8 E2E, load gate, play-through     | open (needs P5–P7) |                                                  |
 | P9 Dev servers and hand-over        | open (needs P8)    |                                                  |
@@ -21,6 +21,7 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 - (q) Winning-margin window, proposal `round.marginWindowS` 2 s (0.5–10 s): [OPEN.md](OPEN.md).
 - Spec conflict 1, check order of a guess (02 §5.1 against 04 §4.1–§4.2), built as 02 §5.1: [OPEN.md](OPEN.md). Please confirm.
 - Spec gap 1, `round_results.secret` stays empty (the server cannot name a game's secret): [OPEN.md](OPEN.md).
+- Spec gap 2, the feed's host allowlist is the feed address itself: [OPEN.md](OPEN.md).
 
 ## P2 — Foundation
 
@@ -407,5 +408,91 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 | `packages/game-sdk/src/module.ts`                        | changed, +6 / −1   |
 | `pnpm-lock.yaml`                                         | changed, +6 / −0   |
 | `vitest.config.ts`                                       | changed, +3 / −0   |
+
+</details>
+
+## P5 — Seasonal specials
+
+**Built** (spec 03):
+
+- Contract: `SpecialHooks` in `game-sdk` (`springHerald`, `leafFall`, `halving`; an empty list ends a special); the platform's special timing keys (`summer.*`, `autumn.intervalS`, `autumn.count`, `winter.delayS`, `halving.intervalS`) in every game document; the 3 s Heatwave floor as a constant.
+- Domain (`round/specials.ts`): which specials apply (season, special on, the game implements it, halving round), Spring Herald at `opensAt`, interval specials at `opensAt + k × interval` until the end or their course is run, several at one instant in the order halving, Leaf Fall, Heatwave in one step; Heatwave steps down to 3 s; Frost marks answers, solves and the win with `deliverAt`; `nextDue`; a `tick` command; season teams for players without one (smallest team, seed tie-break).
+- Guess The Number (`specials.ts`): true hints (parity or half) for everyone or each own number; Leaf Fall from the round's range, never a secret, one set for all, stopping at `autumn.minRemaining`; halving windows of half the size, placed uniformly around each secret, stopping at `halving.minRangeSize`; state, events (`HintGiven`, `NumbersRemoved`, `RangeHalved`) and views (hint, removed numbers within the range, the current range).
+- Server: the actor's due timer (T40); Frost held after commit and delivered with `HeldDelivered`, views cut at now − delay, bots too, result and proof only once announced, held events restored after a restart (T41); team standings at round end; migration `0005_seasons.sql`; the In Season poller with a safe fetch (HTTPS only, public addresses only, no redirects, 5 s, 64 KiB) keeping the last good answer, `GET /seasons/current`, admin feed status and refresh, halving days with add and remove (audited); rounds take In Season when the host gives no season and allow halving only on a halving day (T37); the fast test profile for the Quick Test (T43) and a `halving` option; `SMG_DEV_FEED_URL` (T42).
+
+**Tests:** `pnpm verify` green (178 tests in 41 files); `pnpm test:coverage` green (lines 99.7 %, branches 93.2 %). Equality and special tests: S1 Spring hints (1 000 cases), S2 Heatwave steps and floor, S3 Leaf Fall (no secret, one set, exact counts, stop; 100 rounds; rejection path at 1–1 000 000), S4 Frost delays and the metamorphic same-order-same-winner check, S5 halving windows (100 rounds), S7 order at one instant, P6 in the conformance suite for every hook and mode; server integration: Leaf Fall and Heatwave in fast rounds, Spring hint, Frost early read (no answer in the state before the delay, the answer frame only after ≥ 2.9 s, `HeldDelivered` logged), In Season from a local feed with the last good answer kept, halving days and a halving round's range at 500 after one halving; safe fetch unit tests (inward addresses, plain HTTP, redirect, 64 KiB).
+
+**Reused from Bingo:** none in this piece (Bingo has no specials or safe HTTP client).
+
+**Extracted:** `round/builder.ts` (the step collector, out of `lifecycle.ts`, so specials and lifecycle share it); `lifecycle()` out of `evolveRound` (complexity); `specialSettings.ts` out of `roundSettings.ts`; `FrostHold` out of the actor; the feed and halving-day halves of the season routes.
+
+**Docs:** DECISIONS T37 (rewritten), T40–T44; 04 §4.4 hook signatures; 06 §2.7 event fields; 08 §7 `SMG_DEV_FEED_URL`; OPEN gap 2; BACKLOG Phase 3 split.
+
+**Noticed, left alone:** DNS rebinding between the safe fetch's address check and the request is not closed (a check-then-connect gap; the feed host is chosen by a security admin). The `special` kind of `scheduled_actions` stays in the migration's CHECK but is unused (T40).
+
+<details><summary>P5 lines per touched file</summary>
+
+| File                                                     | Lines               |
+| -------------------------------------------------------- | ------------------- |
+| `apps/server/src/config/env.ts`                          | changed, +3 / −0    |
+| `apps/server/src/db/migrations/0005_seasons.sql`         | new, 27 lines       |
+| `apps/server/src/dev/bots.ts`                            | changed, +2 / −1    |
+| `apps/server/src/dev/quickTest.ts`                       | changed, +5 / −0    |
+| `apps/server/src/http/app.ts`                            | changed, +2 / −0    |
+| `apps/server/src/http/routes/quickTest.ts`               | changed, +3 / −0    |
+| `apps/server/src/http/routes/rounds.ts`                  | changed, +6 / −2    |
+| `apps/server/src/http/routes/seasons.ts`                 | new, 111 lines      |
+| `apps/server/src/match/play.ts`                          | changed, +36 / −14  |
+| `apps/server/src/realtime/gateway.ts`                    | changed, +5 / −3    |
+| `apps/server/src/round/actor.ts`                         | changed, +74 / −5   |
+| `apps/server/src/round/frost.ts`                         | new, 68 lines       |
+| `apps/server/src/round/gameRunner.ts`                    | changed, +36 / −10  |
+| `apps/server/src/round/liveRound.ts`                     | changed, +15 / −5   |
+| `apps/server/src/round/pgResults.ts`                     | changed, +26 / −2   |
+| `apps/server/src/round/pgRoundStore.ts`                  | changed, +29 / −14  |
+| `apps/server/src/round/rounds.ts`                        | changed, +6 / −5    |
+| `apps/server/src/round/runtime.ts`                       | changed, +8 / −1    |
+| `apps/server/src/round/views.ts`                         | changed, +42 / −26  |
+| `apps/server/src/seasons/safeFetch.test.ts`              | new, 80 lines       |
+| `apps/server/src/seasons/safeFetch.ts`                   | new, 94 lines       |
+| `apps/server/src/seasons/seasons.ts`                     | new, 176 lines      |
+| `apps/server/test/rounds.integration.test.ts`            | changed, +7 / −0    |
+| `apps/server/test/specials.integration.test.ts`          | new, 223 lines      |
+| `docs/BACKLOG.md`                                        | changed, +2 / −1    |
+| `docs/DECISIONS.md`                                      | changed, +6 / −1    |
+| `docs/OPEN.md`                                           | changed, +1 / −0    |
+| `docs/spec/04-software-architecture.md`                  | changed, +3 / −3    |
+| `docs/spec/06-data-model-api-realtime.md`                | changed, +2 / −2    |
+| `docs/spec/08-admin-settings.md`                         | changed, +1 / −0    |
+| `docs/spec/README.md`                                    | changed, +1 / −1    |
+| `games/guess-the-number/src/conformance.ts`              | changed, +3 / −0    |
+| `games/guess-the-number/src/fakes.ts`                    | changed, +3 / −0    |
+| `games/guess-the-number/src/module.ts`                   | changed, +4 / −1    |
+| `games/guess-the-number/src/settings.ts`                 | changed, +45 / −5   |
+| `games/guess-the-number/src/specials.properties.test.ts` | new, 176 lines      |
+| `games/guess-the-number/src/specials.ts`                 | new, 152 lines      |
+| `games/guess-the-number/src/state.ts`                    | changed, +101 / −11 |
+| `games/guess-the-number/src/views.test.ts`               | changed, +1 / −0    |
+| `games/guess-the-number/src/views.ts`                    | changed, +26 / −6   |
+| `games/registry/src/conformance.test.ts`                 | changed, +36 / −4   |
+| `packages/application/src/round/roundSession.test.ts`    | changed, +14 / −2   |
+| `packages/application/src/round/roundSession.ts`         | changed, +6 / −0    |
+| `packages/domain/src/index.ts`                           | changed, +4 / −2    |
+| `packages/domain/src/round/builder.ts`                   | new, 36 lines       |
+| `packages/domain/src/round/evolve.ts`                    | changed, +36 / −5   |
+| `packages/domain/src/round/fakes.ts`                     | changed, +23 / −5   |
+| `packages/domain/src/round/guess.test.ts`                | changed, +3 / −3    |
+| `packages/domain/src/round/guess.ts`                     | changed, +25 / −14  |
+| `packages/domain/src/round/lifecycle.test.ts`            | changed, +16 / −4   |
+| `packages/domain/src/round/lifecycle.ts`                 | changed, +41 / −35  |
+| `packages/domain/src/round/specials.test.ts`             | new, 212 lines      |
+| `packages/domain/src/round/specials.ts`                  | new, 153 lines      |
+| `packages/domain/src/round/step.ts`                      | changed, +4 / −2    |
+| `packages/domain/src/round/types.ts`                     | changed, +30 / −1   |
+| `packages/game-sdk/src/index.ts`                         | changed, +2 / −0    |
+| `packages/game-sdk/src/module.ts`                        | changed, +15 / −0   |
+| `packages/game-sdk/src/roundSettings.test.ts`            | changed, +6 / −0    |
+| `packages/game-sdk/src/roundSettings.ts`                 | changed, +12 / −3   |
+| `packages/game-sdk/src/specialSettings.ts`               | new, 101 lines      |
 
 </details>

@@ -4,7 +4,8 @@
  * @brief  A tiny game module and round builders for the round-engine tests.
  *
  * Responsibility: "pick a number from 1 to 10": one secret per player (or one shared), a
- *                 picked event to the player, Solved on a hit. 13 is refused by `decide`
+ *                 picked event to the player, Solved on a hit; special hooks that announce
+ *                 themselves (Leaf Fall three times, halving twice). 13 is refused by `decide`
  *                 (a game-level late rejection), 20 asks the round to end (RoundShouldEnd),
  *                 values outside 1–20 fail `validate`. Lets the platform rules be tested
  *                 without naming a real game (04 §3).
@@ -20,6 +21,7 @@ import {
   type GameModule,
   type PlatformRoundConfig,
   type RoundRng,
+  type Season,
 } from '@smg/game-sdk';
 import { z } from 'zod';
 
@@ -32,7 +34,9 @@ export interface Pick {
   readonly value: number;
 }
 type PickState = Readonly<Record<string, number>>;
-type PickEvent = { readonly type: 'picked'; readonly playerId: string };
+type PickEvent =
+  | { readonly type: 'picked'; readonly playerId: string }
+  | { readonly type: 'special'; readonly name: string; readonly index: number };
 type PickSecrets = Readonly<Record<string, number>>;
 
 export const pickGame: GameModule<PickState, Pick, PickEvent, null, PickSecrets> = {
@@ -73,7 +77,19 @@ export const pickGame: GameModule<PickState, Pick, PickEvent, null, PickSecrets>
       signals,
     };
   },
-  evolve: (s, e) => ({ ...s, [e.playerId]: (s[e.playerId] ?? 0) + 1 }),
+  evolve: (s, e) => (e.type === 'special' ? s : { ...s, [e.playerId]: (s[e.playerId] ?? 0) + 1 }),
+  // Each special announces itself to the room; Leaf Fall runs three times, halving twice.
+  specials: {
+    springHerald: () => [
+      { audience: 'room', event: { type: 'special', name: 'spring', index: 0 } },
+    ],
+    leafFall: (_s, _c, fall) =>
+      fall.index > 3
+        ? []
+        : [{ audience: 'room', event: { type: 'special', name: 'leaf', index: fall.index } }],
+    halving: (_s, _c, index) =>
+      index > 2 ? [] : [{ audience: 'room', event: { type: 'special', name: 'halving', index } }],
+  },
   views: { player: (s, id) => s[id], spectator: (s) => s, result: (_s, sec) => sec },
   viewSchemas: {
     player: z.number(),
@@ -105,12 +121,14 @@ export class PickDriver {
   constructor(
     change: Partial<PlatformRoundConfig> = {},
     private readonly rng: RoundRng = fixedRng(7),
+    season: Season = 'spring',
   ) {
     const created = createRound<PickState, Pick, PickEvent, null>({
       roundId: 'r1',
-      config: config(change),
+      // Specials only where a test asks for them.
+      config: config({ specialOn: false, ...change }),
       gameConfig: null,
-      season: 'spring',
+      season,
       commitment: 'c0ffee',
     });
     this.state = created.state;

@@ -5,12 +5,13 @@
  *
  * Responsibility: the single entry the round actor calls per queue item (04 §5.2). Pure:
  *                 the same state, command and deps give the same result (invariant P1).
- * Depends on:     ./guess, ./lifecycle, ./types
+ * Depends on:     ./builder, ./guess, ./lifecycle, ./types
  * Used by:        ../index, packages/application (round session)
  * Spec:           docs/spec/04-software-architecture.md §5.1, §5.2
  */
 import { guess } from './guess.js';
-import { abortRound, catchUp, hostEnd, startCountdown, Step } from './lifecycle.js';
+import { Step } from './builder.js';
+import { abortRound, catchUp, hostEnd, startCountdown } from './lifecycle.js';
 import type { RoundCommand, RoundDeps, RoundState, StepResult } from './types.js';
 
 export function stepRound<S, A, E, Cfg, Sec>(
@@ -23,6 +24,7 @@ export function stepRound<S, A, E, Cfg, Sec>(
     case 'startCountdown':
       return step.done(startCountdown(step, cmd));
     case 'open':
+    case 'tick':
     case 'timeUp':
       // Scheduler firings: whatever is due at `at` happens; nothing else does.
       catchUp(step, cmd.at);

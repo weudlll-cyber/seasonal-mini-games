@@ -5,15 +5,17 @@
  *
  * Responsibility: the definitions of 08 §3 that are rules of the platform, not of one game
  *                 (secret mode, cooldown, countdown, longest round, winning margin, season
- *                 source and toggles, points, fairness proof), and how their frozen values
+ *                 source and toggles, points, fairness proof, and the specials' timing from
+ *                 ./specialSettings), and how their frozen values
  *                 become the platform's round config in milliseconds. A game's document is
  *                 these keys followed by the game's own (GameSettings.defs).
- * Depends on:     ./settings, ./module
+ * Depends on:     ./settings, ./module, ./specialSettings
  * Used by:        ./index, packages/domain (round config), packages/application, games/*
  * Spec:           docs/spec/08-admin-settings.md §3, docs/spec/02-game-guess-the-number.md §3, §9
  */
 import type { SecretMode } from './module.js';
 import type { SettingDef, SettingValue } from './settings.js';
+import { readSpecialTiming, SPECIAL_SETTINGS, type SpecialTiming } from './specialSettings.js';
 
 const GAME_ADMIN = 'settings.game.edit';
 
@@ -23,7 +25,7 @@ const host = { editPermission: GAME_ADMIN, hostChooses: true, running: 'frozen' 
 const admin = { editPermission: GAME_ADMIN, hostChooses: false, running: 'frozen' } as const;
 const owner = (decision: string) => ({ status: 'owner', decision, spec: '08 §3' }) as const;
 
-export const PLATFORM_ROUND_SETTINGS: readonly SettingDef[] = [
+const ROUND_SETTINGS: readonly SettingDef[] = [
   {
     key: 'round.secretMode',
     kind: 'enum',
@@ -168,6 +170,11 @@ export const PLATFORM_ROUND_SETTINGS: readonly SettingDef[] = [
   },
 ];
 
+export const PLATFORM_ROUND_SETTINGS: readonly SettingDef[] = [
+  ...ROUND_SETTINGS,
+  ...SPECIAL_SETTINGS,
+];
+
 export interface PointsTable {
   readonly sharedWinner: number;
   readonly individualPlaces: readonly number[];
@@ -186,6 +193,7 @@ export interface PlatformRoundConfig {
   readonly halving: boolean;
   readonly commitReveal: boolean;
   readonly points: PointsTable;
+  readonly specials: SpecialTiming;
 }
 
 // Values come from resolveSettings and the host's checked choices, so each has its kind.
@@ -209,5 +217,6 @@ export function readPlatformRound(
       individualPlaces: values['points.individualPlaces'] as readonly number[],
       individualOtherSolver: num('points.individualOtherSolver'),
     },
+    specials: readSpecialTiming(values),
   };
 }

@@ -13,18 +13,30 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { PickDriver } from './fakes.js';
+import { fixedRng, PickDriver } from './fakes.js';
 
 describe('the countdown', () => {
   it('freezes each player once, in order, with teams only in shared rounds with teams on', () => {
     const shared = new PickDriver();
-    shared.start(['a', 'b', 'a'], ['red', 'blue', 'green']);
+    shared.start(['a', 'b', 'a'], ['winter', 'summer', 'autumn']);
     expect(shared.state.status).toBe('countdown');
     expect(Object.keys(shared.state.roster)).toEqual(['a', 'b']);
-    expect(shared.state.roster.a?.team).toBe('red');
+    expect(shared.state.roster.a?.team).toBe('winter');
     const individual = new PickDriver({ secretMode: 'individual' });
-    individual.start(['a'], ['red']);
+    individual.start(['a'], ['winter']);
     expect(individual.state.roster.a?.team).toBeNull();
+  });
+
+  it('puts players without a team into the smallest team, ties broken by the seed (03 §5)', () => {
+    const teams = (seed: number) => {
+      const d = new PickDriver({}, fixedRng(seed));
+      d.start(['a', 'b', 'c', 'd', 'e'], ['spring', 'spring', 'summer', null, null]);
+      return Object.values(d.state.roster).map((e) => e.team);
+    };
+    // Autumn and winter are empty: the two without a team fill them, one each.
+    const [first, second] = teams(0).slice(3);
+    expect(new Set([first, second])).toEqual(new Set(['autumn', 'winter']));
+    expect(teams(0)).toEqual(teams(0));
   });
 
   it('refuses too few players and a second start', () => {

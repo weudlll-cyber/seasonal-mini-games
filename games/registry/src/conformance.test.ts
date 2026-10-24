@@ -8,11 +8,13 @@
  *                 event or rejection of a running round contains a sentinel secret, while the
  *                 result view does; P3 every view validates against the module's schemas;
  *                 P4 a rejected action changes nothing; P5 folding the emitted events from a
- *                 fresh round gives the live state. P6 (specials) joins with the specials.
+ *                 fresh round gives the live state; P6 every special's effect is the same for
+ *                 every player.
  * Depends on:     vitest, fast-check, @smg/game-sdk, ./index
- * Spec:           docs/spec/09-testing-strategy.md §2, §3 (P1–P5); docs/spec/04-software-architecture.md §4.5
+ * Spec:           docs/spec/09-testing-strategy.md §2, §3 (P1–P6); docs/spec/04-software-architecture.md §4.5
  */
-import type { GameEntry, GameModule, RoundRng, SecretMode } from '@smg/game-sdk';
+import type { Emitted, GameEntry, GameModule, RoundRng, SecretMode } from '@smg/game-sdk';
+import { roundRng } from '@smg/game-sdk/crypto';
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
@@ -101,8 +103,38 @@ function conformance<S, A, E, Cfg, Sec>(entry: GameEntry<S, A, E, Cfg, Sec>, mod
   });
 }
 
+// P6: a special's effect is the same for every player: in shared mode it goes to the room
+// (or the host) only; in individual mode every player gets as many events of their own.
+function equalFor(events: readonly Emitted<unknown>[], mode: SecretMode): void {
+  const own = PLAYERS.map((id) => events.filter((e) => e.audience === `player:${id}`).length);
+  if (mode === 'shared') expect(own.every((n) => n === 0)).toBe(true);
+  else expect(new Set(own).size).toBe(1);
+}
+
+function specials<S, A, E, Cfg, Sec>(entry: GameEntry<S, A, E, Cfg, Sec>, mode: SecretMode) {
+  const { module, conformance: kit } = entry;
+  it(`P6 holds for the specials of ${module.meta.id} in ${mode} mode`, () => {
+    fc.assert(
+      fc.property(fc.uint8Array({ minLength: 32, maxLength: 32 }), (seed) => {
+        const input = kit.input(mode, PLAYERS);
+        const { secrets } = kit.sentinels(input);
+        const state = module.createRound(input);
+        const ctx = { now: 0, cooldownMs: 3_000, secrets, rng: roundRng(seed) };
+        const hooks = module.specials ?? {};
+        equalFor(hooks.springHerald?.(state, ctx) ?? [], mode);
+        equalFor(hooks.leafFall?.(state, ctx, { index: 1, count: 5 }) ?? [], mode);
+        equalFor(hooks.halving?.(state, ctx, 1) ?? [], mode);
+      }),
+      { numRuns: 100 },
+    );
+  });
+}
+
 describe('game module conformance', () => {
   for (const entry of GAMES) {
-    for (const mode of entry.module.meta.secretModes) conformance(entry, mode);
+    for (const mode of entry.module.meta.secretModes) {
+      conformance(entry, mode);
+      specials(entry, mode);
+    }
   }
 });
