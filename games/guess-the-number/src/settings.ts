@@ -1,0 +1,89 @@
+/**
+ * @file   games/guess-the-number/src/settings.ts
+ * @module games/guess-the-number
+ * @brief  The game's own keys of document `game.guess-the-number` and its frozen config.
+ *
+ * Responsibility: range, feedback visibility and the repeated-guess rule (08 §3) as setting
+ *                 definitions; reading frozen values into the config; the cross-key rule
+ *                 that a range holds at least 10 numbers (`rangeHigh` ≥ `rangeLow` + 9).
+ *                 The platform's round keys come first in the document (game-sdk).
+ * Depends on:     @smg/game-sdk (SettingDef, GameSettings)
+ * Used by:        ./module, ./index
+ * Spec:           docs/spec/08-admin-settings.md §3, docs/spec/02-game-guess-the-number.md §3, §5.1, §6.2
+ */
+import type { GameSettings, SettingDef } from '@smg/game-sdk';
+
+export type Visibility = 'own' | 'numbers' | 'full';
+
+export interface GtnConfig {
+  readonly rangeLow: number;
+  readonly rangeHigh: number;
+  readonly feedbackVisibility: Visibility;
+  readonly repeatGuessRejected: boolean;
+}
+
+const GAME_ADMIN = 'settings.game.edit';
+const host = { editPermission: GAME_ADMIN, hostChooses: true, running: 'frozen' } as const;
+const owner = (decision: string) => ({ status: 'owner', decision, spec: '08 §3' }) as const;
+
+const defs: readonly SettingDef[] = [
+  {
+    key: 'round.rangeLow',
+    kind: 'int',
+    label: 'Lowest number',
+    help: 'The secret is at least this.',
+    default: 1,
+    min: 0,
+    max: 999_990,
+    unit: '',
+    ...owner('O15'),
+    ...host,
+  },
+  {
+    key: 'round.rangeHigh',
+    kind: 'int',
+    label: 'Highest number',
+    help: 'The secret is at most this; at least 9 above the lowest number.',
+    default: 1_000,
+    min: 9,
+    max: 1_000_000,
+    unit: '',
+    ...owner('O15'),
+    ...host,
+  },
+  {
+    key: 'round.feedbackVisibility',
+    kind: 'enum',
+    label: 'What others see of a guess',
+    help: 'Shared mode. own: that someone guessed; numbers: also the number; full: also the answer.',
+    default: 'full',
+    options: ['own', 'numbers', 'full'],
+    ...owner('O8'),
+    ...host,
+  },
+  {
+    key: 'round.repeatGuessRejected',
+    kind: 'bool',
+    label: 'Refuse repeated guesses',
+    help: 'A number the player already guessed is refused without cost.',
+    default: true,
+    ...owner('O15'),
+    editPermission: GAME_ADMIN,
+    hostChooses: false,
+    running: 'frozen',
+  },
+];
+
+export const gtnSettings: GameSettings<GtnConfig> = {
+  defs,
+  read: (values) => ({
+    rangeLow: values['round.rangeLow'] as number,
+    rangeHigh: values['round.rangeHigh'] as number,
+    feedbackVisibility: values['round.feedbackVisibility'] as Visibility,
+    repeatGuessRejected: values['round.repeatGuessRejected'] as boolean,
+  }),
+  problem: (cfg) =>
+    cfg.rangeHigh >= cfg.rangeLow + 9
+      ? null
+      : 'The highest number must be at least 9 above the lowest.',
+};

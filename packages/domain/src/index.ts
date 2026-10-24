@@ -3,11 +3,12 @@
  * @module domain
  * @brief  Public entry point of @smg/domain: the platform's pure rules.
  *
- * Responsibility: the audit hash chain; the round rules (lifecycle, cooldown, receive
- *                 order, placings, specials) join with the Guess The Number work (04 §3).
- * Depends on:     ./audit/hashChain
+ * Responsibility: the audit hash chain and the round rules (lifecycle, receive order,
+ *                 cooldown, placings, points, standings); seasonal specials join with the
+ *                 seasons work (04 §3).
+ * Depends on:     ./audit/hashChain, ./round/*
  * Used by:        packages/application, apps/server
- * Spec:           docs/spec/04-software-architecture.md §3
+ * Spec:           docs/spec/04-software-architecture.md §3, §5
  */
 export {
   brokenLink,
@@ -16,3 +17,22 @@ export {
   type AuditRecord,
   type ChainLink,
 } from './audit/hashChain.js';
+export { initialRound, replayRound, roundInput, rosterPlayers } from './round/evolve.js';
+export { createRound, type NewRound } from './round/lifecycle.js';
+export { scoredPlayers, standings, type Scored, type StandingRow } from './round/results.js';
+export { stepRound } from './round/step.js';
+export type {
+  EndReason,
+  Margin,
+  PlayerResult,
+  Reply,
+  RosterEntry,
+  RoundCode,
+  RoundCommand,
+  RoundDeps,
+  RoundEvent,
+  RoundState,
+  RoundStatus,
+  StepResult,
+  TeamResult,
+} from './round/types.js';

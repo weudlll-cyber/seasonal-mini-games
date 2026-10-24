@@ -11,7 +11,7 @@ The authoritative list. `OPEN.md` is the short page over it and is aligned after
 
 ### Implementation (roadmap phases, spec/11-roadmap.md)
 
-- Phase 1 — One round on one screen: `game-sdk` with the conformance suite, platform round rules, the Guess The Number module, Quick Test against bots
+- Phase 1 — One round on one screen: Quick Test against bots (the game-sdk contract with the conformance suite, the platform round rules and the Guess The Number module are built, see part two)
 - Phase 2 — Real players: accounts, matches, lobby, round actor with group commit, gateway, host console, result, reconnect
 - Phase 3 — Seasons: the four specials, halving round and halving-day list, season teams, token visuals, In Season with a configured feed; copy `assets/` from Bingo with its manifest and licence note
 - Phase 4 — Standings and leaderboards (with team standing), profiles, verification page
@@ -52,3 +52,4 @@ For Phase 7:
 | Owner question (c) shared guess engine                                                                                                                                                                                                                                                                                                       | Architect decision DECISIONS T21 (decided when the second such game starts; R7 stays) | 2026-10-24 |
 | Review of branch spec/v1 and merge into master                                                                                                                                                                                                                                                                                               | Merge commit on master (no-ff)                                                        | 2026-10-24 |
 | Phase 0 — Foundation: monorepo and tooling from Bingo (renamed), CI, image, server skeleton, migrator, contracts skeleton, web and admin shells, dev compose on ports 3910 / 5410 / 5411 / 5510 / 1110 / 8510; local identity, settings system, audit log and moderation basics (spec 04 §2.1)                                               | Branch feat/guess-the-number (night run P2, not merged)                               | 2026-10-24 |
+| Phase 1, first part: game-module contract in `game-sdk`, conformance suite (P1–P5), platform round rules (lifecycle, receive order, cooldown, winning, placings, points, margin, standings), Guess The Number module, round session with commit-reveal and verification                                                                      | Branch feat/guess-the-number (night run P3, not merged)                               | 2026-10-24 |

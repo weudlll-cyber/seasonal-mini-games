@@ -7,9 +7,9 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 | Piece                               | State              | Commit                                           |
 | ----------------------------------- | ------------------ | ------------------------------------------------ |
 | P1 Record O8–O15, T21; spec updated | done               | `eaeadd5` on master (spec/v1 merged and deleted) |
-| P2 Foundation                       | done               | see `git log` on this branch                     |
-| P3 GTN domain and application       | running            |                                                  |
-| P4 Server                           | open (needs P3)    |                                                  |
+| P2 Foundation                       | done               | `e9936aa`                                        |
+| P3 GTN domain and application       | done               | see `git log` on this branch                     |
+| P4 Server                           | running            |                                                  |
 | P5 Seasonal specials                | open (needs P4)    |                                                  |
 | P6 Player and host client           | open (needs P4)    |                                                  |
 | P7 Admin client                     | open (needs P4)    |                                                  |
@@ -19,6 +19,7 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 ## Needs the owner
 
 - (q) Winning-margin window, proposal `round.marginWindowS` 2 s (0.5–10 s): [OPEN.md](OPEN.md).
+- Spec conflict 1, check order of a guess (02 §5.1 against 04 §4.1–§4.2), built as 02 §5.1: [OPEN.md](OPEN.md). Please confirm.
 
 ## P2 — Foundation
 
@@ -235,5 +236,86 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 | `tsconfig.bundler.json`                                     | new, 18 lines      |
 | `tsconfig.json`                                             | new, 18 lines      |
 | `vitest.config.ts`                                          | new, 40 lines      |
+
+</details>
+
+## P3 — Guess The Number domain and application
+
+**Built** (spec 02, 04 §4–§5):
+
+- `game-sdk`: the game-module contract as built (`module.ts`: round input, ordered player action, step context with secrets, decisions with routed events and `Solved` / `RoundShouldEnd` signals, views with a Frost cut-off, conformance kit, registry entry); range arithmetic; the platform's round keys of every game document with their conversion to milliseconds (`roundSettings.ts`, 08 §3).
+- `domain/round`: the platform round engine, pure and game-agnostic. Lifecycle created → countdown (roster frozen once per player, teams only in shared rounds with teams on, minimum players) → open → ended / aborted; catch-up so a round opens exactly at `opensAt` and ends at the longest round time whatever the scheduler does (T32); the guess path with the checks of 02 §5.1 in order, the game's `validate` before the cooldown (T29); `receiveSeq` only for accepted guesses; the cooldown as a stored end time from the receive time, no timer; shared mode: the first `Solved` wins and ends the round; individual mode: solve order is place order, all solved ends it; the winning margin from the first would-be correct guess inside the window (T33); results, points (10; 10/7/5/3 then 1), team results (1 point to the winner's team), match standings with the tie order of 02 §9; replay of a log.
+- `games/guess-the-number`: settings (range, visibility, repeats; range at least 10 wide), secrets derived with labels `secret/shared` and `secret/<playerId>`, the feedback rule and band (kept in their own files, T21), state without secrets, `validate` / `decide` / `evolve`, the room line per visibility (T31), player / spectator / result views with zod schemas and the Frost cut-off.
+- `games/registry`: one entry per game and the shared conformance suite.
+- `application/round`: round settings from the document plus host choices (`ROUND_SETTINGS_INVALID`), the round session (seed commitment with the proof on, secrets derived when the roster freezes and kept in memory only, commands, recovery from the log, result view only after the end), and the fairness-proof check from the public log.
+
+**Tests:** `pnpm verify` green (format, lint, typecheck, 138 tests in 32 files); `pnpm test:coverage` green (lines 99.6 %, branches 94.0 % over game-sdk, domain, application and the games). Property tests: G1 order, G2 one winner, G3 cooldown, G4 placings, P1 determinism, P4 free rejections, P5 replay (domain, 100 whole rounds each, as 09 §3 caps them); G5 feedback and band (1 000 cases), G6 valid guesses (100 rounds); G7 chi-square of secrets; conformance P1–P5 with sentinel secrets in both modes (100 streams each).
+
+**Reused from Bingo:** no code in this piece. The `decide`/`evolve` shape and log replay follow Bingo's match engine (Bingo 02 §5.1–§5.2); the DRBG and commitment reused in P2 carry the secrets and the proof.
+
+**Extracted:** `countdown` and `accepted` out of `evolveRound` (complexity); `attempt` (checks 4–7 and the decision) shared by the guess path and the margin note; `checkViews` and `play` in the conformance suite.
+
+**Docs:** 04 §4 rewritten to the contract as built, §4.3 (`own` joins with the first long-running game); 06 §2.7 (`MarginNoted`, the `Game` wrapper, `GuessFed`), §2.8 sizing (three events per guess); DECISIONS T29–T33; OPEN conflict 1; BACKLOG Phase 1 split.
+
+**Noticed, left alone:** Vitest's path filter `games` selects no test file here while `games/guess-the-number` does, so `test:coverage` lists each game folder (a new game adds its folder there). `rangeSize` in `game-sdk` has no caller yet; halving (P5) uses it.
+
+<details><summary>P3 lines per touched file</summary>
+
+| File                                                     | Lines              |
+| -------------------------------------------------------- | ------------------ |
+| `docs/BACKLOG.md`                                        | changed, +2 / −1   |
+| `docs/DECISIONS.md`                                      | changed, +35 / −30 |
+| `docs/OPEN.md`                                           | changed, +6 / −0   |
+| `docs/spec/04-software-architecture.md`                  | changed, +25 / −24 |
+| `docs/spec/06-data-model-api-realtime.md`                | changed, +3 / −3   |
+| `docs/spec/README.md`                                    | changed, +1 / −1   |
+| `games/guess-the-number/package.json`                    | new, 20 lines      |
+| `games/guess-the-number/src/conformance.ts`              | new, 50 lines      |
+| `games/guess-the-number/src/fakes.ts`                    | new, 74 lines      |
+| `games/guess-the-number/src/feedback.properties.test.ts` | new, 82 lines      |
+| `games/guess-the-number/src/feedback.ts`                 | new, 41 lines      |
+| `games/guess-the-number/src/index.ts`                    | new, 18 lines      |
+| `games/guess-the-number/src/module.ts`                   | new, 40 lines      |
+| `games/guess-the-number/src/rules.test.ts`               | new, 151 lines     |
+| `games/guess-the-number/src/rules.ts`                    | new, 84 lines      |
+| `games/guess-the-number/src/secrets.test.ts`             | new, 69 lines      |
+| `games/guess-the-number/src/secrets.ts`                  | new, 40 lines      |
+| `games/guess-the-number/src/settings.ts`                 | new, 89 lines      |
+| `games/guess-the-number/src/state.ts`                    | new, 89 lines      |
+| `games/guess-the-number/src/views.test.ts`               | new, 121 lines     |
+| `games/guess-the-number/src/views.ts`                    | new, 123 lines     |
+| `games/guess-the-number/tsconfig.json`                   | new, 17 lines      |
+| `games/registry/package.json`                            | new, 20 lines      |
+| `games/registry/src/conformance.test.ts`                 | new, 108 lines     |
+| `games/registry/src/index.ts`                            | new, 14 lines      |
+| `games/registry/tsconfig.json`                           | new, 17 lines      |
+| `package.json`                                           | changed, +2 / −2   |
+| `packages/application/package.json`                      | changed, +2 / −1   |
+| `packages/application/src/index.ts`                      | changed, +12 / −3  |
+| `packages/application/src/round/fakes.ts`                | new, 76 lines      |
+| `packages/application/src/round/roundSession.test.ts`    | new, 143 lines     |
+| `packages/application/src/round/roundSession.ts`         | new, 107 lines     |
+| `packages/application/src/round/roundSettings.ts`        | new, 60 lines      |
+| `packages/application/src/round/verify.ts`               | new, 39 lines      |
+| `packages/domain/package.json`                           | changed, +2 / −1   |
+| `packages/domain/src/index.ts`                           | changed, +24 / −4  |
+| `packages/domain/src/round/evolve.ts`                    | new, 155 lines     |
+| `packages/domain/src/round/fakes.ts`                     | new, 152 lines     |
+| `packages/domain/src/round/guess.test.ts`                | new, 142 lines     |
+| `packages/domain/src/round/guess.ts`                     | new, 127 lines     |
+| `packages/domain/src/round/lifecycle.test.ts`            | new, 114 lines     |
+| `packages/domain/src/round/lifecycle.ts`                 | new, 132 lines     |
+| `packages/domain/src/round/results.test.ts`              | new, 63 lines      |
+| `packages/domain/src/round/results.ts`                   | new, 117 lines     |
+| `packages/domain/src/round/round.properties.test.ts`     | new, 148 lines     |
+| `packages/domain/src/round/step.ts`                      | new, 37 lines      |
+| `packages/domain/src/round/types.ts`                     | new, 187 lines     |
+| `packages/game-sdk/src/index.ts`                         | changed, +30 / −4  |
+| `packages/game-sdk/src/module.ts`                        | new, 140 lines     |
+| `packages/game-sdk/src/range.test.ts`                    | new, 37 lines      |
+| `packages/game-sdk/src/range.ts`                         | new, 31 lines      |
+| `packages/game-sdk/src/roundSettings.test.ts`            | new, 39 lines      |
+| `packages/game-sdk/src/roundSettings.ts`                 | new, 213 lines     |
+| `pnpm-lock.yaml`                                         | changed, +32 / −0  |
 
 </details>

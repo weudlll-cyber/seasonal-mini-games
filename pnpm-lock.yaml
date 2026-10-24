@@ -311,6 +311,32 @@ importers:
         specifier: 8.3.4
         version: 8.3.4(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1)
 
+  games/guess-the-number:
+    dependencies:
+      '@smg/game-sdk':
+        specifier: workspace:*
+        version: link:../../packages/game-sdk
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      fast-check:
+        specifier: 4.10.2
+        version: 4.10.2
+
+  games/registry:
+    dependencies:
+      '@smg-game/guess-the-number':
+        specifier: workspace:*
+        version: link:../guess-the-number
+      '@smg/game-sdk':
+        specifier: workspace:*
+        version: link:../../packages/game-sdk
+    devDependencies:
+      fast-check:
+        specifier: 4.10.2
+        version: 4.10.2
+
   packages/application:
     dependencies:
       '@smg/contracts':
@@ -326,6 +352,9 @@ importers:
       fast-check:
         specifier: 4.10.2
         version: 4.10.2
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
 
   packages/contracts:
     dependencies:
@@ -345,6 +374,9 @@ importers:
       fast-check:
         specifier: 4.10.2
         version: 4.10.2
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
 
   packages/game-sdk:
     dependencies:

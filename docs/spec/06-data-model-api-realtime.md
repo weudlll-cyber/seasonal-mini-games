@@ -97,15 +97,15 @@
 
 ### 2.7 Round event types (platform)
 
-`RoundCreated` (settings, commitment), `CountdownStarted` (roster, teams, `opensAt`), `RoundOpened`, `GuessAccepted` (`playerKey`, `receiveSeq`, `receivedAt`, `value`, `cooldownEndsAt`), `SpecialFired` (special, index, effect summary), `CooldownChanged` (new value), `PlayerSolved` (`playerKey`, `receiveSeq`, `place`), `HeldDelivered` (Frost: the event seqs delivered), `RoundEnded` (reason, placings, team results, seed when revealed), `RoundAborted` (reason, by).
+`RoundCreated` (settings, commitment), `CountdownStarted` (roster, teams, `opensAt`), `RoundOpened`, `GuessAccepted` (`playerKey`, `receiveSeq`, `receivedAt`, `value`, `cooldownEndsAt`), `SpecialFired` (special, index, effect summary), `CooldownChanged` (new value), `PlayerSolved` (`playerKey`, `receiveSeq`, `place`), `HeldDelivered` (Frost: the event seqs delivered), `RoundEnded` (reason, placings, team results, seed when revealed), `RoundAborted` (reason, by), `MarginNoted` (`playerKey`, `ms`: the first would-be correct guess after a shared win inside `round.marginWindowS`, [02](02-game-guess-the-number.md) §9). A game event is logged as `Game` (`audience`, `feedback`, `event`).
 
-Game events of Guess The Number: `FeedbackGiven` (`playerKey`, `receiveSeq`, `feedback`, `bandLow`, `bandHigh`; marked `feedback: true`), `HintGiven` (Spring Herald), `NumbersRemoved` (Leaf Fall), `RangeHalved` (per player or shared).
+Game events of Guess The Number: `FeedbackGiven` (`playerKey`, `receiveSeq`, `receivedAt`, `value`, `feedback`, `band`; to the guesser, marked `feedback: true`), `GuessFed` (`playerKey`, `guesses`, plus `value`, `feedback` and the shared band as the visibility allows; to the room, marked `feedback: true` when it carries an answer), `HintGiven` (Spring Herald), `NumbersRemoved` (Leaf Fall), `RangeHalved` (per player or shared).
 
 Rejected guesses are **not** events. They are counted in metrics and in the abuse score only.
 
 ### 2.8 Sizing
 
-A shared round with 500 players, 10 s cooldown, lasting 5 minutes: at most 15 000 accepted guesses, about 30 000 events, about 6 MB. At 50 such rounds a day that is under 10 GB a month before compaction. The events of rounds older than 90 days are compacted: `round_results` stay, `round_events` of type `GuessAccepted`/`FeedbackGiven` move to a compressed archive table, and the hash of the moved rows stays in place so that the log remains verifiable.
+A shared round with 500 players, 10 s cooldown, lasting 5 minutes: at most 15 000 accepted guesses, about 45 000 events (`GuessAccepted`, `FeedbackGiven`, `GuessFed` per guess), about 9 MB. At 50 such rounds a day that is under 10 GB a month before compaction. The events of rounds older than 90 days are compacted: `round_results` stay, `round_events` of type `GuessAccepted`, `FeedbackGiven` and `GuessFed` move to a compressed archive table, and the hash of the moved rows stays in place so that the log remains verifiable.
 
 ## 3. HTTP API
 

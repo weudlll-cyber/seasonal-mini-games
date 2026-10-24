@@ -94,64 +94,65 @@ apps/admin            Admin client (as Bingo). apps/embed-loader: embed.js (as B
 
 ## 4. The game-module contract
 
-A game is one object that implements `GameModule` from `packages/game-sdk`. Below is the shape, written as TypeScript for precision. The exact types are fixed in the first work package that builds `game-sdk`, and any change to them is a spec change.
+A game is one object that implements `GameModule` from `packages/game-sdk` (`packages/game-sdk/src/module.ts`). The shape below is the one built in the first work package (night run P3, DECISIONS T29). Any change to it is a spec change.
 
 ```ts
-interface GameModule<S, A, E, Cfg> {
+interface GameModule<S, A, E, Cfg, Sec> {
   meta: {
     id: string;                 // 'guess-the-number' — URL- and DB-safe, never reused
     name: string;               // 'Guess The Number'
     contractVersion: 1;         // the game-sdk contract version it implements
-    timing: 'cooldown' | 'own'; // §4.3
+    timing: 'cooldown';         // §4.3 ('own' joins with the first long-running game)
     secretModes: ReadonlyArray<'shared' | 'individual'>;
     teams: boolean;             // supports season teams (shared mode)
   };
   settings: {
-    schema: ZodType<Cfg>;       // game settings with .describe() help, min/max as zod bounds
-    defaults: Cfg;              // games/<game>/src/settings/defaults.ts
+    defs: SettingDef[];         // the game's own keys of document game.<id> (08 §3)
+    read(values): Cfg;          // frozen values → the game's config
+    problem(cfg: Cfg): string | null;  // a rule across keys
   };
   actionSchema: ZodType<A>;     // the payload of one player action (a guess)
-  createRound(input: RoundInput<Cfg>, rng: Drbg): S;          // secrets are made here
-  decide(state: S, cmd: GameCommand<A>, ctx: GameCtx): Decision<E>;
+  deriveSecrets(input: RoundInput<Cfg>, rng: RoundRng): Sec;  // secrets are made here, never stored
+  createRound(input: RoundInput<Cfg>): S;                     // state holds no secret
+  validate(state: S, playerId: string, action: A): string | null; // the game's own checks
+  decide(state: S, act: PlayerAction<A>, ctx: GameCtx<Sec>): Decision<E>;
   evolve(state: S, event: E): S;
   views: {
-    player(state: S, playerId: string): unknown;     // zod-validated by viewSchemas.player
-    spectator(state: S): unknown;
-    result(state: S): unknown;                       // only after the round has ended
+    player(state: S, playerId: string, ctx: ViewCtx): unknown; // zod-validated by viewSchemas.player
+    spectator(state: S, ctx: ViewCtx): unknown;
+    result(state: S, secrets: Sec): unknown;   // only after the round has ended
   };
   viewSchemas: { player: ZodType; spectator: ZodType; result: ZodType };
-  specials?: Partial<SpecialHooks<S, E>>;            // §4.4
-  ownTimers?(state: S): ReadonlyArray<{ key: string; dueAt: number }>; // timing 'own' only
+  specials?: Partial<SpecialHooks<S, E>>;      // §4.4, joins with the seasonal specials
 }
 ```
 
+The registry lists each game as one entry `{ module, conformance }`, where `conformance` is the game's kit for the shared suite (§4.5): a round input, sentinel secrets and actions that never hit a secret.
+
 ### 4.1 What the platform gives a game
 
-- `RoundInput`: round id, the frozen roster (player ids and teams), secret mode, range and other platform round settings, the game's own frozen settings, the season and whether a halving round runs.
-- `Drbg`: the round's deterministic generator (§5.4), already separated by label. A game asks `rng.child('secret', playerId).intBetween(lo, hi)`, so it never sees the seed.
-- `GameCommand<A>`, one of:
-  - `PlayerAction { playerId, receiveSeq, receivedAt, action: A }`: a validated, ordered player action. It arrives only after the platform's checks (round open, on roster, not solved, cooldown over).
-  - `SpecialDue { special, index }` (§4.4),
-  - `TimerDue { key }` (timing `own` only),
-  - `EndRequested { reason }`.
-- `GameCtx`: `now` (the processing time), the round's current platform values (for example the cooldown), and `rng` for this step.
+- `RoundInput`: round id, the frozen roster (player ids and teams), secret mode, the season, whether a halving round runs, and the game's own frozen config. The platform's round values (cooldown, countdown, points, …) are keys of every game's document as well, defined once in `packages/game-sdk/src/roundSettings.ts`.
+- `RoundRng`: the round's deterministic generator (§5.4), separated by label. A game asks `rng.child('secret', playerId).intBetween(lo, hi)`, so it never sees the seed.
+- `PlayerAction { playerId, receiveSeq, receivedAt, action: A }`: an ordered player action that passed every check (round open, on roster, not solved, the game's `validate`, cooldown over).
+- `GameCtx`: `now` (the processing time), the cooldown in force, the round's `secrets` and `rng`.
+- `ViewCtx`: `releasedBefore`. Answers to guesses received at or after it are still held by Frost and appear in no view.
 
 ### 4.2 What a game gives back
 
-`Decision<E>` is `{ ok: true, events: E[], signals: Signal[] } | { ok: false, code: string }`.
+`Decision<E>` is `{ ok: true, events: Emitted<E>[], signals: Signal[] } | { ok: false, code: string }`.
 
-- `events` are the game's own domain events. The platform appends them to the round's log, folds them with `evolve`, and routes each one by its `audience`: `room`, `player:<id>` or `host`. An event can carry `feedback: true`, which makes the platform hold it back for Frost (§4.4).
+- `events` are the game's own domain events, each with its `audience` (`room`, `player:<id>` or `host`) and optionally `feedback: true`, which makes the platform hold it back for Frost (§4.4). The platform appends them to the round's log, folds them with `evolve` and routes each to its audience.
 - `signals` tell the platform about outcomes without the platform knowing the game:
   - `Solved { playerId }`: this action solved the player's secret.
   - `RoundShouldEnd { reason }`: for game-specific end conditions.
-- A rejection `code` comes from the game's own error list (for example `NUMBER_REMOVED`). The platform's codes (`COOLDOWN_ACTIVE`, `ROUND_OVER`, …) are checked first and never reach the game.
+- Rejections come in the order of [02](02-game-guess-the-number.md) §5.1: the platform's codes for state, roster and solved (`ROUND_NOT_OPEN`, `ROUND_OVER`, `NOT_IN_ROUND`, `ALREADY_SOLVED`), then the game's `validate` (for example `OUT_OF_RANGE`, `NUMBER_REMOVED`), then the platform's `COOLDOWN_ACTIVE`. `validate` is pure and gives no event. `decide` runs only for an action that passed all of them.
 
 **Winning stays in the platform.** From the `Solved` signals and their receive order, the platform applies the owner's rules: in shared mode the first `Solved` wins and ends the round, and in individual mode solve order is placing order (owner, decisions 4 and 5). Every later game with these modes inherits the rules unchanged.
 
 ### 4.3 Timing classes
 
 - `cooldown`: the platform enforces the per-player cooldown of owner decision 3 (range 3–60 s, the same for all, no global tick) before a `PlayerAction` reaches the game. Heatwave and Frost apply automatically.
-- `own`: for games designed as long-running (owner, decision 3). The game declares its timers with `ownTimers`, and the platform schedules them. There is no cooldown, Heatwave or Frost. No v1 game uses this class. It exists so that one can be added without a platform change.
+- `own`: for games designed as long-running (owner, decision 3). The game will declare its timers (`ownTimers`), and the platform schedules them. There is no cooldown, Heatwave or Frost. No v1 game uses this class, so it joins the contract with the first long-running game, as a contract change of its own (§4.6).
 
 ### 4.4 Specials
 
