@@ -133,8 +133,13 @@ export interface ConformanceKit<A, Cfg, Sec> {
   readonly action: (n: number) => A;
 }
 
-// One registry line: a module and its conformance kit.
+// The next action of a development bot (Quick Test, 09 §5) from its own player view, or
+// null when it has nothing to do; `pick(n)` is a uniform integer in [0, n).
+export type DevBot<A> = (playerView: unknown, pick: (n: number) => number) => A | null;
+
+// One registry line: a module, its conformance kit and its development bot.
 export interface GameEntry<S, A, E, Cfg, Sec> {
   readonly module: GameModule<S, A, E, Cfg, Sec>;
   readonly conformance: ConformanceKit<A, Cfg, Sec>;
+  readonly devBot: DevBot<A>;
 }

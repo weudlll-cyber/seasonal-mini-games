@@ -8,9 +8,9 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 | ----------------------------------- | ------------------ | ------------------------------------------------ |
 | P1 Record O8–O15, T21; spec updated | done               | `eaeadd5` on master (spec/v1 merged and deleted) |
 | P2 Foundation                       | done               | `e9936aa`                                        |
-| P3 GTN domain and application       | done               | see `git log` on this branch                     |
-| P4 Server                           | running            |                                                  |
-| P5 Seasonal specials                | open (needs P4)    |                                                  |
+| P3 GTN domain and application       | done               | `42e2cb8`                                        |
+| P4 Server                           | done               | see `git log` on this branch                     |
+| P5 Seasonal specials                | running            |                                                  |
 | P6 Player and host client           | open (needs P4)    |                                                  |
 | P7 Admin client                     | open (needs P4)    |                                                  |
 | P8 E2E, load gate, play-through     | open (needs P5–P7) |                                                  |
@@ -20,6 +20,7 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 
 - (q) Winning-margin window, proposal `round.marginWindowS` 2 s (0.5–10 s): [OPEN.md](OPEN.md).
 - Spec conflict 1, check order of a guess (02 §5.1 against 04 §4.1–§4.2), built as 02 §5.1: [OPEN.md](OPEN.md). Please confirm.
+- Spec gap 1, `round_results.secret` stays empty (the server cannot name a game's secret): [OPEN.md](OPEN.md).
 
 ## P2 — Foundation
 
@@ -317,5 +318,94 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 | `packages/game-sdk/src/roundSettings.test.ts`            | new, 39 lines      |
 | `packages/game-sdk/src/roundSettings.ts`                 | new, 213 lines     |
 | `pnpm-lock.yaml`                                         | changed, +32 / −0  |
+
+</details>
+
+## P4 — Server
+
+**Built** (spec 06, 04 §5):
+
+- Migration `0004_matches_rounds.sql`: matches, match players, rounds (sealed seed, commitment, one running round per match), `round_events` append-only by trigger, snapshots, round and team results (unique places), match and team standings, scheduled actions.
+- Round engine: `RoundActor` (one FIFO per round, each item run when handed in, receive time stamped then, group commit after 20 ms or 200 events, replies and frames only after the commit, batches in order, a failed commit drops later batches and rebuilds, `ROUND_BUSY` at the queue bound, T34); `PgRoundStore` (one transaction per batch with status, schedule, results, standings, snapshots every 200 events keeping two); `GameRunner` / `LiveRound` (the only place a game's types meet the server; actions parsed with the game's schema); `Rounds` (one runner per registry entry, recovery of running rounds at start, ended rounds loaded on demand); `RoundScheduler` (open and time-up with leases; the round catches up with time anyway, T32); seeds sealed with AES-256-GCM under `SMG_ROUND_KEY` (required outside development and tests).
+- Use cases (`match/play.ts`): create a round (one at a time, settings with host choices, `ROUND_SETTINGS_INVALID`; season required and no halving day until P5, T37), start with the connected players minus the host, host end and abort, teams locked while a round runs, leaving ends a round with no roster player left, close and abort a match.
+- HTTP (06 §3.1): games, matches (list, open, summary with next-round defaults for the host, join, leave, team, close, abort, mine), rounds (create, start, end, abort, state per viewer, the HTTP guess fallback, result, verify).
+- Realtime (06 §4): gateway on `/ws` namespace `/play`, origin and session checked, sockets closed when their session ends; envelope, replay number and socket limit checked on read, guesses queued with nothing awaited (04 §5.2), other intents in order per socket; frames to the match, player and host rooms (T35); presence for the roster.
+- Limits and abuse: `rate.*` and `abuse.*` read every second into memory; guess floods `RATE_LIMITED` with an abuse signal; repeated cooldown refusals over the threshold raise one signal a minute.
+- Development Quick Test: `POST /api/v1/dev/quicktest` (seed text, mode, bots, cooldown, visibility, range) with live bots from the registry's `devBot` (T36).
+
+**Tests:** `pnpm verify` green (150 tests in 37 files); `pnpm test:coverage` green (lines 99.6 %, branches 94.1 %); `pnpm e2e` Chromium 3/3. New integration suites with real Postgres and sockets: a shared round end to end (roster without the host, `ROUND_NOT_OPEN`, cooldown across socket and HTTP fallback, single winner, `ROUND_OVER`, result, seed, proof, gap-free and append-only log, standings, frames without values in the room and answers only to their player); recovery on a second server with the cooldown intact; the secret scan S2 over every frame, acknowledgement and HTTP answer (players, host, spectator, admin API) of a running individual round with 1–1 000 000, and the secrets present after the end; the Quick Test to its end with the same seed giving the same season and secrets; permissions and refusals (`NOT_THE_HOST`, 401 without a session, `ROUND_RUNNING`, `ROUND_SETTINGS_INVALID`, `NOT_A_HALVING_DAY`, `IN_SEASON_UNAVAILABLE`).
+
+**Reused from Bingo (d294585), adapted:** `match/pgScheduler.ts` → `round/scheduler.ts`; `realtime/gateway.ts`, `realtime/intents.ts`, `realtime/inOrder.ts` (+ test, unchanged); `config/seedKey.ts` → `config/roundKey.ts`; seed sealing from `match/codec.ts` → `round/seal.ts` (+ test); the match-code alphabet from `match/runtime.ts`; `test/socketKit.ts`. Held back and not used: `match/eventBus.ts` (the rounds service calls its listeners directly), `match/retention.ts`, `config/maintenance.ts`, and the deployment, security and authorization-matrix integration suites (to adapt with the client routes, BACKLOG Phase 2).
+
+**Extracted:** `pgResults.ts` out of the store (file size); the host and read halves of the round routes; the socket kit's helpers.
+
+**Docs:** DECISIONS T34–T39; 04 §4 (registry entry with `devBot`); 06 §4.4 (frames); OPEN gap 1; BACKLOG Phase 1 and 2 split.
+
+**Noticed, left alone:** the Quick Test passes Guess The Number's range keys from server code (development only, but the platform names a game's keys there); the lobby's idle close (`match.lobbyIdleCloseMin`), the bot-timing abuse signal (`abuse.botTimingWindowMs`) and the metrics of 06 §4.6 are not built yet; Frost delivery and specials are P5. The test timeout went to 20 s (T39).
+
+<details><summary>P4 lines per touched file</summary>
+
+| File                                                     | Lines              |
+| -------------------------------------------------------- | ------------------ |
+| `apps/server/build.mjs`                                  | changed, +1 / −1   |
+| `apps/server/devStub.mjs`                                | changed, +3 / −1   |
+| `apps/server/package.json`                               | changed, +2 / −0   |
+| `apps/server/src/config/env.test.ts`                     | changed, +13 / −2  |
+| `apps/server/src/config/env.ts`                          | changed, +10 / −0  |
+| `apps/server/src/config/roundKey.ts`                     | new, 23 lines      |
+| `apps/server/src/db/migrations/0004_matches_rounds.sql`  | new, 154 lines     |
+| `apps/server/src/db/pool.ts`                             | changed, +2 / −5   |
+| `apps/server/src/dev/bots.ts`                            | new, 51 lines      |
+| `apps/server/src/dev/quickTest.ts`                       | new, 90 lines      |
+| `apps/server/src/http/app.ts`                            | changed, +21 / −5  |
+| `apps/server/src/http/routes/adminGuard.ts`              | changed, +2 / −2   |
+| `apps/server/src/http/routes/matches.ts`                 | new, 207 lines     |
+| `apps/server/src/http/routes/quickTest.ts`               | new, 51 lines      |
+| `apps/server/src/http/routes/rounds.ts`                  | new, 179 lines     |
+| `apps/server/src/index.ts`                               | changed, +5 / −6   |
+| `apps/server/src/main.ts`                                | changed, +22 / −6  |
+| `apps/server/src/match/matches.ts`                       | new, 242 lines     |
+| `apps/server/src/match/play.ts`                          | new, 181 lines     |
+| `apps/server/src/match/presence.ts`                      | new, 36 lines      |
+| `apps/server/src/realtime/gateway.ts`                    | new, 151 lines     |
+| `apps/server/src/realtime/inOrder.test.ts`               | new, 40 lines      |
+| `apps/server/src/realtime/inOrder.ts`                    | new, 23 lines      |
+| `apps/server/src/realtime/intents.ts`                    | new, 203 lines     |
+| `apps/server/src/round/actor.ts`                         | new, 152 lines     |
+| `apps/server/src/round/batch.ts`                         | new, 62 lines      |
+| `apps/server/src/round/gameRunner.ts`                    | new, 127 lines     |
+| `apps/server/src/round/guessLimits.ts`                   | new, 115 lines     |
+| `apps/server/src/round/liveRound.ts`                     | new, 90 lines      |
+| `apps/server/src/round/pgResults.ts`                     | new, 82 lines      |
+| `apps/server/src/round/pgRoundStore.ts`                  | new, 245 lines     |
+| `apps/server/src/round/rounds.ts`                        | new, 119 lines     |
+| `apps/server/src/round/runtime.ts`                       | new, 78 lines      |
+| `apps/server/src/round/scheduler.ts`                     | new, 100 lines     |
+| `apps/server/src/round/seal.test.ts`                     | new, 34 lines      |
+| `apps/server/src/round/seal.ts`                          | new, 25 lines      |
+| `apps/server/src/round/views.ts`                         | new, 131 lines     |
+| `apps/server/test/auth.integration.test.ts`              | changed, +1 / −0   |
+| `apps/server/test/rounds.integration.test.ts`            | new, 215 lines     |
+| `apps/server/test/secrets.integration.test.ts`           | new, 208 lines     |
+| `apps/server/test/socketKit.ts`                          | new, 165 lines     |
+| `docs/BACKLOG.md`                                        | changed, +14 / −13 |
+| `docs/DECISIONS.md`                                      | changed, +41 / −35 |
+| `docs/OPEN.md`                                           | changed, +4 / −0   |
+| `docs/spec/04-software-architecture.md`                  | changed, +1 / −1   |
+| `docs/spec/06-data-model-api-realtime.md`                | changed, +1 / −1   |
+| `docs/spec/README.md`                                    | changed, +1 / −1   |
+| `games/guess-the-number/src/devBot.test.ts`              | new, 51 lines      |
+| `games/guess-the-number/src/devBot.ts`                   | new, 32 lines      |
+| `games/guess-the-number/src/feedback.properties.test.ts` | changed, +2 / −2   |
+| `games/guess-the-number/src/index.ts`                    | changed, +5 / −2   |
+| `games/guess-the-number/src/views.ts`                    | changed, +2 / −0   |
+| `games/registry/src/index.ts`                            | changed, +6 / −3   |
+| `packages/application/src/round/roundSession.test.ts`    | changed, +4 / −0   |
+| `packages/application/src/round/roundSession.ts`         | changed, +19 / −1  |
+| `packages/domain/src/index.ts`                           | changed, +14 / −2  |
+| `packages/game-sdk/src/index.ts`                         | changed, +1 / −0   |
+| `packages/game-sdk/src/module.ts`                        | changed, +6 / −1   |
+| `pnpm-lock.yaml`                                         | changed, +6 / −0   |
+| `vitest.config.ts`                                       | changed, +3 / −0   |
 
 </details>

@@ -70,6 +70,7 @@ describe('a round session', () => {
     const { s, log, run } = session();
     expect(log[0]).toMatchObject({ type: 'RoundCreated', commitment: hex(commitSeed(seed)) });
     expect(s.result()).toBeNull();
+    expect(s.revealedSeed()).toBeNull();
     run({ type: 'startCountdown', at: 0, roster: [{ playerId: 'a', team: null }], minPlayers: 1 });
     const verified = verifyRound(findGame, [
       ...log,
@@ -83,6 +84,7 @@ describe('a round session', () => {
     expect(s.state.winner).toBe('a');
     expect(log.at(-1)).toMatchObject({ type: 'RoundEnded', reason: 'solved', seed: hex(seed) });
     expect(s.result()).toEqual({ a: secret });
+    expect(s.revealedSeed()).toBe(hex(seed));
     expect(verifyRound(findGame, log)).toEqual({ ok: true, secrets: { a: secret } });
   });
 
@@ -100,6 +102,8 @@ describe('a round session', () => {
     run({ type: 'guess', playerId: 'a', receivedAt: 3_000, action: { value: 0 } });
     const back = RoundSession.recover(findGame, seed, log);
     expect(back.state).toEqual(s.state);
+    const resumed = RoundSession.resume(findGame, seed, back.state, []);
+    expect(resumed.state).toEqual(s.state);
     const next = { type: 'guess', playerId: 'b', receivedAt: 3_001, action: { value: 0 } } as const;
     expect(back.handle(next)).toEqual(s.handle(next));
   });

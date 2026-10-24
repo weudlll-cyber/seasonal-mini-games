@@ -7,11 +7,8 @@
  *                 /readyz. The pool is kept small for dev (max 10) and left to the
  *                 operator to tune for production via DATABASE_URL's `max=` query.
  * Depends on:     pg
- * Used by:        ../main.ts, ../http/app.ts, ../http/routes/health.ts, ./migrator.ts,
- *                 ../auth/accounts, ../auth/sessionPlugin, ../auth/sessions, ../cli,
- *                 ../http/routes/auth, ../http/routes/devSignIn, ../http/routes/matches,
- *                 ../index, ../match/pgMatchStore, ../match/pgScheduler, ../match/retention,
- *                 ../match/runtime, ../realtime/gateway
+ * Used by:        ../main, ../http/app, ./migrator, ../cli, ../index, ../auth/*, ../admin/*,
+ *                 ../http/routes/*, ../match/*, ../round/*, ../realtime/*, ../dev/quickTest
  * Spec:           Bingo 04 §1, Bingo 02 §7
  */
 import pg from 'pg';

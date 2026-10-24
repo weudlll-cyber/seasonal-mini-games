@@ -17,9 +17,21 @@ export {
   type AuditRecord,
   type ChainLink,
 } from './audit/hashChain.js';
-export { initialRound, replayRound, roundInput, rosterPlayers } from './round/evolve.js';
+export {
+  evolveRound,
+  initialRound,
+  replayRound,
+  roundInput,
+  rosterPlayers,
+} from './round/evolve.js';
 export { createRound, type NewRound } from './round/lifecycle.js';
-export { scoredPlayers, standings, type Scored, type StandingRow } from './round/results.js';
+export {
+  playerResults,
+  scoredPlayers,
+  standings,
+  type Scored,
+  type StandingRow,
+} from './round/results.js';
 export { stepRound } from './round/step.js';
 export type {
   EndReason,

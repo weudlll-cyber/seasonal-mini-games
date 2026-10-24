@@ -227,6 +227,9 @@ importers:
       '@node-rs/argon2':
         specifier: 2.2.2
         version: 2.2.2
+      '@smg-game/registry':
+        specifier: workspace:*
+        version: link:../../games/registry
       '@smg/application':
         specifier: workspace:*
         version: link:../../packages/application
@@ -236,6 +239,9 @@ importers:
       '@smg/domain':
         specifier: workspace:*
         version: link:../../packages/domain
+      '@smg/game-sdk':
+        specifier: workspace:*
+        version: link:../../packages/game-sdk
       fastify:
         specifier: 5.12.7
         version: 5.12.7

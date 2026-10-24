@@ -35,7 +35,7 @@ const npmExternal = {
 
 // Development code stays out of the production bundle (audit B): the app registers these
 // modules only with SMG_DEV=1, so the stub is never called in a production install.
-const DEV_MODULE = /[\\/]src[\\/](dev[\\/][^\\/]+|http[\\/]routes[\\/](quicktest|devSignIn))\.js$/;
+const DEV_MODULE = /[\\/]src[\\/](dev[\\/][^\\/]+|http[\\/]routes[\\/](quickTest|devSignIn))\.js$/;
 const devStub = {
   name: 'dev-stub',
   setup(builder) {

@@ -6,7 +6,7 @@
  * Responsibility: the round seed's commitment at creation (fairness proof on), the secrets
  *                 derived from the seed as soon as the roster is frozen and kept only in
  *                 memory (05 §3), every command through the pure round rules, recovery by
- *                 replaying the log, and the result view once the round has ended. The round
+ *                 replaying the log or from a snapshot and the log's tail, and the result view once the round has ended. The round
  *                 actor (queue, group commit, delivery) wraps one session.
  * Depends on:     @smg/domain (round rules), @smg/game-sdk (module, crypto entry)
  * Used by:        ../index, apps/server (round actor)
@@ -14,6 +14,7 @@
  */
 import {
   createRound,
+  evolveRound,
   replayRound,
   roundInput,
   rosterPlayers,
@@ -75,6 +76,17 @@ export class RoundSession<S, A, E, Cfg, Sec> {
     return new RoundSession(module, seed, replayRound(module, log));
   }
 
+  // After a restart with a snapshot: the snapshot's state with the log's tail folded on.
+  static resume<S, A, E, Cfg, Sec>(
+    module: GameModule<S, A, E, Cfg, Sec>,
+    seed: Uint8Array,
+    snapshot: RoundState<S, Cfg>,
+    tail: readonly RoundEvent<E, A, Cfg>[],
+  ): RoundSession<S, A, E, Cfg, Sec> {
+    const state = tail.reduce((s, e) => evolveRound(module, s, e), snapshot);
+    return new RoundSession(module, seed, state);
+  }
+
   get state(): RoundState<S, Cfg> {
     return this.current;
   }
@@ -96,6 +108,12 @@ export class RoundSession<S, A, E, Cfg, Sec> {
     const { status, game } = this.current;
     if (status !== 'ended' || game === null || this.secrets === null) return null;
     return this.module.views.result(game, this.secrets);
+  }
+
+  // The seed (hex) once the round has ended with the fairness proof on (02 §10).
+  revealedSeed(): string | null {
+    const { status, config } = this.current;
+    return status === 'ended' && config.commitReveal ? hex(this.seed) : null;
   }
 
   // Secrets exist from the moment the roster is frozen.

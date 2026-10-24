@@ -168,7 +168,7 @@ As Bingo 05 §3 for dashboard, settings, integrations, accounts, moderation, upl
 
 ### 4.4 Server → client events
 
-On the wire, committed events arrive as `events` frames `{ s, events: [{ s, at, event }] }` (Bingo 06 §4, as built). The `event` values are the projected public or per-player forms below:
+On the wire, committed events arrive as `events` frames (Bingo 06 §4, as built; DECISIONS T35). The match room gets `{ roundId, s, events: [{ s, at, event }] }` with every seq of the batch, so a gap means a missed frame; an event not meant for the room is `null` there. A player's room gets `{ roundId, events }` with only that player's own events, the host room likewise. The `event` values are the projected public or per-player forms below:
 
 | Event | Room | Data |
 |---|---|---|

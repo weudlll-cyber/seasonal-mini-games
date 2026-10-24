@@ -57,6 +57,8 @@ export const viewSchemas = {
     .strict(),
 };
 
+export type PlayerView = z.infer<typeof viewSchemas.player>;
+
 const released = (g: Guess, ctx: ViewCtx) => g.receivedAt < ctx.releasedBefore;
 
 function shownFeedback(g: Guess, ctx: ViewCtx): Feedback | null {

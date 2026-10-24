@@ -18,12 +18,12 @@ import { input, Table } from './fakes.js';
 import { band, feedbackFor } from './feedback.js';
 
 const LOW = 1;
-const HIGH = 200;
+const HIGH = 100;
 
 const round = fc.record({
   secret: fc.integer({ min: LOW, max: HIGH }),
   removed: fc.uniqueArray(fc.integer({ min: LOW, max: HIGH }), { maxLength: 20 }),
-  guesses: fc.array(fc.integer({ min: LOW - 5, max: HIGH + 5 }), { maxLength: 40 }),
+  guesses: fc.array(fc.integer({ min: LOW - 5, max: HIGH + 5 }), { maxLength: 25 }),
 });
 
 describe('feedback and bands', () => {

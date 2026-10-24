@@ -127,7 +127,7 @@ interface GameModule<S, A, E, Cfg, Sec> {
 }
 ```
 
-The registry lists each game as one entry `{ module, conformance }`, where `conformance` is the game's kit for the shared suite (§4.5): a round input, sentinel secrets and actions that never hit a secret.
+The registry lists each game as one entry `{ module, conformance, devBot }`, where `conformance` is the game's kit for the shared suite (§4.5): a round input, sentinel secrets and actions that never hit a secret; `devBot` picks a development bot's next action from that bot's own player view (Quick Test, DECISIONS T36).
 
 ### 4.1 What the platform gives a game
 

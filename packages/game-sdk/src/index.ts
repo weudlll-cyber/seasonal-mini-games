@@ -15,6 +15,7 @@ export type {
   Audience,
   ConformanceKit,
   Decision,
+  DevBot,
   Emitted,
   GameCtx,
   GameEntry,

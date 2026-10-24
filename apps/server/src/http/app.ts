@@ -5,12 +5,14 @@
  *
  * Responsibility: wire logging, security headers, problem-details, health, metrics, the
  *                 built client (image) or the placeholder page (development), sessions and
- *                 auth, password change, and the admin routes (settings documents, audit
- *                 log, accounts, abuse signals) onto a fresh Fastify instance, under the base
+ *                 auth, password change, the admin routes (settings documents with every
+ *                 game's document, audit log, accounts, abuse signals), the match and round
+ *                 routes with their runtime and, in development, the Quick Test onto a fresh
+ *                 Fastify instance, under the base
  *                 path (SMG_BASE_PATH) and behind the trusted proxies. The caller owns the
  *                 lifecycle (listen, close, pool disposal). Adapted from Bingo's app.ts.
  * Depends on:     fastify, @smg/application, @smg/contracts, ../db/pool, ../auth/*,
- *                 ../config/*, ../admin/*, ./plugins/*, ./routes/*
+ *                 ../config/*, ../admin/*, ../round/runtime, ./plugins/*, ./routes/*
  * Used by:        ../main.ts, test/*, ../index
  * Spec:           docs/spec/04-software-architecture.md §2.1; docs/spec/06-data-model-api-realtime.md §3
  */
@@ -25,11 +27,15 @@ import { cookieConfig, registerSessions } from '../auth/sessionPlugin.js';
 import type { Env } from '../config/env.js';
 import { featuresFrom } from '../config/features.js';
 import type { DbPool } from '../db/pool.js';
+import { createRoundRuntime, gameDocuments, type RoundRuntime } from '../round/runtime.js';
 import { registerProblemDetails } from './plugins/problem.js';
 import { registerSecurityHeaders } from './plugins/securityHeaders.js';
 import { registerAdminAccounts } from './routes/adminAccounts.js';
 import { registerAdminAudit } from './routes/adminAudit.js';
 import { registerAdminSettings } from './routes/adminSettings.js';
+import { registerMatchRoutes } from './routes/matches.js';
+import { registerQuickTest } from './routes/quickTest.js';
+import { registerRoundRoutes } from './routes/rounds.js';
 import { registerAuthRoutes } from './routes/auth.js';
 import { registerDevSignIn } from './routes/devSignIn.js';
 import { registerHealth } from './routes/health.js';
@@ -50,6 +56,9 @@ export interface App {
   readonly audit: PgAuditLog;
   // Ended sessions (logout, suspension, password change): the gateway closes their sockets.
   readonly sessionEnds: SessionEnds;
+  // Rounds, matches and their timers; started with `runtime.start()`, stopped on close.
+  readonly runtime: RoundRuntime;
+  readonly cookieName: string;
 }
 
 // Fastify with the logger, the trusted proxies (Caddy) and the base path: behind the website
@@ -105,11 +114,18 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   // Development only: quick sign-in as host or player (never in a production build).
   if (isDev) registerDevSignIn(fastify, { pool: deps.pool, cookie, sessionEnds });
   const audit = new PgAuditLog(deps.pool);
-  const settings = new SettingsService(PLATFORM_SETTINGS, new PgSettingsStore(deps.pool), audit);
+  const documents = { ...PLATFORM_SETTINGS, ...gameDocuments() };
+  const settings = new SettingsService(documents, new PgSettingsStore(deps.pool), audit);
   registerAdminSettings(fastify, settings);
   registerAdminAudit(fastify, audit);
   registerAdminAccounts(fastify, { pool: deps.pool, audit, sessionEnds });
-  return { fastify, metrics, settings, audit, sessionEnds };
+  const runtime = createRoundRuntime(deps.env, deps.pool, settings);
+  const { play, limits, store } = runtime;
+  registerMatchRoutes(fastify, { play, settings, pool: deps.pool });
+  registerRoundRoutes(fastify, { play, limits, store, pool: deps.pool });
+  if (isDev) registerQuickTest(fastify, { play, pool: deps.pool });
+  fastify.addHook('onClose', () => runtime.stop());
+  return { fastify, metrics, settings, audit, sessionEnds, runtime, cookieName: cookie.name };
 }
 
 // "/games/mini-games/api/v1/x" → "/api/v1/x" when the base path is "/games/mini-games/".

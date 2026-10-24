@@ -8,7 +8,7 @@
  *                 the route the actor its audit entry is written for (account, roles,
  *                 permissions, request id, address).
  * Depends on:     fastify, @smg/application (AuditActor)
- * Used by:        ./adminSettings, ./adminAudit, ./adminAccounts
+ * Used by:        ./adminSettings, ./adminAudit, ./adminAccounts, ./matches, ./rounds
  * Spec:           docs/spec/05-security-threat-model.md §1, §8; Bingo 05 §3
  */
 import type { AuditActor } from '@smg/application';
@@ -18,7 +18,7 @@ export async function permitted(
   request: FastifyRequest,
   reply: FastifyReply,
   permission: string,
-): Promise<AuditActor | null> {
+): Promise<(AuditActor & { readonly accountId: string }) | null> {
   const s = request.session;
   if (s === null || s.accountId === null) {
     await reply.status(401).send({ code: 'SIGN_IN_REQUIRED' });

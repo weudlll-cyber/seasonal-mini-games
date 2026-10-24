@@ -64,6 +64,16 @@ const envSchema = z.object({
   SMG_WEB_DIR: z.string().optional(),
   // A writable directory (the uploads volume in production) for the maintenance flag.
   SMG_DATA_DIR: z.string().default('./data'),
+  // Seals round seeds at rest (AES-256-GCM, 05 §3); 64 hex characters, required outside
+  // development and tests (./roundKey).
+  SMG_ROUND_KEY: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/i, '64 hex characters')
+    .optional(),
+  // Group commit of the round actor (04 §5.3, 08 §7) and the scheduler's poll interval.
+  SMG_ENGINE_BATCH_MS: z.coerce.number().int().min(5).max(100).default(20),
+  SMG_ENGINE_BATCH_MAX: z.coerce.number().int().min(50).max(1_000).default(200),
+  SMG_SCHEDULER_POLL_MS: z.coerce.number().int().min(50).max(1_000).default(100),
 });
 
 export type Env = z.infer<typeof envSchema>;
