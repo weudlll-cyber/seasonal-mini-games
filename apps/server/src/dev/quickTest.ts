@@ -73,6 +73,8 @@ export async function startQuickTest(
   );
   await play.join(match, { key: input.playerId, accountId: input.playerId });
   for (const key of bots) await play.join(match, { key, accountId: null });
+  // Bots are always there: they count as connected (02 §4) and show so in the match.
+  for (const key of bots) play.presence.enter(match.id, key);
   const round = await play.createRound(match, input.playerId, {
     choices: {
       'round.secretMode': input.mode,

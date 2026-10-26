@@ -10,9 +10,9 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 | P2 Foundation                       | done               | `e9936aa`                                        |
 | P3 GTN domain and application       | done               | `42e2cb8`                                        |
 | P4 Server                           | done               | `9804e36`                                        |
-| P5 Seasonal specials                | done               | see `git log` on this branch                     |
-| P6 Player and host client           | running            |                                                  |
-| P7 Admin client                     | open (needs P4)    |                                                  |
+| P5 Seasonal specials                | done               | `f9c56e0`                                        |
+| P6 Player and host client           | done               | see `git log` on this branch                     |
+| P7 Admin client                     | running            |                                                  |
 | P8 E2E, load gate, play-through     | open (needs P5–P7) |                                                  |
 | P9 Dev servers and hand-over        | open (needs P8)    |                                                  |
 
@@ -494,5 +494,94 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 | `packages/game-sdk/src/roundSettings.test.ts`            | changed, +6 / −0    |
 | `packages/game-sdk/src/roundSettings.ts`                 | changed, +12 / −3   |
 | `packages/game-sdk/src/specialSettings.ts`               | new, 101 lines      |
+
+</details>
+
+## P6 — Player and host client
+
+**Built** (02 §11, §12; 03 §6; look and wording as Bingo 01 §13):
+
+- Lobby: public matches, go to a match by code, open a match (hosts), and in development builds the Quick Test link (loaded on demand, out of the production bundle).
+- Match page: join and leave, the season team picker (locked while a round runs), players with their teams and whether they are here, the host console, and the current or last round.
+- Host console: every host-chosen setting of the game's document with its bounds in force, prefilled with the last round's choices; the season (In Season while usable, or by hand); the halving switch only on a halving day; Create, Create and start, Start, End, Abort with a reason.
+- Round screen: the season banner on its token colour with icon, the special's name and rule, the halving badge; "Opens in 3 s" or the time left and the cooldown; for a roster player the cooldown ring and the game's player panel (hint card, range bar with the server's band and fallen numbers, guess field with Enter, own guesses newest first, "answer arriving in 2 s" under Frost); for everyone else the game's spectator panel; roster ("cooling down" / "ready" / solved and place) and the live feed in plain lines.
+- Result page: the headline ("bot-03 found it first — after 4 guesses."), the winning margin or "Nobody else was close.", the secret or every secret with all guesses, placings with points ("took part", "not solved", the viewer's line highlighted), the team result, and the fairness proof (commitment, revealed seed, link to `/rounds/:id/verify`).
+- Quick Test page (development): seed, mode, season (or the seed's), bots, cooldown, range, visibility, fast specials.
+- The game's web half (`games/guess-the-number/web`) and the registry's (`games/registry/web`) behind the prop types of `game-sdk` (T45); shapes in `contracts/src/http/play.ts` used by server and client (T46); the socket with replay numbers and the clock offset from three `time.sync`; the socket reconnects on every sign-in change.
+
+**Checked in a browser** (dev stack, Chromium, two full Quick Test rounds against 3 bots, seed `meadow`): desktop 1280×800 in light mode (autumn) and phone 390×844 in dark mode (winter, Frost's "answer arriving" shown); no console errors; every phone screen fits 390 px after the fixes below. The screenshots for the owner follow in P8 under `reports/night-1/`.
+
+**Fixed after looking:** the result table made the phone page 408 px wide (now scrolls inside its panel); the season icon vanished on its own colour in the banner (now on a light disc); bots showed as "away" (they now count as connected); the ring said "Ready" during the countdown (now shown only while open); the production bundle contained the Quick Test link's text (moved into the lazily loaded dev tools).
+
+**Tests:** `pnpm verify` green (187 tests in 43 files); component tests for the range bar, the player, spectator and result panels and every game line (`panels.test.tsx`), and for the cooldown ring, roster, result screen and the platform's sentences (`round.test.tsx`).
+
+**Reused from Bingo (d294585), adapted:** `game/socket.ts` → `live/socket.ts` (plus the clock offset); `useSecondsUntil.ts` → `live/useTicker.ts`; `seasonIcons.ts` and `types.ts` season colours → `season/season.ts`; `components/SeasonIcon.tsx` → `season/SeasonIcon.tsx`; the dev tools' Quick Test link pattern; `resetSocket` on session changes (removed in P2, back now).
+
+**Extracted:** `components/fields.tsx` (text, number, choice and switch fields, action button, problem line) shared by lobby, host console and Quick Test; `match/roundFields.tsx` (setting fields, season controls, `useSeasonChoice`); `PlayArea` out of `RoundScreen`; `GuessForm` and `OwnGuesses` out of `PlayerPanel`.
+
+**Docs:** DECISIONS T45, T46, T39 (rewritten: the root timeout did not reach the projects, so it now sits in the server's test harness and on the heavy chi-square test); BACKLOG Phases 1–3 split.
+
+**Noticed, left alone:** anonymous visitors cannot open the socket (the handshake needs a session), so watching needs a guest or account session; the feed starts empty after a reload (only frames seen on the page are listed; the state view carries every guess); the HTTP guess fallback is not used by the client yet (only the socket).
+
+<details><summary>P6 lines per touched file</summary>
+
+| File                                            | Lines               |
+| ----------------------------------------------- | ------------------- |
+| `apps/server/src/dev/quickTest.ts`              | changed, +2 / −0    |
+| `apps/server/src/http/routes/matches.ts`        | changed, +13 / −4   |
+| `apps/server/src/match/play.ts`                 | changed, +2 / −0    |
+| `apps/server/src/round/views.ts`                | changed, +11 / −1   |
+| `apps/server/test/harness.ts`                   | changed, +5 / −0    |
+| `apps/web/package.json`                         | changed, +2 / −0    |
+| `apps/web/src/components/fields.tsx`            | new, 163 lines      |
+| `apps/web/src/live/socket.ts`                   | new, 76 lines       |
+| `apps/web/src/live/useMatch.ts`                 | new, 54 lines       |
+| `apps/web/src/live/useRound.ts`                 | new, 73 lines       |
+| `apps/web/src/live/useTicker.ts`                | new, 28 lines       |
+| `apps/web/src/lobby/Lobby.tsx`                  | changed, +153 / −19 |
+| `apps/web/src/match/HostConsole.tsx`            | new, 208 lines      |
+| `apps/web/src/match/MatchPage.tsx`              | new, 172 lines      |
+| `apps/web/src/match/roundFields.tsx`            | new, 113 lines      |
+| `apps/web/src/round/CooldownRing.tsx`           | new, 51 lines       |
+| `apps/web/src/round/ResultScreen.tsx`           | new, 132 lines      |
+| `apps/web/src/round/RoundScreen.tsx`            | new, 171 lines      |
+| `apps/web/src/round/RoundSide.tsx`              | new, 90 lines       |
+| `apps/web/src/round/round.css`                  | new, 209 lines      |
+| `apps/web/src/round/round.test.tsx`             | new, 142 lines      |
+| `apps/web/src/round/roundText.ts`               | new, 102 lines      |
+| `apps/web/src/season/SeasonIcon.tsx`            | new, 42 lines       |
+| `apps/web/src/season/season.ts`                 | new, 48 lines       |
+| `apps/web/src/shell/AppShell.tsx`               | changed, +17 / −3   |
+| `apps/web/src/shell/DevTools.tsx`               | changed, +13 / −3   |
+| `apps/web/src/shell/QuickTest.tsx`              | new, 180 lines      |
+| `apps/web/src/shell/router.ts`                  | changed, +11 / −2   |
+| `apps/web/src/shell/session.tsx`                | changed, +14 / −9   |
+| `apps/web/src/shell/shell.test.tsx`             | changed, +10 / −2   |
+| `docs/BACKLOG.md`                               | changed, +16 / −16  |
+| `docs/DECISIONS.md`                             | changed, +3 / −1    |
+| `docs/spec/README.md`                           | changed, +1 / −1    |
+| `games/guess-the-number/package.json`           | changed, +11 / −4   |
+| `games/guess-the-number/src/views.test.ts`      | changed, +1 / −1    |
+| `games/guess-the-number/src/views.ts`           | changed, +8 / −1    |
+| `games/guess-the-number/web/PlayerPanel.tsx`    | new, 123 lines      |
+| `games/guess-the-number/web/RangeBar.tsx`       | new, 57 lines       |
+| `games/guess-the-number/web/ResultPanel.tsx`    | new, 49 lines       |
+| `games/guess-the-number/web/SpectatorPanel.tsx` | new, 63 lines       |
+| `games/guess-the-number/web/gtn.css`            | new, 88 lines       |
+| `games/guess-the-number/web/index.ts`           | new, 17 lines       |
+| `games/guess-the-number/web/panels.test.tsx`    | new, 155 lines      |
+| `games/guess-the-number/web/text.ts`            | new, 62 lines       |
+| `games/guess-the-number/web/tsconfig.json`      | new, 18 lines       |
+| `games/registry/package.json`                   | changed, +8 / −4    |
+| `games/registry/web/index.ts`                   | new, 36 lines       |
+| `games/registry/web/tsconfig.json`              | new, 18 lines       |
+| `packages/contracts/src/http/play.ts`           | new, 133 lines      |
+| `packages/contracts/src/index.ts`               | changed, +17 / −3   |
+| `packages/domain/src/index.ts`                  | changed, +1 / −0    |
+| `packages/game-sdk/src/drbg.test.ts`            | changed, +2 / −1    |
+| `packages/game-sdk/src/index.ts`                | changed, +9 / −1    |
+| `packages/game-sdk/src/web.ts`                  | new, 54 lines       |
+| `pnpm-lock.yaml`                                | changed, +33 / −0   |
+| `vitest.config.ts`                              | changed, +0 / −3    |
 
 </details>

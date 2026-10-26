@@ -11,7 +11,9 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
+    "@smg-game/registry": "workspace:*",
     "@smg/contracts": "workspace:*",
+    "@smg/game-sdk": "workspace:*",
     "@smg/ui": "workspace:*",
     "react": "19.3.1",
     "react-dom": "19.3.1",

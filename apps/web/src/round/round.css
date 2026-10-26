@@ -1,0 +1,209 @@
+/**
+ * @file   apps/web/src/round/round.css
+ * @module web/round
+ * @brief  Layout of the round, result, match and host screens.
+ *
+ * Responsibility: the season banner on its token colour (text in --color-on-season), the
+ *                 cooldown ring, the play area beside roster and feed on wide screens and
+ *                 stacked at 390 px, the result tables and the fairness proof. Colours only
+ *                 from @smg/ui tokens, so light and dark both work (Bingo 01 §13).
+ * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6
+ */
+.round {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.round-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-card);
+  background: var(--season);
+  color: var(--color-on-season);
+}
+
+.round-banner-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  background: var(--color-surface);
+}
+
+.round-banner h1 {
+  margin: 0;
+  font-size: var(--font-size-title);
+}
+
+.round-banner p {
+  margin: 0;
+}
+
+.round-badge {
+  margin-left: var(--space-2);
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--color-on-season);
+  font-size: var(--font-size-small);
+  vertical-align: middle;
+}
+
+.round-clock {
+  margin: 0;
+  font-weight: var(--font-weight-strong);
+}
+
+.round-main {
+  display: grid;
+  gap: var(--space-3);
+}
+
+@media (min-width: 840px) {
+  .round-main {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.round-play,
+.round-side {
+  display: grid;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.round-roster ul,
+.round-feed ol,
+.round-teams {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.round-roster h2,
+.round-feed h2 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-lead);
+}
+
+.round-ring {
+  position: relative;
+  width: 64px;
+  height: 64px;
+}
+
+.round-ring svg {
+  transform: rotate(-90deg);
+}
+
+.round-ring-track {
+  fill: none;
+  stroke: var(--color-surface-2);
+  stroke-width: 6;
+}
+
+.round-ring-left {
+  fill: none;
+  stroke: var(--season, var(--color-accent));
+  stroke-width: 6;
+  transition: stroke-dashoffset var(--duration-fast) linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .round-ring-left {
+    transition: none;
+  }
+}
+
+.round-ring-label {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-weight: var(--font-weight-strong);
+  font-size: var(--font-size-small);
+}
+
+.round-refusal {
+  margin: 0;
+  color: var(--color-danger);
+}
+
+.round-result {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.round-result h1 {
+  margin: 0;
+  font-size: var(--font-size-title);
+}
+
+/* A wide table scrolls inside its panel, never the page (390 px phones). */
+.round-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.round-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.round-result,
+.round-play,
+.match-head {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.round-table th,
+.round-table td {
+  text-align: left;
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.round-you {
+  background: var(--color-active-bg);
+  font-weight: var(--font-weight-strong);
+}
+
+.round-hex {
+  overflow-wrap: anywhere;
+  font-size: var(--font-size-small);
+}
+
+.match-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.match-head h1 {
+  margin: 0;
+}
+
+.match-teams {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.match-teams button[aria-pressed='true'] {
+  background: var(--season);
+  color: var(--color-on-season);
+}
+
+.host-form {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+}

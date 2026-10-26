@@ -18,9 +18,6 @@ export default defineConfig({
     // Half the cores: jsdom tests beside the integration tests' databases starve otherwise
     // (Bingo NIGHT-4 measurement).
     maxWorkers: '50%',
-    // Integration suites hash passwords and share the machine with their databases; under a
-    // full run a single test can pass 5 s (NIGHT-RUN P4).
-    testTimeout: 20_000,
     // Off for "pnpm test"; "pnpm test:coverage" turns it on. Targets of 09 §1.
     coverage: {
       provider: 'v8',

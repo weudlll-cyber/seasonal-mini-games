@@ -22,6 +22,7 @@ import { AccountPage } from '../account/AccountPage.js';
 import { Register } from '../account/Register.js';
 import { SignIn } from '../account/SignIn.js';
 import { Lobby } from '../lobby/Lobby.js';
+import { MatchPage } from '../match/MatchPage.js';
 import { hrefOf, useRoute, type Route } from './router.js';
 import { useSession } from './session.js';
 import { ThemeToggle } from './ThemeToggle.js';
@@ -31,6 +32,9 @@ import './shell.css';
 // false, so this import and everything behind it stay out of the bundle.
 const DevSignIn = import.meta.env.DEV
   ? lazy(() => import('./DevTools.js').then((m) => ({ default: m.DevSignIn })))
+  : null;
+const QuickTest = import.meta.env.DEV
+  ? lazy(() => import('./QuickTest.js').then((m) => ({ default: m.QuickTest })))
   : null;
 
 export function AppShell({ dev }: { readonly dev: boolean }): ReactElement {
@@ -51,7 +55,7 @@ export function AppShell({ dev }: { readonly dev: boolean }): ReactElement {
         <Account dev={dev} />
       </header>
       <main className="shell-main">
-        <Screen route={route} />
+        <Screen route={route} dev={dev} />
       </main>
     </>
   );
@@ -114,11 +118,21 @@ function Account({ dev }: { readonly dev: boolean }): ReactElement {
 }
 
 // Keyed by account: a sign-in as someone else mounts the screen fresh.
-function Screen({ route }: { readonly route: Route }): ReactElement {
+function Screen({ route, dev }: { readonly route: Route; readonly dev: boolean }): ReactElement {
   const who = useSession().session?.account?.id ?? 'guest';
   switch (route.name) {
     case 'lobby':
-      return <Lobby key={who} />;
+      return <Lobby key={who} dev={dev} />;
+    case 'match':
+      return <MatchPage key={`${who}/${route.code}`} code={route.code} />;
+    case 'quickTest':
+      return dev && QuickTest !== null ? (
+        <Suspense fallback={null}>
+          <QuickTest />
+        </Suspense>
+      ) : (
+        <Lobby key={who} dev={dev} />
+      );
     case 'signIn':
       return <SignIn />;
     case 'register':

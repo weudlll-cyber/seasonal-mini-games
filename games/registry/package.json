@@ -5,16 +5,20 @@
   "license": "AGPL-3.0-or-later",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./web": "./web/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit -p tsconfig.json"
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p web/tsconfig.json"
   },
   "dependencies": {
     "@smg-game/guess-the-number": "workspace:*",
-    "@smg/game-sdk": "workspace:*"
+    "@smg/game-sdk": "workspace:*",
+    "react": "19.3.1"
   },
   "devDependencies": {
-    "fast-check": "4.10.2"
+    "fast-check": "4.10.2",
+    "@types/react": "19.3.0",
+    "vite": "8.3.4"
   }
 }

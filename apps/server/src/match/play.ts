@@ -140,6 +140,8 @@ export class Play {
         fast: req.fast === true,
       });
       if (match.status === 'lobby') await setMatchStatus(this.pool, match.id, 'open');
+      // Watchers learn of the new round and load it.
+      this.changed(match.id);
       return round;
     } catch (error) {
       if (error instanceof RoundSettingsError)

@@ -13,8 +13,13 @@
  * Spec:           Bingo 12 §2, §7
  */
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import { vi } from 'vitest';
 
 import { buildApp, createPool, loadEnv, migrate, type App, type DbPool } from '../src/index.js';
+
+// Integration tests hash passwords and share the machine with their databases: in a full run a
+// single test can pass Vitest's 5 s default while it is green alone (DECISIONS T39).
+vi.setConfig({ testTimeout: 20_000 });
 
 // Starting Postgres can be slow on a cold cache, so give each suite a generous ceiling.
 export const SUITE_TIMEOUT_MS = 180_000;

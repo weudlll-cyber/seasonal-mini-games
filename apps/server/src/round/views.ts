@@ -18,7 +18,13 @@
  * Spec:           docs/spec/02-game-guess-the-number.md §11; docs/spec/06-data-model-api-realtime.md §4.2, §4.4
  */
 import type { RoundSession } from '@smg/application';
-import { frostDelay, playerResults, type RoundEvent, type RoundState } from '@smg/domain';
+import {
+  frostDelay,
+  playerResults,
+  teamResults,
+  type RoundEvent,
+  type RoundState,
+} from '@smg/domain';
 import type { GameViews } from '@smg/game-sdk';
 
 import type { StoredEvent } from './pgRoundStore.js';
@@ -35,6 +41,9 @@ function platformPart<S, Cfg>(state: RoundState<S, Cfg>, cut: number) {
     status: ended,
     season: state.season,
     secretMode: state.config.secretMode,
+    specialOn: state.config.specialOn,
+    halving: state.config.halving,
+    frostDelayMs: frostDelay(state),
     commitment: state.commitment,
     opensAt: state.opensAt,
     endsAt: state.endsAt,
@@ -75,6 +84,7 @@ export function roundView<S, A, E, Cfg, Sec>(
       ...base,
       role: 'result' as const,
       results: playerResults(state),
+      teams: teamResults(state),
       seed: session.revealedSeed(),
       game: session.result(),
     };

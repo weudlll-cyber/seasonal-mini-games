@@ -36,7 +36,9 @@ function serve(permissions: readonly string[]): void {
     'fetch',
     vi.fn((url: string) =>
       Promise.resolve(
-        new Response(JSON.stringify(url.endsWith('/session') ? session : { matches: [] })),
+        new Response(
+          JSON.stringify(url.endsWith('/session') ? session : { matches: [], games: [] }),
+        ),
       ),
     ),
   );
@@ -67,6 +69,10 @@ describe('routes', () => {
     expect(parseRoute('#/account')).toEqual({ name: 'account' });
     expect(parseRoute('#/nowhere')).toEqual({ name: 'lobby' });
     expect(hrefOf({ name: 'account' })).toBe('#/account');
+    expect(parseRoute('#/match/ABC234')).toEqual({ name: 'match', code: 'ABC234' });
+    expect(hrefOf({ name: 'match', code: 'ABC234' })).toBe('#/match/ABC234');
+    expect(parseRoute('#/quick-test')).toEqual({ name: 'quickTest' });
+    expect(hrefOf({ name: 'quickTest' })).toBe('#/quick-test');
   });
 });
 
@@ -117,7 +123,9 @@ describe('the session after a quick sign-in', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn((url: string) => {
-        if (!url.endsWith('/session')) return Promise.resolve(new Response('{}'));
+        if (!url.endsWith('/session')) {
+          return Promise.resolve(new Response('{"matches":[],"games":[]}'));
+        }
         sessionCalls += 1;
         if (sessionCalls === 1) return new Promise<Response>((r) => (answerFirst = r));
         return Promise.resolve(new Response(JSON.stringify(host)));

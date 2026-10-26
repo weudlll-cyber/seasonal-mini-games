@@ -28,6 +28,7 @@ export {
   playerResults,
   scoredPlayers,
   standings,
+  teamResults,
   type Scored,
   type StandingRow,
 } from './round/results.js';

@@ -16,13 +16,18 @@ export type Route =
   | { readonly name: 'lobby' }
   | { readonly name: 'signIn' }
   | { readonly name: 'register' }
-  | { readonly name: 'account' };
+  | { readonly name: 'account' }
+  | { readonly name: 'match'; readonly code: string }
+  | { readonly name: 'quickTest' };
 
 export function parseRoute(hash: string): Route {
-  const [first] = hash
+  const [first, second] = hash
     .replace(/^#\/?/, '')
     .split('/')
     .filter((p) => p.length > 0);
+  if (first === 'match' && second !== undefined)
+    return { name: 'match', code: decodeURIComponent(second) };
+  if (first === 'quick-test') return { name: 'quickTest' };
   if (first === 'sign-in') return { name: 'signIn' };
   if (first === 'register') return { name: 'register' };
   if (first === 'account') return { name: 'account' };
@@ -39,6 +44,10 @@ export function hrefOf(route: Route): string {
       return '#/register';
     case 'account':
       return '#/account';
+    case 'match':
+      return `#/match/${encodeURIComponent(route.code)}`;
+    case 'quickTest':
+      return '#/quick-test';
   }
 }
 

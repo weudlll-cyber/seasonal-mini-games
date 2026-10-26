@@ -39,7 +39,7 @@ describe('player view', () => {
       range: { low: 1, high: 1_000 },
       removed: [],
       band: { low: 301, high: 1_000 },
-      guesses: [{ receiveSeq: 1, value: 300, feedback: 'higher' }],
+      guesses: [{ receiveSeq: 1, receivedAt: 1_000, value: 300, feedback: 'higher' }],
       hint: null,
     });
     const frosted = views.player(t.state, 'a', { releasedBefore: 1_000 });

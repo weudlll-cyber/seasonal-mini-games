@@ -8,16 +8,19 @@
  *                 validated with zod. A summary tells the viewer whether they host or play,
  *                 names the players, and gives the host the next round's defaults (the
  *                 host-chosen keys of the game's document).
- * Depends on:     fastify, zod, @smg/application, ../../match/*, ./adminGuard
+ * Depends on:     fastify, zod, @smg/application, @smg/contracts (shapes), ../../match/*,
+ *                 ./adminGuard
  * Used by:        ../app
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1; docs/spec/02-game-guess-the-number.md §2
  */
 import type { SettingsService } from '@smg/application';
+import type { MatchDetailsView, MatchSummaryView } from '@smg/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
 import {
   activePlayers,
+  currentRoundId,
   displayNames,
   findMatch,
   listMatches,
@@ -51,7 +54,7 @@ export interface MatchRouteDeps {
   readonly pool: Parameters<typeof findMatch>[0];
 }
 
-export function summaryOf(m: MatchRow) {
+export function summaryOf(m: MatchRow): MatchSummaryView {
   return {
     code: m.code,
     gameId: m.gameId,
@@ -110,14 +113,20 @@ export function registerMatchRoutes(app: FastifyInstance, deps: MatchRouteDeps):
   registerHostRoutes(app, deps);
 }
 
-async function matchDetails(deps: MatchRouteDeps, match: MatchRow, request: FastifyRequest) {
+async function matchDetails(
+  deps: MatchRouteDeps,
+  match: MatchRow,
+  request: FastifyRequest,
+): Promise<MatchDetailsView> {
   const viewer = request.session?.accountId ?? null;
   const players = await activePlayers(deps.pool, match.id);
   const names = await displayNames(deps.pool, [
     ...players.map((p) => p.playerKey),
     match.hostId ?? '',
   ]);
-  const round = await deps.play.runningRound(match);
+  // The latest round, running or ended, so the page can show its result too.
+  const roundId = await currentRoundId(deps.pool, match.id);
+  const round = roundId === null ? null : await deps.play.rounds.get(roundId);
   const youHost = viewer !== null && viewer === match.hostId;
   return {
     ...summaryOf(match),

@@ -27,7 +27,12 @@ const hint = z
   ])
   .nullable();
 const ownGuess = z
-  .object({ receiveSeq: z.number().int(), value: z.number().int(), feedback: feedback.nullable() })
+  .object({
+    receiveSeq: z.number().int(),
+    receivedAt: z.number().int(),
+    value: z.number().int(),
+    feedback: feedback.nullable(),
+  })
   .strict();
 
 export const viewSchemas = {
@@ -104,6 +109,8 @@ export const views: GameViews<GtnState, Secrets> = {
       ),
       guesses: own.map((g) => ({
         receiveSeq: g.receiveSeq,
+        // The client shows "answer arriving in 2 s" from it under Frost.
+        receivedAt: g.receivedAt,
         value: g.value,
         feedback: shownFeedback(g, ctx),
       })),

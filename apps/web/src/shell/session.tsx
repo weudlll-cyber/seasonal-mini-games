@@ -24,6 +24,7 @@ import {
   type ReactNode,
 } from 'react';
 
+import { resetSocket } from '../live/socket.js';
 import { api, setCsrfToken } from './http.js';
 
 interface SessionInfo {
@@ -75,30 +76,34 @@ export function SessionProvider({ children }: { children: ReactNode }): ReactEle
       );
     });
   }, [refresh]);
-  const value = useMemo<SessionContextValue>(
-    () => ({
+  const value = useMemo<SessionContextValue>(() => {
+    // A new session: the game socket reconnects with the new cookie (06 §2).
+    const changed = async (): Promise<void> => {
+      resetSocket();
+      await refresh();
+    };
+    return {
       session,
       refresh,
       devSignIn: async (as) => {
         await api('/dev/sign-in', { method: 'POST', body: { as } });
-        await refresh();
+        await changed();
       },
       signOut: async () => {
         await api('/auth/logout', { method: 'POST', body: {} });
-        await refresh();
+        await changed();
       },
       signIn: async (email, password) => {
         await api('/auth/login', { method: 'POST', body: { email, password } });
-        await refresh();
+        await changed();
       },
       register: async (account) => {
         await api('/auth/register', { method: 'POST', body: account });
-        await refresh();
+        await changed();
       },
       can: (permission) => session?.permissions.includes(permission) === true,
-    }),
-    [session, refresh],
-  );
+    };
+  }, [session, refresh]);
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
 

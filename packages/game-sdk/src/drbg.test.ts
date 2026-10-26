@@ -49,7 +49,8 @@ describe('DRBG', () => {
     const chi = counts.reduce((sum, c) => sum + (c - expected) ** 2 / expected, 0);
     // 999 degrees of freedom: the 0.999 quantile is about 1 143.
     expect(chi).toBeLessThan(1_143);
-  });
+    // 100 000 draws: in a full parallel run this can pass the 5 s default.
+  }, 20_000);
 
   it('refuses a seed of the wrong length and impossible bounds', () => {
     expect(() => createDrbg(new Uint8Array(16), 'x')).toThrow();

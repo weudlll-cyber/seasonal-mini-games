@@ -7,7 +7,8 @@
  *                 setting definitions with their checks and the platform's round keys; free
  *                 of node:crypto, so browser code may import it. The DRBG and the
  *                 commitment are the separate entry @smg/game-sdk/crypto.
- * Depends on:     ./module, ./range, ./random, ./roundSettings, ./settings
+ * Depends on:     ./module, ./range, ./random, ./roundSettings, ./settings, ./specialSettings,
+ *                 ./web
  * Used by:        packages/domain, packages/contracts, games/*, apps/server
  * Spec:           docs/spec/04-software-architecture.md §3, §4
  */
@@ -59,3 +60,10 @@ export {
   type SettingValue,
   type TextDef,
 } from './settings.js';
+export type {
+  ActReply,
+  GameText,
+  PlayerPanelProps,
+  ResultPanelProps,
+  SpectatorPanelProps,
+} from './web.js';

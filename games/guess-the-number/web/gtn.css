@@ -1,0 +1,88 @@
+/*
+ * @file   games/guess-the-number/web/gtn.css
+ * @module games/guess-the-number/web
+ * @brief  Styles of the Guess The Number panels: range bar, guess field, lists.
+ *
+ * Responsibility: colours only from the design tokens (light and dark, Bingo 01 §13); the
+ *                 band takes the round's season colour from `--season`, set by the platform's
+ *                 round screen; layouts wrap down to 390 px wide.
+ * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6
+ */
+.gtn-range {
+  margin: 0;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.gtn-range-bar {
+  position: relative;
+  height: 1.25rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.gtn-range-band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--season, var(--color-accent));
+  opacity: 0.85;
+}
+
+.gtn-range-fallen {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-text-muted);
+}
+
+.gtn-range-text {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+.gtn-player,
+.gtn-spectator,
+.gtn-result {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.gtn-guess input {
+  flex: 1 1 8rem;
+  min-width: 0;
+  font-size: var(--font-size-lead);
+}
+
+.gtn-guesses,
+.gtn-players {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.gtn-frost {
+  color: var(--color-winter);
+  font-weight: var(--font-weight-strong);
+}
+
+.gtn-message {
+  margin: 0;
+  color: var(--color-danger);
+}
+
+.gtn-secret {
+  font-size: var(--font-size-lead);
+  margin: 0;
+}
+
+.gtn-you {
+  font-weight: var(--font-weight-strong);
+}
