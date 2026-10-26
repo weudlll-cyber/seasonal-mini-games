@@ -4,7 +4,7 @@
  * @brief  A real round over sockets and HTTP with Postgres: lifecycle, order, cooldown,
  *         winning, results, proof, persistence and recovery after a restart.
  *
- * Responsibility: a shared round from creation to result (roster without the host, guesses
+ * Responsibility: a shared round from creation to result (the host on the roster, guesses
  *                 refused before the open, the cooldown held across socket and HTTP, the first
  *                 correct guess wins and later ones are ROUND_OVER, results, standings and the
  *                 fairness proof); frames carry no guessed value to the room and a player's
@@ -129,11 +129,15 @@ describe('a shared round', () => {
     expect(again.json<unknown>()).toMatchObject({ code: 'ROUND_RUNNING' });
     expect((await kit.send(s.host, 'round.start', { roundId: id })).ok).toBe(true);
     const [p1, p2] = [await kit.accountId('player-1'), await kit.accountId('player-2')];
+    const host = await kit.accountId('host');
     const state = (await kit.clients.host.get(`/api/v1/rounds/${id}/state`)).json<{
       roster: { playerKey: string }[];
+      role: string;
     }>();
-    // The host is not on the roster (02 §4); teams lock while the round runs.
-    expect(state.roster.map((r) => r.playerKey)).toEqual([p1, p2]);
+    // The host joined first and plays along with a player's view (O16); teams lock while
+    // the round runs.
+    expect(state.roster.map((r) => r.playerKey)).toEqual([host, p1, p2]);
+    expect(state.role).toBe('player');
     const team = await kit.clients['player-1'].post(`/api/v1/matches/${code}/team`, {
       team: 'winter',
     });

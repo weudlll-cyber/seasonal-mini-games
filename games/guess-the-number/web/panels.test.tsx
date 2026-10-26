@@ -143,16 +143,19 @@ describe('the words', () => {
       { type: 'GuessFed', playerId: 'p1', guesses: 2, value: 40 },
       { type: 'GuessFed', playerId: 'p1', guesses: 3, value: 50, feedback: 'lower' },
       { type: 'FeedbackGiven', playerId: 'p1' },
-    ].map((e) => gtnText.event(e, names));
+    ].map((e) => {
+      const line = gtnText.event(e, names);
+      return line === null ? null : [line.text, line.playerId, line.feedback];
+    });
     expect(lines).toEqual([
-      'Leaf Fall: 1, 2 and 3 fell.',
-      'Spring Herald: The number is between 1 and 500.',
+      ['Leaf Fall: 1, 2 and 3 fell.', null, null],
+      ['Spring Herald: The number is between 1 and 500.', null, null],
       null,
-      'Halving: the range is now 1–500.',
-      'Halving: every range is now 250 numbers.',
-      'Anna guessed.',
-      'Anna guessed 40.',
-      'Anna guessed 50 — lower.',
+      ['Halving: the range is now 1–500.', null, null],
+      ['Halving: every range is now 250 numbers.', null, null],
+      ['Anna guessed.', 'p1', null],
+      ['Anna guessed 40', 'p1', null],
+      ['Anna guessed 50', 'p1', 'lower'],
       null,
     ]);
   });

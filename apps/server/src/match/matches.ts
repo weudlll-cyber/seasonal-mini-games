@@ -7,7 +7,8 @@
  *                 a six-character code without look-alikes; players join up to its limit
  *                 and leave; a player picks a season team; the match is `open` once a round
  *                 was created, and ends `closed` or `aborted`. Display names for player keys
- *                 (bots keep their key). Matches are never deleted (06 §2.3).
+ *                 (bots keep their key); the match's team standings. Matches are never
+ *                 deleted (06 §2.3).
  * Depends on:     node:crypto, ../db/pool
  * Used by:        ./play, ../http/routes/matches, ../realtime/*, ../dev/quickTest
  * Spec:           docs/spec/02-game-guess-the-number.md §2; docs/spec/06-data-model-api-realtime.md §2.1, §2.2, §3.1
@@ -224,6 +225,18 @@ export async function currentRoundId(pool: DbPool, matchId: string): Promise<str
     [matchId],
   );
   return r.rows[0]?.id ?? null;
+}
+
+// The match's team standings, in rank order (06 §2.5); a team without a round yet is absent.
+export async function teamStandings(
+  pool: DbPool,
+  matchId: string,
+): Promise<{ readonly team: Team; readonly points: number }[]> {
+  const r = await pool.query<{ team: Team; points: number }>(
+    'SELECT team, points FROM smg.match_team_standings WHERE match_id = $1 ORDER BY rank',
+    [matchId],
+  );
+  return r.rows.map((row) => ({ team: row.team, points: row.points }));
 }
 
 // Display names for player keys; a bot's key is its name.

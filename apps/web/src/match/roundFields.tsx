@@ -9,7 +9,7 @@
  *                 usable, and the halving switch only on a halving day (03 §3, §4).
  * Depends on:     react, @smg/contracts, @smg/game-sdk (bounds), ../components/fields, ../season/season,
  *                 ../shell/http
- * Used by:        ./HostConsole
+ * Used by:        ./HostMenu
  * Spec:           docs/spec/08-admin-settings.md §1, §3; docs/spec/03-seasonal-specials.md §3, §4
  */
 import type { MatchDetailsView, SeasonName, SeasonsCurrentView } from '@smg/contracts';

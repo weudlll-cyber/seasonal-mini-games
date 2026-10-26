@@ -45,6 +45,8 @@ export interface MatchDetailsView extends MatchSummaryView {
   }[];
   readonly connected: readonly string[];
   readonly round: { readonly id: string; readonly status: string } | null;
+  // The match's team standings in rank order; a team without points yet is absent.
+  readonly teamStandings: readonly { readonly team: TeamName; readonly points: number }[];
   // The host's form defaults: the game's settings document (host-chosen keys and bounds).
   readonly nextRoundDefaults: SettingsDocumentView | null;
 }
@@ -73,6 +75,8 @@ export interface RoundStateView {
   readonly status: 'created' | 'countdown' | 'open' | 'ended' | 'aborted';
   readonly season: SeasonName;
   readonly secretMode: 'shared' | 'individual';
+  // Season teams play this round (shared mode with teams on).
+  readonly teamsOn: boolean;
   readonly specialOn: boolean;
   readonly halving: boolean;
   // Frost's delay in a winter round with its special on, else null.

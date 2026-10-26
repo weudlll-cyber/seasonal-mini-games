@@ -14,7 +14,17 @@
  */
 import { expect, test } from '@playwright/test';
 
-import { abortMatch, call, closeAll, hostRound, openMatch, person, search, visit } from './play.js';
+import {
+  abortMatch,
+  attempt,
+  call,
+  closeAll,
+  hostRound,
+  openMatch,
+  person,
+  search,
+  visit,
+} from './play.js';
 
 test('journey 5: season teams lock during the round and the winner team scores', async ({
   browser,
@@ -45,11 +55,9 @@ test('journey 5: season teams lock during the round and the winner team scores',
     });
     const one = players[0];
     if (one === undefined) throw new Error('players');
-    await one.page
-      .getByRole('group', { name: 'Season team' })
-      .getByRole('button', { name: 'Winter' })
-      .click();
-    await expect(one.page.getByRole('alert')).toContainText('Teams are locked');
+    // The round view has no team picker; a change through the API is refused while it runs.
+    const locked = await attempt(one, 'POST', `/matches/${code}/team`, { team: 'winter' });
+    expect(locked.body).toMatchObject({ code: 'TEAMS_LOCKED' });
     await Promise.all(players.map((p) => search(p)));
     await expect(host.page.getByTestId('team-result')).toContainText('1 point — the winner’s team');
   } finally {

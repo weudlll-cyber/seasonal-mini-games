@@ -3,13 +3,15 @@
  * @module web/match
  * @brief  One match: its players and teams, joining and leaving, the host's console and the round.
  *
- * Responsibility: the match lobby of 02 §2: title, code and status; join or leave; the season
- *                 team picker (locked while a round runs, 03 §5); the players with their teams;
- *                 the host console; and the current or last round — the round screen while it
- *                 runs, its result afterwards. A player who joins during a round watches it
- *                 and plays from the next one.
- * Depends on:     react, @smg/contracts, ../live/*, ../shell/*, ../season/*, ./HostConsole,
- *                 ../round/RoundScreen, ../round/roundText
+ * Responsibility: while a round runs, the round view alone, filling the screen (O16: the host
+ *                 gets the same view and plays along; the host menu sits in its top bar).
+ *                 Otherwise the match lobby of 02 §2: title, code and status with the host
+ *                 menu; join or leave; the season team picker (03 §5); the players with their
+ *                 teams; and the last round's result. A player who joins during a round
+ *                 watches it and plays from the next one. The host's last round settings are
+ *                 kept here, so the next round's form is prefilled whichever layout made them.
+ * Depends on:     react, @smg/contracts, @smg/game-sdk (types), ../live/*, ../shell/*,
+ *                 ../season/*, ./HostMenu, ../round/RoundScreen, ../round/roundText
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/02-game-guess-the-number.md §2, §4, §11; docs/spec/03-seasonal-specials.md §5
  */
@@ -18,14 +20,14 @@ import { useState, type CSSProperties, type ReactElement } from 'react';
 
 import { intent } from '../live/socket.js';
 import { useMatch } from '../live/useMatch.js';
-import { useRound } from '../live/useRound.js';
+import { useRound, type RoundLive } from '../live/useRound.js';
 import { codeText } from '../round/roundText.js';
 import { RoundScreen } from '../round/RoundScreen.js';
 import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASON_NAMES, SEASONS, seasonColor } from '../season/season.js';
 import { api, ApiError } from '../shell/http.js';
 import { useSession } from '../shell/session.js';
-import { HostConsole } from './HostConsole.js';
+import { HostMenu, type Values } from './HostMenu.js';
 
 function Teams({
   match,
@@ -133,9 +135,10 @@ function JoinLeave({
   );
 }
 
+const LIVE = new Set(['created', 'countdown', 'open']);
+
 export function MatchPage({ code }: { readonly code: string }): ReactElement {
   const { match, missing, reload } = useMatch(code);
-  const viewer = useSession().session?.account?.id ?? null;
   const live = useRound(match?.round?.id ?? null);
   if (missing)
     return (
@@ -145,10 +148,54 @@ export function MatchPage({ code }: { readonly code: string }): ReactElement {
       </section>
     );
   if (match === null) return <p className="smg-muted">Loading the match…</p>;
+  return <MatchView match={match} live={live} reload={reload} />;
+}
+
+// The round view alone while a round runs, else the lobby with the last result.
+function MatchView(p: {
+  readonly match: MatchDetailsView;
+  readonly live: RoundLive;
+  readonly reload: () => Promise<void>;
+}): ReactElement {
+  const { match, live } = p;
+  const viewer = useSession().session?.account?.id ?? null;
+  const [last, setLast] = useState<Values | null>(null);
   const refresh = (): void => {
-    void reload();
+    void p.reload();
     void live.reload();
   };
+  const status = live.state?.status ?? null;
+  const hostMenu = (
+    <HostMenu match={match} roundStatus={status} reload={refresh} last={last} setLast={setLast} />
+  );
+  const round =
+    match.round === null ? null : (
+      <RoundScreen
+        live={live}
+        gameId={match.gameId}
+        viewerKey={viewer}
+        hostMenu={hostMenu}
+        teamPoints={match.teamStandings}
+      />
+    );
+  if (status !== null && LIVE.has(status)) {
+    return (
+      <div className="match-live" data-testid="match">
+        {round}
+      </div>
+    );
+  }
+  return <LobbyView match={match} refresh={refresh} hostMenu={hostMenu} round={round} />;
+}
+
+// Between rounds: the match head with the host menu, joining, the last result, the players.
+function LobbyView(p: {
+  readonly match: MatchDetailsView;
+  readonly refresh: () => void;
+  readonly hostMenu: ReactElement;
+  readonly round: ReactElement | null;
+}): ReactElement {
+  const { match } = p;
   return (
     <div className="smg-stack" data-testid="match">
       <header className="match-head">
@@ -156,15 +203,13 @@ export function MatchPage({ code }: { readonly code: string }): ReactElement {
         <span className="smg-chip">
           Code {match.code} · {match.status}
         </span>
+        {p.hostMenu}
       </header>
-      <JoinLeave match={match} reload={refresh} />
-      <HostConsole match={match} roundStatus={live.state?.status ?? null} reload={refresh} />
-      {match.round === null ? null : (
-        <RoundScreen live={live} gameId={match.gameId} viewerKey={viewer} />
-      )}
+      <JoinLeave match={match} reload={p.refresh} />
+      {p.round}
       <section className="smg-panel smg-stack" aria-labelledby="players-title">
         <h2 id="players-title">In this match</h2>
-        <Teams match={match} reload={refresh} />
+        <Teams match={match} reload={p.refresh} />
         <Players match={match} />
       </section>
     </div>

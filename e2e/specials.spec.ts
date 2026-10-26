@@ -32,9 +32,10 @@ async function quickRound(p: Person, body: Record<string, unknown>): Promise<str
   return started.matchCode;
 }
 
+// The cooldown in force, from the round view's top bar ("Cooldown 7.0 s").
 async function cooldownSeconds(page: Page): Promise<number> {
-  const text = (await page.getByText(/cooldown \d+(\.\d)? s/).textContent()) ?? '';
-  return Number(/cooldown (\d+(?:\.\d)?) s/.exec(text)?.[1] ?? 'NaN');
+  const text = (await page.getByTestId('round-cooldown').textContent()) ?? '';
+  return Number(/(\d+(?:\.\d)?) s/.exec(text)?.[1] ?? 'NaN');
 }
 
 test('journey 3: each season special shows itself', async ({ browser }) => {

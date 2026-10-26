@@ -62,6 +62,7 @@ export {
 } from './settings.js';
 export type {
   ActReply,
+  FeedLine,
   GameText,
   PlayerPanelProps,
   ResultPanelProps,

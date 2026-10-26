@@ -172,7 +172,7 @@ The platform runs one shared conformance test suite against every module in `gam
 
 ### 4.6 Adding a game
 
-1. Create `games/<game>/` with `src/` (module, settings defaults, tests) and `web/` (screen, strings).
+1. Create `games/<game>/` with `src/` (module, settings defaults, tests) and `web/` (screens, strings). The web half gives the player's main area and input row apart (the platform places them and puts its cooldown ring into the row), the spectator and result panels, and its live-list rows as `FeedLine`s (DECISIONS T62).
 2. Add one line to each half of `games/registry` (`src/index.ts` and `web/index.ts`).
 3. Add its settings to [08](08-admin-settings.md) and its rules to a new spec section.
 

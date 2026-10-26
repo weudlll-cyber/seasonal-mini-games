@@ -8,7 +8,7 @@
  *                 line describes it); numbers keep their bounds as attributes, the server checks again.
  *                 Same pattern as ../account/formParts AccountField.
  * Depends on:     react
- * Used by:        ../lobby/Lobby, ../match/HostConsole, ../shell/QuickTest
+ * Used by:        ../lobby/Lobby, ../match/HostMenu, ../shell/QuickTest
  * Spec:           Bingo 01 §13 (forms); docs/spec/02-game-guess-the-number.md §12 (keyboard play)
  */
 import { cloneElement, useId, type ReactElement } from 'react';

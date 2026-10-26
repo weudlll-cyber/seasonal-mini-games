@@ -5,13 +5,14 @@
  *
  * Responsibility: every platform code a player can meet in plain English (02 §12), the
  *                 result's headline ("Walter found it first — after 9 guesses", 02 §9), the
- *                 winning margin, and one feed line per platform event (a solve, Heatwave's new
- *                 cooldown, the end); a game's own lines come from the game's text.
- * Depends on:     @smg/contracts (shapes)
- * Used by:        ./RoundScreen, ./ResultScreen, ./Feed, ../match/HostConsole
+ *                 winning margin, and one live-list row per platform event (a solve, Heatwave's
+ *                 new cooldown, the end); a game's own rows come from the game's text.
+ * Depends on:     @smg/contracts (shapes), @smg/game-sdk (FeedLine)
+ * Used by:        ./RoundScreen, ./ResultScreen, ./Feed, ../match/HostMenu
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §12; docs/spec/03-seasonal-specials.md §2
  */
 import type { RoundStateView } from '@smg/contracts';
+import type { FeedLine } from '@smg/game-sdk';
 
 const CODES: Readonly<Record<string, string>> = {
   ROUND_NOT_OPEN: 'The round has not opened yet.',
@@ -80,22 +81,29 @@ export function marginText(state: RoundStateView): string | null {
   return `Found it ${seconds(state.margin.ms)} before ${nameOf(state.names, state.margin.playerId)}.`;
 }
 
-// The feed line of a platform event, or null (game events are the game's to word).
-export function platformLine(event: unknown, names: Names): string | null {
+const roundLine = (text: string): FeedLine => ({ text, playerId: null, feedback: null });
+
+// The live-list row of a platform event, or null (game events are the game's to word).
+export function platformLine(event: unknown, names: Names): FeedLine | null {
   const e = event as { type?: string; [k: string]: unknown };
   switch (e.type) {
-    case 'PlayerSolved':
-      return `${nameOf(names, String(e['playerId']))} found ${e['place'] === 1 ? 'it' : 'their number'} — place ${String(e['place'])}.`;
+    case 'PlayerSolved': {
+      const who = String(e['playerId']);
+      const text = `${nameOf(names, who)} found ${e['place'] === 1 ? 'it' : 'their number'} — place ${String(e['place'])}.`;
+      return { text, playerId: who, feedback: null };
+    }
     case 'CooldownChanged':
-      return `Heatwave: cooldown now ${seconds(Number(e['cooldownMs']))}.`;
+      return roundLine(`Heatwave: cooldown now ${seconds(Number(e['cooldownMs']))}.`);
     case 'RoundOpened':
-      return 'The round is open — guess!';
+      return roundLine('The round is open — guess!');
     case 'RoundEnded':
-      return 'The round has ended.';
+      return roundLine('The round has ended.');
     case 'RoundAborted':
-      return `The round was aborted: ${String(e['reason'])}.`;
+      return roundLine(`The round was aborted: ${String(e['reason'])}.`);
     case 'SpecialFired':
-      return e['special'] === 'springHerald' ? 'Spring Herald: everyone received a hint.' : null;
+      return e['special'] === 'springHerald'
+        ? roundLine('Spring Herald: everyone received a hint.')
+        : null;
     default:
       return null;
   }

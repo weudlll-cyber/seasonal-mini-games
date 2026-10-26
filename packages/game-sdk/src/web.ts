@@ -7,7 +7,8 @@
  *                 hooks, as plain types (no UI library is named here; the registry's web half
  *                 binds them to components). The platform client draws everything common —
  *                 banner, cooldown ring, roster, results, proof — and hands the game only its
- *                 own view, a way to act, and the clock.
+ *                 own view, a way to act, and the clock. The game words its live-list rows
+ *                 (`FeedLine`); the client draws them.
  * Depends on:     ./module
  * Used by:        ./index, games/<game>/web, games/registry/web, apps/web
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/02-game-guess-the-number.md §12
@@ -46,9 +47,17 @@ export interface ResultPanelProps {
   readonly viewerKey: string | null;
 }
 
+// One row of the live list: the line, the player it is about (for the colour dot) and an
+// answer the room may see, shown in colour after the line.
+export interface FeedLine {
+  readonly text: string;
+  readonly playerId: string | null;
+  readonly feedback: 'higher' | 'lower' | 'correct' | null;
+}
+
 // Plain English for the game's own rejection codes and room events (02 §12); null when the
 // text is not the game's.
 export interface GameText {
   readonly code: (code: string) => string | null;
-  readonly event: (event: unknown, names: Readonly<Record<string, string>>) => string | null;
+  readonly event: (event: unknown, names: Readonly<Record<string, string>>) => FeedLine | null;
 }

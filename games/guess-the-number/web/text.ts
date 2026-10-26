@@ -13,7 +13,7 @@
  * Spec:           docs/spec/02-game-guess-the-number.md §6, §12; docs/spec/03-seasonal-specials.md §2
  */
 import type { Feedback, GtnEvent } from '@smg-game/guess-the-number';
-import type { GameText } from '@smg/game-sdk';
+import type { FeedLine, GameText } from '@smg/game-sdk';
 
 export function answerText(value: number, feedback: Feedback): string {
   if (feedback === 'higher') return `The number is higher than ${String(value)}.`;
@@ -47,22 +47,28 @@ function listOf(numbers: readonly number[]): string {
   return all.length === 0 ? last : `${all.join(', ')} and ${last}`;
 }
 
-function eventText(e: GtnEvent, names: Readonly<Record<string, string>>): string | null {
+// A line about the round as a whole.
+const roundLine = (text: string): FeedLine => ({ text, playerId: null, feedback: null });
+
+function eventText(e: GtnEvent, names: Readonly<Record<string, string>>): FeedLine | null {
   const who = (id: string) => names[id] ?? id;
   switch (e.type) {
     // The fallen numbers by name: with a hidden range this line is the only place (T54).
     case 'NumbersRemoved':
-      return `Leaf Fall: ${listOf(e.numbers)} fell.`;
+      return roundLine(`Leaf Fall: ${listOf(e.numbers)} fell.`);
     case 'HintGiven':
-      return e.playerId === null ? `Spring Herald: ${hintText(e.hint)}` : null;
+      return e.playerId === null ? roundLine(`Spring Herald: ${hintText(e.hint)}`) : null;
     case 'RangeHalved':
-      if (e.range === null) return `Halving: every range is now ${String(e.size)} numbers.`;
-      return `Halving: the range is now ${String(e.range.low)}–${String(e.range.high)}.`;
-    case 'GuessFed': {
-      if (e.value === undefined) return `${who(e.playerId)} guessed.`;
-      if (e.feedback === undefined) return `${who(e.playerId)} guessed ${String(e.value)}.`;
-      return `${who(e.playerId)} guessed ${String(e.value)} — ${e.feedback}.`;
-    }
+      if (e.range === null)
+        return roundLine(`Halving: every range is now ${String(e.size)} numbers.`);
+      return roundLine(`Halving: the range is now ${String(e.range.low)}–${String(e.range.high)}.`);
+    // The number and the answer only as far as the round's visibility lets the room see.
+    case 'GuessFed':
+      return {
+        text: `${who(e.playerId)} guessed${e.value === undefined ? '.' : ` ${String(e.value)}`}`,
+        playerId: e.playerId,
+        feedback: e.feedback ?? null,
+      };
     case 'FeedbackGiven':
       return null;
   }

@@ -115,8 +115,8 @@ A shared round with 500 players, 10 s cooldown, lasting 5 minutes: at most 15 00
 |---|---|---|---|
 | GET | `/games` | — | anyone: registered games with name and supported modes |
 | GET | `/matches?status=&game=` | — | anyone: public matches in the lobby or open, and those ended in the last day |
-| POST | `/matches` | `{ gameId, title, visibility, maxPlayers, countsForLeaderboard? }` | `match.create` |
-| GET | `/matches/:code` | — | anyone: summary (`youHost`, player count, current round summary, `nextRoundDefaults` for the host) |
+| POST | `/matches` | `{ gameId, title, visibility, maxPlayers, countsForLeaderboard? }` | `match.create`; the host joins as the match's first player (owner decision 16) |
+| GET | `/matches/:code` | — | anyone: summary (`youHost`, player count, current round summary, `teamStandings`, `nextRoundDefaults` for the host) |
 | POST | `/matches/:code/join` · `/leave` | `{}` | `match.join` |
 | POST | `/matches/:code/team` | `{ team }` | a match player; refused with `TEAMS_LOCKED` during a countdown or open round |
 | POST | `/matches/:code/rounds` | `{ settings, startNow? }` (platform round settings of [02](02-game-guess-the-number.md) §3 and the game's settings) | the host (`round.manage`); 422 `ROUND_SETTINGS_INVALID`, 409 `ROUND_RUNNING`, 409 `NOT_A_HALVING_DAY`, 409 `IN_SEASON_UNAVAILABLE` |

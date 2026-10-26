@@ -7,7 +7,7 @@
  *                 game's document and the host's choices, ROUND_SETTINGS_INVALID; the host's
  *                 season or In Season while it is usable, IN_SEASON_UNAVAILABLE otherwise; a
  *                 halving round only on a halving day, NOT_A_HALVING_DAY) and starts it with
- *                 the players connected right now, the host excluded (02 §4); host end and
+ *                 the players connected right now, the host among them (O16, 02 §4); host end and
  *                 abort; team choice, locked while a round counts down or runs (TEAMS_LOCKED);
  *                 joining and leaving (leaving ends a round whose roster all left, "no players
  *                 left"); every change of players, teams or status is told to listeners.
@@ -150,7 +150,7 @@ export class Play {
     }
   }
 
-  // The roster: active players connected now, in join order, the host excluded (02 §4).
+  // The roster: active players connected now, in join order; the host plays along (O16, 02 §4).
   async startRound(
     match: MatchRow,
     round: LiveRound,
@@ -160,7 +160,7 @@ export class Play {
     const players =
       roster ??
       (await activePlayers(this.pool, match.id))
-        .filter((p) => p.playerKey !== match.hostId && connected.has(p.playerKey))
+        .filter((p) => connected.has(p.playerKey))
         .map((p) => ({ playerId: p.playerKey, team: p.team }));
     const values = await this.settings.values('matchmaking');
     const minPlayers = values['match.minPlayersPerRound'] as number;

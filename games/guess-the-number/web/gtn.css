@@ -30,6 +30,13 @@
   line-height: 1.1;
 }
 
+/* A phone keeps the title to two lines, so the lists below keep their room. */
+@media (max-width: 899px) {
+  .gtn-range-title {
+    font-size: var(--font-size-lead);
+  }
+}
+
 .gtn-range-note {
   margin: 0;
   font-size: var(--font-size-small);

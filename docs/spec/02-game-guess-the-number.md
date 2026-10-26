@@ -45,7 +45,7 @@ The host's form offers only values inside the bounds an admin set ([08](08-admin
 | State | Entered when | What happens |
 |---|---|---|
 | `created` | The host submits the round form. | Settings are frozen. The server generates the round seed and derives the secret or secrets from it ([04](04-software-architecture.md) §5.4). If the fairness proof is on, it publishes the commitment (§10). |
-| `countdown` | The host presses **Start round**, or immediately after creation if the host chose "start now". | The **roster** is frozen: every match player except the host who has an open connection to the match at that moment (a player who drops later stays on the roster). The server announces `opensAt` as an absolute server time = now + countdown. Spring Herald's free hint is delivered at `opensAt` ([03](03-seasonal-specials.md) §2.1). |
+| `countdown` | The host presses **Start round**, or immediately after creation if the host chose "start now". | The **roster** is frozen: every match player who has an open connection to the match at that moment, the host included (owner, decision 16: the host plays along; a player who drops later stays on the roster). The host joins their own match as a player when opening it. The server announces `opensAt` as an absolute server time = now + countdown. Spring Herald's free hint is delivered at `opensAt` ([03](03-seasonal-specials.md) §2.1). |
 | `open` | The server clock reaches `opensAt`. | Guesses are accepted (§5). Special timers start counting from `opensAt`. |
 | `ended` | An end condition is met (§8). | No more guesses are accepted. The secret is revealed, placings are fixed and standings are updated (§9). |
 | `aborted` | The host aborts, or the system does (for example a shutdown that could not resume the round). | No placings, no points. The round shows its own end page with the reason and who ended it (Bingo D17 wording). |
@@ -143,7 +143,7 @@ When `fairness.commitReveal` is on (default on), the server publishes `sha256(ro
 
 ## 11. What a spectator sees
 
-A spectator is a guest, a match player not on the roster, a solved player in individual mode, or the host.
+A spectator is a guest, a match player not on the roster, a solved player in individual mode, or an admin who is not playing. The host is on the roster like every player (owner, decision 16).
 
 | Visible | Never visible before the round ends |
 |---|---|
@@ -153,15 +153,17 @@ A spectator is a guest, a match player not on the roster, a solved player in ind
 | Live feed of accepted guesses at the visibility of §6.2; specials as they happen ("Leaf Fall: 12 numbers fell") | Spring Herald's hint in individual mode (each player's hint is about their own number) |
 | Team standing when teams are on | Anything a player sees only about their own number |
 
-The host sees what a spectator sees, plus the host controls (Start round, End round, Abort round, Next round). The host never sees a secret of a running round, as Bingo's admins never see a running match's seed (Bingo 01 §9).
+When a round runs, the host sees exactly the view every player sees and plays along: guesses, cooldown, placings and points like any player (owner, decision 16). The host controls (Start round, End round, Abort round, the next round's settings) sit in a small host menu behind one button in the top bar. The host never sees a secret of a running round, as Bingo's admins never see a running match's seed (Bingo 01 §9).
 
 ## 12. Player screen (fast mode)
 
-- "The number is somewhere between L and H" and a bar from the current low to the current high end on which fallen numbers show as gaps, with their count under it; nothing narrowed from the answers (decision 17). With the range hidden: "Any whole number", with a note that negative numbers are possible.
-- A number field and **Guess**, disabled while the cooldown runs. The cooldown ring shows the seconds left. Under Frost, a frosted marker shows "answer arriving in 2 s".
-- The player's own guesses, newest first, as chips with the answer as an arrow ("250 ↓").
-- The season banner with the token's colours and icon; Spring Herald's hint as a card; Heatwave's current cooldown value when it changes.
-- The live feed and the roster (§11); the team standing when teams are on.
+The whole round view fits the screen without a page scrollbar (desktop 1280 × 720 and up, phone 390 × 844); only its lists scroll, each inside its own box. Everyone gets the same view, the host included (decision 16):
+
+- **Top bar, one line:** the season chip in the season's colour with its icon and special (and the halving badge), shared or individual, the cooldown value (Heatwave's changes included), the time left (or "Opens in 3 s"), and for the host the host menu button (at least 44 px).
+- **Main area, the largest part:** "The number is somewhere between L and H" in large type and a full-width bar from L to H on which fallen numbers show as gaps, with their count under it; nothing narrowed from the answers (decision 17). With the range hidden: "Any whole number", with a note that negative numbers are possible. Spring Herald's hint under it. Then "Your guesses" as chips with the answer as an arrow ("250 ↓"). Then the input row: the cooldown ring, the number field (it takes a minus sign; a ± button where negative numbers are possible, DECISIONS T57) and a large **Guess** button, disabled while the cooldown runs; Enter sends. Under Frost a chip shows "answer arriving in 2 s".
+- **Desktop:** a right column about 380 px wide with the **Live** list (a fixed-height box, newest at the top, each row a dot in the player's colour, the line, and higher or lower in colour) and, when teams are on, the four teams as small score tiles in one row.
+- **Phone:** the top bar shortened (season chip, cooldown, time, host button), the range block, the guess chips, the Live list filling the remaining height, the team tiles in one row, and the input row pinned at the bottom for the thumb.
+- Lobby, setup and result pages may scroll.
 - Every line is plain English, as in Bingo 01 §13 ("Your cooldown is now 7 s — Heatwave"). Server codes reach the screen as sentences. All animations respect `prefers-reduced-motion`. Sounds are off by default. Accessibility target WCAG 2.2 AA, with full keyboard play (type, Enter).
 
 ## 13. Out of scope for v1

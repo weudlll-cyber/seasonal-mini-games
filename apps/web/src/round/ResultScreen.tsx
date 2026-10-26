@@ -73,7 +73,7 @@ function Teams({ state }: { readonly state: RoundStateView }): ReactElement | nu
   return (
     <section aria-labelledby="teams-title">
       <h2 id="teams-title">Team result</h2>
-      <ul className="round-teams" data-testid="team-result">
+      <ul className="round-teams-result" data-testid="team-result">
         {teams.map((t) => (
           <li key={t.team}>
             <SeasonIcon season={t.team} size="1rem" /> {SEASON_NAMES[t.team]}: {t.points}{' '}

@@ -5,9 +5,10 @@
  *
  * Responsibility: the match routes of 06 §3.1 with their permissions (`match.create` to
  *                 open, `match.join` to join, the match's host for close and abort), every body
- *                 validated with zod. A summary tells the viewer whether they host or play,
- *                 names the players, and gives the host the next round's defaults (the
- *                 host-chosen keys of the game's document).
+ *                 validated with zod. The host joins their own match as a player when opening
+ *                 it, and plays along (O16). A summary tells the viewer whether they host or
+ *                 play, names the players, gives the team standings, and gives the host the
+ *                 next round's defaults (the host-chosen keys of the game's document).
  * Depends on:     fastify, zod, @smg/application, @smg/contracts (shapes), ../../match/*,
  *                 ./adminGuard
  * Used by:        ../app
@@ -26,6 +27,7 @@ import {
   listMatches,
   myMatches,
   openMatch,
+  teamStandings,
   type MatchRow,
 } from '../../match/matches.js';
 import { PlayError, type Play } from '../../match/play.js';
@@ -94,6 +96,8 @@ export function registerMatchRoutes(app: FastifyInstance, deps: MatchRouteDeps):
     if (body.data.maxPlayers > limit)
       return reply.status(422).send({ code: 'MATCH_TOO_LARGE', limit });
     const match = await openMatch(deps.pool, { ...body.data, hostId: actor.accountId });
+    // The host plays along in their own match (O16).
+    await deps.play.join(match, { key: actor.accountId, accountId: actor.accountId });
     return reply.status(201).send(summaryOf(match));
   });
 
@@ -140,6 +144,7 @@ async function matchDetails(
     })),
     connected: [...deps.play.presence.connected(match.id)],
     round: round === null ? null : { id: round.id, status: round.status() },
+    teamStandings: await teamStandings(deps.pool, match.id),
     nextRoundDefaults: youHost ? await deps.settings.view(`game.${match.gameId}`, []) : null,
   };
 }

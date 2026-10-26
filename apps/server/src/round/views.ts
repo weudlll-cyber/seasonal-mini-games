@@ -41,6 +41,8 @@ function platformPart<S, Cfg>(state: RoundState<S, Cfg>, cut: number) {
     status: ended,
     season: state.season,
     secretMode: state.config.secretMode,
+    // Teams play in shared rounds only (03 §5).
+    teamsOn: state.config.teamsOn && state.config.secretMode === 'shared',
     specialOn: state.config.specialOn,
     halving: state.config.halving,
     frostDelayMs: frostDelay(state),

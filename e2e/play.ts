@@ -5,8 +5,9 @@
  *
  * Responsibility: a person is a browser context signed in with the development sign-in (or a
  *                 guest session) and its page; `call` reaches the API as that person with the
- *                 CSRF header; a host opens a match the players join and watch; the host's form
- *                 creates a round; `search` plays a player's round from the screen only — the
+ *                 CSRF header (`attempt` for an answer that may be a refusal); a host opens a
+ *                 match the players join and watch (the host plays too, O16); the host menu's
+ *                 form creates a round; `search` plays a player's round from the screen only — the
  *                 middle of what the range and the player's own answers leave, until the round
  *                 ends or the player solved — exactly as a person reading the screen would.
  *                 Matches are aborted at the end, never deleted (CLAUDE.md).
@@ -39,12 +40,13 @@ export async function person(browser: Browser, who: Who, viewport = DESKTOP): Pr
   return { who, ctx, page };
 }
 
-export async function call<T>(
+// One API request as that person, whatever its answer.
+export async function attempt(
   p: Person,
   method: 'GET' | 'POST' | 'DELETE',
   path: string,
   data?: unknown,
-): Promise<T> {
+): Promise<{ readonly status: number; readonly body: unknown }> {
   const session = (await (await p.ctx.request.get('api/v1/session')).json()) as {
     csrfToken: string | null;
   };
@@ -53,8 +55,19 @@ export async function call<T>(
     headers: { 'x-csrf-token': session.csrfToken ?? '' },
     ...(data === undefined ? {} : { data }),
   });
-  expect(r.status(), `${method} ${path}`).toBeLessThan(400);
-  return (r.status() === 204 ? undefined : await r.json()) as T;
+  return { status: r.status(), body: r.status() === 204 ? undefined : await r.json() };
+}
+
+// An API request that must succeed.
+export async function call<T>(
+  p: Person,
+  method: 'GET' | 'POST' | 'DELETE',
+  path: string,
+  data?: unknown,
+): Promise<T> {
+  const answer = await attempt(p, method, path, data);
+  expect(answer.status, `${method} ${path}`).toBeLessThan(400);
+  return answer.body as T;
 }
 
 export async function visit(p: Person, code: string): Promise<void> {
@@ -83,12 +96,20 @@ export async function openMatch(
   return m.code;
 }
 
+// The host menu open: the round form or the running round's controls (O16).
+export async function hostMenu(host: Person): Promise<void> {
+  const panel = host.page.getByTestId('host-console');
+  if (!(await panel.isVisible())) await host.page.getByTestId('host-menu').click();
+  await expect(panel).toBeVisible();
+}
+
 // The host fills the round form by the fields' labels and creates (and starts) the round.
 export async function hostRound(
   host: Person,
   fields: Readonly<Record<string, string>>,
   start = true,
 ): Promise<void> {
+  await hostMenu(host);
   const form = host.page.getByTestId('round-form');
   for (const [label, value] of Object.entries(fields)) {
     // Not exact: a select's accessible name also holds its options' text.

@@ -7,7 +7,8 @@
  *                 navigation as pills with the current one solid, the round light/dark toggle,
  *                 account and the dev sign-in menu) over a centred main column, sticky from 640 px with focus kept below
  *                 it; on phones the bar wraps into two rows, scrolls away with the page and
- *                 the navigation scrolls sideways. Colours come from @smg/ui.
+ *                 the navigation scrolls sideways. While a round runs, the page is one screen
+ *                 high and the round view fills what the bar leaves. Colours come from @smg/ui.
  * Spec:           Bingo 01 §13
  */
 
@@ -132,6 +133,22 @@
   max-width: var(--content-width);
   margin: 0 auto;
   padding: var(--space-3) var(--gutter) var(--space-4);
+}
+
+/* While a round runs the page is exactly one screen: the bar on top, the round view in the
+   rest (../round/round.css), and no page scrollbar. */
+#root:has(.match-live) {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+}
+
+.shell-main:has(.match-live) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2) var(--gutter);
 }
 
 @media (max-width: 640px) {

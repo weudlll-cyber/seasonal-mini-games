@@ -1,103 +1,242 @@
 /**
  * @file   apps/web/src/round/round.css
  * @module web/round
- * @brief  Layout of the round, result, match and host screens.
+ * @brief  Layout of the round view, the result, the match head and the host menu.
  *
- * Responsibility: the season banner on its token colour (text in --color-on-season), the
- *                 cooldown ring, the play area beside roster and feed on wide screens and
- *                 stacked at 390 px, the result tables and the fairness proof. Colours only
- *                 from @smg/ui tokens, so light and dark both work (Bingo 01 §13).
+ * Responsibility: the round view fills the space under the app's top bar exactly and never
+ *                 scrolls the page (only its lists scroll inside themselves): on a desktop a
+ *                 one-line top bar, the main area beside a 380 px column with the Live list
+ *                 and the team tiles, and the input row under the main area; on a phone the
+ *                 top bar, the main area, the Live list taking the remaining height, the team
+ *                 tiles, and the input row pinned at the bottom. Then the result tables and the
+ *                 fairness proof, the match head and the host menu. Colours only from @smg/ui
+ *                 tokens, so light and dark both work (Bingo 01 §13).
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6
  */
-.round {
-  display: grid;
-  gap: var(--space-3);
+
+/* The match page while a round runs: as tall as the space left under the app bar. */
+.match-live {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.round-banner {
+.round-live {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(6rem, 1fr) auto;
+  grid-template-areas: 'top' 'main' 'side' 'input';
+}
+
+@media (min-width: 900px) {
+  .round-live {
+    grid-template-columns: minmax(0, 1fr) 380px;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'top top'
+      'main side'
+      'input side';
+  }
+}
+
+/* The top bar: one line, the season chip first, the host menu last. */
+.round-top {
+  grid-area: top;
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border-radius: var(--radius-card);
-  background: var(--season);
-  color: var(--color-on-season);
+  gap: var(--space-1) var(--space-2);
+  min-width: 0;
+  white-space: nowrap;
 }
 
-.round-banner-icon {
+.round-season {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  min-height: var(--hit-target);
+  padding: 0 0.9rem 0 0.35rem;
+  border-radius: var(--radius-pill);
+  background: var(--season);
+  color: var(--color-on-season);
+  overflow: hidden;
+}
+
+.round-season-icon {
   flex: none;
   display: grid;
   place-items: center;
-  width: 3.25rem;
-  height: 3.25rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
   background: var(--color-surface);
 }
 
-.round-banner h1 {
-  margin: 0;
-  font-size: var(--font-size-title);
-}
-
-.round-banner p {
-  margin: 0;
-}
-
 .round-badge {
-  margin-left: var(--space-2);
-  padding: 0 var(--space-2);
+  padding: 0 0.6rem;
   border-radius: var(--radius-pill);
   border: 2px solid var(--color-on-season);
   font-size: var(--font-size-small);
-  vertical-align: middle;
 }
 
-.round-clock {
-  margin: 0;
+.round-fact {
+  flex: none;
   font-weight: var(--font-weight-strong);
 }
 
+.round-top .host-menu {
+  margin-left: auto;
+}
+
 .round-main {
+  grid-area: main;
   display: grid;
-  gap: var(--space-3);
+  min-height: 0;
+  overflow: hidden;
 }
 
-@media (min-width: 840px) {
-  .round-main {
-    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-    align-items: start;
-  }
-}
-
-.round-play,
 .round-side {
-  display: grid;
-  gap: var(--space-3);
-  min-width: 0;
+  grid-area: side;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-height: 0;
 }
 
-.round-roster ul,
-.round-feed ol,
-.round-teams {
-  margin: 0;
-  padding-left: 1.25rem;
+.round-input {
+  grid-area: input;
   display: grid;
   gap: var(--space-1);
 }
 
-.round-roster h2,
+/* The Live list: its own height, newest at the top, scrolling only inside its box. */
+.round-feed {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2);
+}
+
 .round-feed h2 {
-  margin: 0 0 var(--space-2);
+  margin: 0 0 var(--space-1);
   font-size: var(--font-size-lead);
+}
+
+.round-feed ol {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  overflow-y: auto;
+}
+
+.round-feed li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.round-dot {
+  flex: none;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--dot, transparent);
+  border: 1px solid var(--color-border);
+}
+
+.round-answer {
+  font-weight: var(--font-weight-strong);
+  white-space: nowrap;
+}
+
+.round-answer[data-feedback='higher'] {
+  color: var(--color-success);
+}
+
+.round-answer[data-feedback='lower'] {
+  color: var(--color-danger);
+}
+
+/* The team tiles: four in one row. */
+.round-teams {
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+.round-team {
+  display: grid;
+  justify-items: center;
+  gap: 0.15rem;
+  padding: 0.4rem 0.25rem;
+  border-radius: var(--radius);
+  border: 2px solid var(--season);
+  background: var(--color-card);
+  font-size: var(--font-size-small);
+}
+
+.round-team-points {
+  font-size: var(--font-size-lead);
+}
+
+/* A phone: the facts that do not fit go (their words stay for screen readers), the team
+   tiles shrink to icon and points, and the Live list takes the height that is left. */
+@media (max-width: 899px) {
+  .round-mode,
+  .round-special {
+    display: none;
+  }
+
+  .round-fact-label,
+  .round-team-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .round-team {
+    grid-auto-flow: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    padding: 0.25rem;
+  }
+
+  .round-feed {
+    padding: var(--space-1) var(--space-2);
+  }
+
+  .round-main {
+    padding: var(--space-2);
+    max-height: 45dvh;
+  }
 }
 
 .round-ring {
   position: relative;
-  width: 64px;
-  height: 64px;
+  flex: none;
+  width: 52px;
+  height: 52px;
 }
 
 .round-ring svg {
+  display: block;
+  width: 100%;
+  height: 100%;
   transform: rotate(-90deg);
 }
 
@@ -158,7 +297,6 @@
 }
 
 .round-result,
-.round-play,
 .match-head {
   min-width: 0;
   overflow-wrap: anywhere;
@@ -189,16 +327,22 @@
   font-size: var(--font-size-small);
 }
 
+.round-teams-result {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: var(--space-1);
+}
+
 .match-head {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  justify-content: space-between;
+  align-items: center;
   gap: var(--space-2);
 }
 
 .match-head h1 {
-  margin: 0;
+  margin: 0 auto 0 0;
 }
 
 .match-teams {
@@ -210,6 +354,32 @@
 .match-teams button[aria-pressed='true'] {
   background: var(--season);
   color: var(--color-on-season);
+}
+
+/* The host menu: one button, its panel over the page (opaque, as menus are). */
+.host-menu {
+  position: relative;
+}
+
+.host-menu-button {
+  min-width: var(--hit-target);
+  min-height: var(--hit-target);
+}
+
+.host-menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.4rem);
+  z-index: 20;
+  width: min(42rem, calc(100vw - 2 * var(--gutter)));
+  max-height: min(36rem, calc(100dvh - 8rem));
+  overflow-y: auto;
+  padding: var(--space-3);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-raised);
+  white-space: normal;
 }
 
 .host-form {

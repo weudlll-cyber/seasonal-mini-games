@@ -2,12 +2,15 @@
 /**
  * @file   apps/web/src/round/round.test.tsx
  * @module web/round
- * @brief  The platform's round components and words: ring, roster, result, refusals.
+ * @brief  The platform's round components and words: ring, Live list, teams, result, refusals.
  *
- * Responsibility: the cooldown ring counts down and says Ready; the roster says who is
- *                 cooling down, ready or solved; the result screen gives the headline, the
- *                 winning margin, placings with "took part", the team result and the fairness
- *                 proof; every platform refusal and event has its plain sentence (02 §12).
+ * Responsibility: the cooldown ring counts down and says Ready; the Live list shows each row
+ *                 with the player's colour dot and the answer in colour, newest at the top; a
+ *                 player's colour is their team's when teams play, else a season colour by
+ *                 roster order; the team tiles show each team's match points, only when teams
+ *                 play; the result screen gives the headline, the winning margin, placings with
+ *                 "took part", the team result and the fairness proof; every platform refusal
+ *                 and event has its plain sentence (02 §12).
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./CooldownRing, ./RoundSide,
  *                 ./ResultScreen, ./roundText
  * Spec:           docs/spec/02-game-guess-the-number.md §7, §9, §11, §12; docs/spec/09-testing-strategy.md §2
@@ -18,7 +21,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { CooldownRing } from './CooldownRing.js';
 import { ResultScreen } from './ResultScreen.js';
-import { Roster } from './RoundSide.js';
+import { Feed, playerColor, TeamTiles } from './RoundSide.js';
 import { codeText, endHeadline, marginText, platformLine } from './roundText.js';
 
 afterEach(() => {
@@ -30,6 +33,7 @@ const ended: RoundStateView = {
   status: 'ended',
   season: 'autumn',
   secretMode: 'shared',
+  teamsOn: true,
   specialOn: true,
   halving: false,
   frostDelayMs: null,
@@ -94,14 +98,48 @@ describe('the cooldown ring', () => {
   });
 });
 
-describe('the roster', () => {
-  it('says who is solved, cooling down or ready', () => {
-    render(<Roster state={ended} now={10_000} />);
-    const rows = [...screen.getByTestId('roster').querySelectorAll('li')].map(
-      (li) => li.textContent,
+describe('the Live list and the teams', () => {
+  it('shows rows with the player colour and the answer in colour, newest first', () => {
+    const game = {
+      text: {
+        code: () => null,
+        event: () => ({ text: 'Anna guessed 40', playerId: 'a', feedback: 'lower' as const }),
+      },
+    } as never;
+    const feed = [
+      { key: '2', at: 2, event: { type: 'Game', event: {} } },
+      { key: '1', at: 1, event: { type: 'RoundOpened' } },
+    ];
+    render(<Feed feed={feed} game={game} state={ended} />);
+    const rows = [...screen.getByTestId('feed').querySelectorAll('li')];
+    expect(rows.map((li) => li.textContent)).toEqual([
+      'Anna guessed 40 lower ↓',
+      'The round is open — guess!',
+    ]);
+    expect(rows[0]?.querySelector('[data-feedback="lower"]')).not.toBeNull();
+    expect(rows[0]?.querySelector<HTMLElement>('.round-dot')?.style.getPropertyValue('--dot')).toBe(
+      'var(--color-winter)',
     );
-    expect(rows[0]).toContain('Walter 9 guesses · solved, place 1');
-    expect(rows[1]).toContain('Anna 4 guesses · cooling down');
+  });
+
+  it('colours players by team when teams play, else by roster order', () => {
+    expect(playerColor(ended, 'w')).toBe('var(--color-autumn)');
+    const plain = { ...ended, teamsOn: false };
+    expect([playerColor(plain, 'w'), playerColor(plain, 'a')]).toEqual([
+      'var(--color-spring)',
+      'var(--color-summer)',
+    ]);
+  });
+
+  it('shows the four team tiles with match points only when teams play', () => {
+    const points = [{ team: 'autumn' as const, points: 3 }];
+    render(<TeamTiles state={ended} points={points} />);
+    const tiles = screen.getByTestId('team-tiles').textContent;
+    expect(tiles).toContain('Autumn3');
+    expect(tiles).toContain('Spring0');
+    cleanup();
+    render(<TeamTiles state={{ ...ended, teamsOn: false }} points={points} />);
+    expect(screen.queryByTestId('team-tiles')).toBeNull();
   });
 });
 
@@ -131,12 +169,14 @@ describe('the words', () => {
     expect(endHeadline({ ...ended, endReason: 'timeUp' })).toBe('Time is up.');
     expect(marginText({ ...ended, margin: null })).toBe('Nobody else was close.');
     expect(marginText({ ...ended, secretMode: 'individual' })).toBeNull();
-    expect(platformLine({ type: 'CooldownChanged', cooldownMs: 7_000 }, {})).toBe(
+    expect(platformLine({ type: 'CooldownChanged', cooldownMs: 7_000 }, {})?.text).toBe(
       'Heatwave: cooldown now 7.0 s.',
     );
-    expect(platformLine({ type: 'PlayerSolved', playerId: 'a', place: 2 }, ended.names)).toBe(
-      'Anna found their number — place 2.',
-    );
+    expect(platformLine({ type: 'PlayerSolved', playerId: 'a', place: 2 }, ended.names)).toEqual({
+      text: 'Anna found their number — place 2.',
+      playerId: 'a',
+      feedback: null,
+    });
     expect(platformLine({ type: 'GuessAccepted' }, {})).toBeNull();
   });
 });

@@ -89,7 +89,11 @@ test('journey 2: an individual round places solvers in order and ends with time 
     const rows = await host.page.getByTestId('placings').locator('tbody tr').allTextContents();
     expect(rows[0]).toMatch(/^1\s*dev-player-1/);
     expect(rows[1]).toMatch(/^2\s*dev-player-2/);
-    expect(rows[2]).toMatch(/^not solved\s*dev-player-3/);
+    // The host plays too (O16) and, like player 3, did not guess.
+    expect(rows.slice(2).sort()).toEqual([
+      expect.stringMatching(/^not solved\s*dev-host/),
+      expect.stringMatching(/^not solved\s*dev-player-3/),
+    ]);
     await expect(host.page.getByTestId('result').getByRole('heading', { level: 1 })).toHaveText(
       'Time is up.',
     );

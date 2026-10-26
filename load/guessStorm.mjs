@@ -127,7 +127,8 @@ async function main() {
   const match = await call(host, 'POST', '/matches', {
     gameId: 'guess-the-number',
     title: `load ${String(PLAYERS)}`,
-    maxPlayers: PLAYERS,
+    // The host is a player of their own match too (O16).
+    maxPlayers: Math.min(1_000, PLAYERS + 1),
     countsForLeaderboard: false,
   });
   await inGroups(players, 25, (c) => call(c, 'POST', `/matches/${match.code}/join`, {}));
