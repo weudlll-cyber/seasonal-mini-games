@@ -4,17 +4,17 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 
 ## Status
 
-| Piece                               | State              | Commit                                           |
-| ----------------------------------- | ------------------ | ------------------------------------------------ |
-| P1 Record O8–O15, T21; spec updated | done               | `eaeadd5` on master (spec/v1 merged and deleted) |
-| P2 Foundation                       | done               | `e9936aa`                                        |
-| P3 GTN domain and application       | done               | `42e2cb8`                                        |
-| P4 Server                           | done               | `9804e36`                                        |
-| P5 Seasonal specials                | done               | `f9c56e0`                                        |
-| P6 Player and host client           | done               | see `git log` on this branch                     |
-| P7 Admin client                     | running            |                                                  |
-| P8 E2E, load gate, play-through     | open (needs P5–P7) |                                                  |
-| P9 Dev servers and hand-over        | open (needs P8)    |                                                  |
+| Piece                               | State           | Commit                                           |
+| ----------------------------------- | --------------- | ------------------------------------------------ |
+| P1 Record O8–O15, T21; spec updated | done            | `eaeadd5` on master (spec/v1 merged and deleted) |
+| P2 Foundation                       | done            | `e9936aa`                                        |
+| P3 GTN domain and application       | done            | `42e2cb8`                                        |
+| P4 Server                           | done            | `9804e36`                                        |
+| P5 Seasonal specials                | done            | `f9c56e0`                                        |
+| P6 Player and host client           | done            | `b64cfd2`                                        |
+| P7 Admin client                     | done            | see `git log` on this branch                     |
+| P8 E2E, load gate, play-through     | running         |                                                  |
+| P9 Dev servers and hand-over        | open (needs P8) |                                                  |
 
 ## Needs the owner
 
@@ -583,5 +583,61 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 | `packages/game-sdk/src/web.ts`                  | new, 54 lines       |
 | `pnpm-lock.yaml`                                | changed, +33 / −0   |
 | `vitest.config.ts`                              | changed, +0 / −3    |
+
+</details>
+
+## P7 — Admin client
+
+**Built** (spec 08; T47): `apps/admin` as a Vite and React app on port 5411 (it was a shell).
+
+- Sign-in with e-mail and password, and in development builds "Sign in as admin".
+- Areas by permission: Settings (`admin.view`), Seasons (`season.manage`), Abuse (`abuse.view`), Audit log (`audit.read`).
+- Settings: every document (matches, seasons, integrations, security, rate limits, and one per game). Each key shows its label, key and help; the catalogue default; the value in force; the min and max in force (narrowed by the document, never wider than the catalogue); who may change it ("host per round; default by game admin", "security admin", …); when a change applies to running rounds; and its source ("owner (O15)", "proposal", "technical"). The keys the server lists as editable for the viewer get inputs for a new default and narrowed bounds; saving needs the read version and takes a comment into the audit log. A newer version, a forbidden key or a wrong value come back in plain words.
+- Seasons: the feed's last answer, age and error, "Refresh now"; halving days with source, add and remove.
+- Abuse: accounts by 7-day score with their recent signals in plain words; suspension with a reason (`account.suspend`).
+- Audit log: 50 entries at a time with filter and paging; "Check the chain".
+
+**Checked in a browser** (dev stack, Chromium 1280×900): signed in as admin, changed the Guess The Number cooldown default to 12 s with a comment (version 2, the value in force updated), saw the entry in the audit log, checked the chain, opened abuse and seasons, and set the default back. No console errors.
+
+**Fixed after looking:** the chain check showed "breaks at entry -1" for an intact chain; the server answers `-1` for intact (the domain's `brokenLink`), and the page now says "The chain is intact."
+
+**Tests:** `pnpm verify` green (191 tests in 43 files); admin component tests: a setting row's columns (default 500, in force 300, min 2, max 800 narrowed, role, effect, source), its editor only when editable, the words of 08 §2, the chain message, sign-in without an account, and areas by permission.
+
+**Reused:** the player client's `http.ts` contract (copied: an app may not import another app, 04 §3), `@smg/ui` styles, the settings definitions and `effectiveBounds` of `game-sdk`. Nothing from Bingo (its admin app is a shell too).
+
+**Removed:** the admin shell's `index.ts` and `index.test.ts`.
+
+**Docs:** DECISIONS T47; BACKLOG Phase 3 closed, Phase 6 split.
+
+**Noticed, left alone:** 08 §1 also asks for version history with diff and rollback, confirm dialogs and 2FA step-up; the server keeps every version, but there is no route or screen for history yet (BACKLOG Phase 6). The production image does not serve the admin build yet.
+
+<details><summary>P7 lines per touched file</summary>
+
+| File                                       | Lines              |
+| ------------------------------------------ | ------------------ |
+| `apps/admin/index.html`                    | new, 22 lines      |
+| `apps/admin/package.json`                  | changed, +18 / −3  |
+| `apps/admin/src/App.tsx`                   | new, 109 lines     |
+| `apps/admin/src/SignIn.tsx`                | new, 70 lines      |
+| `apps/admin/src/TextInput.tsx`             | new, 49 lines      |
+| `apps/admin/src/abuse/AbusePage.tsx`       | new, 120 lines     |
+| `apps/admin/src/admin.css`                 | new, 91 lines      |
+| `apps/admin/src/admin.test.tsx`            | new, 130 lines     |
+| `apps/admin/src/audit/AuditPage.tsx`       | new, 106 lines     |
+| `apps/admin/src/http.ts`                   | new, 51 lines      |
+| `apps/admin/src/index.test.ts`             | removed (18 lines) |
+| `apps/admin/src/index.ts`                  | removed (14 lines) |
+| `apps/admin/src/main.tsx`                  | new, 27 lines      |
+| `apps/admin/src/seasons/SeasonsPage.tsx`   | new, 137 lines     |
+| `apps/admin/src/settings/SettingRow.tsx`   | new, 163 lines     |
+| `apps/admin/src/settings/SettingsPage.tsx` | new, 186 lines     |
+| `apps/admin/src/settings/settingText.ts`   | new, 59 lines      |
+| `apps/admin/tsconfig.json`                 | changed, +8 / −2   |
+| `apps/admin/vite.config.ts`                | new, 31 lines      |
+| `docs/BACKLOG.md`                          | changed, +2 / −2   |
+| `docs/DECISIONS.md`                        | changed, +1 / −0   |
+| `docs/spec/README.md`                      | changed, +1 / −1   |
+| `eslint.config.js`                         | changed, +1 / −1   |
+| `pnpm-lock.yaml`                           | changed, +39 / −1  |
 
 </details>

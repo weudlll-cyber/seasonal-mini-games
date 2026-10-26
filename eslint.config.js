@@ -65,7 +65,7 @@ const LAYER_POLICIES = [
   allow('registry-web', ['game-web', 'game-sdk']),
   allow('server', ['domain', 'application', 'contracts', 'game-sdk', 'registry']),
   allow('web', ['contracts', 'ui', 'game-sdk', 'registry-web']),
-  allow('admin', ['contracts', 'ui']),
+  allow('admin', ['contracts', 'ui', 'game-sdk']),
 ];
 
 // Default exports are banned so every import names what it uses.

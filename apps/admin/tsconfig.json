@@ -3,10 +3,16 @@
  * @module admin
  * @brief  TypeScript settings for @smg/admin.
  *
- * Responsibility: extend the shared strict base and limit the program to src/.
+ * Responsibility: the bundler settings of the browser with React's JSX, limited to src/ and
+ *                 the Vite config.
  * Spec:           docs/spec/10-repository-structure.md §2
  */
 {
   "extends": "../../tsconfig.bundler.json",
-  "include": ["src"]
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "types": ["vite/client"]
+  },
+  "include": ["src", "vite.config.ts"]
 }

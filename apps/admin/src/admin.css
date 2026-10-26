@@ -1,0 +1,91 @@
+/**
+ * @file   apps/admin/src/admin.css
+ * @module admin
+ * @brief  Layout of the admin app: top bar, main column, wide tables, inline editors.
+ *
+ * Responsibility: colours only from @smg/ui tokens (light and dark follow the system); wide
+ *                 tables scroll inside their panel, never the page.
+ * Spec:           docs/spec/08-admin-settings.md §1; Bingo 11 §1
+ */
+body {
+  margin: 0;
+}
+
+.admin-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--gutter);
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-bar nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  flex: 1;
+}
+
+.admin-bar nav a[aria-current='page'] {
+  font-weight: var(--font-weight-strong);
+  text-decoration: underline;
+}
+
+.admin-main {
+  max-width: 96rem;
+  margin: 0 auto;
+  padding: var(--space-3) var(--gutter);
+  display: grid;
+  gap: var(--space-3);
+}
+
+.admin-sign-in {
+  max-width: 28rem;
+}
+
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.admin-tabs button[aria-pressed='true'] {
+  background: var(--color-solid);
+  color: var(--color-on-solid);
+}
+
+.admin-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-small);
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-table ul {
+  margin: 0;
+  padding-left: 1rem;
+}
+
+.admin-editor {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 9rem;
+}
+
+.admin-diff {
+  overflow-wrap: anywhere;
+}
