@@ -8,18 +8,20 @@
  *                 with the player's colour dot and the answer in colour, newest at the top; a
  *                 player's colour is their team's when teams play, else a season colour by
  *                 roster order; the team tiles show each team's match points, only when teams
- *                 play; the result screen gives the headline, the winning margin, placings with
- *                 "took part", the team result and the fairness proof; every platform refusal
- *                 and event has its plain sentence (02 §12).
- * Depends on:     vitest, @testing-library/react, @smg/contracts, ./CooldownRing, ./RoundSide,
- *                 ./ResultScreen, ./roundText
+ *                 play; a player name stays whole, shortened, and opens on a tap; the result
+ *                 screen gives the headline, the winning margin, placings with "took part",
+ *                 the team result and the fairness proof; every platform refusal and event
+ *                 has its plain sentence (02 §12).
+ * Depends on:     vitest, @testing-library/react, @smg/contracts, ./CooldownRing, ./PlayerName,
+ *                 ./RoundSide, ./ResultScreen, ./roundText
  * Spec:           docs/spec/02-game-guess-the-number.md §7, §9, §11, §12; docs/spec/09-testing-strategy.md §2
  */
 import type { RoundStateView } from '@smg/contracts';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { CooldownRing } from './CooldownRing.js';
+import { PlayerName } from './PlayerName.js';
 import { ResultScreen } from './ResultScreen.js';
 import { Feed, playerColor, TeamTiles } from './RoundSide.js';
 import { codeText, endHeadline, marginText, platformLine } from './roundText.js';
@@ -140,6 +142,20 @@ describe('the Live list and the teams', () => {
     cleanup();
     render(<TeamTiles state={{ ...ended, teamsOn: false }} points={points} />);
     expect(screen.queryByTestId('team-tiles')).toBeNull();
+  });
+});
+
+describe('a player name', () => {
+  it('stays on one line, shortened, and shows in full on a tap or focus', () => {
+    render(<PlayerName name="bot-03" />);
+    const name = screen.getByTitle('bot-03');
+    expect(name.className).toBe('player-name');
+    expect(name.getAttribute('tabindex')).toBe('0');
+    expect(name.dataset['full']).toBe('false');
+    fireEvent.click(name);
+    expect(name.dataset['full']).toBe('true');
+    fireEvent.blur(name);
+    expect(name.dataset['full']).toBe('false');
   });
 });
 

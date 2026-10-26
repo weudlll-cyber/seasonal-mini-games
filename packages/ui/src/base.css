@@ -4,12 +4,12 @@
  * @brief  Base styles and the small set of shared components (buttons, panels, fields).
  *
  * Responsibility: the Seasonal Entertainment website's look on the tokens of ./tokens.css:
- *                 the page background with its four token glows (fixed while the page
- *                 scrolls), type, a visible accent focus ring on every control, buttons as
- *                 pills (primary solid, secondary glass with a hairline) and fields at least
- *                 44 px high (--hit-target), panels as translucent cards with the card radius,
- *                 chips and the LIVE badge. Layout works from 360 px phone width up; nothing
- *                 here sets colours of its own.
+ *                 the page background with its four token glows (the root's background, sized
+ *                 to the whole page, so it covers every height), type, a visible accent focus
+ *                 ring on every control, buttons as pills (primary solid, secondary glass with
+ *                 a hairline) and fields at least 44 px high (--hit-target), panels as
+ *                 translucent cards with the card radius, chips and the LIVE badge. Layout
+ *                 works from 360 px phone width up; nothing here sets colours of its own.
  * Spec:           Bingo 01 §13; Seasonal Entertainment docs/DESIGN.md
  */
 
@@ -19,15 +19,19 @@
   box-sizing: border-box;
 }
 
+/* The page's glows are the root's own background, sized to the whole document and at least
+   the screen, so they cover the page at every height (a body background with
+   background-attachment: fixed ended in a hard edge on tall pages and in full-page captures,
+   and mobile browsers ignore that attachment anyway). */
 html {
   -webkit-text-size-adjust: 100%;
+  min-height: 100%;
+  background: var(--page-background);
 }
 
 body {
   margin: 0;
   min-height: 100dvh;
-  background: var(--page-background);
-  background-attachment: fixed;
   color: var(--color-text);
   font-family: var(--font-family);
   font-weight: var(--font-weight-body);

@@ -317,6 +317,22 @@
   }
 }
 
+/* A name never breaks inside a word; too long, it ends in an ellipsis until focus or a tap
+   shows it whole (./PlayerName). */
+.player-name {
+  display: inline-block;
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.player-name:focus-visible,
+.player-name[data-full='true'] {
+  max-width: none;
+}
+
 .round-you {
   background: var(--color-active-bg);
   font-weight: var(--font-weight-strong);

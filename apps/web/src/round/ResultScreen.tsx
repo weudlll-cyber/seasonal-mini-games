@@ -11,7 +11,7 @@
  *                 published at creation, the seed revealed now, and the link to check them
  *                 (02 §9, §10; 03 §5).
  * Depends on:     react, @smg/contracts, @smg-game/registry/web (types), ../season/SeasonIcon,
- *                 ../shell/http, ./roundText
+ *                 ../shell/http, ./PlayerName, ./roundText
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §10; docs/spec/03-seasonal-specials.md §5
  */
@@ -22,6 +22,7 @@ import type { ReactElement } from 'react';
 import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASON_NAMES } from '../season/season.js';
 import { BASE_PATH } from '../shell/http.js';
+import { PlayerName } from './PlayerName.js';
 import { endHeadline, marginText } from './roundText.js';
 
 function placeText(state: RoundStateView, place: number | null): string {
@@ -54,7 +55,7 @@ function Placings({
               <td>{placeText(state, r.place)}</td>
               <td>
                 {r.team === null ? null : <SeasonIcon season={r.team} size="1rem" />}{' '}
-                {state.names[r.playerId] ?? r.playerId}
+                <PlayerName name={state.names[r.playerId] ?? r.playerId} />
                 {r.playerId === viewerKey ? ' (you)' : ''}
               </td>
               <td>{r.guesses}</td>
