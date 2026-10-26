@@ -40,7 +40,11 @@ test('journey 10: a hidden range reaches no screen and a guess outside it is ans
     await expect(p.page.getByTestId('range')).toContainText('Any whole number');
     await expect(p.page.getByTestId('guess-button')).toBeEnabled({ timeout: 10_000 });
     await fitsScreen(p.page);
-    expect(await p.page.locator('body').textContent()).not.toMatch(/4321|8765/);
+    // Every whole number on the page, so a guess like -14644321 does not count as -4321.
+    const shown = ((await p.page.locator('body').textContent()) ?? '').match(/-?\d+/g) ?? [];
+    const numbers = shown.map((n) => Math.abs(Number(n)));
+    expect(numbers).not.toContain(4_321);
+    expect(numbers).not.toContain(8_765);
     await p.page.getByTestId('guess-input').fill('900000000');
     await p.page.getByTestId('guess-button').click();
     const chip = p.page.getByTestId('own-guesses').locator('li').first();
