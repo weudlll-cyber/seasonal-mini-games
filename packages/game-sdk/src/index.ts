@@ -33,7 +33,7 @@ export type {
   SpecialHooks,
   ViewCtx,
 } from './module.js';
-export { inRange, intersect, rangeSize, type Range } from './range.js';
+export { inRange, rangeSize, type Range } from './range.js';
 export type { Drbg, RoundRng } from './random.js';
 export { HEATWAVE_FLOOR_MS, type SpecialTiming } from './specialSettings.js';
 export {

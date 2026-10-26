@@ -73,7 +73,7 @@ test('journey 6: a reload mid-round keeps the cooldown and delivers the held ans
     await expect(p.page.getByTestId('guess-button')).toBeEnabled({ timeout: 10_000 });
     await p.page.getByTestId('guess-input').fill('333333');
     await p.page.getByTestId('guess-button').click();
-    await expect(p.page.getByTestId('own-guesses')).toContainText('Answer arriving in');
+    await expect(p.page.getByTestId('own-guesses')).toContainText('answer arriving in');
     await p.page.reload();
     await expect(p.page.getByTestId('cooldown')).not.toHaveText('Ready');
     await expect(p.page.getByTestId('own-guesses').locator('li')).toHaveCount(1);

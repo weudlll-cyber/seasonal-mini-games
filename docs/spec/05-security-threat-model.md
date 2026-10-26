@@ -43,7 +43,8 @@ The cooldown (owner, decision 3) exists **only** on the server. The client's coo
 - **Audience routing.** Events addressed to `player:<id>` never go to the room. Frost-held events are not part of any state answer until they are delivered (no early read through `GET …/state`).
 - **No other path.** The admin API, the host console, logs (Pino redaction of `seed`, `secret*`), error messages, metrics labels and webhooks never carry a secret or seed of a running round. The host and admins see what a spectator sees (Bingo 01 §9 principle).
 - **No timing side channel.** The work done for a guess does not depend on how close it is to the secret: one comparison and constant-size answers. With Frost, every answer is held for exactly the same delay.
-- **After the end:** the secret or secrets are public (shown on the result). With the fairness proof on, so is the seed ([02](02-game-guess-the-number.md) §10).
+- **A hidden range is a secret too.** With the range hidden ([02](02-game-guess-the-number.md) §3, owner decision 19), its bounds reach no client while the round runs: the views carry `range: null`, no guess is refused as out of range, Spring Herald gives no half hint and no halving runs (DECISIONS T52–T56). P2 searches for the bounds as for the secrets.
+- **After the end:** the secret or secrets are public (shown on the result), and so is the range. With the fairness proof on, so is the seed ([02](02-game-guess-the-number.md) §10).
 
 ## 4. Cryptographic randomness
 

@@ -111,20 +111,23 @@ function PlayArea({ state, game, viewerKey, now, reload }: PlayProps): ReactElem
     void reload();
     return reply;
   };
+  const panel = {
+    view: state.game,
+    act,
+    canAct: state.status === 'open' && mine.cooldownEndsAt <= now && !mine.solved,
+    frostDelayMs: state.frostDelayMs,
+    now: serverNow,
+    season: state.season,
+  };
+  // The cooldown exists only while the round is open.
+  const ring =
+    state.status === 'open' ? (
+      <CooldownRing endsAt={mine.cooldownEndsAt} cooldownMs={state.cooldownMs} now={now} />
+    ) : null;
   return (
     <>
-      {/* The cooldown exists only while the round is open. */}
-      {state.status === 'open' ? (
-        <CooldownRing endsAt={mine.cooldownEndsAt} cooldownMs={state.cooldownMs} now={now} />
-      ) : null}
-      <game.Player
-        view={state.game}
-        act={act}
-        canAct={state.status === 'open' && mine.cooldownEndsAt <= now && !mine.solved}
-        frostDelayMs={state.frostDelayMs}
-        now={serverNow}
-        season={state.season}
-      />
+      <game.Player {...panel} />
+      <game.Input {...panel} ring={ring} />
       {refusal === null ? null : (
         <p role="status" className="round-refusal">
           {refusal}

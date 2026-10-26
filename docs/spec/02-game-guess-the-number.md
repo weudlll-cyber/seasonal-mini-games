@@ -22,7 +22,8 @@ The server picks a secret whole number in a range (default 1–1 000). Players t
 |---|---|---|---|
 | Secret mode | `shared` or `individual` | `shared` | Owner, decision 5: chosen per round |
 | Cooldown | 3 s – 60 s, whole seconds, the same for every player | 10 s | Owner, decision 3: range 3–60 s |
-| Range | lowest and highest number, both inclusive | 1–1 000 | Setting |
+| Range | lowest and highest number, both inclusive, each from −1 000 000 to 1 000 000, at least 10 numbers; negative numbers are allowed | 1–1 000 | Owner, decision 18 |
+| Show range | shown or hidden: a hidden range reaches no client until the end (§5.1, §12) | shown | Owner, decision 19 |
 | Season | `inSeason` (follow the website) or one of the four seasons | `inSeason` when the feed is available, otherwise the host must pick | Owner, decision 6 ([03](03-seasonal-specials.md) §3) |
 | Season special | on or off | on | [03](03-seasonal-specials.md) §2 |
 | Halving round | on or off; offered only on a halving day | off | [03](03-seasonal-specials.md) §4 |
@@ -60,7 +61,7 @@ A guess is accepted only if all of these hold, checked in this order. The first 
 1. The round is `open` (`ROUND_NOT_OPEN` before `opensAt`, `ROUND_OVER` after the end).
 2. The guesser is on the round's roster (`NOT_IN_ROUND`).
 3. In individual mode, the guesser has not solved their number yet (`ALREADY_SOLVED`).
-4. The value is a whole number inside the round's **current** range ([03](03-seasonal-specials.md) §4 can shrink it) (`OUT_OF_RANGE`).
+4. The value is a whole number inside the round's **current** range ([03](03-seasonal-specials.md) §4 can shrink it) (`OUT_OF_RANGE`). With the range hidden (owner, decision 19) this check does not apply: any whole number from −1 000 000 000 to 1 000 000 000 is accepted and answered `higher` or `lower`, and starts the cooldown, because `OUT_OF_RANGE` would tell where the range is (DECISIONS T53). The input takes whole numbers in that span in both cases.
 5. The value has not been removed by Leaf Fall (`NUMBER_REMOVED`).
 6. The guesser has not guessed this value before in this round (`ALREADY_GUESSED`) (a repeat costs nothing and tells nothing).
 7. The guesser's cooldown has ended (`COOLDOWN_ACTIVE`, with the time it ends).
@@ -83,7 +84,7 @@ For an accepted guess `g` and the guesser's secret `s`:
 | `g > s` | `lower` — "The number is lower than 412." |
 | `g = s` | `correct` |
 
-Feedback goes to the guesser. Without Frost it is sent as soon as the guess is processed. With Frost it is sent after the Frost delay ([03](03-seasonal-specials.md) §2.4). The guesser's screen keeps the narrowed range ("between 413 and 731") computed **by the server** from their own feedback. The client renders it and never derives it.
+Feedback goes to the guesser. Without Frost it is sent as soon as the guess is processed. With Frost it is sent after the Frost delay ([03](03-seasonal-specials.md) §2.4). No narrowed range is shown, neither the player's own nor a shared one (owner, decision 17): the server computes none and no view, frame or contract carries one. Each player sees their own past guesses with their answers ("250 ↓").
 
 ### 6.2 What other players learn in shared mode
 
@@ -93,7 +94,7 @@ Setting `feedbackVisibility`, chosen by the host per round. The default is `full
 |---|---|
 | `own` | That a player guessed, and that it was not correct. Not the number. |
 | `numbers` | The player and the number guessed. Not the feedback. |
-| `full` (default) | The player, the number and the feedback. The search becomes a fully shared one: everyone narrows the range together, and the server sends every player the shared band (the intersection of all feedback so far) along with their own. |
+| `full` (default) | The player, the number and the feedback. The search becomes a fully shared one: everyone reads every answer in the live list (no narrowed range is computed, decision 17). |
 
 In individual mode other players always see only that a player guessed, plus their solve and placing. Their numbers and feedback mean nothing for anyone else.
 
@@ -131,7 +132,7 @@ In individual mode other players always see only that a player guessed, plus the
 
 ## 9. After the round
 
-- **Reveal:** shared mode shows the secret to everyone. Individual mode shows every player their own number and lists every player's number in the result. If the fairness proof is on (§10), the round seed is published as well.
+- **Reveal:** shared mode shows the secret to everyone. Individual mode shows every player their own number and lists every player's number in the result. The result names the round's range, which reveals a hidden one (DECISIONS T52). If the fairness proof is on (§10), the round seed is published as well.
 - **Result screen:** the end reason in plain words ("Walter found 731 first — after 9 guesses"), placings (§8), in shared mode the **winning margin** (owner, decision 13: how much earlier the winning guess arrived than the next correct one, "found it 0.4 s before Anna"; the round closes at the winning guess, so the server keeps noting correct guesses that it answers `ROUND_OVER` for `round.marginWindowS` (*proposal*, default 2 s, 0.5–10 s) after it; the first one sets the margin, and without one the result says "nobody else was close"), the viewer's own line highlighted, team standing when teams are on ([03](03-seasonal-specials.md) §5), and the match standings. The host sees **Next round** with the last settings prefilled.
 - **Points:** placings give match points from a table (`points.placement`, [08](08-admin-settings.md)): shared winner 10; individual 10, 7, 5, 3 for places 1–4 and 1 for every further solver. Match standings are the sum over the match's rounds. Ties are ordered by number of wins, then by the earliest win's receive time.
 - **Leaderboard:** adopted from Bingo 01 §10 (season board per calendar quarter, all-time board), with league points from match standings. The flag `countsForLeaderboard` is set per match (Bingo 01 §3a.3), default on.
@@ -156,9 +157,9 @@ The host sees what a spectator sees, plus the host controls (Start round, End ro
 
 ## 12. Player screen (fast mode)
 
-- A range bar from the current low to the current high end, with the player's own narrowed band highlighted, removed numbers struck through, and the halving window when a halving round runs.
+- "The number is somewhere between L and H" and a bar from the current low to the current high end on which fallen numbers show as gaps, with their count under it; nothing narrowed from the answers (decision 17). With the range hidden: "Any whole number", with a note that negative numbers are possible.
 - A number field and **Guess**, disabled while the cooldown runs. The cooldown ring shows the seconds left. Under Frost, a frosted marker shows "answer arriving in 2 s".
-- The player's own guesses, newest first, each with its feedback.
+- The player's own guesses, newest first, as chips with the answer as an arrow ("250 ↓").
 - The season banner with the token's colours and icon; Spring Herald's hint as a card; Heatwave's current cooldown value when it changes.
 - The live feed and the roster (§11); the team standing when teams are on.
 - Every line is plain English, as in Bingo 01 §13 ("Your cooldown is now 7 s — Heatwave"). Server codes reach the screen as sentences. All animations respect `prefers-reduced-motion`. Sounds are off by default. Accessibility target WCAG 2.2 AA, with full keyboard play (type, Enter).

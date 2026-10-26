@@ -5,8 +5,8 @@
  *
  * Responsibility: a range of 1–1 000 000 with secrets at 777 777 (shared) or 900 001 + k
  *                 (individual), and guesses from 1 to 600 000, so no guess hits or borders a
- *                 secret and no answer narrows a band onto one; a leaked secret is then the
- *                 only way its digits can appear in a view or event.
+ *                 secret; a leaked secret is then the only way its digits can appear in a
+ *                 view or event.
  * Depends on:     @smg/game-sdk (ConformanceKit), ./rules, ./secrets, ./settings
  * Used by:        ./index, games/registry
  * Spec:           docs/spec/09-testing-strategy.md §3 P2
@@ -30,6 +30,7 @@ export const gtnConformance: ConformanceKit<GuessAction, GtnConfig, Secrets> = {
     config: {
       rangeLow: 1,
       rangeHigh: 1_000_000,
+      rangeVisible: true,
       feedbackVisibility: 'full',
       repeatGuessRejected: true,
       springHintType: 'parity',

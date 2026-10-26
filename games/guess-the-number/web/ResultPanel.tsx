@@ -4,23 +4,17 @@
  * @brief  The game's part of the result page: the secret or every player's, and the guesses.
  *
  * Responsibility: the revealed secret in shared mode, or every player's own number in
- *                 individual mode with the viewer's line first (02 §9), and each player's
- *                 guesses with their answers. The platform shows placings, points, margin,
- *                 teams and the fairness proof around it.
- * Depends on:     react, @smg/game-sdk (props)
+ *                 individual mode with the viewer's line first (02 §9), the round's range
+ *                 (revealed here when it was hidden, T52), and each player's guesses with
+ *                 their answers. The platform shows placings, points, margin, teams and the
+ *                 fairness proof around it.
+ * Depends on:     react, @smg/game-sdk (props), @smg-game/guess-the-number (types)
  * Used by:        ./index
  * Spec:           docs/spec/02-game-guess-the-number.md §9
  */
+import type { ResultView } from '@smg-game/guess-the-number';
 import type { ResultPanelProps } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
-
-interface ResultView {
-  readonly secret: number | null;
-  readonly secrets: Readonly<Record<string, number>> | null;
-  readonly guesses: Readonly<
-    Record<string, readonly { readonly value: number; readonly feedback: string }[]>
-  >;
-}
 
 export function ResultPanel({ view, names, viewerKey }: ResultPanelProps): ReactElement {
   const v = view as ResultView;
@@ -34,6 +28,9 @@ export function ResultPanel({ view, names, viewerKey }: ResultPanelProps): React
           The number was <strong data-testid="secret">{v.secret}</strong>.
         </p>
       )}
+      <p data-testid="result-range">
+        The range was {v.range.low} to {v.range.high}.
+      </p>
       <ul className="gtn-players" aria-label="Every guess">
         {players.map((id) => (
           <li key={id} className={id === viewerKey ? 'gtn-you' : undefined}>

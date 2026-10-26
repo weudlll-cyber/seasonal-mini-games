@@ -3,10 +3,12 @@
  * @module games/guess-the-number
  * @brief  The game's own keys of document `game.guess-the-number` and its frozen config.
  *
- * Responsibility: range, feedback visibility, the repeated-guess rule and the game's parts of
- *                 the specials (Spring Herald's hint type, where Leaf Fall and halving stop)
- *                 (08 §3) as setting definitions; reading frozen values into the config; the cross-key rule
- *                 that a range holds at least 10 numbers (`rangeHigh` ≥ `rangeLow` + 9).
+ * Responsibility: range (negative numbers allowed, O18) and whether players see it (O19),
+ *                 feedback visibility, the repeated-guess rule and the game's parts of the
+ *                 specials (Spring Herald's hint type, where Leaf Fall and halving stop) (08 §3)
+ *                 as setting definitions; reading frozen values into the config; the cross-key
+ *                 rule that a range holds at least 10 numbers (`rangeHigh` ≥ `rangeLow` + 9);
+ *                 and that a hidden range allows no halving (DECISIONS T55).
  *                 The platform's round keys come first in the document (game-sdk).
  * Depends on:     @smg/game-sdk (SettingDef, GameSettings)
  * Used by:        ./module, ./index
@@ -19,6 +21,8 @@ export type Visibility = 'own' | 'numbers' | 'full';
 export interface GtnConfig {
   readonly rangeLow: number;
   readonly rangeHigh: number;
+  // Off: players are not told the range until the end (O19, 02 §3).
+  readonly rangeVisible: boolean;
   readonly feedbackVisibility: Visibility;
   readonly repeatGuessRejected: boolean;
   readonly springHintType: 'parity' | 'half';
@@ -36,12 +40,12 @@ const defs: readonly SettingDef[] = [
     key: 'round.rangeLow',
     kind: 'int',
     label: 'Lowest number',
-    help: 'The secret is at least this.',
+    help: 'The secret is at least this. Negative numbers are allowed.',
     default: 1,
-    min: 0,
-    max: 999_990,
+    min: -1_000_000,
+    max: 1_000_000,
     unit: '',
-    ...owner('O15'),
+    ...owner('O18'),
     ...host,
   },
   {
@@ -50,10 +54,19 @@ const defs: readonly SettingDef[] = [
     label: 'Highest number',
     help: 'The secret is at most this; at least 9 above the lowest number.',
     default: 1_000,
-    min: 9,
+    min: -1_000_000,
     max: 1_000_000,
     unit: '',
-    ...owner('O15'),
+    ...owner('O18'),
+    ...host,
+  },
+  {
+    key: 'round.rangeVisible',
+    kind: 'bool',
+    label: 'Show range',
+    help: 'Off: players are not told the lowest and highest number until the end.',
+    default: true,
+    ...owner('O19'),
     ...host,
   },
   {
@@ -116,6 +129,7 @@ export const gtnSettings: GameSettings<GtnConfig> = {
   read: (values) => ({
     rangeLow: values['round.rangeLow'] as number,
     rangeHigh: values['round.rangeHigh'] as number,
+    rangeVisible: values['round.rangeVisible'] as boolean,
     feedbackVisibility: values['round.feedbackVisibility'] as Visibility,
     repeatGuessRejected: values['round.repeatGuessRejected'] as boolean,
     springHintType: values['spring.hintType'] as 'parity' | 'half',
@@ -126,4 +140,7 @@ export const gtnSettings: GameSettings<GtnConfig> = {
     cfg.rangeHigh >= cfg.rangeLow + 9
       ? null
       : 'The highest number must be at least 9 above the lowest.',
+  // Halving would tell players where the range is: a hidden range runs as a normal season
+  // round instead (proposal, docs/OPEN.md).
+  halvingAllowed: (cfg) => cfg.rangeVisible,
 };

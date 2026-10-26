@@ -7,9 +7,9 @@
  *                 guest session) and its page; `call` reaches the API as that person with the
  *                 CSRF header; a host opens a match the players join and watch; the host's form
  *                 creates a round; `search` plays a player's round from the screen only — the
- *                 middle of the band the server sent, until the round ends or the player
- *                 solved — exactly as a person reading the screen would. Matches are aborted at
- *                 the end, never deleted (CLAUDE.md).
+ *                 middle of what the range and the player's own answers leave, until the round
+ *                 ends or the player solved — exactly as a person reading the screen would.
+ *                 Matches are aborted at the end, never deleted (CLAUDE.md).
  * Depends on:     @playwright/test, ./devStack, ./screens
  * Used by:        ./rounds.spec, ./specials.spec, ./players.spec, ./access.spec
  * Spec:           docs/spec/09-testing-strategy.md §4; docs/spec/02-game-guess-the-number.md §12
@@ -101,15 +101,28 @@ export async function hostRound(
   await expect(host.page.getByTestId('round-banner')).toBeVisible();
 }
 
-// The band the server sent, read from the range bar ("Between 51 and 100" or "1 to 100").
-async function band(page: Page): Promise<{ low: number; high: number }> {
+// What the player knows, worked out as a person does (the server sends no narrowed range,
+// O17): the range on screen, or the input's span while it is hidden, cut by their own answers.
+async function window(page: Page): Promise<{ low: number; high: number }> {
   const text =
     (await page
-      .getByTestId('band')
+      .getByTestId('range')
       .textContent({ timeout: 3_000 })
       .catch(() => '')) ?? '';
-  const [low, high] = [...text.matchAll(/\d+/g)].map((m) => Number(m[0]));
-  return { low: low ?? 1, high: high ?? low ?? 1 };
+  const shown = /between (-?\d+) and (-?\d+)/.exec(text);
+  let low = shown === null ? -1_000_000_000 : Number(shown[1]);
+  let high = shown === null ? 1_000_000_000 : Number(shown[2]);
+  const answers = await page
+    .locator('[data-testid="own-guesses"] li')
+    .evaluateAll((items) =>
+      items.map((li) => [Number.parseInt(li.textContent, 10), li.dataset['feedback']] as const),
+    )
+    .catch(() => []);
+  for (const [value, feedback] of answers) {
+    if (feedback === 'higher') low = Math.max(low, value + 1);
+    if (feedback === 'lower') high = Math.min(high, value - 1);
+  }
+  return { low, high: Math.max(low, high) };
 }
 
 // Plays from the screen until the round ends or this player solved; returns the guesses made.
@@ -129,7 +142,7 @@ export async function search(p: Person, deadline = 120_000): Promise<number> {
     const solved = own?.includes('is the number!') ?? false;
     if (solved) return guesses;
     if (await button.isEnabled({ timeout: 3_000 }).catch(() => false)) {
-      const b = await band(page);
+      const b = await window(page);
       // The round may end between the check and the click: a short wait, then look again.
       const filled = await page
         .getByTestId('guess-input')

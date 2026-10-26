@@ -13,7 +13,7 @@
 import type { GameModule } from '@smg/game-sdk';
 import { z } from 'zod';
 
-import { decide, validate, type GuessAction } from './rules.js';
+import { decide, GUESS_LIMIT, validate, type GuessAction } from './rules.js';
 import { deriveSecrets, type Secrets } from './secrets.js';
 import { gtnSettings, type GtnConfig } from './settings.js';
 import { gtnSpecials } from './specials.js';
@@ -30,8 +30,8 @@ export const guessTheNumber: GameModule<GtnState, GuessAction, GtnEvent, GtnConf
     teams: true,
   },
   settings: gtnSettings,
-  // Any finite number; whether it is a whole number in range is check 4 (OUT_OF_RANGE).
-  actionSchema: z.object({ value: z.number() }).strict(),
+  // A whole number the input takes (DECISIONS T53); whether it is in the range is check 4.
+  actionSchema: z.object({ value: z.number().int().min(-GUESS_LIMIT).max(GUESS_LIMIT) }).strict(),
   deriveSecrets,
   createRound: createState,
   validate,

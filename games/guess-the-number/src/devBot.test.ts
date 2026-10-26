@@ -4,8 +4,9 @@
  * @brief  The development bot finds the number from its own answers and then stops.
  *
  * Responsibility: playing only from its player view, the bot solves a 1–1 000 round in at
- *                 most 30 guesses, never repeats or picks a removed number, and has nothing
- *                 to do once solved or when its band is used up.
+ *                 most 30 guesses and a hidden −500–500 round in at most 45, never repeats or
+ *                 picks a removed number, and has nothing to do once solved or when every
+ *                 number its answers leave was tried.
  * Depends on:     vitest, ./devBot, ./fakes, ./module
  * Spec:           docs/spec/09-testing-strategy.md §5
  */
@@ -39,11 +40,24 @@ describe('the development bot', () => {
     }
   });
 
-  it('has nothing to do when every number of its band was tried', () => {
+  it('finds a number in a hidden range that reaches below zero', () => {
+    const hidden = { rangeLow: -500, rangeHigh: 500, rangeVisible: false };
+    const t = new Table({ mode: 'shared', value: -123 }, input('shared', ['bot'], hidden));
+    let guesses = 0;
+    for (;;) {
+      const action = gtnDevBot(guessTheNumber.views.player(t.state, 'bot', all), pick);
+      if (action === null) break;
+      expect(t.play('bot', action.value).ok).toBe(true);
+      guesses += 1;
+    }
+    expect(guesses).toBeLessThanOrEqual(45);
+    expect(t.state.players.bot?.guesses.at(-1)).toMatchObject({ value: -123, feedback: 'correct' });
+  });
+
+  it('has nothing to do when every number its answers leave was tried', () => {
     const view = {
       range: { low: 1, high: 2 },
       removed: [2],
-      band: { low: 1, high: 2 },
       guesses: [{ receiveSeq: 1, value: 1, feedback: 'higher' }],
     };
     expect(gtnDevBot(view, pick)).toBeNull();

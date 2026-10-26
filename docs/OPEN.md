@@ -15,6 +15,8 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 
 **(r) Load gate at 1 000 players.** One plain shared round each, on the development machine (Windows laptop, server under `tsx` in development mode, driver on the same machine), not the reference VPS of 09 §5. 500 players + 100 spectators: acknowledgement p95 133 ms / p99 190 ms, feedback p95 133 ms, nothing lost, duplicated or reordered, one winner, memory 357 MiB; event-loop lag p99 peaked at 87 ms (limit 50 ms). 1 000 players: the fairness checks all hold, but acknowledgement p95 is 4.6 s (limit 300 ms): the server's one thread is saturated, and the profile shows socket writes as the main cost (DECISIONS T49 already merges room frames). Proposal: measure L1 and L4 on the reference VPS before changing the design; if L4 still fails there, raise `SMG_ROOM_FRAME_MS` for large rounds or move the socket fan-out off the round's thread (04 §5.6). Numbers: `reports/night-1/load-500.json`, `load-1000.json`.
 
+**(s) Halving round with a hidden range.** A halving window tells where the range is, so with the range hidden (O19) a halving round runs as a normal season round of that season: the season and its special stay, halving is off (DECISIONS T55). With it, Spring Herald gives the odd-or-even hint instead of "which half" (T56). Proposal: keep it so; the host form says it beside the halving switch.
+
 ## Spec conflicts
 
 Resolved by the decision rules (owner decisions first, then the more specific section) and listed here for the owner to confirm.

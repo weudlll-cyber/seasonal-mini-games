@@ -21,6 +21,7 @@ import type { GtnEvent, GtnState } from './state.js';
 export const defaultConfig: GtnConfig = {
   rangeLow: 1,
   rangeHigh: 1_000,
+  rangeVisible: true,
   feedbackVisibility: 'full',
   repeatGuessRejected: true,
   springHintType: 'parity',

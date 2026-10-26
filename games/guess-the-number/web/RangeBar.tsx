@@ -1,12 +1,13 @@
 /**
  * @file   games/guess-the-number/web/RangeBar.tsx
  * @module games/guess-the-number/web
- * @brief  The range bar: the current range, the narrowed band and the fallen numbers.
+ * @brief  The range block: where the number is, the bar and the fallen numbers.
  *
- * Responsibility: one bar from the range's low to its high end with the band the server sent
- *                 highlighted (02 §12), fallen numbers struck as ticks (at most 200 drawn; the
- *                 count is always named), and the same facts as text for screen readers and
- *                 for colour-blind players. The client never computes the band.
+ * Responsibility: "The number is somewhere between L and H" in large type and a full-width
+ *                 bar from L to H on which fallen numbers show as gaps (at most 200 drawn; the
+ *                 count is always named under it); with a hidden range "Any whole number" and
+ *                 a note that negative numbers are possible (O19). Nothing narrowed from the
+ *                 answers is drawn (O17). The same facts are text for screen readers.
  * Depends on:     react
  * Used by:        ./PlayerPanel, ./SpectatorPanel
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §2.3, §4
@@ -19,39 +20,39 @@ interface RangeView {
 }
 
 interface RangeBarProps {
-  readonly range: RangeView;
-  readonly band: RangeView | null;
+  // Null while the range is hidden.
+  readonly range: RangeView | null;
   readonly removed: readonly number[];
-  readonly label: string;
 }
 
-const MAX_TICKS = 200;
+const MAX_GAPS = 200;
 
-export function RangeBar({ range, band, removed, label }: RangeBarProps): ReactElement {
+export function RangeBar({ range, removed }: RangeBarProps): ReactElement {
+  if (range === null) {
+    return (
+      <section className="gtn-range" aria-label="The range" data-testid="range">
+        <p className="gtn-range-title">Any whole number</p>
+        <p className="gtn-range-note">The range is hidden. Negative numbers are possible.</p>
+      </section>
+    );
+  }
   const size = Math.max(1, range.high - range.low + 1);
   const at = (v: number) => `${String(((v - range.low) / size) * 100)}%`;
-  const width = (r: RangeView) => `${String(((r.high - r.low + 1) / size) * 100)}%`;
-  const narrowed = band !== null && (band.low !== range.low || band.high !== range.high);
   return (
-    <figure className="gtn-range" aria-label={label}>
-      <div className="gtn-range-bar" role="img" aria-hidden="true">
-        {band === null ? null : (
-          <span className="gtn-range-band" style={{ left: at(band.low), width: width(band) }} />
-        )}
-        {removed.slice(0, MAX_TICKS).map((v) => (
-          <span key={v} className="gtn-range-fallen" style={{ left: at(v) }} />
+    <section className="gtn-range" aria-label="The range" data-testid="range">
+      <p className="gtn-range-title">
+        The number is somewhere between {range.low} and {range.high}
+      </p>
+      <div className="gtn-range-bar" aria-hidden="true">
+        {removed.slice(0, MAX_GAPS).map((v) => (
+          <span key={v} className="gtn-range-gap" style={{ left: at(v) }} />
         ))}
       </div>
-      <figcaption className="gtn-range-text">
-        <span>{range.low}</span>
-        <span data-testid="band">
-          {narrowed
-            ? `Between ${String(band.low)} and ${String(band.high)}`
-            : `${String(range.low)} to ${String(range.high)}`}
-          {removed.length > 0 ? ` · ${String(removed.length)} fallen` : ''}
-        </span>
-        <span>{range.high}</span>
-      </figcaption>
-    </figure>
+      {removed.length === 0 ? null : (
+        <p className="gtn-range-note" data-testid="fallen">
+          {removed.length} {removed.length === 1 ? 'number has' : 'numbers have'} fallen.
+        </p>
+      )}
+    </section>
   );
 }

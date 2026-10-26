@@ -33,7 +33,7 @@ With the special off, the round still carries its season for visuals and teams, 
 | Type | Hint |
 |---|---|
 | `parity` | "The number is odd." / "The number is even." |
-| `half` | "The number is in the lower half (1–500)." / "… upper half (501–1 000)." The lower half runs from the low end to `floor((low + high) / 2)`. |
+| `half` | "The number is in the lower half (1–500)." / "… upper half (501–1 000)." The lower half runs from the low end to `floor((low + high) / 2)`. With the range hidden ([02](02-game-guess-the-number.md) §3) the hint is `parity`, because a half names numbers of the range (DECISIONS T56). |
 
 - **Shared mode:** one hint, the same text for everyone. It is shown to spectators too.
 - **Individual mode:** every player gets a hint of the same type about **their own** number. Spectators see only "Spring Herald: everyone received a hint".
@@ -51,9 +51,9 @@ With the special off, the round still carries its season for visuals and teams, 
 - **Trigger:** every `autumn.intervalS` (default 20 s) after `opensAt`.
 - **Effect:** `autumn.count` numbers (default 10) are removed from the range. They are chosen uniformly with the round seed from the **candidates**: numbers inside the current range that have not been removed yet and are not the secret of anyone in the round. A guess for a removed number is rejected without cost (`NUMBER_REMOVED`).
 - **End:** falls stop when the numbers still in the range (removed ones excluded) would drop below `autumn.minRemaining` (default 10). The last fall removes only as many as that allows.
-- **Visible to all:** the removed numbers go to every watcher, players and spectators alike, and every range bar strikes them through.
+- **Visible to all:** the removed numbers go to every watcher, players and spectators alike. They show as gaps in the range bar, and the live list names them ("Leaf Fall: 12, 57 and 300 fell"); with the range hidden the live list is the only place (DECISIONS T54).
 - **Individual mode:** there is one set of removed numbers for the whole round, chosen so that it contains no player's number. It is the same set for everyone.
-- **Equality, stated honestly:** every player loses the same numbers at the same moment, and none of them is anyone's secret. How much a fall helps differs: a number that falls inside one player's narrowed band helps that player more than one that falls outside it. The rule is equal; the luck of where the leaves fall is spread evenly by the uniform choice.
+- **Equality, stated honestly:** every player loses the same numbers at the same moment, and none of them is anyone's secret. How much a fall helps differs: a number that falls where one player is still searching helps that player more than one that falls where their answers already rule it out. The rule is equal; the luck of where the leaves fall is spread evenly by the uniform choice.
 
 ### 2.4 Winter — Frost
 
@@ -79,6 +79,7 @@ With the special off, the round still carries its season for visuals and teams, 
 - **Shared mode:** one window, shown to everyone.
 - **Individual mode:** every player's own range halves around their own number, at the same moment and to the same size. The positions come from the seed per player. Spectators see "Halving: every range is now 125 numbers".
 - **With a season special:** a halving round still has its season, and its special applies too (owner: every round belongs to a season). Order at the same instant: §1 rule 6.
+- **With a hidden range** ([02](02-game-guess-the-number.md) §3): a window tells where the range is, so a normal season round of that season runs instead (*proposal*, DECISIONS T55, [OPEN](../OPEN.md)).
 - **Equality:** the same moment and the same size for all. The halving tells every player the same amount: the size of the window is the same, and its position is random.
 
 ## 5. Season teams

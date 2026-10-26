@@ -52,14 +52,14 @@ test('journey 3: each season special shows itself', async ({ browser }) => {
     await expect(p.page.getByTestId('feed')).toContainText('Heatwave: cooldown now');
 
     codes.push(await quickRound(p, { season: 'autumn' }));
-    await expect(p.page.getByTestId('band')).toContainText('fallen', { timeout: 15_000 });
+    await expect(p.page.getByTestId('fallen')).toContainText('fallen', { timeout: 15_000 });
     await expect(p.page.getByTestId('feed')).toContainText('Leaf Fall:');
 
     codes.push(await quickRound(p, { season: 'winter' }));
     await expect(p.page.getByTestId('guess-button')).toBeEnabled({ timeout: 10_000 });
     await p.page.getByTestId('guess-input').fill('250000');
     await p.page.getByTestId('guess-button').click();
-    await expect(p.page.getByTestId('own-guesses')).toContainText('Answer arriving in');
+    await expect(p.page.getByTestId('own-guesses')).toContainText('answer arriving in');
     await expect(p.page.getByTestId('own-guesses')).toContainText('The number is', {
       timeout: 10_000,
     });
@@ -81,20 +81,22 @@ test('journey 4: a halving round halves the range and refuses a guess outside it
     code = await quickRound(p, { season: 'spring', halving: true, rangeHigh: 1_000 });
     await expect(p.page.getByTestId('round-banner')).toContainText('Halving round');
     // After the first halving (fast profile: 6 s) the range has 500 numbers.
-    const range = p.page.locator('.gtn-range-text');
+    const bounds = async (): Promise<[number, number]> => {
+      const text = (await p.page.getByTestId('range').textContent()) ?? '';
+      const m = /between (-?\d+) and (-?\d+)/.exec(text);
+      return m === null ? [0, -1] : [Number(m[1]), Number(m[2])];
+    };
     await expect
       .poll(
         async () => {
-          const [low, high] = (await range.locator('span').allTextContents())
-            .filter((t) => /^\d+$/.test(t))
-            .map(Number);
-          return (high ?? 0) - (low ?? 0) + 1;
+          const [low, high] = await bounds();
+          return high - low + 1;
         },
         { timeout: 20_000 },
       )
       .toBe(500);
-    const [low] = (await range.locator('span').allTextContents()).map(Number);
-    const outside = (low ?? 1) > 1 ? 1 : 1_000;
+    const [low] = await bounds();
+    const outside = low > 1 ? 1 : 1_000;
     const before = await p.page.getByTestId('own-guesses').locator('li').count();
     await expect(p.page.getByTestId('guess-button')).toBeEnabled();
     await p.page.getByTestId('guess-input').fill(String(outside));

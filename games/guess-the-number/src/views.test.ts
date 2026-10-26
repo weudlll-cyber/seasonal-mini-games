@@ -3,11 +3,13 @@
  * @module games/guess-the-number
  * @brief  Views: what each viewer sees, Frost-held answers hidden, results with secrets.
  *
- * Responsibility: the player sees their own guesses and band; an answer received at or
- *                 after `releasedBefore` is shown as pending and leaves the band alone; the
- *                 spectator sees counts, numbers or answers by visibility and mode; the
- *                 result names the secret (shared) or every player's (individual); every
- *                 view validates against its schema; the settings read and check the range.
+ * Responsibility: the player sees their own guesses and no narrowed range (O17); an answer
+ *                 received at or after `releasedBefore` is shown as pending; the spectator
+ *                 sees counts, numbers or answers by visibility and mode; with a hidden range
+ *                 no view holds the range, and the result reveals it with the secret (T52);
+ *                 the result names the secret (shared) or every player's (individual); every
+ *                 view validates against its schema; the settings read and check the range,
+ *                 negative ends included, and a hidden range rules halving out (T55).
  * Depends on:     vitest, ./fakes, ./module
  * Spec:           docs/spec/02-game-guess-the-number.md §6.2, §9, §11; docs/spec/09-testing-strategy.md §6
  */
@@ -20,30 +22,34 @@ import { guessTheNumber } from './module.js';
 const all = { releasedBefore: Infinity };
 const { views, viewSchemas } = guessTheNumber;
 
-function played(visibility: 'own' | 'numbers' | 'full', mode: 'shared' | 'individual' = 'shared') {
+function played(
+  visibility: 'own' | 'numbers' | 'full',
+  mode: 'shared' | 'individual' = 'shared',
+  rangeVisible = true,
+) {
   const secrets =
     mode === 'shared'
       ? ({ mode, value: 412 } as const)
       : ({ mode, byPlayer: { a: 412, b: 77 } } as const);
-  const t = new Table(secrets, input(mode, ['a', 'b'], { feedbackVisibility: visibility }));
+  const config = { feedbackVisibility: visibility, rangeVisible };
+  const t = new Table(secrets, input(mode, ['a', 'b'], config));
   t.play('a', 300, 1_000);
   t.play('b', 500, 2_000);
   return t;
 }
 
 describe('player view', () => {
-  it('shows own guesses and the band, and holds back answers Frost still holds', () => {
+  it('shows own guesses, nothing narrowed, and holds back answers Frost still holds', () => {
     const t = played('full');
     const open = views.player(t.state, 'a', all);
     expect(open).toEqual({
       range: { low: 1, high: 1_000 },
       removed: [],
-      band: { low: 301, high: 1_000 },
       guesses: [{ receiveSeq: 1, receivedAt: 1_000, value: 300, feedback: 'higher' }],
       hint: null,
     });
     const frosted = views.player(t.state, 'a', { releasedBefore: 1_000 });
-    expect(frosted).toMatchObject({ band: { low: 1, high: 1_000 }, guesses: [{ feedback: null }] });
+    expect(frosted).toMatchObject({ guesses: [{ feedback: null }] });
     expect(viewSchemas.player.safeParse(frosted).success).toBe(true);
     expect(views.player(t.state, 'nobody', all)).toMatchObject({ guesses: [] });
   });
@@ -52,17 +58,14 @@ describe('player view', () => {
 describe('spectator view', () => {
   it('follows the visibility in shared mode', () => {
     const own = views.spectator(played('own').state, all);
-    expect(own).toMatchObject({
-      sharedBand: null,
-      players: [{ guesses: 1, values: null, answers: null }, {}],
-    });
+    expect(own).toMatchObject({ players: [{ guesses: 1, values: null, answers: null }, {}] });
     const numbers = views.spectator(played('numbers').state, all);
     expect(numbers).toMatchObject({
       players: [{ values: [300], answers: null }, { values: [500] }],
     });
     const full = views.spectator(played('full').state, all);
     expect(full).toMatchObject({
-      sharedBand: { low: 301, high: 499 },
+      range: { low: 1, high: 1_000 },
       players: [
         { answers: [{ value: 300, feedback: 'higher' }] },
         { answers: [{ value: 500, feedback: 'lower' }] },
@@ -74,15 +77,24 @@ describe('spectator view', () => {
 
   it('holds back Frost answers and shows only counts in individual mode', () => {
     const frosted = views.spectator(played('full').state, { releasedBefore: 2_000 });
-    expect(frosted).toMatchObject({
-      sharedBand: { low: 301, high: 1_000 },
-      players: [{ answers: [{}] }, { answers: [] }],
-    });
+    expect(frosted).toMatchObject({ players: [{ answers: [{}] }, { answers: [] }] });
     const ind = views.spectator(played('full', 'individual').state, all);
-    expect(ind).toMatchObject({
-      sharedBand: null,
-      players: [{ guesses: 1, values: null, answers: null }, {}],
-    });
+    expect(ind).toMatchObject({ players: [{ guesses: 1, values: null, answers: null }, {}] });
+  });
+});
+
+describe('a hidden range', () => {
+  it('is in no player or spectator view, and the result reveals it', () => {
+    for (const mode of ['shared', 'individual'] as const) {
+      const t = played('full', mode, false);
+      const player = views.player(t.state, 'a', all);
+      const spectator = views.spectator(t.state, all);
+      expect(player).toMatchObject({ range: null });
+      expect(spectator).toMatchObject({ range: null });
+      expect(viewSchemas.player.safeParse(player).success).toBe(true);
+      expect(viewSchemas.spectator.safeParse(spectator).success).toBe(true);
+      expect(views.result(t.state, t.secrets)).toMatchObject({ range: { low: 1, high: 1_000 } });
+    }
   });
 });
 
@@ -91,6 +103,7 @@ describe('result view', () => {
     const shared = played('full');
     const r = views.result(shared.state, shared.secrets);
     expect(r).toEqual({
+      range: { low: 1, high: 1_000 },
       secret: 412,
       secrets: null,
       guesses: { a: [{ value: 300, feedback: 'higher' }], b: [{ value: 500, feedback: 'lower' }] },
@@ -116,7 +129,11 @@ describe('settings', () => {
     expect(guessTheNumber.settings.problem({ ...cfg, rangeLow: 5, rangeHigh: 13 })).toMatch(
       /at least 9/,
     );
-    expect(guessTheNumber.actionSchema.safeParse({ value: 3 }).success).toBe(true);
-    expect(guessTheNumber.actionSchema.safeParse({ value: 'x' }).success).toBe(false);
+    expect(guessTheNumber.settings.problem({ ...cfg, rangeLow: -500, rangeHigh: 500 })).toBeNull();
+    expect(guessTheNumber.settings.halvingAllowed?.(cfg)).toBe(true);
+    expect(guessTheNumber.settings.halvingAllowed?.({ ...cfg, rangeVisible: false })).toBe(false);
+    const takes = (value: unknown) => guessTheNumber.actionSchema.safeParse({ value }).success;
+    expect([3, -1_000_000_000, 1_000_000_000].every(takes)).toBe(true);
+    expect([2.5, 1_000_000_001, 'x'].some(takes)).toBe(false);
   });
 });

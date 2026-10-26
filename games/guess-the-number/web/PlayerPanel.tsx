@@ -1,54 +1,76 @@
 /**
  * @file   games/guess-the-number/web/PlayerPanel.tsx
  * @module games/guess-the-number/web
- * @brief  The player's own screen part: hint, range bar, the guess field and own guesses.
+ * @brief  The player's two parts: the main area (range, own guesses) and the input row.
  *
- * Responsibility: Spring Herald's hint as a card; the range bar with the band the server
- *                 sent; a number field with Guess (Enter works), disabled while the platform
- *                 says the player cannot act; the player's guesses newest first with their
- *                 answers, or "answer arriving in 2 s" while Frost holds one (02 §12). The
- *                 game's own refusals are shown in plain words; the platform's are shown by
- *                 the platform.
- * Depends on:     react, @smg/game-sdk (props), @smg-game/guess-the-number (types), ./RangeBar, ./text
+ * Responsibility: `PlayerPanel` is the main area: the range block (./RangeBar) with Spring
+ *                 Herald's hint under it and "Your guesses" as chips "250 ↓" with the answer
+ *                 as an arrow, or "answer arriving in 2 s" while Frost holds one (02 §12).
+ *                 `GuessInput` is the input row, placed by the platform (pinned at the
+ *                 bottom on a phone): the platform's
+ *                 cooldown ring, a number field that takes a minus sign (with a ± button where
+ *                 negative numbers are possible, since phone keypads often lack one, T57) and a
+ *                 large Guess button; Enter sends. The field takes whole numbers from
+ *                 −1 000 000 000 to 1 000 000 000 (T53). The game's own refusals are shown in
+ *                 plain words; the platform's are shown by the platform.
+ * Depends on:     react, @smg/game-sdk (props), @smg-game/guess-the-number (types, limit),
+ *                 ./RangeBar, ./text
  * Used by:        ./index
  * Spec:           docs/spec/02-game-guess-the-number.md §6, §12; docs/spec/03-seasonal-specials.md §2.1, §2.4
  */
-import type { PlayerView } from '@smg-game/guess-the-number';
+import { GUESS_LIMIT, type PlayerView } from '@smg-game/guess-the-number';
 import type { PlayerPanelProps } from '@smg/game-sdk';
-import { useState, type ReactElement, type SyntheticEvent } from 'react';
+import { useState, type ReactElement, type ReactNode, type SyntheticEvent } from 'react';
 
 import { RangeBar } from './RangeBar.js';
-import { answerText, gtnText, hintText } from './text.js';
+import { answerText, ARROWS, gtnText, hintText } from './text.js';
+
+// The platform hands its cooldown ring in, to sit at the start of the input row.
+export type GtnPlayerProps = PlayerPanelProps & { readonly ring?: ReactNode };
 
 function Arriving({ at, now }: { readonly at: number; readonly now: () => number }): ReactElement {
   const seconds = Math.max(0, Math.ceil((at - now()) / 1_000));
-  return <span className="gtn-frost">Answer arriving in {seconds} s</span>;
+  return <span className="gtn-frost">answer arriving in {seconds} s</span>;
 }
 
-function GuessForm({
-  view,
-  props,
-}: {
-  readonly view: PlayerView;
-  readonly props: PlayerPanelProps;
-}): ReactElement {
+// A whole number the field takes, or null.
+function parsed(text: string): number | null {
+  const t = text.trim().replace('−', '-');
+  if (!/^-?\d+$/.test(t)) return null;
+  const n = Number(t);
+  return Math.abs(n) <= GUESS_LIMIT ? n : null;
+}
+
+// The field's text, the game's refusal line, sending, and flipping the sign.
+function useGuess(act: PlayerPanelProps['act']) {
   const [value, setValue] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   const submit = (e: SyntheticEvent): void => {
     e.preventDefault();
-    const n = Number(value);
-    if (value.trim() === '' || !Number.isInteger(n)) {
+    const n = parsed(value);
+    if (n === null) {
       setMessage(gtnText.code('INVALID_ACTION'));
       return;
     }
-    void props.act({ value: n }).then((reply) => {
+    void act({ value: n }).then((reply) => {
       setMessage(reply.ok ? null : gtnText.code(reply.code ?? ''));
       if (reply.ok) setValue('');
     });
   };
+  const flip = (): void => {
+    setValue((v) => (v.startsWith('-') ? v.slice(1) : `-${v}`));
+  };
+  return { value, setValue, message, submit, flip };
+}
+
+export function GuessInput(props: GtnPlayerProps): ReactElement {
+  const view = props.view as PlayerView;
+  const { value, setValue, message, submit, flip } = useGuess(props.act);
+  const negative = view.range === null || view.range.low < 0;
   return (
-    <>
-      <form className="gtn-guess smg-row" onSubmit={submit}>
+    <div className="gtn-input">
+      <form className="gtn-guess" onSubmit={submit}>
+        {props.ring}
         <label className="smg-visually-hidden" htmlFor="gtn-value">
           Your guess
         </label>
@@ -57,15 +79,30 @@ function GuessForm({
           className="smg-input"
           inputMode="numeric"
           autoComplete="off"
-          placeholder={`${String(view.range.low)}–${String(view.range.high)}`}
+          enterKeyHint="send"
+          placeholder={
+            view.range === null
+              ? 'Any whole number'
+              : `${String(view.range.low)} to ${String(view.range.high)}`
+          }
           value={value}
           onChange={(e) => {
             setValue(e.target.value);
           }}
           data-testid="guess-input"
         />
+        {negative ? (
+          <button
+            type="button"
+            className="smg-btn gtn-sign"
+            onClick={flip}
+            aria-label="Change the sign"
+          >
+            ±
+          </button>
+        ) : null}
         <button
-          className="smg-btn smg-btn--primary"
+          className="smg-btn smg-btn--primary gtn-go"
           type="submit"
           disabled={!props.canAct}
           data-testid="guess-button"
@@ -78,7 +115,7 @@ function GuessForm({
           {message}
         </p>
       )}
-    </>
+    </div>
   );
 }
 
@@ -90,19 +127,32 @@ function OwnGuesses({
   readonly props: PlayerPanelProps;
 }): ReactElement {
   return (
-    <ol className="gtn-guesses" aria-label="Your guesses" data-testid="own-guesses">
-      {[...view.guesses].reverse().map((g) => (
-        <li key={g.receiveSeq}>
-          {g.feedback === null ? (
-            <>
-              {g.value}: <Arriving at={g.receivedAt + (props.frostDelayMs ?? 0)} now={props.now} />
-            </>
-          ) : (
-            answerText(g.value, g.feedback)
-          )}
-        </li>
-      ))}
-    </ol>
+    <section className="gtn-own" aria-labelledby="gtn-own-title">
+      <h2 id="gtn-own-title" className="gtn-own-title">
+        Your guesses
+      </h2>
+      {view.guesses.length === 0 ? (
+        <p className="gtn-own-none">None yet.</p>
+      ) : (
+        <ol className="gtn-chips" data-testid="own-guesses">
+          {[...view.guesses].reverse().map((g) => (
+            <li key={g.receiveSeq} className="gtn-chip" data-feedback={g.feedback ?? 'pending'}>
+              {g.feedback === null ? (
+                <>
+                  {g.value}{' '}
+                  <Arriving at={g.receivedAt + (props.frostDelayMs ?? 0)} now={props.now} />
+                </>
+              ) : (
+                <>
+                  {g.value} <span aria-hidden="true">{ARROWS[g.feedback]}</span>
+                  <span className="smg-visually-hidden">{answerText(g.value, g.feedback)}</span>
+                </>
+              )}
+            </li>
+          ))}
+        </ol>
+      )}
+    </section>
   );
 }
 
@@ -110,13 +160,12 @@ export function PlayerPanel(props: PlayerPanelProps): ReactElement {
   const view = props.view as PlayerView;
   return (
     <div className="gtn-player" data-testid="gtn-player">
+      <RangeBar range={view.range} removed={view.removed} />
       {view.hint === null ? null : (
-        <p className="gtn-hint smg-panel smg-panel--inset" data-testid="hint">
+        <p className="gtn-hint" data-testid="hint">
           <strong>Spring Herald:</strong> {hintText(view.hint)}
         </p>
       )}
-      <RangeBar range={view.range} band={view.band} removed={view.removed} label="Your range" />
-      <GuessForm view={view} props={props} />
       <OwnGuesses view={view} props={props} />
     </div>
   );

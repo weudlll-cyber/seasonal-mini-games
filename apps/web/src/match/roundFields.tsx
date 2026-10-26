@@ -81,7 +81,7 @@ export function SeasonControls(p: {
       {p.now?.halvingToday == null ? null : (
         <SwitchField
           label="Halving round"
-          help="Today is a halving day."
+          help="Today is a halving day. With a hidden range the round plays as a normal season round."
           checked={p.halving}
           onChange={p.setHalving}
         />

@@ -3,10 +3,12 @@
  * @module games/guess-the-number
  * @brief  The game's checks, its answers, the room's line per visibility, and solving.
  *
- * Responsibility: OUT_OF_RANGE for values outside the player's range or not whole,
- *                 NUMBER_REMOVED, ALREADY_GUESSED only when repeats are refused; the answer
- *                 goes to the guesser and is marked for Frost; the room line carries what
- *                 the visibility allows (02 §6.2); a correct guess signals Solved.
+ * Responsibility: OUT_OF_RANGE for values outside the player's range or not whole while the
+ *                 range is shown, and none at all while it is hidden (T53); NUMBER_REMOVED,
+ *                 ALREADY_GUESSED only when repeats are refused; the answer goes to the
+ *                 guesser and is marked for Frost, without any narrowed range (O17); the room
+ *                 line carries what the visibility allows (02 §6.2); a correct guess signals
+ *                 Solved.
  * Depends on:     vitest, ./fakes, ./module
  * Spec:           docs/spec/02-game-guess-the-number.md §5.1, §6, §8
  */
@@ -30,6 +32,27 @@ describe('checks', () => {
     expect(t.play('a', 1)).toEqual({ ok: false, code: 'ALREADY_GUESSED' });
   });
 
+  it('accept and answer any whole number while the range is hidden', () => {
+    const hidden = { rangeLow: -500, rangeHigh: 500, rangeVisible: false };
+    const t = new Table(shared(-40), input('shared', ['a'], hidden));
+    const far = t.play('a', -900_000_000);
+    expect(far.ok && far.events[0]?.event).toMatchObject({
+      value: -900_000_000,
+      feedback: 'higher',
+    });
+    expect(t.play('a', 700).ok).toBe(true);
+    t.state = { ...t.state, removed: [17] };
+    expect(t.play('a', 17)).toEqual({ ok: false, code: 'NUMBER_REMOVED' });
+    expect(t.play('a', 700)).toEqual({ ok: false, code: 'ALREADY_GUESSED' });
+  });
+
+  it('take negative numbers in a range that reaches below zero', () => {
+    const t = new Table(shared(-40), input('shared', ['a'], { rangeLow: -500, rangeHigh: 500 }));
+    expect(t.play('a', -501)).toEqual({ ok: false, code: 'OUT_OF_RANGE' });
+    expect(t.play('a', -500).ok).toBe(true);
+    expect(t.play('a', -40).ok && t.state.players.a?.guesses.at(-1)?.feedback).toBe('correct');
+  });
+
   it('allow a repeat when repeats are not refused', () => {
     const t = new Table(shared(500), input('shared', ['a'], { repeatGuessRejected: false }));
     expect(t.play('a', 1).ok).toBe(true);
@@ -38,7 +61,7 @@ describe('checks', () => {
 });
 
 describe('answers', () => {
-  it('tell the guesser higher, lower or correct with the narrowed band, held for Frost', () => {
+  it('tell the guesser higher, lower or correct and nothing narrowed, held for Frost', () => {
     const t = new Table(shared(412), input('shared', ['a']));
     const first = t.play('a', 300, 1_000);
     expect(first.ok && first.events[0]).toEqual({
@@ -51,14 +74,10 @@ describe('answers', () => {
         receivedAt: 1_000,
         value: 300,
         feedback: 'higher',
-        band: { low: 301, high: 1_000 },
       },
     });
     const second = t.play('a', 500);
-    expect(second.ok && second.events[0]?.event).toMatchObject({
-      feedback: 'lower',
-      band: { low: 301, high: 499 },
-    });
+    expect(second.ok && second.events[0]?.event).toMatchObject({ feedback: 'lower' });
     const hit = t.play('a', 412);
     expect(hit.ok && hit.signals).toEqual([{ type: 'Solved', playerId: 'a' }]);
     expect(second.ok && second.signals).toEqual([]);
@@ -96,7 +115,6 @@ describe('the room line', () => {
         guesses: 1,
         value: 300,
         feedback: 'higher',
-        sharedBand: { low: 301, high: 1_000 },
       },
     });
     expect(line('full', 'individual')?.event).toEqual({
@@ -107,21 +125,7 @@ describe('the room line', () => {
   });
 });
 
-describe('the shared band and unknown players', () => {
-  it('narrow the shared band with every player in shared mode only', () => {
-    const t = new Table(shared(412), input('shared', ['a', 'b']));
-    t.play('a', 300);
-    t.play('b', 500);
-    expect(t.state.sharedBand).toEqual({ low: 301, high: 499 });
-    expect(t.state.players.b?.band).toEqual({ low: 1, high: 499 });
-    const ind = new Table(
-      { mode: 'individual', byPlayer: { a: 412, b: 9 } },
-      input('individual', ['a', 'b']),
-    );
-    ind.play('a', 300);
-    expect(ind.state.sharedBand).toEqual({ low: 1, high: 1_000 });
-  });
-
+describe('unknown players', () => {
   it('refuse a guess from a player the game does not know', () => {
     const t = new Table(shared(412), input('shared', ['a']));
     const act = { playerId: 'x', receiveSeq: 1, receivedAt: 0, action: { value: 5 } };
@@ -144,7 +148,6 @@ describe('the shared band and unknown players', () => {
         receivedAt: 0,
         value: 5,
         feedback: 'higher',
-        band: { low: 6, high: 1_000 },
       }),
     ).toBe(t.state);
   });

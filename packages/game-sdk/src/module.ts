@@ -38,6 +38,9 @@ export interface GameSettings<Cfg> {
   readonly read: (values: Readonly<Record<string, SettingValue>>) => Cfg;
   // A rule across keys (e.g. a range at least 10 wide); null when the values fit.
   readonly problem: (cfg: Cfg) => string | null;
+  // False when this round's values rule out a halving round; the round then runs as a
+  // normal season round (Guess The Number with a hidden range, DECISIONS T55).
+  readonly halvingAllowed?: (cfg: Cfg) => boolean;
 }
 
 export interface RosterPlayer {

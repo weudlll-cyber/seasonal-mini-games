@@ -5,8 +5,9 @@
  *
  * Responsibility: the answers ("The number is higher than 412."), the game's refusals, the
  *                 Spring Herald hint, and one line per room event for the live feed (02 §6,
- *                 §12; 03 §2): Leaf Fall, the shared hint, halving, and a guess at the round's
- *                 visibility. Server codes never reach the screen as codes.
+ *                 §12; 03 §2): Leaf Fall with the fallen numbers named, the shared hint,
+ *                 halving, and a guess at the round's visibility. Server codes never reach the
+ *                 screen as codes.
  * Depends on:     @smg/game-sdk (GameText), ../src (types)
  * Used by:        ./PlayerPanel, ./SpectatorPanel, ./ResultPanel, ./index
  * Spec:           docs/spec/02-game-guess-the-number.md §6, §12; docs/spec/03-seasonal-specials.md §2
@@ -19,6 +20,9 @@ export function answerText(value: number, feedback: Feedback): string {
   if (feedback === 'lower') return `The number is lower than ${String(value)}.`;
   return `${String(value)} is the number!`;
 }
+
+// An answer on a chip: ↑ the number is higher, ↓ lower, ✓ found (02 §12).
+export const ARROWS: Readonly<Record<Feedback, string>> = { higher: '↑', lower: '↓', correct: '✓' };
 
 export type HintView =
   | { readonly kind: 'parity'; readonly odd: boolean }
@@ -33,14 +37,22 @@ const CODES: Readonly<Record<string, string>> = {
   OUT_OF_RANGE: 'That number is outside the range.',
   NUMBER_REMOVED: 'That number fell in Leaf Fall. Try another one.',
   ALREADY_GUESSED: 'You guessed that number already. It costs nothing — try another one.',
-  INVALID_ACTION: 'Please type a whole number.',
+  INVALID_ACTION: 'Please type a whole number between −1 000 000 000 and 1 000 000 000.',
 };
+
+// "3", "3 and 9", "3, 9 and 12".
+function listOf(numbers: readonly number[]): string {
+  const all = numbers.map(String);
+  const last = all.pop() ?? '';
+  return all.length === 0 ? last : `${all.join(', ')} and ${last}`;
+}
 
 function eventText(e: GtnEvent, names: Readonly<Record<string, string>>): string | null {
   const who = (id: string) => names[id] ?? id;
   switch (e.type) {
+    // The fallen numbers by name: with a hidden range this line is the only place (T54).
     case 'NumbersRemoved':
-      return `Leaf Fall: ${String(e.numbers.length)} numbers fell.`;
+      return `Leaf Fall: ${listOf(e.numbers)} fell.`;
     case 'HintGiven':
       return e.playerId === null ? `Spring Herald: ${hintText(e.hint)}` : null;
     case 'RangeHalved':

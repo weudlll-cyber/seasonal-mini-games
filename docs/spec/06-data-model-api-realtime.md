@@ -99,7 +99,7 @@
 
 `RoundCreated` (settings, commitment), `CountdownStarted` (roster, teams, `opensAt`), `RoundOpened`, `GuessAccepted` (`playerKey`, `receiveSeq`, `receivedAt`, `value`, `cooldownEndsAt`), `SpecialFired` (special, index, effect summary), `CooldownChanged` (new value), `PlayerSolved` (`playerKey`, `receiveSeq`, `place`), `HeldDelivered` (Frost: `upTo`, the last log seq delivered; written by the round actor, DECISIONS T41), `RoundEnded` (reason, placings, team results, seed when revealed), `RoundAborted` (reason, by), `MarginNoted` (`playerKey`, `ms`: the first would-be correct guess after a shared win inside `round.marginWindowS`, [02](02-game-guess-the-number.md) §9). A game event is logged as `Game` (`audience`, `feedback`, `event`).
 
-Game events of Guess The Number: `FeedbackGiven` (`playerKey`, `receiveSeq`, `receivedAt`, `value`, `feedback`, `band`; to the guesser, marked `feedback: true`), `GuessFed` (`playerKey`, `guesses`, plus `value`, `feedback` and the shared band as the visibility allows; to the room, marked `feedback: true` when it carries an answer), `HintGiven` (Spring Herald: `playerKey` or null for the shared hint, `hint`), `NumbersRemoved` (Leaf Fall: `index`, `numbers`), `RangeHalved` (`index`, `playerKey` or null, `range` or null, `size`: the shared window, a player's own range, or the room's line with the size).
+Game events of Guess The Number: `FeedbackGiven` (`playerKey`, `receiveSeq`, `receivedAt`, `value`, `feedback`; to the guesser, marked `feedback: true`), `GuessFed` (`playerKey`, `guesses`, plus `value` and `feedback` as the visibility allows; to the room, marked `feedback: true` when it carries an answer). No event carries a narrowed range (owner decision 17), `HintGiven` (Spring Herald: `playerKey` or null for the shared hint, `hint`), `NumbersRemoved` (Leaf Fall: `index`, `numbers`), `RangeHalved` (`index`, `playerKey` or null, `range` or null, `size`: the shared window, a player's own range, or the room's line with the size).
 
 Rejected guesses are **not** events. They are counted in metrics and in the abuse score only.
 
@@ -173,11 +173,11 @@ On the wire, committed events arrive as `events` frames (Bingo 06 §4, as built;
 | Event | Room | Data |
 |---|---|---|
 | `match.updated` | match | status, player count, teams |
-| `round.created` | match | round summary: season, special, halving, mode, cooldown, range, commitment |
+| `round.created` | match | round summary: season, special, halving, mode, cooldown, range (none while the range is hidden, DECISIONS T52), commitment |
 | `round.countdown` | match | `opensAt`, roster size, teams |
 | `round.opened` | match | — |
 | `guess.feed` | match | per `feedbackVisibility` ([02](02-game-guess-the-number.md) §6.2): `{ player, guesses }`, plus `value` and/or `feedback` when allowed |
-| `guess.result` | player | `{ receiveSeq, value, feedback, band }`; under Frost sent at `receivedAt + delay` |
+| `guess.result` | player | `{ receiveSeq, value, feedback }`; under Frost sent at `receivedAt + delay` |
 | `hint` | player (individual) / match (shared) | Spring Herald text and type |
 | `special.fired` | match | `{ special, index, summary }`, e.g. Leaf Fall's removed numbers, Heatwave's new cooldown, a shared halving window |
 | `range.changed` | player | individual-mode halving: the player's own new range |

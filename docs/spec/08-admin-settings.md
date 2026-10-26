@@ -22,8 +22,9 @@
 |---|---|---|---|---|---|---|
 | `round.secretMode` | `shared` | — | — (`shared`, `individual`) | modes: owner; default: owner (O15) | host | frozen |
 | `round.cooldownS` | 10 | 3 | 60 | bounds: owner; default: owner (O15) | host | frozen (changed only by Heatwave) |
-| `round.rangeLow` | 1 | 0 | 999 990 | owner (O15) | host | frozen |
-| `round.rangeHigh` | 1 000 | `rangeLow` + 9 | 1 000 000 | owner (O15) | host | frozen |
+| `round.rangeLow` | 1 | −1 000 000 | 1 000 000 | owner (O18); `rangeHigh` ≥ `rangeLow` + 9 | host | frozen |
+| `round.rangeHigh` | 1 000 | −1 000 000 | 1 000 000 | owner (O18); `rangeHigh` ≥ `rangeLow` + 9 | host | frozen |
+| `round.rangeVisible` | true | — | — | owner (O19): off hides the range until the end (02 §3) | host | frozen |
 | `round.countdownS` | 5 | 3 | 30 | owner (O15) | host | frozen |
 | `round.maxDurationMin` | 10 | 1 | 60 | owner (O15) | host | frozen |
 | `round.feedbackVisibility` | `full` | — | — (`own`, `numbers`, `full`) | owner (O8) | host (shared mode) | frozen |

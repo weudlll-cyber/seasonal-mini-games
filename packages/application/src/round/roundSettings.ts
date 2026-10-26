@@ -7,7 +7,8 @@
  *                 game's own. A round's settings are the document's values with the host's
  *                 choices on top: only keys the host chooses, each inside the bounds in force,
  *                 then the game's cross-key rule. Anything else is ROUND_SETTINGS_INVALID with
- *                 a sentence for the host form (08 §3).
+ *                 a sentence for the host form (08 §3). A game that rules halving out for the
+ *                 chosen values gets a normal season round instead (DECISIONS T55).
  * Depends on:     @smg/game-sdk (definitions, checks, round keys)
  * Used by:        ./roundSession tests, ../index, apps/server (round creation, settings service)
  * Spec:           docs/spec/08-admin-settings.md §1, §3; docs/spec/06-data-model-api-realtime.md §3.1
@@ -56,5 +57,8 @@ export function chooseRoundSettings<S, A, E, Cfg, Sec>(
   const game = module.settings.read(values);
   const problem = module.settings.problem(game);
   if (problem !== null) throw new RoundSettingsError(problem);
-  return { platform: readPlatformRound(values), game };
+  const platform = readPlatformRound(values);
+  // A game may rule halving out for these values: the round keeps its season and special.
+  const halving = platform.halving && module.settings.halvingAllowed?.(game) !== false;
+  return { platform: { ...platform, halving }, game };
 }

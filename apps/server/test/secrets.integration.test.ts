@@ -1,14 +1,16 @@
 /**
  * @file   apps/server/test/secrets.integration.test.ts
  * @module server/test
- * @brief  No secret of a running round reaches anyone; the Quick Test; who may do what.
+ * @brief  No secret, and no bound of a hidden range, reaches anyone; the Quick Test; who may do what.
  *
- * Responsibility: S2 / 09 §6 secret scan: in a running individual round with 1–1 000 000,
- *                 every frame each socket received (players, host, a spectator), every
- *                 acknowledgement and every HTTP answer (state for each viewer, match summary
- *                 and lists, the admin API) is searched for each secret as a number or a whole
- *                 word, with guesses that never touch a secret or its neighbours; after the
- *                 end the result shows them. The Quick Test runs a real round against bots to
+ * Responsibility: S2 / 09 §6 secret scan: in a running individual round with a hidden range
+ *                 (O19) whose bounds are odd numbers no default or guess holds, every frame
+ *                 each socket received (players, host, a spectator), every acknowledgement and
+ *                 every HTTP answer (state for each viewer, match summary and lists, the admin
+ *                 API) is searched for each secret and each bound as a number or a whole word,
+ *                 with guesses that never touch a secret, a bound or their neighbours (a guess
+ *                 outside the hidden range is accepted, T53); after the end the result shows
+ *                 them all (T52). The Quick Test runs a real round against bots to
  *                 its end, and the same seed text gives the same season and secret. Hosts,
  *                 players and guests are held to their permissions.
  * Depends on:     vitest, ./socketKit, ./harness
@@ -37,7 +39,8 @@ afterAll(async () => {
 // Every number equal to a secret, and every string holding one as a whole word.
 function leaks(value: unknown, secrets: readonly number[]): string[] {
   const found: string[] = [];
-  const words = secrets.map((n) => new RegExp(`\b${String(n)}\b`));
+  // `\\b` in a template literal: a regex word boundary (a bare `\b` would be a backspace).
+  const words = secrets.map((n) => new RegExp(`\\b${String(Math.abs(n))}\\b`));
   const walk = (v: unknown, path: string): void => {
     if (typeof v === 'number' && secrets.includes(v)) found.push(`${path}=${String(v)}`);
     else if (typeof v === 'string' && words.some((w) => w.test(v))) found.push(`${path}="${v}"`);
@@ -63,17 +66,18 @@ async function watched(code: string) {
   return sockets;
 }
 
-// Two guesses per player that never touch a secret or its neighbours.
+// Two guesses per player that never touch a secret, a bound or their neighbours; the first
+// round lies outside the hidden range (accepted and answered all the same, T53).
 async function guessAround(
   sockets: Awaited<ReturnType<typeof watched>>,
   id: string,
-  secrets: number[],
+  marks: number[],
 ) {
-  const safe = (v: number) => secrets.every((n) => Math.abs(n - v) > 1);
+  const safe = (v: number) => marks.every((n) => Math.abs(n - v) > 1);
   const acks: unknown[] = [];
   for (let k = 0; k < 2; k += 1) {
     for (const [i, p] of PLAYERS.entries()) {
-      let value = 1 + 499_999 * ((k + i) % 2) + 7 * k + i;
+      let value = k === 0 ? -2_000_000 - 11 * i : 1 + 499_999 * (i % 2) + 7 * k + i;
       while (!safe(value)) value += 3;
       const s = sockets.find((x) => x.w === p)?.s;
       if (s !== undefined) acks.push(await kit.send(s, 'guess', { roundId: id, value }));
@@ -108,8 +112,12 @@ async function answers(id: string, code: string) {
   return http;
 }
 
-describe('secrets of a running round', () => {
-  it('appear in no frame, acknowledgement or HTTP answer until the end (S2)', async () => {
+// The hidden range's bounds: odd values that no default, limit or guess holds.
+const LOW = -123_457;
+const HIGH = 876_543;
+
+describe('secrets and a hidden range of a running round', () => {
+  it('appear in no frame, acknowledgement or HTTP answer until the end (S2, T52)', async () => {
     const code = await kit.openMatch(PLAYERS);
     opened.push(code);
     const sockets = await watched(code);
@@ -118,8 +126,9 @@ describe('secrets of a running round', () => {
         'round.secretMode': 'individual',
         'round.cooldownS': 3,
         'round.countdownS': 3,
-        'round.rangeLow': 1,
-        'round.rangeHigh': 1_000_000,
+        'round.rangeLow': LOW,
+        'round.rangeHigh': HIGH,
+        'round.rangeVisible': false,
       },
       season: 'winter',
       startNow: true,
@@ -127,19 +136,21 @@ describe('secrets of a running round', () => {
     const id = created.json<{ id: string }>().id;
     const sec = await kit.secretsOf(id);
     const secrets = sec.mode === 'individual' ? Object.values(sec.byPlayer) : [sec.value];
+    const marks = [...secrets, LOW, HIGH];
     await sleep(3_100);
-    const acks = await guessAround(sockets, id, secrets);
+    const acks = await guessAround(sockets, id, marks);
     const http = await answers(id, code);
     expect(acks.every((x) => (x as { ok: boolean }).ok)).toBe(true);
     const frames = sockets.map(({ s }) => kit.frames(s));
     expect(frames.flat().length).toBeGreaterThan(0);
-    expect(leaks({ frames, acks, http }, secrets)).toEqual([]);
+    expect(leaks({ frames, acks, http }, marks)).toEqual([]);
     const end = await kit.clients.host.post(`/api/v1/rounds/${id}/end`, {});
     expect(end.statusCode).toBe(200);
     const result = (
       await kit.clients['player-3'].get(`/api/v1/rounds/${id}/result`)
     ).json<unknown>();
-    expect(leaks(result, secrets).length).toBeGreaterThanOrEqual(secrets.length);
+    expect(leaks(result, marks).length).toBeGreaterThanOrEqual(marks.length);
+    expect(result).toMatchObject({ game: { range: { low: LOW, high: HIGH } } });
   }, 60_000);
 });
 

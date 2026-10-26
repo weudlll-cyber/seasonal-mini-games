@@ -3,10 +3,12 @@
  * @module games/guess-the-number
  * @brief  The game's acceptance checks and its decision for an accepted guess.
  *
- * Responsibility: checks 4–6 of 02 §5.1 (inside the player's current range, not removed,
- *                 not guessed before when repeats are refused); for an accepted guess the
- *                 answer to the guesser (held by Frost), the room's line at the round's
- *                 visibility (02 §6.2), and `Solved` when the number was found.
+ * Responsibility: checks 4–6 of 02 §5.1 (inside the player's current range when the range is
+ *                 shown, not removed, not guessed before when repeats are refused); with a
+ *                 hidden range any whole number is accepted and answered, because refusing
+ *                 one outside the range would tell where the range is (DECISIONS T53). For an
+ *                 accepted guess: the answer to the guesser (held by Frost), the room's line
+ *                 at the round's visibility (02 §6.2), and `Solved` when the number was found.
  * Depends on:     @smg/game-sdk (contract, inRange), ./feedback, ./secrets, ./state
  * Used by:        ./module
  * Spec:           docs/spec/02-game-guess-the-number.md §5.1, §6, §8
@@ -19,7 +21,7 @@ import {
   type PlayerAction,
 } from '@smg/game-sdk';
 
-import { band, feedbackFor, type Answer } from './feedback.js';
+import { feedbackFor, type Answer } from './feedback.js';
 import { secretOf, type Secrets } from './secrets.js';
 import type { GtnEvent, GtnState } from './state.js';
 
@@ -29,9 +31,13 @@ export interface GuessAction {
 
 export type GtnCode = 'OUT_OF_RANGE' | 'NUMBER_REMOVED' | 'ALREADY_GUESSED';
 
+// The input takes any whole number from −1 000 000 000 to 1 000 000 000 (T53).
+export const GUESS_LIMIT = 1_000_000_000;
+
 export function validate(state: GtnState, playerId: string, action: GuessAction): GtnCode | null {
   const player = state.players[playerId];
-  if (player === undefined || !inRange(player.range, action.value)) return 'OUT_OF_RANGE';
+  if (player === undefined) return 'OUT_OF_RANGE';
+  if (state.rangeVisible && !inRange(player.range, action.value)) return 'OUT_OF_RANGE';
   if (state.removed.includes(action.value)) return 'NUMBER_REMOVED';
   if (state.repeatRejected && player.guesses.some((g) => g.value === action.value)) {
     return 'ALREADY_GUESSED';
@@ -53,8 +59,7 @@ function fed(
   if (state.visibility === 'numbers') {
     return { audience: 'room', event: { ...base, value: answer.value } };
   }
-  const sharedBand = band(state.sharedBand, [answer]);
-  return { audience: 'room', feedback: true, event: { ...base, ...answer, sharedBand } };
+  return { audience: 'room', feedback: true, event: { ...base, ...answer } };
 }
 
 export function decide(
@@ -72,7 +77,6 @@ export function decide(
     receiveSeq: act.receiveSeq,
     receivedAt: act.receivedAt,
     ...answer,
-    band: band(player.band, [answer]),
   };
   const events: Emitted<GtnEvent>[] = [
     { audience: `player:${act.playerId}`, feedback: true, event: given },

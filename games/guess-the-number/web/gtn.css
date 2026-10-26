@@ -1,71 +1,162 @@
 /*
  * @file   games/guess-the-number/web/gtn.css
  * @module games/guess-the-number/web
- * @brief  Styles of the Guess The Number panels: range bar, guess field, lists.
+ * @brief  Styles of the Guess The Number panels: range block, guess chips, input row, lists.
  *
- * Responsibility: colours only from the design tokens (light and dark, Bingo 01 §13); the
- *                 band takes the round's season colour from `--season`, set by the platform's
- *                 round screen; layouts wrap down to 390 px wide.
- * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6
+ * Responsibility: colours only from the design tokens (light and dark, Bingo 01 §13); the bar
+ *                 takes the round's season colour from `--season`, set by the platform's
+ *                 round screen, and fallen numbers are gaps in it; answers are coloured
+ *                 (higher in the success colour, lower in the danger colour) and always carry an
+ *                 arrow too, so colour is never the only sign; the chip list scrolls inside
+ *                 itself so the round view fits one screen; layouts work down to 390 px wide.
+ * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §2.3, §6
  */
+.gtn-player {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: var(--space-2);
+  min-height: 0;
+}
+
 .gtn-range {
-  margin: 0;
   display: grid;
   gap: var(--space-1);
 }
 
-.gtn-range-bar {
-  position: relative;
-  height: 1.25rem;
-  border-radius: var(--radius-pill);
-  background: var(--color-surface-2);
-  border: 1px solid var(--color-border);
-  overflow: hidden;
+.gtn-range-title {
+  margin: 0;
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-heading);
+  line-height: 1.1;
 }
 
-.gtn-range-band {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  background: var(--season, var(--color-accent));
-  opacity: 0.85;
-}
-
-.gtn-range-fallen {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: var(--color-text-muted);
-}
-
-.gtn-range-text {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-2);
+.gtn-range-note {
+  margin: 0;
   font-size: var(--font-size-small);
   color: var(--color-text-muted);
 }
 
-.gtn-player,
-.gtn-spectator,
-.gtn-result {
+.gtn-range-bar {
+  position: relative;
+  height: 1.5rem;
+  border-radius: var(--radius-pill);
+  background: var(--season, var(--color-accent));
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+/* A fallen number: a gap in the bar, in the page colour behind it */
+.gtn-range-gap {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  margin-left: -1px;
+  background: var(--color-surface);
+}
+
+.gtn-hint {
+  margin: 0;
+}
+
+.gtn-own {
   display: grid;
-  gap: var(--space-3);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-1);
+  min-height: 0;
+}
+
+.gtn-own-title {
+  margin: 0;
+  font-size: var(--font-size-lead);
+}
+
+.gtn-own-none {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.gtn-chips {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 0.4rem;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.gtn-chip {
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-weight: var(--font-weight-strong);
+  white-space: nowrap;
+}
+
+.gtn-chip[data-feedback='higher'] {
+  color: var(--color-success);
+}
+
+.gtn-chip[data-feedback='lower'] {
+  color: var(--color-danger);
+}
+
+.gtn-chip[data-feedback='correct'] {
+  background: var(--color-solid);
+  color: var(--color-on-solid);
+}
+
+.gtn-input {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.gtn-guess {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 
 .gtn-guess input {
   flex: 1 1 8rem;
   min-width: 0;
+  min-height: 3.25rem;
   font-size: var(--font-size-lead);
 }
 
-.gtn-guesses,
+.gtn-sign {
+  flex: none;
+  width: var(--hit-target);
+  padding: 0;
+  font-size: var(--font-size-lead);
+}
+
+/* The large Guess button */
+.gtn-go {
+  flex: none;
+  min-height: 3.25rem;
+  padding: 0 1.75rem;
+  font-size: var(--font-size-lead);
+}
+
+.gtn-spectator,
+.gtn-result {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+}
+
 .gtn-players {
   margin: 0;
   padding-left: 1.25rem;
   display: grid;
   gap: var(--space-1);
+  overflow-y: auto;
 }
 
 .gtn-frost {

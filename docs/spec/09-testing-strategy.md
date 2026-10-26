@@ -28,7 +28,7 @@
 **Platform conformance (every game module):**
 
 - **P1 Determinism.** Same seed, same settings and the same ordered inputs ⇒ identical event list.
-- **P2 No secret leaks.** With unique sentinel secrets, no serialized player view, spectator view, room frame or rejection answer of a running round contains a sentinel. Result views contain them only after the end.
+- **P2 No secret leaks.** With unique sentinel secrets, no serialized player view, spectator view, room frame or rejection answer of a running round contains a sentinel. Result views contain them only after the end. With a hidden range, its bounds count as sentinels too (DECISIONS T52).
 - **P3 Valid views.** Every view validates against the module's `viewSchemas`.
 - **P4 Rejections are free.** A rejected action produces no event and leaves state equal (deep equality).
 - **P5 Replay equals live.** Folding the round's event log with `evolve` gives the actor's state.
@@ -40,8 +40,8 @@
 - **G2 One winner.** In shared mode at most one winner exists: the correct guess with the lowest `receiveSeq`. No guess is accepted after it.
 - **G3 Cooldown.** For every player, two consecutive accepted guesses are at least the cooldown in force at the earlier one's receive time apart. A guess is never accepted earlier than that, from any socket or route.
 - **G4 Placings.** In individual mode, places are 1..k without gaps, in the `receiveSeq` order of the solves. Unsolved players have no place. No two players share a place.
-- **G5 Feedback.** Feedback is `higher`, `lower` or `correct` as defined in [02](02-game-guess-the-number.md) §6.1. The band the server sends is exactly the intersection of the player's feedback with the current range.
-- **G6 Valid guesses.** Every accepted guess is inside the current range, was not removed, and was not guessed before by that player.
+- **G5 Feedback.** Feedback is `higher`, `lower` or `correct` as defined in [02](02-game-guess-the-number.md) §6.1. No answer, view or frame carries a narrowed range (owner decision 17).
+- **G6 Valid guesses.** Every accepted guess is a whole number inside the current range (any whole number from −1 000 000 000 to 1 000 000 000 while the range is hidden), was not removed, and was not guessed before by that player.
 - **G7 Uniform secrets.** Secrets are uniform over the range (chi-square smoke test, not a property).
 
 **Seasonal specials:**
