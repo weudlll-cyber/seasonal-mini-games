@@ -4,17 +4,17 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 
 ## Status
 
-| Piece                               | State   | Commit                                           |
-| ----------------------------------- | ------- | ------------------------------------------------ |
-| P1 Record O8–O15, T21; spec updated | done    | `eaeadd5` on master (spec/v1 merged and deleted) |
-| P2 Foundation                       | done    | `e9936aa`                                        |
-| P3 GTN domain and application       | done    | `42e2cb8`                                        |
-| P4 Server                           | done    | `9804e36`                                        |
-| P5 Seasonal specials                | done    | `f9c56e0`                                        |
-| P6 Player and host client           | done    | `b64cfd2`                                        |
-| P7 Admin client                     | done    | `23b6b5c`                                        |
-| P8 E2E, load gate, play-through     | done    | see `git log` on this branch                     |
-| P9 Dev servers and hand-over        | running |                                                  |
+| Piece                               | State | Commit                                           |
+| ----------------------------------- | ----- | ------------------------------------------------ |
+| P1 Record O8–O15, T21; spec updated | done  | `eaeadd5` on master (spec/v1 merged and deleted) |
+| P2 Foundation                       | done  | `e9936aa`                                        |
+| P3 GTN domain and application       | done  | `42e2cb8`                                        |
+| P4 Server                           | done  | `9804e36`                                        |
+| P5 Seasonal specials                | done  | `f9c56e0`                                        |
+| P6 Player and host client           | done  | `b64cfd2`                                        |
+| P7 Admin client                     | done  | `23b6b5c`                                        |
+| P8 E2E, load gate, play-through     | done  | `ddbc324`                                        |
+| P9 Dev servers and hand-over        | done  | see `git log` on this branch                     |
 
 ## Needs the owner
 
@@ -740,3 +740,33 @@ At 1 000 players the one server thread is saturated, so the 781 guesses accepted
 | `reports/night-1/`                              | new, 25 PNG and 2 JSON |
 
 </details>
+
+## P9 — Dev servers and hand-over
+
+**Running:** `pnpm dev` on this machine: server http://127.0.0.1:3910 (ready), player client http://127.0.0.1:5410, admin app http://127.0.0.1:5411, PostgreSQL on 5510 (Docker `smg-dev`).
+
+**Quick Test:** http://127.0.0.1:5410/#/quick-test. Open "Dev sign-in" in the header, choose "Sign in as player-1", open the Quick Test, type a seed into the seed field, leave Season on "from the seed", and start.
+
+**Server commit:** `ddbc324` on `feat/guess-the-number` (P8; this sheet's commit changes only docs).
+
+**Seeds** (the season comes from `sha256("smg-quicktest:" + seed)`, first byte mod 4):
+
+| Seed      | Season | What to look at                                                                                     |
+| --------- | ------ | --------------------------------------------------------------------------------------------------- |
+| `meadow`  | Spring | Spring Herald: one free hint at the start, shown in the banner and the live feed.                   |
+| `harvest` | Summer | Heatwave: the cooldown under the banner shrinks step by step, never below 3 s; the ring follows it. |
+| `frost`   | Autumn | Leaf Fall: numbers are struck from the range bar; a struck number is refused without cost.          |
+| `blossom` | Winter | Frost: own answers show "answer arriving" and land after the delay; the result waits for it too.    |
+
+**What to look at:**
+
+1. One Quick Test round per seed, on a desktop and at phone width (390 px), in light and in dark (the sun and moon button). Expected: the season banner with its icon; the countdown holds Guess; the cooldown ring after each guess; the range bar with the band; bots shown as "here" and guessing; a result with the secret, placings, team result and the fairness proof.
+2. As host (the Quick Test player hosts its round): "End round" and "Abort round" (with a reason).
+3. Two windows with "host" and "player-1"/"player-2" (Dev sign-in): open a match from the lobby, join, pick teams, and start a round from the host console. Teams lock while it runs.
+4. The admin app at http://127.0.0.1:5411 ("Sign in as admin (development)"): settings with defaults, values in force, bounds and roles; Seasons; Abuse; Audit log with "Check the chain".
+5. The screenshots in `reports/night-1/` show all of this from the night.
+6. The owner items at the top of this sheet: (q), conflict 1, gaps 1–2, and (r), the load gate.
+
+**Push:** confirmed with `git ls-remote origin`: `refs/heads/feat/guess-the-number` at `ddbc324` (P8), `master` at `eaeadd5` (not merged into). This sheet's own commit is pushed the same way after it.
+
+**CI:** P3–P7 green. P8 (`ddbc324`): green (security, docs, verify, e2e in three browsers).

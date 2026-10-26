@@ -3,7 +3,7 @@
 Full list: [BACKLOG.md](BACKLOG.md). Decisions: [DECISIONS.md](DECISIONS.md).
 
 - Specification v1 (01–11) merged into `master` on 2026-10-24, with the owner's answers (DECISIONS O8–O15).
-- Next: the foundation and Guess The Number on branch `feat/guess-the-number` (roadmap phases 0–3).
+- Built on branch `feat/guess-the-number`, not merged: the foundation, Guess The Number with its server, client, admin app, e2e journeys and a first load check (night run 1, [NIGHT-RUN.md](NIGHT-RUN.md)). Next: the owner's review of that branch.
 - E2E journey 8 (embedded handoff) waits for the handoff itself (roadmap phase 7).
 - From the website repository: the In Season feed (with halving days), the handoff endpoint for `seasonal-mini-games` with the optional `links` claim, the chat room `mini-games`, and the route import into its Caddy.
 
