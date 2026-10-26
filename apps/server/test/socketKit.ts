@@ -111,6 +111,8 @@ async function listening(harness: Harness) {
     allowedOrigins: ['http://localhost:5410'],
     path: '/ws',
     sessionEnds: built.sessionEnds,
+    // The default of SMG_ROOM_FRAME_MS: the tests see frames merged as production does.
+    roomFrameMs: 100,
   });
   await built.runtime.start();
   await built.fastify.listen({ host: '127.0.0.1', port: 0 });

@@ -10,10 +10,13 @@
  *                 its round's queue at once, with nothing awaited in between, so the queue
  *                 order is the read order across all sockets (04 §5.2); other intents run one
  *                 after another per socket (./inOrder). Committed round events go out as
- *                 frames `{ roundId, s, events }`: the public form to `match:<id>`, a player's
- *                 own events to `match:<id>:player:<key>`, host events to `match:<id>:host`.
+ *                 frames `{ roundId, s, events }`: the public form to `match:<id>` (merged over
+ *                 `roomFrameMs`, ./roomFrames), a player's own events to
+ *                 `match:<id>:player:<key>`, host events to `match:<id>:host`.
+ *                 "Match changed" goes out at most once a second per match (./perKeyAtMost).
  *                 Adapted from Bingo's gateway.ts.
- * Depends on:     socket.io, node:http, ../auth/*, ../match/*, ../round/*, ./intents, ./inOrder
+ * Depends on:     socket.io, node:http, ../auth/*, ../match/*, ../round/*, ./intents, ./inOrder,
+ *                 ./perKeyAtMost, ./roomFrames
  * Used by:        ../main, test/*
  * Spec:           docs/spec/06-data-model-api-realtime.md §4; docs/spec/04-software-architecture.md §5.2
  */
@@ -27,6 +30,8 @@ import type { DbPool } from '../db/pool.js';
 import type { Play } from '../match/play.js';
 import type { GuessLimits } from '../round/guessLimits.js';
 import { inOrder } from './inOrder.js';
+import { perKeyAtMost } from './perKeyAtMost.js';
+import { roomFrames } from './roomFrames.js';
 import {
   envelopeOf,
   guessIntent,
@@ -44,6 +49,8 @@ export interface GatewayDeps {
   // "/ws" standalone, "/games/mini-games/ws" behind the website.
   readonly path: string;
   readonly sessionEnds: SessionEnds;
+  // The window over which a round's room frames are merged (./roomFrames, T49).
+  readonly roomFrameMs: number;
 }
 
 export interface SocketData {
@@ -81,12 +88,20 @@ export function attachGateway(server: HttpServer, deps: GatewayDeps): Server {
   play.on('connection', (socket) => {
     connect(socket, deps);
   });
+  const toRoom = roomFrames(deps.roomFrameMs, (matchId, frame) => {
+    play.to(`match:${matchId}`).emit('events', frame);
+  });
   deps.play.rounds.onCommitted((round, events, how) => {
     const frames = round.frames(events, how.held);
     const s = events.at(-1)?.seq ?? 0;
     // Released Frost events repeat earlier seqs: `late` tells the client they are no gap.
-    const room = { roundId: round.id, s, events: frames.room, ...(how.late ? { late: true } : {}) };
-    play.to(`match:${round.matchId}`).emit('events', room);
+    const room = {
+      roundId: round.id,
+      s,
+      events: frames.room,
+      ...(how.late ? { late: true as const } : {}),
+    };
+    toRoom(round.matchId, room);
     for (const [key, own] of frames.players) {
       play
         .to(`match:${round.matchId}:player:${key}`)
@@ -98,9 +113,11 @@ export function attachGateway(server: HttpServer, deps: GatewayDeps): Server {
         .emit('events', { roundId: round.id, events: frames.host });
     }
   });
-  deps.play.onMatchChanged((matchId) => {
-    play.to(`match:${matchId}`).emit('match', { matchId });
-  });
+  // At most one "match changed" a second per match: every page reloads the match on it, and
+  // a thousand players entering would otherwise mean a thousand reloads per page.
+  deps.play.onMatchChanged(
+    perKeyAtMost(1_000, (matchId) => play.to(`match:${matchId}`).emit('match', { matchId })),
+  );
   return io;
 }
 
@@ -129,7 +146,10 @@ function connect(socket: Socket, deps: GatewayDeps): void {
   });
   socket.on('disconnect', () => {
     for (const [matchId, key] of ctx.data.rooms)
-      if (key !== null) deps.play.presence.leave(matchId, key);
+      if (key !== null) {
+        deps.play.presence.leave(matchId, key);
+        deps.play.changed(matchId);
+      }
     ctx.data.rooms.clear();
   });
 }

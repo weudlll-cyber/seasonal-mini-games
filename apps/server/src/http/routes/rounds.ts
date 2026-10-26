@@ -3,12 +3,11 @@
  * @module server/http
  * @brief  Rounds over HTTP: create, start, end, abort, state, the guess fallback, result, verify.
  *
- * Responsibility: the round routes of 06 §3.1. The host (`round.manage`, and the match's
- *                 host) creates, starts, ends and aborts; anyone allowed to watch reads the
- *                 state (their own view, 02 §11); a roster player guesses through the same
+ * Responsibility: the round routes of 06 §3.1. The match's host (T48) creates, starts,
+ *                 ends and aborts; anyone allowed to watch reads the state (their own view, 02 §11); a roster player guesses through the same
  *                 queue and checks as the socket (the HTTP fallback, with its own rate limit);
  *                 the result and the proof only after the end. Codes map to 409 / 422 / 429.
- * Depends on:     fastify, zod, ../../match/*, ../../round/*, ./adminGuard
+ * Depends on:     fastify, zod, ../../match/*, ../../round/*
  * Used by:        ../app
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1, §4.3; docs/spec/02-game-guess-the-number.md §4, §10, §11
  */
@@ -21,7 +20,6 @@ import { PlayError, type Play } from '../../match/play.js';
 import type { GuessLimits } from '../../round/guessLimits.js';
 import type { LiveRound } from '../../round/liveRound.js';
 import type { PgRoundStore } from '../../round/pgRoundStore.js';
-import { permitted } from './adminGuard.js';
 
 const SEASONS = ['spring', 'summer', 'autumn', 'winter'] as const;
 const createBody = z
@@ -62,10 +60,14 @@ async function roundOr404(deps: RoundRouteDeps, request: FastifyRequest, reply: 
   return round;
 }
 
-// The match's host with round.manage, for the round's match.
+// The match's host runs its rounds (DECISIONS T48): opening a match needs match.create.
 async function hostOf(request: FastifyRequest, reply: FastifyReply, match: MatchRow | null) {
-  const actor = await permitted(request, reply, 'round.manage');
-  if (actor === null) return null;
+  const accountId = request.session?.accountId ?? null;
+  if (accountId === null) {
+    await reply.status(401).send({ code: 'SIGN_IN_REQUIRED' });
+    return null;
+  }
+  const actor = { accountId };
   if (match === null) {
     await reply.status(404).send({ code: 'MATCH_NOT_FOUND' });
     return null;
@@ -171,6 +173,8 @@ function registerReadRoutes(app: FastifyInstance, deps: RoundRouteDeps): void {
     if (round === null) return reply;
     // Ended and announced: under Frost a win is shown only after the delay (03 §2.4).
     if (!announced(round)) return reply.status(409).send({ code: 'ROUND_NOT_ENDED' });
+    // The view runs ahead of the log by the batches still being written: wait for them.
+    await round.drain();
     const log = await deps.store.log(round.id);
     const verified = round.verify(log);
     if (!verified.ok) return reply.status(409).send({ code: 'NO_PROOF', detail: verified.problem });

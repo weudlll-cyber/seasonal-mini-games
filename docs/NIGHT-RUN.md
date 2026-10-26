@@ -4,17 +4,17 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 
 ## Status
 
-| Piece                               | State           | Commit                                           |
-| ----------------------------------- | --------------- | ------------------------------------------------ |
-| P1 Record O8–O15, T21; spec updated | done            | `eaeadd5` on master (spec/v1 merged and deleted) |
-| P2 Foundation                       | done            | `e9936aa`                                        |
-| P3 GTN domain and application       | done            | `42e2cb8`                                        |
-| P4 Server                           | done            | `9804e36`                                        |
-| P5 Seasonal specials                | done            | `f9c56e0`                                        |
-| P6 Player and host client           | done            | `b64cfd2`                                        |
-| P7 Admin client                     | done            | see `git log` on this branch                     |
-| P8 E2E, load gate, play-through     | running         |                                                  |
-| P9 Dev servers and hand-over        | open (needs P8) |                                                  |
+| Piece                               | State   | Commit                                           |
+| ----------------------------------- | ------- | ------------------------------------------------ |
+| P1 Record O8–O15, T21; spec updated | done    | `eaeadd5` on master (spec/v1 merged and deleted) |
+| P2 Foundation                       | done    | `e9936aa`                                        |
+| P3 GTN domain and application       | done    | `42e2cb8`                                        |
+| P4 Server                           | done    | `9804e36`                                        |
+| P5 Seasonal specials                | done    | `f9c56e0`                                        |
+| P6 Player and host client           | done    | `b64cfd2`                                        |
+| P7 Admin client                     | done    | `23b6b5c`                                        |
+| P8 E2E, load gate, play-through     | done    | see `git log` on this branch                     |
+| P9 Dev servers and hand-over        | running |                                                  |
 
 ## Needs the owner
 
@@ -22,6 +22,8 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 - Spec conflict 1, check order of a guess (02 §5.1 against 04 §4.1–§4.2), built as 02 §5.1: [OPEN.md](OPEN.md). Please confirm.
 - Spec gap 1, `round_results.secret` stays empty (the server cannot name a game's secret): [OPEN.md](OPEN.md).
 - Spec gap 2, the feed's host allowlist is the feed address itself: [OPEN.md](OPEN.md).
+- (r) Load gate: 500 players pass except event-loop lag (87 ms, limit 50); 1 000 players fail the acknowledgement time (p95 4.6 s, limit 300 ms) on this laptop. Proposal: measure on the reference VPS first: [OPEN.md](OPEN.md).
+- E2E journey 8 (embedded handoff) is blocked: the handoff is roadmap phase 7, not built yet.
 
 ## P2 — Foundation
 
@@ -639,5 +641,102 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 | `docs/spec/README.md`                      | changed, +1 / −1   |
 | `eslint.config.js`                         | changed, +1 / −1   |
 | `pnpm-lock.yaml`                           | changed, +39 / −1  |
+
+</details>
+
+## P8 — E2E, load gate, play-through
+
+**Built** (spec 09 §4, §5):
+
+- E2E journeys 1–7 and 9 (`e2e/rounds.spec.ts`, `specials.spec.ts`, `players.spec.ts`, `access.spec.ts`) with the shared helpers `e2e/play.ts`. A person is a browser context signed in by the development sign-in. `search` plays a round from the screen alone, guessing the middle of the band the server sent. Every match is aborted at the end, never deleted. Journey 9 uses axe (WCAG 2.2 AA tags) and guesses by keyboard only.
+- The load driver `load/guessStorm.mjs` (a workspace package). It signs in N players plus 100 spectators and spreads their sockets over six worker threads (`load/stormWorker.mjs`). It runs one shared round (cooldown 3 s, range 1–1 000 000) with binary-searching players that pause 200–1 500 ms. It checks the log through the fairness proof and reads the server's CPU, memory and loop lag from `/metrics`. Afterwards it aborts the match, deletes the load accounts and puts the match size setting back.
+- The play-through screenshots, 25 PNG in `reports/night-1/`: lobby, Quick Test form, countdown, round with the host console, and result, each on desktop and on a 390 px phone, in light and in dark; plus the admin app's settings, a game document after a change, the audit log with the chain check, abuse and seasons. No console errors on any page.
+
+**Test results:**
+
+- `pnpm verify` green: 196 tests in 45 files.
+- E2E, whole suite in Chromium, Firefox and WebKit (iPhone 13): 28 passed. 3 failed, all WebKit-only (see "Fixed after looking"); after the fixes those 3 passed in WebKit. After the room-frame change (T49), the round journeys were re-run in Chromium: all 8 passed. Journey 8 is blocked: the embedded handoff is roadmap phase 7.
+- Load, one short run each (`reports/night-1/load-500.json`, `load-1000.json`). Measured on this laptop (14 threads), with the server under `tsx` in development mode and the driver on the same machine; this is not the reference VPS.
+
+| Check (09 §5)                              | 500 players + 100 spectators | 1 000 players + 100 spectators |
+| ------------------------------------------ | ---------------------------- | ------------------------------ |
+| Guess acknowledgement p95 / p99            | 133 / 190 ms ✓ (< 150 / 300) | 4 603 / 4 791 ms ✗ (p95 < 300) |
+| Own feedback p95                           | 133 ms ✓ (< 200)             | 4 601 ms ✗                     |
+| Lost, duplicated, reordered; gap-free seqs | none; gap-free ✓             | none; gap-free ✓               |
+| Fairness proof; winners                    | verified; 1 ✓                | verified; 1 ✓                  |
+| Event-loop lag p99 (peak sample)           | 87 ms ✗ (< 50)               | 197 ms ✗                       |
+| Server CPU mean / peak; memory             | 0.38 / 0.51 cores; 357 MiB ✓ | 0.67 / 0.91 cores; 484 MiB     |
+| Guesses in the round; round length         | 9 001; 68 s                  | 18 086; 78 s                   |
+| Driver's busiest worker                    | 13 %                         | 54 %                           |
+
+At 1 000 players the one server thread is saturated, so the 781 guesses accepted but not acknowledged are the backlog at the round's end, not lost guesses. The proposal is in [OPEN.md](OPEN.md) (r).
+
+**Fixed after looking:**
+
+- Load, driver: the first 500-player try ran all 600 sockets in one process. Its ack times (p95 4 s) were the driver falling behind the frames, not the server. The driver now uses worker threads and reports how busy they are (T51). It also paces sign-ins under the per-address limit of 600 a minute, and it measures a player's feedback from its own frame, which arrives before the ack.
+- Load, server: a CPU profile at 300 players showed socket writes (`writev`) as two thirds of the busy time: one room frame per 20 ms batch to every watcher. Room frames are now merged over 100 ms, and the first goes out at once (`apps/server/src/realtime/roomFrames.ts`, `SMG_ROOM_FRAME_MS`, T49). At 300 players the ack p95 went from 335 ms to 78 ms and the CPU from 0.69 to 0.25 cores.
+- Load, server: "match changed" went to every page once per entering player, and every page reloads on it. It is now at most once a second per match (`perKeyAtMost.ts`, T50).
+- `/rounds/:id/verify` read the log while the last batches were still being written, and answered "the round has not ended" under load. It now waits for them (`round.drain()`).
+- Development sign-in takes four-digit load names (`load-0001` … `load-1100`); five digits are refused, and the integration test covers both.
+- E2E, WebKit: the play loop's 2 s bound on a click failed every time, because WebKit with trace recording takes 1–3 s a step with several pages open. The WebKit timing project now records no trace (T51), and the loop's bounds are 3 s for reads and 10 s for actions. Journey 1's countdown is 8 s, so a slow browser still sees it hold Guess. Journey 2 checks for "no enabled Guess button", because a solved player's form is gone.
+- Phone result: the placings table split words ("Plac e", "too k part") and pushed Points out of the panel. Words now wrap whole, and the cells are tighter below 480 px; all four columns fit at 390 px.
+- Earlier in P8 (before the full run): field help is linked by `aria-describedby` instead of sitting in the label (axe); presence changes reach the room; the host check is host identity alone (T48); a Frost round reloads once more after the delay, so an answer released during a reload still shows.
+
+**Reused from Bingo:** `load/drawLatency.mjs` (dev sign-in with cookie and CSRF, the call helper; adapted in `load/http.mjs`), the split of the Playwright projects into a timing pass (Bingo NIGHT-3), and `@axe-core/playwright` as Bingo's journey 9 uses it.
+
+**New dependency:** `@axe-core/playwright` 4.13.0 (dev, root), for journey 9. The `load` package uses `socket.io-client` 4.8.4, already in the lockfile through the server's tests.
+
+**Removed or extracted:** nothing removed. Extracted: `perKeyAtMost` and `roomFrames` from the gateway's broadcast path, and `load/http.mjs` and `load/stormWorker.mjs` from the first single-file driver.
+
+**Noticed, left alone:**
+
+- Full-page screenshots show the page background ending at the first screen. The background is `background-attachment: fixed`; a real browser keeps it behind the viewport.
+- Re-running the account journey three times within an hour trips the registration limit in Firefox ("Too many tries"). That is the limiter working; a fresh stack passes.
+- At start, the dev server warns that Fastify's `disableRequestLogging` is deprecated (FSTDEP023), and pnpm warns that `prom-client` 15.1.3 is deprecated.
+- L1's nine further rounds (each special, a halving round), L2 `open-burst` and L3 `parallel` were not run: the task asked for one short run at 500 and one at 1 000.
+
+<details><summary>P8 lines per touched file</summary>
+
+| File                                            | Lines                  |
+| ----------------------------------------------- | ---------------------- |
+| `apps/server/src/config/env.ts`                 | changed, +2 / −0       |
+| `apps/server/src/http/routes/adminGuard.ts`     | changed, +1 / −1       |
+| `apps/server/src/http/routes/devSignIn.ts`      | changed, +4 / −4       |
+| `apps/server/src/http/routes/matches.ts`        | changed, +9 / −3       |
+| `apps/server/src/http/routes/rounds.ts`         | changed, +12 / −8      |
+| `apps/server/src/main.ts`                       | changed, +1 / −0       |
+| `apps/server/src/match/play.ts`                 | changed, +2 / −2       |
+| `apps/server/src/realtime/gateway.ts`           | changed, +29 / −9      |
+| `apps/server/src/realtime/intents.ts`           | changed, +6 / −3       |
+| `apps/server/src/realtime/perKeyAtMost.test.ts` | new, 43 lines          |
+| `apps/server/src/realtime/perKeyAtMost.ts`      | new, 33 lines          |
+| `apps/server/src/realtime/roomFrames.test.ts`   | new, 67 lines          |
+| `apps/server/src/realtime/roomFrames.ts`        | new, 65 lines          |
+| `apps/server/test/auth.integration.test.ts`     | changed, +4 / −1       |
+| `apps/server/test/socketKit.ts`                 | changed, +2 / −0       |
+| `apps/web/src/components/fields.tsx`            | changed, +18 / −9      |
+| `apps/web/src/live/useRound.ts`                 | changed, +30 / −8      |
+| `apps/web/src/round/round.css`                  | changed, +10 / −0      |
+| `docs/BACKLOG.md`                               | changed                |
+| `docs/DECISIONS.md`                             | changed, +4 / −0       |
+| `docs/NIGHT-RUN.md`                             | changed                |
+| `docs/OPEN.md`                                  | changed                |
+| `docs/spec/04-software-architecture.md`         | changed, +1 / −0       |
+| `docs/spec/08-admin-settings.md`                | changed, +1 / −0       |
+| `docs/spec/README.md`                           | changed, +1 / −1       |
+| `e2e/access.spec.ts`                            | new, 64 lines          |
+| `e2e/play.ts`                                   | new, 155 lines         |
+| `e2e/players.spec.ts`                           | new, 111 lines         |
+| `e2e/playwright.config.ts`                      | changed, +8 / −3       |
+| `e2e/rounds.spec.ts`                            | new, 100 lines         |
+| `e2e/specials.spec.ts`                          | new, 109 lines         |
+| `load/guessStorm.mjs`                           | new, 210 lines         |
+| `load/http.mjs`                                 | new, 62 lines          |
+| `load/package.json`                             | new, 14 lines          |
+| `load/stormWorker.mjs`                          | new, 107 lines         |
+| `package.json`                                  | changed, +1 / −0       |
+| `pnpm-lock.yaml`                                | changed, +25 / −0      |
+| `pnpm-workspace.yaml`                           | changed, +2 / −0       |
+| `reports/night-1/`                              | new, 25 PNG and 2 JSON |
 
 </details>

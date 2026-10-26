@@ -7,7 +7,8 @@
  *                 client on 5410, then run the specs in Chromium, Firefox and WebKit at a
  *                 phone viewport. Specs listed in TIMING (their checks depend on browser
  *                 timers) run afterwards, one at a time and one browser after the other, as
- *                 Bingo learned to (its NIGHT-3). Locally an already-running stack is reused.
+ *                 Bingo learned to (its NIGHT-3); WebKit records no trace there. Locally an
+ *                 already-running stack is reused.
  * Depends on:     @playwright/test, ./devStack, ./globalSetup
  * Spec:           docs/spec/09-testing-strategy.md §1, §4; Bingo 12 §7
  */
@@ -17,8 +18,9 @@ import { CLIENT_URL, REPO_ROOT, SERVER_URL, databaseUrl } from './devStack.js';
 
 const CI = process.env['CI'] !== undefined;
 
-// Specs whose checks depend on browser timers firing on time (cooldown ring, Frost delay).
-const TIMING: string[] = [];
+// Specs whose checks depend on timers firing on time (countdown, cooldown, specials, Frost):
+// they run after the others, one test at a time.
+const TIMING = ['rounds.spec.ts', 'specials.spec.ts', 'players.spec.ts', 'access.spec.ts'];
 const BROWSERS = [
   { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
@@ -40,6 +42,9 @@ export default defineConfig({
     // The timing specs: after all others, one test at a time, one browser after another.
     ...BROWSERS.map((b, i) => ({
       ...b,
+      // WebKit on Windows records a trace at 1–3 s a step with several pages open, which
+      // breaks the timing checks themselves: no trace there (found in night run P8).
+      ...(b.name === 'webkit-mobile' ? { use: { ...b.use, trace: 'off' as const } } : {}),
       name: `${b.name}-timing`,
       testMatch: TIMING,
       workers: 1,

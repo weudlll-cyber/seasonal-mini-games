@@ -4,14 +4,14 @@
  * @brief  Labelled form fields (text, number, choice, switch), an action button, a problem line.
  *
  * Responsibility: one look and one accessible structure for the forms of the lobby, the
- *                 host console and the Quick Test (label wraps its control, optional help
- *                 line); numbers keep their bounds as attributes, the server checks again.
+ *                 host console and the Quick Test (label wraps its control, the optional help
+ *                 line describes it); numbers keep their bounds as attributes, the server checks again.
  *                 Same pattern as ../account/formParts AccountField.
  * Depends on:     react
  * Used by:        ../lobby/Lobby, ../match/HostConsole, ../shell/QuickTest
  * Spec:           Bingo 01 §13 (forms); docs/spec/02-game-guess-the-number.md §12 (keyboard play)
  */
-import type { ReactElement, ReactNode } from 'react';
+import { cloneElement, useId, type ReactElement } from 'react';
 
 interface Base {
   readonly label: string;
@@ -19,17 +19,26 @@ interface Base {
   readonly testId?: string;
 }
 
+// The label names the control; the help line describes it (aria-describedby), so a field's
+// accessible name is its label alone.
 function Labelled({
   label,
   help,
   children,
-}: Base & { readonly children: ReactNode }): ReactElement {
+}: Base & { readonly children: ReactElement<{ 'aria-describedby'?: string }> }): ReactElement {
+  const helpId = useId();
   return (
-    <label className="smg-field">
-      <span>{label}</span>
-      {children}
-      {help === undefined ? null : <small className="smg-muted">{help}</small>}
-    </label>
+    <div className="smg-field">
+      <label>
+        <span>{label}</span>
+        {help === undefined ? children : cloneElement(children, { 'aria-describedby': helpId })}
+      </label>
+      {help === undefined ? null : (
+        <small id={helpId} className="smg-muted">
+          {help}
+        </small>
+      )}
+    </div>
   );
 }
 

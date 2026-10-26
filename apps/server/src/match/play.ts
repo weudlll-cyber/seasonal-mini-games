@@ -83,12 +83,12 @@ export class Play {
     this.seasons = live.seasons;
   }
 
-  // Players, teams or status of a match changed: the gateway tells its room.
+  // Players, their presence, teams or status of a match changed: the gateway tells its room.
   onMatchChanged(listener: (matchId: string) => void): void {
     this.matchListeners.push(listener);
   }
 
-  private changed(matchId: string): void {
+  changed(matchId: string): void {
     for (const l of this.matchListeners) l(matchId);
   }
 

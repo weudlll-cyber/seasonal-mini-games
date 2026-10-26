@@ -163,6 +163,7 @@ async function watch(ctx: IntentContext, code: string): Promise<Answer> {
   if (key !== null && isPlayer) {
     await ctx.socket.join(`match:${match.id}:player:${key}`);
     ctx.deps.play.presence.enter(match.id, key);
+    ctx.deps.play.changed(match.id);
   }
   if (key !== null && key === match.hostId) await ctx.socket.join(`match:${match.id}:host`);
   ctx.data.rooms.set(match.id, isPlayer ? key : null);
@@ -173,7 +174,10 @@ async function unwatch(ctx: IntentContext, code: string): Promise<Answer> {
   const match = await matchOr(ctx, code);
   if (match === null || !ctx.data.rooms.has(match.id)) return { ok: true };
   const key = ctx.data.rooms.get(match.id) ?? null;
-  if (key !== null) ctx.deps.play.presence.leave(match.id, key);
+  if (key !== null) {
+    ctx.deps.play.presence.leave(match.id, key);
+    ctx.deps.play.changed(match.id);
+  }
   ctx.data.rooms.delete(match.id);
   for (const room of [
     `match:${match.id}`,
@@ -190,8 +194,7 @@ async function hostRound(
   t: 'round.start' | 'round.end' | 'round.abort',
   body: z.infer<typeof roundData>,
 ): Promise<Answer> {
-  if (!ctx.data.session.permissions.includes('round.manage'))
-    return { ok: false, code: 'FORBIDDEN' };
+  // The match's host runs its rounds (DECISIONS T48).
   const round = await ctx.deps.play.rounds.get(body.roundId);
   const match = round === null ? null : await matchById(ctx.deps.pool, round.matchId);
   if (round === null || match === null) return { ok: false, code: 'NOT_FOUND' };

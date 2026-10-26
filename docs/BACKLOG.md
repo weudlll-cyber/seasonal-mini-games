@@ -11,12 +11,12 @@ The authoritative list. `OPEN.md` is the short page over it and is aligned after
 
 ### Implementation (roadmap phases, spec/11-roadmap.md)
 
-- Phase 2 — Real players: the authorization matrix and security suites of Bingo adapted to the new routes and intents, and the e2e journeys of spec/09 §4 (server and client are built, see part two)
+- Phase 2 — Real players: the authorization matrix and security suites of Bingo adapted to the new routes and intents (server, client and e2e journeys 1–7 and 9 are built, see part two)
 - Phase 4 — Standings and leaderboards (with team standing), profiles, verification page
 - Phase 5 — Chat providers `none` / `builtin` / `hostEmbed` and moderation
 - Phase 6 — Admin app: live rounds, account search with roles, version history with diff and rollback, confirm dialogs and 2FA step-up (Bingo 11 §1), and serving the admin build from the server (settings catalogue, Seasons area, abuse view and audit log are built, see part two)
-- Phase 7 — Integration: handoff, embed loader and allowlist, website feed, webhooks, public read API
-- Phase 8 — Production readiness: installer and `smg` CLI, backups, observability, security pass, load gate, operator guide, v1.0.0
+- Phase 7 — Integration: handoff, embed loader and allowlist, website feed, webhooks, public read API, and e2e journey 8 (embedded handoff, spec/09 §4)
+- Phase 8 — Production readiness: installer and `smg` CLI, backups, observability, security pass, load gate (the driver is built; a plain shared round at 500 and at 1 000 players ran once on the development machine, see [OPEN.md](OPEN.md) (r); open: the reference VPS, L1's special and halving rounds, L2 and L3), operator guide, v1.0.0
 
 ### Needed from the website repository
 
@@ -55,3 +55,4 @@ For Phase 7:
 | Phase 3, rules and server: the four specials (Spring Herald, Heatwave, Leaf Fall, Frost) with their timing and the order of 03 §1, halving rounds and halving days, season teams with automatic places and team standings, In Season from a polled feed with a safe fetch, the fast test profile                                                                                                                                    | Branch feat/guess-the-number (night run P5, not merged)                               | 2026-10-24 |
 | Phase 1 and 2, client: lobby, match page with joining, teams and players, host console with every host setting inside its bounds, round screen (season banner, countdown, cooldown ring, range bar, guess field, own guesses, Frost "answer arriving", roster, live feed), spectator view, result page (secret, margin, placings, team result, fairness proof), the development Quick Test page; light and dark, 390 px and desktop | Branch feat/guess-the-number (night run P6, not merged)                               | 2026-10-26 |
 | Phase 3 and 6, admin app: every settings document with every key's default, value in force, bounds in force, role, effect on running rounds and source, editing of the viewer's keys with a comment and version check; the Seasons area (feed state and refresh, halving days); the abuse view with suspension; the audit log with its chain check                                                                                  | Branch feat/guess-the-number (night run P7, not merged)                               | 2026-10-26 |
+| Phase 2 and 8, checks: e2e journeys 1–7 and 9 of spec/09 §4 in Chromium, Firefox and WebKit at a phone viewport (axe included); the load driver `load/guessStorm.mjs` with worker threads, run once at 500 and once at 1 000 players                                                                                                                                                                                                | Branch feat/guess-the-number (night run P8, not merged)                               | 2026-10-26 |

@@ -238,8 +238,11 @@ describe('development accounts', () => {
     expect(r.json<{ displayName: string }>().displayName).toBe('dev-load-007');
     const cookie = cookieOf(r);
     expect((await session(cookie)).account?.displayName).toBe('dev-load-007');
+    // Four digits for the 1 000-player check; five are refused.
+    expect((await post('/api/v1/dev/sign-in', { as: 'load-1000' })).statusCode).toBe(200);
+    expect((await post('/api/v1/dev/sign-in', { as: 'load-10000' })).statusCode).toBe(400);
     const gone = await app().inject({ method: 'DELETE', url: '/api/v1/dev/load-accounts' });
-    expect(gone.json<{ deleted: number }>().deleted).toBe(1);
+    expect(gone.json<{ deleted: number }>().deleted).toBe(2);
     expect((await session(cookie)).signedIn).toBe(false);
   });
 

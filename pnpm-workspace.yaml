@@ -10,6 +10,8 @@ packages:
   # Game modules and their registry (docs/spec/04-software-architecture.md §3).
   - games/*
   - apps/*
+  # The load check against a running stack (docs/spec/09-testing-strategy.md §5).
+  - load
 
 # Refuse installs on a Node version outside package.json "engines".
 engineStrict: true

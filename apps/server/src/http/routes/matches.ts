@@ -4,7 +4,7 @@
  * @brief  Games and matches over HTTP: list, open, summary, join, leave, team, close, abort.
  *
  * Responsibility: the match routes of 06 §3.1 with their permissions (`match.create` to
- *                 open, `match.join` to join, the host for close and abort), every body
+ *                 open, `match.join` to join, the match's host for close and abort), every body
  *                 validated with zod. A summary tells the viewer whether they host or play,
  *                 names the players, and gives the host the next round's defaults (the
  *                 host-chosen keys of the game's document).
@@ -186,9 +186,15 @@ function registerPlayerRoutes(app: FastifyInstance, deps: MatchRouteDeps): void 
 }
 
 function registerHostRoutes(app: FastifyInstance, deps: MatchRouteDeps): void {
+  // The match's host closes and aborts it (06 §3.1). Only accounts with match.create open
+  // matches, except a development Quick Test, which a player hosts.
   const hostOnly = async (request: FastifyRequest, reply: FastifyReply) => {
-    const actor = await permitted(request, reply, 'match.manage');
-    if (actor === null) return null;
+    const accountId = request.session?.accountId ?? null;
+    if (accountId === null) {
+      await reply.status(401).send({ code: 'SIGN_IN_REQUIRED' });
+      return null;
+    }
+    const actor = { accountId };
     const match = await matchOr404(deps, (request.params as { code: string }).code, reply);
     if (match === null) return null;
     if (match.hostId !== actor.accountId) {

@@ -8,7 +8,7 @@
  *                 the route the actor its audit entry is written for (account, roles,
  *                 permissions, request id, address).
  * Depends on:     fastify, @smg/application (AuditActor)
- * Used by:        ./adminSettings, ./adminAudit, ./adminAccounts, ./matches, ./rounds
+ * Used by:        ./adminSettings, ./adminAudit, ./adminAccounts, ./matches, ./seasons
  * Spec:           docs/spec/05-security-threat-model.md §1, §8; Bingo 05 §3
  */
 import type { AuditActor } from '@smg/application';

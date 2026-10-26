@@ -74,6 +74,8 @@ const envSchema = z.object({
   SMG_ENGINE_BATCH_MS: z.coerce.number().int().min(5).max(100).default(20),
   SMG_ENGINE_BATCH_MAX: z.coerce.number().int().min(50).max(1_000).default(200),
   SMG_SCHEDULER_POLL_MS: z.coerce.number().int().min(50).max(1_000).default(100),
+  // A round's room frames are merged over this window, the first sent at once (DECISIONS T49).
+  SMG_ROOM_FRAME_MS: z.coerce.number().int().min(0).max(250).default(100),
   // Development only (with SMG_DEV=1): a local In Season feed, plain HTTP allowed, used instead
   // of the `seasons.feedUrl` setting (which takes https addresses only).
   SMG_DEV_FEED_URL: z.url().optional(),

@@ -8,8 +8,8 @@
  *                 (role organizer), `dev-admin` (super_admin) or `dev-player-N` and starts a
  *                 session for it, so the
  *                 owner can try host and players alone in several browser windows. The load
- *                 check signs in `load-001` … `load-200` the same way (`dev-load-NNN`, players)
- *                 and removes them with DELETE /api/v1/dev/load-accounts. The app
+ *                 check signs in `load-0001` … `load-1100` the same way (`dev-load-NNNN`,
+ *                 players) and removes them with DELETE /api/v1/dev/load-accounts. The app
  *                 registers this route only with SMG_DEV=1; a test proves
  *                 a production build answers 404.
  * Depends on:     fastify, zod, ../../auth/*, ../../db/pool
@@ -34,8 +34,8 @@ const DEV_ACCOUNTS = {
   'player-3': { displayName: 'dev-player-3', roles: [] },
 } as const;
 
-// The load check (load/) signs in numbered players: `load-001` … `load-200`.
-const LOAD = /^load-\d{3}$/;
+// The load check (load/) signs in numbered players: `load-0001` … `load-1100`.
+const LOAD = /^load-\d{3,4}$/;
 const body = z.object({
   as: z.union([
     z.enum(['host', 'admin', 'player-1', 'player-2', 'player-3']),

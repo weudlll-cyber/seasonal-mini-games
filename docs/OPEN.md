@@ -4,6 +4,7 @@ Full list: [BACKLOG.md](BACKLOG.md). Decisions: [DECISIONS.md](DECISIONS.md).
 
 - Specification v1 (01–11) merged into `master` on 2026-10-24, with the owner's answers (DECISIONS O8–O15).
 - Next: the foundation and Guess The Number on branch `feat/guess-the-number` (roadmap phases 0–3).
+- E2E journey 8 (embedded handoff) waits for the handoff itself (roadmap phase 7).
 - From the website repository: the In Season feed (with halving days), the handoff endpoint for `seasonal-mini-games` with the optional `links` claim, the chat room `mini-games`, and the route import into its Caddy.
 
 ## Owner questions
@@ -11,6 +12,8 @@ Full list: [BACKLOG.md](BACKLOG.md). Decisions: [DECISIONS.md](DECISIONS.md).
 The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8–O15, T21). New proposals are listed here, and each one is built as written unless the owner decides otherwise.
 
 **(q) Winning-margin window.** The round closes at the winning guess, so "the next correct guess" has to arrive within a window to count for the margin. Proposal: `round.marginWindowS` 2 s (0.5–10 s); without a correct guess in that window, the result says "nobody else was close" (02 §9).
+
+**(r) Load gate at 1 000 players.** One plain shared round each, on the development machine (Windows laptop, server under `tsx` in development mode, driver on the same machine), not the reference VPS of 09 §5. 500 players + 100 spectators: acknowledgement p95 133 ms / p99 190 ms, feedback p95 133 ms, nothing lost, duplicated or reordered, one winner, memory 357 MiB; event-loop lag p99 peaked at 87 ms (limit 50 ms). 1 000 players: the fairness checks all hold, but acknowledgement p95 is 4.6 s (limit 300 ms): the server's one thread is saturated, and the profile shows socket writes as the main cost (DECISIONS T49 already merges room frames). Proposal: measure L1 and L4 on the reference VPS before changing the design; if L4 still fails there, raise `SMG_ROOM_FRAME_MS` for large rounds or move the socket fan-out off the round's thread (04 §5.6). Numbers: `reports/night-1/load-500.json`, `load-1000.json`.
 
 ## Spec conflicts
 

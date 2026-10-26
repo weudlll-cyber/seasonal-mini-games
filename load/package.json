@@ -1,0 +1,14 @@
+{
+  "name": "@smg/load",
+  "version": "0.0.0",
+  "private": true,
+  "license": "AGPL-3.0-or-later",
+  "description": "Load check of one shared round against a local development stack (spec 09 §5).",
+  "type": "module",
+  "scripts": {
+    "guess-storm": "node guessStorm.mjs"
+  },
+  "dependencies": {
+    "socket.io-client": "4.8.4"
+  }
+}
