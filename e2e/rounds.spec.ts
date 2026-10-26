@@ -14,7 +14,7 @@
  */
 import { expect, test } from '@playwright/test';
 
-import { abortMatch, closeAll, hostRound, openMatch, person, search } from './play.js';
+import { abortMatch, closeAll, fitsScreen, hostRound, openMatch, person, search } from './play.js';
 import { PHONE } from './screens.js';
 
 test('journey 1: a shared round from start to result, also on a phone', async ({ browser }) => {
@@ -40,6 +40,8 @@ test('journey 1: a shared round from start to result, also on a phone', async ({
     await one.page.getByTestId('guess-button').click();
     await expect(one.page.getByTestId('own-guesses')).toContainText('15');
     await expect(one.page.getByTestId('guess-button')).toBeDisabled();
+    // The round view is one screen on the phone (02 §12).
+    await fitsScreen(two.page);
     await Promise.all([search(one), search(two)]);
     for (const p of [one, two, host]) {
       await expect(p.page.getByTestId('result')).toBeVisible();

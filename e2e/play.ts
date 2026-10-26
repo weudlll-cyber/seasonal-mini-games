@@ -7,7 +7,7 @@
  *                 guest session) and its page; `call` reaches the API as that person with the
  *                 CSRF header (`attempt` for an answer that may be a refusal); a host opens a
  *                 match the players join and watch (the host plays too, O16); the host menu's
- *                 form creates a round; `search` plays a player's round from the screen only — the
+ *                 form creates a round; `fitsScreen` checks the round view has no page scrollbar; `search` plays a player's round from the screen only — the
  *                 middle of what the range and the player's own answers leave, until the round
  *                 ends or the player solved — exactly as a person reading the screen would.
  *                 Matches are aborted at the end, never deleted (CLAUDE.md).
@@ -96,6 +96,15 @@ export async function openMatch(
   return m.code;
 }
 
+// The round view is one screen: no page scrollbar (02 §12).
+export async function fitsScreen(page: Page): Promise<void> {
+  const [height, inner] = await page.evaluate(() => [
+    document.scrollingElement?.scrollHeight ?? 0,
+    window.innerHeight,
+  ]);
+  expect(height, 'the round view fits the screen').toBeLessThanOrEqual(inner);
+}
+
 // The host menu open: the round form or the running round's controls (O16).
 export async function hostMenu(host: Person): Promise<void> {
   const panel = host.page.getByTestId('host-console');
@@ -124,7 +133,7 @@ export async function hostRound(
 
 // What the player knows, worked out as a person does (the server sends no narrowed range,
 // O17): the range on screen, or the input's span while it is hidden, cut by their own answers.
-async function window(page: Page): Promise<{ low: number; high: number }> {
+async function stillPossible(page: Page): Promise<{ low: number; high: number }> {
   const text =
     (await page
       .getByTestId('range')
@@ -163,7 +172,7 @@ export async function search(p: Person, deadline = 120_000): Promise<number> {
     const solved = own?.includes('is the number!') ?? false;
     if (solved) return guesses;
     if (await button.isEnabled({ timeout: 3_000 }).catch(() => false)) {
-      const b = await window(page);
+      const b = await stillPossible(page);
       // The round may end between the check and the click: a short wait, then look again.
       const filled = await page
         .getByTestId('guess-input')

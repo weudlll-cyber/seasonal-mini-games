@@ -20,7 +20,13 @@ const CI = process.env['CI'] !== undefined;
 
 // Specs whose checks depend on timers firing on time (countdown, cooldown, specials, Frost):
 // they run after the others, one test at a time.
-const TIMING = ['rounds.spec.ts', 'specials.spec.ts', 'players.spec.ts', 'access.spec.ts'];
+const TIMING = [
+  'rounds.spec.ts',
+  'specials.spec.ts',
+  'players.spec.ts',
+  'access.spec.ts',
+  'range.spec.ts',
+];
 const BROWSERS = [
   { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   { name: 'firefox', use: { ...devices['Desktop Firefox'] } },

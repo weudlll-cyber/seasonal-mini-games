@@ -80,11 +80,8 @@ export function GuessInput(props: GtnPlayerProps): ReactElement {
           inputMode="numeric"
           autoComplete="off"
           enterKeyHint="send"
-          placeholder={
-            view.range === null
-              ? 'Any whole number'
-              : `${String(view.range.low)} to ${String(view.range.high)}`
-          }
+          // The range block above names the range; a phone has no room for it in the field.
+          placeholder="Your guess"
           value={value}
           onChange={(e) => {
             setValue(e.target.value);
