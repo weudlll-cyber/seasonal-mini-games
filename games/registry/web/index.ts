@@ -14,6 +14,7 @@
  */
 import {
   GuessInput,
+  gtnSettingDefs,
   gtnText,
   PlayerPanel,
   ResultPanel,
@@ -21,6 +22,7 @@ import {
 } from '@smg-game/guess-the-number/web';
 import type {
   GameText,
+  SettingDef,
   PlayerPanelProps,
   ResultPanelProps,
   SpectatorPanelProps,
@@ -34,6 +36,8 @@ export interface GameWeb {
   readonly Spectator: ComponentType<SpectatorPanelProps>;
   readonly Result: ComponentType<ResultPanelProps>;
   readonly text: GameText;
+  // The game's own setting definitions: one wording for every form that shows them.
+  readonly settings: readonly SettingDef[];
 }
 
 export const GAME_SCREENS: Readonly<Record<string, GameWeb>> = {
@@ -43,5 +47,6 @@ export const GAME_SCREENS: Readonly<Record<string, GameWeb>> = {
     Spectator: SpectatorPanel,
     Result: ResultPanel,
     text: gtnText,
+    settings: gtnSettingDefs,
   },
 };

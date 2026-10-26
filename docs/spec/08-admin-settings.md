@@ -5,6 +5,7 @@
 ## 1. Principles (adopted)
 
 - The admin app, its navigation model, and forms generated from the same zod schemas the server validates with (defaults, bounds and help text from schema metadata) are as in Bingo 11 §1.
+- The host's round form and the development Quick Test show every field's help as one line under the field, in the words of the setting's definition (DECISIONS T64).
 - Every change is a new version of its settings document, with history, diff and rollback, and is audited ([05](05-security-threat-model.md) §8). Confirm dialogs and 2FA step-up apply as in Bingo 11 §1.
 - Bingo's settings documents `security`, `rate_limits`, `branding`, `theme`, `notifications`, `features` and `chat` are adopted with their keys (Bingo 11 §4). This catalogue lists only the keys that are new or different.
 - Definitions with their defaults live in `packages/contracts/src/settings/` (platform) and `games/guess-the-number/src/settings/` (game). The tables below are the specification of those files. A document stores only what an admin changed: per key a new default and, for numbers, narrowed bounds (never wider than the table).

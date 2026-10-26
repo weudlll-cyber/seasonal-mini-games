@@ -16,6 +16,6 @@ export type { Feedback } from './feedback.js';
 export { guessTheNumber } from './module.js';
 export { GUESS_LIMIT, type GtnCode, type GuessAction } from './rules.js';
 export type { Secrets } from './secrets.js';
-export type { GtnConfig, Visibility } from './settings.js';
+export { gtnSettings, type GtnConfig, type Visibility } from './settings.js';
 export type { GtnEvent, GtnState } from './state.js';
 export type { PlayerView, ResultView, SpectatorView } from './views.js';

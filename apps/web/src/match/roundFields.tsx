@@ -3,13 +3,14 @@
  * @module web/match
  * @brief  The fields of the host's round form: one per setting, and the season controls.
  *
- * Responsibility: a setting definition becomes a switch, a choice or a number field with the
- *                 bounds in force (the document's narrowed bounds, never wider than the
- *                 catalogue, 08 §1); the season choice offers In Season only while it is
- *                 usable, and the halving switch only on a halving day (03 §3, §4).
- * Depends on:     react, @smg/contracts, @smg/game-sdk (bounds), ../components/fields, ../season/season,
- *                 ../shell/http
- * Used by:        ./HostMenu
+ * Responsibility: a setting definition becomes a switch, a choice or a number field with its
+ *                 label and one-line help and the bounds in force (the document's narrowed
+ *                 bounds, never wider than the catalogue, 08 §1); the Quick Test uses the same
+ *                 fields. The season choice offers In Season only while it is usable, and the
+ *                 halving switch only on a halving day (03 §3, §4).
+ * Depends on:     react, @smg/contracts, @smg/game-sdk (bounds), ../components/fields,
+ *                 ./formHelp, ../season/season, ../shell/http
+ * Used by:        ./HostMenu, ../shell/QuickTest
  * Spec:           docs/spec/08-admin-settings.md §1, §3; docs/spec/03-seasonal-specials.md §3, §4
  */
 import type { MatchDetailsView, SeasonName, SeasonsCurrentView } from '@smg/contracts';
@@ -18,13 +19,16 @@ import { useEffect, useState, type ReactElement } from 'react';
 
 import { ChoiceField, NumberField, plain, SwitchField } from '../components/fields.js';
 import { SEASON_NAMES, SEASONS } from '../season/season.js';
+import { FORM_HELP } from './formHelp.js';
 import { api } from '../shell/http.js';
 
 type Doc = NonNullable<MatchDetailsView['nextRoundDefaults']>;
 
+// One setting as a field, its label and help from the definition (the same words wherever it is
+// shown); the bounds are the document's when there is one, else the definition's.
 export function Field(p: {
   def: SettingDef;
-  doc: Doc;
+  doc?: Doc;
   value: SettingValue;
   set: (v: SettingValue) => void;
 }): ReactElement | null {
@@ -42,7 +46,7 @@ export function Field(p: {
       />
     );
   if (def.kind !== 'int' && def.kind !== 'number') return null;
-  const b = effectiveBounds(def, p.doc.overrides[def.key]);
+  const b = effectiveBounds(def, p.doc?.overrides[def.key]);
   const step = def.kind === 'number' ? def.step : 1;
   return (
     <NumberField
@@ -74,6 +78,7 @@ export function SeasonControls(p: {
     <>
       <ChoiceField<SeasonName | 'inSeason'>
         label="Season"
+        help={FORM_HELP.season}
         value={p.season}
         options={options}
         onChange={p.setSeason}
