@@ -11,7 +11,7 @@
  *                 watches it and plays from the next one. The host's last round settings are
  *                 kept here, so the next round's form is prefilled whichever layout made them.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (types), ../live/*, ../shell/*,
- *                 ../season/*, ./HostMenu, ../round/RoundScreen, ../round/roundText
+ *                 ../season/*, ./HostMenu, ../round/RoundScreen, ../round/roundText, ./match.css
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/02-game-guess-the-number.md §2, §4, §11; docs/spec/03-seasonal-specials.md §5
  */
@@ -28,6 +28,7 @@ import { SEASON_NAMES, SEASONS, seasonColor } from '../season/season.js';
 import { api, ApiError } from '../shell/http.js';
 import { useSession } from '../shell/session.js';
 import { HostMenu, type Values } from './HostMenu.js';
+import './match.css';
 
 function Teams({
   match,

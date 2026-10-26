@@ -11,7 +11,7 @@
  *                 published at creation, the seed revealed now, and the link to check them
  *                 (02 §9, §10; 03 §5).
  * Depends on:     react, @smg/contracts, @smg-game/registry/web (types), ../season/SeasonIcon,
- *                 ../shell/http, ./PlayerName, ./roundText
+ *                 ../shell/http, ./PlayerName, ./roundText, ./result.css
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §10; docs/spec/03-seasonal-specials.md §5
  */
@@ -24,6 +24,7 @@ import { SEASON_NAMES } from '../season/season.js';
 import { BASE_PATH } from '../shell/http.js';
 import { PlayerName } from './PlayerName.js';
 import { endHeadline, marginText } from './roundText.js';
+import './result.css';
 
 function placeText(state: RoundStateView, place: number | null): string {
   if (place !== null) return String(place);

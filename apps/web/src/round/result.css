@@ -1,0 +1,87 @@
+/**
+ * @file   apps/web/src/round/result.css
+ * @module web/round
+ * @brief  The result page: headline, placings table, player names, the proof's hex values.
+ *
+ * Responsibility: placings as a table that scrolls inside its panel on a phone (never the
+ *                 page), with words wrapping whole and tighter cells below 480 px; a player's
+ *                 name on one line with an ellipsis until focus or a tap (./PlayerName); the
+ *                 viewer's own line highlighted; the team result list. Colours only from
+ *                 @smg/ui tokens.
+ * Spec:           docs/spec/02-game-guess-the-number.md §9, §12
+ */
+.round-result {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.round-result h1 {
+  margin: 0;
+  font-size: var(--font-size-title);
+}
+
+/* A wide table scrolls inside its panel, never the page (390 px phones). */
+.round-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Words wrap whole inside the table (the panel's `anywhere` split "Place" into "Plac e"). */
+.round-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow-wrap: normal;
+}
+
+.round-result {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.round-table th,
+.round-table td {
+  text-align: left;
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* A phone fits all four columns with tighter cells. */
+@media (max-width: 480px) {
+  .round-table th,
+  .round-table td {
+    padding: var(--space-1);
+  }
+}
+
+/* A name never breaks inside a word; too long, it ends in an ellipsis until focus or a tap
+   shows it whole (./PlayerName). */
+.player-name {
+  display: inline-block;
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.player-name:focus-visible,
+.player-name[data-full='true'] {
+  max-width: none;
+}
+
+.round-you {
+  background: var(--color-active-bg);
+  font-weight: var(--font-weight-strong);
+}
+
+.round-hex {
+  overflow-wrap: anywhere;
+  font-size: var(--font-size-small);
+}
+
+.round-teams-result {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: var(--space-1);
+}

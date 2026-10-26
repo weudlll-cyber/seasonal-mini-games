@@ -1,0 +1,66 @@
+/**
+ * @file   apps/web/src/match/match.css
+ * @module web/match
+ * @brief  The match head, the season team picker, the host menu and the round forms' grid.
+ *
+ * Responsibility: the match title with its code and the host menu button; the team buttons
+ *                 with the chosen one in its season colour; the host menu's panel over the page
+ *                 (opaque, as menus are, scrolling inside itself); the grid of the host's round
+ *                 form and the Quick Test. Colours only from @smg/ui tokens.
+ * Spec:           docs/spec/02-game-guess-the-number.md §2, §11; docs/spec/03-seasonal-specials.md §5
+ */
+.match-head {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.match-head h1 {
+  margin: 0 auto 0 0;
+}
+
+.match-teams {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.match-teams button[aria-pressed='true'] {
+  background: var(--season);
+  color: var(--color-on-season);
+}
+
+/* The host menu: one button, its panel over the page (opaque, as menus are). */
+.host-menu {
+  position: relative;
+}
+
+.host-menu-button {
+  min-width: var(--hit-target);
+  min-height: var(--hit-target);
+}
+
+.host-menu-panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.4rem);
+  z-index: 20;
+  width: min(42rem, calc(100vw - 2 * var(--gutter)));
+  max-height: min(36rem, calc(100dvh - 8rem));
+  overflow-y: auto;
+  padding: var(--space-3);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-raised);
+  white-space: normal;
+}
+
+.host-form {
+  display: grid;
+  gap: var(--space-2);
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+}

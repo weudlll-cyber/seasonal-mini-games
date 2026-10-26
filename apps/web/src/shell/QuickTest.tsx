@@ -13,7 +13,8 @@
  *                 both forms say the same. Development builds only: the shell loads this module
  *                 on demand and a production build leaves it out.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (definitions), @smg-game/registry/web,
- *                 ./http, ./router, ../season/season, ../components/fields, ../match/*
+ *                 ./http, ./router, ../season/season, ../components/fields, ../match/* (and its
+ *                 form grid, ../match/match.css)
  * Used by:        ./AppShell (lazy, development only)
  * Spec:           docs/spec/11-roadmap.md (phase 1 Quick Test); docs/spec/09-testing-strategy.md §1, §4
  */
@@ -28,6 +29,7 @@ import { Field } from '../match/roundFields.js';
 import { SEASON_NAMES, SEASONS } from '../season/season.js';
 import { api } from './http.js';
 import { navigate } from './router.js';
+import '../match/match.css';
 
 const GAME = 'guess-the-number';
 // The settings the Quick Test offers, in the form's order, with its own starting values.
