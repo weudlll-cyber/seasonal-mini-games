@@ -1,0 +1,31 @@
+# @file   ops/examples/Caddyfile
+# @module ops
+# @brief  Example: Seasonal Mini Games behind a Caddy you already run (no Caddy of its own).
+#
+# Responsibility: two ways to place the app — on its own (sub)domain, or under a path of an
+#                 existing site. reverse_proxy carries the WebSocket upgrade by itself. The
+#                 app must trust this Caddy (SMG_TRUSTED_PROXIES) and know its address
+#                 (SMG_PUBLIC_URL; SMG_BASE_PATH=/games/mini-games/ for the path variant).
+#                 "app:3100" is the app's name on a shared Docker network; use 127.0.0.1:3100
+#                 when the app's port is published to the host instead.
+# Spec:           docs/spec/10-repository-structure.md §6; Bingo 09 §8
+
+# Own (sub)domain:
+games.example.org {
+	encode zstd gzip
+	@metrics path /metrics /metrics/*
+	respond @metrics 404
+	reverse_proxy app:3100
+}
+
+# Under a path of an existing site (what ops/install.sh --type website writes for the
+# Seasonal Entertainment website): inside that site's block, before its own reverse_proxy.
+example.org {
+	redir /games/mini-games /games/mini-games/ 308
+	@smg_metrics path /games/mini-games/metrics /games/mini-games/metrics/*
+	respond @smg_metrics 404
+	handle /games/mini-games/* {
+		reverse_proxy app:3100
+	}
+	reverse_proxy site:3800
+}

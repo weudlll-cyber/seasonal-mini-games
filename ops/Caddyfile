@@ -1,0 +1,38 @@
+# @file   ops/Caddyfile
+# @module ops
+# @brief  Standalone installs: HTTPS for the public address, everything forwarded to the app.
+#
+# Responsibility: automatic HTTPS (Let's Encrypt) for a domain, Caddy's internal CA for an
+#                 IP address (SMG_TLS = "tls internal", set by ops/install.sh); http is
+#                 redirected to https; pages, /api and the WebSocket /ws go to the app.
+#                 Caddy replaces any X-Forwarded-For a visitor sends; the app trusts only
+#                 this proxy (SMG_TRUSTED_PROXIES). /metrics is not forwarded. HSTS, a 1 MiB body
+#                 limit and a 10 s header timeout (Bingo 03 §7, §13); the per-IP request rate
+#                 needs a Caddy rate-limit plugin, so the app limits per IP instead (Bingo 03 §13).
+# Used by:        ops/compose.yml (service caddy, profile standalone)
+# Spec:           docs/spec/10-repository-structure.md §6; Bingo 09 §1, §3
+{
+	email {$SMG_ACME_EMAIL}
+	# Clients send no SNI to a bare IP address (browsers neither): use the site's certificate.
+	default_sni {$SMG_SITE_ADDRESS}
+	# Bingo 03 §13 layer 1: slow clients do not hold connections open.
+	servers {
+		timeouts {
+			read_header 10s
+		}
+	}
+}
+
+{$SMG_SITE_ADDRESS} {
+	{$SMG_TLS}
+	encode zstd gzip
+	# Bingo 03 §7: HSTS (browsers ignore it for a bare IP address, so it acts for domains only).
+	header Strict-Transport-Security "max-age=63072000; includeSubDomains"
+	# Bingo 03 §13 layer 1: request bodies up to 1 MiB.
+	request_body {
+		max_size 1MB
+	}
+	@metrics path /metrics /metrics/*
+	respond @metrics 404
+	reverse_proxy app:3100
+}
