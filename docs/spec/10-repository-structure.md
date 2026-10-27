@@ -82,6 +82,7 @@ Every port of this repository differs from every port used in the Bingo reposito
 | Mailpit SMTP (dev compose) | **1110** | 1090 |
 | Mailpit web UI (dev compose) | **8510** | 8490 |
 | App port inside its container | **3100** | 3000 |
+| Test host page for e2e journey 8 (development only) | **5420** | — |
 | Metrics port inside its container | **9465** | 9464 |
 
 Container-side ports of the third-party images (PostgreSQL 5432, Mailpit 1025 and 8025) are not bound on the host and are the same in both repositories.

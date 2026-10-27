@@ -11,7 +11,7 @@
  *                 Keys idle for a whole window are pruned, so the maps stay small.
  * Depends on:     nothing
  * Used by:        ./sessionPlugin, ../http/routes/auth, ../http/routes/twoFactor,
- *                 ../realtime/intents
+ *                 ../http/routes/handoff, ../realtime/intents
  * Spec:           Bingo 03 §13
  */
 
@@ -77,6 +77,8 @@ export const RATE_RULES = {
   // and new guest sessions (audit S3).
   anonymous: { limit: 600, windowMs: 60_000 },
   guest: { limit: 10, windowMs: 60 * 60_000 },
+  // Per IP: handoff tokens redeemed (a host signs one per sign-in).
+  handoff: { limit: 30, windowMs: 60_000 },
   // Per account: two-factor codes (confirm, step-up, disable), right or wrong.
   twoFactor: { limit: 10, windowMs: 15 * 60_000 },
 } as const satisfies Record<string, RateRule>;

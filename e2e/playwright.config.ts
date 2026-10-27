@@ -4,7 +4,8 @@
  * @brief  Playwright config: three browsers against the dev server, player client and admin app.
  *
  * Responsibility: start PostgreSQL (global setup), the server on 3910, the player client
- *                 on 5410 and the admin app on 5411, then run the specs in Chromium, Firefox
+ *                 on 5410, the admin app on 5411 and the test host site on 5420 (development
+ *                 only, ./host-page), then run the specs in Chromium, Firefox
  *                 and WebKit at a phone viewport. Specs listed in TIMING (their checks depend
  *                 on browser timers, or they change shared settings) run afterwards, one at a time and one browser after the other, as
  *                 Bingo learned to (its NIGHT-3); WebKit records no trace there. Locally an
@@ -14,7 +15,14 @@
  */
 import { defineConfig, devices } from '@playwright/test';
 
-import { ADMIN_URL, CLIENT_URL, REPO_ROOT, SERVER_URL, databaseUrl } from './devStack.js';
+import {
+  ADMIN_URL,
+  CLIENT_URL,
+  HOST_PAGE_URL,
+  REPO_ROOT,
+  SERVER_URL,
+  databaseUrl,
+} from './devStack.js';
 
 const CI = process.env['CI'] !== undefined;
 
@@ -31,6 +39,8 @@ const TIMING = [
   'chat.spec.ts',
   // Changes and rolls back the game's settings document, and aborts a round.
   'admin.spec.ts',
+  // Changes the embed allowlist and the identity providers (journey 8).
+  'embed.spec.ts',
 ];
 const BROWSERS = [
   { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
@@ -86,6 +96,14 @@ export default defineConfig({
       url: ADMIN_URL,
       reuseExistingServer: !CI,
       timeout: 120_000,
+    },
+    {
+      // Development only: the test host site of journey 8 (never part of the image).
+      command: 'node --experimental-strip-types e2e/host-page/server.ts',
+      cwd: REPO_ROOT,
+      url: `${HOST_PAGE_URL}/healthz`,
+      reuseExistingServer: !CI,
+      timeout: 30_000,
     },
   ],
 });

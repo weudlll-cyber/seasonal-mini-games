@@ -7,7 +7,7 @@
  *                 by the cookie into `request.session` (null when absent or dead); on
  *                 state-changing /api requests require the `X-CSRF-Token` header to equal
  *                 the session's token (constant-time), except the routes that create the
- *                 first session (register, login, guest, dev sign-in), which accept only
+ *                 first session (register, login, guest, handoff, dev sign-in), which accept only
  *                 JSON bodies so a cross-site form cannot reach them; limit every session
  *                 to 120 API calls a minute, and requests without a session to 600 a minute
  *                 per address. Cookie name, path and Secure flag follow 03 §3
@@ -50,6 +50,7 @@ const SESSION_STARTERS = new Set([
   '/api/v1/auth/register',
   '/api/v1/auth/login',
   '/api/v1/auth/guest',
+  '/api/v1/auth/handoff',
   '/api/v1/dev/sign-in',
 ]);
 // Development only and outside any session: the load check's cleanup (no CSRF token).

@@ -4,7 +4,8 @@
  * @brief  The signed-in session for the whole client: who, permissions, CSRF token.
  *
  * Responsibility: load GET /session on start, keep its CSRF token for ./http, and offer
- *                 the development quick sign-in (host, admin or player 1–3) and sign-out.
+ *                 the development quick sign-in (host, admin or player 1–3), sign-out, and the
+ *                 sign-in with a host's handoff token (an embedded page, 07 §1).
  *                 Only the newest refresh sets the session (an older answer arriving late
  *                 never undoes a sign-in). Screens read it through `useSession`.
  * Depends on:     react, ./http
@@ -44,6 +45,8 @@ interface SessionContextValue {
   // Local accounts (05 §2.1); both throw ApiError with the server's code on refusal.
   readonly signIn: (email: string, password: string) => Promise<void>;
   readonly register: (account: NewAccount) => Promise<void>;
+  // A host-signed token exchanged for a session (Bingo 07 §2.2).
+  readonly handoff: (token: string) => Promise<void>;
   readonly can: (permission: string) => boolean;
 }
 
@@ -99,6 +102,10 @@ export function SessionProvider({ children }: { children: ReactNode }): ReactEle
       },
       register: async (account) => {
         await api('/auth/register', { method: 'POST', body: account });
+        await changed();
+      },
+      handoff: async (token) => {
+        await api('/auth/handoff', { method: 'POST', body: { token } });
         await changed();
       },
       can: (permission) => session?.permissions.includes(permission) === true,

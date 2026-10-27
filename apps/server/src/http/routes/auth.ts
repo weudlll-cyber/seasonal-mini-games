@@ -13,7 +13,7 @@
  *                 verification and 2FA are behind feature flags that are off by default;
  *                 when verification is on, unverified accounts cannot sign in.
  * Depends on:     fastify, zod, ../../auth/*, ../../admin/abuse, ../../db/pool, ../../config/features
- * Used by:        ../app
+ * Used by:        ../app, ./handoff (startSession)
  * Spec:           docs/spec/05-security-threat-model.md §1, §2; Bingo 05 §2.1; Bingo 03 §2.1, §2.3, §3, §13
  */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
@@ -146,10 +146,11 @@ async function login(
   return startSession(request, reply, deps, { accountId: account.id, status: 200 });
 }
 
-async function startSession(
+// A new session for the account, answered with its cookie (also after a handoff, ./handoff).
+export async function startSession(
   request: FastifyRequest,
   reply: FastifyReply,
-  deps: AuthDeps,
+  deps: Pick<AuthDeps, 'pool' | 'cookie' | 'sessionEnds'>,
   { accountId, status }: { readonly accountId: string; readonly status: number },
 ) {
   // A fresh session id on every sign-in (03 §3: rotate on login).

@@ -9,7 +9,7 @@
  *                 stays open; call a route of the tables as any kind of caller with a fresh
  *                 session and an address of its own; list the routes Fastify registered; abort
  *                 the matches and remove the accounts at the end. Adapted from Bingo's matrix.
- * Depends on:     fastify, socket.io-client (types), ../src/auth/*, ./authzTable, ./session,
+ * Depends on:     fastify, socket.io-client (types), ../src/auth/*, ./authzRoles, ./authzTable, ./session,
  *                 ./socketKit
  * Used by:        ./authzMatrix.integration.test
  * Spec:           docs/spec/09-testing-strategy.md §6; Bingo 12 §7
@@ -19,14 +19,8 @@ import type { Socket } from 'socket.io-client';
 
 import { deleteAccount, registerAccount } from '../src/auth/accounts.js';
 import { createSession } from '../src/auth/sessions.js';
-import {
-  ACCOUNT_PARAM,
-  PARAMS,
-  PERIOD,
-  SETTINGS_DOCUMENT,
-  type Role,
-  type RouteCase,
-} from './authzTable.js';
+import type { Role } from './authzRoles.js';
+import { ACCOUNT_PARAM, PARAMS, PERIOD, SETTINGS_DOCUMENT, type RouteCase } from './authzTable.js';
 import { signIn } from './session.js';
 import { startSocketKit, type SocketKit } from './socketKit.js';
 

@@ -4,71 +4,45 @@
  * @brief  The authorization matrix as data: every HTTP route and WS intent with the callers
  *         that may use it.
  *
- * Responsibility: the kinds of caller (anonymous, guest, a player, a player of the match,
- *                 another host, the match's host, the super admin, a moderator, a game admin
- *                 and a staff-only security admin) and, for each route the server registers
- *                 and each intent of the gateway, the callers that get through. Every body is
+ * Responsibility: for each route the server registers and each intent of the gateway, the
+ *                 kinds of caller (./authzRoles) that get through. Every body is
  *                 chosen so a call that gets through changes as little as possible: invalid
  *                 after the permission check, a round that has ended, a match kept for
  *                 closing, a target that does not exist. Adapted from Bingo's matrix tables.
- * Depends on:     nothing
- * Used by:        ./authzMatrix.integration.test
+ * Depends on:     ./authzRoles
+ * Used by:        ./authzMatrix.integration.test, ./authzSetup
  * Spec:           docs/spec/05-security-threat-model.md §1; docs/spec/09-testing-strategy.md §6;
  *                 docs/spec/06-data-model-api-realtime.md §3, §4.3; docs/DECISIONS.md S10
  */
 
-export type Role =
-  | 'anonymous'
-  | 'guest'
-  | 'player'
-  | 'matchPlayer'
-  | 'otherHost'
-  | 'host'
-  | 'admin'
-  | 'moderator'
-  | 'gameAdmin'
-  | 'securityAdmin';
-
-export const ROLES: readonly Role[] = [
-  'anonymous',
-  'guest',
-  'player',
-  'matchPlayer',
-  'otherHost',
-  'host',
-  'admin',
-  'moderator',
-  'gameAdmin',
-  'securityAdmin',
-];
-const not = (...out: Role[]) => ROLES.filter((r) => !out.includes(r));
-const ALL = ROLES;
-export const SESSION = not('anonymous');
-const ACCOUNTS = not('anonymous', 'guest');
-// The security admin is staff only (no player role): it holds neither match.join nor match.watch.
-const JOINERS = not('anonymous', 'guest', 'securityAdmin');
-const WATCHERS = not('anonymous', 'securityAdmin');
-const CREATORS: readonly Role[] = ['otherHost', 'host', 'admin', 'gameAdmin'];
-const HOST: readonly Role[] = ['host'];
-// The roster of the running round: the host plays along (O16, S10) with the match's player.
-const ROSTER: readonly Role[] = ['host', 'matchPlayer'];
-const ADMIN_VIEW: readonly Role[] = ['admin', 'moderator', 'gameAdmin', 'securityAdmin'];
-const AUDIT: readonly Role[] = ['admin', 'securityAdmin'];
-const ABUSE: readonly Role[] = ['admin', 'moderator', 'securityAdmin'];
-const SUSPEND: readonly Role[] = ['admin', 'securityAdmin'];
-const ROLE_ASSIGN: readonly Role[] = ['admin'];
-const SEASONS: readonly Role[] = ['admin', 'gameAdmin'];
-const ADJUST: readonly Role[] = ['admin', 'moderator'];
-const ABORT: readonly Role[] = ['admin', 'moderator', 'gameAdmin'];
-// match.manage: organizers (in their own match only, checked after the match is found) and staff.
-const MANAGE: readonly Role[] = ['otherHost', 'host', 'admin', 'gameAdmin'];
-const MODERATE: readonly Role[] = ['admin', 'moderator', 'gameAdmin'];
+import {
+  ABORT,
+  ABUSE,
+  ACCOUNTS,
+  ADJUST,
+  ADMIN_VIEW,
+  ALL,
+  AUDIT,
+  CREATORS,
+  HOST,
+  INTEGRATION,
+  JOINERS,
+  MANAGE,
+  MODERATE,
+  ROLE_ASSIGN,
+  ROSTER,
+  SEASONS,
+  SESSION,
+  SUSPEND,
+  WATCHERS,
+  type Role,
+} from './authzRoles.js';
 
 // Which match or round a path names: `:code` is the host's match with the running round
 // (`spare`: a second match of the host, kept for closing, joining and leaving); `:id` of a
 // round is the ended round of that match (`live`: the running round).
 export interface RouteCase {
-  readonly method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  readonly method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE' | 'OPTIONS';
   readonly path: string;
   readonly body?: object;
   readonly allow: readonly Role[];
@@ -103,6 +77,11 @@ export const ROUTES: readonly RouteCase[] = [
     allow: ALL,
   },
   { method: 'POST', path: '/api/v1/auth/guest', body: {}, allow: ALL },
+  // The handoff (07 §1): an empty body is refused; the preflight without an Origin too.
+  { method: 'POST', path: '/api/v1/auth/handoff', body: {}, allow: ALL },
+  { method: 'OPTIONS', path: '/api/v1/auth/handoff', allow: ALL },
+  { method: 'GET', path: '/auth/handoff', allow: ALL },
+  { method: 'GET', path: '/embed.js', allow: ALL },
   { method: 'POST', path: '/api/v1/auth/logout', body: {}, allow: SESSION },
   { method: 'DELETE', path: '/api/v1/me', body: { password: 'not the password' }, allow: ACCOUNTS },
   {
@@ -220,6 +199,25 @@ export const ROUTES: readonly RouteCase[] = [
   { method: 'PATCH', path: '/api/v1/admin/chat/rooms/:id', body: {}, allow: MODERATE },
   { method: 'GET', path: '/api/v1/admin/profanity-lists', allow: MODERATE },
   { method: 'PUT', path: '/api/v1/admin/profanity-lists/:id', body: {}, allow: MODERATE },
+  // The public read API and the embed config (07 §1): anyone, nothing to change.
+  { method: 'GET', path: '/api/v1/public/embed-config', allow: ALL },
+  { method: 'GET', path: '/api/v1/public/matches/open', allow: ALL },
+  { method: 'GET', path: '/api/v1/public/rounds/current', allow: ALL },
+  { method: 'GET', path: '/api/v1/public/leaderboards/current', allow: ALL },
+  { method: 'GET', path: '/api/v1/public/rounds/:id/result', allow: ALL },
+  // integration.manage: invalid bodies, missing targets.
+  { method: 'GET', path: '/api/v1/admin/embed-origins', allow: INTEGRATION },
+  { method: 'POST', path: '/api/v1/admin/embed-origins', body: {}, allow: INTEGRATION },
+  { method: 'DELETE', path: '/api/v1/admin/embed-origins', allow: INTEGRATION },
+  { method: 'GET', path: '/api/v1/admin/identity-providers', allow: INTEGRATION },
+  { method: 'POST', path: '/api/v1/admin/identity-providers', body: {}, allow: INTEGRATION },
+  { method: 'PUT', path: '/api/v1/admin/identity-providers/:id', body: {}, allow: INTEGRATION },
+  { method: 'DELETE', path: '/api/v1/admin/identity-providers/:id', allow: INTEGRATION },
+  { method: 'GET', path: '/api/v1/admin/webhooks', allow: INTEGRATION },
+  { method: 'POST', path: '/api/v1/admin/webhooks', body: {}, allow: INTEGRATION },
+  { method: 'PUT', path: '/api/v1/admin/webhooks/:id', body: {}, allow: INTEGRATION },
+  { method: 'DELETE', path: '/api/v1/admin/webhooks/:id', allow: INTEGRATION },
+  { method: 'GET', path: '/api/v1/admin/webhooks/:id/deliveries', allow: INTEGRATION },
 ];
 
 // What a path's parameters are filled with, besides the match and round.
@@ -286,5 +284,7 @@ export const CSRF_WRITES: readonly RouteCase[] = ROUTES.filter((r) =>
     'POST /api/v1/admin/leaderboard-adjustments',
     'POST /api/v1/chat/messages/:id/report',
     'POST /api/v1/admin/chat/sanctions',
+    'POST /api/v1/admin/embed-origins',
+    'POST /api/v1/admin/webhooks',
   ].includes(`${r.method} ${r.path}`),
 );

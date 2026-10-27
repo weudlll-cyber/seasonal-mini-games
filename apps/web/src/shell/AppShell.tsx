@@ -45,8 +45,13 @@ const QuickTest = import.meta.env.DEV
   ? lazy(() => import('./QuickTest.js').then((m) => ({ default: m.QuickTest })))
   : null;
 
+type ShellRoute = Exclude<Route, { name: 'embed' }>;
+
 export function AppShell({ dev }: { readonly dev: boolean }): ReactElement {
-  const route = useRoute();
+  const routed = useRoute();
+  // An embed address opened after the page loaded shows the lobby: the embed frame exists only
+  // for a page opened at it (../main).
+  const route: ShellRoute = routed.name === 'embed' ? { name: 'lobby' } : routed;
   // Keyed by account: a sign-in or sign-out from the menu closes it.
   const who = useSession().session?.account?.id ?? 'guest';
   return (
@@ -163,7 +168,13 @@ function AccountItems(props: {
 }
 
 // Keyed by account: a sign-in as someone else mounts the screen fresh.
-function Screen({ route, dev }: { readonly route: Route; readonly dev: boolean }): ReactElement {
+function Screen({
+  route,
+  dev,
+}: {
+  readonly route: ShellRoute;
+  readonly dev: boolean;
+}): ReactElement {
   const who = useSession().session?.account?.id ?? 'guest';
   switch (route.name) {
     case 'lobby':

@@ -14,5 +14,6 @@ const missing = () => {
   throw new Error('development code is not part of the production bundle; run without SMG_DEV');
 };
 
+export const devEmbedScript = missing;
 export const registerDevSignIn = missing;
 export const registerQuickTest = missing;

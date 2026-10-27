@@ -9,8 +9,10 @@
  *                 TypeScript sources) inlined and the npm dependencies left as imports for node_modules,
  *                 without comments or spacing; the
  *                 development modules (src/dev/*, the Quick Test and dev sign-in routes)
- *                 replaced by ./devStub.mjs; copy src/db/migrations to <out>/migrations,
- *                 where the bundled migrator looks for them. Run by the Dockerfile.
+ *                 replaced by ./devStub.mjs; the embed loader (apps/embed-loader) as a browser
+ *                 script <out>/public/embed.js, which GET /embed.js serves; copy
+ *                 src/db/migrations to <out>/migrations, where the bundled migrator looks for
+ *                 them. Run by the Dockerfile.
  * Depends on:     esbuild, node:fs, node:path, ./devStub.mjs
  * Used by:        Dockerfile, test/productionBundle.test.ts
  * Spec:           Bingo 08 §4; Bingo 09 §1
@@ -65,6 +67,16 @@ await build({
   banner: {
     js: "import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);",
   },
+  logLevel: 'info',
+});
+// The loader host pages include (07 §1): one small script without dependencies.
+await build({
+  entryPoints: ['../embed-loader/src/index.ts'],
+  outfile: path.join(out, 'public', 'embed.js'),
+  bundle: true,
+  format: 'iife',
+  target: 'es2022',
+  minify: true,
   logLevel: 'info',
 });
 cpSync('src/db/migrations', path.join(out, 'migrations'), { recursive: true });

@@ -26,7 +26,6 @@ import {
   findMatch,
   listMatches,
   myMatches,
-  openMatch,
   teamStandings,
   type MatchRow,
 } from '../../match/matches.js';
@@ -96,7 +95,7 @@ export function registerMatchRoutes(app: FastifyInstance, deps: MatchRouteDeps):
     const limit = (await deps.settings.values('matchmaking'))['match.maxPlayers'] as number;
     if (body.data.maxPlayers > limit)
       return reply.status(422).send({ code: 'MATCH_TOO_LARGE', limit });
-    const match = await openMatch(deps.pool, { ...body.data, hostId: actor.accountId });
+    const match = await deps.play.open({ ...body.data, hostId: actor.accountId });
     // The host plays along in their own match (O16).
     await deps.play.join(match, { key: actor.accountId, accountId: actor.accountId });
     return reply.status(201).send(summaryOf(match));

@@ -64,7 +64,7 @@
 5. Teams: four players pick teams, the team standing updates after the round, and teams lock during the countdown.
 6. Reconnect mid-round: the cooldown is unchanged after reconnect, there are no duplicate guesses, and Frost answers arrive after reconnect.
 7. Spectator (guest): sees the feed at the round's visibility and never a number or feedback under `own`.
-8. Embedded: JWT handoff from a test host page signs the player in; an origin that is not on the allowlist is refused (Bingo journey 7).
+8. Embedded: JWT handoff from a test host page (`e2e/host-page`, port 5420) signs the player in inside the iframe; the same page from an origin that is not on the allowlist cannot frame the game and its handoff is refused (Bingo journey 7).
 9. Accessibility: axe checks on lobby, round and result; keyboard-only guessing.
 10. Hidden range (owner decision 19), 1280 × 720: the round view says "Any whole number", no bound is on the page, a guess far outside the range is answered, and the result reveals the range.
 11. Negative bounds (owner decision 18), 390 × 844: a range from −500 to 500 is shown, the ± button makes a typed number negative, the guess is answered, and the round plays to its result.

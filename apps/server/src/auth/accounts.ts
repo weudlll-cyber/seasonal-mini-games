@@ -1,19 +1,22 @@
 /**
  * @file   apps/server/src/auth/accounts.ts
  * @module server/auth
- * @brief  Local accounts: register, find for login, change password, delete, dev accounts.
+ * @brief  Accounts: register, linked (handoff) accounts, find for login, change password,
+ *         delete, dev accounts.
  *
- * Responsibility: create an account with the `player` role (and any extra roles), look an
- *                 account up by e-mail for login, and create-or-reuse the development
- *                 accounts behind the quick sign-in (also when several browsers sign in as
- *                 a new one at once). E-mail and display name are unique
- *                 case-insensitively; a clash is reported as one generic error so the
- *                 response never reveals which e-mail exists.
- * Depends on:     ../db/pool, ./password
- * Used by:        ../http/routes/auth, ../http/routes/devSignIn, ../cli, test/*
- * Spec:           Bingo 03 §2.1; Bingo 04 §3.1
+ * Responsibility: create an account with the `player` role (and any extra roles), or one
+ *                 without e-mail and password for a host's identity (Bingo 07 §2.1); look an
+ *                 account up by e-mail for login; create-or-reuse the development accounts
+ *                 behind the quick sign-in. E-mail and display name are unique case-insensitively;
+ *                 a clash is one generic error, so no response reveals which e-mail exists.
+ * Depends on:     pg, ../db/pool, ./password
+ * Used by:        ../http/routes/auth, ../http/routes/devSignIn, ../integration/handoff, ../cli,
+ *                 test/*
+ * Spec:           Bingo 03 §2.1; Bingo 04 §3.1; Bingo 07 §2.1
  */
 import { randomBytes } from 'node:crypto';
+
+import type pg from 'pg';
 
 import type { DbPool } from '../db/pool.js';
 import { hashPassword } from './password.js';
@@ -56,6 +59,25 @@ export async function registerAccount(pool: DbPool, input: NewAccount): Promise<
   } finally {
     client.release();
   }
+}
+
+// A first login through a host's identity: no e-mail, no password, the `player` role, inside
+// the caller's transaction. Null when the display name is taken (the caller tries another).
+export async function createLinkedAccount(
+  c: pg.PoolClient,
+  displayName: string,
+): Promise<string | null> {
+  const inserted = await c.query<{ id: string }>(
+    `INSERT INTO smg.accounts (display_name, display_name_key) VALUES ($1, $2)
+     ON CONFLICT DO NOTHING RETURNING id::text`,
+    [displayName, displayName],
+  );
+  const id = inserted.rows[0]?.id;
+  if (id === undefined) return null;
+  await c.query("INSERT INTO smg.role_assignments (account_id, role_id) VALUES ($1, 'player')", [
+    id,
+  ]);
+  return id;
 }
 
 interface LoginAccount {

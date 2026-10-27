@@ -11,9 +11,11 @@
  *                 abort; team choice, locked while a round counts down or runs (TEAMS_LOCKED);
  *                 joining and leaving (leaving ends a round whose roster all left, "no players
  *                 left"); staff kick a player, who leaves the same way and whose guesses the
- *                 running round refuses from then on; every change of players, teams or status is told to listeners.
+ *                 running round refuses from then on; every change of players, teams or status is told to listeners,
+ *                 and a match opened or closed to the lifecycle listeners (webhooks, 07 §3.2); in
+ *                 shared mode the roster keeps only players the anti-multi rules admit (./rosterRules).
  * Depends on:     node:crypto, @smg/application (settings), ../round/*, ../seasons/seasons,
- *                 ./matches, ./presence, ../db/pool
+ *                 ./matches, ./presence, ./rosterRules, ../db/pool
  * Used by:        ../http/routes/*, ../realtime/intents, ../dev/quickTest
  * Spec:           docs/spec/02-game-guess-the-number.md §2–§4, §8.3; docs/spec/06-data-model-api-realtime.md §3.1
  */
@@ -35,12 +37,15 @@ import {
   joinMatch,
   kickPlayer,
   leaveMatch,
+  openMatch,
   setMatchStatus,
   setTeam,
   type JoinResult,
   type MatchRow,
+  type NewMatch,
   type Team,
 } from './matches.js';
+import { admitted } from './rosterRules.js';
 import type { Seasons } from '../seasons/seasons.js';
 import type { Presence } from './presence.js';
 
@@ -71,8 +76,11 @@ export interface RoundRequest {
 
 const RUNNING = new Set(['created', 'countdown', 'open']);
 
+type MatchLifecycle = (event: 'opened' | 'closed', match: MatchRow) => void;
+
 export class Play {
   private readonly matchListeners: ((matchId: string) => void)[] = [];
+  private readonly lifecycleListeners: MatchLifecycle[] = [];
 
   readonly presence: Presence;
   private readonly seasons: Seasons;
@@ -94,6 +102,17 @@ export class Play {
 
   changed(matchId: string): void {
     for (const l of this.matchListeners) l(matchId);
+  }
+
+  // A match was opened, or closed or aborted (the row carries its new status).
+  onLifecycle(listener: MatchLifecycle): void {
+    this.lifecycleListeners.push(listener);
+  }
+
+  async open(m: NewMatch): Promise<MatchRow> {
+    const match = await openMatch(this.pool, m);
+    for (const l of this.lifecycleListeners) l('opened', match);
+    return match;
   }
 
   async join(
@@ -154,18 +173,23 @@ export class Play {
     }
   }
 
-  // The roster: active players connected now, in join order; the host plays along (O16, 02 §4).
+  // Active players connected now, in join order.
+  private async present(match: MatchRow): Promise<RosterPlayer[]> {
+    const connected = this.presence.connected(match.id);
+    return (await activePlayers(this.pool, match.id))
+      .filter((p) => connected.has(p.playerKey))
+      .map((p) => ({ playerId: p.playerKey, team: p.team }));
+  }
+
+  // The roster: the players present; the host plays along (O16, 02 §4).
   async startRound(
     match: MatchRow,
     round: LiveRound,
     roster?: readonly RosterPlayer[],
   ): Promise<Reply> {
-    const connected = this.presence.connected(match.id);
+    // A given roster (the Quick Test) is taken as it is; others pass the anti-multi rules (05 §6).
     const players =
-      roster ??
-      (await activePlayers(this.pool, match.id))
-        .filter((p) => connected.has(p.playerKey))
-        .map((p) => ({ playerId: p.playerKey, team: p.team }));
+      roster ?? (await admitted(this.pool, this.settings, round.id, await this.present(match)));
     const values = await this.settings.values('matchmaking');
     const minPlayers = values['match.minPlayersPerRound'] as number;
     return round.run({
@@ -216,7 +240,9 @@ export class Play {
         by: abort?.by ?? 'host',
       });
     }
-    await setMatchStatus(this.pool, match.id, abort === undefined ? 'closed' : 'aborted', abort);
+    const status = abort === undefined ? 'closed' : 'aborted';
+    await setMatchStatus(this.pool, match.id, status, abort);
+    for (const l of this.lifecycleListeners) l('closed', { ...match, status });
     // An aborted match takes back its league points unless the setting keeps them (T70).
     if (abort !== undefined && !(await leagueRules(this.settings)).abortedMatchesCount) {
       await inTransaction(this.pool, (c) => withdrawMatch(c, match.id));

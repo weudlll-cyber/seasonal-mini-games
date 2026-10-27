@@ -1,0 +1,26 @@
+/**
+ * @file   apps/web/src/embed/embed.css
+ * @module web/embed
+ * @brief  The frame of an embedded view: no top bar, the host page's width.
+ *
+ * Responsibility: tight margins for the embedded view, its "signed in as" line and its
+ *                 refusal line. Colours only from the @smg/ui tokens.
+ * Depends on:     @smg/ui tokens
+ * Used by:        ./EmbedShell
+ * Spec:           docs/spec/07-integration.md §1
+ */
+
+.embed-main {
+  padding: var(--space-3);
+}
+
+.embed-who {
+  margin: 0 0 var(--space-2);
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+.embed-refused {
+  margin: var(--space-4);
+  color: var(--color-text-muted);
+}

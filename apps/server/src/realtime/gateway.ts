@@ -4,7 +4,8 @@
  * @brief  Socket.IO gateway: authenticated sockets, match rooms, frames out, intents in (06 §4).
  *
  * Responsibility: one endpoint (`/ws` under the base path), namespace `/play`, WebSocket only.
- *                 The handshake checks the Origin and loads the session from the cookie; a
+ *                 The handshake checks the Origin (the game's own, or an embed origin an admin
+ *                 approved, 07 §1) and loads the session from the cookie; a
  *                 socket whose session ends is closed. Every intent's envelope, replay number
  *                 and socket limit are checked the moment it is read; a guess then goes into
  *                 its round's queue at once, with nothing awaited in between, so the queue
@@ -51,6 +52,8 @@ export interface GatewayDeps {
   readonly chat: Chat;
   readonly cookieName: string;
   readonly allowedOrigins: readonly string[];
+  // The embed allowlist (Bingo 07 §3.4): its sites may open the socket too.
+  readonly embeds: { allows(origin: string): boolean };
   // "/ws" standalone, "/games/mini-games/ws" behind the website.
   readonly path: string;
   readonly sessionEnds: SessionEnds;
@@ -201,8 +204,9 @@ function connect(socket: Socket, deps: GatewayDeps): void {
 
 async function authenticate(socket: Socket, deps: GatewayDeps): Promise<Session> {
   const origin = socket.handshake.headers.origin;
-  if (origin === undefined || !deps.allowedOrigins.includes(origin))
-    throw new Error('ORIGIN_NOT_ALLOWED');
+  const allowed =
+    origin !== undefined && (deps.allowedOrigins.includes(origin) || deps.embeds.allows(origin));
+  if (!allowed) throw new Error('ORIGIN_NOT_ALLOWED');
   const token = cookieValue(socket.handshake.headers.cookie, deps.cookieName);
   const session = token === null ? null : await findSession(deps.pool, token);
   if (session === null) throw new Error('UNAUTHORIZED');

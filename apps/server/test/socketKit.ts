@@ -112,6 +112,7 @@ async function listening(harness: Harness) {
     chat: built.chat,
     cookieName: built.cookieName,
     allowedOrigins: ['http://localhost:5410'],
+    embeds: built.embeds,
     path: '/ws',
     sessionEnds: built.sessionEnds,
     // The default of SMG_ROOM_FRAME_MS: the tests see frames merged as production does.

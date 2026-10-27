@@ -28,9 +28,10 @@ const envSchema = z.object({
   // One libpq URL; the integration test overrides it with the Testcontainers URL.
   DATABASE_URL: z.url(),
   SMG_LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
-  // Feature flags (./features): e-mail verification and 2FA off, guests on.
+  // Feature flags (./features): e-mail verification, 2FA and outbound webhooks off, guests on.
   SMG_FEATURE_EMAIL_VERIFICATION: z.stringbool().default(false),
   SMG_FEATURE_TWO_FACTOR: z.stringbool().default(false),
+  SMG_FEATURE_WEBHOOKS: z.stringbool().default(false),
   SMG_FEATURE_GUESTS: z.stringbool().default(true),
   // Browser origins allowed to open the WebSocket (06 §2), comma-separated; without it the
   // public URL's origin, else the local player and admin clients (allowedOrigins below).

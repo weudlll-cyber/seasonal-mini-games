@@ -14,8 +14,8 @@
  *                 group is refused without the CSRF token or with another session's. Matches
  *                 are aborted and the accounts made here removed at the end.
  *                 Adapted from Bingo's authzMatrix.integration.test.ts.
- * Depends on:     vitest, fastify (inject), ../src/auth/*, ../src/realtime/intents, ./authzTable,
- *                 ./authzSetup, ./harness, ./socketKit
+ * Depends on:     vitest, fastify (inject), ../src/auth/*, ../src/realtime/intents, ./authzRoles,
+ *                 ./authzTable, ./authzSetup, ./harness, ./socketKit
  * Spec:           docs/spec/05-security-threat-model.md §1, M13; docs/spec/09-testing-strategy.md §6;
  *                 docs/DECISIONS.md O16, S10; Bingo 03 §3, §8
  */
@@ -26,15 +26,8 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { INTENT_TYPES } from '../src/realtime/intents.js';
-import {
-  INTENTS,
-  REFUSALS,
-  ROLES,
-  ROUTES,
-  CSRF_WRITES,
-  SESSION,
-  type RouteCase,
-} from './authzTable.js';
+import { ROLES, SESSION } from './authzRoles.js';
+import { INTENTS, REFUSALS, ROUTES, CSRF_WRITES, type RouteCase } from './authzTable.js';
 import {
   callAs,
   prepare,

@@ -1,16 +1,19 @@
 /**
  * @file   apps/web/src/shell/router.ts
  * @module web/shell
- * @brief  Hash routes of the player client: lobby, account, match, boards, profiles, proofs.
+ * @brief  Hash routes of the player client: lobby, account, match, boards, profiles, proofs,
+ *         and the embedded views.
  *
  * Responsibility: parse `location.hash` into a route and back, and a hook that follows
  *                 hash changes. Hash routing keeps every screen reachable from the dev
  *                 server and from a static host without server rewrites (as Bingo). The
  *                 boards: `#/leaderboard` (optionally `/<periodId>`), a profile
- *                 `#/players/<displayName>` and a round's proof `#/rounds/<roundId>/verify`.
+ *                 `#/players/<displayName>` and a round's proof `#/rounds/<roundId>/verify`; inside a
+ *                 host page's frame `#/embed/<lobby|match|leaderboard|profile>[/<code or name>]`.
  * Depends on:     react
- * Used by:        ./AppShell, ../account/*, ./DevTools, ../boards/*, ../round/ResultScreen
- * Spec:           Bingo 01 §13; docs/spec/02-game-guess-the-number.md §9
+ * Used by:        ./AppShell, ../account/*, ./DevTools, ../boards/*, ../round/ResultScreen,
+ *                 ../embed/*, ../main
+ * Spec:           Bingo 01 §13; docs/spec/02-game-guess-the-number.md §9; docs/spec/07-integration.md §1
  */
 import { useEffect, useState } from 'react';
 
@@ -23,7 +26,14 @@ export type Route =
   | { readonly name: 'quickTest' }
   | { readonly name: 'leaderboard'; readonly periodId: string | null }
   | { readonly name: 'player'; readonly displayName: string }
-  | { readonly name: 'verify'; readonly roundId: string };
+  | { readonly name: 'verify'; readonly roundId: string }
+  | { readonly name: 'embed'; readonly view: EmbedView; readonly param: string | null };
+
+// The views a host page can embed (07 §1).
+type EmbedView = 'lobby' | 'match' | 'leaderboard' | 'profile';
+const EMBED_VIEWS: readonly string[] = ['lobby', 'match', 'leaderboard', 'profile'];
+const isEmbedView = (v: string | undefined): v is EmbedView =>
+  v !== undefined && EMBED_VIEWS.includes(v);
 
 type Rest = readonly (string | undefined)[];
 
@@ -37,6 +47,10 @@ const PARSERS = new Map<string, (rest: Rest) => Route | null>([
   ['account', () => ({ name: 'account' })],
   ['leaderboard', ([periodId]) => ({ name: 'leaderboard', periodId: periodId ?? null })],
   ['players', ([n]) => (n === undefined ? null : { name: 'player', displayName: n })],
+  [
+    'embed',
+    ([view, param]) => (isEmbedView(view) ? { name: 'embed', view, param: param ?? null } : null),
+  ],
   [
     'rounds',
     ([roundId, what]) =>
@@ -60,20 +74,19 @@ export function parseRoute(hash: string): Route {
   return PARSERS.get(first)?.(rest) ?? { name: 'lobby' };
 }
 
+// The routes without parameters.
+const FIXED: Partial<Record<Route['name'], string>> = {
+  lobby: '#/',
+  signIn: '#/sign-in',
+  register: '#/register',
+  account: '#/account',
+  quickTest: '#/quick-test',
+};
+
 export function hrefOf(route: Route): string {
   switch (route.name) {
-    case 'lobby':
-      return '#/';
-    case 'signIn':
-      return '#/sign-in';
-    case 'register':
-      return '#/register';
-    case 'account':
-      return '#/account';
     case 'match':
       return `#/match/${encodeURIComponent(route.code)}`;
-    case 'quickTest':
-      return '#/quick-test';
     case 'leaderboard':
       return route.periodId === null
         ? '#/leaderboard'
@@ -82,6 +95,10 @@ export function hrefOf(route: Route): string {
       return `#/players/${encodeURIComponent(route.displayName)}`;
     case 'verify':
       return `#/rounds/${encodeURIComponent(route.roundId)}/verify`;
+    case 'embed':
+      return `#/embed/${route.view}${route.param === null ? '' : `/${encodeURIComponent(route.param)}`}`;
+    default:
+      return FIXED[route.name] ?? '#/';
   }
 }
 

@@ -10,12 +10,14 @@
  *                 document and their history, audit log, accounts, abuse signals, live rounds
  *                 with staff actions), the match and round
  *                 routes with their runtime, the boards (leaderboards, profiles, adjustments),
- *                 the builtin chat with its moderation and, in development, the Quick Test
+ *                 the builtin chat with its moderation, the integration (handoff, embed allowlist,
+ *                 public read API, webhooks; ./integrationWiring) and, in development, the Quick Test
  *                 onto a fresh Fastify instance, under the base
  *                 path (SMG_BASE_PATH) and behind the trusted proxies. The caller owns the
  *                 lifecycle (listen, close, pool disposal). Adapted from Bingo's app.ts.
  * Depends on:     fastify, @smg/application, @smg/contracts, ../db/pool, ../auth/*, ../chat/*,
- *                 ../config/*, ../admin/*, ../round/runtime, ./plugins/*, ./routes/*
+ *                 ../config/*, ../admin/*, ../integration/embedOrigins, ../round/runtime,
+ *                 ./integrationWiring, ./plugins/*, ./routes/*
  * Used by:        ../main.ts, test/*, ../index
  * Spec:           docs/spec/04-software-architecture.md §2.1; docs/spec/06-data-model-api-realtime.md §3
  */
@@ -32,7 +34,10 @@ import { hostChatOrigin } from '../chat/provider.js';
 import type { Env } from '../config/env.js';
 import { featuresFrom } from '../config/features.js';
 import type { DbPool } from '../db/pool.js';
+import { EmbedAllowlist } from '../integration/embedOrigins.js';
+import type { WebhookDelivery } from '../integration/webhookDelivery.js';
 import { createRoundRuntime, gameDocuments, type RoundRuntime } from '../round/runtime.js';
+import { registerIntegration } from './integrationWiring.js';
 import { registerProblemDetails } from './plugins/problem.js';
 import { maintenanceFlag, registerMaintenance } from './plugins/maintenance.js';
 import { registerSecurityHeaders } from './plugins/securityHeaders.js';
@@ -71,6 +76,10 @@ export interface App {
   readonly runtime: RoundRuntime;
   // The builtin chat; the gateway sends its events.
   readonly chat: Chat;
+  // The embed allowlist: the gateway's Origin check reads it too (Bingo 07 §3.4).
+  readonly embeds: EmbedAllowlist;
+  // Queued webhook deliveries; ../main sends them while SMG_FEATURE_WEBHOOKS is on.
+  readonly webhooks: WebhookDelivery;
   readonly cookieName: string;
 }
 
@@ -110,6 +119,21 @@ function attachSources(metrics: MetricsHandle, runtime: RoundRuntime): void {
   });
 }
 
+// Problems, maintenance, metrics, health, and the built client (or the placeholder page).
+function registerBasics(fastify: FastifyInstance, deps: AppDeps, metrics: MetricsHandle): void {
+  registerProblemDetails(fastify);
+  // `smg maintenance on`: no new match or round while the flag file exists (10 §6).
+  registerMaintenance(fastify, maintenanceFlag(deps.env.SMG_DATA_DIR));
+  registerMetrics(fastify, metrics);
+  registerHealth(fastify, deps.pool);
+  // The built client in the image; the placeholder page in development (Vite serves it).
+  if (deps.env.SMG_WEB_DIR === undefined) {
+    registerPlaceholder(fastify, { dev: deps.env.SMG_DEV, port: deps.env.SMG_PORT });
+  } else {
+    registerWebClient(fastify, deps.env.SMG_WEB_DIR, deps.env.SMG_ADMIN_DIR);
+  }
+}
+
 export async function buildApp(deps: AppDeps): Promise<App> {
   const fastify = createFastify(deps.env);
   // Development features only with SMG_DEV=1 (fail closed).
@@ -117,38 +141,23 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   const audit = new PgAuditLog(deps.pool);
   const documents = { ...PLATFORM_SETTINGS, ...gameDocuments() };
   const settings = new SettingsService(documents, new PgSettingsStore(deps.pool), audit);
-  // The CSP lets the host's chat room load in a frame while the provider is hostEmbed.
-  await registerSecurityHeaders(fastify, hostChatOrigin(settings));
-  registerProblemDetails(fastify);
-  // `smg maintenance on`: no new match or round while the flag file exists (10 §6).
-  registerMaintenance(fastify, maintenanceFlag(deps.env.SMG_DATA_DIR));
+  // Loaded before the first request: the CSP's frame-ancestors and the CORS checks read it.
+  const embeds = new EmbedAllowlist(deps.pool);
+  await embeds.list();
+  // The CSP lets the host's chat room load in a frame while the provider is hostEmbed, and the
+  // allowlisted sites frame the game.
+  await registerSecurityHeaders(fastify, hostChatOrigin(settings), () => embeds.config().origins);
   const metrics = createMetrics();
-  registerMetrics(fastify, metrics);
-  registerHealth(fastify, deps.pool);
-  // The built client in the image; the placeholder page in development (Vite serves it).
-  if (deps.env.SMG_WEB_DIR === undefined) {
-    registerPlaceholder(fastify, { dev: isDev, port: deps.env.SMG_PORT });
-  } else {
-    registerWebClient(fastify, deps.env.SMG_WEB_DIR, deps.env.SMG_ADMIN_DIR);
-  }
+  registerBasics(fastify, deps, metrics);
   const cookie = cookieConfig(!isDev, deps.env.SMG_BASE_PATH);
   const sessionEnds = new SessionEnds();
   await registerSessions(fastify, deps.pool, cookie);
-  registerAuthRoutes(fastify, {
-    pool: deps.pool,
-    cookie,
-    features: featuresFrom(deps.env),
-    sessionEnds,
-  });
+  const features = featuresFrom(deps.env);
+  registerAuthRoutes(fastify, { pool: deps.pool, cookie, features, sessionEnds });
   registerPasswordChange(fastify, { pool: deps.pool, sessionEnds });
   // Development only: quick sign-in as host or player (never in a production build).
   if (isDev) registerDevSignIn(fastify, { pool: deps.pool, cookie, sessionEnds });
-  registerTwoFactor(fastify, {
-    pool: deps.pool,
-    env: deps.env,
-    features: featuresFrom(deps.env),
-    audit,
-  });
+  registerTwoFactor(fastify, { pool: deps.pool, env: deps.env, features, audit });
   registerAdminSettings(fastify, settings, deps.pool);
   registerAdminAudit(fastify, audit);
   registerAdminAccounts(fastify, { pool: deps.pool, audit, sessionEnds });
@@ -162,9 +171,23 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   registerAdminRounds(fastify, { play, pool: deps.pool, audit, settings });
   const chat = createChat(deps.pool, settings, runtime.rounds);
   registerChatRoutes(fastify, { chat, audit });
+  const integration = { ...deps, features, embeds, audit, cookie, sessionEnds, runtime };
+  const webhooks = registerIntegration(fastify, integration);
   if (isDev) registerQuickTest(fastify, { play, pool: deps.pool });
   fastify.addHook('onClose', () => runtime.stop());
-  return { fastify, metrics, settings, audit, sessionEnds, runtime, chat, cookieName: cookie.name };
+  const cookieName = cookie.name;
+  return {
+    fastify,
+    metrics,
+    settings,
+    audit,
+    sessionEnds,
+    runtime,
+    chat,
+    embeds,
+    webhooks,
+    cookieName,
+  };
 }
 
 // "/games/mini-games/api/v1/x" → "/api/v1/x" when the base path is "/games/mini-games/".

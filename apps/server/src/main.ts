@@ -5,18 +5,19 @@
  *
  * Responsibility: single entry point used by `pnpm dev`, `node dist/main.js` and the
  *                 Dockerfile `server` command; attaches the realtime gateway, recovers every
- *                 running round and starts its timers, starts the daily retention jobs
- *                 (sessions, chat messages), and closes everything on SIGINT/SIGTERM (the
- *                 open batches are written first).
+ *                 running round and starts its timers, starts the retention jobs (sessions,
+ *                 handoff replay cache, chat messages) and, with SMG_FEATURE_WEBHOOKS, the webhook
+ *                 deliveries, and closes everything on SIGINT/SIGTERM (open batches written first).
  *                 The integration tests import buildApp directly.
  * Depends on:     ./config/env, ./db/pool, ./db/migrator, ./http/app, ./auth/retention,
- *                 ./chat/retention, ./realtime/gateway
+ *                 ./chat/retention, ./integration/webhookDelivery, ./realtime/gateway
  * Used by:        apps/server/package.json "dev" script, Dockerfile
  * Spec:           docs/spec/04-software-architecture.md §2.1, §5.3; Bingo 08 §4
  */
 import { startRetention } from './auth/retention.js';
 import { startChatRetention } from './chat/retention.js';
 import { allowedOrigins, loadEnv } from './config/env.js';
+import { startWebhookDelivery } from './integration/webhookDelivery.js';
 import { migrate } from './db/migrator.js';
 import { createPool } from './db/pool.js';
 import { buildApp } from './http/app.js';
@@ -35,6 +36,7 @@ async function main(): Promise<void> {
     chat: app.chat,
     cookieName: app.cookieName,
     allowedOrigins: allowedOrigins(env),
+    embeds: app.embeds,
     path: `${env.SMG_BASE_PATH}ws`,
     sessionEnds: app.sessionEnds,
     roomFrameMs: env.SMG_ROOM_FRAME_MS,
@@ -45,9 +47,11 @@ async function main(): Promise<void> {
   await app.fastify.listen({ host: env.SMG_HOST, port: env.SMG_PORT });
   const stopRetention = startRetention(pool);
   const stopChatRetention = startChatRetention(pool, app.settings);
+  const stopWebhooks = env.SMG_FEATURE_WEBHOOKS ? startWebhookDelivery(app.webhooks) : () => {};
   const shutdown = async (): Promise<void> => {
     stopRetention();
     stopChatRetention();
+    stopWebhooks();
     await io.close();
     await app.fastify.close();
     await pool.end();

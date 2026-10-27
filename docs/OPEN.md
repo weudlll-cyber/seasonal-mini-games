@@ -4,7 +4,7 @@ Full list: [BACKLOG.md](BACKLOG.md). Decisions: [DECISIONS.md](DECISIONS.md).
 
 - Specification v1 (01–11) merged into `master` on 2026-10-24, with the owner's answers (DECISIONS O8–O15).
 - Built on branch `feat/guess-the-number`, not merged: the foundation, Guess The Number with its server, client, admin app, e2e journeys and a first load check (night run 1, [NIGHT-RUN.md](NIGHT-RUN.md)). Next: the owner's review of that branch.
-- E2E journey 8 (embedded handoff) waits for the handoff itself (roadmap phase 7).
+- E2E journey 8 (embedded handoff) runs against a local test host page (night run 2, N7); the real website side is a website task.
 - From the website repository: the In Season feed (with halving days), the handoff endpoint for `seasonal-mini-games` with the optional `links` claim, the chat room `mini-games`, and the route import into its Caddy.
 
 ## Owner questions
@@ -26,6 +26,8 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 **(w) The chat on screen (builtin).** 07 §2 names the providers but not where the chat sits. Built as proposed: in the round view a "Live | Chat" switch in the Live list's place (Live chosen; the round view stays one screen); between rounds the match chat under "In this match", and the lobby chat at the foot of the lobby, each a panel whose list scrolls inside itself; "Report" on every line, and for moderators Delete, Mute 5 min / 1 h / 24 h and Ban, each with a reason and a confirm sentence; an inline mute or ban applies to the whole chat (the admin API also takes one room). Questions: should a mute from a match room cover only that room? Should staff see flagged messages marked in the room? Should the round-end line name the number (a new optional game hook, T72)?
 
 **(x) Staff actions as players see them.** Built as proposed: a staff abort reads "The round was aborted: by staff (reason)"; a kicked player who tries to join again is told the match is full (a separate KICKED answer would be clearer); a removed result still appears in that round's result view, only the standings and boards leave it out (T75).
+
+**(y) The game embedded.** Built as proposed: inside the host's frame the view shows no top bar, only a small "Signed in as <name>" line; a match opened from the embedded lobby opens inside the frame; a page that is not allowlisted, if it ever loads the frame, shows "This site may not show Seasonal Mini Games." Also open: an account made by the handoff has no password, so it cannot delete itself with `DELETE /me` (spec question); the multi-account rule `antiMulti.requireLinkedChat` can be switched on in a standalone install, where it would leave every shared roster empty (07 §4 asks the admin form to explain it); `antiMulti.minAccountAgeH` is defined but not applied yet.
 
 ## Spec conflicts
 

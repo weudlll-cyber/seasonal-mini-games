@@ -6,20 +6,21 @@ N1 and N2 on `feat/guess-the-number`; N3 onwards on `night/2026-10-27`, created 
 
 ### Status
 
-| Piece                                                          | State   | Branch                | Commit                              |
-| -------------------------------------------------------------- | ------- | --------------------- | ----------------------------------- |
-| N1 Journey 4 intermittent failure                              | done    | feat/guess-the-number | `e007fdf` (CI green, first attempt) |
-| N2 Compact phone bar, text contrast                            | done    | feat/guess-the-number | `3783f01` (CI green, first attempt) |
-| N3 Phase 4 standings, boards, profiles, verification page      | done    | night/2026-10-27      | see N3                              |
-| N4 Phase 2 authorization matrix and security suites            | done    | night/2026-10-27      | see N4                              |
-| N5 Phase 5 chat `none` / `builtin`, moderation                 | done    | night/2026-10-27      | see N5                              |
-| N6 Phase 6 admin remainder                                     | done    | night/2026-10-27      | see N6                              |
-| N7 Phase 7 handoff, embed, test host page, webhooks, read API  | open    | night/2026-10-27      | —                                   |
-| N8 Phase 8 installer, `smg` CLI, backups, observability, guide | running | night/2026-10-27      | —                                   |
+| Piece                                                          | State | Branch                | Commit                              |
+| -------------------------------------------------------------- | ----- | --------------------- | ----------------------------------- |
+| N1 Journey 4 intermittent failure                              | done  | feat/guess-the-number | `e007fdf` (CI green, first attempt) |
+| N2 Compact phone bar, text contrast                            | done  | feat/guess-the-number | `3783f01` (CI green, first attempt) |
+| N3 Phase 4 standings, boards, profiles, verification page      | done  | night/2026-10-27      | `3d9aaa0` (CI green with `40cb02f`) |
+| N4 Phase 2 authorization matrix and security suites            | done  | night/2026-10-27      | `ceffebb` (CI green with `40cb02f`) |
+| N5 Phase 5 chat `none` / `builtin`, moderation                 | done  | night/2026-10-27      | `6366ab2` (CI green with `8af3951`) |
+| N6 Phase 6 admin remainder                                     | done  | night/2026-10-27      | `6366ab2` (CI green with `8af3951`) |
+| N7 Phase 7 handoff, embed, test host page, webhooks, read API  | done  | night/2026-10-27      | see N7                              |
+| N8 Phase 8 installer, `smg` CLI, backups, observability, guide | done  | night/2026-10-27      | see N8                              |
 
 ### Needs the owner
 
-- (t) Which season names a quarter's board; (u) aborted matches and league points; (v) account ids visible to anonymous viewers; (w) the chat on screen; (x) staff actions as players see them. All in [OPEN.md](OPEN.md), each built as proposed.
+- (t) Which season names a quarter's board; (u) aborted matches and league points; (v) account ids visible to anonymous viewers; (w) the chat on screen; (x) staff actions as players see them; (y) the game embedded. All in [OPEN.md](OPEN.md), each built as proposed.
+- Found in Bingo (read-only, not changed): `sbr status` stops before the first backup exists (`find` under `pipefail` in `ops/sbr`); the same line in `smg` was fixed.
 - The Night 1 items below still stand.
 
 ### N1 — Journey 4 (halving) failed now and then
@@ -295,6 +296,105 @@ Branch `night/2026-10-27` (created from `feat/guess-the-number` at `3783f01`, af
 - The admin round view answer has no contract type yet.
 
 **Checks (N5 and N6 together).** `pnpm verify` green: 308 tests in 61 files. E2E in Chromium: all 16 journeys passed (with the dev servers restarted for migrations 0007–0009), journeys 13 (chat: two players chat in a match, a moderator mutes one, whose next message is refused, lifts it and bans; the provider set to `none` removes the panel) and 14 (the admin changes a special's default, sees the diff in the history, rolls it back through the confirm dialog, and aborts a running Quick Test round, which the player sees as aborted by staff) on their first run. CI: see the next update.
+
+### N7 — Phase 7 against a test host page
+
+Built by a subagent. The migrations 0009 and 0010 and the contracts are the lead's; the agent stopped once to ask for the missing permission `integration.manage`, which 0010 now grants, as Bingo 05 §3 has it.
+
+**JWT handoff** (T79)
+
+- `POST /auth/handoff` checks a host-signed token with node:crypto (no new dependency): the algorithm and key type, the issuer, the audience `seasonal-mini-games`, a life of at most 60 s, and a single-use `jti`.
+- It then links the account by (provider, subject) only and creates it on first login. Mapped roles can never be an admin role. The optional `links` claim is stored as facts only.
+- The answer is a same-site session cookie. The third-party bearer flow is left out.
+- The redirect form `/auth/handoff#token=…` works too.
+- `antiMulti.requireLinkedChat` is now applied. Before, nothing checked it.
+
+**Embedding** (T80)
+
+- The loader `embed.js` (lobby, match, leaderboard, profile; `data-smg-embed`, `smg:*` messages, explicit target origins) is built with the server.
+- The client's embed mode resizes itself, asks the host for a sign-in, and accepts tokens only from allowlisted origins.
+- The allowlist drives `frame-ancestors`, the postMessage check, the socket Origin check and the handoff's CORS.
+
+**Admin routes** (`integration.manage`, audited)
+
+- Embed origins, identity providers and webhook endpoints. Admin screens for them are still to do.
+
+**Webhooks** (T81)
+
+- Behind `SMG_FEATURE_WEBHOOKS`, default off. The events are `match.opened`, `round.countdown`, `round.ended` and `match.closed`.
+- Each is signed `X-SMG-Signature: t=,v1=` and sent HTTPS-only to a checked public address. There are four attempts with backoff, and deliveries are kept for the admin.
+
+**Public read API** (T82)
+
+- Open matches, a match's current round, the current season board with the team board, and a round's result.
+- Uncached for 60 s at most, with CORS for allowlisted origins, and names only.
+
+**Test host page** (`e2e/host-page/server.ts`)
+
+- It runs on port 5420, development only. It embeds the game and signs handoff tokens with an EdDSA key it makes at start.
+- The website repository was not touched, and no website feed was built.
+
+**Tests**
+
+- Unit: JWT verification (good token; wrong signature, `alg: none`, wrong audience, expired, too long-lived, replayed; the role ceiling), the webhook signature and backoff, and the embed loader.
+- Integration: `handoff.integration.test.ts`, `embed.integration.test.ts` and `webhooks.integration.test.ts`. They cover login and linking, the `links` claim, CORS and `frame-ancestors` from the allowlist, the socket Origin check, delivery with signature and retry to a fake HTTPS receiver (certificate made in memory), the public API's shapes and headers, and admin CRUD with audit.
+- The authorization matrix lists every new route; its caller kinds moved to `authzRoles.ts`, so the table stays below 300 lines.
+- E2E journey 8 (`e2e/embed.spec.ts`): the host page on 5420 embeds the game and its handoff signs the player in inside the iframe. The same page from `localhost:5420` cannot frame the game, and its handoff gets 403.
+
+**Reused**
+
+- From this repo: `safeFetchJson` and its address checks, `inTransaction`, `permitted`, the audit log, `RateLimiter`, the session start of the auth routes (`startSession`, now exported), `sealSeed` with a derived key, `rounds.onCommitted`, and the league's board queries.
+- From Bingo: the design (07 §2–§7, 04 §3.1, §3.2, §3.6). Its loader at `d294585` is a stub, so there was no code to take.
+
+**Noticed, left alone**
+
+- `seasons/safeFetch` has no POST, so the webhook client repeats its address checks. It also checks the address before connecting rather than the one connected to; worth merging.
+- Handoff accounts have no password and cannot delete themselves (OPEN (y)).
+- `antiMulti.minAccountAgeH` is defined but not applied (OPEN (y)).
+- Vite adds CORS headers of its own for loopback origins in development, so the journey posts the refused handoff to 3910 directly.
+
+**Checks (N7).** `pnpm verify` green: 343 tests in 67 files. E2E in Chromium: all 18 tests passed (journeys 1–14, journey 8 with its two cases). CI: see the status table.
+
+**CI so far on `night/2026-10-27`:** `40cb02f` (N3, N4, N8 part 1) green on the first attempt; `7eba672` failed `verify`: the production-bundle check found the Quick Test's path in the server bundle, which my maintenance hook named (I had committed that part after targeted tests only, not a full `verify`); fixed in `8af3951`, green on the first attempt. Runs of commits pushed in quick succession were cancelled by the next push and are not counted.
+
+### N8 — Phase 8, the parts that need no server
+
+**Built.**
+
+- **Installer and `smg` CLI**, adopted from Bingo's ops (committed tree `d294585`) with this repository's names: `/opt/smg`, `/etc/smg`, `/var/backups/smg`, the compose project `smg-<env>`, app port 3100, the website route `/games/mini-games` with `website-mini-games.caddy` and the network alias `smg-mini-games-<env>`, the group `smg-backup` and the timer `smg-backup@<env>`. Both install types, each answer also a flag, re-runs keep the answers and the secrets. Differences from Bingo:
+  - `SMG_ROUND_KEY` is generated once and kept.
+  - There are no SMTP questions, because this server sends no e-mail.
+  - `smg update` waits up to 10 minutes for running rounds (`--now` restarts at once), and `smg status` shows them.
+  - Maintenance stops new matches and new rounds in the app (503 `MAINTENANCE`, T77).
+- **Backups:** age-encrypted pg_dump plus the uploads volume, every night at 03:30, 14 daily and 8 weekly kept; `smg restore` and `smg restore --drill`; pulling to Windows or Linux (`ops/pull-backups.ps1`, `.sh`). The restore drill also runs against the dev compose database (`pnpm drill:dev`, `ops/dev-drill.sh`): "6 migrations, 5 accounts, 458 matches, 175 218 events" at its first run.
+- **Observability** (T78): the metrics of 06 §4.6 and Bingo 08 §6's core; the unset placeholder metric is gone.
+- **Operator guide** (`docs/operator-guide.md`), adapted from Bingo's, with an added section on running next to Bingo on one server (a name-by-name table) and one on watching it run.
+
+**The installer, tested in Linux containers** (Docker was available): `ops/test/installer-test.sh` with `ops/test/Dockerfile`, a fresh Ubuntu 24.04 with systemd as PID 1 standing in for a new VPS.
+
+- **Standalone** (passed, at the final N8 commit):
+  - The installer installs Docker from Docker's repository, builds the app image from a git bundle of the branch, starts it behind Caddy's internal CA on a bare IP, and is ready after 4 s ("Done (14 change(s))").
+  - HTTPS answers `/readyz` and `/api/v1/games`, and `smg status` shows ready with 0 rounds running.
+  - A backup encrypted for a fresh age key is written, and the restore drill on it passes (10 migrations).
+  - Maintenance turns on, a new match is refused with 503, and it turns off.
+  - A second installer run changes nothing ("Done (0 change(s))").
+- **Website type, beside Seasonal Bingo Royale** (passed): a stand-in for the website (compose project `seasonal-site`, service `caddy`, routes imported from `routes/*.caddy`, as its DEPLOYMENT.md sets them up). Then this installer and Bingo's own (from its committed tree `d294585`, read with `git archive` only) were run, both as the website type.
+  - Both answer through the website's Caddy, at `/games/mini-games/` and `/games/bingo/`, and the website keeps its own pages.
+  - No app publishes a host port; the two databases are on two volumes; both backup timers exist.
+  - A backup with each tool lands in its own folder, and `smg status` and `sbr status` both run.
+
+**Defects the installer test found, and fixed:**
+
+1. **The production image could not start.** The server bundle inlined only `@smg/*` and imported the game registry's TypeScript sources from node_modules, which Node refuses (`ERR_UNSUPPORTED_NODE_MODULES_TYPE_STRIPPING`). CI builds the image only on master and pull requests, so no run had ever started it. `apps/server/build.mjs` now inlines `@smg-game/*` too, the Dockerfile drops their copies, and `productionBundle.test.ts` fails when an import of a workspace package is left in the bundle (checked against the old rule).
+2. **`smg status` stopped before the first backup** (`find` on the missing backup folder under `pipefail`). Fixed in `ops/smg`.
+
+**Checks.** ShellCheck is clean on every ops script. The maintenance hook and the flag file have unit tests (`apps/server/src/http/plugins/maintenance.test.ts`). The metric catalogue is checked in `server.integration.test.ts`, and the guess counter by result in `rounds.integration.test.ts`. CI: see the status table.
+
+**Not done, as the chain says:** the reference-VPS load test and the release tag. Still open in Phase 8: the security pass with ZAP and the secret scan of the history, the load gate, v1.0.0 (BACKLOG).
+
+**Reused:** all of Bingo's `ops/` (install.sh, sbr, lib/*.sh, compose files, Caddyfile, examples, pull scripts) and its operator guide. `notify.ps1` is left out: a Bingo development-machine helper, not in spec 10's ops list.
+
+**Noticed, left alone (in Bingo, read-only):** Bingo's `sbr status` stops before its first backup in the same way (the `find` under `pipefail` in `ops/sbr`).
 
 ## Night 1 (2026-10-24 to 2026-10-26)
 
