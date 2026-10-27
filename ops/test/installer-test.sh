@@ -9,7 +9,8 @@
 #                 standalone — ops/install.sh on a bare IP installs Docker, builds the app
 #                 from a git bundle of the given ref, starts it behind Caddy's internal CA and
 #                 waits for /readyz; then HTTPS answers, `smg status`, a backup encrypted for a
-#                 fresh age key, the restore drill on it, maintenance on and off, and a re-run
+#                 fresh age key, the restore drill on it, maintenance on (a new match is
+#                 refused) and off, and a re-run
 #                 of the installer that changes nothing. website — a stand-in for the Seasonal
 #                 Entertainment website (compose project seasonal-site, service caddy, with
 #                 the routes import its DEPLOYMENT.md sets up), then this installer and Seasonal
@@ -107,7 +108,12 @@ standalone() {
   grep -q 'drill passed' "$WORK/drill.txt" || fail "the drill did not pass"
   on "$s" 'systemctl is-enabled smg-backup@prod.timer' | grep -q enabled || fail "no backup timer"
   step "standalone: maintenance on and off"
-  on "$s" 'smg maintenance on && smg status | grep -q "maintenance: ON" && smg maintenance off'
+  on "$s" 'smg maintenance on && smg status | grep -q "maintenance: ON"'
+  # The app refuses a new match while it holds (no sign-in needed: it answers first).
+  sleep 2
+  on "$s" 'curl -sk -o /dev/null -w "%{http_code}" -X POST https://127.0.0.1/api/v1/matches' |
+    grep -q 503 || fail "a new match was not refused during maintenance"
+  on "$s" 'smg maintenance off'
   step "standalone: a second run changes nothing"
   on "$s" "bash /root/smg/ops/install.sh --yes --age-key '$pub'" | tee "$WORK/rerun.txt"
   grep -q 'Done (0 change(s))' "$WORK/rerun.txt" || fail "the re-run changed something"
