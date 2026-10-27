@@ -6,20 +6,59 @@ N1 and N2 on `feat/guess-the-number`; N3 onwards on `night/2026-10-27`, created 
 
 ### Status
 
-| Piece                                                          | State   | Branch                | Commit |
-| -------------------------------------------------------------- | ------- | --------------------- | ------ |
-| N1 Journey 4 intermittent failure                              | running | feat/guess-the-number | —      |
-| N2 Compact phone bar, text contrast                            | running | feat/guess-the-number | —      |
-| N3 Phase 4 standings, boards, profiles, verification page      | open    | night/2026-10-27      | —      |
-| N4 Phase 2 authorization matrix and security suites            | open    | night/2026-10-27      | —      |
-| N5 Phase 5 chat `none` / `builtin`, moderation                 | open    | night/2026-10-27      | —      |
-| N6 Phase 6 admin remainder                                     | open    | night/2026-10-27      | —      |
-| N7 Phase 7 handoff, embed, test host page, webhooks, read API  | open    | night/2026-10-27      | —      |
-| N8 Phase 8 installer, `smg` CLI, backups, observability, guide | open    | night/2026-10-27      | —      |
+| Piece                                                          | State | Branch                | Commit                              |
+| -------------------------------------------------------------- | ----- | --------------------- | ----------------------------------- |
+| N1 Journey 4 intermittent failure                              | done  | feat/guess-the-number | `e007fdf` (CI green, first attempt) |
+| N2 Compact phone bar, text contrast                            | done  | feat/guess-the-number | `3783f01` (CI green, first attempt) |
+| N3 Phase 4 standings, boards, profiles, verification page      | done  | night/2026-10-27      | see the sheet on that branch        |
+| N4 Phase 2 authorization matrix and security suites            | done  | night/2026-10-27      | see the sheet on that branch        |
+| N5 Phase 5 chat `none` / `builtin`, moderation                 | done  | night/2026-10-27      | see the sheet on that branch        |
+| N6 Phase 6 admin remainder                                     | done  | night/2026-10-27      | see the sheet on that branch        |
+| N7 Phase 7 handoff, embed, test host page, webhooks, read API  | done  | night/2026-10-27      | see the sheet on that branch        |
+| N8 Phase 8 installer, `smg` CLI, backups, observability, guide | done  | night/2026-10-27      | see the sheet on that branch        |
 
 ### Needs the owner
 
-- Nothing new yet. The Night 1 items below still stand.
+- New owner questions (t)–(y) are in `docs/OPEN.md` on `night/2026-10-27`: which season names a quarter's board, aborted matches and league points, account ids visible to anonymous viewers, the chat on screen, staff actions as players see them, the game embedded. Each is built as proposed there.
+- The production image built from this branch cannot start (the server bundle imports the game registry's TypeScript sources); found by the installer test of N8 and fixed on `night/2026-10-27` in `1e0db49`. The dev servers this branch runs are not affected.
+- Found in Bingo (read-only, not changed): `sbr status` stops before the first backup exists.
+- The Night 1 items below still stand.
+
+### Handover (Night 2)
+
+**Running on this machine:** `pnpm dev` on `feat/guess-the-number`: server http://127.0.0.1:3910, player client http://127.0.0.1:5410, admin app http://127.0.0.1:5411, PostgreSQL on 5510 (Docker `smg-dev`). The server runs the newest commit of this branch, the one that adds this handover (`git log -1`). The development database also holds the tables of the night branch's migrations 0006–0010; `feat/guess-the-number` starts on it unchanged, because its migrator checks only the files it knows.
+
+**Quick Test:** http://127.0.0.1:5410/#/quick-test. Open "Dev sign-in" in the header (on a phone during a round: "Menu"), choose "Sign in as player 1", open the Quick Test. You host the round and play it.
+
+| What to look at                                                  | Seed               | Fields                                                |
+| ---------------------------------------------------------------- | ------------------ | ----------------------------------------------------- |
+| A shown range from −500 to 500                                   | `meadow` (Spring)  | Lowest number −500, Highest number 500, Show range on |
+| A hidden range                                                   | `frost` (Autumn)   | Show range off                                        |
+| A Frost round ("answer arriving", now in the darker winter step) | `blossom` (Winter) | defaults                                              |
+
+On `feat/guess-the-number` (N1, N2): the round view on a phone has the one-row app bar with "Menu"; every text keeps 4.5:1 in light and dark (the Frost line, a disabled Guess button); journey 4 no longer races the dev bot. Screenshots: `reports/round-view-2/`.
+
+**On `night/2026-10-27`** (N3–N8, not merged; for a later look, after `git switch night/2026-10-27` and a restart of `pnpm dev`):
+
+- **Boards:** "Leaderboard" in the navigation, with season and all-time boards and the team board beside them. A player's profile is reached from a name. Under a round's result, "Fairness proof", then "Verify this round", checks the seed in the browser.
+- **Chat:** in the lobby, on the match page, and in the round view behind the "Live | Chat" switch. As the admin (Dev sign-in "admin"), "Moderate" on a line mutes or bans.
+- **The admin app** at http://127.0.0.1:5411: Live (running rounds, staff abort, kick, removing a result), Accounts (roles), a settings document's History with Rollback, Two-factor, Moderation (reports, sanctions, rooms, word lists).
+- **Embedding:** `pnpm exec playwright test -c e2e/playwright.config.ts e2e/embed.spec.ts --project chromium-timing --no-deps` starts the test host page on 5420 and shows the single sign-on inside the iframe.
+- **Operations:**
+  - `docs/operator-guide.md`.
+  - `bash ops/test/installer-test.sh all` runs the installer from a fresh Ubuntu container to a running instance, then beside Bingo (20–40 minutes).
+  - `pnpm drill:dev` runs the restore drill against the dev database.
+- **Owner questions:** (t)–(y) in `docs/OPEN.md`, each built as proposed.
+
+### N3–N8 in short (details in the sheet on `night/2026-10-27`)
+
+- **N3:** match standings, season and all-time boards with the team board, profiles, staff adjustments, the fairness verification page; e2e journey 12.
+- **N4:** the authorization matrix over every route and intent for every kind of caller, and the security suites; two refusal gaps fixed.
+- **N5:** chat providers `none`, `builtin` (with moderation: word lists, reports, mutes, bans, slow mode, lock) and `hostEmbed` behind its setting; e2e journey 13.
+- **N6:** admin live rounds with staff actions, accounts with roles, settings history with diff and rollback, one confirm dialog, TOTP two-factor with step-up, the admin build served at /admin/; e2e journey 14.
+- **N7:** JWT handoff with the `links` claim, the embed loader and allowlist, webhooks, the public read API; e2e journey 8 against a test host page on port 5420.
+- **N8:** the installer and `smg` CLI from Bingo's ops (both install types, beside Bingo on one server), backups with the restore drill, maintenance mode, the metric catalogue, the operator guide. The installer was tested in containers from a fresh Ubuntu 24.04 to a running, backed-up instance, standalone and as the website type beside Bingo.
+- **Checks there:** `pnpm verify` 343 tests in 67 files; e2e in Chromium 18 of 18; CI green for `8af3951` (N3–N6, N8) on the first attempt.
 
 ### N1 — Journey 4 (halving) failed now and then
 
@@ -56,7 +95,7 @@ Reused: the helper's own range (`quickRound`). Removed: the range override. Noti
    - Two token pairs failed, so each got a step: `--color-winter-text` (light `#00669a`, dark the winter token) and `--color-success-text` (light `#17683b`, dark the success token). Disabled buttons show muted text on the second surface (6.6:1 light, 8.0:1 dark) instead of fading to 45 % opacity; this also applies in the admin app. No other new tokens.
    - Journeys 10 and 11 assert 4.5:1 in both themes, and journey 3 asserts it for the Frost round in light. `designTokens.test.ts` checks both new steps on every background, including the four glows (the plain success token is 4.1:1 on the green glow).
 
-**Checks.** `pnpm verify` green: 204 tests in 46 files. The first attempt hit Testcontainers' 180 s start ceiling in six server integration files while another session's Bingo e2e run loaded the machine; one file passed alone, and the full re-run was green. E2E in Chromium: all 13 journeys passed (`chromium` and `chromium-timing`); after a lint split of the contrast helper, journeys 3, 4, 10 and 11 passed again. CI: see the next update.
+**Checks.** `pnpm verify` green: 204 tests in 46 files. The first attempt hit Testcontainers' 180 s start ceiling in six server integration files while another session's Bingo e2e run loaded the machine; one file passed alone, and the full re-run was green. E2E in Chromium: all 13 journeys passed (`chromium` and `chromium-timing`); after a lint split of the contrast helper, journeys 3, 4, 10 and 11 passed again. CI for `3783f01`: green on the first attempt (verify, e2e in three browsers, docs, security).
 
 **On the way.** One e2e run failed journey 10 with "higher" at 2.36:1 in dark: the dev server (running since 2026-10-26 20:31) was serving an old transform of `tokens.css` without the new dark line. It passed after a restart. This is the second stale Vite transform in two nights; see "Noticed".
 
