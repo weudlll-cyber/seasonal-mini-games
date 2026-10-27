@@ -177,6 +177,7 @@ function MatchView(p: {
         viewerKey={viewer}
         hostMenu={hostMenu}
         teamPoints={match.teamStandings}
+        standings={match.standings}
       />
     );
   if (status !== null && LIVE.has(status)) {

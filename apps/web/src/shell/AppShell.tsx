@@ -11,10 +11,11 @@
  *                 a production build (Vite's DEV false) leaves it out; `dev` decides whether
  *                 it shows. While a round runs on a phone the bar is one compact row and the
  *                 account and development controls sit behind one "Menu" button (./shell.css).
+ *                 The navigation has Play and Leaderboard; the compact bar keeps Play only.
  *                 Bingo's shell, without its game screens.
  * Depends on:     react, ./router, ./session, ./ThemeToggle, ./DevTools (lazy, development
  *                 only), ../components/useDisclosure, ../lobby/Lobby, ../account/*,
- *                 ../match/MatchPage, ./shell.css, assets/brand/emblem.webp
+ *                 ../match/MatchPage, ../boards/*, ./shell.css, assets/brand/emblem.webp
  * Used by:        ../main
  * Spec:           Bingo 01 §13; Bingo 05 §2.1
  */
@@ -24,6 +25,9 @@ import emblem from '../../../../assets/brand/emblem.webp';
 import { AccountPage } from '../account/AccountPage.js';
 import { Register } from '../account/Register.js';
 import { SignIn } from '../account/SignIn.js';
+import { LeaderboardPage } from '../boards/LeaderboardPage.js';
+import { ProfilePage } from '../boards/ProfilePage.js';
+import { VerifyPage } from '../boards/VerifyPage.js';
 import { useDisclosure } from '../components/useDisclosure.js';
 import { Lobby } from '../lobby/Lobby.js';
 import { MatchPage } from '../match/MatchPage.js';
@@ -75,6 +79,14 @@ function Nav({ route }: { readonly route: Route }): ReactElement {
         aria-current={route.name === 'lobby' ? 'page' : undefined}
       >
         Play
+      </a>
+      {/* Left out of the compact bar of a running round on a phone (shell.css). */}
+      <a
+        className="shell-nav-boards"
+        href={hrefOf({ name: 'leaderboard', periodId: null })}
+        aria-current={route.name === 'leaderboard' ? 'page' : undefined}
+      >
+        Leaderboard
       </a>
     </nav>
   );
@@ -172,5 +184,23 @@ function Screen({ route, dev }: { readonly route: Route; readonly dev: boolean }
       return <Register />;
     case 'account':
       return <AccountPage key={who} />;
+    default:
+      return <BoardScreen key={who} route={route} />;
+  }
+}
+
+// The boards' screens: the leaderboard, a profile, a round's verification page.
+function BoardScreen({
+  route,
+}: {
+  readonly route: Extract<Route, { name: 'leaderboard' | 'player' | 'verify' }>;
+}): ReactElement {
+  switch (route.name) {
+    case 'leaderboard':
+      return <LeaderboardPage periodId={route.periodId} />;
+    case 'player':
+      return <ProfilePage key={route.displayName} displayName={route.displayName} />;
+    case 'verify':
+      return <VerifyPage key={route.roundId} roundId={route.roundId} />;
   }
 }

@@ -26,6 +26,7 @@ const TIMING = [
   'players.spec.ts',
   'access.spec.ts',
   'range.spec.ts',
+  'boards.spec.ts',
 ];
 const BROWSERS = [
   { name: 'chromium', use: { ...devices['Desktop Chrome'] } },

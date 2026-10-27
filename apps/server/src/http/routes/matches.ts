@@ -10,7 +10,7 @@
  *                 play, names the players, gives the team standings, and gives the host the
  *                 next round's defaults (the host-chosen keys of the game's document).
  * Depends on:     fastify, zod, @smg/application, @smg/contracts (shapes), ../../match/*,
- *                 ./adminGuard
+ *                 ../../league/boards (match standings), ./adminGuard
  * Used by:        ../app
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1; docs/spec/02-game-guess-the-number.md §2
  */
@@ -30,6 +30,7 @@ import {
   teamStandings,
   type MatchRow,
 } from '../../match/matches.js';
+import { matchStandings } from '../../league/boards.js';
 import { PlayError, type Play } from '../../match/play.js';
 import { permitted } from './adminGuard.js';
 
@@ -145,6 +146,7 @@ async function matchDetails(
     connected: [...deps.play.presence.connected(match.id)],
     round: round === null ? null : { id: round.id, status: round.status() },
     teamStandings: await teamStandings(deps.pool, match.id),
+    standings: await matchStandings(deps.pool, match.id),
     nextRoundDefaults: youHost ? await deps.settings.view(`game.${match.gameId}`, []) : null,
   };
 }

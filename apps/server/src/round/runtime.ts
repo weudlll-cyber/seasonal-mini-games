@@ -3,13 +3,14 @@
  * @module server/round
  * @brief  Builds the round runtime of one server process and starts or stops its timers.
  *
- * Responsibility: the store with the sealed-seed key, the rounds with the actor options of
+ * Responsibility: the store with the sealed-seed key and the league rules, the rounds with the actor options of
  *                 08 §7 (`SMG_ENGINE_BATCH_MS`, `SMG_ENGINE_BATCH_MAX`) and the queue bound
  *                 setting, presence, the match use cases, the guess limits and the
  *                 scheduler; the game documents `game.<id>` for the settings service.
  *                 `start` recovers every running round and starts the timers; `stop` stops
  *                 them and waits until every open batch is written.
- * Depends on:     @smg/application, @smg-game/registry, ../config/*, ../db/pool, ../match/*, ./*
+ * Depends on:     @smg/application, @smg-game/registry, ../config/*, ../db/pool, ../league/rules,
+ *                 ../match/*, ./*
  * Used by:        ../http/app
  * Spec:           docs/spec/04-software-architecture.md §5; docs/spec/08-admin-settings.md §7
  */
@@ -22,6 +23,7 @@ import { roundKeyFrom } from '../config/roundKey.js';
 import type { DbPool } from '../db/pool.js';
 import { Play } from '../match/play.js';
 import { Presence } from '../match/presence.js';
+import { leagueRules } from '../league/rules.js';
 import { GuessLimits } from './guessLimits.js';
 import { PgRoundStore } from './pgRoundStore.js';
 import { Rounds } from './rounds.js';
@@ -50,7 +52,7 @@ export function createRoundRuntime(
   pool: DbPool,
   settings: SettingsService,
 ): RoundRuntime {
-  const store = new PgRoundStore(pool, roundKeyFrom(env));
+  const store = new PgRoundStore(pool, roundKeyFrom(env), () => leagueRules(settings));
   const limits = new GuessLimits(settings, pool);
   const rounds = new Rounds(store, {
     batchMs: env.SMG_ENGINE_BATCH_MS,

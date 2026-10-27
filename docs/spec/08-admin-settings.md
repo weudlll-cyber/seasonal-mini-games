@@ -62,7 +62,9 @@ The host form shows each host-chosen value with its default preselected and refu
 | `match.lobbyIdleCloseMin` | 60 | 10 | 1 440 | owner (O15): a match with no round for this long closes itself | game admin | immediate |
 | `match.maxConcurrentRounds` | 20 | 1 | 100 | technical (per server) | game admin | next: read at round creation |
 | `leaderboard.minPlayersForPoints` | 4 | 2 | 50 | owner (O11) | game admin | next: read at round end |
-| `leaderboard.periodLength` | quarter, named after the season | — | — | adopted (Bingo 01 §10) | game admin | next period |
+| `leaderboard.periodLength` | quarter, named after the season | — | — | adopted (Bingo 01 §10); fixed to the calendar quarter in UTC, not a stored setting (DECISIONS T69) | — | — |
+| `leaderboard.firstQuarterSeason` | winter | spring, summer, autumn, winter | — | *proposal* (OPEN (t)): the season that names January to March; the other quarters follow in the order of the year | game admin | next: read at round end |
+| `leaderboard.abortedMatchesCount` | off | — | — | *proposal* (OPEN (u)): off, aborting a match takes back its league points | game admin | immediate |
 
 ## 5. Seasons (documents `seasons`, `integrations`)
 

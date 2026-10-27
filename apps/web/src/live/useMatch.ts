@@ -5,8 +5,8 @@
  *
  * Responsibility: load `GET /matches/:code`, watch the match room (`match.watch`, again after
  *                 every reconnect, so a player counts as connected for the roster), and load
- *                 again when the room says the match changed or a round frame arrives (a new
- *                 round, a round's status). Leaves the room when the page goes.
+ *                 again when the room says the match changed (joins, teams, a new round, a
+ *                 round's end with the new standings). Leaves the room when the page goes.
  * Depends on:     react, @smg/contracts (shapes), ../shell/http, ./socket
  * Used by:        ../match/MatchPage
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1, §4.2, §4.3

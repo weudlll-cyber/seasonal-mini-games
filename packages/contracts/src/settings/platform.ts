@@ -98,6 +98,31 @@ const matchmaking: readonly SettingDef[] = [
     running: 'next',
     spec: '08 §4',
   },
+  {
+    key: 'leaderboard.firstQuarterSeason',
+    kind: 'enum',
+    label: 'Season that names January to March',
+    help: 'A season board covers one calendar quarter; the next quarters take the following seasons.',
+    default: 'winter',
+    options: ['spring', 'summer', 'autumn', 'winter'],
+    status: 'proposal',
+    editPermission: GAME_ADMIN,
+    hostChooses: false,
+    running: 'next',
+    spec: '08 §4',
+  },
+  {
+    key: 'leaderboard.abortedMatchesCount',
+    kind: 'bool',
+    label: 'Aborted matches keep their league points',
+    help: 'Off: aborting a match takes back the league points of its rounds.',
+    default: false,
+    status: 'proposal',
+    editPermission: GAME_ADMIN,
+    hostChooses: false,
+    running: 'immediate',
+    spec: '08 §4',
+  },
 ];
 
 const seasons: readonly SettingDef[] = [

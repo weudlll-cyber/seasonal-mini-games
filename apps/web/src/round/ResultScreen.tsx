@@ -6,22 +6,23 @@
  * Responsibility: the end in plain words ("Walter found it first — after 9 guesses"), the
  *                 winning margin in shared mode ("found it 0.4 s before Anna"), placings with
  *                 points (the viewer's line highlighted; "took part" in shared mode, "not
- *                 solved" in individual mode), the team result when teams played, the game's
- *                 result panel with the secret(s), and the fairness proof: the commitment
- *                 published at creation, the seed revealed now, and the link to check them
- *                 (02 §9, §10; 03 §5).
+ *                 solved" in individual mode), the team result when teams played, the match
+ *                 standings, the game's result panel with the secret(s), and the fairness
+ *                 proof: the commitment published at creation, the seed revealed now, and the
+ *                 link to the round's verification page (02 §9, §10; 03 §5).
  * Depends on:     react, @smg/contracts, @smg-game/registry/web (types), ../season/SeasonIcon,
- *                 ../shell/http, ./PlayerName, ./roundText, ./result.css
+ *                 ../shell/router, ./MatchStandings, ./PlayerName, ./roundText, ./result.css
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §10; docs/spec/03-seasonal-specials.md §5
  */
 import type { GameWeb } from '@smg-game/registry/web';
-import type { RoundStateView } from '@smg/contracts';
+import type { MatchStandingView, RoundStateView } from '@smg/contracts';
 import type { ReactElement } from 'react';
 
 import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASON_NAMES } from '../season/season.js';
-import { BASE_PATH } from '../shell/http.js';
+import { hrefOf } from '../shell/router.js';
+import { MatchStandings } from './MatchStandings.js';
 import { PlayerName } from './PlayerName.js';
 import { endHeadline, marginText } from './roundText.js';
 import './result.css';
@@ -102,7 +103,7 @@ function Proof({ state }: { readonly state: RoundStateView }): ReactElement | nu
         <p>
           The seed is <code className="round-hex">{state.seed}</code>. Hash it to check the
           commitment; the seed gives every secret of the round.{' '}
-          <a href={`${BASE_PATH}api/v1/rounds/${state.roundId}/verify`}>Check this round</a>
+          <a href={hrefOf({ name: 'verify', roundId: state.roundId })}>Verify this round</a>
         </p>
       )}
     </details>
@@ -113,10 +114,12 @@ export function ResultScreen({
   state,
   game,
   viewerKey,
+  standings,
 }: {
   readonly state: RoundStateView;
   readonly game: GameWeb | null;
   readonly viewerKey: string | null;
+  readonly standings: readonly MatchStandingView[];
 }): ReactElement {
   const margin = marginText(state);
   return (
@@ -128,6 +131,7 @@ export function ResultScreen({
       )}
       <Placings state={state} viewerKey={viewerKey} />
       <Teams state={state} />
+      <MatchStandings standings={standings} viewerKey={viewerKey} />
       <Proof state={state} />
     </section>
   );

@@ -68,6 +68,7 @@
 9. Accessibility: axe checks on lobby, round and result; keyboard-only guessing.
 10. Hidden range (owner decision 19), 1280 × 720: the round view says "Any whole number", no bound is on the page, a guess far outside the range is answered, and the result reveals the range.
 11. Negative bounds (owner decision 18), 390 × 844: a range from −500 to 500 is shown, the ± button makes a typed number negative, the guess is answered, and the round plays to its result.
+12. Boards (roadmap phase 4): four players play two counting matches; the points add up on the season board with the team board beside it, the profile shows them, the round's verification page confirms the seed against the commitment, and aborting the matches takes the points back.
 
 Journeys 1, 10 and 11 also check that the round view fits the screen: `document.scrollingElement.scrollHeight` is at most `window.innerHeight` ([02](02-game-guess-the-number.md) §12).
 

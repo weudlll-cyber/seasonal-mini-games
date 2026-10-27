@@ -13,7 +13,8 @@
  *                 frames `{ roundId, s, events }`: the public form to `match:<id>` (merged over
  *                 `roomFrameMs`, ./roomFrames), a player's own events to
  *                 `match:<id>:player:<key>`, host events to `match:<id>:host`.
- *                 "Match changed" goes out at most once a second per match (./perKeyAtMost).
+ *                 "Match changed" goes out at most once a second per match (./perKeyAtMost),
+ *                 also when a round ends or is aborted, so pages load the new standings.
  *                 Adapted from Bingo's gateway.ts.
  * Depends on:     socket.io, node:http, ../auth/*, ../match/*, ../round/*, ./intents, ./inOrder,
  *                 ./perKeyAtMost, ./roomFrames
@@ -31,7 +32,7 @@ import type { Play } from '../match/play.js';
 import type { GuessLimits } from '../round/guessLimits.js';
 import { inOrder } from './inOrder.js';
 import { perKeyAtMost } from './perKeyAtMost.js';
-import { roomFrames } from './roomFrames.js';
+import { roomFrames, type RoomFrame } from './roomFrames.js';
 import {
   envelopeOf,
   guessIntent,
@@ -92,26 +93,7 @@ export function attachGateway(server: HttpServer, deps: GatewayDeps): Server {
     play.to(`match:${matchId}`).emit('events', frame);
   });
   deps.play.rounds.onCommitted((round, events, how) => {
-    const frames = round.frames(events, how.held);
-    const s = events.at(-1)?.seq ?? 0;
-    // Released Frost events repeat earlier seqs: `late` tells the client they are no gap.
-    const room = {
-      roundId: round.id,
-      s,
-      events: frames.room,
-      ...(how.late ? { late: true as const } : {}),
-    };
-    toRoom(round.matchId, room);
-    for (const [key, own] of frames.players) {
-      play
-        .to(`match:${round.matchId}:player:${key}`)
-        .emit('events', { roundId: round.id, events: own });
-    }
-    if (frames.host.length > 0) {
-      play
-        .to(`match:${round.matchId}:host`)
-        .emit('events', { roundId: round.id, events: frames.host });
-    }
+    sendCommitted(play, toRoom, deps.play, { round, events, how });
   });
   // At most one "match changed" a second per match: every page reloads the match on it, and
   // a thousand players entering would otherwise mean a thousand reloads per page.
@@ -119,6 +101,43 @@ export function attachGateway(server: HttpServer, deps: GatewayDeps): Server {
     perKeyAtMost(1_000, (matchId) => play.to(`match:${matchId}`).emit('match', { matchId })),
   );
   return io;
+}
+
+type Committed = Parameters<Parameters<Play['rounds']['onCommitted']>[0]>;
+
+// One committed batch out: the room's public frame (merged), each player's own events, the
+// host's events, and "match changed" when the round ended (02 §9: new standings).
+function sendCommitted(
+  play: ReturnType<Server['of']>,
+  toRoom: (matchId: string, frame: RoomFrame) => void,
+  match: Play,
+  c: { round: Committed[0]; events: Committed[1]; how: Committed[2] },
+): void {
+  const { round, events, how } = c;
+  const frames = round.frames(events, how.held);
+  const s = events.at(-1)?.seq ?? 0;
+  // Released Frost events repeat earlier seqs: `late` tells the client they are no gap.
+  const room = {
+    roundId: round.id,
+    s,
+    events: frames.room,
+    ...(how.late ? { late: true as const } : {}),
+  };
+  toRoom(round.matchId, room);
+  for (const [key, own] of frames.players) {
+    play
+      .to(`match:${round.matchId}:player:${key}`)
+      .emit('events', { roundId: round.id, events: own });
+  }
+  if (frames.host.length > 0) {
+    play
+      .to(`match:${round.matchId}:host`)
+      .emit('events', { roundId: round.id, events: frames.host });
+  }
+  // A round's end changes the match: its standings and team standings (02 §9).
+  if (events.some((e) => e.type === 'RoundEnded' || e.type === 'RoundAborted')) {
+    match.changed(round.matchId);
+  }
 }
 
 function connect(socket: Socket, deps: GatewayDeps): void {

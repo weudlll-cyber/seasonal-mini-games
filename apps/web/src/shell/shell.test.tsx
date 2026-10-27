@@ -4,7 +4,8 @@
  * @module web/shell
  * @brief  The app shell: routes, the dev-only quick sign-in, the role in the account chip.
  *
- * Responsibility: hashes map to the lobby, sign-in, register and account screens and back;
+ * Responsibility: hashes map to the lobby, sign-in, register, account, leaderboard, profile
+ *                 and verification screens and back; Leaderboard sits beside Play;
  *                 the quick sign-in buttons "Sign in as host" / "admin" / "player 1/2/3"
  *                 exist only in development (production passes dev=false); the account chip
  *                 says host only with `match.create`; the compact bar's "Menu" opens the
@@ -70,11 +71,27 @@ describe('routes', () => {
     expect(parseRoute('#/register')).toEqual({ name: 'register' });
     expect(parseRoute('#/account')).toEqual({ name: 'account' });
     expect(parseRoute('#/nowhere')).toEqual({ name: 'lobby' });
+    expect(parseRoute('#/players/%E0%A4%A')).toEqual({ name: 'lobby' });
     expect(hrefOf({ name: 'account' })).toBe('#/account');
     expect(parseRoute('#/match/ABC234')).toEqual({ name: 'match', code: 'ABC234' });
     expect(hrefOf({ name: 'match', code: 'ABC234' })).toBe('#/match/ABC234');
     expect(parseRoute('#/quick-test')).toEqual({ name: 'quickTest' });
     expect(hrefOf({ name: 'quickTest' })).toBe('#/quick-test');
+  });
+
+  it('maps the boards, profiles and proofs', () => {
+    expect(parseRoute('#/leaderboard')).toEqual({ name: 'leaderboard', periodId: null });
+    expect(parseRoute('#/leaderboard/p-1')).toEqual({ name: 'leaderboard', periodId: 'p-1' });
+    expect(hrefOf({ name: 'leaderboard', periodId: null })).toBe('#/leaderboard');
+    expect(hrefOf({ name: 'leaderboard', periodId: 'p-1' })).toBe('#/leaderboard/p-1');
+    expect(parseRoute('#/players/Anna%20B')).toEqual({ name: 'player', displayName: 'Anna B' });
+    expect(hrefOf({ name: 'player', displayName: 'Anna B' })).toBe('#/players/Anna%20B');
+    expect(parseRoute('#/players')).toEqual({ name: 'lobby' });
+    expect(parseRoute('#/rounds/r1/verify')).toEqual({ name: 'verify', roundId: 'r1' });
+    expect(hrefOf({ name: 'verify', roundId: 'r1' })).toBe('#/rounds/r1/verify');
+    expect(parseRoute('#/rounds/r1')).toEqual({ name: 'lobby' });
+    // No inherited key is a route.
+    expect(parseRoute('#/constructor')).toEqual({ name: 'lobby' });
   });
 });
 
@@ -128,6 +145,19 @@ describe('app shell', () => {
     expect((await screen.findByTestId('signed-in-as')).textContent).toBe(
       'Signed in as dev-host (player)',
     );
+  });
+});
+
+describe('the navigation', () => {
+  it('has Leaderboard beside Play in the navigation, current on its page', async () => {
+    serve([]);
+    window.location.hash = '#/leaderboard';
+    await renderShell(false);
+    const nav = screen.getByRole('navigation', { name: 'Main' });
+    const links = [...nav.querySelectorAll('a')];
+    expect(links.map((a) => a.textContent)).toEqual(['Play', 'Leaderboard']);
+    expect(links[1]?.getAttribute('aria-current')).toBe('page');
+    expect(links[0]?.getAttribute('aria-current')).toBeNull();
   });
 });
 

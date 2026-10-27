@@ -17,6 +17,12 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 
 **(s) Halving round with a hidden range.** A halving window tells where the range is, so with the range hidden (O19) a halving round runs as a normal season round of that season: the season and its special stay, halving is off (DECISIONS T55). With it, Spring Herald gives the odd-or-even hint instead of "which half" (T56). Proposal: keep it so; the host form says it beside the halving switch.
 
+**(t) Which season names a quarter.** A season board covers one calendar quarter (Bingo 01 §10) but nothing says which season names which quarter. Proposal: `leaderboard.firstQuarterSeason` = winter, so January–March is "Winter 2027", then Spring, Summer and Autumn, in UTC (DECISIONS T69).
+
+**(u) Aborted matches and league points.** An aborted round gives no points (02 §8); for an aborted match the spec is silent. Proposal: `leaderboard.abortedMatchesCount` off: aborting a match takes back the league points of its ended rounds; a closed match keeps them (T70).
+
+**(v) Account ids visible to anonymous viewers.** A player's key is the account id (DECISIONS T17), so match details, round results, the fairness proof and room frames show account ids (random UUIDs, no personal data) to anyone who watches; Bingo replaced them in its security audit. Proposal: keep them for now, and replace them by per-match player numbers when the contracts next change (it touches every view). Found by the authorization matrix (night run 2, N4).
+
 ## Spec conflicts
 
 Resolved by the decision rules (owner decisions first, then the more specific section) and listed here for the owner to confirm.

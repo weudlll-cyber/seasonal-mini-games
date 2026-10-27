@@ -1,0 +1,106 @@
+/**
+ * @file   apps/web/src/boards/boards.css
+ * @module web/boards
+ * @brief  The boards' layout: player and team boards side by side, profile facts, the proof.
+ *
+ * Responsibility: on wide screens the team board stands beside the player board, on a phone
+ *                 below it; tables (../round/result.css) scroll inside their panel, never the
+ *                 page; the profile's numbers as a grid of facts; the verification page's
+ *                 check line in the success or danger text colour, the guesses in a list that
+ *                 scrolls inside itself, and long hex values that wrap. Colours only from
+ *                 @smg/ui tokens; text keeps 4.5:1 in both themes.
+ * Spec:           docs/spec/02-game-guess-the-number.md §9, §10, §12
+ */
+.boards-grid {
+  display: grid;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .boards-grid {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}
+
+.boards-grid > *,
+.boards-page > * {
+  min-width: 0;
+}
+
+.boards-page caption,
+.boards-grid caption {
+  text-align: left;
+  font-weight: var(--font-weight-strong);
+  padding-bottom: var(--space-1);
+}
+
+.boards-more {
+  justify-self: start;
+}
+
+/* The profile's numbers: label over value, as many per row as fit. */
+.boards-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.boards-facts div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.boards-facts dt {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.boards-facts dd {
+  margin: 0;
+  font-size: var(--font-size-lead);
+  font-weight: var(--font-weight-strong);
+}
+
+.boards-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: var(--space-1);
+}
+
+/* The verification page */
+.boards-check[data-ok='true'] {
+  color: var(--color-success-text);
+  font-weight: var(--font-weight-strong);
+}
+
+.boards-check[data-ok='false'] {
+  color: var(--color-danger);
+  font-weight: var(--font-weight-strong);
+}
+
+.boards-hex {
+  overflow-wrap: anywhere;
+  font-size: var(--font-size-small);
+}
+
+/* The accepted guesses scroll inside their panel; the header row stays in view. */
+.boards-scroll {
+  max-height: 24rem;
+  overflow: auto;
+}
+
+.boards-scroll th {
+  position: sticky;
+  top: 0;
+  background: var(--color-surface);
+}
+
+.boards-json {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 0;
+  font-size: var(--font-size-small);
+}

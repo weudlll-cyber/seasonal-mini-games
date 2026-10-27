@@ -23,7 +23,9 @@ import type { Reply } from '@smg/domain';
 import type { RosterPlayer, Season } from '@smg/game-sdk';
 import { SEED_BYTES } from '@smg/game-sdk/crypto';
 
-import type { DbPool } from '../db/pool.js';
+import { inTransaction, type DbPool } from '../db/pool.js';
+import { withdrawMatch } from '../league/awards.js';
+import { leagueRules } from '../league/rules.js';
 import type { LiveRound } from '../round/liveRound.js';
 import type { Rounds } from '../round/rounds.js';
 import {
@@ -200,6 +202,10 @@ export class Play {
       });
     }
     await setMatchStatus(this.pool, match.id, abort === undefined ? 'closed' : 'aborted', abort);
+    // An aborted match takes back its league points unless the setting keeps them (T70).
+    if (abort !== undefined && !(await leagueRules(this.settings)).abortedMatchesCount) {
+      await inTransaction(this.pool, (c) => withdrawMatch(c, match.id));
+    }
     this.changed(match.id);
   }
 }

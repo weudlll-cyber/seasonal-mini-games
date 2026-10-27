@@ -7,7 +7,8 @@
  *                 built client (image) or the placeholder page (development), sessions and
  *                 auth, password change, the admin routes (settings documents with every
  *                 game's document, audit log, accounts, abuse signals), the match and round
- *                 routes with their runtime and, in development, the Quick Test onto a fresh
+ *                 routes with their runtime, the boards (leaderboards, profiles, adjustments)
+ *                 and, in development, the Quick Test onto a fresh
  *                 Fastify instance, under the base
  *                 path (SMG_BASE_PATH) and behind the trusted proxies. The caller owns the
  *                 lifecycle (listen, close, pool disposal). Adapted from Bingo's app.ts.
@@ -33,6 +34,7 @@ import { registerSecurityHeaders } from './plugins/securityHeaders.js';
 import { registerAdminAccounts } from './routes/adminAccounts.js';
 import { registerAdminAudit } from './routes/adminAudit.js';
 import { registerAdminSettings } from './routes/adminSettings.js';
+import { registerLeaderboardRoutes } from './routes/leaderboards.js';
 import { registerMatchRoutes } from './routes/matches.js';
 import { registerQuickTest } from './routes/quickTest.js';
 import { registerRoundRoutes } from './routes/rounds.js';
@@ -125,6 +127,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   registerMatchRoutes(fastify, { play, settings, pool: deps.pool });
   registerRoundRoutes(fastify, { play, limits, store, pool: deps.pool });
   registerSeasonRoutes(fastify, { pool: deps.pool, seasons: runtime.seasons, audit });
+  registerLeaderboardRoutes(fastify, { pool: deps.pool, audit });
   if (isDev) registerQuickTest(fastify, { play, pool: deps.pool });
   fastify.addHook('onClose', () => runtime.stop());
   return { fastify, metrics, settings, audit, sessionEnds, runtime, cookieName: cookie.name };

@@ -9,7 +9,8 @@
  *                 it; on phones the bar wraps into two rows, scrolls away with the page and
  *                 the navigation scrolls sideways. While a round runs, the page is one screen
  *                 high and the round view fills what the bar leaves; on a phone the bar is
- *                 then one row of at most 56 px with the account behind "Menu". Colours come
+ *                 then one row of at most 56 px with the account behind "Menu" and Play as the
+ *                 only navigation pill. Colours come
  *                 from @smg/ui.
  * Spec:           Bingo 01 §13; docs/spec/02-game-guess-the-number.md §12
  */
@@ -202,7 +203,8 @@
 
 /* While a round runs on a phone the bar is one row of 55 px (44 px controls, 5 px above and
    below, the hairline): the emblem without the wordmark (its name is still read out), the
-   theme toggle, Play, and "Menu" with the account and the development menu (DECISIONS T67). */
+   theme toggle, Play, and "Menu" with the account and the development menu (DECISIONS T67).
+   A second pill (Leaderboard) does not fit beside them at 390 px, so it is left out here. */
 @media (max-width: 640px) {
   #root:has(.match-live) .shell-bar {
     flex-wrap: nowrap;
@@ -220,6 +222,10 @@
 
   #root:has(.match-live) .shell-menu {
     width: auto;
+  }
+
+  #root:has(.match-live) .shell-nav-boards {
+    display: none;
   }
 
   #root:has(.match-live) .shell-menu-button {

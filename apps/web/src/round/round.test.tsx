@@ -10,10 +10,11 @@
  *                 roster order; the team tiles show each team's match points, only when teams
  *                 play; a player name stays whole, shortened, and opens on a tap; the result
  *                 screen gives the headline, the winning margin, placings with "took part",
- *                 the team result and the fairness proof; every platform refusal and event
+ *                 the team result, the match standings and the fairness proof with the link to
+ *                 the verification page; every platform refusal and event
  *                 has its plain sentence (02 §12).
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./CooldownRing, ./PlayerName,
- *                 ./RoundSide, ./ResultScreen, ./roundText
+ *                 ./RoundSide, ./ResultScreen (with ./MatchStandings), ./roundText
  * Spec:           docs/spec/02-game-guess-the-number.md §7, §9, §11, §12; docs/spec/09-testing-strategy.md §2
  */
 import type { RoundStateView } from '@smg/contracts';
@@ -160,8 +161,12 @@ describe('a player name', () => {
 });
 
 describe('the result screen', () => {
-  it('gives the headline, the margin, placings, the team result and the proof', () => {
-    render(<ResultScreen state={ended} game={null} viewerKey="a" />);
+  it('gives the headline, the margin, placings, the team result, the standings and the proof', () => {
+    const standings = [
+      { rank: 1, playerKey: 'w', name: 'Walter', points: 20, wins: 2 },
+      { rank: 2, playerKey: 'a', name: 'Anna', points: 7, wins: 0 },
+    ];
+    render(<ResultScreen state={ended} game={null} viewerKey="a" standings={standings} />);
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
       'Walter found it first — after 9 guesses.',
     );
@@ -174,6 +179,16 @@ describe('the result screen', () => {
       'Autumn: 1 point — the winner’s team',
     );
     expect(screen.getByTestId('proof').textContent).toContain('cd'.repeat(32));
+    expect(screen.getByRole('link', { name: 'Verify this round' }).getAttribute('href')).toBe(
+      '#/rounds/r1/verify',
+    );
+    const standingRows = [
+      ...screen.getByTestId('match-standings').querySelectorAll('tbody tr'),
+    ].map((tr) => tr.textContent);
+    expect(standingRows).toEqual(['1Walter202', '2Anna (you)70']);
+    expect(screen.getByTestId('match-standings').querySelector('.round-you')?.textContent).toBe(
+      '2Anna (you)70',
+    );
   });
 });
 

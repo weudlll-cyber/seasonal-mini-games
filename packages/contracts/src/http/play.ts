@@ -4,14 +4,15 @@
  * @brief  The shapes of the match, round and season answers the player client reads.
  *
  * Responsibility: one description of what the server sends and the client renders (06 §3.1):
- *                 games, match summaries and details, the round view per viewer (platform part
+ *                 games, match summaries and details (with the match standings), the round view per viewer (platform part
  *                 plus the game's own view, unknown here), frames, Quick Test and seasons. The
  *                 server's routes return these types; the client never guesses a shape.
- * Depends on:     ./admin (settings document view)
+ * Depends on:     ./admin (settings document view), ./boards (match standings)
  * Used by:        ../index, apps/server (routes), apps/web
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1, §4.4
  */
 import type { SettingsDocumentView } from './admin.js';
+import type { MatchStandingView } from './boards.js';
 
 export type SeasonName = 'spring' | 'summer' | 'autumn' | 'winter';
 export type TeamName = SeasonName;
@@ -47,6 +48,8 @@ export interface MatchDetailsView extends MatchSummaryView {
   readonly round: { readonly id: string; readonly status: string } | null;
   // The match's team standings in rank order; a team without points yet is absent.
   readonly teamStandings: readonly { readonly team: TeamName; readonly points: number }[];
+  // The match's player standings in rank order (02 §9); a player without a round yet is absent.
+  readonly standings: readonly MatchStandingView[];
   // The host's form defaults: the game's settings document (host-chosen keys and bounds).
   readonly nextRoundDefaults: SettingsDocumentView | null;
 }

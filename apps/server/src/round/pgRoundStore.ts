@@ -6,16 +6,18 @@
  *
  * Responsibility: one transaction per batch (04 §5.3): the events, the round row's status,
  *                 the scheduled actions of a countdown, and at the end the results, team
- *                 results and the match standings; a snapshot every 200 events, keeping the
+ *                 results, the match standings and the league awards (../league/awards); a
+ *                 snapshot every 200 events, keeping the
  *                 last two. Events are opaque JSON here; the actor knows their types.
- * Depends on:     pg (via ../db/pool), @smg/domain (types), ./pgResults, ./seal
+ * Depends on:     pg (via ../db/pool), @smg/domain (types), ../league/awards, ./pgResults, ./seal
  * Used by:        ./actor, ./rounds
  * Spec:           docs/spec/06-data-model-api-realtime.md §2.3–§2.5; docs/spec/04-software-architecture.md §5.3
  */
 import type { PlayerResult, TeamResult } from '@smg/domain';
 import type pg from 'pg';
 
-import type { DbPool } from '../db/pool.js';
+import { inTransaction, type DbPool } from '../db/pool.js';
+import { awardMatch, type LeagueRules } from '../league/awards.js';
 import { ts, writeResults } from './pgResults.js';
 import { openSeed, sealSeed } from './seal.js';
 
@@ -95,11 +97,13 @@ export class PgRoundStore {
   constructor(
     private readonly pool: DbPool,
     private readonly key: Buffer,
+    // Read at round end (08 §4: `leaderboard.*` take effect from the next round end).
+    private readonly leagueRules: () => Promise<LeagueRules>,
   ) {}
 
   // Inserts the round row with its first event (RoundCreated) in one transaction.
   async create(row: NewRoundRow, created: StoredEvent): Promise<number> {
-    return this.tx(async (c) => {
+    return inTransaction(this.pool, async (c) => {
       const r = await c.query<{ round_index: number }>(
         `INSERT INTO smg.rounds (id, match_id, round_index, game_id, secret_mode, season,
            season_source, special_on, halving, teams_on, cooldown_ms, settings, seed_commitment,
@@ -131,7 +135,8 @@ export class PgRoundStore {
   }
 
   async append(batch: BatchWrite): Promise<void> {
-    await this.tx(async (c) => {
+    const rules = batch.ended === null ? null : await this.leagueRules();
+    await inTransaction(this.pool, async (c) => {
       await insertEvents(c, batch.roundId, batch.events);
       const s = batch.status;
       await c.query(
@@ -151,7 +156,10 @@ export class PgRoundStore {
           [batch.roundId],
         );
       }
-      if (batch.ended !== null) await writeResults(c, batch.roundId, batch.matchId, batch.ended);
+      if (batch.ended !== null && rules !== null) {
+        await writeResults(c, batch.roundId, batch.matchId, batch.ended);
+        await awardMatch(c, batch.matchId, rules);
+      }
       if (batch.snapshot !== null) await writeSnapshot(c, batch.roundId, batch.snapshot);
     });
   }
@@ -209,21 +217,6 @@ export class PgRoundStore {
       `SELECT id::text FROM smg.rounds WHERE status IN ('created', 'countdown', 'open') ORDER BY created_at`,
     );
     return r.rows.map((x) => x.id);
-  }
-
-  private async tx<T>(work: (c: pg.PoolClient) => Promise<T>): Promise<T> {
-    const c = await this.pool.connect();
-    try {
-      await c.query('BEGIN');
-      const result = await work(c);
-      await c.query('COMMIT');
-      return result;
-    } catch (error) {
-      await c.query('ROLLBACK');
-      throw error;
-    } finally {
-      c.release();
-    }
   }
 }
 

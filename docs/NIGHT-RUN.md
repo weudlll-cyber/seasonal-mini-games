@@ -6,20 +6,21 @@ N1 and N2 on `feat/guess-the-number`; N3 onwards on `night/2026-10-27`, created 
 
 ### Status
 
-| Piece                                                          | State   | Branch                | Commit |
-| -------------------------------------------------------------- | ------- | --------------------- | ------ |
-| N1 Journey 4 intermittent failure                              | running | feat/guess-the-number | —      |
-| N2 Compact phone bar, text contrast                            | running | feat/guess-the-number | —      |
-| N3 Phase 4 standings, boards, profiles, verification page      | open    | night/2026-10-27      | —      |
-| N4 Phase 2 authorization matrix and security suites            | open    | night/2026-10-27      | —      |
-| N5 Phase 5 chat `none` / `builtin`, moderation                 | open    | night/2026-10-27      | —      |
-| N6 Phase 6 admin remainder                                     | open    | night/2026-10-27      | —      |
-| N7 Phase 7 handoff, embed, test host page, webhooks, read API  | open    | night/2026-10-27      | —      |
-| N8 Phase 8 installer, `smg` CLI, backups, observability, guide | open    | night/2026-10-27      | —      |
+| Piece                                                          | State   | Branch                | Commit                              |
+| -------------------------------------------------------------- | ------- | --------------------- | ----------------------------------- |
+| N1 Journey 4 intermittent failure                              | done    | feat/guess-the-number | `e007fdf` (CI green, first attempt) |
+| N2 Compact phone bar, text contrast                            | done    | feat/guess-the-number | `3783f01` (CI green, first attempt) |
+| N3 Phase 4 standings, boards, profiles, verification page      | done    | night/2026-10-27      | see N3                              |
+| N4 Phase 2 authorization matrix and security suites            | done    | night/2026-10-27      | see N4                              |
+| N5 Phase 5 chat `none` / `builtin`, moderation                 | open    | night/2026-10-27      | —                                   |
+| N6 Phase 6 admin remainder                                     | open    | night/2026-10-27      | —                                   |
+| N7 Phase 7 handoff, embed, test host page, webhooks, read API  | open    | night/2026-10-27      | —                                   |
+| N8 Phase 8 installer, `smg` CLI, backups, observability, guide | running | night/2026-10-27      | —                                   |
 
 ### Needs the owner
 
-- Nothing new yet. The Night 1 items below still stand.
+- (t) Which season names a quarter's board; (u) aborted matches and league points; (v) account ids visible to anonymous viewers. All in [OPEN.md](OPEN.md), each built as proposed.
+- The Night 1 items below still stand.
 
 ### N1 — Journey 4 (halving) failed now and then
 
@@ -56,7 +57,7 @@ Reused: the helper's own range (`quickRound`). Removed: the range override. Noti
    - Two token pairs failed, so each got a step: `--color-winter-text` (light `#00669a`, dark the winter token) and `--color-success-text` (light `#17683b`, dark the success token). Disabled buttons show muted text on the second surface (6.6:1 light, 8.0:1 dark) instead of fading to 45 % opacity; this also applies in the admin app. No other new tokens.
    - Journeys 10 and 11 assert 4.5:1 in both themes, and journey 3 asserts it for the Frost round in light. `designTokens.test.ts` checks both new steps on every background, including the four glows (the plain success token is 4.1:1 on the green glow).
 
-**Checks.** `pnpm verify` green: 204 tests in 46 files. The first attempt hit Testcontainers' 180 s start ceiling in six server integration files while another session's Bingo e2e run loaded the machine; one file passed alone, and the full re-run was green. E2E in Chromium: all 13 journeys passed (`chromium` and `chromium-timing`); after a lint split of the contrast helper, journeys 3, 4, 10 and 11 passed again. CI: see the next update.
+**Checks.** CI for `3783f01`: green on the first attempt (verify, e2e in three browsers, docs, security). `pnpm verify` green: 204 tests in 46 files. The first attempt hit Testcontainers' 180 s start ceiling in six server integration files while another session's Bingo e2e run loaded the machine; one file passed alone, and the full re-run was green. E2E in Chromium: all 13 journeys passed (`chromium` and `chromium-timing`); after a lint split of the contrast helper, journeys 3, 4, 10 and 11 passed again. CI: see the next update.
 
 **On the way.** One e2e run failed journey 10 with "higher" at 2.36:1 in dark: the dev server (running since 2026-10-26 20:31) was serving an old transform of `tokens.css` without the new dark line. It passed after a restart. This is the second stale Vite transform in two nights; see "Noticed".
 
@@ -93,6 +94,93 @@ Reused: the helper's own range (`quickRound`). Removed: the range override. Noti
 - `apps/web/src/useReducedMotion.ts` says it is used by `./game/CurrentBall`, which does not exist here (a Bingo line).
 - The `smg-anim-*` motion classes in `packages/ui/src/motion.css` are used nowhere in this repository.
 - Another session ran Bingo's Playwright suite and Bingo's dev servers on this machine during the night; nothing of theirs was touched.
+
+### N3 — Phase 4: standings, boards, profiles, verification page
+
+Branch `night/2026-10-27` (created from `feat/guess-the-number` at `3783f01`, after N2).
+
+**Built.**
+
+- **League points (DECISIONS T69).** In the transaction that appends a round's `RoundEnded`, a counting match with at least `leaderboard.minPlayersForPoints` (4) distinct accounts awards each account its match standing (points, round wins, solves, rank). The awards go to the all-time board and to the season board of the UTC quarter in which the match's first round ended; the match's teams award their team standing the same way. Awards are replaced as later rounds end; entries are the sums of awards and staff adjustments. One module writes the league tables (`apps/server/src/league/awards.ts`). Migration `0006_leaderboards.sql` adds periods, awards, entries, append-only adjustments, and team awards and entries.
+- **Boards and profiles over HTTP:**
+  - `GET /leaderboards`, `/leaderboards/:periodId?offset=`, `/:periodId/me` (the viewer ±5), `/:periodId/teams`, and `/players/:displayName`.
+  - `POST /admin/leaderboard-adjustments` (`leaderboard.adjust`, reason required, audited, shown on the profile).
+  - The match details carry the match standings.
+- **Player client** (a subagent, apps/web only):
+  - A "Leaderboard" pill in the navigation (hidden in the compact round bar on a phone, where it does not fit).
+  - The board page: a picker by board name; the player table with "you", "Show more" and the viewer's neighbourhood; the team board beside it on a desktop (below on a phone).
+  - The profile page.
+  - The fairness verification page (O9): commitment and seed, checked with `crypto.subtle` in the browser; the recomputed secret(s), the roster and the accepted guesses in receive order; "Download the proof".
+  - The result screen shows the match standings, and its proof links to "Verify this round".
+- **Proposals (OPEN (t), (u)):** `leaderboard.firstQuarterSeason` (winter names January–March) and `leaderboard.abortedMatchesCount` (off: aborting a match takes back its league points, T70).
+- **A defect found on the way, fixed.** The server never said "match changed" when a round ended, so a page kept the standings from before the result (the result screen showed none). The gateway now announces a match change with every `RoundEnded` or `RoundAborted` (`apps/server/src/realtime/gateway.ts`, `sendCommitted`), through the existing once-a-second throttle. The header of `useMatch` claimed it reloaded on round frames; it now says what it does.
+
+**Tests.**
+
+- **Unit:** the quarter and its name (`packages/domain/src/league/periods.test.ts`); the client's boards, profile, verification page, standings and routes (`apps/web/src/boards/boards.test.tsx` and others).
+- **Integration** (`apps/server/test/league.integration.test.ts`, Testcontainers):
+  - Two matches of four accounts add up on both boards, with the team board beside.
+  - `/me` and the profile agree with the boards; no e-mail appears.
+  - An adjustment is refused to a player, made by the admin, audited, append-only and shown on the profile.
+  - Three accounts, or a match that does not count, award nothing.
+  - Aborting a match takes its points back.
+  - Invalid input answers 400.
+- **E2E journey 12** (`e2e/boards.spec.ts`, Chromium):
+  - Two counting matches of four accounts put 20 points and two team wins on the season board.
+  - The board page shows the team board beside the player board, and a name opens the profile.
+  - "Verify this round" checks the seed in the browser.
+  - Aborting the matches puts the board back as it was.
+
+**Reused:** the domain's `standings()` order (already behind `match_standings`), `displayNames`, `permitted` (the admin guard) and the audit log. Bingo's leaderboard design was adopted (01 §10, 04 §3.4, 05 §2.4, 03 §11); Bingo built none of it, so there was no code to take. On the client: `api`, `ChoiceField`, `Problem`, `PlayerName`, `SeasonIcon` and the result table styles.
+
+**Extracted:** `inTransaction` (`apps/server/src/db/pool.ts`), now used by the round store and the league code; `useApi`, a GET hook that drops stale answers, in the client.
+
+**Removed:** the round store's private transaction helper.
+
+**Noticed, left alone:**
+
+- Four more hand-written transactions (`admin/pgAuditLog.ts`, `admin/pgSettingsStore.ts`, `auth/accounts.ts`, `db/migrator.ts`) could use `inTransaction`.
+- `smg_matches_running` (`http/routes/metrics.ts`) is never set, and the metric catalogue of 06 §4.6 is not built (taken up in N8).
+- Migration 0006 is applied to the development database. `feat/guess-the-number` starts fine on it, because the migrator checks only the files it knows, but 0006 must not be edited any more.
+
+### N4 — Phase 2 remainder: authorization matrix and security suites
+
+**Built** (a subagent, apps/server/test only, plus the fixes below):
+
+- **`authzMatrix.integration.test.ts`** with `authzTable.ts` and `authzSetup.ts`, adapted from Bingo's matrix.
+  - Every HTTP route the server registers (56) against 10 kinds of caller: anonymous, guest, player, player of the match, another host, the match's host, admin, moderator, game admin, and a staff-only security admin.
+  - The 2 routes of a server that serves the built client.
+  - Every socket intent (8) against the 9 callers with a session, plus the anonymous handshake.
+  - A route or intent missing from the tables fails the test.
+  - Also: with `SMG_DEV=0` the development routes are not there; CSRF is checked on one write of each route group; an unknown intent answers `UNKNOWN_INTENT`.
+  - Host plays (S10, O16): the host and the match's player get the player view; an admin and a guest get the spectator view; the host's guess is accepted and the admin's refused `NOT_IN_ROUND`.
+- **`security.integration.test.ts`**, adapted from Bingo's:
+  - Per-address limits for guests and for requests without a session; dead sessions are purged.
+  - A socket closes at logout and at account deletion; the handshake is refused for another origin and without a session.
+  - The `__Secure-` cookie under a base path; short admin sessions; the Permissions-Policy header.
+  - `/metrics` through a proxy answers 404.
+  - No e-mail in match details, results, proofs, boards or profiles.
+  - A broken %-escape answers 400.
+- **Left out from Bingo's suite:** "a deleted player shown as such" (there is no such naming here), and Bingo's account-id checks (see OPEN (v)).
+
+**Defects found and fixed:**
+
+1. **`team.choose` over the socket** checked neither the sign-in nor `match.join`: a guest got `NOT_FOUND`, and a security admin without `match.join` got through to `TEAMS_LOCKED`. The HTTP route requires `match.join`, and 06 §4 says the intent follows it. The intent now answers `SIGN_IN_REQUIRED` or `FORBIDDEN` first (`apps/server/src/realtime/intents.ts`, `chooseTeam`). With the fix taken out, the matrix fails on exactly these two cells.
+2. **`GET /rounds/:id/state`** answered 401 `SIGN_IN_REQUIRED` to a signed-in session without `match.watch`. It now answers 403 `FORBIDDEN` (`apps/server/src/http/routes/rounds.ts`).
+3. **N3's league routes** answered 500 to an invalid adjustment body or `offset` (a thrown zod error). They now answer 400 `VALIDATION_FAILED`.
+
+**Already covered before (not repeated):**
+
+- `server.integration.test.ts`: CSP and the other headers; problem+json on 404.
+- `auth.integration.test.ts`: CSRF on logout; JSON-only session starters; login limits; dev sign-in 404 in production; guests watch only.
+- `admin.integration.test.ts`: suspension and admin refusals.
+- `secrets.integration.test.ts`: host-only round control and the secret scan.
+
+**Noticed, left alone:**
+
+- **Account ids are public.** `player_key` is the account id (T17), so match details, results, proofs and room frames show account ids to anonymous viewers; Bingo removed this in its audit. Listed as OPEN (v).
+- **`DELETE /api/v1/dev/load-accounts`** has no sign-in and no CSRF (development builds only).
+- **The admin match abort** of 06 §3.2 does not exist yet: moderators and game admins hold `match.abort` but cannot use it (taken up in N6).
 
 ## Night 1 (2026-10-24 to 2026-10-26)
 

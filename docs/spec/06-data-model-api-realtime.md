@@ -7,9 +7,9 @@
 | Topic | Bingo reference | Difference here |
 |---|---|---|
 | Conventions: PostgreSQL 17, UUIDv7 keys, `timestamptz` UTC, snake_case, `text` + `CHECK` instead of enums, `jsonb` only for documents and event payloads, **no monetary columns**, DB roles | Bingo 04 §1 | Schema `smg`, roles `smg_*`. |
-| Identity and access tables (`accounts`, `sessions`, `identity_providers`, `external_identities`, `roles`, `role_permissions`, `role_assignments`, `totp_factors`, `recovery_codes`, token tables, `player_profiles`, badges) | Bingo 04 §3.1 | `player_profiles` counts `rounds_played`, `wins`, `solves` instead of Bingo's counters. |
+| Identity and access tables (`accounts`, `sessions`, `identity_providers`, `external_identities`, `roles`, `role_permissions`, `role_assignments`, `totp_factors`, `recovery_codes`, token tables, `player_profiles`, badges) | Bingo 04 §3.1 | No profile counters: a public profile is computed from the league awards, so it always agrees with the boards (DECISIONS T69). |
 | Configuration tables (`settings_documents`, `settings_versions`, `embed_origins`) | Bingo 04 §3.2 | No `rulesets`, `ruleset_versions` or `patterns`. Per-game settings are settings documents with id `game.<gameId>` ([08](08-admin-settings.md)). |
-| Leaderboard tables (`leaderboard_periods`, `league_entries`, `league_awards`, `leaderboard_adjustments`) | Bingo 04 §3.4 | `league_entries` counts `wins` and `solves` instead of `season_completes`. Adds `team_league_entries` (§2.6). |
+| Leaderboard tables (`leaderboard_periods`, `league_entries`, `league_awards`, `leaderboard_adjustments`) | Bingo 04 §3.4 | `league_entries` counts `wins` and `solves` instead of `season_completes`. `league_awards` hold a match's standing per board and account (replaced as its rounds end); `leaderboard_adjustments` are append-only. Adds `team_league_awards` and `team_league_entries` (§2.6). |
 | Chat and moderation tables | Bingo 04 §3.5 | None. |
 | Notifications, uploads, `audit_log`, `jwt_replay_cache` | Bingo 04 §3.6 | None. |
 | `scheduled_actions` with leases | Bingo 04 §3.3 | The `kind` values differ (§2.5). |
@@ -17,7 +17,7 @@
 | Migrations: hand-written SQL, checksummed own migrator, applied on start; seed on first install | Bingo 04 §6 | The seed has no rulesets. It holds the settings documents from defaults and the `game.guess-the-number` document. |
 | API conventions: `/api/v1`, zod contracts, OpenAPI generation, RFC 9457 problems, cursor pagination, `Idempotency-Key`, session cookie plus CSRF or bearer embed token, rate-limit headers | Bingo 05 §1 | None. |
 | Session, auth and profile routes | Bingo 05 §2.1, §2.2 | `POST /dev/sign-in` as Bingo (development builds only). |
-| Leaderboard, chat, notification and misc routes (`/config/public`, `/assets`, `/healthz`, `/readyz`, `/metrics` internal only) | Bingo 05 §2.4, §2.5 | Leaderboards add `GET /leaderboards/:periodId/teams`. |
+| Leaderboard, chat, notification and misc routes (`/config/public`, `/assets`, `/healthz`, `/readyz`, `/metrics` internal only) | Bingo 05 §2.4, §2.5 | Leaderboards add `GET /leaderboards/:periodId/teams`; pages are `?offset=` steps of 50. The public profile is `GET /players/:displayName` (Bingo 05 §2.2). |
 | Admin route layout, permissions per route, audit on every write, step-up | Bingo 05 §3 | Rulesets, patterns and the simulator are replaced by settings documents and `halving-days` (§3.2). |
 | Realtime transport (Socket.IO over WebSocket only, `/ws`, namespaces `/play` and `/admin`, connection state recovery, frame limits) | Bingo 06 §1 | None. |
 | Handshake and auth, session revocation push | Bingo 06 §2 | A socket may be in at most 3 match rooms. |
@@ -93,7 +93,9 @@
 
 - **season_feed_state** — single row: `season text NULL`, `token text NULL`, `since timestamptz NULL`, `fetched_at timestamptz NULL`, `last_error text NULL`.
 - **halving_days** — `day date`, `token text`, `source` (`feed` / `admin`), `created_by NULL`, `created_at`. PK `(day, token)`. Edits are audited.
+- **team_league_awards** — `period_id`, `team`, `match_id`, `points`, `wins`. PK `(period_id, team, match_id)`: a match's team standing on one board.
 - **team_league_entries** — `period_id`, `team`, `points int`, `wins int`, `updated_at`. PK `(period_id, team)`.
+- **How points reach the boards** (DECISIONS T69, T70): in the transaction that appends a round's `RoundEnded`, a match with `counts_for_leaderboard` and at least `leaderboard.minPlayersForPoints` distinct accounts over its ended rounds awards every account its match standing (points, round wins, solves, rank) and every team its team standing, to the all-time board and to the season board of the quarter (UTC) in which the match's first round ended. Entries are the sums of awards and adjustments. Aborting a match removes its awards unless `leaderboard.abortedMatchesCount` is on.
 
 ### 2.7 Round event types (platform)
 
@@ -137,6 +139,7 @@ As Bingo 05 §3 for dashboard, settings, integrations, accounts, moderation, upl
 |---|---|---|
 | Matches and rounds | `GET /matches`, `GET /rounds/:id`, `POST /rounds/:id/abort`, `POST /matches/:id/kick`, `POST /rounds/:id/results/:playerKey/remove` (reason required) | `match.abort` / `match.manage` / `leaderboard.adjust` |
 | Seasons | `GET /seasons/feed`, `POST /seasons/feed/refresh`, `GET/POST/DELETE /halving-days` | `season.manage` |
+| Leaderboards | `POST /leaderboard-adjustments` (`{ periodId, displayName, delta, reason }`, reason required, audited, public on the profile) | `leaderboard.adjust` |
 | Game settings | `GET/PUT /settings/game.<gameId>` with versions and rollback as Bingo | `settings.game.edit` |
 
 ## 4. Realtime

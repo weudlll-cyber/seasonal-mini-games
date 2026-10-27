@@ -18,7 +18,7 @@
  * Spec:           docs/spec/02-game-guess-the-number.md §4, §7, §11, §12; docs/spec/03-seasonal-specials.md §2, §6
  */
 import { GAME_SCREENS, type GameWeb } from '@smg-game/registry/web';
-import type { RoundStateView, TeamName } from '@smg/contracts';
+import type { MatchStandingView, RoundStateView, TeamName } from '@smg/contracts';
 import type { ActReply } from '@smg/game-sdk';
 import { useState, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 
@@ -40,6 +40,8 @@ interface RoundScreenProps {
   // The host menu for the host, else null.
   readonly hostMenu: ReactNode;
   readonly teamPoints: readonly { readonly team: TeamName; readonly points: number }[];
+  // The match's player standings, for the result screen.
+  readonly standings: readonly MatchStandingView[];
 }
 
 function timeText(state: RoundStateView, now: number): string {
@@ -143,7 +145,14 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
   const game = GAME_SCREENS[props.gameId] ?? null;
   if (state === null) return <p className="smg-muted">Loading the round…</p>;
   if (state.status === 'ended') {
-    return <ResultScreen state={state} game={game} viewerKey={props.viewerKey} />;
+    return (
+      <ResultScreen
+        state={state}
+        game={game}
+        viewerKey={props.viewerKey}
+        standings={props.standings}
+      />
+    );
   }
   if (state.status === 'aborted') {
     return <p className="smg-panel">The round was aborted: {state.abortReason}</p>;
