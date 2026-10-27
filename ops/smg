@@ -69,7 +69,8 @@ cmd_status() {
     info "health:      NOT READY (smg logs app)"
   fi
   # The names carry the time, so the last in name order is the newest.
-  last=$(find "$SMG_BACKUPS/$env" -maxdepth 1 -name 'smg-*.tar.age' 2>/dev/null | sort | tail -1)
+  # Before the first backup the folder does not exist yet: that is no error (pipefail).
+  last=$({ find "$SMG_BACKUPS/$env" -maxdepth 1 -name 'smg-*.tar.age' 2>/dev/null || true; } | sort | tail -1)
   info "last backup: ${last:-none yet}"
   info "next backup: $(systemctl show "smg-backup@$env.timer" -p NextElapseUSecRealtime --value 2>/dev/null || echo unknown)"
   [[ -f $ROLLBACK_DIR/$env/rollback.conf ]] && info "rollback:    possible (smg confirm deletes the pre-update dump)"

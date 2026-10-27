@@ -4,7 +4,8 @@
 # @brief  The installer from a fresh Ubuntu 24.04 to a running, backed-up instance, in containers.
 #
 # Responsibility: two throw-away "servers" (ops/test/Dockerfile: systemd as PID 1, privileged,
-#                 /var/lib/docker on an anonymous volume so the Docker they install works):
+#                 /var/lib/docker and /var/lib/containerd on anonymous volumes, so the Docker
+#                 they install can build and run images):
 #                 standalone — ops/install.sh on a bare IP installs Docker, builds the app
 #                 from a git bundle of the given ref, starts it behind Caddy's internal CA and
 #                 waits for /readyz; then HTTPS answers, `smg status`, a backup encrypted for a
@@ -25,13 +26,16 @@
 set -euo pipefail
 shopt -s inherit_errexit
 # Git Bash on Windows rewrites arguments that start with / (such as -v /var/lib/docker) into
-# Windows paths: off, and host files reach Docker by paths relative to WORK.
+# Windows paths: off, and host files reach Docker by paths relative to WORK; git gets
+# native paths (native, below).
 export MSYS_NO_PATHCONV=1
+# native <path>: the path as the host's own programs read it (Windows form under Git Bash).
+native() { cygpath -w "$1" 2>/dev/null || printf '%s' "$1"; }
 
 HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO=$(cd "$HERE/../.." && pwd)
 WHICH=${1:-all}
-REF=${2:-$(git -C "$REPO" rev-parse --abbrev-ref HEAD)}
+REF=${2:-$(git -C "$(native "$REPO")" rev-parse --abbrev-ref HEAD)}
 BINGO_REPO=${BINGO_REPO:-$REPO/../seasonal-bingo-royale}
 BINGO_COMMIT=${BINGO_COMMIT:-d294585}
 IMAGE=smg-installer-test
@@ -41,8 +45,15 @@ WORK=$(mktemp -d)
 SERVERS=()
 
 finish() {
-  local name
-  for name in "${SERVERS[@]}"; do docker rm -f -v "$name" >/dev/null 2>&1 || true; done
+  local status=$? name
+  for name in "${SERVERS[@]}"; do
+    # A failed run shows what the apps said before the server goes.
+    if ((status != 0)); then
+      step "app logs on $name"
+      on "$name" 'for c in $(docker ps -a --format "{{.Names}}" | grep -- -app-1); do docker logs --tail 60 "$c" 2>&1; done' || true
+    fi
+    docker rm -f -v "$name" >/dev/null 2>&1 || true
+  done
   rm -rf "$WORK"
 }
 trap finish EXIT
@@ -63,7 +74,7 @@ server() {
   docker rm -f -v "$name" >/dev/null 2>&1 || true
   SERVERS+=("$name")
   docker run -d --name "$name" --hostname "$name" --privileged --cgroupns=private \
-    --tmpfs /run --tmpfs /run/lock -v /var/lib/docker "$IMAGE" >/dev/null
+    --tmpfs /run --tmpfs /run/lock -v /var/lib/docker -v /var/lib/containerd "$IMAGE" >/dev/null
   for _ in $(seq 1 30); do
     on "$name" 'systemctl is-system-running 2>/dev/null | grep -Eq "running|degraded"' && break
     sleep 1
@@ -135,7 +146,7 @@ EOF
 # Seasonal Bingo Royale beside it, from its committed tree only (never its working tree).
 bingo_beside() {
   local s=$1 pub=$2
-  git -C "$BINGO_REPO" archive --format=tar --prefix=bingo/ "$BINGO_COMMIT" >"$WORK/bingo.tar"
+  git -C "$(native "$BINGO_REPO")" archive --format=tar --prefix=bingo/ "$BINGO_COMMIT" >"$WORK/bingo.tar"
   put "$s" bingo.tar /root/bingo.tar
   on "$s" 'cd /root && tar -xf bingo.tar && cd bingo && git init -q -b master && git add -A'
   on "$s" 'cd /root/bingo && git -c user.email=t@example.org -c user.name=test commit -qm tree'
@@ -175,7 +186,7 @@ website() {
 
 step "test server image and the source bundle of $REF"
 (cd "$HERE" && docker build -q -t "$IMAGE" . >/dev/null)
-git -C "$REPO" bundle create "$WORK/smg.bundle" "$REF" 2>/dev/null
+git -C "$(native "$REPO")" bundle create "$(native "$WORK")/smg.bundle" "$REF"
 case $WHICH in
   standalone) standalone ;;
   website) website ;;
