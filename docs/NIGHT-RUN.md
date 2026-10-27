@@ -381,7 +381,7 @@ Built by a subagent. The migrations 0009 and 0010 and the contracts are the lead
 
 **Checks (N7).** `pnpm verify` green: 343 tests in 67 files. E2E in Chromium: all 18 tests passed (journeys 1–14, journey 8 with its two cases). CI: see the status table.
 
-**CI so far on `night/2026-10-27`:** `40cb02f` (N3, N4, N8 part 1) green on the first attempt; `7eba672` failed `verify`: the production-bundle check found the Quick Test's path in the server bundle, which my maintenance hook named (I had committed that part after targeted tests only, not a full `verify`); fixed in `8af3951`, green on the first attempt. Runs of commits pushed in quick succession were cancelled by the next push and are not counted.
+**CI so far on `night/2026-10-27`:** `40cb02f` (N3, N4, N8 part 1) green on the first attempt; `7eba672` failed `verify`: the production-bundle check found the Quick Test's path in the server bundle, which my maintenance hook named (I had committed that part after targeted tests only, not a full `verify`); fixed in `8af3951`, green on the first attempt. Runs of commits pushed in quick succession were cancelled by the next push and are not counted. `4bc7920` (N7 and the handover) failed e2e in Firefox: journey 8's refusal case looked inside a frame Firefox had refused and left without a document, and the locator waited until the test timed out; the case now checks from the host page that the game never said `smg:ready` there (Chromium keeps its error-page check), and passes in Chromium, Firefox and WebKit locally.
 
 ### N8 — Phase 8, the parts that need no server
 

@@ -160,9 +160,10 @@ test('a site that is not on the allowlist can neither frame the game nor hand of
   } else {
     await page.waitForTimeout(3_000);
   }
-  const frame = page.frameLocator('iframe');
-  await expect(frame.getByTestId('embed')).toHaveCount(0);
-  await expect(frame.getByTestId('embed-refused')).toHaveCount(0);
+  // The game never ran in that frame: it would have said smg:ready to the page. Checked from
+  // the page, not inside the frame: Firefox leaves a refused frame without a document, and a
+  // locator into it waits for ever (found in CI, night run 2).
+  await expect(page.getByTestId('host-events')).not.toContainText('smg:ready');
   // The handoff from that origin is refused before its token is looked at.
   const token = (
     (await (await request.get(`${OTHER_ORIGIN}/handoff-token?user=Intruder`)).json()) as {
