@@ -47,9 +47,10 @@ SERVERS=()
 finish() {
   local status=$? name
   for name in "${SERVERS[@]}"; do
-    # A failed run shows what the apps said before the server goes.
+    # A failed run shows what the apps said before the server goes (expanded in the server).
     if ((status != 0)); then
       step "app logs on $name"
+      # shellcheck disable=SC2016
       on "$name" 'for c in $(docker ps -a --format "{{.Names}}" | grep -- -app-1); do docker logs --tail 60 "$c" 2>&1; done' || true
     fi
     docker rm -f -v "$name" >/dev/null 2>&1 || true
@@ -181,6 +182,11 @@ website() {
   [[ $(on "$s" 'docker volume ls -q' | grep -c '_pgdata$') == 2 ]] || fail "the databases share a volume"
   on "$s" 'systemctl is-enabled smg-backup@prod.timer sbr-backup@prod.timer' >/dev/null ||
     fail "the backup timers are not both there"
+  # A backup of each first: Bingo's `sbr status` (d294585) stops before its first backup,
+  # as `smg status` did (night run 2); both backups also show their files do not collide.
+  on "$s" 'smg backup && sbr backup'
+  [[ $(on "$s" 'ls /var/backups/smg/prod /var/backups/sbr/prod' | grep -c '.tar.age$') == 2 ]] ||
+    fail "the two backups are not both there"
   on "$s" 'smg status && sbr status' >/dev/null
 }
 
