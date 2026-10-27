@@ -106,7 +106,7 @@
 }
 
 .gtn-chip[data-feedback='higher'] {
-  color: var(--color-success);
+  color: var(--color-success-text);
 }
 
 .gtn-chip[data-feedback='lower'] {
@@ -167,7 +167,7 @@
 }
 
 .gtn-frost {
-  color: var(--color-winter);
+  color: var(--color-winter-text);
   font-weight: var(--font-weight-strong);
 }
 

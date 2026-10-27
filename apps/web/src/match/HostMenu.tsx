@@ -15,23 +15,17 @@
  *                 Start round, End round and Abort round with a reason (02 §4, §9, §11).
  *                 Refusals in plain words. The host plays the round like every player; the
  *                 menu holds no secret.
- * Depends on:     react, @smg/contracts, @smg/game-sdk (types), ../shell/http, ../live/socket,
- *                 ../round/roundText, ./roundFields
+ * Depends on:     react, @smg/contracts, @smg/game-sdk (types), ../components/*, ../shell/http,
+ *                 ../live/socket, ../round/roundText, ./roundFields
  * Used by:        ./MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §3, §4, §9; docs/spec/08-admin-settings.md §3
  */
 import type { MatchDetailsView } from '@smg/contracts';
 import type { SettingValue } from '@smg/game-sdk';
-import {
-  useId,
-  useRef,
-  useState,
-  type KeyboardEvent,
-  type ReactElement,
-  type SyntheticEvent,
-} from 'react';
+import { useState, type ReactElement, type SyntheticEvent } from 'react';
 
 import { ActionButton, Problem } from '../components/fields.js';
+import { useDisclosure } from '../components/useDisclosure.js';
 import { intent } from '../live/socket.js';
 import { codeText } from '../round/roundText.js';
 import { api, ApiError } from '../shell/http.js';
@@ -219,40 +213,29 @@ function MenuBody({ p, close }: { readonly p: HostMenuProps; readonly close: () 
 
 export function HostMenu(p: HostMenuProps): ReactElement | null {
   // Open by itself before the first round, so the host sees where to start.
-  const [open, setOpen] = useState(p.match.round === null);
-  const panelId = useId();
-  const button = useRef<HTMLButtonElement>(null);
+  const menu = useDisclosure(p.match.round === null);
   if (!p.match.youHost || p.match.nextRoundDefaults === null) return null;
-  const close = (): void => {
-    setOpen(false);
-    button.current?.focus();
-  };
-  const onKey = (e: KeyboardEvent): void => {
-    if (e.key === 'Escape' && open) close();
-  };
   return (
-    <div className="host-menu" onKeyDown={onKey}>
+    <div className="host-menu" onKeyDown={menu.onKeyDown}>
       <button
-        ref={button}
+        ref={menu.button}
         type="button"
         className="smg-btn host-menu-button"
-        aria-expanded={open}
-        aria-controls={panelId}
+        aria-expanded={menu.open}
+        aria-controls={menu.panelId}
         data-testid="host-menu"
-        onClick={() => {
-          setOpen((o) => !o);
-        }}
+        onClick={menu.toggle}
       >
         Host
       </button>
-      {open ? (
+      {menu.open ? (
         <section
-          id={panelId}
+          id={menu.panelId}
           className="host-menu-panel smg-stack"
           aria-label="Host"
           data-testid="host-console"
         >
-          <MenuBody p={p} close={close} />
+          <MenuBody p={p} close={menu.close} />
         </section>
       ) : null}
     </div>

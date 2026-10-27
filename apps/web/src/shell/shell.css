@@ -8,8 +8,10 @@
  *                 account and the dev sign-in menu) over a centred main column, sticky from 640 px with focus kept below
  *                 it; on phones the bar wraps into two rows, scrolls away with the page and
  *                 the navigation scrolls sideways. While a round runs, the page is one screen
- *                 high and the round view fills what the bar leaves. Colours come from @smg/ui.
- * Spec:           Bingo 01 §13
+ *                 high and the round view fills what the bar leaves; on a phone the bar is
+ *                 then one row of at most 56 px with the account behind "Menu". Colours come
+ *                 from @smg/ui.
+ * Spec:           Bingo 01 §13; docs/spec/02-game-guess-the-number.md §12
  */
 
 /* The page column keeps its width whether or not the page needs a scrollbar. Only with
@@ -120,8 +122,17 @@
   background: var(--color-active-bg);
 }
 
-.shell-account {
+/* The account and the development menu; the "Menu" button shows only in the compact bar */
+.shell-menu {
   order: 4;
+  position: relative;
+}
+
+.shell-menu-button {
+  display: none;
+}
+
+.shell-account {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -158,9 +169,8 @@
 
   /* The account row keeps the chip whole: the buttons move to a second line only when
      chip and buttons do not fit side by side (360 px with the development menu) */
-  .shell-account {
+  .shell-menu {
     width: 100%;
-    flex-wrap: wrap;
   }
 
   .shell-account .smg-chip {
@@ -187,6 +197,61 @@
     overflow: hidden;
     clip-path: inset(50%);
     white-space: nowrap;
+  }
+}
+
+/* While a round runs on a phone the bar is one row of 55 px (44 px controls, 5 px above and
+   below, the hairline): the emblem without the wordmark (its name is still read out), the
+   theme toggle, Play, and "Menu" with the account and the development menu (DECISIONS T67). */
+@media (max-width: 640px) {
+  #root:has(.match-live) .shell-bar {
+    flex-wrap: nowrap;
+    padding-block: 5px;
+  }
+
+  #root:has(.match-live) .shell-brand span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  #root:has(.match-live) .shell-menu {
+    width: auto;
+  }
+
+  #root:has(.match-live) .shell-menu-button {
+    display: inline-flex;
+  }
+
+  #root:has(.match-live) .shell-account {
+    display: none;
+  }
+
+  /* The open menu covers the page under the button, opaque like every menu */
+  #root:has(.match-live) .shell-account[data-open='true'] {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.4rem);
+    z-index: 20;
+    display: grid;
+    gap: var(--space-1);
+    width: min(18rem, calc(100vw - 2 * var(--gutter)));
+    padding: var(--space-2);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-raised);
+  }
+
+  /* Inside the open menu the development menu's items follow in place */
+  #root:has(.match-live) .dev-menu-panel {
+    position: static;
+    width: auto;
+    margin-top: var(--space-1);
+    padding: 0;
+    box-shadow: none;
   }
 }
 

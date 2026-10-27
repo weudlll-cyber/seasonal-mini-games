@@ -3,8 +3,8 @@
  * @module web
  * @brief  WCAG AA contrast of the design tokens in the light and the dark theme (01 §13).
  *
- * Responsibility: read the shared tokens (@smg/ui) and check, in both themes, that body and
- *                 muted text keep 4.5:1 on the page, the opaque surfaces and the translucent
+ * Responsibility: read the shared tokens (@smg/ui) and check, in both themes, that body,
+ *                 muted, winter and success text (Frost's line, "higher") keep 4.5:1 on the page, the opaque surfaces and the translucent
  *                 cards — composited over the base colour and over each of the four token
  *                 glows, as the website measures — and on the top bar's gradient stops; the
  *                 solid pill and text on the season colours keep 4.5:1; the board ink
@@ -40,7 +40,7 @@ function parse(value: string): Rgba {
 // The single-colour custom properties of a block.
 function colours(selector: string): Record<string, string> {
   const entries = [
-    ...blockText(selector).matchAll(/--([\w-]+):\s*(#[0-9a-f]{6}|rgb\([^)]*\));/gi),
+    ...blockText(selector).matchAll(/--([\w-]+):\s*(#[0-9a-f]{6}|rgb\([^)]*\)|var\(--[\w-]+\));/gi),
   ].map((m): [string, string] => [m[1] ?? '', m[2] ?? '']);
   return Object.fromEntries(entries);
 }
@@ -104,13 +104,26 @@ function backgrounds(theme: keyof typeof THEMES): [string, Rgba][] {
   return list;
 }
 
+// A token's colour, following `var(--other)` to the token it names.
+function resolved(set: Readonly<Record<string, string>>, name: string): string {
+  const value = set[name] ?? '';
+  const ref = /^var\(--([\w-]+)\)$/.exec(value)?.[1];
+  return ref === undefined ? value : resolved(set, ref);
+}
+
 describe('token contrast (WCAG AA), light and dark', () => {
-  it.each(['light', 'dark'] as const)('%s: text and muted text keep 4.5:1 everywhere', (theme) => {
+  it.each(['light', 'dark'] as const)('%s: text, muted and winter text keep 4.5:1', (theme) => {
     const set = THEMES[theme].set;
     for (const [where, bg] of backgrounds(theme)) {
-      for (const text of ['color-text', 'color-text-muted']) {
+      // Muted text on surface-2 is also every disabled button (base.css).
+      for (const text of [
+        'color-text',
+        'color-text-muted',
+        'color-winter-text',
+        'color-success-text',
+      ]) {
         expect(
-          contrast(parse(set[text] ?? ''), bg),
+          contrast(parse(resolved(set, text)), bg),
           `${theme}: ${text} on ${where}`,
         ).toBeGreaterThanOrEqual(4.5);
       }

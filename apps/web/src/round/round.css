@@ -161,7 +161,7 @@
 }
 
 .round-answer[data-feedback='higher'] {
-  color: var(--color-success);
+  color: var(--color-success-text);
 }
 
 .round-answer[data-feedback='lower'] {

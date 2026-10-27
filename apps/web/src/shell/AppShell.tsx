@@ -9,9 +9,12 @@
  *                 "Sign in" and "Register". Below the bar, the screen of the current route.
  *                 In development also the "Dev sign-in" menu (./DevTools), loaded on demand so
  *                 a production build (Vite's DEV false) leaves it out; `dev` decides whether
- *                 it shows. Bingo's shell, without its game screens.
+ *                 it shows. While a round runs on a phone the bar is one compact row and the
+ *                 account and development controls sit behind one "Menu" button (./shell.css).
+ *                 Bingo's shell, without its game screens.
  * Depends on:     react, ./router, ./session, ./ThemeToggle, ./DevTools (lazy, development
- *                 only), ../lobby/Lobby, ../account/*, ./shell.css, assets/brand/emblem.webp
+ *                 only), ../components/useDisclosure, ../lobby/Lobby, ../account/*,
+ *                 ../match/MatchPage, ./shell.css, assets/brand/emblem.webp
  * Used by:        ../main
  * Spec:           Bingo 01 §13; Bingo 05 §2.1
  */
@@ -21,6 +24,7 @@ import emblem from '../../../../assets/brand/emblem.webp';
 import { AccountPage } from '../account/AccountPage.js';
 import { Register } from '../account/Register.js';
 import { SignIn } from '../account/SignIn.js';
+import { useDisclosure } from '../components/useDisclosure.js';
 import { Lobby } from '../lobby/Lobby.js';
 import { MatchPage } from '../match/MatchPage.js';
 import { hrefOf, useRoute, type Route } from './router.js';
@@ -39,6 +43,8 @@ const QuickTest = import.meta.env.DEV
 
 export function AppShell({ dev }: { readonly dev: boolean }): ReactElement {
   const route = useRoute();
+  // Keyed by account: a sign-in or sign-out from the menu closes it.
+  const who = useSession().session?.account?.id ?? 'guest';
   return (
     <>
       <header className="shell-bar">
@@ -52,7 +58,7 @@ export function AppShell({ dev }: { readonly dev: boolean }): ReactElement {
         {/* Beside the account on wide screens, beside the brand on phones (shell.css). */}
         <ThemeToggle />
         <Nav route={route} />
-        <Account dev={dev} />
+        <Account key={who} dev={dev} />
       </header>
       <main className="shell-main">
         <Screen route={route} dev={dev} />
@@ -74,10 +80,37 @@ function Nav({ route }: { readonly route: Route }): ReactElement {
   );
 }
 
+// The account and the development menu: in the bar, or, in the compact bar of a round on a
+// phone (shell.css), behind one "Menu" button that the wide bar hides.
 function Account({ dev }: { readonly dev: boolean }): ReactElement {
-  const { session, signOut, can } = useSession();
+  const menu = useDisclosure();
   return (
-    <div className="shell-account" data-testid="account">
+    <div className="shell-menu" onKeyDown={menu.onKeyDown}>
+      <button
+        ref={menu.button}
+        type="button"
+        className="smg-btn shell-menu-button"
+        aria-expanded={menu.open}
+        aria-controls={menu.panelId}
+        data-testid="account-menu"
+        onClick={menu.toggle}
+      >
+        Menu
+      </button>
+      <AccountItems id={menu.panelId} open={menu.open} dev={dev} />
+    </div>
+  );
+}
+
+function AccountItems(props: {
+  readonly id: string;
+  readonly open: boolean;
+  readonly dev: boolean;
+}): ReactElement {
+  const { session, signOut, can } = useSession();
+  const { dev } = props;
+  return (
+    <div id={props.id} className="shell-account" data-open={props.open} data-testid="account">
       {session?.account ? (
         <>
           <a className="smg-chip" href={hrefOf({ name: 'account' })} data-testid="signed-in-as">

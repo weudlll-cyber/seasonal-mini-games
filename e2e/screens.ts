@@ -9,7 +9,7 @@
  *                 `captureLook` adds the desktop (1280×800) and phone (390×844) size, and can
  *                 bring one element into view first.
  * Depends on:     @playwright/test, node:path, ./devStack
- * Used by:        ./account.spec
+ * Used by:        ./account.spec, ./contrast (setTheme)
  * Spec:           Bingo 12 §4; Bingo 01 §13
  */
 import path from 'node:path';
@@ -28,7 +28,7 @@ const themeNow = (page: Page) =>
   page.evaluate(() => document.documentElement.getAttribute('data-theme'));
 
 // Presses the top bar's toggle until <html> carries the theme (the icon follows).
-async function setTheme(page: Page, theme: string): Promise<void> {
+export async function setTheme(page: Page, theme: string): Promise<void> {
   if ((await themeNow(page)) !== theme) await page.getByTestId('theme-toggle').click();
   await expect.poll(() => themeNow(page)).toBe(theme);
   // Buttons fade their background (160 ms): the picture waits until the fade is done.

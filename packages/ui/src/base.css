@@ -7,7 +7,7 @@
  *                 the page background with its four token glows (the root's background, sized
  *                 to the whole page, so it covers every height), type, a visible accent focus
  *                 ring on every control, buttons as pills (primary solid, secondary glass with
- *                 a hairline) and fields at least 44 px high (--hit-target), panels as
+ *                 a hairline, disabled muted on the second surface) and fields at least 44 px high (--hit-target), panels as
  *                 translucent cards with the card radius, chips and the LIVE badge. Layout
  *                 works from 360 px phone width up; nothing here sets colours of its own.
  * Spec:           Bingo 01 §13; Seasonal Entertainment docs/DESIGN.md
@@ -123,8 +123,12 @@ a {
   transform: translateY(1px);
 }
 
+/* Disabled: muted text on the second surface, 6.6:1 light and 8.0:1 dark, for every kind of
+   button (fading the whole button took its text below 2:1, DECISIONS T68) */
 .smg-btn:disabled {
-  opacity: 0.45;
+  border-color: var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
   cursor: not-allowed;
 }
 

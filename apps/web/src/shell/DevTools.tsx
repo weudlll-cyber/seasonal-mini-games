@@ -4,15 +4,16 @@
  * @brief  Development-only parts of the client: the "Dev sign-in" menu and the Quick Test link.
  *
  * Responsibility: a compact "Dev sign-in" menu with "Sign in as host" / "admin" / "player
- *                 1/2/3" and a hint that one window holds one sign-in; the lobby's link to the
- *                 Quick Test. Loaded on demand by ./AppShell and ../lobby/Lobby only
+ *                 1/2/3" and a hint that one window holds one sign-in (Escape closes it); the
+ *                 lobby's link to the Quick Test. Loaded on demand by ./AppShell and ../lobby/Lobby only
  *                 when Vite's DEV flag is set, so a production bundle does not contain it.
- * Depends on:     react, ./session
+ * Depends on:     react, ../components/useDisclosure, ./router, ./session
  * Used by:        ./AppShell, ../lobby/Lobby (lazy imports)
  * Spec:           Bingo 05 §2.1; Bingo 01 §13
  */
-import { useState, type ReactElement } from 'react';
+import type { ReactElement } from 'react';
 
+import { useDisclosure } from '../components/useDisclosure.js';
 import { hrefOf } from './router.js';
 import { useSession, type DevIdentity } from './session.js';
 
@@ -27,22 +28,22 @@ const DEV_IDENTITIES: readonly { readonly as: DevIdentity; readonly label: strin
 // One compact menu instead of four buttons in the bar.
 export function DevSignIn(): ReactElement {
   const { devSignIn } = useSession();
-  const [open, setOpen] = useState(false);
+  const menu = useDisclosure();
   return (
-    <div className="dev-menu">
+    <div className="dev-menu" onKeyDown={menu.onKeyDown}>
       <button
+        ref={menu.button}
         type="button"
         className="smg-btn"
-        aria-expanded={open}
+        aria-expanded={menu.open}
+        aria-controls={menu.panelId}
         data-testid="dev-menu"
-        onClick={() => {
-          setOpen(!open);
-        }}
+        onClick={menu.toggle}
       >
         Dev sign-in
       </button>
-      {open ? (
-        <div className="dev-menu-panel smg-panel" role="menu">
+      {menu.open ? (
+        <div id={menu.panelId} className="dev-menu-panel smg-panel" role="menu">
           {DEV_IDENTITIES.map((d) => (
             <button
               key={d.as}
@@ -51,7 +52,7 @@ export function DevSignIn(): ReactElement {
               className="smg-btn"
               data-testid={`dev-sign-in-${d.as}`}
               onClick={() => {
-                setOpen(false);
+                menu.close();
                 void devSignIn(d.as);
               }}
             >

@@ -45,6 +45,55 @@ N1 and N2 on `feat/guess-the-number`; N3 onwards on `night/2026-10-27`, created 
 
 Reused: the helper's own range (`quickRound`). Removed: the range override. Noticed, left alone: in a halving round the bot's search uses the halved range; that is how a player plays too.
 
+### N2 — Compact phone bar and text contrast on the round view
+
+**Built.**
+
+1. **Compact bar (DECISIONS T67).** While a round runs on a screen up to 640 px wide, the app bar is one row of 55 px (it was about 220 px of 844). The row holds the emblem (the wordmark is hidden but still read out), the theme toggle, Play and "Menu". "Menu" opens the account chip, Sign out and the development sign-in as an opaque panel. It is the same account element as on a wide screen, so no control or test id exists twice. Escape closes the innermost open menu and returns the focus to its button. The behaviour is one new hook, `useDisclosure`, which the host menu and the development menu now use too (the development menu gains Escape). The round view still fits 390 × 844 without a page scrollbar; the e2e assertion stays, and journey 11 also asserts the bar is at most 56 px.
+2. **Contrast (DECISIONS T68).** Every text on the round view keeps 4.5:1 in light and dark. The measurement works on the rendered pixels (`e2e/contrast.ts`): each text's colour from the page, against the median pixel behind each of its lines with all text made transparent. axe leaves text on translucent cards over gradients "incomplete". The sweep covered a shown range, a hidden range and every season's special, each at 1280 × 720 and 390 × 844, in light and dark, with the host menu and the account menu open too.
+   - Before the fix, below 4.5:1: Frost's "answer arriving in 3 s" in the winter colour at 2.59:1 (light); the disabled Guess at 1.85:1; the disabled Abort round at 2.26:1 (light) and 2.45:1 (dark); "higher ↑" at 4.43:1 where the open host menu's shadow falls on the Live list.
+   - After: 2 140 texts measured, none below 4.5:1; the lowest is 5.49:1 (the Summer chip).
+   - Two token pairs failed, so each got a step: `--color-winter-text` (light `#00669a`, dark the winter token) and `--color-success-text` (light `#17683b`, dark the success token). Disabled buttons show muted text on the second surface (6.6:1 light, 8.0:1 dark) instead of fading to 45 % opacity; this also applies in the admin app. No other new tokens.
+   - Journeys 10 and 11 assert 4.5:1 in both themes, and journey 3 asserts it for the Frost round in light. `designTokens.test.ts` checks both new steps on every background, including the four glows (the plain success token is 4.1:1 on the green glow).
+
+**Checks.** `pnpm verify` green: 204 tests in 46 files. The first attempt hit Testcontainers' 180 s start ceiling in six server integration files while another session's Bingo e2e run loaded the machine; one file passed alone, and the full re-run was green. E2E in Chromium: all 13 journeys passed (`chromium` and `chromium-timing`); after a lint split of the contrast helper, journeys 3, 4, 10 and 11 passed again. CI: see the next update.
+
+**On the way.** One e2e run failed journey 10 with "higher" at 2.36:1 in dark: the dev server (running since 2026-10-26 20:31) was serving an old transform of `tokens.css` without the new dark line. It passed after a restart. This is the second stale Vite transform in two nights; see "Noticed".
+
+**Screenshots** in `reports/round-view-2/` (14). Each round fits its screen (720/720, 844/844) and the phone bar is 55 px.
+
+- Shown range (seed `meadow`, Spring): `shown-range-desktop-light`, `-desktop-dark`, `-phone-light`, `-phone-dark`, plus `-phone-light-menu-open` and `-phone-dark-menu-open`.
+- Hidden range (seed `frost`, Autumn): the same six.
+- Frost in light (seed `blossom`, Winter): `frost-desktop-light`, `frost-phone-light`.
+
+| File                                       | Lines                         |
+| ------------------------------------------ | ----------------------------- |
+| `apps/web/src/components/useDisclosure.ts` | new, 50 lines                 |
+| `e2e/contrast.ts`                          | new, 168 lines                |
+| `apps/web/src/shell/AppShell.tsx`          | 143 → 181                     |
+| `apps/web/src/shell/shell.css`             | 215 → 280                     |
+| `apps/web/src/shell/shell.test.tsx`        | 149 → 172                     |
+| `apps/web/src/shell/DevTools.tsx`          | 77 → 78                       |
+| `apps/web/src/match/HostMenu.tsx`          | 260 → 243                     |
+| `apps/web/src/designTokens.test.ts`        | 167 → 180                     |
+| `apps/web/src/round/round.css`             | 275 → 275                     |
+| `games/guess-the-number/web/gtn.css`       | 186 → 186                     |
+| `packages/ui/src/tokens.css`               | 140 → 149                     |
+| `packages/ui/src/base.css`                 | 205 → 209                     |
+| `e2e/range.spec.ts`                        | 96 → 103                      |
+| `e2e/specials.spec.ts`                     | 116 → 119                     |
+| `e2e/screens.ts`                           | 70 → 70 (`setTheme` exported) |
+| `docs/DECISIONS.md`                        | 131 → 133                     |
+
+**Reused:** `setTheme` from `e2e/screens.ts`; the existing tokens (`--color-surface-2`, `--color-text-muted`, `--color-surface`, `--shadow-raised`); the 640 px phone breakpoint and the `:has(.match-live)` round layout; the visually hidden pattern of the account chip. Nothing in Bingo's committed tree has a phone account menu (only the same development menu). **Extracted:** the disclosure behaviour that was inline in HostMenu and duplicated in DevSignIn (`useDisclosure`). **Removed:** the disabled buttons' 45 % opacity.
+
+**Noticed, left alone.**
+
+- The dev servers can keep a stale transform for hours (twice now). The handover restarts them.
+- `apps/web/src/useReducedMotion.ts` says it is used by `./game/CurrentBall`, which does not exist here (a Bingo line).
+- The `smg-anim-*` motion classes in `packages/ui/src/motion.css` are used nowhere in this repository.
+- Another session ran Bingo's Playwright suite and Bingo's dev servers on this machine during the night; nothing of theirs was touched.
+
 ## Night 1 (2026-10-24 to 2026-10-26)
 
 Branch `feat/guess-the-number` (not merged; for the owner to look at first). Updated after every piece.

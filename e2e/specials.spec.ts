@@ -5,14 +5,15 @@
  *
  * Responsibility: journey 3 — in Quick Test rounds of the fast test profile, Spring Herald's
  *                 hint card appears, Heatwave's cooldown drops, Leaf Fall strikes numbers and
- *                 Frost shows "answer arriving". Journey 4 — with today entered as a halving
+ *                 Frost shows "answer arriving", readable on the light page. Journey 4 — with today entered as a halving
  *                 day, a halving round's range halves, and a guess outside the new range is
  *                 refused without cost. The halving day and the matches are removed or aborted.
- * Depends on:     @playwright/test, ./play
+ * Depends on:     @playwright/test, ./contrast, ./play
  * Spec:           docs/spec/09-testing-strategy.md §4 (journeys 3, 4); docs/spec/03-seasonal-specials.md §2, §4
  */
 import { expect, test, type Page } from '@playwright/test';
 
+import { readable } from './contrast.js';
 import { abortMatch, call, closeAll, person, type Person } from './play.js';
 
 interface Started {
@@ -61,6 +62,8 @@ test('journey 3: each season special shows itself', async ({ browser }) => {
     await p.page.getByTestId('guess-input').fill('250000');
     await p.page.getByTestId('guess-button').click();
     await expect(p.page.getByTestId('own-guesses')).toContainText('answer arriving in');
+    // Frost's line in the winter colour on the light page (night run 2, N2).
+    await readable(p.page, 'Frost round', ['light']);
     await expect(p.page.getByTestId('own-guesses')).toContainText('The number is', {
       timeout: 10_000,
     });

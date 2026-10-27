@@ -9,13 +9,15 @@
  *                 DECISIONS T52, T53). Journey 11 (390 × 844) — a range from −500 to 500 is
  *                 shown, the ± button turns a typed number negative, the guess is answered,
  *                 and the round plays to its result (O18). Both check that the round view fits
- *                 the screen without a page scrollbar (02 §12). The Quick Test player hosts
- *                 and plays (O16).
- * Depends on:     @playwright/test, ./play, ./screens
+ *                 the screen without a page scrollbar (02 §12) and that every text on it keeps
+ *                 4.5:1 in light and dark (./contrast); on the phone the app bar is one row of
+ *                 at most 56 px (T67). The Quick Test player hosts and plays (O16).
+ * Depends on:     @playwright/test, ./contrast, ./play, ./screens
  * Spec:           docs/spec/02-game-guess-the-number.md §3, §5.1, §12; docs/spec/09-testing-strategy.md §4
  */
 import { expect, test } from '@playwright/test';
 
+import { readable } from './contrast.js';
 import { abortMatch, call, closeAll, fitsScreen, hostMenu, person, search } from './play.js';
 import { PHONE } from './screens.js';
 
@@ -40,6 +42,7 @@ test('journey 10: a hidden range reaches no screen and a guess outside it is ans
     await expect(p.page.getByTestId('range')).toContainText('Any whole number');
     await expect(p.page.getByTestId('guess-button')).toBeEnabled({ timeout: 10_000 });
     await fitsScreen(p.page);
+    await readable(p.page, 'round view with a hidden range');
     // Every whole number on the page, so a guess like -14644321 does not count as -4321.
     const shown = ((await p.page.locator('body').textContent()) ?? '').match(/-?\d+/g) ?? [];
     const numbers = shown.map((n) => Math.abs(Number(n)));
@@ -80,6 +83,10 @@ test('journey 11: a range from -500 to 500 takes negative guesses on a phone', a
     );
     await expect(p.page.getByTestId('guess-button')).toBeEnabled({ timeout: 10_000 });
     await fitsScreen(p.page);
+    // During a round on a phone the app bar is one row of at most 56 px (DECISIONS T67).
+    const bar = await p.page.locator('.shell-bar').boundingBox();
+    expect(bar?.height ?? Infinity, 'the app bar during a round').toBeLessThanOrEqual(56);
+    await readable(p.page, 'round view on a phone');
     await p.page.getByTestId('guess-input').fill('250');
     await p.page.getByRole('button', { name: 'Change the sign' }).click();
     await expect(p.page.getByTestId('guess-input')).toHaveValue('-250');

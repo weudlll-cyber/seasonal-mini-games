@@ -21,6 +21,13 @@
   --color-summer: #e06e22;
   --color-autumn: #f9a825;
   --color-winter: #04aaf7;
+  /* Winter as a text colour: the token itself is 2.6:1 on white, so text uses this darker
+     step (6.2:1 on white, 4.8:1 on the winter glow, the bluest place); the dark theme keeps
+     the token, 5.9:1 and more on its surfaces (DECISIONS T68) */
+  --color-winter-text: #00669a;
+  /* Success as a text colour (answers "higher"): the token is 4.1:1 on the green glow and
+     below 4.5:1 in an open menu's shadow; this step keeps 5.3:1 on every light background */
+  --color-success-text: #17683b;
   /* Text and icons on a token colour: 5.5:1 (Summer) to 9.1:1 (Autumn) */
   --color-on-season: #14171c;
   /* The LIVE badge: the same red in both themes, white text 6.6:1 */
@@ -134,6 +141,8 @@
   --color-warning-surface: #3a2e10;
   --color-solid: #f1f4fa;
   --color-on-solid: #0a1233;
+  --color-winter-text: var(--color-winter);
+  --color-success-text: var(--color-success);
   --shadow-raised: 0 8px 28px rgb(0 0 0 / 55%);
   /* Form controls and scrollbars follow the theme */
   color-scheme: dark;
