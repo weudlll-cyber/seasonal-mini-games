@@ -13,7 +13,8 @@
  *                 Adapted from Bingo's socketKit.ts.
  * Depends on:     socket.io-client, @smg-game/registry, @smg/domain, @smg/game-sdk/crypto,
  *                 ../src/index, ./harness, ./session
- * Used by:        ./rounds.integration.test, ./realtime.integration.test, ./secrets.integration.test
+ * Used by:        ./rounds.integration.test, ./secrets.integration.test, ./security.integration.test,
+ *                 ./authzSetup, and the other socket suites
  * Spec:           docs/spec/06-data-model-api-realtime.md §4; docs/spec/09-testing-strategy.md §2
  */
 import { GAMES } from '@smg-game/registry';

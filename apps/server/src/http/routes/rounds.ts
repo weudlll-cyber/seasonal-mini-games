@@ -131,9 +131,11 @@ function registerHostRoutes(app: FastifyInstance, deps: RoundRouteDeps): void {
 
 function registerReadRoutes(app: FastifyInstance, deps: RoundRouteDeps): void {
   app.get('/api/v1/rounds/:id/state', async (request, reply) => {
-    // Guests watch too: a session with match.watch, with or without an account.
-    if (request.session?.permissions.includes('match.watch') !== true) {
-      return reply.status(401).send({ code: 'SIGN_IN_REQUIRED' });
+    // Guests watch too: a session with match.watch, with or without an account. No session
+    // asks for a sign-in; a session without the permission is refused.
+    if (request.session === null) return reply.status(401).send({ code: 'SIGN_IN_REQUIRED' });
+    if (!request.session.permissions.includes('match.watch')) {
+      return reply.status(403).send({ code: 'FORBIDDEN' });
     }
     const round = await roundOr404(deps, request, reply);
     if (round === null) return reply;

@@ -10,7 +10,8 @@
  *                 per-account limit and the round's queue, nothing awaited. The others:
  *                 match.watch / match.unwatch (at most 3 matches, a match player also joins
  *                 their own room and counts as connected, the host joins the host room),
- *                 time.sync, team.choose, round.start / round.end / round.abort for the host.
+ *                 time.sync, team.choose (an account with match.join, as over HTTP),
+ *                 round.start / round.end / round.abort for the host.
  *                 Adapted from Bingo's intents.ts.
  * Depends on:     zod, socket.io (types), ../auth/rateLimit, ../match/*, ./gateway (types)
  * Used by:        ./gateway
@@ -128,19 +129,24 @@ async function dispatch(
       return unwatch(ctx, codeData.parse(data).code);
     case 'time.sync':
       return { ok: true, data: { serverTime: Date.now() } };
-    case 'team.choose': {
-      const body = teamData.parse(data);
-      const match = await matchOr(ctx, body.code);
-      if (match === null || ctx.data.session.accountId === null)
-        return { ok: false, code: 'NOT_FOUND' };
-      const ok = await ctx.deps.play.chooseTeam(match, ctx.data.session.accountId, body.team);
-      return ok ? { ok: true } : { ok: false, code: 'NOT_IN_MATCH' };
-    }
+    case 'team.choose':
+      return chooseTeam(ctx, teamData.parse(data));
     case 'round.start':
     case 'round.end':
     case 'round.abort':
       return hostRound(ctx, t, roundData.parse(data));
   }
+}
+
+// As over HTTP (POST /matches/:code/team): a signed-in account with match.join (05 §1).
+async function chooseTeam(ctx: IntentContext, body: z.infer<typeof teamData>): Promise<Answer> {
+  const { accountId, permissions } = ctx.data.session;
+  if (accountId === null) return { ok: false, code: 'SIGN_IN_REQUIRED' };
+  if (!permissions.includes('match.join')) return { ok: false, code: 'FORBIDDEN' };
+  const match = await matchOr(ctx, body.code);
+  if (match === null) return { ok: false, code: 'NOT_FOUND' };
+  const ok = await ctx.deps.play.chooseTeam(match, accountId, body.team);
+  return ok ? { ok: true } : { ok: false, code: 'NOT_IN_MATCH' };
 }
 
 async function matchOr(ctx: IntentContext, code: string): Promise<MatchRow | null> {
