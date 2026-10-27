@@ -6,10 +6,12 @@
  * Responsibility: pick a document (platform documents and one per game, 08 §1); show every
  *                 key in a table (./SettingRow); collect the viewer's changes and save them as
  *                 a new version with a comment (`PUT /admin/settings/:id` with the version it
- *                 was read at; a newer version answers "changed meanwhile", 08 §1). Refusals
- *                 come back with the setting and the reason in plain words.
- * Depends on:     react, @smg/contracts, @smg/game-sdk (types), ../http, ../TextInput,
- *                 ./SettingRow, ./settingText
+ *                 was read at; a newer version answers "changed meanwhile", 08 §1); a change
+ *                 of the security document goes through the confirm dialog first (Bingo 11
+ *                 §1). Refusals come back with the setting and the reason in plain words.
+ *                 Below the table the document's history with diffs and rollback (./History).
+ * Depends on:     react, @smg/contracts, @smg/game-sdk (types), ../ConfirmDialog, ../http,
+ *                 ../TextInput, ./History, ./SettingRow, ./settingText
  * Used by:        ../App
  * Spec:           docs/spec/08-admin-settings.md §1–§6; Bingo 11 §1
  */
@@ -17,8 +19,10 @@ import type { SettingsDocumentView } from '@smg/contracts';
 import type { SettingOverride } from '@smg/game-sdk';
 import { useCallback, useEffect, useState, type ReactElement } from 'react';
 
+import { useConfirm, type ConfirmRequest } from '../ConfirmDialog.js';
 import { api, ApiError } from '../http.js';
 import { TextInput } from '../TextInput.js';
+import { History } from './History.js';
 import { SettingRow } from './SettingRow.js';
 import { documentName } from './settingText.js';
 
@@ -92,6 +96,42 @@ const stored = (draft: Draft): Draft =>
     Object.entries(draft).filter(([, o]) => Object.values(o).some((v) => v !== undefined)),
   );
 
+function SaveBar(p: {
+  readonly comment: string;
+  readonly setComment: (c: string) => void;
+  readonly save: () => void;
+}): ReactElement {
+  return (
+    <div className="smg-row">
+      <TextInput
+        label="Comment"
+        placeholder="Why (goes into the audit log)"
+        maxLength={200}
+        value={p.comment}
+        onChange={p.setComment}
+      />
+      <button
+        type="button"
+        className="smg-btn smg-btn--primary"
+        onClick={p.save}
+        data-testid="save-settings"
+      >
+        Save
+      </button>
+    </div>
+  );
+}
+
+function securityRequest(put: () => Promise<unknown>): ConfirmRequest {
+  return {
+    title: 'Change the security settings',
+    effect: 'The new security settings apply to every account from the next request on.',
+    confirmLabel: 'Save',
+    danger: true,
+    action: put,
+  };
+}
+
 function Document({ id }: { readonly id: string }): ReactElement {
   const [doc, setDoc] = useState<SettingsDocumentView | null>(null);
   const [draft, setDraft] = useState<Draft>({});
@@ -102,26 +142,34 @@ function Document({ id }: { readonly id: string }): ReactElement {
     setDoc(d);
     setDraft({ ...d.overrides });
   }, [id]);
+  const [dialog, open] = useConfirm();
   useEffect(() => {
     void load();
   }, [load]);
   if (doc === null) return <p className="smg-muted">Loading…</p>;
+  const put = () =>
+    api(`/admin/settings/${id}`, {
+      method: 'PUT',
+      body: {
+        version: doc.version,
+        overrides: stored(draft),
+        ...(comment === '' ? {} : { comment }),
+      },
+    }).then(() => {
+      setMessage('Saved as a new version.');
+      setComment('');
+      return load();
+    });
   const save = (): void => {
-    const body = {
-      version: doc.version,
-      overrides: stored(draft),
-      ...(comment === '' ? {} : { comment }),
-    };
-    api(`/admin/settings/${id}`, { method: 'PUT', body })
-      .then(() => {
-        setMessage('Saved as a new version.');
-        setComment('');
-        return load();
-      })
-      .catch((error: unknown) => {
-        setMessage(problemText(error));
-        if (error instanceof ApiError && error.code === 'CONFIG_VERSION_CONFLICT') void load();
-      });
+    // Security settings are high-impact: the confirm dialog first (Bingo 11 §1).
+    if (id === 'security') {
+      open(securityRequest(put));
+      return;
+    }
+    put().catch((error: unknown) => {
+      setMessage(problemText(error));
+      if (error instanceof ApiError && error.code === 'CONFIG_VERSION_CONFLICT') void load();
+    });
   };
   return (
     <section className="smg-panel smg-stack">
@@ -130,25 +178,16 @@ function Document({ id }: { readonly id: string }): ReactElement {
       </h2>
       <Table doc={doc} draft={draft} setDraft={setDraft} />
       {doc.editable.length === 0 ? null : (
-        <div className="smg-row">
-          <TextInput
-            label="Comment"
-            placeholder="Why (goes into the audit log)"
-            maxLength={200}
-            value={comment}
-            onChange={setComment}
-          />
-          <button
-            type="button"
-            className="smg-btn smg-btn--primary"
-            onClick={save}
-            data-testid="save-settings"
-          >
-            Save
-          </button>
-        </div>
+        <SaveBar comment={comment} setComment={setComment} save={save} />
       )}
       {message === null ? null : <p role="status">{message}</p>}
+      <History
+        id={id}
+        current={doc.version}
+        canEdit={doc.editable.length > 0}
+        changed={() => void load()}
+      />
+      {dialog}
     </section>
   );
 }

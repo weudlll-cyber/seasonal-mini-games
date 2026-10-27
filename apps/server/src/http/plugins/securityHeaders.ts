@@ -5,7 +5,8 @@
  *
  * Responsibility: hard-set the headers of 03 §7 for every response: CSP (self scripts
  *                 and styles), frame and referrer rules, nosniff and a Permissions-Policy
- *                 that denies camera, microphone, geolocation and payment. HSTS comes from
+ *                 that denies camera, microphone, geolocation and payment; `frame-src` admits
+ *                 the host chat's origin while the chat provider is hostEmbed. HSTS comes from
  *                 the TLS proxy (ops/Caddyfile).
  * Depends on:     @fastify/helmet
  * Used by:        ../app.ts
@@ -14,7 +15,12 @@
 import helmet from '@fastify/helmet';
 import type { FastifyInstance } from 'fastify';
 
-export async function registerSecurityHeaders(app: FastifyInstance): Promise<void> {
+// `frameOrigin`: an extra origin pages may frame (the host's chat room with the provider
+// hostEmbed, 07 §2), read per response; '' for none.
+export async function registerSecurityHeaders(
+  app: FastifyInstance,
+  frameOrigin: () => string,
+): Promise<void> {
   await app.register(helmet, {
     contentSecurityPolicy: {
       // "default-src 'self'" plus explicit directives for the placeholder page. The admin
@@ -30,6 +36,7 @@ export async function registerSecurityHeaders(app: FastifyInstance): Promise<voi
         'style-src': ["'self'", "'unsafe-inline'"],
         'script-src': ["'self'"],
         'connect-src': ["'self'"],
+        'frame-src': [() => frameOrigin() || "'self'"],
       },
     },
     // HSTS is only meaningful behind TLS: the standalone Caddy sends it (ops/Caddyfile).

@@ -5,22 +5,30 @@
  *
  * Responsibility: load the session; without an account a sign-in form (and, in development
  *                 builds, "Sign in as admin"); with one the areas its permissions allow —
- *                 Settings (`admin.view`), Seasons (`season.manage`), Abuse (`abuse.view`),
- *                 Audit log (`audit.read`) — chosen with the address's hash (08 §1, §2). The
- *                 server checks every permission again.
- * Depends on:     react, ./http, ./SignIn, ./settings/SettingsPage, ./seasons/SeasonsPage,
- *                 ./abuse/AbusePage, ./audit/AuditPage
+ *                 Live rounds and Settings (`admin.view`), Accounts (`account.view`), Seasons
+ *                 (`season.manage`), Moderation (`chat.moderate`), Abuse (`abuse.view`), Audit
+ *                 log (`audit.read`) and Two-factor (every account) — chosen with the
+ *                 address's hash (08 §1, §2); the step-up dialog (./StepUp) for writes that
+ *                 need a fresh two-factor check. The server checks every permission again.
+ * Depends on:     react, ./http, ./SignIn, ./StepUp, ./live/LivePage, ./accounts/AccountsPage,
+ *                 ./settings/SettingsPage, ./seasons/SeasonsPage, ./moderation/ModerationPage,
+ *                 ./abuse/AbusePage, ./audit/AuditPage, ./twofactor/TwoFactorPage
  * Used by:        ./main
  * Spec:           docs/spec/08-admin-settings.md §1, §2; Bingo 11 §1, §2
  */
 import { useCallback, useEffect, useState, type ReactElement } from 'react';
 
 import { AbusePage } from './abuse/AbusePage.js';
+import { AccountsPage } from './accounts/AccountsPage.js';
 import { AuditPage } from './audit/AuditPage.js';
 import { api, setCsrfToken } from './http.js';
+import { LivePage } from './live/LivePage.js';
+import { ModerationPage } from './moderation/ModerationPage.js';
 import { SeasonsPage } from './seasons/SeasonsPage.js';
 import { SettingsPage } from './settings/SettingsPage.js';
 import { SignIn } from './SignIn.js';
+import { StepUp } from './StepUp.js';
+import { TwoFactorPage } from './twofactor/TwoFactorPage.js';
 
 export interface SessionInfo {
   readonly account: { readonly id: string; readonly displayName: string } | null;
@@ -28,11 +36,16 @@ export interface SessionInfo {
   readonly csrfToken: string | null;
 }
 
+// `null`: every signed-in account (its own two-factor sign-in).
 const AREAS = [
+  { hash: 'live', label: 'Live', permission: 'admin.view' },
   { hash: 'settings', label: 'Settings', permission: 'admin.view' },
+  { hash: 'accounts', label: 'Accounts', permission: 'account.view' },
   { hash: 'seasons', label: 'Seasons', permission: 'season.manage' },
+  { hash: 'moderation', label: 'Moderation', permission: 'chat.moderate' },
   { hash: 'abuse', label: 'Abuse', permission: 'abuse.view' },
   { hash: 'audit', label: 'Audit log', permission: 'audit.read' },
+  { hash: 'two-factor', label: 'Two-factor', permission: null },
 ] as const;
 type Area = (typeof AREAS)[number]['hash'];
 
@@ -57,13 +70,32 @@ function Area({
   readonly area: Area;
   readonly session: SessionInfo;
 }): ReactElement {
+  const can = (p: string) => session.permissions.includes(p);
   switch (area) {
+    case 'live':
+      return (
+        <LivePage
+          rights={{
+            abort: can('match.abort'),
+            kick: can('match.manage'),
+            removeResult: can('leaderboard.adjust'),
+          }}
+        />
+      );
+    case 'accounts':
+      return (
+        <AccountsPage rights={{ suspend: can('account.suspend'), roles: can('role.assign') }} />
+      );
+    case 'moderation':
+      return <ModerationPage />;
+    case 'two-factor':
+      return <TwoFactorPage />;
     case 'settings':
       return <SettingsPage />;
     case 'seasons':
       return <SeasonsPage />;
     case 'abuse':
-      return <AbusePage canSuspend={session.permissions.includes('account.suspend')} />;
+      return <AbusePage canSuspend={can('account.suspend')} />;
     case 'audit':
       return <AuditPage />;
   }
@@ -82,8 +114,12 @@ export function App({ dev }: { readonly dev: boolean }): ReactElement {
   }, [refresh]);
   if (session === null) return <p className="smg-muted admin-main">Loading…</p>;
   if (session.account === null) return <SignIn dev={dev} done={refresh} />;
-  const open = AREAS.filter((a) => session.permissions.includes(a.permission));
-  const current = open.find((a) => hash.startsWith(a.hash)) ?? open[0];
+  const open = AREAS.filter(
+    (a) => a.permission === null || session.permissions.includes(a.permission),
+  );
+  // An account without staff rights opens Two-factor only when it asks for it.
+  const staff = open.some((a) => a.permission !== null);
+  const current = open.find((a) => hash.startsWith(a.hash)) ?? (staff ? open[0] : undefined);
   return (
     <>
       <header className="admin-bar">
@@ -97,6 +133,7 @@ export function App({ dev }: { readonly dev: boolean }): ReactElement {
         </nav>
         <span className="smg-chip">{session.account.displayName}</span>
       </header>
+      <StepUp />
       <main className="admin-main">
         {current === undefined ? (
           <p>This account has no admin rights.</p>

@@ -5,15 +5,17 @@
  *
  * Responsibility: single entry point used by `pnpm dev`, `node dist/main.js` and the
  *                 Dockerfile `server` command; attaches the realtime gateway, recovers every
- *                 running round and starts its timers, starts the daily retention job, and
- *                 closes everything on SIGINT/SIGTERM (the open batches are written first).
+ *                 running round and starts its timers, starts the daily retention jobs
+ *                 (sessions, chat messages), and closes everything on SIGINT/SIGTERM (the
+ *                 open batches are written first).
  *                 The integration tests import buildApp directly.
  * Depends on:     ./config/env, ./db/pool, ./db/migrator, ./http/app, ./auth/retention,
- *                 ./realtime/gateway
+ *                 ./chat/retention, ./realtime/gateway
  * Used by:        apps/server/package.json "dev" script, Dockerfile
  * Spec:           docs/spec/04-software-architecture.md §2.1, §5.3; Bingo 08 §4
  */
 import { startRetention } from './auth/retention.js';
+import { startChatRetention } from './chat/retention.js';
 import { allowedOrigins, loadEnv } from './config/env.js';
 import { migrate } from './db/migrator.js';
 import { createPool } from './db/pool.js';
@@ -30,6 +32,7 @@ async function main(): Promise<void> {
     pool,
     play: app.runtime.play,
     limits: app.runtime.limits,
+    chat: app.chat,
     cookieName: app.cookieName,
     allowedOrigins: allowedOrigins(env),
     path: `${env.SMG_BASE_PATH}ws`,
@@ -40,8 +43,10 @@ async function main(): Promise<void> {
   if (recovered > 0) app.fastify.log.info({ rounds: recovered }, 'recovered running rounds');
   await app.fastify.listen({ host: env.SMG_HOST, port: env.SMG_PORT });
   const stopRetention = startRetention(pool);
+  const stopChatRetention = startChatRetention(pool, app.settings);
   const shutdown = async (): Promise<void> => {
     stopRetention();
+    stopChatRetention();
     await io.close();
     await app.fastify.close();
     await pool.end();

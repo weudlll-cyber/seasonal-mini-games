@@ -15,9 +15,10 @@
  *                 `match:<id>:player:<key>`, host events to `match:<id>:host`.
  *                 "Match changed" goes out at most once a second per match (./perKeyAtMost),
  *                 also when a round ends or is aborted, so pages load the new standings.
+ *                 Chat events go to `chat:<roomId>` as `chat` frames (ChatEventView).
  *                 Adapted from Bingo's gateway.ts.
- * Depends on:     socket.io, node:http, ../auth/*, ../match/*, ../round/*, ./intents, ./inOrder,
- *                 ./perKeyAtMost, ./roomFrames
+ * Depends on:     socket.io, node:http, ../auth/*, ../chat/chat (types), ../match/*, ../round/*,
+ *                 ./intents, ./inOrder, ./perKeyAtMost, ./roomFrames
  * Used by:        ../main, test/*
  * Spec:           docs/spec/06-data-model-api-realtime.md §4; docs/spec/04-software-architecture.md §5.2
  */
@@ -27,6 +28,7 @@ import { Server, type Socket } from 'socket.io';
 
 import type { SessionEnds } from '../auth/sessionEnds.js';
 import { findSession, type Session } from '../auth/sessions.js';
+import type { Chat } from '../chat/chat.js';
 import type { DbPool } from '../db/pool.js';
 import type { Play } from '../match/play.js';
 import type { GuessLimits } from '../round/guessLimits.js';
@@ -45,6 +47,7 @@ export interface GatewayDeps {
   readonly pool: DbPool;
   readonly play: Play;
   readonly limits: GuessLimits;
+  readonly chat: Chat;
   readonly cookieName: string;
   readonly allowedOrigins: readonly string[];
   // "/ws" standalone, "/games/mini-games/ws" behind the website.
@@ -59,6 +62,8 @@ export interface SocketData {
   lastSeq: number;
   // Watched matches: match id → the player key this socket counts as there (or null).
   rooms: Map<string, string | null>;
+  // Joined chat rooms (ids).
+  chats: Set<string>;
 }
 
 type Ack = (answer: unknown) => void;
@@ -79,7 +84,12 @@ export function attachGateway(server: HttpServer, deps: GatewayDeps): Server {
   play.use((socket, next) => {
     authenticate(socket, deps)
       .then((session) => {
-        (socket.data as SocketData) = { session, lastSeq: 0, rooms: new Map() };
+        (socket.data as SocketData) = {
+          session,
+          lastSeq: 0,
+          rooms: new Map(),
+          chats: new Set(),
+        };
         next();
       })
       .catch((error: unknown) => {
@@ -92,6 +102,7 @@ export function attachGateway(server: HttpServer, deps: GatewayDeps): Server {
   const toRoom = roomFrames(deps.roomFrameMs, (matchId, frame) => {
     play.to(`match:${matchId}`).emit('events', frame);
   });
+  deps.chat.onEvent((roomId, event) => play.to(`chat:${roomId}`).emit('chat', event));
   deps.play.rounds.onCommitted((round, events, how) => {
     sendCommitted(play, toRoom, deps.play, { round, events, how });
   });

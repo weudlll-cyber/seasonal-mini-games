@@ -77,6 +77,8 @@ export interface LoadedRound {
   readonly events: readonly StoredEvent[];
   // Frost: held events not yet delivered (after the last HeldDelivered).
   readonly undelivered: readonly StoredEvent[];
+  // Players staff kicked from the match: the round refuses their guesses.
+  readonly kicked: readonly string[];
 }
 
 interface EventRow {
@@ -191,6 +193,10 @@ export class PgRoundStore {
        ORDER BY seq`,
       [roundId],
     );
+    const kicked = await this.pool.query<{ player_key: string }>(
+      `SELECT player_key FROM smg.match_players WHERE match_id = $1 AND state = 'kicked'`,
+      [row.match_id],
+    );
     return {
       id: roundId,
       matchId: row.match_id,
@@ -199,6 +205,7 @@ export class PgRoundStore {
       snapshot,
       events: events.rows.map(stored),
       undelivered: undelivered.rows.map(stored),
+      kicked: kicked.rows.map((k) => k.player_key),
     };
   }
 

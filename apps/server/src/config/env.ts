@@ -5,8 +5,8 @@
  *
  * Responsibility: parse process.env with a strict zod schema, exit with a readable
  *                 message on invalid or missing values, expose a typed Env object; the
- *                 deployment settings (base path, public URL, trusted proxies, client and
- *                 data directories, 09 §1) and the WebSocket origins derived from them.
+ *                 deployment settings (base path, public URL, trusted proxies, client, admin
+ *                 and data directories, 09 §1) and the WebSocket origins derived from them.
  *                 Fail closed: NODE_ENV defaults to production and development features
  *                 need SMG_DEV=1, which is refused for a public (non-localhost) address.
  * Depends on:     zod
@@ -62,6 +62,8 @@ const envSchema = z.object({
     ),
   // The built player client (index.html, assets/); the image sets it, development has none.
   SMG_WEB_DIR: z.string().optional(),
+  // The built admin app, served under /admin/ beside the player client (needs SMG_WEB_DIR).
+  SMG_ADMIN_DIR: z.string().optional(),
   // A writable directory (the uploads volume in production) for the maintenance flag.
   SMG_DATA_DIR: z.string().default('./data'),
   // Seals round seeds at rest (AES-256-GCM, 05 §3); 64 hex characters, required outside

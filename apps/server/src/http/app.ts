@@ -4,15 +4,17 @@
  * @brief  Builds the Fastify instance of the server with every plugin and route wired.
  *
  * Responsibility: wire logging, security headers, problem-details, health, metrics, the
- *                 built client (image) or the placeholder page (development), sessions and
- *                 auth, password change, the admin routes (settings documents with every
- *                 game's document, audit log, accounts, abuse signals), the match and round
- *                 routes with their runtime, the boards (leaderboards, profiles, adjustments)
- *                 and, in development, the Quick Test onto a fresh
- *                 Fastify instance, under the base
+ *                 built client and admin app (image) or the placeholder page (development),
+ *                 sessions and auth, password change, two-factor sign-in with the step-up gate
+ *                 of admin writes, the admin routes (settings documents with every game's
+ *                 document and their history, audit log, accounts, abuse signals, live rounds
+ *                 with staff actions), the match and round
+ *                 routes with their runtime, the boards (leaderboards, profiles, adjustments),
+ *                 the builtin chat with its moderation and, in development, the Quick Test
+ *                 onto a fresh Fastify instance, under the base
  *                 path (SMG_BASE_PATH) and behind the trusted proxies. The caller owns the
  *                 lifecycle (listen, close, pool disposal). Adapted from Bingo's app.ts.
- * Depends on:     fastify, @smg/application, @smg/contracts, ../db/pool, ../auth/*,
+ * Depends on:     fastify, @smg/application, @smg/contracts, ../db/pool, ../auth/*, ../chat/*,
  *                 ../config/*, ../admin/*, ../round/runtime, ./plugins/*, ./routes/*
  * Used by:        ../main.ts, test/*, ../index
  * Spec:           docs/spec/04-software-architecture.md §2.1; docs/spec/06-data-model-api-realtime.md §3
@@ -25,6 +27,8 @@ import { PgAuditLog } from '../admin/pgAuditLog.js';
 import { PgSettingsStore } from '../admin/pgSettingsStore.js';
 import { SessionEnds } from '../auth/sessionEnds.js';
 import { cookieConfig, registerSessions } from '../auth/sessionPlugin.js';
+import { createChat, type Chat } from '../chat/chat.js';
+import { hostChatOrigin } from '../chat/provider.js';
 import type { Env } from '../config/env.js';
 import { featuresFrom } from '../config/features.js';
 import type { DbPool } from '../db/pool.js';
@@ -33,6 +37,7 @@ import { registerProblemDetails } from './plugins/problem.js';
 import { registerSecurityHeaders } from './plugins/securityHeaders.js';
 import { registerAdminAccounts } from './routes/adminAccounts.js';
 import { registerAdminAudit } from './routes/adminAudit.js';
+import { registerAdminRounds } from './routes/adminRounds.js';
 import { registerAdminSettings } from './routes/adminSettings.js';
 import { registerLeaderboardRoutes } from './routes/leaderboards.js';
 import { registerMatchRoutes } from './routes/matches.js';
@@ -40,11 +45,13 @@ import { registerQuickTest } from './routes/quickTest.js';
 import { registerRoundRoutes } from './routes/rounds.js';
 import { registerSeasonRoutes } from './routes/seasons.js';
 import { registerAuthRoutes } from './routes/auth.js';
+import { registerChatRoutes } from './routes/chat.js';
 import { registerDevSignIn } from './routes/devSignIn.js';
 import { registerHealth } from './routes/health.js';
 import { createMetrics, registerMetrics, type MetricsHandle } from './routes/metrics.js';
 import { registerPasswordChange } from './routes/password.js';
 import { registerPlaceholder } from './routes/placeholder.js';
+import { registerTwoFactor } from './routes/twoFactor.js';
 import { registerWebClient } from './routes/webClient.js';
 
 interface AppDeps {
@@ -61,6 +68,8 @@ export interface App {
   readonly sessionEnds: SessionEnds;
   // Rounds, matches and their timers; started with `runtime.start()`, stopped on close.
   readonly runtime: RoundRuntime;
+  // The builtin chat; the gateway sends its events.
+  readonly chat: Chat;
   readonly cookieName: string;
 }
 
@@ -93,7 +102,11 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   const fastify = createFastify(deps.env);
   // Development features only with SMG_DEV=1 (fail closed).
   const isDev = deps.env.SMG_DEV;
-  await registerSecurityHeaders(fastify);
+  const audit = new PgAuditLog(deps.pool);
+  const documents = { ...PLATFORM_SETTINGS, ...gameDocuments() };
+  const settings = new SettingsService(documents, new PgSettingsStore(deps.pool), audit);
+  // The CSP lets the host's chat room load in a frame while the provider is hostEmbed.
+  await registerSecurityHeaders(fastify, hostChatOrigin(settings));
   registerProblemDetails(fastify);
   const metrics = createMetrics();
   registerMetrics(fastify, metrics);
@@ -102,7 +115,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   if (deps.env.SMG_WEB_DIR === undefined) {
     registerPlaceholder(fastify, { dev: isDev, port: deps.env.SMG_PORT });
   } else {
-    registerWebClient(fastify, deps.env.SMG_WEB_DIR);
+    registerWebClient(fastify, deps.env.SMG_WEB_DIR, deps.env.SMG_ADMIN_DIR);
   }
   const cookie = cookieConfig(!isDev, deps.env.SMG_BASE_PATH);
   const sessionEnds = new SessionEnds();
@@ -116,10 +129,13 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   registerPasswordChange(fastify, { pool: deps.pool, sessionEnds });
   // Development only: quick sign-in as host or player (never in a production build).
   if (isDev) registerDevSignIn(fastify, { pool: deps.pool, cookie, sessionEnds });
-  const audit = new PgAuditLog(deps.pool);
-  const documents = { ...PLATFORM_SETTINGS, ...gameDocuments() };
-  const settings = new SettingsService(documents, new PgSettingsStore(deps.pool), audit);
-  registerAdminSettings(fastify, settings);
+  registerTwoFactor(fastify, {
+    pool: deps.pool,
+    env: deps.env,
+    features: featuresFrom(deps.env),
+    audit,
+  });
+  registerAdminSettings(fastify, settings, deps.pool);
   registerAdminAudit(fastify, audit);
   registerAdminAccounts(fastify, { pool: deps.pool, audit, sessionEnds });
   const runtime = createRoundRuntime(deps.env, deps.pool, settings);
@@ -128,9 +144,12 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   registerRoundRoutes(fastify, { play, limits, store, pool: deps.pool });
   registerSeasonRoutes(fastify, { pool: deps.pool, seasons: runtime.seasons, audit });
   registerLeaderboardRoutes(fastify, { pool: deps.pool, audit });
+  registerAdminRounds(fastify, { play, pool: deps.pool, audit, settings });
+  const chat = createChat(deps.pool, settings, runtime.rounds);
+  registerChatRoutes(fastify, { chat, audit });
   if (isDev) registerQuickTest(fastify, { play, pool: deps.pool });
   fastify.addHook('onClose', () => runtime.stop());
-  return { fastify, metrics, settings, audit, sessionEnds, runtime, cookieName: cookie.name };
+  return { fastify, metrics, settings, audit, sessionEnds, runtime, chat, cookieName: cookie.name };
 }
 
 // "/games/mini-games/api/v1/x" → "/api/v1/x" when the base path is "/games/mini-games/".

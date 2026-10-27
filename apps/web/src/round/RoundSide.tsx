@@ -1,29 +1,31 @@
 /**
  * @file   apps/web/src/round/RoundSide.tsx
  * @module web/round
- * @brief  The round's side column: the Live list and the team tiles.
+ * @brief  The round's side column: the Live list (or the "Live | Chat" switch) and the team tiles.
  *
  * Responsibility: the Live list of the round's events, newest at the top, in a box of its own
  *                 height that scrolls inside itself: each row a dot in the player's colour,
  *                 the line, and an answer the room may see in colour (02 §6.2, §12). A player's
  *                 colour is their season team's when teams play, else one of the four season
- *                 colours by roster order, so it comes from the existing tokens. The team
+ *                 colours by roster order, so it comes from the existing tokens. With a chat
+ *                 (07 §2) a "Live | Chat" switch takes the Live list's place and height. The team
  *                 tiles: one small tile per season team with its match points and its players
  *                 in this round, shown only when teams play (03 §5).
  * Depends on:     react, @smg/contracts, @smg/game-sdk (FeedLine), @smg-game/registry/web (types),
- *                 ../live/useRound, ../season/*, ./roundText
+ *                 ../live/useRound, ../season/*, ./roundText, ./switch.css
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §11, §12; docs/spec/03-seasonal-specials.md §5
  */
 import type { GameWeb } from '@smg-game/registry/web';
 import type { RoundStateView, TeamName } from '@smg/contracts';
 import type { FeedLine } from '@smg/game-sdk';
-import type { CSSProperties, ReactElement } from 'react';
+import { useState, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 
 import type { FeedItem } from '../live/useRound.js';
 import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASON_NAMES, SEASONS, seasonColor } from '../season/season.js';
 import { platformLine } from './roundText.js';
+import './switch.css';
 
 const ARROW = { higher: '↑', lower: '↓', correct: '✓' } as const;
 
@@ -46,22 +48,20 @@ function lineOf(
   return platformLine(event, names);
 }
 
-export function Feed({
-  feed,
-  game,
-  state,
-}: {
+interface FeedProps {
   readonly feed: readonly FeedItem[];
   readonly game: GameWeb | null;
   readonly state: RoundStateView;
-}): ReactElement {
+}
+
+// The rows of the Live list, newest at the top.
+function FeedRows({ feed, game, state }: FeedProps): ReactElement {
   const rows = feed.flatMap((item) => {
     const line = lineOf(item.event, game, state.names);
     return line === null ? [] : [{ key: item.key, line }];
   });
   return (
-    <section className="smg-panel round-feed" aria-labelledby="feed-title">
-      <h2 id="feed-title">Live</h2>
+    <>
       {rows.length === 0 ? (
         <p className="smg-muted">Nothing yet.</p>
       ) : (
@@ -88,6 +88,68 @@ export function Feed({
           ))}
         </ol>
       )}
+    </>
+  );
+}
+
+export function Feed(p: FeedProps): ReactElement {
+  return (
+    <section className="smg-panel round-feed" aria-labelledby="feed-title">
+      <h2 id="feed-title">Live</h2>
+      <FeedRows {...p} />
+    </section>
+  );
+}
+
+// The Live list, or with a chat a "Live | Chat" switch in its place: the chat takes the
+// list's height and never adds any, so the round view still fits one screen (02 §12).
+export function LiveOrChat(p: FeedProps & { readonly chat: ReactNode }): ReactElement {
+  const [tab, setTab] = useState<'live' | 'chat'>('live');
+  if (p.chat === null) return <Feed {...p} />;
+  const tabs = [
+    { id: 'live', label: 'Live' },
+    { id: 'chat', label: 'Chat' },
+  ] as const;
+  return (
+    <section className="smg-panel round-feed" aria-label="Live and chat">
+      <div className="round-tabs" role="tablist" aria-label="Live or chat">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            id={`round-tab-${t.id}`}
+            aria-selected={tab === t.id}
+            aria-controls={`round-panel-${t.id}`}
+            className="round-tab"
+            data-testid={`tab-${t.id}`}
+            onClick={() => {
+              setTab(t.id);
+            }}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+      {/* Both stay mounted: the chat keeps its room and the Live list its rows. */}
+      <div
+        className="round-tabpanel"
+        role="tabpanel"
+        id="round-panel-live"
+        aria-labelledby="round-tab-live"
+        hidden={tab !== 'live'}
+      >
+        <FeedRows {...p} />
+      </div>
+      <div
+        className="round-tabpanel"
+        role="tabpanel"
+        id="round-panel-chat"
+        aria-labelledby="round-tab-chat"
+        hidden={tab !== 'chat'}
+      >
+        {p.chat}
+      </div>
     </section>
   );
 }

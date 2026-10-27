@@ -7,7 +7,7 @@
  *                 free port; sign in the host and players; open sockets on `/ws`, namespace
  *                 `/play` (with or without a session, from any origin), wait for the
  *                 handshake, send intents with a rising seq, collect every frame a socket
- *                 receives; open a Guess The Number match and let players join; derive a
+ *                 receives (chat events as `{ chat }`); open a Guess The Number match and let players join; derive a
  *                 running round's secret from its sealed seed, as only the server can, so a
  *                 test can win on purpose; close every socket and the harness at the end.
  *                 Adapted from Bingo's socketKit.ts.
@@ -96,6 +96,7 @@ function socketOpener(url: string) {
     const list: unknown[] = [];
     received.set(s, list);
     s.on('events', (frame: unknown) => list.push(frame));
+    s.on('chat', (event: unknown) => list.push({ chat: event }));
     sockets.push(s);
     return s;
   };
@@ -108,6 +109,7 @@ async function listening(harness: Harness) {
     pool: harness.pool,
     play: built.runtime.play,
     limits: built.runtime.limits,
+    chat: built.chat,
     cookieName: built.cookieName,
     allowedOrigins: ['http://localhost:5410'],
     path: '/ws',

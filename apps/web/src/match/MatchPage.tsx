@@ -7,17 +7,20 @@
  *                 gets the same view and plays along; the host menu sits in its top bar).
  *                 Otherwise the match lobby of 02 §2: title, code and status with the host
  *                 menu; join or leave; the season team picker (03 §5); the players with their
- *                 teams; and the last round's result. A player who joins during a round
+ *                 teams; the last round's result; and the match's chat (07 §2; during a round
+ *                 it sits behind the round view's "Live | Chat" switch). A player who joins during a round
  *                 watches it and plays from the next one. The host's last round settings are
  *                 kept here, so the next round's form is prefilled whichever layout made them.
- * Depends on:     react, @smg/contracts, @smg/game-sdk (types), ../live/*, ../shell/*,
+ * Depends on:     react, @smg/contracts, @smg/game-sdk (types), ../chat/*, ../live/*, ../shell/*,
  *                 ../season/*, ./HostMenu, ../round/RoundScreen, ../round/roundText, ./match.css
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/02-game-guess-the-number.md §2, §4, §11; docs/spec/03-seasonal-specials.md §5
  */
 import type { MatchDetailsView, TeamName } from '@smg/contracts';
-import { useState, type CSSProperties, type ReactElement } from 'react';
+import { useState, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 
+import { ChatPanel } from '../chat/ChatPanel.js';
+import { useChatConfig } from '../chat/useChat.js';
 import { intent } from '../live/socket.js';
 import { useMatch } from '../live/useMatch.js';
 import { useRound, type RoundLive } from '../live/useRound.js';
@@ -166,6 +169,12 @@ function MatchView(p: {
     void live.reload();
   };
   const status = live.state?.status ?? null;
+  const chatConfig = useChatConfig();
+  const target = { kind: 'match', code: match.code } as const;
+  const chat =
+    chatConfig === null || chatConfig.provider === 'none' ? null : (
+      <ChatPanel target={target} config={chatConfig} bare />
+    );
   const hostMenu = (
     <HostMenu match={match} roundStatus={status} reload={refresh} last={last} setLast={setLast} />
   );
@@ -178,6 +187,7 @@ function MatchView(p: {
         hostMenu={hostMenu}
         teamPoints={match.teamStandings}
         standings={match.standings}
+        chat={chat}
       />
     );
   if (status !== null && LIVE.has(status)) {
@@ -187,7 +197,11 @@ function MatchView(p: {
       </div>
     );
   }
-  return <LobbyView match={match} refresh={refresh} hostMenu={hostMenu} round={round} />;
+  return (
+    <LobbyView match={match} refresh={refresh} hostMenu={hostMenu} round={round}>
+      <ChatPanel target={target} config={chatConfig} />
+    </LobbyView>
+  );
 }
 
 // Between rounds: the match head with the host menu, joining, the last result, the players.
@@ -196,6 +210,7 @@ function LobbyView(p: {
   readonly refresh: () => void;
   readonly hostMenu: ReactElement;
   readonly round: ReactElement | null;
+  readonly children: ReactNode;
 }): ReactElement {
   const { match } = p;
   return (
@@ -214,6 +229,7 @@ function LobbyView(p: {
         <Teams match={match} reload={p.refresh} />
         <Players match={match} />
       </section>
+      {p.children}
     </div>
   );
 }

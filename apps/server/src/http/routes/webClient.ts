@@ -1,14 +1,16 @@
 /**
  * @file   apps/server/src/http/routes/webClient.ts
  * @module server/http
- * @brief  Serves the built player client and the admin placeholder (one image, 09 §1).
+ * @brief  Serves the built player client and the built admin app (one image, 09 §1).
  *
  * Responsibility: GET / answers the client's index.html; any other GET outside /api,
  *                 /ws and the health and metrics routes answers the file of that name from
  *                 SMG_WEB_DIR (assets with a content hash are cached for a year, the rest
  *                 revalidated); a path that leaves the directory or names no file is a 404.
  *                 The client routes with the URL hash, so no other path needs index.html.
- *                 /admin answers a placeholder until the admin app exists (WP-19).
+ *                 With SMG_ADMIN_DIR the admin app is served the same way under /admin/
+ *                 (/admin redirects there, so its relative asset paths resolve; the same
+ *                 security headers); without it /admin answers a placeholder.
  * Depends on:     fastify, node:fs, node:path
  * Used by:        ../app.ts (only when SMG_WEB_DIR is set, i.e. in the image)
  * Spec:           Bingo 09 §1; Bingo 08 §4
@@ -35,18 +37,35 @@ const ADMIN_PLACEHOLDER = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Seasonal Mini Games — admin</title></head>
 <body style="font-family: system-ui, sans-serif; margin: 3rem;">
-<h1>Admin</h1><p>The admin app is not part of this version yet. Hosts run their matches from the game itself.</p>
+<h1>Admin</h1><p>The admin app is not installed on this server. Hosts run their matches from the game itself.</p>
 </body></html>`;
 
-export function registerWebClient(app: FastifyInstance, webDir: string): void {
+export function registerWebClient(
+  app: FastifyInstance,
+  webDir: string,
+  adminDir: string | undefined,
+): void {
   const root = path.resolve(webDir);
-  app.get('/admin', (_request, reply) =>
-    reply.header('content-type', 'text/html; charset=utf-8').send(ADMIN_PLACEHOLDER),
-  );
+  if (adminDir === undefined) {
+    app.get('/admin', (_request, reply) =>
+      reply.header('content-type', 'text/html; charset=utf-8').send(ADMIN_PLACEHOLDER),
+    );
+  } else {
+    registerAdminApp(app, path.resolve(adminDir));
+  }
   app.get('/', (_request, reply) => sendFile(reply, root, 'index.html'));
   // The router has decoded the path already (a broken %-escape is its 400); decoding it a
   // second time turned "%25zz" into a 500 (audit S10).
   app.get('/*', (request, reply) =>
+    sendFile(reply, root, (request.params as { '*': string })['*']),
+  );
+}
+
+// Relative to the request ("admin/"), so the redirect also holds under a base path.
+function registerAdminApp(app: FastifyInstance, root: string): void {
+  app.get('/admin', (_request, reply) => reply.redirect('admin/'));
+  app.get('/admin/', (_request, reply) => sendFile(reply, root, 'index.html'));
+  app.get('/admin/*', (request, reply) =>
     sendFile(reply, root, (request.params as { '*': string })['*']),
   );
 }

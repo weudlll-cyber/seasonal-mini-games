@@ -1,0 +1,129 @@
+/**
+ * @file   apps/web/src/chat/chat.css
+ * @module web/chat
+ * @brief  The chat panel: a message box that scrolls inside itself, the field, the actions.
+ *
+ * Responsibility: the panel is a column whose list takes the free height and scrolls on its
+ *                 own (newest at the bottom), so the round view keeps its one-screen layout
+ *                 when the chat fills the Live list's place; on the lobby and match pages the
+ *                 panel has a height of its own. Colours only from the @smg/ui tokens.
+ * Depends on:     @smg/ui tokens
+ * Used by:        ./ChatPanel
+ * Spec:           docs/spec/07-integration.md §2; docs/spec/02-game-guess-the-number.md §12
+ */
+
+.chat-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.chat-panel--page {
+  flex: none;
+  height: 24rem;
+  padding: var(--space-2);
+}
+
+.chat-panel--page h2 {
+  margin: 0;
+  font-size: var(--font-size-lead);
+}
+
+.chat-list {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+}
+
+/* A line flows as text, also inside the round's Live box (whose list items are flex rows). */
+.chat-list .chat-line {
+  display: block;
+}
+
+.chat-line--system {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.chat-author {
+  color: var(--color-text);
+}
+
+.chat-actions {
+  display: inline;
+  margin-left: 0.4rem;
+}
+
+.chat-actions .smg-row {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.6rem;
+}
+
+/* Small text buttons, so a line stays one line until an action is opened. */
+.chat-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--font-size-small);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.chat-link:hover,
+.chat-link:focus-visible {
+  color: var(--color-text);
+}
+
+.chat-confirm {
+  display: grid;
+  gap: var(--space-1);
+  margin-top: 0.25rem;
+}
+
+.chat-confirm p {
+  margin: 0;
+}
+
+.chat-writer {
+  flex: none;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.chat-writer p {
+  margin: 0;
+}
+
+.chat-form {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.chat-form .smg-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.chat-refusal {
+  color: var(--color-danger);
+}
+
+.chat-frame {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  border: 0;
+  border-radius: var(--radius);
+}

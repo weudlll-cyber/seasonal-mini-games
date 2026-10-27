@@ -4,7 +4,7 @@
  * @brief  Ports and database URL of the local dev stack, read from ops/.env.dev.example.
  *
  * Responsibility: one place for the project's fixed ports (server 3910, player client
- *                 5410) and the DATABASE_URL built from the dev env file, so the e2e
+ *                 5410, admin app 5411) and the DATABASE_URL built from the dev env file, so the e2e
  *                 config never repeats credentials.
  * Depends on:     ops/.env.dev.example
  * Used by:        ./playwright.config.ts, ./globalSetup.ts, ./screens
@@ -18,6 +18,7 @@ export const ENV_FILE = 'ops/.env.dev.example';
 export const COMPOSE_FILE = 'ops/compose.dev.yml';
 export const SERVER_URL = 'http://127.0.0.1:3910';
 export const CLIENT_URL = 'http://127.0.0.1:5410';
+export const ADMIN_URL = 'http://127.0.0.1:5411';
 
 function readEnvFile(): Map<string, string> {
   const text = readFileSync(new URL(`../${ENV_FILE}`, import.meta.url), 'utf8');

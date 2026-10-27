@@ -8,7 +8,8 @@
  *                 narrowed by the document, who may change it and when it applies, and offers
  *                 an editor only when the viewer may edit; the words for roles, effects and
  *                 sources follow 08 §2; the app opens only the areas the account's
- *                 permissions allow, and asks to sign in without an account.
+ *                 permissions allow (and Two-factor for every account), and asks to sign in
+ *                 without an account.
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./App, ./settings/*
  * Spec:           docs/spec/08-admin-settings.md §1, §2
  */
@@ -125,6 +126,11 @@ describe('the app', () => {
     });
     await renderApp();
     const nav = await screen.findByRole('navigation', { name: 'Areas' });
-    expect([...nav.querySelectorAll('a')].map((a) => a.textContent)).toEqual(['Settings', 'Abuse']);
+    expect([...nav.querySelectorAll('a')].map((a) => a.textContent)).toEqual([
+      'Live',
+      'Settings',
+      'Abuse',
+      'Two-factor',
+    ]);
   });
 });

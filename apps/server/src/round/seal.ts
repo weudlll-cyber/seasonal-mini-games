@@ -1,12 +1,13 @@
 /**
  * @file   apps/server/src/round/seal.ts
  * @module server/round
- * @brief  Seal and open a round seed with AES-256-GCM (06 §2.3 seed_enc).
+ * @brief  Seal and open a round seed with AES-256-GCM (06 §2.3 seed_enc), and other short
+ *         secrets at rest (TOTP secrets) under a key of their own.
  *
  * Responsibility: 12-byte random IV, 16-byte tag, then the ciphertext; opening checks the
  *                 tag, so a changed row fails loudly. Adapted from Bingo's match/codec.ts.
  * Depends on:     node:crypto
- * Used by:        ./pgRoundStore
+ * Used by:        ./pgRoundStore, ../auth/twoFactor
  * Spec:           docs/spec/04-software-architecture.md §5.4; docs/spec/05-security-threat-model.md §3
  */
 import { createCipheriv, createDecipheriv, randomBytes } from 'node:crypto';

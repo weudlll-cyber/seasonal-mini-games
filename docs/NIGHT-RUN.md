@@ -12,14 +12,14 @@ N1 and N2 on `feat/guess-the-number`; N3 onwards on `night/2026-10-27`, created 
 | N2 Compact phone bar, text contrast                            | done    | feat/guess-the-number | `3783f01` (CI green, first attempt) |
 | N3 Phase 4 standings, boards, profiles, verification page      | done    | night/2026-10-27      | see N3                              |
 | N4 Phase 2 authorization matrix and security suites            | done    | night/2026-10-27      | see N4                              |
-| N5 Phase 5 chat `none` / `builtin`, moderation                 | open    | night/2026-10-27      | —                                   |
-| N6 Phase 6 admin remainder                                     | open    | night/2026-10-27      | —                                   |
+| N5 Phase 5 chat `none` / `builtin`, moderation                 | done    | night/2026-10-27      | see N5                              |
+| N6 Phase 6 admin remainder                                     | done    | night/2026-10-27      | see N6                              |
 | N7 Phase 7 handoff, embed, test host page, webhooks, read API  | open    | night/2026-10-27      | —                                   |
 | N8 Phase 8 installer, `smg` CLI, backups, observability, guide | running | night/2026-10-27      | —                                   |
 
 ### Needs the owner
 
-- (t) Which season names a quarter's board; (u) aborted matches and league points; (v) account ids visible to anonymous viewers. All in [OPEN.md](OPEN.md), each built as proposed.
+- (t) Which season names a quarter's board; (u) aborted matches and league points; (v) account ids visible to anonymous viewers; (w) the chat on screen; (x) staff actions as players see them. All in [OPEN.md](OPEN.md), each built as proposed.
 - The Night 1 items below still stand.
 
 ### N1 — Journey 4 (halving) failed now and then
@@ -181,6 +181,120 @@ Branch `night/2026-10-27` (created from `feat/guess-the-number` at `3783f01`, af
 - **Account ids are public.** `player_key` is the account id (T17), so match details, results, proofs and room frames show account ids to anonymous viewers; Bingo removed this in its audit. Listed as OPEN (v).
 - **`DELETE /api/v1/dev/load-accounts`** has no sign-in and no CSRF (development builds only).
 - **The admin match abort** of 06 §3.2 does not exist yet: moderators and game admins hold `match.abort` but cannot use it (taken up in N6).
+
+### N5 — Phase 5 without the host embed: chat providers and moderation
+
+**Built (a subagent; the migration, contracts and settings by the lead):**
+
+- **Provider switch.** `integrations.chatProvider` chooses the chat (07 §2):
+  - `none`: no panel.
+  - `builtin`: the platform chat.
+  - `hostEmbed`: an iframe of `integrations.hostChatUrl`, with the CSP's `frame-src` set to that origin only (T73). Behind its setting as specified; no website work.
+  - With `none` or `hostEmbed`, every chat route and intent except `GET /chat/config` answers `CHAT_DISABLED`.
+- **Builtin chat, Bingo's design** (06 §7, 03 §12, 04 §3.5; Bingo built no chat code):
+  - Rooms: one lobby room and one room per match.
+  - Messages: at most 300 characters, plain text.
+  - The send pipeline (T71): sanctions, lock and slow modes, the rate limit and duplicates, length, links, normalisation, then the block / mask / flag word lists. Flagged messages enter the report queue.
+  - Reports, mutes with an expiry, bans and lifting; room slow mode and lock. Every staff action is audited.
+  - A nightly retention job (`chat.retentionDays`).
+  - With `builtin`, a system line at a round's end ("Round 4: Walter found it first", T72).
+  - Migration `0007_chat.sql`, with the permissions `chat.send` (accounts that play or host) and `chat.moderate`. Guests read only.
+- **Settings document `chat`** (Bingo 11 §4, without `typingIndicator`, since there is no typing indicator to switch): `chat.maxLength`, `chat.allowLinks`, `chat.slowModeDefault`, `chat.rateMessages`, `chat.rateWindowS`, `chat.newAccountSlowModeHours`, `chat.retentionDays`.
+- **Routes:**
+  - Player: `GET /chat/config`, `/chat/rooms/lobby`, `/chat/rooms/match/:code`, `/chat/rooms/:roomId/messages?before=`; `POST /chat/messages/:id/report`.
+  - Moderation, under `/admin/` (`chat.moderate`): reports and resolving them, deleting messages, sanctions and lifting them, room settings, word lists.
+  - Socket intents `chat.join`, `chat.leave`, `chat.send`, with events on `chat:<roomId>`.
+- **Player client:** the `ChatPanel` boundary in the lobby and on the match page.
+  - In the round view, a "Live | Chat" switch takes the Live list's place, so the round view stays one screen.
+  - "Report" on every line, and inline moderation (delete, mute 5 min / 1 h / 24 h, ban), each with a reason and a confirm sentence.
+  - Proposals in OPEN (w).
+- **Admin moderation screens:** built in N6.
+
+**Tests:**
+
+- Unit: normalisation and word lists (`apps/server/src/chat/filter.test.ts`); slow modes, rate and duplicates (`spam.test.ts`).
+- Components: the panel's three providers (`apps/web/src/chat/chat.test.tsx`).
+- Integration (`apps/server/test/chat.integration.test.ts`, 10 tests):
+  - sending and receiving over the socket; a guest reads but cannot write;
+  - block, mask and flag; links; duplicates and the rate limit;
+  - a report and its resolving;
+  - a mute that refuses, is lifted, and a second that expires; a ban;
+  - a deletion and a room lock reaching the watchers;
+  - the round-end line;
+  - the provider switched between `none`, `builtin` and `hostEmbed`: the refusals, `/chat/config` and the CSP.
+- The authorization matrix lists every new route and intent.
+- E2E journey 13 (`e2e/chat.spec.ts`): see Checks.
+
+**Reused:** `permitted`, `RateLimiter`, `displayNames`, `findMatch`, the audit log, `settings.values`, `rounds.onCommitted` (as the gateway uses it), the pattern of `auth/retention.ts`; on the client `api`, `gameSocket`/`intent`, `useSession` and the smg-* classes.
+
+**Noticed, left alone:**
+
+- With several server instances, the sanction and word-list caches would need invalidation across instances (scale step 1).
+- Separator tricks ("f.u.c.k") pass the word lists.
+- The word-list answer has no contract type yet (`{ lists: [{ id, terms, updatedAt }] }`).
+
+### N6 — Phase 6 remainder: live rounds, accounts, history, confirm dialogs, two-factor, admin build
+
+**Built** (a subagent; the migration and contracts are the lead's):
+
+- **Live rounds with staff actions** (06 §3.2; T75):
+  - The routes:
+    - `GET /admin/rounds/live`: counts only, no secret;
+    - `GET /admin/rounds/:id`: the staff spectator view;
+    - `POST /admin/rounds/:id/abort`: with a reason, shown to the players as "by staff (reason)";
+    - `POST /admin/matches/:id/kick`: the player is `kicked` and their guesses are refused;
+    - `POST /admin/rounds/:id/results/:playerKey/remove`: with a reason, after the end, once.
+  - A removed result leaves the standings, the team standings and the league; the row itself stays.
+  - Every action is audited.
+- **Settings version history** (T76):
+  - `GET /admin/settings/:id/versions` shows each version with its changes against the one before.
+  - `POST /admin/settings/:id/rollback` writes a new version with an old version's overrides; a conflicting version answers 409.
+- **Two-factor sign-in for staff** (T74):
+  - TOTP per RFC 6238 on node:crypto, so no new dependency.
+  - The secret is sealed at rest with a key derived from the round key.
+  - A code is accepted once, and attempts are rate-limited.
+  - Ten recovery codes, shown once.
+  - Routes `/me/2fa`, `/setup`, `/confirm`, `/step-up` and `/disable`.
+  - With `SMG_FEATURE_TWO_FACTOR` on, every admin write needs an enrolled factor and a check within 10 minutes; with it off, nothing changes.
+  - Migration `0008_admin.sql`.
+- **The admin build, served by the server** at `/admin/` from `SMG_ADMIN_DIR`; the Dockerfile builds and ships it.
+- **Admin app:**
+  - Live: the running rounds, abort, kick and result removal.
+  - Accounts: search, roles with a reason, suspension.
+  - A settings document's History, with its diff and Rollback.
+  - Two-factor: enrol by URI and secret (no QR library), confirm, recovery codes, disable.
+  - A step-up dialog that retries the write.
+  - Moderation, over N5's routes: the report queue, sanctions, rooms and word lists.
+  - One confirm dialog that states the effect in one sentence, for every destructive or high-impact action (Bingo 11 §1).
+
+**Tests:**
+
+- Unit:
+  - TOTP against the RFC 6238 SHA-1 vectors, with the drift window and single use;
+  - base32 against the RFC 4648 vectors;
+  - the settings diff (`packages/application/src/settings/diff.test.ts`).
+- Components (`apps/admin/src/staff.test.tsx`): the confirm dialog, the step-up retry and cancel, the history diff and rollback.
+- Integration:
+  - `adminLive.integration.test.ts`: the live list without secrets, the staff view, kick, a staff abort with its reason, and a removal that changes the standings and the league;
+  - `adminTwoFactor.integration.test.ts`: enrol, confirm, step-up and its expiry, a recovery code used once, disable, and the gate on and off;
+  - `adminHistory.integration.test.ts`: history, rollback and conflict; `/admin/` served.
+- The authorization matrix lists every new route and expects the redirect from `/admin`.
+- E2E journey 14 (`e2e/admin.spec.ts`): see Checks.
+
+**Reused:**
+
+- Server: `inTransaction`, `permitted` (the step-up gate sits in it), `sealSeed`/`openSeed`, `RateLimiter`, the audit log, `SettingsService.update`, `awardMatch` and `leagueRules`, `displayNames`, the round's spectator view and abort, `webClient`'s file serving.
+- Extracted: `overrideChanges` (`packages/application/src/settings/diff.ts`), now used by the audit diff and the history alike.
+
+**Noticed, left alone:**
+
+- Bingo rotates the session id when a 2FA check completes; this is not done here.
+- There is no 2FA challenge at sign-in, only the step-up.
+- `plugins/securityHeaders.ts` mentions a stricter CSP for the admin app; it gets the same headers as the player client.
+- `apps/server/test/authzTable.ts` is at about 290 of 300 lines.
+- The admin round view answer has no contract type yet.
+
+**Checks (N5 and N6 together).** `pnpm verify` green: 308 tests in 61 files. E2E in Chromium: all 16 journeys passed (with the dev servers restarted for migrations 0007–0009), journeys 13 (chat: two players chat in a match, a moderator mutes one, whose next message is refused, lifts it and bans; the provider set to `none` removes the panel) and 14 (the admin changes a special's default, sees the diff in the history, rolls it back through the confirm dialog, and aborts a running Quick Test round, which the player sees as aborted by staff) on their first run. CI: see the next update.
 
 ## Night 1 (2026-10-24 to 2026-10-26)
 

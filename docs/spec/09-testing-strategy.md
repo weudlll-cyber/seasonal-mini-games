@@ -69,6 +69,8 @@
 10. Hidden range (owner decision 19), 1280 × 720: the round view says "Any whole number", no bound is on the page, a guess far outside the range is answered, and the result reveals the range.
 11. Negative bounds (owner decision 18), 390 × 844: a range from −500 to 500 is shown, the ± button makes a typed number negative, the guess is answered, and the round plays to its result.
 12. Boards (roadmap phase 4): four players play two counting matches; the points add up on the season board with the team board beside it, the profile shows them, the round's verification page confirms the seed against the commitment, and aborting the matches takes the points back.
+13. Chat (roadmap phase 5, `builtin`): two players chat in a match; a moderator mutes one, whose next message is refused, lifts the mute and bans; with `integrations.chatProvider` = `none` the chat panel is gone.
+14. Admin (roadmap phase 6): the admin changes a special's default, sees the change in the document's history, rolls it back through the confirm dialog, and aborts a running round with a reason, which the player sees as aborted by staff.
 
 Journeys 1, 10 and 11 also check that the round view fits the screen: `document.scrollingElement.scrollHeight` is at most `window.innerHeight` ([02](02-game-guess-the-number.md) §12).
 

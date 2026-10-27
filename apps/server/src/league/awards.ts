@@ -13,10 +13,11 @@
  *                 standing the same way. Awards are replaced as later rounds end, so a match
  *                 awards once per board. Withdrawing removes a match's awards (an aborted
  *                 match, T70). Every change recomputes the affected entries as the sum of
- *                 awards and staff adjustments. Only this module writes league tables (Bingo
- *                 03 §11).
+ *                 awards and staff adjustments. A result staff removed counts for nothing here
+ *                 (no account, no solve; the standings leave it out already, ../round/pgResults).
+ *                 Only this module writes league tables (Bingo 03 §11).
  * Depends on:     pg, @smg/domain (quarterPeriod), @smg/game-sdk (Season)
- * Used by:        ../round/pgRoundStore, ../match/play, ./adjustments
+ * Used by:        ../round/pgRoundStore, ../match/play, ./adjustments, ../admin/liveRounds
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/06-data-model-api-realtime.md §2.6
  */
 import { quarterPeriod } from '@smg/domain';
@@ -53,7 +54,9 @@ async function eligible(c: Db, matchId: string) {
             bool_and(m.counts_for_leaderboard) AS counts
      FROM smg.matches m
      LEFT JOIN smg.rounds r ON r.match_id = m.id AND r.status = 'ended'
-     LEFT JOIN smg.round_results rr ON rr.round_id = r.id
+     LEFT JOIN smg.round_results rr ON rr.round_id = r.id AND NOT EXISTS (
+       SELECT 1 FROM smg.round_result_removals x
+       WHERE x.round_id = rr.round_id AND x.player_key = rr.player_key)
      LEFT JOIN smg.accounts a ON a.id::text = rr.player_key
      WHERE m.id = $1`,
     [matchId],
@@ -78,7 +81,10 @@ export async function awardMatch(c: Db, matchId: string, rules: LeagueRules): Pr
       `INSERT INTO smg.league_awards (period_id, account_id, match_id, points, wins, solves, place)
        SELECT $1, a.id, $2, s.points, s.wins,
               (SELECT count(*) FROM smg.round_results rr JOIN smg.rounds r ON r.id = rr.round_id
-               WHERE r.match_id = $2 AND rr.player_key = s.player_key AND rr.solved), s.rank
+               WHERE r.match_id = $2 AND rr.player_key = s.player_key AND rr.solved
+                 AND NOT EXISTS (SELECT 1 FROM smg.round_result_removals x
+                                 WHERE x.round_id = rr.round_id AND x.player_key = rr.player_key)),
+              s.rank
        FROM smg.match_standings s JOIN smg.accounts a ON a.id::text = s.player_key
        WHERE s.match_id = $2`,
       [periodId, matchId],

@@ -12,7 +12,7 @@
  *                 ends or the player solved — exactly as a person reading the screen would.
  *                 Matches are aborted at the end, never deleted (CLAUDE.md).
  * Depends on:     @playwright/test, ./devStack, ./screens
- * Used by:        ./rounds.spec, ./specials.spec, ./players.spec, ./access.spec
+ * Used by:        ./rounds.spec, ./specials.spec, ./players.spec, ./access.spec, ./chat.spec
  * Spec:           docs/spec/09-testing-strategy.md §4; docs/spec/02-game-guess-the-number.md §12
  */
 import { expect, type Browser, type BrowserContext, type Page } from '@playwright/test';
@@ -43,7 +43,7 @@ export async function person(browser: Browser, who: Who, viewport = DESKTOP): Pr
 // One API request as that person, whatever its answer.
 export async function attempt(
   p: Person,
-  method: 'GET' | 'POST' | 'DELETE',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   path: string,
   data?: unknown,
 ): Promise<{ readonly status: number; readonly body: unknown }> {
@@ -61,7 +61,7 @@ export async function attempt(
 // An API request that must succeed.
 export async function call<T>(
   p: Person,
-  method: 'GET' | 'POST' | 'DELETE',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   path: string,
   data?: unknown,
 ): Promise<T> {

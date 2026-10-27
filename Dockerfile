@@ -1,13 +1,13 @@
 # @file   Dockerfile
 # @module repo
-# @brief  Multi-stage image of the app: deps -> build -> runtime (server, player client).
+# @brief  Multi-stage image of the app: deps -> build -> runtime (server, player client, admin app).
 #
-# Responsibility: fetch dependencies from the lockfile only; build the player client (Vite,
-#                 relative paths, so one image serves at "/" or under any SMG_BASE_PATH)
-#                 and the server bundle (esbuild, apps/server/build.mjs) inside a full
-#                 toolchain stage; ship a small non-root runtime with the bundle, its npm
-#                 dependencies and the client only. With NODE_ENV=production no development
-#                 route is registered (apps/server/test/deployment.integration.test.ts). It
+# Responsibility: fetch dependencies from the lockfile only; build the player client and the
+#                 admin app (Vite, relative paths, so one image serves at "/" or under any
+#                 SMG_BASE_PATH; the admin app under /admin/) and the server bundle
+#                 (esbuild, apps/server/build.mjs) inside a full toolchain stage; ship a small
+#                 non-root runtime with the bundle, its npm dependencies, the client and the
+#                 admin app only. With NODE_ENV=production no development route is registered (apps/server/test/deployment.integration.test.ts). It
 #                 runs on a read-only root filesystem with /tmp in memory and /data as its
 #                 one writable volume (ops/compose.yml).
 # Used by:        .github/workflows/ci.yml (job image)
@@ -27,21 +27,25 @@ FROM base AS deps
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 RUN pnpm fetch
 
-# build: install offline from the store, build the client and the server bundle, then
-# collect the server's production files (package.json "files": dist) and the client.
+# build: install offline from the store, build the client, the admin app and the server
+# bundle, then
+# collect the server's production files (package.json "files": dist), the client and the
+# admin app.
 FROM deps AS build
 COPY . .
 RUN pnpm install --frozen-lockfile --offline
-RUN pnpm --filter @smg/web build && pnpm --filter @smg/server build
+RUN pnpm --filter @smg/web build && pnpm --filter @smg/admin build && pnpm --filter @smg/server build
 # The workspace packages are inside the bundle, so their copies are not shipped.
 RUN pnpm --filter @smg/server deploy --prod --legacy /out \
-  && rm -rf /out/node_modules/@smg \
-  && cp -r apps/web/dist /out/web
+  && rm -rf /out/node_modules/@smg /out/node_modules/@smg-game \
+  && cp -r apps/web/dist /out/web \
+  && cp -r apps/admin/dist /out/admin
 
 # runtime: production files only, owned by root and therefore read-only for the app user.
 FROM node:22-alpine@sha256:0a7108bf6c7bf5de370ffb1a3ed6be93d405b43ff159f681a8d18c0e2bc2e402 AS runtime
 ENV NODE_ENV=production \
     SMG_WEB_DIR=/app/web \
+    SMG_ADMIN_DIR=/app/admin \
     SMG_HOST=0.0.0.0 \
     SMG_PORT=3100 \
     SMG_DATA_DIR=/data

@@ -1,12 +1,12 @@
 /**
  * @file   e2e/playwright.config.ts
  * @module e2e
- * @brief  Playwright config: three browsers against the dev server and player client.
+ * @brief  Playwright config: three browsers against the dev server, player client and admin app.
  *
- * Responsibility: start PostgreSQL (global setup), the server on 3910 and the player
- *                 client on 5410, then run the specs in Chromium, Firefox and WebKit at a
- *                 phone viewport. Specs listed in TIMING (their checks depend on browser
- *                 timers) run afterwards, one at a time and one browser after the other, as
+ * Responsibility: start PostgreSQL (global setup), the server on 3910, the player client
+ *                 on 5410 and the admin app on 5411, then run the specs in Chromium, Firefox
+ *                 and WebKit at a phone viewport. Specs listed in TIMING (their checks depend
+ *                 on browser timers, or they change shared settings) run afterwards, one at a time and one browser after the other, as
  *                 Bingo learned to (its NIGHT-3); WebKit records no trace there. Locally an
  *                 already-running stack is reused.
  * Depends on:     @playwright/test, ./devStack, ./globalSetup
@@ -14,7 +14,7 @@
  */
 import { defineConfig, devices } from '@playwright/test';
 
-import { CLIENT_URL, REPO_ROOT, SERVER_URL, databaseUrl } from './devStack.js';
+import { ADMIN_URL, CLIENT_URL, REPO_ROOT, SERVER_URL, databaseUrl } from './devStack.js';
 
 const CI = process.env['CI'] !== undefined;
 
@@ -27,6 +27,10 @@ const TIMING = [
   'access.spec.ts',
   'range.spec.ts',
   'boards.spec.ts',
+  // Not timing, but it changes platform-wide chat settings: never two browsers at once.
+  'chat.spec.ts',
+  // Changes and rolls back the game's settings document, and aborts a round.
+  'admin.spec.ts',
 ];
 const BROWSERS = [
   { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
@@ -73,6 +77,13 @@ export default defineConfig({
       command: 'pnpm --filter @smg/web dev',
       cwd: REPO_ROOT,
       url: CLIENT_URL,
+      reuseExistingServer: !CI,
+      timeout: 120_000,
+    },
+    {
+      command: 'pnpm --filter @smg/admin dev',
+      cwd: REPO_ROOT,
+      url: ADMIN_URL,
       reuseExistingServer: !CI,
       timeout: 120_000,
     },

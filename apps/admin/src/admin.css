@@ -4,7 +4,8 @@
  * @brief  Layout of the admin app: top bar, main column, wide tables, inline editors.
  *
  * Responsibility: colours only from @smg/ui tokens (light and dark follow the system); wide
- *                 tables scroll inside their panel, never the page.
+ *                 tables scroll inside their panel, never the page; the confirm dialog over a
+ *                 scrim; version history, recovery codes and moderation lists.
  * Spec:           docs/spec/08-admin-settings.md §1; Bingo 11 §1
  */
 body {
@@ -88,4 +89,38 @@ body {
 
 .admin-diff {
   overflow-wrap: anywhere;
+}
+
+.admin-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: var(--gutter);
+  background: var(--color-scrim);
+}
+
+.admin-dialog {
+  width: min(32rem, 100%);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-raised);
+}
+
+.admin-history,
+.admin-list {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.admin-codes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  gap: var(--space-1);
+  padding-left: 0;
+  list-style: none;
 }

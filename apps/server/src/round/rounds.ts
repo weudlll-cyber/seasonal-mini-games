@@ -7,7 +7,8 @@
  * Responsibility: the registry is read once (04 §4.6: games are found only there); a round
  *                 is created through its game's runner; a round that is not in memory is
  *                 loaded from the database (running rounds at start, ended ones on demand
- *                 for views); committed events go to every subscriber (the gateway).
+ *                 for views, with the players staff kicked from its match); committed
+ *                 events go to every subscriber (the gateway).
  * Depends on:     @smg-game/registry, ./gameRunner, ./liveRound, ./pgRoundStore, ./actor
  * Used by:        ../http/app, ../http/routes/*, ../realtime/*, ../dev/*, ./scheduler
  * Spec:           docs/spec/04-software-architecture.md §4.6, §5.2, §5.3
@@ -92,7 +93,10 @@ export class Rounds {
     const runner = loaded === null ? undefined : this.runners.get(loaded.gameId);
     if (loaded === null || runner === undefined) return null;
     // Another call may have loaded it meanwhile; keep the first.
-    const live = this.live.get(roundId) ?? runner.recover(loaded);
+    const first = this.live.get(roundId);
+    if (first !== undefined) return first;
+    const live = runner.recover(loaded);
+    for (const key of loaded.kicked) live.exclude(key);
     this.live.set(roundId, live);
     return live;
   }

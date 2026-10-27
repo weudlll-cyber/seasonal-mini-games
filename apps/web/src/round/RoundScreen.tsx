@@ -8,7 +8,7 @@
  *                 badge, shared or individual, the cooldown, the time left or "Opens in 3 s",
  *                 and the host menu for the host); the game's main area (the player panel for
  *                 a roster player, else the spectator panel); the side column with the Live
- *                 list and the team tiles; and for a roster player the game's input row with
+ *                 list (behind a "Live | Chat" switch when the match has a chat) and the team tiles; and for a roster player the game's input row with
  *                 the cooldown ring, whose platform refusals appear under it in plain words.
  *                 The layout (round.css) fits the viewport without a page scrollbar; only the
  *                 lists scroll inside themselves. After the end the result screen takes over.
@@ -29,7 +29,7 @@ import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASON_NAMES, seasonColor, SPECIALS } from '../season/season.js';
 import { CooldownRing } from './CooldownRing.js';
 import { ResultScreen } from './ResultScreen.js';
-import { Feed, TeamTiles } from './RoundSide.js';
+import { LiveOrChat, TeamTiles } from './RoundSide.js';
 import { codeText, seconds } from './roundText.js';
 import './round.css';
 
@@ -42,6 +42,8 @@ interface RoundScreenProps {
   readonly teamPoints: readonly { readonly team: TeamName; readonly points: number }[];
   // The match's player standings, for the result screen.
   readonly standings: readonly MatchStandingView[];
+  // The match's chat panel behind the "Live | Chat" switch, or null without a chat.
+  readonly chat: ReactNode;
 }
 
 function timeText(state: RoundStateView, now: number): string {
@@ -181,7 +183,7 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
         )}
       </section>
       <aside className="round-side">
-        <Feed feed={feed} game={game} state={state} />
+        <LiveOrChat feed={feed} game={game} state={state} chat={props.chat} />
         <TeamTiles state={state} points={props.teamPoints} />
       </aside>
       {player ? (

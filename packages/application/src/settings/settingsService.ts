@@ -6,10 +6,12 @@
  * Responsibility: a document's view (definitions, stored overrides, effective values, the
  *                 keys the viewer may edit); an update that checks every key against its
  *                 definition and the editor's permissions, refuses a stale version, writes a
- *                 new version and one audit entry with the before/after diff. The documents
+ *                 new version and one audit entry with the before/after diff (./diff); a
+ *                 rollback is such an update with an earlier version's overrides, audited as
+ *                 `settings.rollback`. The documents
  *                 are passed in (platform ones from contracts, game ones from the registry),
  *                 so this layer never names a game.
- * Depends on:     @smg/game-sdk (checks), @smg/contracts (shapes), ./ports, ../audit/ports
+ * Depends on:     @smg/game-sdk (checks), @smg/contracts (shapes), ./ports, ./diff, ../audit/ports
  * Used by:        ../index, apps/server (settings routes, round creation)
  * Spec:           docs/spec/08-admin-settings.md §1, §2; Bingo 02 §6, Bingo 11 §1
  */
@@ -24,6 +26,7 @@ import {
 } from '@smg/game-sdk';
 
 import type { AuditActor, AuditLog } from '../audit/ports.js';
+import { overrideChanges } from './diff.js';
 import type { SettingsStore, StoredDocument } from './ports.js';
 
 export class SettingsError extends Error {
@@ -72,6 +75,7 @@ export class SettingsService {
     id: string,
     change: SettingsUpdate,
     actor: AuditActor,
+    action: 'settings.update' | 'settings.rollback' = 'settings.update',
   ): Promise<SettingsDocumentView> {
     const defs = this.defs(id);
     const before = (await this.store.load(id)) ?? emptyDocument();
@@ -85,7 +89,7 @@ export class SettingsService {
     });
     if (!saved) throw new SettingsError('CONFIG_VERSION_CONFLICT');
     await this.audit.append(actor, {
-      action: 'settings.update',
+      action,
       targetType: 'settings',
       targetId: id,
       diff: changedKeys(before.overrides, next, change.comment),
@@ -145,13 +149,8 @@ function changedKeys(
   after: Readonly<Record<string, SettingOverride>>,
   comment: string | undefined,
 ): unknown {
-  const keys = new Set([...Object.keys(before), ...Object.keys(after)]);
-  const changes: Record<string, { before: SettingOverride | null; after: SettingOverride | null }> =
-    {};
-  for (const key of keys) {
-    const b = before[key] ?? null;
-    const a = after[key] ?? null;
-    if (JSON.stringify(b) !== JSON.stringify(a)) changes[key] = { before: b, after: a };
-  }
+  const changes = Object.fromEntries(
+    overrideChanges(before, after).map((c) => [c.key, { before: c.before, after: c.after }]),
+  );
   return { changes, comment: comment ?? null };
 }

@@ -6,16 +6,17 @@
  * Responsibility: the public matches in the lobby or running (06 §3.1 `GET /matches`), a field
  *                 to go to a match by its code, for hosts (`match.create`) a form to open a
  *                 match of a registered game, and in development builds the way to the Quick
- *                 Test. Signed-out visitors are asked to sign in or register.
- * Depends on:     react, @smg/contracts, ../shell/*, ../components/fields
+ *                 Test, and the lobby's chat room (07 §2). Signed-out visitors are asked to
+ *                 sign in or register.
+ * Depends on:     react, @smg/contracts, ../chat/ChatPanel, ../shell/*, ../components/fields
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/02-game-guess-the-number.md §2; docs/spec/06-data-model-api-realtime.md §3.1
  */
 import type { GameInfoView, MatchSummaryView } from '@smg/contracts';
 import { lazy, Suspense, useEffect, useState, type ReactElement, type SyntheticEvent } from 'react';
 
+import { ChatPanel } from '../chat/ChatPanel.js';
 import { NumberField, TextField } from '../components/fields.js';
-
 import { api, ApiError } from '../shell/http.js';
 import { hrefOf, navigate } from '../shell/router.js';
 import { useSession } from '../shell/session.js';
@@ -24,6 +25,8 @@ import { useSession } from '../shell/session.js';
 const QuickTestLink = import.meta.env.DEV
   ? lazy(() => import('../shell/DevTools.js').then((m) => ({ default: m.QuickTestLink })))
   : null;
+
+const LOBBY = { kind: 'lobby' } as const;
 
 function OpenMatch(): ReactElement {
   const [games, setGames] = useState<readonly GameInfoView[]>([]);
@@ -162,6 +165,7 @@ export function Lobby({ dev }: { readonly dev: boolean }): ReactElement {
         )}
       </section>
       {can('match.create') ? <OpenMatch /> : null}
+      <ChatPanel target={LOBBY} />
     </div>
   );
 }

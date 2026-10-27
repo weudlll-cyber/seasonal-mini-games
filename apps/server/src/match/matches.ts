@@ -5,12 +5,13 @@
  *
  * Responsibility: the match lobby of 02 §2: a host opens a match for a registered game with
  *                 a six-character code without look-alikes; players join up to its limit
- *                 and leave; a player picks a season team; the match is `open` once a round
+ *                 and leave, or staff kick them (they cannot join again); a player picks a season team; the match is `open` once a round
  *                 was created, and ends `closed` or `aborted`. Display names for player keys
  *                 (bots keep their key); the match's team standings. Matches are never
  *                 deleted (06 §2.3).
  * Depends on:     node:crypto, ../db/pool
- * Used by:        ./play, ../http/routes/matches, ../realtime/*, ../dev/quickTest
+ * Used by:        ./play, ../http/routes/matches, ../http/routes/adminRounds, ../realtime/*,
+ *                 ../dev/quickTest
  * Spec:           docs/spec/02-game-guess-the-number.md §2; docs/spec/06-data-model-api-realtime.md §2.1, §2.2, §3.1
  */
 import { randomInt } from 'node:crypto';
@@ -187,6 +188,20 @@ export async function leaveMatch(pool: DbPool, matchId: string, playerKey: strin
      WHERE match_id = $1 AND player_key = $2 AND state = 'active'`,
     [matchId, playerKey],
   );
+}
+
+// Staff only (06 §3.2): true when an active player was kicked.
+export async function kickPlayer(
+  pool: DbPool,
+  matchId: string,
+  playerKey: string,
+): Promise<boolean> {
+  const r = await pool.query(
+    `UPDATE smg.match_players SET state = 'kicked', left_at = now()
+     WHERE match_id = $1 AND player_key = $2 AND state = 'active'`,
+    [matchId, playerKey],
+  );
+  return r.rowCount === 1;
 }
 
 export async function setTeam(

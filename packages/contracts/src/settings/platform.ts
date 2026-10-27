@@ -3,15 +3,16 @@
  * @module contracts/settings
  * @brief  The platform's settings documents: every key with default, min, max, who and effect.
  *
- * Responsibility: the catalogue of spec 08 §4–§6 as data, so the server validates with it
+ * Responsibility: the catalogue of spec 08 §4–§6 as data (with ./security and ./chat), so the server validates with it
  *                 and the admin app renders it; one array of definitions per document.
  *                 Game settings live in each game module (games/<game>/src/settings).
- * Depends on:     @smg/game-sdk (SettingDef), ./security
+ * Depends on:     @smg/game-sdk (SettingDef), ./chat, ./security
  * Used by:        ../index, apps/server (settings service), apps/admin
  * Spec:           docs/spec/08-admin-settings.md §4, §5 (and §6 through ./security)
  */
 import type { SettingDef } from '@smg/game-sdk';
 
+import { chat } from './chat.js';
 import { rateLimits, security } from './security.js';
 
 const GAME_ADMIN = 'settings.game.edit';
@@ -223,6 +224,7 @@ export const PLATFORM_SETTINGS: Readonly<Record<string, readonly SettingDef[]>> 
   matchmaking,
   seasons,
   integrations,
+  chat,
   security,
   rate_limits: rateLimits,
 };

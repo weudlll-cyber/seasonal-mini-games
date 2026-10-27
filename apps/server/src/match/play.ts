@@ -10,7 +10,8 @@
  *                 the players connected right now, the host among them (O16, 02 §4); host end and
  *                 abort; team choice, locked while a round counts down or runs (TEAMS_LOCKED);
  *                 joining and leaving (leaving ends a round whose roster all left, "no players
- *                 left"); every change of players, teams or status is told to listeners.
+ *                 left"); staff kick a player, who leaves the same way and whose guesses the
+ *                 running round refuses from then on; every change of players, teams or status is told to listeners.
  * Depends on:     node:crypto, @smg/application (settings), ../round/*, ../seasons/seasons,
  *                 ./matches, ./presence, ../db/pool
  * Used by:        ../http/routes/*, ../realtime/intents, ../dev/quickTest
@@ -32,6 +33,7 @@ import {
   activePlayers,
   currentRoundId,
   joinMatch,
+  kickPlayer,
   leaveMatch,
   setMatchStatus,
   setTeam,
@@ -184,9 +186,22 @@ export class Play {
   // Leaving ends a running round once no roster player is left in the match (02 §8.3).
   async leave(match: MatchRow, playerKey: string): Promise<void> {
     await leaveMatch(this.pool, match.id, playerKey);
+    await this.departed(match, null);
+  }
+
+  // Staff (06 §3.2): false when the player is not active in the match.
+  async kick(match: MatchRow, playerKey: string): Promise<boolean> {
+    if (!(await kickPlayer(this.pool, match.id, playerKey))) return false;
+    await this.departed(match, playerKey);
+    return true;
+  }
+
+  private async departed(match: MatchRow, kicked: string | null): Promise<void> {
     this.changed(match.id);
     const round = await this.runningRound(match);
-    if (round === null || round.status() === 'created') return;
+    if (round === null) return;
+    if (kicked !== null) round.exclude(kicked);
+    if (round.status() === 'created') return;
     const active = new Set((await activePlayers(this.pool, match.id)).map((p) => p.playerKey));
     if (!round.rosterKeys().some((k) => active.has(k)))
       await round.run({ type: 'end', reason: 'noPlayers' });

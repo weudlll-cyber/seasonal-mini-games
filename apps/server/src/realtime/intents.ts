@@ -11,9 +11,11 @@
  *                 match.watch / match.unwatch (at most 3 matches, a match player also joins
  *                 their own room and counts as connected, the host joins the host room),
  *                 time.sync, team.choose (an account with match.join, as over HTTP),
- *                 round.start / round.end / round.abort for the host.
+ *                 round.start / round.end / round.abort for the host, and the chat's
+ *                 chat.join / chat.leave / chat.send (./chatIntents).
  *                 Adapted from Bingo's intents.ts.
- * Depends on:     zod, socket.io (types), ../auth/rateLimit, ../match/*, ./gateway (types)
+ * Depends on:     zod, socket.io (types), ../auth/rateLimit, ../match/*, ./chatIntents,
+ *                 ./gateway (types)
  * Used by:        ./gateway
  * Spec:           docs/spec/06-data-model-api-realtime.md §4.1–§4.3; docs/spec/05-security-threat-model.md §5
  */
@@ -24,6 +26,7 @@ import { z } from 'zod';
 import { RateLimiter } from '../auth/rateLimit.js';
 import { activePlayers, findMatch, matchById, type MatchRow } from '../match/matches.js';
 import { PlayError } from '../match/play.js';
+import { chatIntent } from './chatIntents.js';
 import type { GatewayDeps, SocketData } from './gateway.js';
 
 export interface IntentContext {
@@ -60,6 +63,9 @@ export const INTENT_TYPES = [
   'round.start',
   'round.end',
   'round.abort',
+  'chat.join',
+  'chat.leave',
+  'chat.send',
 ] as const;
 export type IntentType = (typeof INTENT_TYPES)[number];
 const isIntentType = (t: string): t is IntentType =>
@@ -135,6 +141,10 @@ async function dispatch(
     case 'round.end':
     case 'round.abort':
       return hostRound(ctx, t, roundData.parse(data));
+    case 'chat.join':
+    case 'chat.leave':
+    case 'chat.send':
+      return chatIntent(ctx, t, data);
   }
 }
 

@@ -1,0 +1,47 @@
+/**
+ * @file   apps/web/src/round/switch.css
+ * @module web/round
+ * @brief  The "Live | Chat" switch in the round's side column.
+ *
+ * Responsibility: two tabs in the line of the Live heading, and panels that take the Live
+ *                 list's free height and scroll inside themselves, so the chat never makes
+ *                 the round view taller than the screen. Colours only from the tokens.
+ * Depends on:     @smg/ui tokens, ./round.css (.round-feed)
+ * Used by:        ./RoundSide
+ * Spec:           docs/spec/07-integration.md §2; docs/spec/02-game-guess-the-number.md §12
+ */
+
+.round-tabs {
+  flex: none;
+  display: flex;
+  gap: var(--space-1);
+  margin-bottom: var(--space-1);
+}
+
+.round-tab {
+  padding: 0 0.25rem;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--font-size-lead);
+  font-weight: var(--font-weight-strong);
+  cursor: pointer;
+}
+
+.round-tab[aria-selected='true'] {
+  color: var(--color-text);
+  border-bottom-color: var(--season, var(--color-accent));
+}
+
+.round-tabpanel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.round-tabpanel[hidden] {
+  display: none;
+}

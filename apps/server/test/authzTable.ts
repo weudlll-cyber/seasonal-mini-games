@@ -59,12 +59,16 @@ const SUSPEND: readonly Role[] = ['admin', 'securityAdmin'];
 const ROLE_ASSIGN: readonly Role[] = ['admin'];
 const SEASONS: readonly Role[] = ['admin', 'gameAdmin'];
 const ADJUST: readonly Role[] = ['admin', 'moderator'];
+const ABORT: readonly Role[] = ['admin', 'moderator', 'gameAdmin'];
+// match.manage: organizers (in their own match only, checked after the match is found) and staff.
+const MANAGE: readonly Role[] = ['otherHost', 'host', 'admin', 'gameAdmin'];
+const MODERATE: readonly Role[] = ['admin', 'moderator', 'gameAdmin'];
 
 // Which match or round a path names: `:code` is the host's match with the running round
 // (`spare`: a second match of the host, kept for closing, joining and leaving); `:id` of a
 // round is the ended round of that match (`live`: the running round).
 export interface RouteCase {
-  readonly method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  readonly method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   readonly path: string;
   readonly body?: object;
   readonly allow: readonly Role[];
@@ -83,6 +87,8 @@ export const PERIOD = ':periodId';
 export const ROUTES: readonly RouteCase[] = [
   { method: 'GET', path: '/', allow: ALL },
   { method: 'GET', path: '/admin', allow: ALL, web: true },
+  { method: 'GET', path: '/admin/', allow: ALL, web: true },
+  { method: 'GET', path: '/admin/*', allow: ALL, web: true },
   { method: 'GET', path: '/*', allow: ALL, web: true },
   { method: 'GET', path: '/healthz', allow: ALL },
   { method: 'GET', path: '/readyz', allow: ALL },
@@ -113,6 +119,24 @@ export const ROUTES: readonly RouteCase[] = [
   { method: 'GET', path: '/api/v1/admin/settings', allow: ADMIN_VIEW },
   { method: 'GET', path: '/api/v1/admin/settings/:id', allow: ADMIN_VIEW },
   { method: 'PUT', path: '/api/v1/admin/settings/:id', body: {}, allow: ADMIN_VIEW },
+  { method: 'GET', path: '/api/v1/admin/settings/:id/versions', allow: ADMIN_VIEW },
+  { method: 'POST', path: '/api/v1/admin/settings/:id/rollback', body: {}, allow: ADMIN_VIEW },
+  { method: 'GET', path: '/api/v1/admin/rounds/live', allow: ADMIN_VIEW },
+  { method: 'GET', path: '/api/v1/admin/rounds/:id', allow: ADMIN_VIEW },
+  { method: 'POST', path: '/api/v1/admin/rounds/:id/abort', body: {}, allow: ABORT },
+  { method: 'POST', path: '/api/v1/admin/matches/:id/kick', body: {}, allow: MANAGE },
+  {
+    method: 'POST',
+    path: '/api/v1/admin/rounds/:id/results/:playerKey/remove',
+    body: {},
+    allow: ADJUST,
+  },
+  { method: 'GET', path: '/api/v1/me/2fa', allow: ACCOUNTS },
+  // Setup draws an unconfirmed factor only; the code routes refuse the empty body.
+  { method: 'POST', path: '/api/v1/me/2fa/setup', body: {}, allow: ACCOUNTS },
+  { method: 'POST', path: '/api/v1/me/2fa/confirm', body: {}, allow: ACCOUNTS },
+  { method: 'POST', path: '/api/v1/me/2fa/step-up', body: {}, allow: ACCOUNTS },
+  { method: 'POST', path: '/api/v1/me/2fa/disable', body: {}, allow: ACCOUNTS },
   { method: 'GET', path: '/api/v1/admin/audit', allow: AUDIT },
   { method: 'GET', path: '/api/v1/admin/audit/verify', allow: AUDIT },
   { method: 'GET', path: '/api/v1/admin/accounts', allow: ADMIN_VIEW },
@@ -170,6 +194,32 @@ export const ROUTES: readonly RouteCase[] = [
     body: { periodId: NO_ONE, displayName: 'nobody-here', delta: 1, reason: 'authz matrix' },
     allow: ADJUST,
   },
+  // The chat (builtin provider): watchers read, chat.send reports, chat.moderate moderates.
+  // Every target is missing (NO_ONE) or every body invalid, so nothing changes.
+  { method: 'GET', path: '/api/v1/chat/config', allow: ALL },
+  { method: 'GET', path: '/api/v1/chat/rooms/lobby', allow: WATCHERS },
+  { method: 'GET', path: '/api/v1/chat/rooms/match/:code', allow: WATCHERS },
+  { method: 'GET', path: '/api/v1/chat/rooms/:roomId/messages', allow: WATCHERS },
+  {
+    method: 'POST',
+    path: '/api/v1/chat/messages/:id/report',
+    body: { reason: 'authz' },
+    allow: JOINERS,
+  },
+  { method: 'GET', path: '/api/v1/admin/moderation/reports', allow: MODERATE },
+  {
+    method: 'POST',
+    path: '/api/v1/admin/moderation/reports/:id/resolve',
+    body: {},
+    allow: MODERATE,
+  },
+  { method: 'POST', path: '/api/v1/admin/chat/messages/:id/delete', body: {}, allow: MODERATE },
+  { method: 'GET', path: '/api/v1/admin/chat/sanctions', allow: MODERATE },
+  { method: 'POST', path: '/api/v1/admin/chat/sanctions', body: {}, allow: MODERATE },
+  { method: 'POST', path: '/api/v1/admin/chat/sanctions/:id/lift', body: {}, allow: MODERATE },
+  { method: 'PATCH', path: '/api/v1/admin/chat/rooms/:id', body: {}, allow: MODERATE },
+  { method: 'GET', path: '/api/v1/admin/profanity-lists', allow: MODERATE },
+  { method: 'PUT', path: '/api/v1/admin/profanity-lists/:id', body: {}, allow: MODERATE },
 ];
 
 // What a path's parameters are filled with, besides the match and round.
@@ -177,6 +227,8 @@ export const PARAMS: Readonly<Record<string, string>> = {
   ':displayName': 'dev-host',
   ':day': 'x',
   ':token': 'y',
+  ':roomId': NO_ONE,
+  ':playerKey': 'nobody-here',
   '*': 'index.html',
 };
 export const ACCOUNT_PARAM = NO_ONE;
@@ -201,6 +253,10 @@ export const INTENTS: Readonly<
   'round.end': { data: ({ round }) => ({ roundId: round }), allow: HOST },
   // Without a reason: the host's call is answered VALIDATION_FAILED.
   'round.abort': { data: ({ round }) => ({ roundId: round }), allow: HOST },
+  // A room that does not exist: allowed callers are answered NOT_FOUND.
+  'chat.join': { data: () => ({ roomId: NO_ONE }), allow: WATCHERS },
+  'chat.leave': { data: () => ({ roomId: NO_ONE }), allow: SESSION },
+  'chat.send': { data: () => ({ roomId: NO_ONE, text: 'authz' }), allow: JOINERS },
 };
 
 // The refusals: HTTP status with its code; an intent answers the code alone.
@@ -228,5 +284,7 @@ export const CSRF_WRITES: readonly RouteCase[] = ROUTES.filter((r) =>
     'POST /api/v1/rounds/:id/guesses',
     'POST /api/v1/admin/halving-days',
     'POST /api/v1/admin/leaderboard-adjustments',
+    'POST /api/v1/chat/messages/:id/report',
+    'POST /api/v1/admin/chat/sanctions',
   ].includes(`${r.method} ${r.path}`),
 );

@@ -8,8 +8,8 @@
  *                 (SIGN_IN_REQUIRED, FORBIDDEN, NOT_THE_HOST, CSRF_INVALID, NOT_IN_ROUND; a
  *                 refused socket handshake), each call with a fresh session. A route or intent
  *                 missing from the tables fails the test, so a new one cannot go in unreviewed;
- *                 the routes of a server with the built client and of a build without SMG_DEV
- *                 are listed too. The host plays their round with a player view while an admin
+ *                 the routes of a server with the built client and admin app, and of a build
+ *                 without SMG_DEV, are listed too. The host plays their round with a player view while an admin
  *                 who is not on the roster watches and may not guess (S10). One write per route
  *                 group is refused without the CSRF token or with another session's. Matches
  *                 are aborted and the accounts made here removed at the end.
@@ -71,11 +71,13 @@ describe('the authorization matrix: HTTP routes', () => {
     const { harness } = w.kit;
     const app = await buildOn(harness.pool, harness.container.getConnectionUri(), {
       SMG_WEB_DIR: web,
+      SMG_ADMIN_DIR: web,
     });
     try {
       expect(registeredRoutes(app.fastify)).toEqual(listed(() => true));
       for (const route of ROUTES.filter((r) => r.web === true)) {
-        for (const role of ROLES) expect((await callAs(w, role, route, { app })).status).toBe(200);
+        const ok = route.path === '/admin' ? 302 : 200; // on to /admin/, the admin app
+        for (const role of ROLES) expect((await callAs(w, role, route, { app })).status).toBe(ok);
       }
     } finally {
       await app.fastify.close();
@@ -146,7 +148,7 @@ describe('the authorization matrix: WS intents', () => {
   it('answers an intent nobody listed with UNKNOWN_INTENT', async () => {
     const socket = w.kit.open(w.kit.clients.host.cookie);
     expect(await w.kit.connected(socket)).toBe('ok');
-    expect((await w.kit.send(socket, 'chat.send', {})).code).toBe('UNKNOWN_INTENT');
+    expect((await w.kit.send(socket, 'chat.whisper', {})).code).toBe('UNKNOWN_INTENT');
     socket.disconnect();
   });
 });

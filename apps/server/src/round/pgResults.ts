@@ -6,9 +6,12 @@
  * Responsibility: in the transaction that appends RoundEnded (06 §2.4): one row per roster
  *                 player (a place only for placed players, unique per round), one per team,
  *                 and the match and team standings recomputed over every ended round of the
- *                 match with the domain's tie order (02 §9, 03 §5).
+ *                 match with the domain's tie order (02 §9, 03 §5). A result staff removed
+ *                 (smg.round_result_removals, 06 §3.2) is left out: its points, and the team
+ *                 point of its team when it was the round's winner; the other players keep
+ *                 their places. `refreshMatch` recomputes both after a removal.
  * Depends on:     pg, @smg/domain (results, standings)
- * Used by:        ./pgRoundStore
+ * Used by:        ./pgRoundStore, ../admin/liveRounds
  * Spec:           docs/spec/06-data-model-api-realtime.md §2.4, §2.5; docs/spec/02-game-guess-the-number.md §9
  */
 import { scoredPlayers, standings, type PlayerResult, type TeamResult } from '@smg/domain';
@@ -46,6 +49,10 @@ export async function writeResults(
       [roundId, t.team, t.members, t.points, t.won],
     );
   }
+  await refreshMatch(c, matchId);
+}
+
+export async function refreshMatch(c: pg.PoolClient, matchId: string): Promise<void> {
   await refreshStandings(c, matchId);
   await refreshTeamStandings(c, matchId);
 }
@@ -59,7 +66,9 @@ async function refreshStandings(c: pg.PoolClient, matchId: string) {
     solve_at: Date | null;
   }>(
     `SELECT rr.player_key, rr.place, rr.points, rr.solve_at FROM smg.round_results rr
-     JOIN smg.rounds r ON r.id = rr.round_id WHERE r.match_id = $1`,
+     JOIN smg.rounds r ON r.id = rr.round_id WHERE r.match_id = $1
+       AND NOT EXISTS (SELECT 1 FROM smg.round_result_removals x
+                       WHERE x.round_id = rr.round_id AND x.player_key = rr.player_key)`,
     [matchId],
   );
   const results: PlayerResult[] = rows.rows.map((r) => ({
@@ -85,8 +94,14 @@ async function refreshStandings(c: pg.PoolClient, matchId: string) {
 // Team standings: 1 point per round win (O12), ties by wins, then by the earliest win (03 §5).
 async function refreshTeamStandings(c: pg.PoolClient, matchId: string) {
   const rows = await c.query<{ team: string; points: number; won: boolean; ended_at: Date | null }>(
-    `SELECT t.team, t.points, t.won, r.ended_at FROM smg.round_team_results t
-     JOIN smg.rounds r ON r.id = t.round_id WHERE r.match_id = $1`,
+    `SELECT t.team, CASE WHEN w.removed THEN 0 ELSE t.points END AS points,
+            t.won AND NOT w.removed AS won, r.ended_at
+     FROM smg.round_team_results t JOIN smg.rounds r ON r.id = t.round_id
+     CROSS JOIN LATERAL (SELECT EXISTS (
+       SELECT 1 FROM smg.round_result_removals x JOIN smg.round_results rr
+         ON rr.round_id = x.round_id AND rr.player_key = x.player_key
+       WHERE x.round_id = t.round_id AND rr.team = t.team AND rr.place = 1) AS removed) w
+     WHERE r.match_id = $1`,
     [matchId],
   );
   const scores = rows.rows.map((r) => ({

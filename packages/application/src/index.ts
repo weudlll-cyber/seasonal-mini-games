@@ -12,6 +12,7 @@
  */
 export { SettingsError, SettingsService } from './settings/settingsService.js';
 export type { NewVersion, SettingsStore, StoredDocument } from './settings/ports.js';
+export { overrideChanges } from './settings/diff.js';
 export type { AuditActor, AuditEntry, AuditLog } from './audit/ports.js';
 export {
   chooseRoundSettings,

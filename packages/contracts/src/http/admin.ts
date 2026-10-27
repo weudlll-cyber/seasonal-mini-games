@@ -1,14 +1,17 @@
 /**
  * @file   packages/contracts/src/http/admin.ts
  * @module contracts/http
- * @brief  Wire shapes of the admin API: settings documents, audit log, accounts, abuse scores.
+ * @brief  Wire shapes of the admin API: settings documents with their versions, audit log,
+ *         accounts, abuse scores, live rounds with staff actions, and two-factor sign-in.
  *
  * Responsibility: zod schemas for every admin request body (the server validates with
  *                 them, unknown keys refused) and the types of the answers the admin app
- *                 renders. One source for both sides.
+ *                 renders. One source for both sides. A step-up (Bingo 11 §1) is a fresh TOTP
+ *                 check of the session: `TwoFactorCodeBody` both enrols and steps up.
  * Depends on:     zod, @smg/game-sdk (setting types)
  * Used by:        ../index, apps/server (admin routes), apps/admin
- * Spec:           docs/spec/06-data-model-api-realtime.md §3.2; docs/spec/08-admin-settings.md §1
+ * Spec:           docs/spec/06-data-model-api-realtime.md §3.2; docs/spec/08-admin-settings.md §1;
+ *                 Bingo 11 §1, §3, Bingo 05 §2.1, §3
  */
 import type { SettingDef, SettingOverride, SettingValue } from '@smg/game-sdk';
 import { z } from 'zod';
@@ -97,3 +100,71 @@ export interface AbuseRowView {
     readonly detail: string;
   }[];
 }
+
+// One version of a settings document and what it changed against the version before.
+export interface SettingsVersionView {
+  readonly version: number;
+  readonly createdAt: string;
+  readonly by: string | null;
+  readonly comment: string | null;
+  readonly changes: readonly {
+    readonly key: string;
+    readonly before: SettingOverride | null;
+    readonly after: SettingOverride | null;
+  }[];
+}
+
+// Rollback writes a new version with the overrides of `toVersion` (history is never rewritten).
+export const SettingsRollbackBody = z
+  .object({
+    version: z.number().int().min(1),
+    toVersion: z.number().int().min(1),
+    comment: z.string().trim().min(3).max(200),
+  })
+  .strict();
+
+// A running round as staff see it in the live list (06 §3.2): no secret, no seed.
+export interface LiveRoundView {
+  readonly roundId: string;
+  readonly matchId: string;
+  readonly matchCode: string;
+  readonly matchTitle: string;
+  readonly host: string | null;
+  readonly status: 'created' | 'countdown' | 'open';
+  readonly season: string;
+  readonly secretMode: 'shared' | 'individual';
+  readonly halving: boolean;
+  readonly roster: number;
+  readonly connected: number;
+  readonly guesses: number;
+  readonly opensAt: number | null;
+  readonly endsAt: number | null;
+}
+
+export const KickBody = z
+  .object({ playerKey: z.string().min(1).max(64), reason: z.string().trim().min(3).max(200) })
+  .strict();
+
+export interface TwoFactorStatusView {
+  readonly enrolled: boolean;
+  // A step-up is needed for the next admin write (none or older than 10 minutes).
+  readonly stepUpNeeded: boolean;
+  readonly lastCheckAt: string | null;
+  readonly recoveryCodesLeft: number;
+}
+
+// Enrolment: the secret once, for the authenticator app (otpauth URI and base32 text).
+export interface TwoFactorSetupView {
+  readonly otpauthUri: string;
+  readonly secret: string;
+}
+
+// A six-digit code of the authenticator app, or one recovery code.
+export const TwoFactorCodeBody = z
+  .object({
+    code: z
+      .string()
+      .trim()
+      .regex(/^(\d{6}|[a-z0-9]{4}-[a-z0-9]{4})$/),
+  })
+  .strict();

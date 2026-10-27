@@ -6,7 +6,8 @@
  * Responsibility: what routes, the gateway, the scheduler and the bots may do with a round
  *                 without knowing its game: a guess (parsed with the game's action schema,
  *                 refused as INVALID_ACTION otherwise, never queued), lifecycle commands
- *                 stamped with the processing time, views per viewer, frames per audience,
+ *                 stamped with the processing time, players staff kicked (their guesses are
+ *                 refused as NOT_IN_ROUND, never queued), views per viewer, frames per audience,
  *                 the fairness check, and draining before shutdown.
  * Depends on:     @smg/application (verify), @smg/domain (types), @smg/game-sdk (GameEntry),
  *                 ./actor, ./pgRoundStore (types), ./views
@@ -39,6 +40,8 @@ export interface LiveRound {
   status(): RoundStatus;
   rosterKeys(): string[];
   guess(playerKey: string, raw: unknown): Promise<Reply>;
+  // A kicked player: no further guess of theirs reaches the round.
+  exclude(playerKey: string): void;
   run(cmd: LifecycleCommand): Promise<Reply>;
   view(viewerKey: string | null): unknown;
   // The game's own player view of a roster player while the round runs (development bots).
@@ -57,6 +60,7 @@ export function liveRound<S, A, E, Cfg, Sec>(
 ): LiveRound {
   const module = entry.module;
   const state = () => actor.current.state;
+  const excluded = new Set<string>();
   return {
     id: actor.roundId,
     matchId: actor.matchId,
@@ -64,6 +68,7 @@ export function liveRound<S, A, E, Cfg, Sec>(
     status: () => state().status,
     rosterKeys: () => Object.keys(state().roster),
     guess: (playerKey, raw) => {
+      if (excluded.has(playerKey)) return Promise.resolve({ ok: false, code: 'NOT_IN_ROUND' });
       const parsed = module.actionSchema.safeParse(raw);
       if (!parsed.success) return Promise.resolve({ ok: false, code: 'INVALID_ACTION' });
       return actor.submit((now) => ({
@@ -72,6 +77,9 @@ export function liveRound<S, A, E, Cfg, Sec>(
         receivedAt: now,
         action: parsed.data,
       }));
+    },
+    exclude: (playerKey) => {
+      excluded.add(playerKey);
     },
     run: (cmd) => actor.submit((now) => ({ ...cmd, at: now })),
     view: (viewerKey) =>
