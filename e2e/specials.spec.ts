@@ -79,11 +79,15 @@ test('journey 4: a halving round halves the range and refuses a guess outside it
   await call(admin, 'POST', '/admin/halving-days', { day: today, token: 'E2E' });
   let code: string | null = null;
   try {
-    code = await quickRound(p, { season: 'spring', halving: true, rangeHigh: 1_000 });
+    // The helper's range of 1–1 000 000: with 1–1 000 the bot, which searches inside the
+    // halved range, could win the round before the journey was done (night run 2, N1).
+    code = await quickRound(p, { season: 'spring', halving: true });
     await expect(p.page.getByTestId('round-banner')).toContainText('Halving round');
-    // After the first halving (fast profile: 6 s) the range has 500 numbers.
+    // After the first halving (fast profile: 6 s) the range has 500 000 numbers.
     const bounds = async (): Promise<[number, number]> => {
-      const text = (await p.page.getByTestId('range').textContent()) ?? '';
+      // Bounded: once the round is over the range is gone, and an unbounded read would make
+      // the poll report the last range it saw instead of saying so.
+      const text = (await p.page.getByTestId('range').textContent({ timeout: 2_000 })) ?? '';
       const m = /between (-?\d+) and (-?\d+)/.exec(text);
       return m === null ? [0, -1] : [Number(m[1]), Number(m[2])];
     };
@@ -95,9 +99,9 @@ test('journey 4: a halving round halves the range and refuses a guess outside it
         },
         { timeout: 20_000 },
       )
-      .toBe(500);
+      .toBe(500_000);
     const [low] = await bounds();
-    const outside = low > 1 ? 1 : 1_000;
+    const outside = low > 1 ? 1 : 1_000_000;
     const before = await p.page.getByTestId('own-guesses').locator('li').count();
     await expect(p.page.getByTestId('guess-button')).toBeEnabled();
     await p.page.getByTestId('guess-input').fill(String(outside));

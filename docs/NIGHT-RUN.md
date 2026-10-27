@@ -1,8 +1,55 @@
-# Night run 1 — morning sheet
+# Morning sheet
+
+## Night 2 (2026-10-27)
+
+N1 and N2 on `feat/guess-the-number`; N3 onwards on `night/2026-10-27`, created from `feat/guess-the-number` after N2. Nothing is merged. Updated after every piece.
+
+### Status
+
+| Piece                                                          | State   | Branch                | Commit |
+| -------------------------------------------------------------- | ------- | --------------------- | ------ |
+| N1 Journey 4 intermittent failure                              | running | feat/guess-the-number | —      |
+| N2 Compact phone bar, text contrast                            | running | feat/guess-the-number | —      |
+| N3 Phase 4 standings, boards, profiles, verification page      | open    | night/2026-10-27      | —      |
+| N4 Phase 2 authorization matrix and security suites            | open    | night/2026-10-27      | —      |
+| N5 Phase 5 chat `none` / `builtin`, moderation                 | open    | night/2026-10-27      | —      |
+| N6 Phase 6 admin remainder                                     | open    | night/2026-10-27      | —      |
+| N7 Phase 7 handoff, embed, test host page, webhooks, read API  | open    | night/2026-10-27      | —      |
+| N8 Phase 8 installer, `smg` CLI, backups, observability, guide | open    | night/2026-10-27      | —      |
+
+### Needs the owner
+
+- Nothing new yet. The Night 1 items below still stand.
+
+### N1 — Journey 4 (halving) failed now and then
+
+**Cause, measured.** Both failures were the development bot winning the journey's round before the journey was done. Nothing was late or missed in the client or the server.
+
+- `e2e/specials.spec.ts:82` (before the fix): journey 4 overrode its helper's range of 1–1 000 000 with `rangeHigh: 1_000`. The helper's own comment says the large range is there "so the bots take long". In a halving round the bot also searches inside the halved range, so with 1–1 000 it can find the number in a handful of guesses, sometimes in the first seconds.
+- `e2e/specials.spec.ts:86` (before the fix): the range was read with an unbounded `textContent()`. When the round ends, the range leaves the page, the read waits, and `expect.poll` reports the last value it saw. That is the "Received: 1000" of the WebKit failure: an experiment with the element removed gives exactly that message.
+
+**Evidence.**
+
+- CI Chromium (`28f1342`, run 40373033627): the page snapshot shows "bot-01 found it first — after 3 guesses" (506 lower, 206 lower, 143 correct). The round ended about 40 ms after the journey's out-of-range guess, so there was no refusal to show. (Night 1's report called this "step 1"; it was the refusal step.)
+- CI WebKit (`8d51c72`, run 40387410141, attempt 1): no trace there (WebKit's timing project records none). The message matches a range that has left the page.
+- Twenty Chromium and twenty WebKit runs with traces and a timeline per run: the server's event log, every socket frame at the page, every state load and every change of the range text. Server firing after the round opened: 5 988–6 013 ms (due 6 000). Frame at the page after the firing: Chromium 35–86 ms, WebKit 58–262 ms. Range text in the DOM after the firing: Chromium 322–378 ms, WebKit 348–415 ms. Frames missed: none in 40 runs (no seq gaps). Result: Chromium 20/20 passed, WebKit 19/20. The one failure (WebKit run 6) was the bot solving 8.9 s after the halving, while traced WebKit took 2.6 s to perform the journey's click.
+- So: not the page missing an update, not the server sending late, but the test reading a round that the bot could end.
+
+**Fix (in the test, where the cause is; no check removed, no timeout raised, no retry).** Journey 4 uses the helper's range of 1–1 000 000 and waits for 500 000 numbers. The bot's chance of winning within the journey falls from a few in a hundred to well under one in ten thousand. The range is read with a 2 s bound, so a finished round now fails with what happened, not with a stale number.
+
+**After the fix.** Twenty and twenty again with traces: Chromium 20/20 passed, WebKit 20/20 passed. (A first WebKit batch after the fix is not counted: it ran while my N2 edits were hot-reloading into the dev server, and its run 1 lost its cleanup to the stopped batch's last test, which deleted the shared halving day; its 19 others passed.)
+
+| File                   | Lines     |
+| ---------------------- | --------- |
+| `e2e/specials.spec.ts` | 112 → 116 |
+
+Reused: the helper's own range (`quickRound`). Removed: the range override. Noticed, left alone: in a halving round the bot's search uses the halved range; that is how a player plays too.
+
+## Night 1 (2026-10-24 to 2026-10-26)
 
 Branch `feat/guess-the-number` (not merged; for the owner to look at first). Updated after every piece.
 
-## Status
+### Status
 
 | Piece                               | State | Commit                                           |
 | ----------------------------------- | ----- | ------------------------------------------------ |
@@ -16,7 +63,7 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 | P8 E2E, load gate, play-through     | done  | `ddbc324`                                        |
 | P9 Dev servers and hand-over        | done  | see `git log` on this branch                     |
 
-## Needs the owner
+### Needs the owner
 
 - (q) Winning-margin window, proposal `round.marginWindowS` 2 s (0.5–10 s): [OPEN.md](OPEN.md).
 - Spec conflict 1, check order of a guess (02 §5.1 against 04 §4.1–§4.2), built as 02 §5.1: [OPEN.md](OPEN.md). Please confirm.
@@ -25,7 +72,7 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 - (r) Load gate: 500 players pass except event-loop lag (87 ms, limit 50); 1 000 players fail the acknowledgement time (p95 4.6 s, limit 300 ms) on this laptop. Proposal: measure on the reference VPS first: [OPEN.md](OPEN.md).
 - E2E journey 8 (embedded handoff) is blocked: the handoff is roadmap phase 7, not built yet.
 
-## P2 — Foundation
+### P2 — Foundation
 
 **Built** (spec 04 §2.1, names per 04 §2.2):
 
@@ -243,7 +290,7 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 
 </details>
 
-## P3 — Guess The Number domain and application
+### P3 — Guess The Number domain and application
 
 **Built** (spec 02, 04 §4–§5):
 
@@ -324,7 +371,7 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 
 </details>
 
-## P4 — Server
+### P4 — Server
 
 **Built** (spec 06, 04 §5):
 
@@ -413,7 +460,7 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 
 </details>
 
-## P5 — Seasonal specials
+### P5 — Seasonal specials
 
 **Built** (spec 03):
 
@@ -499,7 +546,7 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 
 </details>
 
-## P6 — Player and host client
+### P6 — Player and host client
 
 **Built** (02 §11, §12; 03 §6; look and wording as Bingo 01 §13):
 
@@ -588,7 +635,7 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 
 </details>
 
-## P7 — Admin client
+### P7 — Admin client
 
 **Built** (spec 08; T47): `apps/admin` as a Vite and React app on port 5411 (it was a shell).
 
@@ -644,7 +691,7 @@ Branch `feat/guess-the-number` (not merged; for the owner to look at first). Upd
 
 </details>
 
-## P8 — E2E, load gate, play-through
+### P8 — E2E, load gate, play-through
 
 **Built** (spec 09 §4, §5):
 
@@ -741,7 +788,7 @@ At 1 000 players the one server thread is saturated, so the 781 guesses accepted
 
 </details>
 
-## P9 — Dev servers and hand-over
+### P9 — Dev servers and hand-over
 
 **Running:** `pnpm dev` on this machine: server http://127.0.0.1:3910 (ready), player client http://127.0.0.1:5410, admin app http://127.0.0.1:5411, PostgreSQL on 5510 (Docker `smg-dev`).
 
