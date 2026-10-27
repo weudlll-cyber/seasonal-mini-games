@@ -23,6 +23,32 @@ N1 and N2 on `feat/guess-the-number`; N3 onwards on `night/2026-10-27`, created 
 - Found in Bingo (read-only, not changed): `sbr status` stops before the first backup exists (`find` under `pipefail` in `ops/sbr`); the same line in `smg` was fixed.
 - The Night 1 items below still stand.
 
+### Handover (Night 2)
+
+**Running on this machine:** `pnpm dev` on `feat/guess-the-number`: server http://127.0.0.1:3910, player client http://127.0.0.1:5410, admin app http://127.0.0.1:5411, PostgreSQL on 5510 (Docker `smg-dev`). The server runs the commit of this handover (named below). The development database also holds the tables of the night branch's migrations 0006–0010; `feat/guess-the-number` starts on it unchanged, because its migrator checks only the files it knows.
+
+**Quick Test:** http://127.0.0.1:5410/#/quick-test. Open "Dev sign-in" in the header (on a phone during a round: "Menu"), choose "Sign in as player 1", open the Quick Test. You host the round and play it.
+
+| What to look at                                                  | Seed               | Fields                                                |
+| ---------------------------------------------------------------- | ------------------ | ----------------------------------------------------- |
+| A shown range from −500 to 500                                   | `meadow` (Spring)  | Lowest number −500, Highest number 500, Show range on |
+| A hidden range                                                   | `frost` (Autumn)   | Show range off                                        |
+| A Frost round ("answer arriving", now in the darker winter step) | `blossom` (Winter) | defaults                                              |
+
+On `feat/guess-the-number` (N1, N2): the round view on a phone has the one-row app bar with "Menu"; every text keeps 4.5:1 in light and dark (the Frost line, a disabled Guess button); journey 4 no longer races the dev bot. Screenshots: `reports/round-view-2/`.
+
+**On `night/2026-10-27`** (N3–N8, not merged; for a later look, after `git switch night/2026-10-27` and a restart of `pnpm dev`):
+
+- **Boards:** "Leaderboard" in the navigation, with season and all-time boards and the team board beside them. A player's profile is reached from a name. Under a round's result, "Fairness proof", then "Verify this round", checks the seed in the browser.
+- **Chat:** in the lobby, on the match page, and in the round view behind the "Live | Chat" switch. As the admin (Dev sign-in "admin"), "Moderate" on a line mutes or bans.
+- **The admin app** at http://127.0.0.1:5411: Live (running rounds, staff abort, kick, removing a result), Accounts (roles), a settings document's History with Rollback, Two-factor, Moderation (reports, sanctions, rooms, word lists).
+- **Embedding:** `pnpm exec playwright test -c e2e/playwright.config.ts e2e/embed.spec.ts --project chromium-timing --no-deps` starts the test host page on 5420 and shows the single sign-on inside the iframe.
+- **Operations:**
+  - `docs/operator-guide.md`.
+  - `bash ops/test/installer-test.sh all` runs the installer from a fresh Ubuntu container to a running instance, then beside Bingo (20–40 minutes).
+  - `pnpm drill:dev` runs the restore drill against the dev database.
+- **Owner questions:** (t)–(y) in `docs/OPEN.md`, each built as proposed.
+
 ### N1 — Journey 4 (halving) failed now and then
 
 **Cause, measured.** Both failures were the development bot winning the journey's round before the journey was done. Nothing was late or missed in the client or the server.
