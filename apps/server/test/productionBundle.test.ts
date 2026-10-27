@@ -7,7 +7,8 @@
  *                 into temporary folders and fail when any shipped file (source maps
  *                 aside: they quote the sources, comments included) contains a marker of
  *                 development code: the Quick Test route or page, the dev sign-in menu,
- *                 or the development server address.
+ *                 or the development server address; and the server bundle imports no
+ *                 workspace package (@smg/*, @smg-game/*), which the image does not ship.
  * Depends on:     vitest, node:child_process, node:fs
  * Spec:           Bingo 09 §1; Bingo 03 §13
  */
@@ -54,6 +55,12 @@ describe('production bundles', () => {
     run(SERVER_DIR, ['build.mjs', dir]);
     expect(readdirSync(dir)).toContain('main.js');
     expect(devMarkersIn(dir)).toEqual([]);
+    // The image ships no workspace package: each must be inside the bundle (a game's sources
+    // are TypeScript, which Node refuses to load from node_modules; found by the installer test).
+    for (const entry of ['main.js', 'cli.js']) {
+      const text = readFileSync(path.join(dir, entry), 'utf8');
+      expect(text, entry).not.toMatch(/from\s*["']@smg(-game)?\//);
+    }
   }, 60_000);
 
   it('leave Quick Test, the dev sign-in and the dev server address out of the client', () => {

@@ -5,8 +5,8 @@
  *
  * Responsibility: bundle src/main.ts (the server) and src/cli.ts (the operator commands,
  *                 e.g. create-super) with esbuild into dist/ (or the folder given as the
- *                 first argument), the workspace packages (@smg/*, TypeScript sources)
- *                 inlined and the npm dependencies left as imports for node_modules,
+ *                 first argument), the workspace packages (@smg/* and the games @smg-game/*,
+ *                 TypeScript sources) inlined and the npm dependencies left as imports for node_modules,
  *                 without comments or spacing; the
  *                 development modules (src/dev/*, the Quick Test and dev sign-in routes)
  *                 replaced by ./devStub.mjs; copy src/db/migrations to <out>/migrations,
@@ -22,13 +22,15 @@ import { build } from 'esbuild';
 
 const out = process.argv[2] ?? 'dist';
 
-// npm packages stay imports for node_modules; the workspace packages (@smg/*, TypeScript
-// sources) are compiled into the bundle.
+// npm packages stay imports for node_modules; the workspace packages (@smg/* and the games,
+// @smg-game/*: TypeScript sources Node cannot load from node_modules) are compiled into the
+// bundle.
+const WORKSPACE = /^@smg(-game)?\//;
 const npmExternal = {
   name: 'npm-external',
   setup(builder) {
     builder.onResolve({ filter: /^[^./]/ }, (args) =>
-      args.path.startsWith('@smg/') ? undefined : { path: args.path, external: true },
+      WORKSPACE.test(args.path) ? undefined : { path: args.path, external: true },
     );
   },
 };
