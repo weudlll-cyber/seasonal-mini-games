@@ -148,6 +148,10 @@ describe('a shared round', () => {
     await checkResult(id, secret, p2);
     await checkStorage(id, code, p2);
     await checkFrames(s, id, p1);
+    // The guesses reached the metrics with their results (06 §4.6).
+    const metrics = await kit.harness.built.fastify.inject({ method: 'GET', url: '/metrics' });
+    expect(metrics.body).toMatch(/smg_guess_total\{result="ok"\} [2-9]/);
+    expect(metrics.body).toMatch(/smg_guess_total\{result="COOLDOWN_ACTIVE"\} [1-9]/);
   }, 60_000);
 });
 

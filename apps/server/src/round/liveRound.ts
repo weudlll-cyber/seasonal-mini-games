@@ -50,6 +50,8 @@ export interface LiveRound {
   frames(events: readonly StoredEvent[], held: ReadonlySet<number>): Frames;
   verify(log: readonly StoredEvent[]): Verified<unknown>;
   drain(): Promise<void>;
+  // Unanswered items in its queue (metrics).
+  queued(): number;
   // Drains and stops the round's timers (shutdown).
   close(): Promise<void>;
 }
@@ -100,6 +102,7 @@ export function liveRound<S, A, E, Cfg, Sec>(
         log.map((e) => e.event as RoundEvent<E, A, Cfg>),
       ),
     drain: () => actor.drain(),
+    queued: () => actor.queued,
     close: async () => {
       await actor.drain();
       actor.stop();

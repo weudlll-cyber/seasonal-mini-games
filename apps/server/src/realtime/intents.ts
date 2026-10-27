@@ -71,6 +71,7 @@ export type IntentType = (typeof INTENT_TYPES)[number];
 const isIntentType = (t: string): t is IntentType =>
   (INTENT_TYPES as readonly string[]).includes(t);
 
+const syncData = z.object({ rttMs: z.number().min(0).max(60_000).optional() });
 const MAX_ROOMS = 3;
 const perSocket = new WeakMap<Socket, RateLimiter>();
 
@@ -134,7 +135,7 @@ async function dispatch(
     case 'match.unwatch':
       return unwatch(ctx, codeData.parse(data).code);
     case 'time.sync':
-      return { ok: true, data: { serverTime: Date.now() } };
+      return timeSync(ctx, data);
     case 'team.choose':
       return chooseTeam(ctx, teamData.parse(data));
     case 'round.start':
@@ -157,6 +158,14 @@ async function chooseTeam(ctx: IntentContext, body: z.infer<typeof teamData>): P
   if (match === null) return { ok: false, code: 'NOT_FOUND' };
   const ok = await ctx.deps.play.chooseTeam(match, accountId, body.team);
   return ok ? { ok: true } : { ok: false, code: 'NOT_IN_MATCH' };
+}
+
+// The server's clock; the client sends the round trip it measured at its previous sync,
+// which becomes a metric (06 §4.6).
+function timeSync(ctx: IntentContext, data: unknown): Answer {
+  const rtt = syncData.safeParse(data);
+  if (rtt.success && rtt.data.rttMs !== undefined) ctx.deps.sockets?.rtt(rtt.data.rttMs / 1_000);
+  return { ok: true, data: { serverTime: Date.now() } };
 }
 
 async function matchOr(ctx: IntentContext, code: string): Promise<MatchRow | null> {

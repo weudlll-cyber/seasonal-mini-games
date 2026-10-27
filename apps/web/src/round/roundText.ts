@@ -25,6 +25,8 @@ const CODES: Readonly<Record<string, string>> = {
   ROUND_RUNNING: 'A round is running already.',
   ROUND_SETTINGS_INVALID: 'These round settings are not allowed.',
   NOT_A_HALVING_DAY: 'Today is not a halving day.',
+  MAINTENANCE: 'The games are being updated: new matches and rounds can start again shortly.',
+  MATCH_TOO_LARGE: 'That many players are not allowed.',
   IN_SEASON_UNAVAILABLE: 'In Season is not available right now. Pick a season.',
   NOT_ENOUGH_PLAYERS: 'Not enough connected players to start.',
   TEAMS_LOCKED: 'Teams are locked while a round runs.',

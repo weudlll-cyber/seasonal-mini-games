@@ -29,6 +29,20 @@ afterAll(async () => {
   await stopHarness(harness);
 }, SUITE_TIMEOUT_MS);
 
+const METRICS = [
+  'smg_guess_total',
+  'smg_guess_ack_seconds',
+  'smg_round_queue_depth',
+  'smg_round_batch_seconds',
+  'smg_special_lag_seconds',
+  'smg_frost_delivery_lag_seconds',
+  'smg_ws_rtt_seconds',
+  'smg_rounds',
+  'smg_season_feed_age_seconds',
+  'smg_ws_connections',
+  'smg_ws_intents_total',
+];
+
 describe('server integration', () => {
   it('answers /healthz with status ok', async () => {
     const response = await app().inject({ method: 'GET', url: '/healthz' });
@@ -46,7 +60,13 @@ describe('server integration', () => {
     const response = await app().inject({ method: 'GET', url: '/metrics' });
     expect(response.statusCode).toBe(200);
     expect(response.headers['content-type']).toContain('text/plain');
-    expect(response.body).toContain('smg_matches_running');
+    // The catalogue of 06 §4.6 and Bingo 08 §6; the readyz above counts as an HTTP request.
+    for (const name of METRICS) {
+      expect(response.body, name).toContain(`# TYPE ${name} `);
+    }
+    expect(response.body).toMatch(
+      /smg_http_requests_total\{method="GET",route="\/readyz",status="200"\} \d+/,
+    );
   });
 
   it('renders the placeholder page with the dev badge in non-production', async () => {

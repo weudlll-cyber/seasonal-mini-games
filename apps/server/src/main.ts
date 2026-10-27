@@ -38,6 +38,7 @@ async function main(): Promise<void> {
     path: `${env.SMG_BASE_PATH}ws`,
     sessionEnds: app.sessionEnds,
     roomFrameMs: env.SMG_ROOM_FRAME_MS,
+    sockets: app.metrics.sockets,
   });
   const recovered = await app.runtime.start();
   if (recovered > 0) app.fastify.log.info({ rounds: recovered }, 'recovered running rounds');

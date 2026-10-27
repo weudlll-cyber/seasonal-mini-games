@@ -221,7 +221,7 @@ cmd_admin() {
 
 cmd_maintenance() {
   case ${2:-} in
-    on) compose "$1" exec -T app touch /data/maintenance && info "maintenance on: no new matches; running ones finish" ;;
+    on) compose "$1" exec -T app touch /data/maintenance && info "maintenance on: no new matches or rounds; running rounds finish" ;;
     off) compose "$1" exec -T app rm -f /data/maintenance && info "maintenance off" ;;
     *) die "usage: smg maintenance on|off" ;;
   esac

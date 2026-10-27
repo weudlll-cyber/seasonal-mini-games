@@ -113,6 +113,17 @@ export class Rounds {
     return ids.length;
   }
 
+  // The rounds in memory by status and their unanswered items, for the metrics scrape.
+  stats(): { byStatus: Record<string, number>; queued: number } {
+    const byStatus: Record<string, number> = {};
+    let queued = 0;
+    for (const r of this.live.values()) {
+      byStatus[r.status()] = (byStatus[r.status()] ?? 0) + 1;
+      queued += r.queued();
+    }
+    return { byStatus, queued };
+  }
+
   onCommitted(listener: Listener): void {
     this.listeners.push(listener);
   }

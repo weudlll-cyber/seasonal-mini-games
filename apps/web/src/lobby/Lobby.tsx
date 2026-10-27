@@ -8,7 +8,8 @@
  *                 match of a registered game, and in development builds the way to the Quick
  *                 Test, and the lobby's chat room (07 §2). Signed-out visitors are asked to
  *                 sign in or register.
- * Depends on:     react, @smg/contracts, ../chat/ChatPanel, ../shell/*, ../components/fields
+ * Depends on:     react, @smg/contracts, ../chat/ChatPanel, ../shell/*, ../components/fields,
+ *                 ../round/roundText (refusals)
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/02-game-guess-the-number.md §2; docs/spec/06-data-model-api-realtime.md §3.1
  */
@@ -17,6 +18,7 @@ import { lazy, Suspense, useEffect, useState, type ReactElement, type SyntheticE
 
 import { ChatPanel } from '../chat/ChatPanel.js';
 import { NumberField, TextField } from '../components/fields.js';
+import { codeText } from '../round/roundText.js';
 import { api, ApiError } from '../shell/http.js';
 import { hrefOf, navigate } from '../shell/router.js';
 import { useSession } from '../shell/session.js';
@@ -46,10 +48,9 @@ function OpenMatch(): ReactElement {
         navigate({ name: 'match', code: m.code });
       })
       .catch((error: unknown) => {
-        const tooLarge = error instanceof ApiError && error.code === 'MATCH_TOO_LARGE';
-        setProblem(
-          tooLarge ? 'That many players are not allowed.' : 'The match could not be opened.',
-        );
+        const code = error instanceof ApiError ? error.code : '';
+        const worded = code === 'MATCH_TOO_LARGE' || code === 'MAINTENANCE';
+        setProblem(worded ? codeText(code) : 'The match could not be opened.');
       });
   };
   return (

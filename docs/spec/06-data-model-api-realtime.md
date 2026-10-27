@@ -206,4 +206,4 @@ Budget at 500 players and a 3 s cooldown: about 170 accepted guesses a second fo
 
 ### 4.6 Metrics (in addition to Bingo 06 §10)
 
-`smg_guess_total{result}`, `smg_guess_ack_seconds`, `smg_round_queue_depth`, `smg_round_batch_seconds`, `smg_special_lag_seconds`, `smg_frost_delivery_lag_seconds`, `smg_ws_rtt_seconds`, `smg_rounds{status}`, `smg_season_feed_age_seconds`.
+`smg_guess_total{result}`, `smg_guess_ack_seconds`, `smg_round_queue_depth`, `smg_round_batch_seconds`, `smg_special_lag_seconds`, `smg_frost_delivery_lag_seconds`, `smg_ws_rtt_seconds` (as the client measured it at its previous clock sync), `smg_rounds{status}`, `smg_season_feed_age_seconds` (−1 before the first good answer). From Bingo 08 §6: `smg_http_requests_total{method,route,status}`, `smg_http_duration_seconds{method}`, `smg_ws_connections`, `smg_ws_intents_total{type,result}`. Labels are route patterns and codes, never match codes or accounts (DECISIONS T78).

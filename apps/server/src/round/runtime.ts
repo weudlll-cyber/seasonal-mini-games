@@ -6,7 +6,7 @@
  * Responsibility: the store with the sealed-seed key and the league rules, the rounds with the actor options of
  *                 08 §7 (`SMG_ENGINE_BATCH_MS`, `SMG_ENGINE_BATCH_MAX`) and the queue bound
  *                 setting, presence, the match use cases, the guess limits and the
- *                 scheduler; the game documents `game.<id>` for the settings service.
+ *                 scheduler, with the metrics' observer when given; the game documents `game.<id>` for the settings service.
  *                 `start` recovers every running round and starts the timers; `stop` stops
  *                 them and waits until every open batch is written.
  * Depends on:     @smg/application, @smg-game/registry, ../config/*, ../db/pool, ../league/rules,
@@ -25,6 +25,7 @@ import { Play } from '../match/play.js';
 import { Presence } from '../match/presence.js';
 import { leagueRules } from '../league/rules.js';
 import { GuessLimits } from './guessLimits.js';
+import type { RoundObserver } from './actor.js';
 import { PgRoundStore } from './pgRoundStore.js';
 import { Rounds } from './rounds.js';
 import { Seasons } from '../seasons/seasons.js';
@@ -51,6 +52,7 @@ export function createRoundRuntime(
   env: Env,
   pool: DbPool,
   settings: SettingsService,
+  observe?: RoundObserver,
 ): RoundRuntime {
   const store = new PgRoundStore(pool, roundKeyFrom(env), () => leagueRules(settings));
   const limits = new GuessLimits(settings, pool);
@@ -59,6 +61,7 @@ export function createRoundRuntime(
     batchMax: env.SMG_ENGINE_BATCH_MAX,
     queueBound: () => limits.queueBound(),
     now: () => Date.now(),
+    ...(observe === undefined ? {} : { observe }),
   });
   const devFeed = env.SMG_DEV ? (env.SMG_DEV_FEED_URL ?? null) : null;
   const seasons = new Seasons(pool, settings, devFeed);

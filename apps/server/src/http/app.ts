@@ -34,6 +34,7 @@ import { featuresFrom } from '../config/features.js';
 import type { DbPool } from '../db/pool.js';
 import { createRoundRuntime, gameDocuments, type RoundRuntime } from '../round/runtime.js';
 import { registerProblemDetails } from './plugins/problem.js';
+import { maintenanceFlag, registerMaintenance } from './plugins/maintenance.js';
 import { registerSecurityHeaders } from './plugins/securityHeaders.js';
 import { registerAdminAccounts } from './routes/adminAccounts.js';
 import { registerAdminAudit } from './routes/adminAudit.js';
@@ -98,6 +99,17 @@ function createFastify(env: Env): FastifyInstance {
   });
 }
 
+// The metrics read at scrape time: the rounds in memory and the In Season feed's age.
+function attachSources(metrics: MetricsHandle, runtime: RoundRuntime): void {
+  metrics.attach({
+    rounds: () => runtime.rounds.stats(),
+    feedAgeSeconds: async () => {
+      const at = (await runtime.seasons.feedState()).fetchedAt;
+      return at === null ? null : (Date.now() - at) / 1_000;
+    },
+  });
+}
+
 export async function buildApp(deps: AppDeps): Promise<App> {
   const fastify = createFastify(deps.env);
   // Development features only with SMG_DEV=1 (fail closed).
@@ -108,6 +120,8 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   // The CSP lets the host's chat room load in a frame while the provider is hostEmbed.
   await registerSecurityHeaders(fastify, hostChatOrigin(settings));
   registerProblemDetails(fastify);
+  // `smg maintenance on`: no new match or round while the flag file exists (10 §6).
+  registerMaintenance(fastify, maintenanceFlag(deps.env.SMG_DATA_DIR));
   const metrics = createMetrics();
   registerMetrics(fastify, metrics);
   registerHealth(fastify, deps.pool);
@@ -138,7 +152,8 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   registerAdminSettings(fastify, settings, deps.pool);
   registerAdminAudit(fastify, audit);
   registerAdminAccounts(fastify, { pool: deps.pool, audit, sessionEnds });
-  const runtime = createRoundRuntime(deps.env, deps.pool, settings);
+  const runtime = createRoundRuntime(deps.env, deps.pool, settings, metrics.rounds);
+  attachSources(metrics, runtime);
   const { play, limits, store } = runtime;
   registerMatchRoutes(fastify, { play, settings, pool: deps.pool });
   registerRoundRoutes(fastify, { play, limits, store, pool: deps.pool });

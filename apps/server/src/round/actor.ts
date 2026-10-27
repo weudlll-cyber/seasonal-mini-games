@@ -12,8 +12,10 @@
  *                 (04 §5.3). A failed commit drops that batch and every later one (their
  *                 senders get INTERNAL) and the actor rebuilds itself from the database,
  *                 answering ROUND_BUSY meanwhile.
- *                 More than `queueBound` unanswered items answer ROUND_BUSY (05 §5).
- * Depends on:     @smg/application (RoundSession), @smg/domain (types), ./pgRoundStore, ./batch
+ *                 More than `queueBound` unanswered items answer ROUND_BUSY (05 §5). An optional
+ *                 observer gets guess answers, commit times and tick and Frost lag (06 §4.6).
+ * Depends on:     @smg/application (RoundSession), @smg/domain (types), ./pgRoundStore, ./batch,
+ *                 ./frost
  * Used by:        ./rounds
  * Spec:           docs/spec/04-software-architecture.md §5.2, §5.3; docs/spec/06-data-model-api-realtime.md §4.5
  */
@@ -21,14 +23,24 @@ import type { RoundSession } from '@smg/application';
 import type { Reply, RoundCommand, RoundEvent, RoundState } from '@smg/domain';
 
 import { batchWrite, eventType } from './batch.js';
-import { FrostHold } from './frost.js';
+import { deliverAtOf, FrostHold } from './frost.js';
 import type { PgRoundStore, StoredEvent } from './pgRoundStore.js';
+
+// What the actor reports while it works (metrics, 06 §4.6); seconds throughout.
+export interface RoundObserver {
+  guess(result: string, seconds: number): void;
+  batch(seconds: number): void;
+  tickLag(seconds: number): void;
+  frostLag(seconds: number): void;
+}
 
 export interface ActorOptions {
   readonly batchMs: number;
   readonly batchMax: number;
   readonly queueBound: () => number;
   readonly now: () => number;
+  // Metrics (06 §4.6): guesses with their answer time, batch commits, tick and Frost lag.
+  readonly observe?: RoundObserver;
 }
 
 interface Waiter {
@@ -111,6 +123,11 @@ export class RoundActor<S, A, E, Cfg, Sec> {
     return this.session;
   }
 
+  // Items handed in and not answered yet (the queue depth, 06 §4.6).
+  get queued(): number {
+    return this.unanswered;
+  }
+
   // The seq of the last event processed (committed or in the open batch).
   get seq(): number {
     return this.lastSeq;
@@ -123,12 +140,22 @@ export class RoundActor<S, A, E, Cfg, Sec> {
       return Promise.resolve({ ok: false, code: 'ROUND_BUSY' });
     }
     const now = this.deps.options.now();
-    const result = this.session.handle(build(now));
+    const command = build(now);
+    const result = this.session.handle(command);
     for (const event of result.events) this.stamp(event, now);
     this.unanswered += 1;
     this.armDue();
+    const observe = this.deps.options.observe;
     return new Promise((resolve) => {
-      this.open.waiters.push({ reply: result.reply, resolve });
+      // A guess is timed from receive to its answer, which follows the commit (04 §5.3).
+      const answer =
+        command.type === 'guess' && observe !== undefined
+          ? (reply: Reply) => {
+              observe.guess(reply.ok ? 'ok' : reply.code, (this.deps.options.now() - now) / 1_000);
+              resolve(reply);
+            }
+          : resolve;
+      this.open.waiters.push({ reply: result.reply, resolve: answer });
       if (this.open.events.length >= this.deps.options.batchMax) this.close();
       else
         this.timer ??= setTimeout(() => {
@@ -153,7 +180,10 @@ export class RoundActor<S, A, E, Cfg, Sec> {
     const timer = setTimeout(
       () => {
         this.due = null;
-        void this.submit((now) => ({ type: 'tick', at: now }));
+        void this.submit((now) => {
+          this.deps.options.observe?.tickLag(Math.max(0, now - at) / 1_000);
+          return { type: 'tick', at: now };
+        });
       },
       Math.max(0, at - this.deps.options.now()),
     );
@@ -164,6 +194,8 @@ export class RoundActor<S, A, E, Cfg, Sec> {
   // Frost: the due held events are delivered; the log records it as HeldDelivered.
   private release(due: StoredEvent[]): void {
     const now = this.deps.options.now();
+    for (const e of due)
+      this.deps.options.observe?.frostLag(Math.max(0, now - (deliverAtOf(e) ?? now)) / 1_000);
     const upTo = due.at(-1)?.seq ?? 0;
     this.stamp({ type: 'HeldDelivered', upTo, at: now }, now);
     this.open.released.push(...due);
@@ -189,9 +221,11 @@ export class RoundActor<S, A, E, Cfg, Sec> {
     try {
       if (this.broken) throw new Error('an earlier batch failed');
       if (batch.events.length > 0 && batch.state !== null) {
+        const started = this.deps.options.now();
         await this.deps.store.append(
           batchWrite(this.roundId, this.matchId, batch.events, batch.state),
         );
+        this.deps.options.observe?.batch((this.deps.options.now() - started) / 1_000);
         this.deps.committed(batch.events, { held: this.frost.hold(batch.events), late: false });
       }
       if (batch.released.length > 0)

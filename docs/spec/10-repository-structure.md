@@ -104,6 +104,6 @@ Differences:
 
 - **Website install type:** the website's Caddy forwards `/games/mini-games/*` (HTTP and WebSocket) to the app's port 3100 on the website's Docker network. The installer writes the route snippet to `/opt/smg/website-mini-games.caddy`. `SMG_BASE_PATH=/games/mini-games/`.
 - **Next to Bingo on one server:** both can be installed as the website type on the same server. They keep separate databases, containers, volumes, env files and backup timers. Two **standalone** installs cannot share a server, because both need ports 80 and 443. The installer's port check refuses, as Bingo's does (Bingo `ops/lib/host.sh`).
-- **Maintenance:** `smg maintenance on` stops new matches and new rounds. Running rounds finish.
+- **Maintenance:** `smg maintenance on` stops new matches and new rounds (503 `MAINTENANCE` for opening a match, creating a round and the Quick Test). Running rounds finish (DECISIONS T77).
 - **Updates during play:** `smg update` waits up to 10 minutes for open rounds to end, or with `--now` restarts at once. Open rounds then resume from their event log ([04](04-software-architecture.md) §5.3); cooldowns and Frost-held answers are rebuilt.
 - **Secrets generated at install:** `SMG_ROUND_KEY` (32 random bytes) in addition to Bingo's set.

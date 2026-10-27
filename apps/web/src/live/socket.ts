@@ -6,7 +6,8 @@
  * Responsibility: open `/ws` namespace `/play` once (WebSocket only), send intents
  *                 `{ t, seq, data }` and wait for their answer, reconnect with a fresh cookie
  *                 after a sign-in or sign-out, and measure the clock offset with three
- *                 `time.sync` round trips, keeping the shortest (06 §4.1). The offset is used
+ *                 `time.sync` round trips, keeping the shortest (06 §4.1); each sync carries the
+ *                 round trip measured before it, which the server keeps as a metric (06 §4.6). The offset is used
  *                 for display only and never sent. Adapted from Bingo's game/socket.ts.
  * Depends on:     socket.io-client, ../shell/http
  * Used by:        ./useMatch, ./useRound, ../shell/session
@@ -63,13 +64,16 @@ export function serverNow(): number {
 
 async function syncClock(): Promise<void> {
   let best: { rtt: number; offset: number } | null = null;
+  let last: number | undefined;
   for (let i = 0; i < 3; i += 1) {
     const sent = Date.now();
-    const answer = await intent('time.sync', {});
+    // The previous round trip goes along: the server keeps it as a metric only.
+    const answer = await intent('time.sync', last === undefined ? {} : { rttMs: last });
     const back = Date.now();
     const serverTime = (answer.data as { serverTime?: number } | undefined)?.serverTime;
     if (!answer.ok || serverTime === undefined) continue;
     const rtt = back - sent;
+    last = rtt;
     if (best === null || rtt < best.rtt) best = { rtt, offset: serverTime - (sent + back) / 2 };
   }
   if (best !== null) offsetMs = best.offset;

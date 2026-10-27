@@ -30,6 +30,7 @@ import type { SessionEnds } from '../auth/sessionEnds.js';
 import { findSession, type Session } from '../auth/sessions.js';
 import type { Chat } from '../chat/chat.js';
 import type { DbPool } from '../db/pool.js';
+import type { MetricsHandle } from '../http/routes/metrics.js';
 import type { Play } from '../match/play.js';
 import type { GuessLimits } from '../round/guessLimits.js';
 import { inOrder } from './inOrder.js';
@@ -55,6 +56,8 @@ export interface GatewayDeps {
   readonly sessionEnds: SessionEnds;
   // The window over which a round's room frames are merged (./roomFrames, T49).
   readonly roomFrameMs: number;
+  // Metrics (Bingo 08 §6): open sockets, intents by type and result, clock-sync round trips.
+  readonly sockets?: MetricsHandle['sockets'];
 }
 
 export interface SocketData {
@@ -151,9 +154,19 @@ function sendCommitted(
   }
 }
 
+// The ack, counting the answer by intent type and result first (metrics).
+function counted(deps: GatewayDeps, type: string, ack?: Ack): Ack {
+  return (answer) => {
+    const a = answer as { ok?: boolean; code?: string };
+    deps.sockets?.intent(type, a.ok === true ? 'ok' : (a.code ?? 'unknown'));
+    ack?.(answer);
+  };
+}
+
 function connect(socket: Socket, deps: GatewayDeps): void {
   const ctx: IntentContext = { socket, data: socket.data as SocketData, deps };
   void socket.join(`session:${ctx.data.session.id}`);
+  deps.sockets?.connected(1);
   const later = inOrder(async (t: Exclude<IntentType, 'guess'>, data: unknown, ack?: Ack) => {
     const answer = await handleIntent(ctx, t, data).catch((error: unknown) => {
       console.error('[smg] intent failed:', error);
@@ -164,17 +177,19 @@ function connect(socket: Socket, deps: GatewayDeps): void {
   socket.on('intent', (raw: unknown, ack?: Ack) => {
     const read = envelopeOf(ctx, raw);
     if (!read.ok) {
-      ack?.(read);
+      counted(deps, 'invalid', ack)(read);
       return;
     }
+    const answer = counted(deps, read.t, ack);
     if (read.t === 'guess') {
       // Queued now, answered after its batch committed (04 §5.2, §5.3).
-      void guessIntent(ctx, read.data).then((answer) => ack?.(answer));
+      void guessIntent(ctx, read.data).then(answer);
       return;
     }
-    void later(read.t, read.data, ack);
+    void later(read.t, read.data, answer);
   });
   socket.on('disconnect', () => {
+    deps.sockets?.connected(-1);
     for (const [matchId, key] of ctx.data.rooms)
       if (key !== null) {
         deps.play.presence.leave(matchId, key);

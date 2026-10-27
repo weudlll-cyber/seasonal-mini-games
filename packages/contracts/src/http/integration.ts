@@ -10,7 +10,8 @@
  *                 (a webhook's secret is shown once, at creation); the webhook events of 07
  *                 §3.2 and their payload envelope; and the answers of the public read API
  *                 (07 §1: open matches, the current round of a match, the current season board
- *                 with the team board, a round's result), which carry display names only.
+ *                 with the team board, a round's result), which carry display names only, and
+ *                 the embed config the client checks postMessage origins against.
  * Depends on:     zod, ./boards, ./play (shapes reused)
  * Used by:        ../index, apps/server, apps/admin, apps/embed-loader (message names)
  * Spec:           docs/spec/07-integration.md §1, §3.2, §4; Bingo 07 §2.2, §3, §5, §7
@@ -91,6 +92,29 @@ export const WebhookEndpointBody = z
     enabled: z.boolean(),
   })
   .strict();
+
+// The answer to creating an endpoint: the signing secret, shown this once and stored sealed.
+export interface WebhookEndpointCreated extends WebhookEndpointView {
+  readonly secret: string;
+}
+
+// One delivery of an event to an endpoint, for the admin's view.
+export interface WebhookDeliveryView {
+  readonly id: string;
+  readonly event: WebhookEvent;
+  readonly status: 'pending' | 'delivered' | 'failed';
+  readonly attempts: number;
+  readonly lastError: string | null;
+  readonly createdAt: string;
+  readonly deliveredAt: string | null;
+}
+
+// GET /public/embed-config: where an embedding page may sit and which may hand off a sign-in;
+// the client checks postMessage origins against it.
+export interface EmbedConfigView {
+  readonly origins: readonly string[];
+  readonly handoffOrigins: readonly string[];
+}
 
 // The body of every webhook POST; signed with HMAC-SHA256 over `${timestamp}.${body}`.
 export interface WebhookPayload {
