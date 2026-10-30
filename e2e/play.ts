@@ -121,8 +121,9 @@ export async function hostRound(
   await hostMenu(host);
   const form = host.page.getByTestId('round-form');
   for (const [label, value] of Object.entries(fields)) {
-    // Not exact: a select's accessible name also holds its options' text.
-    const field = form.getByLabel(label);
+    // Not exact: a select's accessible name also holds its options' text. Only controls: the ±
+    // button beside a number field is named after it ("Change the sign: Highest number").
+    const field = form.getByLabel(label).and(form.locator('input, select'));
     if ((await field.evaluate((el) => el.tagName)) === 'SELECT') await field.selectOption(value);
     else await field.fill(value);
   }
