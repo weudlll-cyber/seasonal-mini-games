@@ -136,13 +136,6 @@
   font-size: var(--font-size-lead);
 }
 
-.gtn-sign {
-  flex: none;
-  width: var(--hit-target);
-  padding: 0;
-  font-size: var(--font-size-lead);
-}
-
 /* The large Guess button */
 .gtn-go {
   flex: none;

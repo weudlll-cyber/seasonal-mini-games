@@ -67,7 +67,7 @@
 8. Embedded: JWT handoff from a test host page signs the player in; an origin that is not on the allowlist is refused (Bingo journey 7).
 9. Accessibility: axe checks on lobby, round and result; keyboard-only guessing.
 10. Hidden range (owner decision 19), 1280 × 720: the round view says "Any whole number", no bound is on the page, a guess far outside the range is answered, and the result reveals the range.
-11. Negative bounds (owner decision 18), 390 × 844: a range from −500 to 500 is shown, the ± button makes a typed number negative, the guess is answered, and the round plays to its result.
+11. Negative bounds (owner decision 18), 390 × 844: the Quick Test form takes "-500" typed key by key into Lowest number and starts a round from −500 to 500 (T69); the range is shown, the ± button makes a typed number negative, the guess is answered, and the round plays to its result.
 
 Journeys 1, 10 and 11 also check that the round view fits the screen: `document.scrollingElement.scrollHeight` is at most `window.innerHeight` ([02](02-game-guess-the-number.md) §12).
 

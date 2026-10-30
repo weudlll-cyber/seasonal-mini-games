@@ -6,16 +6,17 @@
  * Responsibility: journey 10 (1280 × 720) — with the range hidden the round view says "Any
  *                 whole number", no bound is anywhere on the page, a guess far outside the
  *                 range is accepted and answered, and the result reveals the range (O19,
- *                 DECISIONS T52, T53). Journey 11 (390 × 844) — a range from −500 to 500 is
- *                 shown, the ± button turns a typed number negative, the guess is answered,
- *                 and the round plays to its result (O18). Both check that the round view fits
+ *                 DECISIONS T52, T53). Journey 11 (390 × 844) — the Quick Test form takes
+ *                 "-500" typed key by key into Lowest number and starts a round from −500 to
+ *                 500, the range is shown, the ± button turns a typed number negative, the
+ *                 guess is answered, and the round plays to its result (O18). Both check that the round view fits
  *                 the screen without a page scrollbar (02 §12) and that every text on it keeps
  *                 4.5:1 in light and dark (./contrast); on the phone the app bar is one row of
  *                 at most 56 px (T67). The Quick Test player hosts and plays (O16).
  * Depends on:     @playwright/test, ./contrast, ./play, ./screens
  * Spec:           docs/spec/02-game-guess-the-number.md §3, §5.1, §12; docs/spec/09-testing-strategy.md §4
  */
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 import { readable } from './contrast.js';
 import { abortMatch, call, closeAll, fitsScreen, hostMenu, person, search } from './play.js';
@@ -64,20 +65,32 @@ test('journey 10: a hidden range reaches no screen and a guess outside it is ans
   }
 });
 
+// The Quick Test form, filled the way a person types: "-500" key by key into Lowest number
+// (a lone "-" used to turn into 0). Returns the code of the match it opened.
+async function quickTestForm(page: Page): Promise<string> {
+  await page.goto('./#/quick-test');
+  const form = page.getByTestId('quick-test');
+  await form.getByLabel('Bots', { exact: true }).fill('1');
+  await form.getByLabel('Cooldown', { exact: true }).fill('3');
+  const low = form.getByLabel('Lowest number', { exact: true });
+  await low.fill('');
+  await low.pressSequentially('-500');
+  await expect(low).toHaveValue('-500');
+  await form.getByLabel('Highest number', { exact: true }).fill('500');
+  await form.getByLabel('Fast specials', { exact: true }).uncheck();
+  await page.getByTestId('start-quick-test').click();
+  await page.waitForURL(/#\/match\/[A-Z0-9]+$/);
+  return new URL(page.url()).hash.split('/').pop() ?? '';
+}
+
 test('journey 11: a range from -500 to 500 takes negative guesses on a phone', async ({
   browser,
 }) => {
   test.setTimeout(150_000);
   const p = await person(browser, 'player-1', PHONE);
-  const started = await call<Started>(p, 'POST', '/dev/quicktest', {
-    bots: 1,
-    cooldownS: 3,
-    rangeLow: -500,
-    rangeHigh: 500,
-    fast: false,
-  });
+  let code = '';
   try {
-    await p.page.goto(`./#/match/${started.matchCode}`);
+    code = await quickTestForm(p.page);
     await expect(p.page.getByTestId('range')).toContainText(
       'The number is somewhere between -500 and 500',
     );
@@ -88,7 +101,7 @@ test('journey 11: a range from -500 to 500 takes negative guesses on a phone', a
     expect(bar?.height ?? Infinity, 'the app bar during a round').toBeLessThanOrEqual(56);
     await readable(p.page, 'round view on a phone');
     await p.page.getByTestId('guess-input').fill('250');
-    await p.page.getByRole('button', { name: 'Change the sign' }).click();
+    await p.page.getByRole('button', { name: 'Change the sign', exact: true }).click();
     await expect(p.page.getByTestId('guess-input')).toHaveValue('-250');
     await p.page.getByTestId('guess-button').click();
     await expect(p.page.getByTestId('own-guesses')).toContainText('-250');
@@ -97,7 +110,7 @@ test('journey 11: a range from -500 to 500 takes negative guesses on a phone', a
       timeout: 15_000,
     });
   } finally {
-    await abortMatch(p, started.matchCode);
+    if (code !== '') await abortMatch(p, code);
     await closeAll([p]);
   }
 });
