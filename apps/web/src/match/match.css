@@ -21,7 +21,8 @@
 }
 
 .match-head h1 {
-  margin: 0 auto 0 0;
+  flex: 1 1 auto;
+  margin: 0;
 }
 
 /* The Host button ends its row also when the head wraps (a phone), so the menu's panel,
