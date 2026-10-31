@@ -7,8 +7,9 @@
  * Responsibility: the range block names the range and the fallen numbers, or "Any whole
  *                 number" while the range is hidden, and nothing narrowed (O17); the player
  *                 panel shows the range and the hint; the input row keeps Guess disabled while
- *                 the player cannot act, takes negative whole numbers (± flips the sign), and
- *                 words the game's own refusal; the spectator and result panels show what their
+ *                 the player cannot act, takes negative whole numbers (± flips the sign),
+ *                 words the game's own refusal, and keeps what was typed across the round
+ *                 opening and while an answer is on its way (T76); the spectator and result panels show what their
  *                 views hold, the result with the range; the views become the list's guess
  *                 rows, own ones pending while Frost holds them (O20, O21); every room event
  *                 has its plain line, and guesses none (they are rows).
@@ -93,6 +94,51 @@ describe('the player panel', () => {
     });
     expect(act).toHaveBeenCalledWith({ value: -5 });
     expect(screen.getByRole('status').textContent).toContain('fell in Leaf Fall');
+  });
+});
+
+describe('the input row keeps what the player typed (T76)', () => {
+  const props = { view, frostDelayMs: null, now: () => 0, season: 'spring' as const };
+
+  it('across the round opening', () => {
+    const { rerender } = render(<GuessInput {...props} act={vi.fn()} canAct={false} />);
+    fireEvent.change(screen.getByTestId('guess-input'), { target: { value: '50' } });
+    rerender(<GuessInput {...props} act={vi.fn()} canAct ring={<span />} />);
+    expect(screen.getByTestId<HTMLInputElement>('guess-input').value).toBe('50');
+    expect(screen.getByTestId<HTMLButtonElement>('guess-button').disabled).toBe(false);
+  });
+
+  it('while the answer to the last guess is on its way', async () => {
+    let answer: (r: { ok: boolean }) => void = () => undefined;
+    const act = vi.fn(
+      () =>
+        new Promise<{ ok: boolean }>((resolve) => {
+          answer = resolve;
+        }),
+    );
+    render(<GuessInput {...props} act={act} canAct />);
+    const field = screen.getByTestId<HTMLInputElement>('guess-input');
+    const button = screen.getByTestId<HTMLButtonElement>('guess-button');
+    fireEvent.change(field, { target: { value: '50' } });
+    fireEvent.click(button);
+    // Guess waits for the answer; the next number is typed meanwhile.
+    expect(button.disabled).toBe(true);
+    fireEvent.change(field, { target: { value: '75' } });
+    await actAsync(() => {
+      answer({ ok: true });
+    });
+    expect(field.value).toBe('75');
+    expect(button.disabled).toBe(false);
+    expect(act).toHaveBeenCalledTimes(1);
+  });
+
+  it('and empties the field once the guess sent is answered', async () => {
+    render(<GuessInput {...props} act={() => Promise.resolve({ ok: true })} canAct />);
+    fireEvent.change(screen.getByTestId('guess-input'), { target: { value: '50' } });
+    await actAsync(() => {
+      fireEvent.click(screen.getByTestId('guess-button'));
+    });
+    expect(screen.getByTestId<HTMLInputElement>('guess-input').value).toBe('');
   });
 });
 

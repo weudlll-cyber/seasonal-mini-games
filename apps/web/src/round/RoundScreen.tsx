@@ -112,7 +112,9 @@ function InputRow({ state, game, viewerKey, now, reload }: PlayProps): ReactElem
     // The game words its own refusals; the platform's are worded here.
     const own = reply.code === undefined ? null : game.text.code(reply.code);
     setRefusal(reply.ok || own !== null ? null : codeText(reply.code, reply.until, serverNow()));
-    void reload();
+    // The answer counts as arrived once the view holds the new cooldown: until then the old
+    // one would show Guess enabled for a send the server refuses (T76).
+    await reload().catch(() => undefined);
     return reply;
   };
   // The cooldown exists only while the round is open.

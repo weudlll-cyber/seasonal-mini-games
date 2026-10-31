@@ -9,9 +9,11 @@
  *                 bottom on a phone): the platform's cooldown ring, a number field that takes
  *                 a minus sign (with the shared ± button of @smg/ui where negative numbers are
  *                 possible, since phone keypads often lack one, T57) and a large Guess button;
- *                 Enter sends. The field takes whole numbers from −1 000 000 000 to
- *                 1 000 000 000 (T53). The game's own refusals are shown in plain words; the
- *                 platform's are shown by the platform.
+ *                 Enter sends. Guess waits while a guess is on its way, and the field is
+ *                 emptied only if it still holds the guess sent, so nothing typed is lost
+ *                 (T76). The field takes whole numbers from −1 000 000 000 to 1 000 000 000
+ *                 (T53). The game's own refusals are shown in plain words; the platform's are
+ *                 shown by the platform.
  * Depends on:     react, @smg/game-sdk (props), @smg/ui (sign toggle),
  *                 @smg-game/guess-the-number (types, limit), ./RangeBar, ./text
  * Used by:        ./index
@@ -40,6 +42,8 @@ function parsed(text: string): number | null {
 function useGuess(act: PlayerPanelProps['act']) {
   const [value, setValue] = useState('');
   const [message, setMessage] = useState<string | null>(null);
+  // A guess on its way: Guess waits for its answer, so the next one is never sent early.
+  const [sending, setSending] = useState(false);
   const submit = (e: SyntheticEvent): void => {
     e.preventDefault();
     const n = parsed(value);
@@ -47,20 +51,28 @@ function useGuess(act: PlayerPanelProps['act']) {
       setMessage(gtnText.code('INVALID_ACTION'));
       return;
     }
-    void act({ value: n }).then((reply) => {
-      setMessage(reply.ok ? null : gtnText.code(reply.code ?? ''));
-      if (reply.ok) setValue('');
-    });
+    const sent = value;
+    setSending(true);
+    void act({ value: n })
+      .then((reply) => {
+        setMessage(reply.ok ? null : gtnText.code(reply.code ?? ''));
+        // Empty the field only if it still holds the guess sent: text typed while the answer
+        // was on its way is the player's next guess and stays.
+        if (reply.ok) setValue((now) => (now === sent ? '' : now));
+      })
+      .finally(() => {
+        setSending(false);
+      });
   };
   const flip = (): void => {
     setValue(flipSign);
   };
-  return { value, setValue, message, submit, flip };
+  return { value, setValue, message, sending, submit, flip };
 }
 
 export function GuessInput(props: GtnPlayerProps): ReactElement {
   const view = props.view as PlayerView;
-  const { value, setValue, message, submit, flip } = useGuess(props.act);
+  const { value, setValue, message, sending, submit, flip } = useGuess(props.act);
   const negative = view.range === null || view.range.low < 0;
   return (
     <div className="gtn-input">
@@ -87,7 +99,7 @@ export function GuessInput(props: GtnPlayerProps): ReactElement {
         <button
           className="smg-btn smg-btn--primary gtn-go"
           type="submit"
-          disabled={!props.canAct}
+          disabled={!props.canAct || sending}
           data-testid="guess-button"
         >
           Guess
