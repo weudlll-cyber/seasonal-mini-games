@@ -3,88 +3,31 @@
  * @module web/match
  * @brief  One match: its players and teams, joining and leaving, the host's console and the round.
  *
- * Responsibility: while a round runs, the round view alone, filling the screen (O16: the host
- *                 gets the same view and plays along; the host menu sits in its top bar).
- *                 Otherwise the match lobby of 02 §2: title, code and status with the host
- *                 menu; join or leave; the season team picker (03 §5); the players with their
- *                 teams; and the last round's result. A player who joins during a round
- *                 watches it and plays from the next one. The host's last round settings are
- *                 kept here, so the next round's form is prefilled whichever layout made them.
- * Depends on:     react, @smg/contracts, @smg/game-sdk (types), ../live/*, ../shell/*,
- *                 ../season/*, ./HostMenu, ../round/RoundScreen, ../round/roundText, ./match.css
+ * Responsibility: from the countdown to the end, the round view alone, filling the screen
+ *                 (O16: the host gets the same view and plays along; the host menu sits in its
+ *                 top bar). Otherwise the match lobby of 02 §2: title, code and status with the
+ *                 host menu; join or leave; the last round's result, if any; and the waiting
+ *                 area with the team picker and the players (./WaitingArea, O23), also while
+ *                 the next round is only set up. A player who joins during a round watches it
+ *                 and plays from the next one. The host's last round settings are kept here,
+ *                 so the next round's form is prefilled whichever layout made them.
+ * Depends on:     react, @smg/contracts, ../live/*, ../shell/*, ./HostMenu, ./WaitingArea,
+ *                 ../round/RoundScreen, ../round/roundText, ./match.css
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/02-game-guess-the-number.md §2, §4, §11; docs/spec/03-seasonal-specials.md §5
  */
-import type { MatchDetailsView, TeamName } from '@smg/contracts';
-import { useState, type CSSProperties, type ReactElement } from 'react';
+import type { MatchDetailsView } from '@smg/contracts';
+import { useState, type ReactElement } from 'react';
 
-import { intent } from '../live/socket.js';
 import { useMatch } from '../live/useMatch.js';
 import { useRound, type RoundLive } from '../live/useRound.js';
 import { codeText } from '../round/roundText.js';
 import { RoundScreen } from '../round/RoundScreen.js';
-import { SeasonIcon } from '../season/SeasonIcon.js';
-import { SEASON_NAMES, SEASONS, seasonColor } from '../season/season.js';
 import { api, ApiError } from '../shell/http.js';
 import { useSession } from '../shell/session.js';
 import { HostMenu, type Values } from './HostMenu.js';
+import { WaitingArea } from './WaitingArea.js';
 import './match.css';
-
-function Teams({
-  match,
-  reload,
-}: {
-  readonly match: MatchDetailsView;
-  readonly reload: () => void;
-}): ReactElement | null {
-  const viewer = useSession().session?.account?.id ?? null;
-  const [problem, setProblem] = useState<string | null>(null);
-  if (!match.youPlayer) return null;
-  const mine = match.players.find((p) => p.playerKey === viewer)?.team ?? null;
-  const choose = async (team: TeamName): Promise<void> => {
-    const answer = await intent('team.choose', { code: match.code, team });
-    setProblem(answer.ok ? null : codeText(answer.code));
-    reload();
-  };
-  return (
-    <div className="smg-stack">
-      <p>Your season team (teams play in shared rounds):</p>
-      <div className="match-teams" role="group" aria-label="Season team">
-        {SEASONS.map((t) => (
-          <button
-            key={t}
-            type="button"
-            className="smg-btn"
-            aria-pressed={mine === t}
-            style={{ '--season': seasonColor(t) } as CSSProperties}
-            onClick={() => void choose(t)}
-          >
-            <SeasonIcon season={t} size="1rem" /> {SEASON_NAMES[t]}
-          </button>
-        ))}
-      </div>
-      {problem === null ? null : (
-        <p role="alert" className="round-refusal">
-          {problem}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function Players({ match }: { readonly match: MatchDetailsView }): ReactElement {
-  const connected = new Set(match.connected);
-  return (
-    <ul className="smg-stack" data-testid="match-players">
-      {match.players.map((p) => (
-        <li key={p.playerKey}>
-          {p.team === null ? null : <SeasonIcon season={p.team} size="1rem" />} {p.name}{' '}
-          <span className="smg-muted">{connected.has(p.playerKey) ? 'here' : 'away'}</span>
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 function JoinLeave({
   match,
@@ -136,7 +79,20 @@ function JoinLeave({
   );
 }
 
-const LIVE = new Set(['created', 'countdown', 'open']);
+// The round view takes the page from the countdown; a round only set up waits in the lobby.
+const LIVE = new Set(['countdown', 'open']);
+// A finished round's result stays above (or beside) the waiting area until the next one.
+const DONE = new Set(['ended', 'aborted']);
+
+type Phase = 'live' | 'loading' | 'after' | 'waiting';
+
+// What the match page shows: the round view, "loading" while a round's view is on its way
+// (no waiting area meanwhile), the last result with the waiting area, or the waiting area.
+function phaseOf(match: MatchDetailsView, status: string | null): Phase {
+  if (status === null) return match.round === null ? 'waiting' : 'loading';
+  if (LIVE.has(status)) return 'live';
+  return DONE.has(status) ? 'after' : 'waiting';
+}
 
 export function MatchPage({ code }: { readonly code: string }): ReactElement {
   const { match, missing, reload } = useMatch(code);
@@ -152,7 +108,8 @@ export function MatchPage({ code }: { readonly code: string }): ReactElement {
   return <MatchView match={match} live={live} reload={reload} />;
 }
 
-// The round view alone while a round runs, else the lobby with the last result.
+// The round view alone while a round runs, else the lobby with the last result and the
+// waiting area.
 function MatchView(p: {
   readonly match: MatchDetailsView;
   readonly live: RoundLive;
@@ -169,8 +126,9 @@ function MatchView(p: {
   const hostMenu = (
     <HostMenu match={match} roundStatus={status} reload={refresh} last={last} setLast={setLast} />
   );
+  const phase = phaseOf(match, status);
   const round =
-    match.round === null ? null : (
+    phase !== 'live' && phase !== 'after' ? null : (
       <RoundScreen
         live={live}
         gameId={match.gameId}
@@ -179,24 +137,42 @@ function MatchView(p: {
         teamPoints={match.teamStandings}
       />
     );
-  if (status !== null && LIVE.has(status)) {
+  if (phase === 'live') {
     return (
       <div className="match-live" data-testid="match">
         {round}
       </div>
     );
   }
-  return <LobbyView match={match} refresh={refresh} hostMenu={hostMenu} round={round} />;
+  if (phase === 'loading') {
+    return (
+      <p className="smg-muted" data-testid="match">
+        Loading the round…
+      </p>
+    );
+  }
+  return (
+    <LobbyView
+      match={match}
+      viewerKey={viewer}
+      refresh={refresh}
+      hostMenu={hostMenu}
+      round={round}
+    />
+  );
 }
 
-// Between rounds: the match head with the host menu, joining, the last result, the players.
+// Before and between rounds: the match head with the host menu, joining, then the last
+// result with the waiting area beside it on a wide screen and under it on a phone (T79).
 function LobbyView(p: {
   readonly match: MatchDetailsView;
+  readonly viewerKey: string | null;
   readonly refresh: () => void;
   readonly hostMenu: ReactElement;
   readonly round: ReactElement | null;
 }): ReactElement {
   const { match } = p;
+  const waiting = <WaitingArea match={match} viewerKey={p.viewerKey} reload={p.refresh} />;
   return (
     <div className="smg-stack" data-testid="match">
       <header className="match-head">
@@ -207,12 +183,14 @@ function LobbyView(p: {
         {p.hostMenu}
       </header>
       <JoinLeave match={match} reload={p.refresh} />
-      {p.round}
-      <section className="smg-panel smg-stack" aria-labelledby="players-title">
-        <h2 id="players-title">In this match</h2>
-        <Teams match={match} reload={p.refresh} />
-        <Players match={match} />
-      </section>
+      {p.round === null ? (
+        waiting
+      ) : (
+        <div className="match-after">
+          {p.round}
+          {waiting}
+        </div>
+      )}
     </div>
   );
 }

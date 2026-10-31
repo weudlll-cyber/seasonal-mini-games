@@ -120,11 +120,10 @@ export async function hostMenu(host: Person): Promise<void> {
   await expect(panel).toBeVisible();
 }
 
-// The host fills the round form by the fields' labels and creates (and starts) the round.
+// The host fills the round form by the fields' labels, then creates and starts the round.
 export async function hostRound(
   host: Person,
   fields: Readonly<Record<string, string>>,
-  start = true,
 ): Promise<void> {
   await hostMenu(host);
   const form = host.page.getByTestId('round-form');
@@ -135,8 +134,7 @@ export async function hostRound(
     if ((await field.evaluate((el) => el.tagName)) === 'SELECT') await field.selectOption(value);
     else await field.fill(value);
   }
-  if (start) await form.getByTestId('create-start').click();
-  else await form.getByRole('button', { name: 'Create round' }).click();
+  await form.getByTestId('create-start').click();
   await expect(host.page.getByTestId('round-banner')).toBeVisible();
 }
 

@@ -85,7 +85,7 @@ With the special off, the round still carries its season for visuals and teams, 
 ## 5. Season teams
 
 - **Where:** shared mode only, when the round setting **Season teams** is on (default on). The owner decided teams for shared mode. Individual mode has no teams in v1.
-- **Joining:** in the match lobby every player picks one of four teams: Spring, Summer, Autumn or Winter. A player may switch between rounds. Teams lock when a round's countdown starts. A roster player without a team at that moment is put in the smallest team; ties between teams are broken with the round seed.
+- **Joining:** in the match's waiting area before a round ([02](02-game-guess-the-number.md) §2, owner decision 23) every player picks one of four teams: Spring, Summer, Autumn or Winter. A player may switch between rounds. Teams lock when a round's countdown starts. A roster player without a team at that moment is put in the smallest team; ties between teams are broken with the round seed.
 - **Effect on play:** none. Team members play by the same rules, the same cooldown and the same feedback visibility as everyone else. The team does not change any player's information.
 - **Team standing (owner, decision 12):** after each round the winner's team gets 1 point. Other teams get 0, and a round without a winner gives no team a point. A large team has more chances to win simply because it has more players guessing; this follows from the decision and is not corrected.
 - **Shown:** the team standing (rank, team, points, wins) appears on the round result, in the match standings and on the season leaderboard beside the player board (owner, decision 6). Ties are ordered by wins, then by the earliest win.

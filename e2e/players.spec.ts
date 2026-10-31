@@ -3,8 +3,9 @@
  * @module e2e
  * @brief  Journeys 5, 6 and 7: season teams, a reconnect mid-round, and a guest spectator.
  *
- * Responsibility: journey 5 — four players pick teams, teams are locked once the countdown
- *                 starts, and the team result names the winner's team after the round. Journey 6
+ * Responsibility: journey 5 — four players pick teams in the waiting area, teams are locked
+ *                 once the countdown starts, the team result names the winner's team after the
+ *                 round, and the waiting area for the next round follows it (O23). Journey 6
  *                 — a reload during a Frost round keeps the cooldown, shows the guess once and
  *                 the held answer arrives after the reload. Journey 7 — a guest watching a round
  *                 under `own` sees that players guessed and never a number or an answer.
@@ -61,6 +62,14 @@ test('journey 5: season teams lock during the round and the winner team scores',
     expect(locked.body).toMatchObject({ code: 'TEAMS_LOCKED' });
     await Promise.all(players.map((p) => search(p)));
     await expect(host.page.getByTestId('team-result')).toContainText('1 point — the winner’s team');
+    // After the result: the waiting area for the next round, with the teams kept; the result
+    // has no player box of its own any more (O23).
+    const waiting = one.page.getByTestId('waiting-area');
+    await expect(waiting).toContainText('Next round');
+    await expect(
+      waiting.getByRole('group', { name: 'Season team' }).getByRole('button', { name: 'Spring' }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(one.page.getByText('In this match')).toHaveCount(0);
   } finally {
     await abortMatch(host, code);
     await closeAll([host, ...players]);

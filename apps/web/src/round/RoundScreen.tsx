@@ -56,7 +56,7 @@ function timeText(state: RoundStateView, now: number): string {
     const secs = Math.floor((left % 60_000) / 1_000);
     return `${String(Math.floor(left / 60_000))}:${String(secs).padStart(2, '0')} left`;
   }
-  return state.status === 'created' ? 'Waiting for the host' : '';
+  return '';
 }
 
 function TopBar(p: {

@@ -61,7 +61,7 @@
 2. Individual round with three players: placings in solve order; a solved player keeps their own rows, with a notice and their place instead of the input row (owner decision 25); time-up ends the round with "not solved" rows.
 3. Each season special once (fast test profile): Spring hint shown, Heatwave value drops, Leaf Fall strikes numbers, Frost shows "answer arriving".
 4. Halving round on a test halving day: the range halves, and a guess outside it is refused without cost.
-5. Teams: four players pick teams, the team standing updates after the round, and teams lock during the countdown.
+5. Teams: four players pick teams in the waiting area, the team standing updates after the round, teams lock during the countdown, and the waiting area for the next round follows the result, with no player box on the result itself (owner decision 23).
 6. Reconnect mid-round: the cooldown is unchanged after reconnect, there are no duplicate guesses, and Frost answers arrive after reconnect.
 7. Spectator (guest): sees the feed at the round's visibility and never a number or feedback under `own`.
 8. Embedded: JWT handoff from a test host page signs the player in; an origin that is not on the allowlist is refused (Bingo journey 7).
