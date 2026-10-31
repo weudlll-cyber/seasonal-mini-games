@@ -10,7 +10,7 @@
 | Test pyramid and its tools (Vitest, fast-check, Testcontainers, contract tests, Testing Library, Playwright in Chromium, Firefox and WebKit mobile, security tests); coverage targets domain ≥ 95 %, application ≥ 85 % | Bingo 12 §2 | `game-sdk` and every `games/*/src` also have a ≥ 95 % target. Load testing uses a Node.js driver (DECISIONS T9). |
 | Security tests (authz matrix generated from the permission table, CSRF, headers, rate limits, fuzzing, JWT, upload, SSRF, ZAP baseline) | Bingo 12 §6 | Additions in §6. |
 | Test data and determinism (fixed seeds, failing seeds turned into regression tests, shared builders, tests remove their accounts and abort their matches, timing specs in their own Playwright projects, fixed local ports) | Bingo 12 §7 | Ports from [10](10-repository-structure.md) §4. Builders: `aRound().shared().withPlayers(500)`. |
-| Manual acceptance by the owner with a Quick Test seed | Bingo 12 §8 | The Quick Test plays one round against bots (§5). |
+| Manual acceptance by the owner with a Quick Test seed | Bingo 12 §8 | The Quick Test plays rounds against bots (§5), through the waiting area or started at once (owner decision 24). |
 
 ## 2. Levels specific to this platform
 
@@ -68,6 +68,7 @@
 9. Accessibility: axe checks on lobby, round and result; keyboard-only guessing.
 10. Hidden range (owner decision 19), 1280 × 720: the round view says "Any whole number", no bound is on the page, a guess far outside the range is answered, and the result reveals the range.
 11. Negative bounds (owner decision 18), 390 × 844: the Quick Test form takes "-500" typed key by key into Lowest number and starts a round from −500 to 500 (T69); the range is shown, the ± button makes a typed number negative, the guess is answered, and the round plays to its result.
+12. Quick Test through the lobby (owner decisions 22–24): the form with "Start from the lobby" on opens the waiting area; the bots appear one after another with their teams; the player picks a team, which shows pressed; the host menu's Start starts the round; the round runs with the bots playing; the result names the closest miss (or the margin, when a second correct guess came within its window); and the waiting area for the next round follows.
 
 Journeys 1, 10 and 11 also check that the round view fits the screen: `document.scrollingElement.scrollHeight` is at most `window.innerHeight` ([02](02-game-guess-the-number.md) §12).
 

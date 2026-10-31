@@ -14,7 +14,8 @@
  *                 solved — exactly as a person reading the screen would.
  *                 Matches are aborted at the end, never deleted (CLAUDE.md).
  * Depends on:     @playwright/test, ./devStack, ./screens
- * Used by:        ./rounds.spec, ./specials.spec, ./players.spec, ./access.spec, ./range.spec
+ * Used by:        ./rounds.spec, ./specials.spec, ./players.spec, ./access.spec, ./range.spec,
+ *                 ./lobby.spec
  * Spec:           docs/spec/09-testing-strategy.md §4; docs/spec/02-game-guess-the-number.md §12
  */
 import {

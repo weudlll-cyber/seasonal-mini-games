@@ -3,11 +3,14 @@
  * @module web/shell
  * @brief  The development Quick Test: one round against bots, with a seed field.
  *
- * Responsibility: choose the seed text (the same text gives the same secret and season), the
- *                 secret mode, the season (or the seed's), what others see, the bots, the
- *                 cooldown, the lowest and highest number, whether the range is shown, the
- *                 closeness comments (O21) and the fast test profile; start it (`POST /dev/quicktest`) and go to the match,
- *                 where the round counts down at once and the player hosts it. Every field has
+ * Responsibility: choose whether to start from the lobby (on by default, O24), the seed text
+ *                 (the same text gives the same secret and season), the secret mode, the
+ *                 season (or the seed's), what others see, the bots, the cooldown, the lowest
+ *                 and highest number, whether the range is shown, the closeness comments (O21)
+ *                 and the fast test profile; start it (`POST /dev/quicktest`) and go to the
+ *                 match, where the player hosts it: in the waiting area, where the bots join
+ *                 and the player starts the round from the host menu, or with the round
+ *                 counting down at once. Every field has
  *                 its one-line help under it: the settings with the words and bounds of their
  *                 definitions through the host form's own `Field`, the rest from FORM_HELP, so
  *                 both forms say the same. Development builds only: the shell loads this module
@@ -65,6 +68,7 @@ interface Extra {
   readonly season: SeasonName | '';
   readonly bots: number;
   readonly fast: boolean;
+  readonly lobby: boolean;
 }
 
 type Values = Readonly<Record<string, SettingValue>>;
@@ -105,6 +109,7 @@ function bodyOf(values: Values, extra: Extra) {
     comments: values['round.comments'],
     bots: extra.bots,
     fast: extra.fast,
+    lobby: extra.lobby,
     ...(extra.seedText.trim() === '' ? {} : { seedText: extra.seedText }),
     ...(extra.season === '' ? {} : { season: extra.season }),
   };
@@ -150,6 +155,14 @@ function extraFields(p: { readonly extra: Extra; readonly set: (e: Partial<Extra
         }}
       />
     ),
+    ...switchFields(p),
+  };
+}
+
+// The two switches that are not settings: fast specials and the start from the lobby.
+function switchFields(p: { readonly extra: Extra; readonly set: (e: Partial<Extra>) => void }) {
+  const { extra, set } = p;
+  return {
     fast: (
       <SwitchField
         label="Fast specials"
@@ -160,12 +173,29 @@ function extraFields(p: { readonly extra: Extra; readonly set: (e: Partial<Extra
         }}
       />
     ),
+    lobby: (
+      <SwitchField
+        label="Start from the lobby"
+        help={FORM_HELP.lobby}
+        checked={extra.lobby}
+        testId="quick-lobby"
+        onChange={(lobby) => {
+          set({ lobby });
+        }}
+      />
+    ),
   };
 }
 
 export function QuickTest(): ReactElement {
   const [values, setValues] = useState<Values>(START);
-  const [extra, setExtra] = useState<Extra>({ seedText: '', season: '', bots: 3, fast: true });
+  const [extra, setExtra] = useState<Extra>({
+    seedText: '',
+    season: '',
+    bots: 3,
+    fast: true,
+    lobby: true,
+  });
   const [problem, setProblem] = useState<string | null>(null);
   const set = (key: string, v: SettingValue): void => {
     setValues((old) => ({ ...old, [key]: v }));
@@ -192,10 +222,11 @@ export function QuickTest(): ReactElement {
     <form className="smg-panel smg-stack" onSubmit={start} data-testid="quick-test">
       <h1>Quick Test</h1>
       <p className="smg-muted">
-        One round against bots, which you host and play. The same seed gives the same secret and the
-        same season.
+        One round against bots, which you host and play: from the lobby, where the bots join and you
+        start the round, or at once. The same seed gives the same secret and the same season.
       </p>
       <div className="host-form">
+        {more.lobby}
         {more.seed}
         <SettingFields keys={KEYS.slice(0, 1)} values={values} set={set} />
         {more.season}

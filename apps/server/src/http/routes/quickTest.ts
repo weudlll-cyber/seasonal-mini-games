@@ -4,7 +4,7 @@
  * @brief  POST /api/v1/dev/quicktest: start a Quick Test round against bots.
  *
  * Responsibility: validate the body with zod and start the Quick Test for the signed-in
- *                 player. Registered only in development builds (SMG_DEV=1), like every
+ *                 player, at once or through the waiting area (`lobby`, O24). Registered only in development builds (SMG_DEV=1), like every
  *                 development route. Replaces Bingo's in-memory runner of the same name.
  * Depends on:     fastify, zod, ../../dev/quickTest, ../../match/play
  * Used by:        ../app
@@ -13,7 +13,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
-import { startQuickTest } from '../../dev/quickTest.js';
+import { quickTests } from '../../dev/quickTest.js';
 import type { Play } from '../../match/play.js';
 
 const body = z
@@ -32,6 +32,9 @@ const body = z
     // The fast test profile (09 §4): specials every few seconds. On by default here.
     fast: z.boolean().default(true),
     halving: z.boolean().default(false),
+    // Through the waiting area, the host starting the round (O24). Off here, so scripted
+    // callers keep the direct start; the Quick Test form sends it on by default.
+    lobby: z.boolean().default(false),
     seedText: z.string().trim().min(1).max(64).optional(),
     season: z.enum(['spring', 'summer', 'autumn', 'winter']).optional(),
   })
@@ -41,8 +44,9 @@ const body = z
 
 export function registerQuickTest(
   app: FastifyInstance,
-  deps: { readonly play: Play; readonly pool: Parameters<typeof startQuickTest>[1] },
+  deps: { readonly play: Play; readonly pool: Parameters<typeof quickTests>[1] },
 ): void {
+  const quick = quickTests(deps.play, deps.pool);
   app.post('/api/v1/dev/quicktest', async (request, reply) => {
     const accountId = request.session?.accountId ?? null;
     if (accountId === null) return reply.status(401).send({ code: 'SIGN_IN_REQUIRED' });
@@ -51,10 +55,7 @@ export function registerQuickTest(
     if (!deps.play.rounds.hasGame(parsed.data.gameId)) {
       return reply.status(422).send({ code: 'GAME_UNKNOWN' });
     }
-    const started = await startQuickTest(deps.play, deps.pool, {
-      ...parsed.data,
-      playerId: accountId,
-    });
+    const started = await quick.start({ ...parsed.data, playerId: accountId });
     return reply.status(201).send(started);
   });
 }
