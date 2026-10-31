@@ -6,7 +6,7 @@
  * Responsibility: the player starts the Quick Test from its form with "Start from the lobby"
  *                 on (O24) and lands in the waiting area (O23); the bots join one after another
  *                 and show as here with a team; the player picks a team, which shows pressed;
- *                 the host menu, open by itself, starts the round with the normal Start; the
+ *                 the host menu starts the round with the normal Start; the
  *                 round runs with the bots playing; the result names the closest miss (O22),
  *                 or the margin when a second correct guess came in its window; and the
  *                 waiting area for the next round follows the result.
@@ -15,7 +15,7 @@
  */
 import { expect, test } from '@playwright/test';
 
-import { abortMatch, closeAll, person, search } from './play.js';
+import { abortMatch, closeAll, hostMenu, person, search } from './play.js';
 
 test('journey 12: the Quick Test through the lobby, bots, a team, the start and the result', async ({
   browser,
@@ -44,7 +44,8 @@ test('journey 12: the Quick Test through the lobby, bots, a team, the start and 
     await summer.click();
     await expect(summer).toHaveAttribute('aria-pressed', 'true');
     await expect(p.page.getByTestId('waiting-state')).toContainText('set up');
-    // The host menu waits open with the normal Start.
+    // The normal Start in the host menu.
+    await hostMenu(p);
     await p.page.getByTestId('host-console').getByTestId('start-round').click();
     await expect(p.page.getByTestId('round-banner')).toBeVisible();
     await search(p);

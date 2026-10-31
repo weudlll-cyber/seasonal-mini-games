@@ -22,6 +22,8 @@ import { SEASON_NAMES, SEASONS, seasonColor } from '../season/season.js';
 
 interface Props {
   readonly match: MatchDetailsView;
+  // Under the last round's result: the area is about the next round.
+  readonly after: boolean;
   // The signed-in viewer's player key, to mark their team.
   readonly viewerKey: string | null;
   readonly reload: () => void;
@@ -100,7 +102,7 @@ export function WaitingArea(p: Props): ReactElement {
       aria-labelledby="waiting-title"
       data-testid="waiting-area"
     >
-      <h2 id="waiting-title">{match.round === null ? 'Before the first round' : 'Next round'}</h2>
+      <h2 id="waiting-title">{p.after ? 'Next round' : 'Before the round'}</h2>
       <p data-testid="waiting-state">{stateText(match)}</p>
       <p className="smg-muted">
         Pick a season team: in shared rounds the winner’s team gets a point. Players without a team

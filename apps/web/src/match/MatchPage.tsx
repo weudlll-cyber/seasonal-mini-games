@@ -172,7 +172,14 @@ function LobbyView(p: {
   readonly round: ReactElement | null;
 }): ReactElement {
   const { match } = p;
-  const waiting = <WaitingArea match={match} viewerKey={p.viewerKey} reload={p.refresh} />;
+  const waiting = (
+    <WaitingArea
+      match={match}
+      viewerKey={p.viewerKey}
+      after={p.round !== null}
+      reload={p.refresh}
+    />
+  );
   return (
     <div className="smg-stack" data-testid="match">
       <header className="match-head">

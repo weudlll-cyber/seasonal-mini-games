@@ -5,8 +5,7 @@
  *
  * Responsibility: the host's controls sit behind one button of at least 44 px (O16), in the
  *                 round view's top bar while a round runs and in the match head otherwise; the
- *                 menu opens on its own before the first round and while a round set up waits
- *                 for its start, closes with Escape (focus goes
+ *                 menu opens on its own before the first round, closes with Escape (focus goes
  *                 back to the button) and after a successful action. Inside: while a round
  *                 runs, Start (a created round), End and Abort with a reason; otherwise a form
  *                 with every setting the host chooses per round, prefilled with the
@@ -213,9 +212,8 @@ function MenuBody({ p, close }: { readonly p: HostMenuProps; readonly close: () 
 }
 
 export function HostMenu(p: HostMenuProps): ReactElement | null {
-  // Open by itself before the first round and while a round waits to be started (a Quick
-  // Test from the lobby, O24), so the host sees where to start.
-  const menu = useDisclosure(p.match.round === null || p.match.round.status === 'created');
+  // Open by itself before the first round, so the host sees where to start.
+  const menu = useDisclosure(p.match.round === null);
   if (!p.match.youHost || p.match.nextRoundDefaults === null) return null;
   return (
     <div className="host-menu" onKeyDown={menu.onKeyDown}>

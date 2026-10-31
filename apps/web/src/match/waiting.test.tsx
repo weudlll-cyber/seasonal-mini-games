@@ -44,8 +44,8 @@ const match: MatchDetailsView = {
   nextRoundDefaults: null,
 };
 
-const show = (m: MatchDetailsView, viewerKey: string | null) =>
-  render(<WaitingArea match={m} viewerKey={viewerKey} reload={() => undefined} />);
+const show = (m: MatchDetailsView, viewerKey: string | null, after = false) =>
+  render(<WaitingArea match={m} viewerKey={viewerKey} after={after} reload={() => undefined} />);
 
 describe('the waiting area', () => {
   it('says what teams are for and marks the viewer’s team', () => {
@@ -71,13 +71,13 @@ describe('the waiting area', () => {
 
   it('says whether the next round is set up and who starts it', () => {
     show(match, 'a');
-    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Before the first round');
+    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Before the round');
     expect(screen.getByTestId('waiting-state').textContent).toBe(
       'Waiting for the host to start the next round.',
     );
     cleanup();
     const ready = { ...match, youHost: true, round: { id: 'r', status: 'created' } };
-    show(ready, 'h');
+    show(ready, 'h', true);
     expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Next round');
     expect(screen.getByTestId('waiting-state').textContent).toBe(
       'The next round is set up. Start it from the Host menu.',
