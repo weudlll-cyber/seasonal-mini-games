@@ -2,99 +2,38 @@
 /**
  * @file   apps/web/src/round/round.test.tsx
  * @module web/round
- * @brief  The platform's round components and words: ring, guess list, teams, result, refusals.
+ * @brief  The platform's round components and words: ring, guess list, teams, solved, words.
  *
  * Responsibility: the cooldown ring counts down and says Ready; the guess list merges the
  *                 game's guess rows and the event rows, newest at the top, each guess with the
  *                 player's colour dot, "You" and a highlight on the viewer's own, the answer in
  *                 colour and the comment under it, "answer arriving" while Frost holds an own
- *                 answer (O20, O21); a player's colour is their team's when teams play, else a season colour by
- *                 roster order; the team tiles show each team's match points, only when teams
- *                 play; a player name stays whole, shortened, and opens on a tap; the result
- *                 screen gives the headline, the winning margin or else the game's closest
- *                 miss (O22), placings with "took part",
- *                 the team result and the fairness proof; every platform refusal and event
- *                 has its plain sentence (02 §12).
- * Depends on:     vitest, @testing-library/react, @smg/contracts, @smg-game/registry/web,
- *                 ./CooldownRing, ./PlayerName,
- *                 ./RoundLog, ./RoundSide, ./ResultScreen, ./roundText
+ *                 answer (O20, O21); a player's colour is their team's when teams play, else a
+ *                 season colour by roster order; the team tiles show each team's match points,
+ *                 only when teams play; a player name stays whole, shortened, and opens on a
+ *                 tap; a solved player in individual mode gets a notice with their place
+ *                 instead of the input row and keeps their own rows (O25); every platform
+ *                 refusal and event has its plain sentence (02 §12). The result screen has its
+ *                 own tests (./result.test).
+ * Depends on:     vitest, @testing-library/react, @smg/contracts, ./fakes, ./CooldownRing,
+ *                 ./PlayerName, ./RoundLog, ./RoundScreen, ./RoundSide, ./roundText
  * Spec:           docs/spec/02-game-guess-the-number.md §7, §9, §11, §12; docs/spec/09-testing-strategy.md §2
  */
-import { GAME_SCREENS } from '@smg-game/registry/web';
 import type { RoundStateView } from '@smg/contracts';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { CooldownRing } from './CooldownRing.js';
+import { ended } from './fakes.js';
 import { PlayerName } from './PlayerName.js';
-import { ResultScreen } from './ResultScreen.js';
 import { RoundLog } from './RoundLog.js';
+import { RoundScreen } from './RoundScreen.js';
 import { playerColor, TeamTiles } from './RoundSide.js';
 import { codeText, endHeadline, marginText, platformLine } from './roundText.js';
 
 afterEach(() => {
   cleanup();
 });
-
-const ended: RoundStateView = {
-  roundId: 'r1',
-  status: 'ended',
-  season: 'autumn',
-  secretMode: 'shared',
-  teamsOn: true,
-  specialOn: true,
-  halving: false,
-  frostDelayMs: null,
-  commitment: 'ab'.repeat(32),
-  opensAt: 0,
-  endsAt: 600_000,
-  endedAt: 9_000,
-  cooldownMs: 3_000,
-  endReason: 'solved',
-  abortReason: null,
-  winner: 'w',
-  margin: { playerId: 'a', ms: 400 },
-  roster: [
-    { playerKey: 'w', team: 'autumn', guesses: 9, cooldownEndsAt: 0, place: 1, solved: true },
-    {
-      playerKey: 'a',
-      team: 'winter',
-      guesses: 4,
-      cooldownEndsAt: 20_000,
-      place: null,
-      solved: false,
-    },
-  ],
-  seq: 30,
-  role: 'result',
-  game: null,
-  results: [
-    {
-      playerId: 'w',
-      place: 1,
-      solved: true,
-      solveAt: 9_000,
-      guesses: 9,
-      team: 'autumn',
-      points: 10,
-    },
-    {
-      playerId: 'a',
-      place: null,
-      solved: false,
-      solveAt: null,
-      guesses: 4,
-      team: 'winter',
-      points: 0,
-    },
-  ],
-  teams: [
-    { team: 'autumn', members: 1, points: 1, won: true },
-    { team: 'winter', members: 1, points: 0, won: false },
-  ],
-  seed: 'cd'.repeat(32),
-  names: { w: 'Walter', a: 'Anna' },
-};
 
 describe('the cooldown ring', () => {
   it('counts the seconds left and then says Ready', () => {
@@ -207,53 +146,48 @@ describe('a player name', () => {
   });
 });
 
-describe('the result screen', () => {
-  it('gives the headline, the margin, placings, the team result and the proof', () => {
-    render(<ResultScreen state={ended} game={null} viewerKey="a" />);
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
-      'Walter found it first — after 9 guesses.',
-    );
-    expect(screen.getByTestId('margin').textContent).toBe('Found it 0.4 s before Anna.');
-    const rows = [...screen.getByTestId('placings').querySelectorAll('tbody tr')].map(
-      (tr) => tr.textContent,
-    );
-    expect(rows).toEqual(['1 Walter910', 'took part Anna (you)40']);
-    expect(screen.getByTestId('team-result').textContent).toContain(
-      'Autumn: 1 point — the winner’s team',
-    );
-    expect(screen.getByTestId('proof').textContent).toContain('cd'.repeat(32));
-  });
-});
-
-describe('the result without a margin', () => {
-  it('gives the game’s closest miss in its place, and nothing when there is none (O22)', () => {
-    const game = GAME_SCREENS['guess-the-number'] ?? null;
+describe('a solved player in individual mode (O25)', () => {
+  it('gets a notice with their place instead of the input row, and keeps their own rows', () => {
     const view = {
       range: { low: 1, high: 100 },
-      secret: 92,
-      secrets: null,
-      guesses: { w: [{ value: 92, feedback: 'correct' }], a: [{ value: 93, feedback: 'lower' }] },
-      closestMiss: { playerId: 'a', value: 93, distance: 1 },
+      removed: [],
+      guesses: [
+        {
+          receiveSeq: 1,
+          receivedAt: 1_000,
+          value: 92,
+          feedback: 'correct',
+          tier: 'correct',
+          comment: 'Bullseye!',
+        },
+      ],
+      log: [],
+      hint: null,
     };
-    const state = { ...ended, margin: null, game: view };
-    render(<ResultScreen state={state} game={game} viewerKey="a" />);
-    expect(screen.queryByTestId('margin')).toBeNull();
-    expect(screen.getByTestId('closest-miss').textContent).toBe('Anna missed by just 1 (93).');
-    cleanup();
-    const far = { ...view, closestMiss: { playerId: 'a', value: 60, distance: 32 } };
-    render(<ResultScreen state={{ ...state, game: far }} game={game} viewerKey="a" />);
-    expect(screen.getByTestId('closest-miss').textContent).toBe(
-      'Closest miss: Anna, 32 away (60).',
+    const solved = {
+      ...live,
+      secretMode: 'individual',
+      frostDelayMs: null,
+      role: 'player',
+      game: view,
+      roster: [{ ...ended.roster[1], playerKey: 'a', place: 2, solved: true }],
+    } as unknown as RoundStateView;
+    const roundLive = { state: solved, feed: [], reload: () => Promise.resolve() };
+    render(
+      <RoundScreen
+        live={roundLive}
+        gameId="guess-the-number"
+        viewerKey="a"
+        hostMenu={null}
+        teamPoints={[]}
+      />,
     );
-    cleanup();
-    // With a margin, the margin stays and the closest miss is not shown (O13).
-    render(<ResultScreen state={{ ...ended, game: view }} game={game} viewerKey="a" />);
-    expect(screen.getByTestId('margin')).toBeTruthy();
-    expect(screen.queryByTestId('closest-miss')).toBeNull();
-    cleanup();
-    const none = { ...state, game: { ...view, closestMiss: null } };
-    render(<ResultScreen state={none} game={game} viewerKey="a" />);
-    expect(screen.queryByTestId('closest-miss')).toBeNull();
+    expect(screen.getByTestId('solved-notice').textContent).toBe(
+      'You found your number — place 2. Your guesses stay here while the others play on.',
+    );
+    expect(screen.queryByTestId('guess-input')).toBeNull();
+    const own = screen.getByTestId('guess-list').querySelector('li[data-own="true"]');
+    expect(own?.textContent).toBe('You92correct ✓Bullseye!');
   });
 });
 

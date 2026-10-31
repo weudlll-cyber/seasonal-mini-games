@@ -7,7 +7,8 @@
  *                 waits for the open and for the cooldown, both players search from what the
  *                 screen shows, one wins, both see the result with the revealed secret; one
  *                 player plays on a 390 × 844 screen. Journey 2 — an individual round: placings
- *                 follow the solve order, a solved player can guess no more, the round ends with
+ *                 follow the solve order, a solved player can guess no more and keeps their own
+ *                 rows with a notice and their place (O25), the round ends with
  *                 "time is up" and a "not solved" row for the player who did not play.
  * Depends on:     @playwright/test, ./play, ./screens
  * Spec:           docs/spec/09-testing-strategy.md §4 (journeys 1, 2); docs/spec/02-game-guess-the-number.md §4–§9
@@ -94,9 +95,20 @@ test('journey 2: an individual round places solvers in order and ends with time 
     // Player 1 solves before player 2 starts, so the solve order is known.
     await expect(one.page.getByTestId('guess-button')).toBeEnabled({ timeout: 10_000 });
     await search(one);
-    // Solved: no enabled Guess button is left (the form may be gone altogether).
-    await expect(one.page.locator('[data-testid="guess-button"]:enabled')).toHaveCount(0);
+    // Solved: the notice with the place stands where the input row was, and the player's own
+    // rows stay, the correct one with its comment (O25).
+    await expect(one.page.getByTestId('solved-notice')).toContainText('place 1');
+    await expect(one.page.getByTestId('guess-button')).toHaveCount(0);
+    const solvedRow = ownRows(one.page).filter({
+      has: one.page.locator('[data-feedback="correct"]'),
+    });
+    await expect(solvedRow.locator('.round-comment')).not.toBeEmpty();
     await search(two);
+    // Player 2's rows reach player 1 without number or answer (individual mode).
+    await expect(
+      one.page.locator('[data-testid="guess-list"] li[data-own="false"]').first(),
+    ).toContainText('guessed');
+    await expect(ownRows(one.page).first()).toBeVisible();
     for (const p of [one, two, idle, host])
       await expect(p.page.getByTestId('result')).toBeVisible({ timeout: 90_000 });
     const rows = await host.page.getByTestId('placings').locator('tbody tr').allTextContents();

@@ -10,7 +10,9 @@
  *                 (the player panel for a roster player, else the spectator panel) above the
  *                 round's one list of guesses and events (./RoundLog, O20); the side column
  *                 with the team tiles; and for a roster player the game's input row with the
- *                 cooldown ring, whose platform refusals appear under it in plain words. The
+ *                 cooldown ring, whose platform refusals appear under it in plain words, or
+ *                 once they solved their number a short notice with their place, their own
+ *                 rows staying in the list (O25). The
  *                 layout (round.css) fits the viewport without a page scrollbar; only the list
  *                 scrolls inside itself. After the end the result screen takes over.
  * Depends on:     react, @smg/contracts, @smg-game/registry/web, ../live/*, ../season/*,
@@ -33,7 +35,7 @@ import { CooldownRing } from './CooldownRing.js';
 import { ResultScreen } from './ResultScreen.js';
 import { RoundLog } from './RoundLog.js';
 import { TeamTiles } from './RoundSide.js';
-import { codeText, seconds } from './roundText.js';
+import { codeText, seconds, solvedText } from './roundText.js';
 import './round.css';
 
 interface RoundScreenProps {
@@ -102,11 +104,19 @@ interface PlayProps {
   readonly reload: () => Promise<void>;
 }
 
-// A roster player's input row with the ring, and the platform's refusals under it.
+// A roster player's input row with the ring, and the platform's refusals under it; once the
+// player solved (individual mode), a short notice with their place instead (O25).
 function InputRow({ state, game, viewerKey, now, reload }: PlayProps): ReactElement | null {
   const [refusal, setRefusal] = useState<string | null>(null);
   const me = state.roster.find((r) => r.playerKey === viewerKey) ?? null;
   if (me === null || state.game === null) return null;
+  if (me.solved) {
+    return (
+      <p className="round-input round-solved" role="status" data-testid="solved-notice">
+        {solvedText(me.place)}
+      </p>
+    );
+  }
   const act = async (action: unknown): Promise<ActReply> => {
     const reply = await intent('guess', { roundId: state.roundId, ...(action as object) });
     // The game words its own refusals; the platform's are worded here.
@@ -127,7 +137,7 @@ function InputRow({ state, game, viewerKey, now, reload }: PlayProps): ReactElem
       <game.Input
         view={state.game}
         act={act}
-        canAct={state.status === 'open' && me.cooldownEndsAt <= now && !me.solved}
+        canAct={state.status === 'open' && me.cooldownEndsAt <= now}
         frostDelayMs={state.frostDelayMs}
         now={serverNow}
         season={state.season}

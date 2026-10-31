@@ -7,7 +7,9 @@
  *                 range (O17), and the others' guesses in the log; an answer and its comment
  *                 received at or after `releasedBefore` are shown as pending; the log follows
  *                 the visibility and the mode, with a comment exactly where an answer is shown
- *                 (O21, T73), and keeps the newest LOG_LIMIT guesses (T74); with a hidden range
+ *                 (O21, T73), and keeps the newest LOG_LIMIT guesses (T74); a solved player in
+ *                 individual mode keeps their own rows and learns nothing more of the others
+ *                 (O25); with a hidden range
  *                 no view holds the range, and the result reveals it with the secret (T52);
  *                 the result names the secret (shared) or every player's (individual); every
  *                 view validates against its schema; the settings read and check the range,
@@ -126,6 +128,36 @@ describe('the guess log', () => {
       guesses: [{ feedback: 'higher', tier: 'cool' }],
       log: [{ playerId: 'b', value: null, ...hidden }],
     });
+  });
+});
+
+describe('a solved player in individual mode', () => {
+  const hidden = { feedback: null, tier: null, comment: null };
+
+  it('keeps their own rows and learns nothing more of the others (O25)', () => {
+    const t = played('full', 'individual');
+    t.play('a', 412, 3_000);
+    t.play('b', 70, 4_000);
+    const solved = views.player(t.state, 'a', all);
+    expect(solved).toMatchObject({
+      guesses: [
+        { value: 300, feedback: 'higher', tier: 'cool', comment: someLine },
+        { value: 412, feedback: 'correct', tier: 'correct', comment: someLine },
+      ],
+      log: [
+        { playerId: 'b', value: null, ...hidden },
+        { playerId: 'b', value: null, ...hidden },
+      ],
+      // An individual hint is the player's own: never someone else's.
+      hint: null,
+    });
+    // b's number (77) and b's answers appear nowhere in a's view.
+    const text = JSON.stringify(solved);
+    expect(text).not.toContain('77');
+    expect(text).not.toMatch(
+      /"(higher|lower)"[^}]*"playerId":"b"|"playerId":"b"[^}]*"(higher|lower)"/,
+    );
+    expect(viewSchemas.player.safeParse(solved).success).toBe(true);
   });
 
   it('keeps the newest guesses of others only', () => {

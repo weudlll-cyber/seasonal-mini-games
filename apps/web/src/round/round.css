@@ -11,7 +11,8 @@
  *                 with the list taking the remaining height, the team tiles, and the input row
  *                 pinned at the bottom (O20). The list's rows: dot, name, number, answer in
  *                 colour and the comment under them; the viewer's own rows on a tint of the
- *                 season colour. The cooldown ring and the platform's refusal line. Colours
+ *                 season colour. The cooldown ring and the platform's refusal line; a solved
+ *                 player's notice in place of the input row (O25). Colours
  *                 only from @smg/ui tokens, so light and dark both work (Bingo 01 §13). The result is ./result.css, the match head and the
  *                 host menu ../match/match.css.
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6
@@ -121,6 +122,16 @@
   grid-area: input;
   display: grid;
   gap: var(--space-1);
+}
+
+/* Solved (individual mode): a short notice where the input row was, in the season's frame. */
+.round-solved {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--season);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  font-weight: var(--font-weight-strong);
 }
 
 /* The guess list: the height left under the range block, newest at the top, scrolling only

@@ -78,8 +78,8 @@ function Answer({ guess, state, now }: Omit<RowProps, 'viewerKey'>): ReactElemen
 }
 
 function GuessLine({ guess, state, viewerKey, now }: RowProps): ReactElement {
-  // A solved player in individual mode watches as a spectator; their rows stay "You".
-  const own = guess.playerId === null || guess.playerId === viewerKey;
+  // The viewer's own rows come without a player: they are "You" (a solved player too, O25).
+  const own = guess.playerId === null;
   const key = guess.playerId ?? viewerKey;
   const name = own ? 'You' : (state.names[key ?? ''] ?? key ?? '');
   return (

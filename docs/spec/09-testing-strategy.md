@@ -28,7 +28,7 @@
 **Platform conformance (every game module):**
 
 - **P1 Determinism.** Same seed, same settings and the same ordered inputs ⇒ identical event list.
-- **P2 No secret leaks.** With unique sentinel secrets, no serialized player view, spectator view, room frame or rejection answer of a running round contains a sentinel. Result views contain them only after the end. With a hidden range, its bounds count as sentinels too (DECISIONS T52). Nothing about an answer travels without it: a closeness comment sits only beside its feedback, and while Frost holds every answer no view shows either (owner decision 21, DECISIONS T73).
+- **P2 No secret leaks.** With unique sentinel secrets, no serialized player view, spectator view, room frame or rejection answer of a running round contains a sentinel. Result views contain them only after the end. With a hidden range, its bounds count as sentinels too (DECISIONS T52). Nothing about an answer travels without it: a closeness comment sits only beside its feedback, and while Frost holds every answer no view shows either (owner decision 21, DECISIONS T73). In individual mode a player who solved their own secret sees that one mark in their view and no other, their solve tells no one else their mark, and no other view holds it (owner decision 25; the kit's `solve` action).
 - **P3 Valid views.** Every view validates against the module's `viewSchemas`.
 - **P4 Rejections are free.** A rejected action produces no event and leaves state equal (deep equality).
 - **P5 Replay equals live.** Folding the round's event log with `evolve` gives the actor's state.
@@ -58,7 +58,7 @@
 ## 4. E2E journeys
 
 1. Two players and a host: shared round, cooldown 3 s, the host starts it, both guess, one wins, both see the result and the revealed secret; the cooldown ring blocks the button. Also at 390 × 844.
-2. Individual round with three players: placings in solve order; a solved player becomes a spectator; time-up ends the round with "not solved" rows.
+2. Individual round with three players: placings in solve order; a solved player keeps their own rows, with a notice and their place instead of the input row (owner decision 25); time-up ends the round with "not solved" rows.
 3. Each season special once (fast test profile): Spring hint shown, Heatwave value drops, Leaf Fall strikes numbers, Frost shows "answer arriving".
 4. Halving round on a test halving day: the range halves, and a guess outside it is refused without cost.
 5. Teams: four players pick teams, the team standing updates after the round, and teams lock during the countdown.

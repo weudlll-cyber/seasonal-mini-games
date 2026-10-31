@@ -8,7 +8,8 @@
  *                 event or rejection of a running round contains a sentinel secret, while the
  *                 result view does; and nothing about an answer travels without it: a
  *                 `comment` sits only beside a `feedback` (O21), and while Frost holds every
- *                 answer no view shows a `feedback` or a `comment`; P3 every view validates
+ *                 answer no view shows a `feedback` or a `comment`; and a solved player's view
+ *                 holds their own secret and no other (O25); P3 every view validates
  *                 against the module's schemas;
  *                 P4 a rejected action changes nothing; P5 folding the emitted events from a
  *                 fresh round gives the live state; P6 every special's effect is the same for
@@ -30,6 +31,14 @@ const stream = fc.array(fc.tuple(fc.integer({ min: 0, max: 2 }), fc.integer()), 
   maxLength: 40,
 });
 type Leaks = (value: unknown) => string[];
+
+// The sentinel marks found in a value's JSON.
+const leaksOf =
+  (marks: readonly string[]): Leaks =>
+  (value) => {
+    const text = JSON.stringify(value);
+    return marks.filter((m) => text.includes(m));
+  };
 
 // Paths of objects that hold a comment without an answer beside it, or (`held`) any answer.
 function answerless(value: unknown, held = false, path = '$'): string[] {
@@ -105,10 +114,7 @@ function conformance<S, A, E, Cfg, Sec>(entry: GameEntry<S, A, E, Cfg, Sec>, mod
   const { module, conformance: kit } = entry;
   const input = kit.input(mode, PLAYERS);
   const { secrets, marks } = kit.sentinels(input);
-  const leaks: Leaks = (value) => {
-    const text = JSON.stringify(value);
-    return marks.filter((m) => text.includes(m));
-  };
+  const leaks = leaksOf(marks);
 
   it(`P1–P5 hold for ${module.meta.id} in ${mode} mode`, () => {
     fc.assert(
@@ -119,6 +125,46 @@ function conformance<S, A, E, Cfg, Sec>(entry: GameEntry<S, A, E, Cfg, Sec>, mod
         const result = module.views.result(live.state, secrets);
         expect(module.viewSchemas.result.safeParse(result).success).toBe(true);
         expect(leaks(result)).toEqual([...marks]);
+      }),
+      { numRuns: 100 },
+    );
+  });
+}
+
+// P2 for a solved player (O25): p1 solves its own secret first, and the solve tells nobody
+// else its mark; while the others play on, p1's view holds its own mark and no other, and no
+// other view holds p1's.
+function solvedPlayer<S, A, E, Cfg, Sec>(entry: GameEntry<S, A, E, Cfg, Sec>) {
+  const { module, conformance: kit } = entry;
+  const solve = kit.solve;
+  if (solve === undefined) return;
+  it(`P2 holds for a solved player of ${module.meta.id} in individual mode`, () => {
+    const input = kit.input('individual', PLAYERS);
+    const { secrets, marks } = kit.sentinels(input);
+    const leaks = leaksOf(marks);
+    const all = { releasedBefore: Infinity };
+    fc.assert(
+      fc.property(stream, (actions) => {
+        let state = module.createRound(input);
+        const step = (playerId: string, action: A, k: number): readonly Emitted<E>[] => {
+          if (module.validate(state, playerId, action) !== null) return [];
+          const act = { playerId, receiveSeq: k + 1, receivedAt: k * 1_000, action };
+          const ctx = { now: act.receivedAt, cooldownMs: 3_000, secrets, rng: RNG };
+          const decision = module.decide(state, act, ctx);
+          if (!decision.ok) return [];
+          for (const e of decision.events) state = module.evolve(state, e.event);
+          return decision.events;
+        };
+        const solving = step('p1', solve(secrets, 'p1'), 0);
+        expect(leaks(solving.filter((e) => e.audience !== 'player:p1'))).toEqual([]);
+        const own = leaks(module.views.player(state, 'p1', all));
+        expect(own).toHaveLength(1);
+        for (const [k, [p, n]] of actions.entries()) {
+          step(PLAYERS[1 + (p % 2)] ?? 'p2', kit.action(n), k + 1);
+          expect(leaks(module.views.player(state, 'p1', all))).toEqual(own);
+          const others = PLAYERS.slice(1).map((id) => module.views.player(state, id, all));
+          expect(leaks([module.views.spectator(state, all), others])).toEqual([]);
+        }
       }),
       { numRuns: 100 },
     );
@@ -158,5 +204,6 @@ describe('game module conformance', () => {
       conformance(entry, mode);
       specials(entry, mode);
     }
+    if (entry.module.meta.secretModes.includes('individual')) solvedPlayer(entry);
   }
 });

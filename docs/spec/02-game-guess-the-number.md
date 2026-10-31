@@ -131,7 +131,7 @@ Every accepted guess gets a short English comment on how close it came, when the
 ### 8.2 Individual secret (owner, decision 5)
 
 - A player who guesses their own number has **solved** it. Their placing is the order of their correct guess in the round's receive order: the first solver is 1st, the next 2nd, and so on. Ties cannot happen.
-- A solved player cannot guess again in the round. They watch the rest as a spectator, still seeing their own result.
+- A solved player cannot guess again in the round. For the rest of the round they keep the player view with their own guesses, answers and comments; the input row is replaced by a short notice with their place ("You found your number — place 2."). Other players' guesses still follow the visibility setting (§6.2), so a solved player learns nothing new about anyone else's number (owner, decision 25).
 - The round ends when every roster player has solved, when the longest round time is reached, or when the host ends it.
 - **Players who did not solve:** listed after the placed players as "not solved", without a place.
 
@@ -157,7 +157,7 @@ When `fairness.commitReveal` is on (default on), the server publishes `sha256(ro
 
 ## 11. What a spectator sees
 
-A spectator is a guest, a match player not on the roster, a solved player in individual mode, or an admin who is not playing. The host is on the roster like every player (owner, decision 16).
+A spectator is a guest, a match player not on the roster, or an admin who is not playing. A solved player in individual mode stays a player (§8.2, owner decision 25). The host is on the roster like every player (owner, decision 16).
 
 | Visible | Never visible before the round ends |
 |---|---|

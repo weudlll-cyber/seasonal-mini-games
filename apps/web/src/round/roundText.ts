@@ -4,10 +4,10 @@
  * @brief  The platform's sentences for a round: refusals, end reasons, feed lines, the margin.
  *
  * Responsibility: every platform code a player can meet in plain English (02 §12), the
- *                 result's headline ("Walter found it first — after 9 guesses", 02 §9), the
- *                 winning margin, and one event row of the round's list per platform event (a
- *                 solve, Heatwave's new cooldown, the round opening and ending); a game's own
- *                 rows come from the game's text.
+ *                 solved player's notice (O25), the result's headline ("Walter found it first
+ *                 — after 9 guesses", 02 §9), the winning margin, and one event row of the
+ *                 round's list per platform event (a solve, Heatwave's new cooldown, the round
+ *                 opening and ending); a game's own rows come from the game's text.
  * Depends on:     @smg/contracts (shapes), @smg/game-sdk (FeedLine)
  * Used by:        ./RoundScreen, ./ResultScreen, ./RoundLog, ../match/HostMenu
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §12; docs/spec/03-seasonal-specials.md §2
@@ -74,6 +74,12 @@ export function endHeadline(state: RoundStateView): string {
     default:
       return 'The round has ended.';
   }
+}
+
+// In place of the input row once a player solved their own number (O25).
+export function solvedText(place: number | null): string {
+  const at = place === null ? '' : ` — place ${String(place)}`;
+  return `You found your number${at}. Your guesses stay here while the others play on.`;
 }
 
 // The winning margin when a second correct guess came within the window (O13), else null:
