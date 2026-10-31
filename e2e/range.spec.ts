@@ -8,7 +8,7 @@
  *                 range is accepted and answered, and the result reveals the range (O19,
  *                 DECISIONS T52, T53). Journey 11 (390 × 844) — the Quick Test form takes
  *                 "-500" typed key by key into Lowest number and starts a round from −500 to
- *                 500, the range is shown, the ± button turns a typed number negative, the
+ *                 500 at once ("Start from the lobby" off), the range is shown, the ± button turns a typed number negative, the
  *                 guess is answered, and the round plays to its result (O18). Both check that the round view fits
  *                 the screen without a page scrollbar (02 §12) and that every text on it keeps
  *                 4.5:1 in light and dark (./contrast); on the phone the app bar is one row of
@@ -89,6 +89,8 @@ async function quickTestForm(page: Page): Promise<string> {
   await expect(low).toHaveValue('-500');
   await form.getByLabel('Highest number', { exact: true }).fill('500');
   await form.getByLabel('Fast specials', { exact: true }).uncheck();
+  // The direct start (the lobby start has journey 12).
+  await form.getByLabel('Start from the lobby', { exact: true }).uncheck();
   await page.getByTestId('start-quick-test').click();
   await page.waitForURL(/#\/match\/[A-Z0-9]+$/);
   return new URL(page.url()).hash.split('/').pop() ?? '';
