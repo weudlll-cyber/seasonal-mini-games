@@ -48,12 +48,17 @@ test('journey 1: a shared round from start to result, also on a phone', async ({
     // The cooldown ring holds Guess after an accepted guess (02 §7).
     await one.page.getByTestId('guess-input').fill('15');
     await one.page.getByTestId('guess-button').click();
-    await expect(ownRows(one.page).first()).toContainText('15');
-    // The closeness comment under the guess (O21), in smaller text on its own line.
-    await expect(ownRows(one.page).first().locator('.round-comment')).not.toBeEmpty();
-    await expect(one.page.getByTestId('guess-button')).toBeDisabled();
-    // The round view is one screen on the phone (02 §12).
-    await fitsScreen(two.page);
+    // 15 may be the secret (1 in 30): then the round is over at once and the result follows.
+    const won = one.page.getByTestId('result');
+    await expect(ownRows(one.page).first().or(won)).toBeVisible();
+    if (!(await won.isVisible())) {
+      await expect(ownRows(one.page).first()).toContainText('15');
+      // The closeness comment under the guess (O21), in smaller text on its own line.
+      await expect(ownRows(one.page).first().locator('.round-comment')).not.toBeEmpty();
+      await expect(one.page.getByTestId('guess-button')).toBeDisabled();
+      // The round view is one screen on the phone (02 §12).
+      await fitsScreen(two.page);
+    }
     await Promise.all([search(one), search(two)]);
     for (const p of [one, two, host]) {
       await expect(p.page.getByTestId('result')).toBeVisible();
