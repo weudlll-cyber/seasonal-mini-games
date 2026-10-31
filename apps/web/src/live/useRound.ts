@@ -35,18 +35,29 @@ export interface RoundLive {
 
 const FEED_LIMIT = 60;
 
-export function useRound(roundId: string | null): RoundLive {
+// The state of the round shown now: an answer for another one (a reload of the last round
+// still on its way when the next round loaded) is dropped, so it never shows over the new
+// round (T81). `take` says whether it took the answer.
+function useShownState(roundId: string | null) {
   const [state, setState] = useState<RoundStateView | null>(null);
+  const shown = useRef(roundId);
+  shown.current = roundId;
+  const take = useCallback((next: RoundStateView): boolean => {
+    if (next.roundId !== shown.current) return false;
+    setState(next);
+    return true;
+  }, []);
+  const clear = useCallback(() => {
+    setState(null);
+  }, []);
+  return { state, take, clear };
+}
+
+export function useRound(roundId: string | null): RoundLive {
+  const { state, take, clear } = useShownState(roundId);
   const [feed, setFeed] = useState<readonly FeedItem[]>([]);
   const pending = useRef<number | null>(null);
   const later = useRef<number | null>(null);
-  // The round shown now: an answer for another one (a reload of the last round still on its
-  // way when the next round loaded) is dropped, so it never shows over the new round (T81).
-  const shown = useRef(roundId);
-  shown.current = roundId;
-  const take = useCallback((next: RoundStateView) => {
-    if (next.roundId === shown.current) setState(next);
-  }, []);
   const reload = useCallback(async () => {
     if (roundId === null) return;
     take(await api<RoundStateView>(`/rounds/${roundId}/state`));
@@ -57,8 +68,7 @@ export function useRound(roundId: string | null): RoundLive {
   const reloadAndFollow = useCallback(async () => {
     if (roundId === null) return;
     const next = await api<RoundStateView>(`/rounds/${roundId}/state`);
-    take(next);
-    if (next.roundId !== shown.current) return;
+    if (!take(next)) return;
     if (next.frostDelayMs === null || next.status !== 'open') return;
     if (later.current !== null) window.clearTimeout(later.current);
     later.current = window.setTimeout(() => {
@@ -67,7 +77,7 @@ export function useRound(roundId: string | null): RoundLive {
     }, next.frostDelayMs + 250);
   }, [roundId, reload, take]);
   useEffect(() => {
-    setState(null);
+    clear();
     setFeed([]);
     void reloadAndFollow();
     const socket = gameSocket();
@@ -99,6 +109,6 @@ export function useRound(roundId: string | null): RoundLive {
         timer.current = null;
       }
     };
-  }, [roundId, reloadAndFollow]);
+  }, [roundId, reloadAndFollow, clear]);
   return { state, feed, reload };
 }
