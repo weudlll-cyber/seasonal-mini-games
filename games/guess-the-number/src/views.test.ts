@@ -162,11 +162,14 @@ describe('result view', () => {
       secret: 412,
       secrets: null,
       guesses: { a: [{ value: 300, feedback: 'higher' }], b: [{ value: 500, feedback: 'lower' }] },
+      // Nobody won, so there is no closest miss (O22).
+      closestMiss: null,
     });
     const ind = played('full', 'individual');
     expect(views.result(ind.state, ind.secrets)).toMatchObject({
       secret: null,
       secrets: { a: 412, b: 77 },
+      closestMiss: null,
     });
     expect(viewSchemas.result.safeParse(r).success).toBe(true);
   });

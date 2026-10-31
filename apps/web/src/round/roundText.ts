@@ -76,9 +76,10 @@ export function endHeadline(state: RoundStateView): string {
   }
 }
 
+// The winning margin when a second correct guess came within the window (O13), else null:
+// the game's closest miss takes its place (O22).
 export function marginText(state: RoundStateView): string | null {
-  if (state.secretMode !== 'shared' || state.winner === null) return null;
-  if (state.margin === null) return 'Nobody else was close.';
+  if (state.secretMode !== 'shared' || state.margin === null) return null;
   return `Found it ${seconds(state.margin.ms)} before ${nameOf(state.names, state.margin.playerId)}.`;
 }
 

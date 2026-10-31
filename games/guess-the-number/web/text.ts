@@ -7,13 +7,14 @@
  *                 the round's list (02 §12; 03 §2): Leaf Fall with the fallen numbers named,
  *                 the shared hint and halving; and the list's guess rows from the player or
  *                 spectator view, own guesses and the others' at the round's visibility, with
- *                 answers and comments as far as the view carries them (O20, O21). Server codes
- *                 never reach the screen as codes.
+ *                 answers and comments as far as the view carries them (O20, O21); and the
+ *                 closest miss on the shared result (O22). Server codes never reach the screen
+ *                 as codes.
  * Depends on:     @smg/game-sdk (GameText, GuessRow), ../src (types)
  * Used by:        ./PlayerPanel, ./SpectatorPanel, ./ResultPanel, ./index
- * Spec:           docs/spec/02-game-guess-the-number.md §6, §12; docs/spec/03-seasonal-specials.md §2
+ * Spec:           docs/spec/02-game-guess-the-number.md §6, §9, §12; docs/spec/03-seasonal-specials.md §2
  */
-import type { GtnEvent, PlayerView, SpectatorView } from '@smg-game/guess-the-number';
+import type { GtnEvent, PlayerView, ResultView, SpectatorView } from '@smg-game/guess-the-number';
 import type { FeedLine, GameText, GuessRow } from '@smg/game-sdk';
 
 export type HintView =
@@ -78,8 +79,21 @@ function guessRows(view: unknown): readonly GuessRow[] {
   return [...(v.guesses ?? []).map((g) => row(g, null)), ...v.log.map((g) => row(g, g.playerId))];
 }
 
+// The closest miss on the shared result (O22): "bot-01 missed by just 1 (92)." up to 2 away.
+function runnerUp(view: unknown, names: Readonly<Record<string, string>>): string | null {
+  const miss = (view as Partial<ResultView>).closestMiss ?? null;
+  if (miss === null) return null;
+  const name = names[miss.playerId] ?? miss.playerId;
+  const n = String(miss.distance);
+  const guess = String(miss.value);
+  return miss.distance <= 2
+    ? `${name} missed by just ${n} (${guess}).`
+    : `Closest miss: ${name}, ${n} away (${guess}).`;
+}
+
 export const gtnText: GameText = {
   code: (code) => CODES[code] ?? null,
   event: (event) => eventText(event as GtnEvent),
   guesses: guessRows,
+  runnerUp,
 };

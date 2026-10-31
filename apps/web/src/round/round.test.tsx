@@ -11,13 +11,16 @@
  *                 answer (O20, O21); a player's colour is their team's when teams play, else a season colour by
  *                 roster order; the team tiles show each team's match points, only when teams
  *                 play; a player name stays whole, shortened, and opens on a tap; the result
- *                 screen gives the headline, the winning margin, placings with "took part",
+ *                 screen gives the headline, the winning margin or else the game's closest
+ *                 miss (O22), placings with "took part",
  *                 the team result and the fairness proof; every platform refusal and event
  *                 has its plain sentence (02 §12).
- * Depends on:     vitest, @testing-library/react, @smg/contracts, ./CooldownRing, ./PlayerName,
+ * Depends on:     vitest, @testing-library/react, @smg/contracts, @smg-game/registry/web,
+ *                 ./CooldownRing, ./PlayerName,
  *                 ./RoundLog, ./RoundSide, ./ResultScreen, ./roundText
  * Spec:           docs/spec/02-game-guess-the-number.md §7, §9, §11, §12; docs/spec/09-testing-strategy.md §2
  */
+import { GAME_SCREENS } from '@smg-game/registry/web';
 import type { RoundStateView } from '@smg/contracts';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -222,13 +225,45 @@ describe('the result screen', () => {
   });
 });
 
+describe('the result without a margin', () => {
+  it('gives the game’s closest miss in its place, and nothing when there is none (O22)', () => {
+    const game = GAME_SCREENS['guess-the-number'] ?? null;
+    const view = {
+      range: { low: 1, high: 100 },
+      secret: 92,
+      secrets: null,
+      guesses: { w: [{ value: 92, feedback: 'correct' }], a: [{ value: 93, feedback: 'lower' }] },
+      closestMiss: { playerId: 'a', value: 93, distance: 1 },
+    };
+    const state = { ...ended, margin: null, game: view };
+    render(<ResultScreen state={state} game={game} viewerKey="a" />);
+    expect(screen.queryByTestId('margin')).toBeNull();
+    expect(screen.getByTestId('closest-miss').textContent).toBe('Anna missed by just 1 (93).');
+    cleanup();
+    const far = { ...view, closestMiss: { playerId: 'a', value: 60, distance: 32 } };
+    render(<ResultScreen state={{ ...state, game: far }} game={game} viewerKey="a" />);
+    expect(screen.getByTestId('closest-miss').textContent).toBe(
+      'Closest miss: Anna, 32 away (60).',
+    );
+    cleanup();
+    // With a margin, the margin stays and the closest miss is not shown (O13).
+    render(<ResultScreen state={{ ...ended, game: view }} game={game} viewerKey="a" />);
+    expect(screen.getByTestId('margin')).toBeTruthy();
+    expect(screen.queryByTestId('closest-miss')).toBeNull();
+    cleanup();
+    const none = { ...state, game: { ...view, closestMiss: null } };
+    render(<ResultScreen state={none} game={game} viewerKey="a" />);
+    expect(screen.queryByTestId('closest-miss')).toBeNull();
+  });
+});
+
 describe('the words', () => {
   it('give refusals, end reasons, margins and events plain sentences', () => {
     expect(codeText('COOLDOWN_ACTIVE', 5_000, 2_100)).toBe('Your cooldown is running — 3 s left.');
     expect(codeText('NOT_IN_ROUND')).toMatch(/watching this round/);
     expect(codeText('SOMETHING_NEW')).toBe('That did not work. Please try again.');
     expect(endHeadline({ ...ended, endReason: 'timeUp' })).toBe('Time is up.');
-    expect(marginText({ ...ended, margin: null })).toBe('Nobody else was close.');
+    expect(marginText({ ...ended, margin: null })).toBeNull();
     expect(marginText({ ...ended, secretMode: 'individual' })).toBeNull();
     expect(platformLine({ type: 'CooldownChanged', cooldownMs: 7_000 }, {})?.text).toBe(
       'Heatwave: cooldown now 7.0 s.',

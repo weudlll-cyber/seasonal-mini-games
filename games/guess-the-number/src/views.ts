@@ -14,14 +14,16 @@
  *                 holds the range at all: `range` is null until the result reveals it with
  *                 the secret (O19, T52). Answers and comments of guesses received at or after
  *                 `releasedBefore` are still held by Frost and appear in no view. Only
- *                 `result` takes the secrets.
- * Depends on:     zod, @smg/game-sdk (GameViews, Range), ./closeness, ./secrets, ./state
+ *                 `result` takes the secrets; it alone carries the closest miss (O22).
+ * Depends on:     zod, @smg/game-sdk (GameViews, Range), ./closeness, ./closestMiss, ./secrets,
+ *                 ./state
  * Used by:        ./module
  * Spec:           docs/spec/02-game-guess-the-number.md §6, §9, §11, §12; docs/spec/05-security-threat-model.md §3
  */
 import type { GameViews, Range, ViewCtx } from '@smg/game-sdk';
 import { z } from 'zod';
 
+import { closestMiss } from './closestMiss.js';
 import { TIERS } from './closeness.js';
 import type { Secrets } from './secrets.js';
 import type { Guess, GtnState } from './state.js';
@@ -75,6 +77,15 @@ export const viewSchemas = {
         z.string(),
         z.array(z.object({ value: z.number().int(), feedback }).strict()),
       ),
+      // Shared mode with a winner: the best wrong guess of anyone else (O22).
+      closestMiss: z
+        .object({
+          playerId: z.string(),
+          value: z.number().int(),
+          distance: z.number().int().nonnegative(),
+        })
+        .strict()
+        .nullable(),
     })
     .strict(),
 };
@@ -160,5 +171,6 @@ export const views: GameViews<GtnState, Secrets> = {
         p.guesses.map((g) => ({ value: g.value, feedback: g.feedback })),
       ]),
     ),
+    closestMiss: secrets.mode === 'shared' ? closestMiss(state, secrets.value) : null,
   }),
 };

@@ -16,7 +16,7 @@
 
 | Level | Scope |
 |---|---|
-| Unit and property | `domain` (lifecycle, cooldown, ordering, placings, teams, special scheduling), `game-sdk` (DRBG helpers, range arithmetic), `games/guess-the-number/src` (feedback, hints, Leaf Fall, halving) |
+| Unit and property | `domain` (lifecycle, cooldown, ordering, placings, teams, special scheduling), `game-sdk` (DRBG helpers, range arithmetic), `games/guess-the-number/src` (feedback, hints, Leaf Fall, halving, the closest miss: ties, none, a hidden range) |
 | Conformance | One shared suite run against every module in `games/registry` (invariants P1–P6). A new game is green only when it passes. |
 | Engine integration | The round actor with real Postgres: group commit, restart recovery, scheduler precision, Frost after restart |
 | Component | Range bar, cooldown ring, guess list, roster, team standing, result screen; the input row keeps typed text across the round opening and while an answer is on its way |

@@ -4,7 +4,8 @@
  * @brief  The result of a round: headline, margin, placings, teams, the secret and the proof.
  *
  * Responsibility: the end in plain words ("Walter found it first — after 9 guesses"), the
- *                 winning margin in shared mode ("found it 0.4 s before Anna"), placings with
+ *                 winning margin in shared mode ("found it 0.4 s before Anna") or, without one,
+ *                 the game's closest miss ("bot-01 missed by just 1 (92).", O22), placings with
  *                 points (the viewer's line highlighted; "took part" in shared mode, "not
  *                 solved" in individual mode), the team result when teams played, the game's
  *                 result panel with the secret(s), and the fairness proof: the commitment
@@ -119,10 +120,13 @@ export function ResultScreen({
   readonly viewerKey: string | null;
 }): ReactElement {
   const margin = marginText(state);
+  // Without a margin, the game's line about the closest miss stands in its place (O22).
+  const miss = margin === null ? (game?.text.runnerUp(state.game, state.names) ?? null) : null;
   return (
     <section className="smg-panel round-result" data-testid="result">
       <h1>{endHeadline(state)}</h1>
       {margin === null ? null : <p data-testid="margin">{margin}</p>}
+      {miss === null ? null : <p data-testid="closest-miss">{miss}</p>}
       {game === null ? null : (
         <game.Result view={state.game} names={state.names} viewerKey={viewerKey} />
       )}

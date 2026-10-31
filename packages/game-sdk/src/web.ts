@@ -9,7 +9,8 @@
  *                 banner, cooldown ring, roster, the round's one list, results, proof — and
  *                 hands the game only its own view, a way to act, and the clock. The game
  *                 turns its view into the list's guess rows (`GuessRow`, O20) and words its
- *                 event rows (`FeedLine`); the client draws both, in one list.
+ *                 event rows (`FeedLine`); the client draws both, in one list. On the result
+ *                 page the game words the line about the best of the rest (`runnerUp`, O22).
  * Depends on:     ./module
  * Used by:        ./index, games/<game>/web, games/registry/web, apps/web
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/02-game-guess-the-number.md §12
@@ -74,8 +75,14 @@ export interface GuessRow {
 
 // Plain English for the game's own rejection codes and room events (02 §12); null when the
 // text is not the game's. `guesses` turns the game's player or spectator view into rows.
+// `runnerUp` words the best of the rest from the result view, shown where the winning margin
+// goes when the round has none (O22), or null.
 export interface GameText {
   readonly code: (code: string) => string | null;
   readonly event: (event: unknown, names: Readonly<Record<string, string>>) => FeedLine | null;
   readonly guesses: (view: unknown) => readonly GuessRow[];
+  readonly runnerUp: (
+    resultView: unknown,
+    names: Readonly<Record<string, string>>,
+  ) => string | null;
 }
