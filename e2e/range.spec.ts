@@ -19,7 +19,16 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { readable } from './contrast.js';
-import { abortMatch, call, closeAll, fitsScreen, hostMenu, person, search } from './play.js';
+import {
+  abortMatch,
+  call,
+  closeAll,
+  fitsScreen,
+  hostMenu,
+  ownRows,
+  person,
+  search,
+} from './play.js';
 import { PHONE } from './screens.js';
 
 interface Started {
@@ -51,9 +60,11 @@ test('journey 10: a hidden range reaches no screen and a guess outside it is ans
     expect(numbers).not.toContain(8_765);
     await p.page.getByTestId('guess-input').fill('900000000');
     await p.page.getByTestId('guess-button').click();
-    const chip = p.page.getByTestId('own-guesses').locator('li').first();
-    await expect(chip).toHaveAttribute('data-feedback', 'lower');
-    await expect(chip).toContainText('900000000');
+    const row = ownRows(p.page).first();
+    await expect(row.locator('.round-answer')).toHaveAttribute('data-feedback', 'lower');
+    await expect(row).toContainText('900000000');
+    // Outside the hidden range: the farthest tier, with a comment that names no bound (O21).
+    await expect(row).toHaveAttribute('data-tier', 'wayOff');
     await hostMenu(p);
     await p.page.getByTestId('end-round').click();
     await expect(p.page.getByTestId('result-range')).toHaveText('The range was -4321 to 8765.', {
@@ -104,7 +115,7 @@ test('journey 11: a range from -500 to 500 takes negative guesses on a phone', a
     await p.page.getByRole('button', { name: 'Change the sign', exact: true }).click();
     await expect(p.page.getByTestId('guess-input')).toHaveValue('-250');
     await p.page.getByTestId('guess-button').click();
-    await expect(p.page.getByTestId('own-guesses')).toContainText('-250');
+    await expect(ownRows(p.page).first()).toContainText('-250');
     await search(p);
     await expect(p.page.getByTestId('result-range')).toHaveText('The range was -500 to 500.', {
       timeout: 15_000,

@@ -5,10 +5,11 @@
  *
  * Responsibility: every platform code a player can meet in plain English (02 §12), the
  *                 result's headline ("Walter found it first — after 9 guesses", 02 §9), the
- *                 winning margin, and one live-list row per platform event (a solve, Heatwave's
- *                 new cooldown, the end); a game's own rows come from the game's text.
+ *                 winning margin, and one event row of the round's list per platform event (a
+ *                 solve, Heatwave's new cooldown, the round opening and ending); a game's own
+ *                 rows come from the game's text.
  * Depends on:     @smg/contracts (shapes), @smg/game-sdk (FeedLine)
- * Used by:        ./RoundScreen, ./ResultScreen, ./Feed, ../match/HostMenu
+ * Used by:        ./RoundScreen, ./ResultScreen, ./RoundLog, ../match/HostMenu
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §12; docs/spec/03-seasonal-specials.md §2
  */
 import type { RoundStateView } from '@smg/contracts';
@@ -81,16 +82,16 @@ export function marginText(state: RoundStateView): string | null {
   return `Found it ${seconds(state.margin.ms)} before ${nameOf(state.names, state.margin.playerId)}.`;
 }
 
-const roundLine = (text: string): FeedLine => ({ text, playerId: null, feedback: null });
+const roundLine = (text: string): FeedLine => ({ text, playerId: null });
 
-// The live-list row of a platform event, or null (game events are the game's to word).
+// The list row of a platform event, or null (game events are the game's to word).
 export function platformLine(event: unknown, names: Names): FeedLine | null {
   const e = event as { type?: string; [k: string]: unknown };
   switch (e.type) {
     case 'PlayerSolved': {
       const who = String(e['playerId']);
       const text = `${nameOf(names, who)} found ${e['place'] === 1 ? 'it' : 'their number'} — place ${String(e['place'])}.`;
-      return { text, playerId: who, feedback: null };
+      return { text, playerId: who };
     }
     case 'CooldownChanged':
       return roundLine(`Heatwave: cooldown now ${seconds(Number(e['cooldownMs']))}.`);

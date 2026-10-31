@@ -29,6 +29,13 @@
 | `round.countdownS` | 5 | 3 | 30 | owner (O15) | host | frozen |
 | `round.maxDurationMin` | 10 | 1 | 60 | owner (O15) | host | frozen |
 | `round.feedbackVisibility` | `full` | — | — (`own`, `numbers`, `full`) | owner (O8) | host (shared mode) | frozen |
+| `round.comments` | true | — | — | owner (O21): a closeness comment on every guess, seen exactly where its answer is seen (02 §6.3) | host | frozen |
+| `comments.wayOffAbove` | 50 % | 20 | 90 | proposal: a guess farther from the secret than this share of the range's width is "way off" (02 §6.3) | game admin | frozen |
+| `comments.coldAbove` | 25 % | 10 | 60 | proposal: "cold" above this share | game admin | frozen |
+| `comments.coolAbove` | 10 % | 3 | 40 | proposal: "cool" above this share | game admin | frozen |
+| `comments.warmAbove` | 3 % | 1 | 20 | proposal: "warm" above this share | game admin | frozen |
+| `comments.hotAbove` | 1 % | 0.5 | 10 | proposal: "hot" above this share; at or under it "burning" (more than 2 away). The five thresholds must fall from way off to hot | game admin | frozen |
+| `comments.trendPercent` | 33 % | 0 | 100 | proposal: how often a guess in another tier than the player's last one gets a trend line ("getting warmer") instead of a tier line (DECISIONS T71) | game admin | frozen |
 | `round.marginWindowS` | 2 | 0.5 | 10 | proposal: how long after the winning guess a correct guess still counts for the winning margin (02 §9) | game admin | frozen |
 | `round.seasonSource` | `inSeason` | — | — (`inSeason`, `manual`) | owner (default: O15) | host | frozen |
 | `round.specialOn` | true | — | — | owner (O15) | host | frozen |

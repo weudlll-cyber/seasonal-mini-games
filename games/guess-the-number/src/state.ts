@@ -4,17 +4,21 @@
  * @brief  Game state and events of a round, and how events change the state.
  *
  * Responsibility: per roster player the current range and the accepted guesses with their
- *                 answers; the removed numbers; whether the range is shown (O19); the hints of
- *                 Spring Herald and the windows of halving (03 §2.1, §2.3, §4). Nothing is
+ *                 answers and closeness comments (O21); the removed numbers; whether the range
+ *                 is shown (O19); the hints of Spring Herald and the windows of halving (03 §2.1,
+ *                 §2.3, §4); the comment lines the round has used (DECISIONS T72). Nothing is
  *                 narrowed from the answers (O17). No secret is ever part of the state
  *                 (05 §3). `GuessFed` is the room's line about a guess, shaped by the
  *                 visibility, and changes nothing.
- * Depends on:     @smg/game-sdk (Range, RoundInput), ./feedback, ./settings
+ * Depends on:     @smg/game-sdk (Range, RoundInput), ./closeness, ./comments, ./feedback,
+ *                 ./settings
  * Used by:        ./module, ./rules, ./views
  * Spec:           docs/spec/02-game-guess-the-number.md §5, §6; docs/spec/06-data-model-api-realtime.md §2.7
  */
-import type { Range, RoundInput, SecretMode } from '@smg/game-sdk';
+import type { Range, RoundInput, SecretMode, Season } from '@smg/game-sdk';
 
+import type { Thresholds } from './closeness.js';
+import { noteUsed, type Comment, type UsedLines } from './comments.js';
 import type { Feedback } from './feedback.js';
 import type { GtnConfig, Visibility } from './settings.js';
 
@@ -23,6 +27,8 @@ export interface Guess {
   readonly receivedAt: number;
   readonly value: number;
   readonly feedback: Feedback;
+  // Null when the round has the comments off.
+  readonly comment: Comment | null;
 }
 
 // Spring Herald's hint: odd or even, or which half of the range (03 §2.1).
@@ -43,6 +49,15 @@ export interface GtnState {
   // Off: no client learns the range while the round runs (O19, DECISIONS T52).
   readonly rangeVisible: boolean;
   readonly repeatRejected: boolean;
+  // The closeness comments (O21): on or off, the tiers' thresholds, how often a trend line
+  // comes, the season whose own lines may come up, and the lines used so far.
+  readonly comments: {
+    readonly on: boolean;
+    readonly thresholds: Thresholds;
+    readonly trendPercent: number;
+    readonly season: Season;
+    readonly used: UsedLines;
+  };
   readonly specials: {
     readonly hintType: GtnConfig['springHintType'];
     readonly minRemaining: number;
@@ -66,6 +81,7 @@ export type GtnEvent =
       readonly receivedAt: number;
       readonly value: number;
       readonly feedback: Feedback;
+      readonly comment: Comment | null;
     }
   | {
       readonly type: 'GuessFed';
@@ -73,6 +89,8 @@ export type GtnEvent =
       readonly guesses: number;
       readonly value?: number;
       readonly feedback?: Feedback;
+      // Only beside the feedback, under `full` (T73).
+      readonly comment?: Comment;
     }
   // `playerId` null: the shared hint, to everyone.
   | { readonly type: 'HintGiven'; readonly playerId: string | null; readonly hint: Hint }
@@ -98,6 +116,13 @@ export function createState(input: RoundInput<GtnConfig>): GtnState {
     visibility: c.feedbackVisibility,
     rangeVisible: c.rangeVisible,
     repeatRejected: c.repeatGuessRejected,
+    comments: {
+      on: c.comments,
+      thresholds: c.thresholds,
+      trendPercent: c.trendPercent,
+      season: input.season,
+      used: {},
+    },
     specials: {
       // "Which half" names numbers of the range: a hidden range gets odd or even (T56).
       hintType: c.rangeVisible ? c.springHintType : 'parity',
@@ -140,9 +165,13 @@ function withPlayer(
 }
 
 function answered(state: GtnState, event: Extract<GtnEvent, { type: 'FeedbackGiven' }>): GtnState {
-  const { receiveSeq, receivedAt, value, feedback } = event;
-  const guess: Guess = { receiveSeq, receivedAt, value, feedback };
-  return withPlayer(state, event.playerId, (p) => ({ ...p, guesses: [...p.guesses, guess] }));
+  const { receiveSeq, receivedAt, value, feedback, comment } = event;
+  const guess: Guess = { receiveSeq, receivedAt, value, feedback, comment };
+  const next = withPlayer(state, event.playerId, (p) => ({ ...p, guesses: [...p.guesses, guess] }));
+  // An unknown player's event changes nothing, its comment included.
+  if (comment === null || next === state) return next;
+  const c = state.comments;
+  return { ...next, comments: { ...c, used: noteUsed(c.used, comment, c.season) } };
 }
 
 // A new range for one player, or the shared window for all.

@@ -2,18 +2,20 @@
 /**
  * @file   apps/web/src/round/round.test.tsx
  * @module web/round
- * @brief  The platform's round components and words: ring, Live list, teams, result, refusals.
+ * @brief  The platform's round components and words: ring, guess list, teams, result, refusals.
  *
- * Responsibility: the cooldown ring counts down and says Ready; the Live list shows each row
- *                 with the player's colour dot and the answer in colour, newest at the top; a
- *                 player's colour is their team's when teams play, else a season colour by
+ * Responsibility: the cooldown ring counts down and says Ready; the guess list merges the
+ *                 game's guess rows and the event rows, newest at the top, each guess with the
+ *                 player's colour dot, "You" and a highlight on the viewer's own, the answer in
+ *                 colour and the comment under it, "answer arriving" while Frost holds an own
+ *                 answer (O20, O21); a player's colour is their team's when teams play, else a season colour by
  *                 roster order; the team tiles show each team's match points, only when teams
  *                 play; a player name stays whole, shortened, and opens on a tap; the result
  *                 screen gives the headline, the winning margin, placings with "took part",
  *                 the team result and the fairness proof; every platform refusal and event
  *                 has its plain sentence (02 §12).
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./CooldownRing, ./PlayerName,
- *                 ./RoundSide, ./ResultScreen, ./roundText
+ *                 ./RoundLog, ./RoundSide, ./ResultScreen, ./roundText
  * Spec:           docs/spec/02-game-guess-the-number.md §7, §9, §11, §12; docs/spec/09-testing-strategy.md §2
  */
 import type { RoundStateView } from '@smg/contracts';
@@ -23,7 +25,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { CooldownRing } from './CooldownRing.js';
 import { PlayerName } from './PlayerName.js';
 import { ResultScreen } from './ResultScreen.js';
-import { Feed, playerColor, TeamTiles } from './RoundSide.js';
+import { RoundLog } from './RoundLog.js';
+import { playerColor, TeamTiles } from './RoundSide.js';
 import { codeText, endHeadline, marginText, platformLine } from './roundText.js';
 
 afterEach(() => {
@@ -100,31 +103,73 @@ describe('the cooldown ring', () => {
   });
 });
 
-describe('the Live list and the teams', () => {
-  it('shows rows with the player colour and the answer in colour, newest first', () => {
-    const game = {
-      text: {
-        code: () => null,
-        event: () => ({ text: 'Anna guessed 40', playerId: 'a', feedback: 'lower' as const }),
-      },
-    } as never;
+// The guess list's game: its rows, and an event line for every game event.
+const row = { pending: false, tier: null, comment: null, feedback: null, value: null };
+const guesses = [
+  {
+    ...row,
+    key: '1',
+    at: 3_000,
+    playerId: null,
+    value: 40,
+    feedback: 'lower',
+    tier: 'warm',
+    comment: 'Getting cosy.',
+  },
+  { ...row, key: '2', at: 5_000, playerId: 'w', value: 70 },
+  { ...row, key: '3', at: 8_000, playerId: null, value: 45, pending: true },
+];
+const gameWith = (rows: readonly object[]) =>
+  ({
+    text: {
+      code: () => null,
+      event: () => ({ text: 'Leaf Fall: 12 fell.', playerId: null }),
+      guesses: () => rows,
+    },
+  }) as never;
+const game = gameWith(guesses);
+const live = { ...ended, status: 'open', frostDelayMs: 3_000, game: {} } as const;
+
+describe('the guess list', () => {
+  it('merges guesses and events newest first, with "You", answers, comments and Frost', () => {
     const feed = [
-      { key: '2', at: 2, event: { type: 'Game', event: {} } },
-      { key: '1', at: 1, event: { type: 'RoundOpened' } },
+      { key: '9', at: 6_000, event: { type: 'Game', event: {} } },
+      { key: '1', at: 1_000, event: { type: 'RoundOpened' } },
     ];
-    render(<Feed feed={feed} game={game} state={ended} />);
-    const rows = [...screen.getByTestId('feed').querySelectorAll('li')];
+    render(<RoundLog feed={feed} game={game} state={live} viewerKey="a" now={9_000} />);
+    const rows = [...screen.getByTestId('guess-list').querySelectorAll('li')];
     expect(rows.map((li) => li.textContent)).toEqual([
-      'Anna guessed 40 lower ↓',
+      'You45answer arriving in 2 s',
+      'Leaf Fall: 12 fell.',
+      'Walter70',
+      'You40lower ↓Getting cosy.',
       'The round is open — guess!',
     ]);
-    expect(rows[0]?.querySelector('[data-feedback="lower"]')).not.toBeNull();
+    expect(rows.map((li) => li.dataset['own'])).toEqual([
+      'true',
+      undefined,
+      'false',
+      'true',
+      undefined,
+    ]);
+    expect(rows[3]?.querySelector('[data-feedback="lower"]')).not.toBeNull();
+    expect(rows[3]?.querySelector('.round-comment')?.textContent).toBe('Getting cosy.');
+    expect(rows[3]?.dataset['tier']).toBe('warm');
+    // The viewer's own dot: Anna plays for winter.
     expect(rows[0]?.querySelector<HTMLElement>('.round-dot')?.style.getPropertyValue('--dot')).toBe(
       'var(--color-winter)',
     );
+    expect(rows[1]?.className).toContain('round-row--event');
   });
 
-  it('colours players by team when teams play, else by roster order', () => {
+  it('says so when nothing has happened yet', () => {
+    render(<RoundLog feed={[]} game={gameWith([])} state={live} viewerKey="a" now={0} />);
+    expect(screen.getByText('No guesses yet.')).toBeTruthy();
+  });
+});
+
+describe('the colours and the teams', () => {
+  it('colour players by team when teams play, else by roster order', () => {
     expect(playerColor(ended, 'w')).toBe('var(--color-autumn)');
     const plain = { ...ended, teamsOn: false };
     expect([playerColor(plain, 'w'), playerColor(plain, 'a')]).toEqual([
@@ -133,7 +178,7 @@ describe('the Live list and the teams', () => {
     ]);
   });
 
-  it('shows the four team tiles with match points only when teams play', () => {
+  it('show the four team tiles with match points only when teams play', () => {
     const points = [{ team: 'autumn' as const, points: 3 }];
     render(<TeamTiles state={ended} points={points} />);
     const tiles = screen.getByTestId('team-tiles').textContent;
@@ -191,7 +236,6 @@ describe('the words', () => {
     expect(platformLine({ type: 'PlayerSolved', playerId: 'a', place: 2 }, ended.names)).toEqual({
       text: 'Anna found their number — place 2.',
       playerId: 'a',
-      feedback: null,
     });
     expect(platformLine({ type: 'GuessAccepted' }, {})).toBeNull();
   });

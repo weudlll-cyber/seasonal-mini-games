@@ -6,9 +6,10 @@
  * Responsibility: OUT_OF_RANGE for values outside the player's range or not whole while the
  *                 range is shown, and none at all while it is hidden (T53); NUMBER_REMOVED,
  *                 ALREADY_GUESSED only when repeats are refused; the answer goes to the
- *                 guesser and is marked for Frost, without any narrowed range (O17); the room
- *                 line carries what the visibility allows (02 §6.2); a correct guess signals
- *                 Solved.
+ *                 guesser and is marked for Frost, without any narrowed range (O17), with its
+ *                 closeness comment, or none when the round has the comments off; the room
+ *                 line carries what the visibility allows (02 §6.2), the comment only beside
+ *                 the answer (O21); a correct guess signals Solved.
  * Depends on:     vitest, ./fakes, ./module
  * Spec:           docs/spec/02-game-guess-the-number.md §5.1, §6, §8
  */
@@ -18,6 +19,9 @@ import { input, Table } from './fakes.js';
 import { guessTheNumber } from './module.js';
 
 const shared = (value: number) => ({ mode: 'shared', value }) as const;
+// A comment of the tier (from the pool, when given); its line depends on the DRBG.
+const commentOf = (tier: string, pool?: string): unknown =>
+  expect.objectContaining(pool === undefined ? { tier } : { tier, pool });
 
 describe('checks', () => {
   it('refuse values outside the range, fractions, removed numbers and repeats', () => {
@@ -74,13 +78,26 @@ describe('answers', () => {
         receivedAt: 1_000,
         value: 300,
         feedback: 'higher',
+        // 112 away in a range 999 wide: 11.2 %, cool; no earlier guess, so no trend line.
+        comment: commentOf('cool', 'cool'),
       },
     });
     const second = t.play('a', 500);
     expect(second.ok && second.events[0]?.event).toMatchObject({ feedback: 'lower' });
     const hit = t.play('a', 412);
     expect(hit.ok && hit.signals).toEqual([{ type: 'Solved', playerId: 'a' }]);
+    expect(hit.ok && hit.events[0]?.event).toMatchObject({ comment: { tier: 'correct' } });
     expect(second.ok && second.signals).toEqual([]);
+  });
+
+  it('carry no comment when the round has the comments off', () => {
+    const t = new Table(shared(412), input('shared', ['a', 'b'], { comments: false }));
+    const d = t.play('a', 300);
+    const [given, fed] = d.ok ? d.events.map((e) => e.event) : [];
+    expect(given).toMatchObject({ type: 'FeedbackGiven', comment: null });
+    expect(fed).toMatchObject({ type: 'GuessFed', feedback: 'higher' });
+    expect(fed !== undefined && 'comment' in fed).toBe(false);
+    expect(t.state.players.a?.guesses[0]?.comment).toBeNull();
   });
 });
 
@@ -115,6 +132,7 @@ describe('the room line', () => {
         guesses: 1,
         value: 300,
         feedback: 'higher',
+        comment: commentOf('cool'),
       },
     });
     expect(line('full', 'individual')?.event).toEqual({
@@ -140,15 +158,17 @@ describe('unknown players', () => {
       },
     };
     expect(guessTheNumber.decide(t.state, act, ctx)).toEqual({ ok: false, code: 'OUT_OF_RANGE' });
-    expect(
-      guessTheNumber.evolve(t.state, {
-        type: 'FeedbackGiven',
-        playerId: 'x',
-        receiveSeq: 1,
-        receivedAt: 0,
-        value: 5,
-        feedback: 'higher',
-      }),
-    ).toBe(t.state);
+    const event = {
+      type: 'FeedbackGiven',
+      playerId: 'x',
+      receiveSeq: 1,
+      receivedAt: 0,
+      value: 5,
+      feedback: 'higher',
+      comment: null,
+    } as const;
+    expect(guessTheNumber.evolve(t.state, event)).toBe(t.state);
+    const comment = { tier: 'cold', text: 'Brrr.', pool: 'cold', index: 3 } as const;
+    expect(guessTheNumber.evolve(t.state, { ...event, comment })).toBe(t.state);
   });
 });

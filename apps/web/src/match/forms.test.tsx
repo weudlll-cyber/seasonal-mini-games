@@ -51,6 +51,7 @@ describe('the forms', () => {
       'Lowest number',
       'Highest number',
       'Show range',
+      'Closeness comments',
       'Fast specials',
     ]);
     for (const [label, text] of help) expect(text, label).not.toBe('');

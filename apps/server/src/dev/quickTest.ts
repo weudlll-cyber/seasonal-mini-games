@@ -5,7 +5,8 @@
  *
  * Responsibility: opens an unlisted match hosted by the signed-in player, adds bots
  *                 `bot-01` …, creates a round with the chosen mode, cooldown, visibility,
- *                 range (negative bounds allowed) and whether it is shown, and starts it
+ *                 range (negative bounds allowed), whether it is shown and whether guesses get
+ *                 closeness comments (O21), and starts it
  *                 at once with the player and the bots as its roster; the bots then play
  *                 (./bots). A seed text makes the round repeatable: the round seed is
  *                 `sha256("smg-quicktest:" + text)`, and without a season given the seed picks
@@ -35,6 +36,7 @@ export interface QuickTestInput {
   readonly rangeLow: number;
   readonly rangeHigh: number;
   readonly rangeVisible: boolean;
+  readonly comments: boolean;
   readonly fast: boolean;
   // A halving round; only on a halving day, as for every round.
   readonly halving: boolean;
@@ -86,6 +88,7 @@ export async function startQuickTest(
       'round.rangeLow': input.rangeLow,
       'round.rangeHigh': input.rangeHigh,
       'round.rangeVisible': input.rangeVisible,
+      'round.comments': input.comments,
       'round.halving': input.halving,
     },
     season,

@@ -28,7 +28,7 @@
 **Platform conformance (every game module):**
 
 - **P1 Determinism.** Same seed, same settings and the same ordered inputs ⇒ identical event list.
-- **P2 No secret leaks.** With unique sentinel secrets, no serialized player view, spectator view, room frame or rejection answer of a running round contains a sentinel. Result views contain them only after the end. With a hidden range, its bounds count as sentinels too (DECISIONS T52).
+- **P2 No secret leaks.** With unique sentinel secrets, no serialized player view, spectator view, room frame or rejection answer of a running round contains a sentinel. Result views contain them only after the end. With a hidden range, its bounds count as sentinels too (DECISIONS T52). Nothing about an answer travels without it: a closeness comment sits only beside its feedback, and while Frost holds every answer no view shows either (owner decision 21, DECISIONS T73).
 - **P3 Valid views.** Every view validates against the module's `viewSchemas`.
 - **P4 Rejections are free.** A rejected action produces no event and leaves state equal (deep equality).
 - **P5 Replay equals live.** Folding the round's event log with `evolve` gives the actor's state.

@@ -1,18 +1,17 @@
 /**
  * @file   games/guess-the-number/web/PlayerPanel.tsx
  * @module games/guess-the-number/web
- * @brief  The player's two parts: the main area (range, own guesses) and the input row.
+ * @brief  The player's two parts: the range block at the top of the main area, and the input row.
  *
- * Responsibility: `PlayerPanel` is the main area: the range block (./RangeBar) with Spring
- *                 Herald's hint under it and "Your guesses" as chips "250 ↓" with the answer
- *                 as an arrow, or "answer arriving in 2 s" while Frost holds one (02 §12).
- *                 `GuessInput` is the input row, placed by the platform (pinned at the
+ * Responsibility: `PlayerPanel` is the range block (./RangeBar) with Spring Herald's hint under
+ *                 it; the platform draws the round's one list of guesses and events beneath it
+ *                 (O20). `GuessInput` is the input row, placed by the platform (pinned at the
  *                 bottom on a phone): the platform's cooldown ring, a number field that takes
  *                 a minus sign (with the shared ± button of @smg/ui where negative numbers are
  *                 possible, since phone keypads often lack one, T57) and a large Guess button;
- *                 Enter sends. The field takes whole numbers from
- *                 −1 000 000 000 to 1 000 000 000 (T53). The game's own refusals are shown in
- *                 plain words; the platform's are shown by the platform.
+ *                 Enter sends. The field takes whole numbers from −1 000 000 000 to
+ *                 1 000 000 000 (T53). The game's own refusals are shown in plain words; the
+ *                 platform's are shown by the platform.
  * Depends on:     react, @smg/game-sdk (props), @smg/ui (sign toggle),
  *                 @smg-game/guess-the-number (types, limit), ./RangeBar, ./text
  * Used by:        ./index
@@ -24,15 +23,10 @@ import { flipSign, SignToggle } from '@smg/ui';
 import { useState, type ReactElement, type ReactNode, type SyntheticEvent } from 'react';
 
 import { RangeBar } from './RangeBar.js';
-import { answerText, ARROWS, gtnText, hintText } from './text.js';
+import { gtnText, hintText } from './text.js';
 
 // The platform hands its cooldown ring in, to sit at the start of the input row.
 export type GtnPlayerProps = PlayerPanelProps & { readonly ring?: ReactNode };
-
-function Arriving({ at, now }: { readonly at: number; readonly now: () => number }): ReactElement {
-  const seconds = Math.max(0, Math.ceil((at - now()) / 1_000));
-  return <span className="gtn-frost">answer arriving in {seconds} s</span>;
-}
 
 // A whole number the field takes, or null.
 function parsed(text: string): number | null {
@@ -108,43 +102,6 @@ export function GuessInput(props: GtnPlayerProps): ReactElement {
   );
 }
 
-function OwnGuesses({
-  view,
-  props,
-}: {
-  readonly view: PlayerView;
-  readonly props: PlayerPanelProps;
-}): ReactElement {
-  return (
-    <section className="gtn-own" aria-labelledby="gtn-own-title">
-      <h2 id="gtn-own-title" className="gtn-own-title">
-        Your guesses
-      </h2>
-      {view.guesses.length === 0 ? (
-        <p className="gtn-own-none">None yet.</p>
-      ) : (
-        <ol className="gtn-chips" data-testid="own-guesses">
-          {[...view.guesses].reverse().map((g) => (
-            <li key={g.receiveSeq} className="gtn-chip" data-feedback={g.feedback ?? 'pending'}>
-              {g.feedback === null ? (
-                <>
-                  {g.value}{' '}
-                  <Arriving at={g.receivedAt + (props.frostDelayMs ?? 0)} now={props.now} />
-                </>
-              ) : (
-                <>
-                  {g.value} <span aria-hidden="true">{ARROWS[g.feedback]}</span>
-                  <span className="smg-visually-hidden">{answerText(g.value, g.feedback)}</span>
-                </>
-              )}
-            </li>
-          ))}
-        </ol>
-      )}
-    </section>
-  );
-}
-
 export function PlayerPanel(props: PlayerPanelProps): ReactElement {
   const view = props.view as PlayerView;
   return (
@@ -155,7 +112,6 @@ export function PlayerPanel(props: PlayerPanelProps): ReactElement {
           <strong>Spring Herald:</strong> {hintText(view.hint)}
         </p>
       )}
-      <OwnGuesses view={view} props={props} />
     </div>
   );
 }

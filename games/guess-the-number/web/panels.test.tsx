@@ -2,15 +2,16 @@
 /**
  * @file   games/guess-the-number/web/panels.test.tsx
  * @module games/guess-the-number/web
- * @brief  The game's panels and words: range bar, guess field, own guesses, feed lines.
+ * @brief  The game's panels and words: range bar, guess field, guess rows, event lines.
  *
  * Responsibility: the range block names the range and the fallen numbers, or "Any whole
  *                 number" while the range is hidden, and nothing narrowed (O17); the player
- *                 panel shows the hint and the guesses as chips newest first, with "answer
- *                 arriving" while Frost holds one; the input row keeps Guess disabled while
+ *                 panel shows the range and the hint; the input row keeps Guess disabled while
  *                 the player cannot act, takes negative whole numbers (± flips the sign), and
  *                 words the game's own refusal; the spectator and result panels show what their
- *                 views hold, the result with the range; every room event has its plain line.
+ *                 views hold, the result with the range; the views become the list's guess
+ *                 rows, own ones pending while Frost holds them (O20, O21); every room event
+ *                 has its plain line, and guesses none (they are rows).
  * Depends on:     vitest, @testing-library/react, ./PlayerPanel, ./RangeBar, ./SpectatorPanel,
  *                 ./ResultPanel, ./text
  * Spec:           docs/spec/02-game-guess-the-number.md §6, §11, §12; docs/spec/09-testing-strategy.md §2
@@ -22,19 +23,22 @@ import { GuessInput, PlayerPanel } from './PlayerPanel.js';
 import { RangeBar } from './RangeBar.js';
 import { ResultPanel } from './ResultPanel.js';
 import { SpectatorPanel } from './SpectatorPanel.js';
-import { answerText, gtnText } from './text.js';
+import { gtnText } from './text.js';
 
 afterEach(() => {
   cleanup();
 });
 
+const answered = { feedback: 'higher' as const, tier: 'cool' as const, comment: 'Mild.' };
+const held = { feedback: null, tier: null, comment: null };
 const view = {
   range: { low: 1, high: 1_000 },
   removed: [5, 6],
   guesses: [
-    { receiveSeq: 1, receivedAt: 1_000, value: 300, feedback: 'higher' as const },
-    { receiveSeq: 2, receivedAt: 5_000, value: 700, feedback: null },
+    { receiveSeq: 1, receivedAt: 1_000, value: 300, ...answered },
+    { receiveSeq: 3, receivedAt: 5_000, value: 700, ...held },
   ],
+  log: [{ receiveSeq: 2, receivedAt: 2_000, playerId: 'p2', value: 40, ...held }],
   hint: { kind: 'parity' as const, odd: true },
 };
 
@@ -54,14 +58,11 @@ describe('the range block', () => {
 });
 
 describe('the player panel', () => {
-  it('shows the hint and the guesses as chips, newest first', () => {
+  it('shows the range and the hint, and the input row waits for the cooldown', () => {
     const props = { view, act: vi.fn(), canAct: false, frostDelayMs: 3_000, now: () => 6_000 };
     render(<PlayerPanel {...props} season="winter" />);
     expect(screen.getByTestId('hint').textContent).toContain('The number is odd.');
-    const chips = [...screen.getByTestId('own-guesses').querySelectorAll('li')].map(
-      (li) => li.textContent,
-    );
-    expect(chips).toEqual(['700 answer arriving in 2 s', '300 ↑The number is higher than 300.']);
+    expect(screen.getByTestId('range')).toBeTruthy();
     cleanup();
     render(<GuessInput {...props} season="winter" ring={<span data-testid="ring" />} />);
     expect(screen.getByTestId<HTMLButtonElement>('guess-button').disabled).toBe(true);
@@ -104,16 +105,9 @@ async function actAsync(f: () => void): Promise<void> {
 
 describe('the spectator and result panels', () => {
   it('show what their views hold', () => {
-    const spectator = {
-      range: { low: 1, high: 100 },
-      removed: [],
-      hint: null,
-      players: [
-        { playerId: 'p1', guesses: 1, values: [39], answers: [{ value: 39, feedback: 'higher' }] },
-      ],
-    };
+    const spectator = { range: { low: 1, high: 100 }, removed: [], hint: null, log: [] };
     render(<SpectatorPanel view={spectator} names={{ p1: 'Anna' }} season="spring" />);
-    expect(screen.getByText(/Anna/).parentElement?.textContent).toBe('Anna: 1 guess — 39 ↑');
+    expect(screen.getByTestId('range').textContent).toContain('between 1 and 100');
     cleanup();
     const result = {
       range: { low: -500, high: 500 },
@@ -127,9 +121,22 @@ describe('the spectator and result panels', () => {
   });
 });
 
+describe('the guess rows', () => {
+  it('turn the views into rows: own ones first, pending while Frost holds them', () => {
+    expect(gtnText.guesses(view)).toEqual([
+      { key: '1', at: 1_000, playerId: null, value: 300, ...answered, pending: false },
+      { key: '3', at: 5_000, playerId: null, value: 700, ...held, pending: true },
+      { key: '2', at: 2_000, playerId: 'p2', value: 40, ...held, pending: false },
+    ]);
+    const spectator = { range: null, removed: [], hint: null, log: view.log };
+    expect(gtnText.guesses(spectator)).toEqual([
+      { key: '2', at: 2_000, playerId: 'p2', value: 40, ...held, pending: false },
+    ]);
+  });
+});
+
 describe('the words', () => {
-  it('give every answer, refusal and room event a plain line', () => {
-    expect(answerText(412, 'lower')).toBe('The number is lower than 412.');
+  it('give every refusal and room event a plain line, and guesses none', () => {
     expect(gtnText.code('ALREADY_GUESSED')).toMatch(/guessed that number already/);
     expect(gtnText.code('COOLDOWN_ACTIVE')).toBeNull();
     const names = { p1: 'Anna' };
@@ -145,17 +152,17 @@ describe('the words', () => {
       { type: 'FeedbackGiven', playerId: 'p1' },
     ].map((e) => {
       const line = gtnText.event(e, names);
-      return line === null ? null : [line.text, line.playerId, line.feedback];
+      return line === null ? null : [line.text, line.playerId];
     });
     expect(lines).toEqual([
-      ['Leaf Fall: 1, 2 and 3 fell.', null, null],
-      ['Spring Herald: The number is between 1 and 500.', null, null],
+      ['Leaf Fall: 1, 2 and 3 fell.', null],
+      ['Spring Herald: The number is between 1 and 500.', null],
       null,
-      ['Halving: the range is now 1–500.', null, null],
-      ['Halving: every range is now 250 numbers.', null, null],
-      ['Anna guessed.', 'p1', null],
-      ['Anna guessed 40', 'p1', null],
-      ['Anna guessed 50', 'p1', 'lower'],
+      ['Halving: the range is now 1–500.', null],
+      ['Halving: every range is now 250 numbers.', null],
+      null,
+      null,
+      null,
       null,
     ]);
   });

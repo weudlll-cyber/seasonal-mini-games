@@ -5,8 +5,8 @@
  *
  * Responsibility: choose the seed text (the same text gives the same secret and season), the
  *                 secret mode, the season (or the seed's), what others see, the bots, the
- *                 cooldown, the lowest and highest number, whether the range is shown, and the
- *                 fast test profile; start it (`POST /dev/quicktest`) and go to the match,
+ *                 cooldown, the lowest and highest number, whether the range is shown, the
+ *                 closeness comments (O21) and the fast test profile; start it (`POST /dev/quicktest`) and go to the match,
  *                 where the round counts down at once and the player hosts it. Every field has
  *                 its one-line help under it: the settings with the words and bounds of their
  *                 definitions through the host form's own `Field`, the rest from FORM_HELP, so
@@ -34,7 +34,12 @@ import '../match/match.css';
 const GAME = 'guess-the-number';
 // The settings the Quick Test offers, in the form's order, with its own starting values.
 const KEYS = ['round.secretMode', 'round.feedbackVisibility', 'round.cooldownS'] as const;
-const RANGE_KEYS = ['round.rangeLow', 'round.rangeHigh', 'round.rangeVisible'] as const;
+const RANGE_KEYS = [
+  'round.rangeLow',
+  'round.rangeHigh',
+  'round.rangeVisible',
+  'round.comments',
+] as const;
 const START: Readonly<Record<string, SettingValue>> = {
   'round.secretMode': 'shared',
   'round.feedbackVisibility': 'full',
@@ -42,6 +47,7 @@ const START: Readonly<Record<string, SettingValue>> = {
   'round.rangeLow': 1,
   'round.rangeHigh': 100,
   'round.rangeVisible': true,
+  'round.comments': true,
 };
 const SEASON_CHOICES = [
   { value: '' as const, label: 'from the seed' },
@@ -96,6 +102,7 @@ function bodyOf(values: Values, extra: Extra) {
     rangeLow: values['round.rangeLow'],
     rangeHigh: values['round.rangeHigh'],
     rangeVisible: values['round.rangeVisible'],
+    comments: values['round.comments'],
     bots: extra.bots,
     fast: extra.fast,
     ...(extra.seedText.trim() === '' ? {} : { seedText: extra.seedText }),

@@ -14,7 +14,16 @@
  */
 import { expect, test } from '@playwright/test';
 
-import { abortMatch, closeAll, fitsScreen, hostRound, openMatch, person, search } from './play.js';
+import {
+  abortMatch,
+  closeAll,
+  fitsScreen,
+  hostRound,
+  openMatch,
+  ownRows,
+  person,
+  search,
+} from './play.js';
 import { PHONE } from './screens.js';
 
 test('journey 1: a shared round from start to result, also on a phone', async ({ browser }) => {
@@ -38,7 +47,9 @@ test('journey 1: a shared round from start to result, also on a phone', async ({
     // The cooldown ring holds Guess after an accepted guess (02 §7).
     await one.page.getByTestId('guess-input').fill('15');
     await one.page.getByTestId('guess-button').click();
-    await expect(one.page.getByTestId('own-guesses')).toContainText('15');
+    await expect(ownRows(one.page).first()).toContainText('15');
+    // The closeness comment under the guess (O21), in smaller text on its own line.
+    await expect(ownRows(one.page).first().locator('.round-comment')).not.toBeEmpty();
     await expect(one.page.getByTestId('guess-button')).toBeDisabled();
     // The round view is one screen on the phone (02 §12).
     await fitsScreen(two.page);

@@ -7,15 +7,23 @@
  *                 guest session) and its page; `call` reaches the API as that person with the
  *                 CSRF header (`attempt` for an answer that may be a refusal); a host opens a
  *                 match the players join and watch (the host plays too, O16); the host menu's
- *                 form creates a round; `fitsScreen` checks the round view has no page scrollbar; `search` plays a player's round from the screen only — the
- *                 middle of what the range and the player's own answers leave, until the round
- *                 ends or the player solved — exactly as a person reading the screen would.
+ *                 form creates a round; `fitsScreen` checks the round view has no page
+ *                 scrollbar; `ownRows` are the viewer's own rows of the round's guess list (O20);
+ *                 `search` plays a player's round from the screen only — the middle of what the
+ *                 range and the player's own answers leave, until the round ends or the player
+ *                 solved — exactly as a person reading the screen would.
  *                 Matches are aborted at the end, never deleted (CLAUDE.md).
  * Depends on:     @playwright/test, ./devStack, ./screens
- * Used by:        ./rounds.spec, ./specials.spec, ./players.spec, ./access.spec
+ * Used by:        ./rounds.spec, ./specials.spec, ./players.spec, ./access.spec, ./range.spec
  * Spec:           docs/spec/09-testing-strategy.md §4; docs/spec/02-game-guess-the-number.md §12
  */
-import { expect, type Browser, type BrowserContext, type Page } from '@playwright/test';
+import {
+  expect,
+  type Browser,
+  type BrowserContext,
+  type Locator,
+  type Page,
+} from '@playwright/test';
 
 import { CLIENT_URL } from './devStack.js';
 import { DESKTOP } from './screens.js';
@@ -132,6 +140,11 @@ export async function hostRound(
   await expect(host.page.getByTestId('round-banner')).toBeVisible();
 }
 
+// The viewer's own rows of the round's one guess list, newest first (O20).
+export function ownRows(page: Page): Locator {
+  return page.locator('[data-testid="guess-list"] li[data-own="true"]');
+}
+
 // What the player knows, worked out as a person does (the server sends no narrowed range,
 // O17): the range on screen, or the input's span while it is hidden, cut by their own answers.
 async function stillPossible(page: Page): Promise<{ low: number; high: number }> {
@@ -143,10 +156,15 @@ async function stillPossible(page: Page): Promise<{ low: number; high: number }>
   const shown = /between (-?\d+) and (-?\d+)/.exec(text);
   let low = shown === null ? -1_000_000_000 : Number(shown[1]);
   let high = shown === null ? 1_000_000_000 : Number(shown[2]);
-  const answers = await page
-    .locator('[data-testid="own-guesses"] li')
+  const answers = await ownRows(page)
     .evaluateAll((items) =>
-      items.map((li) => [Number.parseInt(li.textContent, 10), li.dataset['feedback']] as const),
+      items.map(
+        (li) =>
+          [
+            Number(li.querySelector('.round-value')?.textContent),
+            li.querySelector<HTMLElement>('.round-answer')?.dataset['feedback'],
+          ] as const,
+      ),
     )
     .catch(() => []);
   for (const [value, feedback] of answers) {
@@ -166,12 +184,11 @@ export async function search(p: Person, deadline = 120_000): Promise<number> {
     if (await page.getByTestId('result').isVisible()) return guesses;
     // Every read is bounded: the round can end between two reads and take the list away.
     // The bounds leave room for a slow browser on a busy machine.
-    const own = await page
-      .getByTestId('own-guesses')
-      .textContent({ timeout: 3_000 })
-      .catch(() => '');
-    const solved = own?.includes('is the number!') ?? false;
-    if (solved) return guesses;
+    const solved = await ownRows(page)
+      .locator('[data-feedback="correct"]')
+      .count()
+      .catch(() => 0);
+    if (solved > 0) return guesses;
     if (await button.isEnabled({ timeout: 3_000 }).catch(() => false)) {
       const b = await stillPossible(page);
       // The round may end between the check and the click: a short wait, then look again.

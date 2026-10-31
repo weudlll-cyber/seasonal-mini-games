@@ -21,6 +21,7 @@ import {
   closeAll,
   hostRound,
   openMatch,
+  ownRows,
   person,
   search,
   visit,
@@ -81,14 +82,12 @@ test('journey 6: a reload mid-round keeps the cooldown and delivers the held ans
     await expect(p.page.getByTestId('guess-button')).toBeEnabled({ timeout: 10_000 });
     await p.page.getByTestId('guess-input').fill('333333');
     await p.page.getByTestId('guess-button').click();
-    await expect(p.page.getByTestId('own-guesses')).toContainText('answer arriving in');
+    await expect(ownRows(p.page)).toContainText('answer arriving in');
     await p.page.reload();
     await expect(p.page.getByTestId('cooldown')).not.toHaveText('Ready');
-    await expect(p.page.getByTestId('own-guesses').locator('li')).toHaveCount(1);
-    await expect(p.page.getByTestId('own-guesses')).toContainText('The number is', {
-      timeout: 10_000,
-    });
-    await expect(p.page.getByTestId('own-guesses').locator('li')).toHaveCount(1);
+    await expect(ownRows(p.page)).toHaveCount(1);
+    await expect(ownRows(p.page).locator('.round-answer')).toBeVisible({ timeout: 10_000 });
+    await expect(ownRows(p.page)).toHaveCount(1);
   } finally {
     await abortMatch(p, started.matchCode);
     await closeAll([p]);
@@ -108,10 +107,12 @@ test('journey 7: a guest sees guesses happen but no number under own', async ({ 
     await visit(guest, started.matchCode);
     const panel = guest.page.getByTestId('gtn-spectator');
     await expect(panel).toBeVisible({ timeout: 10_000 });
-    await expect(guest.page.getByTestId('feed')).toContainText('guessed.', { timeout: 15_000 });
-    const seen = `${(await panel.textContent()) ?? ''} ${(await guest.page.getByTestId('feed').textContent()) ?? ''}`;
-    expect(seen).not.toMatch(/higher|lower|correct|guessed \d/);
-    expect(seen).toMatch(/bot-01: \d+ guess/);
+    const list = guest.page.getByTestId('guess-list');
+    await expect(list).toContainText('bot-01guessed', { timeout: 15_000 });
+    const seen = `${(await panel.textContent()) ?? ''} ${(await list.textContent()) ?? ''}`;
+    expect(seen).not.toMatch(/higher|lower|correct|guessed ?\d/);
+    // No answer, so no closeness comment either (O21).
+    await expect(list.locator('.round-answer, .round-comment')).toHaveCount(0);
   } finally {
     await abortMatch(p, started.matchCode);
     await closeAll([p, guest]);

@@ -3,26 +3,18 @@
  * @module games/guess-the-number/web
  * @brief  Every sentence Guess The Number puts on a screen, in plain English.
  *
- * Responsibility: the answers ("The number is higher than 412."), the game's refusals, the
- *                 Spring Herald hint, and one line per room event for the live feed (02 §6,
- *                 §12; 03 §2): Leaf Fall with the fallen numbers named, the shared hint,
- *                 halving, and a guess at the round's visibility. Server codes never reach the
- *                 screen as codes.
- * Depends on:     @smg/game-sdk (GameText), ../src (types)
+ * Responsibility: the game's refusals, the Spring Herald hint, one line per room event for
+ *                 the round's list (02 §12; 03 §2): Leaf Fall with the fallen numbers named,
+ *                 the shared hint and halving; and the list's guess rows from the player or
+ *                 spectator view, own guesses and the others' at the round's visibility, with
+ *                 answers and comments as far as the view carries them (O20, O21). Server codes
+ *                 never reach the screen as codes.
+ * Depends on:     @smg/game-sdk (GameText, GuessRow), ../src (types)
  * Used by:        ./PlayerPanel, ./SpectatorPanel, ./ResultPanel, ./index
  * Spec:           docs/spec/02-game-guess-the-number.md §6, §12; docs/spec/03-seasonal-specials.md §2
  */
-import type { Feedback, GtnEvent } from '@smg-game/guess-the-number';
-import type { FeedLine, GameText } from '@smg/game-sdk';
-
-export function answerText(value: number, feedback: Feedback): string {
-  if (feedback === 'higher') return `The number is higher than ${String(value)}.`;
-  if (feedback === 'lower') return `The number is lower than ${String(value)}.`;
-  return `${String(value)} is the number!`;
-}
-
-// An answer on a chip: ↑ the number is higher, ↓ lower, ✓ found (02 §12).
-export const ARROWS: Readonly<Record<Feedback, string>> = { higher: '↑', lower: '↓', correct: '✓' };
+import type { GtnEvent, PlayerView, SpectatorView } from '@smg-game/guess-the-number';
+import type { FeedLine, GameText, GuessRow } from '@smg/game-sdk';
 
 export type HintView =
   | { readonly kind: 'parity'; readonly odd: boolean }
@@ -48,10 +40,9 @@ function listOf(numbers: readonly number[]): string {
 }
 
 // A line about the round as a whole.
-const roundLine = (text: string): FeedLine => ({ text, playerId: null, feedback: null });
+const roundLine = (text: string): FeedLine => ({ text, playerId: null });
 
-function eventText(e: GtnEvent, names: Readonly<Record<string, string>>): FeedLine | null {
-  const who = (id: string) => names[id] ?? id;
+function eventText(e: GtnEvent): FeedLine | null {
   switch (e.type) {
     // The fallen numbers by name: with a hidden range this line is the only place (T54).
     case 'NumbersRemoved':
@@ -62,19 +53,33 @@ function eventText(e: GtnEvent, names: Readonly<Record<string, string>>): FeedLi
       if (e.range === null)
         return roundLine(`Halving: every range is now ${String(e.size)} numbers.`);
       return roundLine(`Halving: the range is now ${String(e.range.low)}–${String(e.range.high)}.`);
-    // The number and the answer only as far as the round's visibility lets the room see.
+    // Guesses are rows of their own, from the view (`guessRows`), so they survive a reload.
     case 'GuessFed':
-      return {
-        text: `${who(e.playerId)} guessed${e.value === undefined ? '.' : ` ${String(e.value)}`}`,
-        playerId: e.playerId,
-        feedback: e.feedback ?? null,
-      };
     case 'FeedbackGiven':
       return null;
   }
 }
 
+type Seen = PlayerView['log'][number];
+
+// The list's rows of a player view (own guesses and the others') or a spectator view.
+function guessRows(view: unknown): readonly GuessRow[] {
+  const v = view as Partial<PlayerView> & Pick<SpectatorView, 'log'>;
+  const row = (g: Omit<Seen, 'playerId'>, playerId: string | null): GuessRow => ({
+    key: String(g.receiveSeq),
+    at: g.receivedAt,
+    playerId,
+    value: g.value,
+    feedback: g.feedback,
+    comment: g.comment,
+    tier: g.tier,
+    pending: playerId === null && g.feedback === null,
+  });
+  return [...(v.guesses ?? []).map((g) => row(g, null)), ...v.log.map((g) => row(g, g.playerId))];
+}
+
 export const gtnText: GameText = {
   code: (code) => CODES[code] ?? null,
-  event: (event, names) => eventText(event as GtnEvent, names),
+  event: (event) => eventText(event as GtnEvent),
+  guesses: guessRows,
 };

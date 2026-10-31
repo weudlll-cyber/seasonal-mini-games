@@ -27,6 +27,8 @@ const body = z
     rangeLow: z.number().int().min(-1_000_000).max(1_000_000).default(1),
     rangeHigh: z.number().int().min(-1_000_000).max(1_000_000).default(1_000),
     rangeVisible: z.boolean().default(true),
+    // Closeness comments on every guess (O21), on as for every round.
+    comments: z.boolean().default(true),
     // The fast test profile (09 §4): specials every few seconds. On by default here.
     fast: z.boolean().default(true),
     halving: z.boolean().default(false),

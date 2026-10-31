@@ -17,6 +17,8 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 
 **(s) Halving round with a hidden range.** A halving window tells where the range is, so with the range hidden (O19) a halving round runs as a normal season round of that season: the season and its special stay, halving is off (DECISIONS T55). With it, Spring Herald gives the odd-or-even hint instead of "which half" (T56). Proposal: keep it so; the host form says it beside the halving switch.
 
+**(z) Closeness comments (owner decisions 20 and 21, 2026-10-31).** Built as proposals and adjustable in the admin app: the tier thresholds in percent of the range's width — way off above 50 %, cold above 25 %, cool above 10 %, warm above 3 %, hot above 1 %, burning at or under 1 % (`comments.*Above`); and how often a change of tier gets a trend line instead of a tier line, 33 % (`comments.trendPercent`) (02 §6.3, 08 §3). Lettered (z) because the night branch uses (t)–(y).
+
 ## Spec conflicts
 
 Resolved by the decision rules (owner decisions first, then the more specific section) and listed here for the owner to confirm.

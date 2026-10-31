@@ -14,7 +14,7 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { readable } from './contrast.js';
-import { abortMatch, call, closeAll, person, type Person } from './play.js';
+import { abortMatch, call, closeAll, ownRows, person, type Person } from './play.js';
 
 interface Started {
   readonly matchCode: string;
@@ -51,22 +51,22 @@ test('journey 3: each season special shows itself', async ({ browser }) => {
 
     codes.push(await quickRound(p, { season: 'summer', cooldownS: 8 }));
     await expect.poll(() => cooldownSeconds(p.page), { timeout: 15_000 }).toBeLessThan(8);
-    await expect(p.page.getByTestId('feed')).toContainText('Heatwave: cooldown now');
+    await expect(p.page.getByTestId('guess-list')).toContainText('Heatwave: cooldown now');
 
     codes.push(await quickRound(p, { season: 'autumn' }));
     await expect(p.page.getByTestId('fallen')).toContainText('fallen', { timeout: 15_000 });
-    await expect(p.page.getByTestId('feed')).toContainText('Leaf Fall:');
+    await expect(p.page.getByTestId('guess-list')).toContainText('Leaf Fall:');
 
     codes.push(await quickRound(p, { season: 'winter' }));
     await expect(p.page.getByTestId('guess-button')).toBeEnabled({ timeout: 10_000 });
     await p.page.getByTestId('guess-input').fill('250000');
     await p.page.getByTestId('guess-button').click();
-    await expect(p.page.getByTestId('own-guesses')).toContainText('answer arriving in');
+    await expect(ownRows(p.page)).toContainText('answer arriving in');
     // Frost's line in the winter colour on the light page (night run 2, N2).
     await readable(p.page, 'Frost round', ['light']);
-    await expect(p.page.getByTestId('own-guesses')).toContainText('The number is', {
-      timeout: 10_000,
-    });
+    // The answer and its comment arrive together after the delay (O21).
+    await expect(ownRows(p.page).locator('.round-answer')).toBeVisible({ timeout: 10_000 });
+    await expect(ownRows(p.page).locator('.round-comment')).not.toBeEmpty();
   } finally {
     for (const code of codes) await abortMatch(p, code);
     await closeAll([p]);
@@ -105,12 +105,12 @@ test('journey 4: a halving round halves the range and refuses a guess outside it
       .toBe(500_000);
     const [low] = await bounds();
     const outside = low > 1 ? 1 : 1_000_000;
-    const before = await p.page.getByTestId('own-guesses').locator('li').count();
+    const before = await ownRows(p.page).count();
     await expect(p.page.getByTestId('guess-button')).toBeEnabled();
     await p.page.getByTestId('guess-input').fill(String(outside));
     await p.page.getByTestId('guess-button').click();
     await expect(p.page.getByRole('status')).toContainText('outside the range');
-    await expect(p.page.getByTestId('own-guesses').locator('li')).toHaveCount(before);
+    await expect(ownRows(p.page)).toHaveCount(before);
   } finally {
     if (code !== null) await abortMatch(p, code);
     await call(admin, 'DELETE', `/admin/halving-days/${today}/E2E`);

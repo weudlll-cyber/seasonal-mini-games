@@ -29,6 +29,7 @@ The server picks a secret whole number in a range (default 1–1 000). Players t
 | Halving round | on or off; offered only on a halving day | off | [03](03-seasonal-specials.md) §4 |
 | Season teams | on or off; shared mode only | on | [03](03-seasonal-specials.md) §5 |
 | Feedback visibility | `own`, `numbers` or `full`; shared mode only | `full` (§6.2) | Owner, decision 8: default `full`, host may change it per round |
+| Closeness comments | on or off (§6.3) | on | Owner, decision 21 |
 | Countdown before opening | 3 s – 30 s | 5 s | Setting |
 | Longest round | 1 min – 60 min | 10 min | Setting |
 
@@ -84,7 +85,7 @@ For an accepted guess `g` and the guesser's secret `s`:
 | `g > s` | `lower` — "The number is lower than 412." |
 | `g = s` | `correct` |
 
-Feedback goes to the guesser. Without Frost it is sent as soon as the guess is processed. With Frost it is sent after the Frost delay ([03](03-seasonal-specials.md) §2.4). No narrowed range is shown, neither the player's own nor a shared one (owner, decision 17): the server computes none and no view, frame or contract carries one. Each player sees their own past guesses with their answers ("250 ↓").
+Feedback goes to the guesser. Without Frost it is sent as soon as the guess is processed. With Frost it is sent after the Frost delay ([03](03-seasonal-specials.md) §2.4). No narrowed range is shown, neither the player's own nor a shared one (owner, decision 17): the server computes none and no view, frame or contract carries one. Each player sees their own past guesses with their answers in the round's one list, highlighted as their own (owner, decision 20; §12).
 
 ### 6.2 What other players learn in shared mode
 
@@ -94,9 +95,22 @@ Setting `feedbackVisibility`, chosen by the host per round. The default is `full
 |---|---|
 | `own` | That a player guessed, and that it was not correct. Not the number. |
 | `numbers` | The player and the number guessed. Not the feedback. |
-| `full` (default) | The player, the number and the feedback. The search becomes a fully shared one: everyone reads every answer in the live list (no narrowed range is computed, decision 17). |
+| `full` (default) | The player, the number, the feedback and its closeness comment (§6.3). The search becomes a fully shared one: everyone reads every answer in the round's list (no narrowed range is computed, decision 17). |
 
 In individual mode other players always see only that a player guessed, plus their solve and placing. Their numbers and feedback mean nothing for anyone else.
+
+All of it is shown in one list: every guess the viewer may see and the round's events, with the viewer's own guesses highlighted (owner, decision 20, §12).
+
+### 6.3 Closeness comments (owner, decision 21)
+
+Every accepted guess gets a short English comment on how close it came, when the host has the comments on for the round (`round.comments`, default on).
+
+- **Tier.** The server computes a tier for each accepted guess from the distance relative to the round's range, `d = |guess − secret| / (high − low)`, so a tier means the same in a 1–100 and in a −1 000 000–1 000 000 round (DECISIONS T70). The tiers: **way off** (`d` > 50 %), **cold** (25–50 %), **cool** (10–25 %), **warm** (3–10 %), **hot** (1–3 %), **burning** (under 1 %, more than 2 away), **just missed** (1 or 2 away), and a correct guess. The thresholds are admin settings, proposals ([08](08-admin-settings.md) §3). With a hidden range the same formula uses the hidden bounds; a guess outside them gets **way off**, and no comment states the bounds or the range's size. The client never computes a tier and never receives the secret.
+- **Who sees it.** The tier and its comment travel with the feedback: to the guesser with their answer, held by Frost exactly as long ([03](03-seasonal-specials.md) §2.4), and to others exactly where §6.2 shows them the answer. A viewer sees a comment exactly when they see that guess's higher or lower (DECISIONS T73).
+- **Lines.** A catalogue in the game module holds at least 25 lines per tier, 15 for a correct guess and 10 per trend direction, plus a few that only a round of their season uses. They are friendly and playful, teasing at the far end ("Well, that wasn't it."), never insulting, never about a name, without profanity and without digits.
+- **Trend.** When the player's previous guess in the round is in another tier, the comment may react to the change instead ("Getting warmer!", "That went the wrong way."), in `comments.trendPercent` % of such guesses. The trend compares the two tiers, so it says nothing beyond them (DECISIONS T71).
+- **Choice.** The line is chosen with the round's randomness (seeded rounds and the Quick Test replay the same lines), and no line of a pool comes back in a round until every line of that pool was used (DECISIONS T72).
+- **What it tells.** Tiers tell more than higher or lower, and with a hidden range many tiers together hint at its size; the owner chose this on 2026-10-31 ([05](05-security-threat-model.md) §10).
 
 ## 7. Cooldown (owner, decision 3)
 
@@ -150,19 +164,19 @@ A spectator is a guest, a match player not on the roster, a solved player in ind
 | Season, its special and token visuals ([03](03-seasonal-specials.md) §6); halving badge | The secret or any secret |
 | Current range; removed numbers; current cooldown value; time left | Any player's feedback, except under `full` visibility in shared mode |
 | Roster: per player the number of guesses, "cooling down" or "ready", solved and placing (individual) | Guessed numbers, except under `numbers` or `full` |
-| Live feed of accepted guesses at the visibility of §6.2; specials as they happen ("Leaf Fall: 12 numbers fell") | Spring Herald's hint in individual mode (each player's hint is about their own number) |
+| The round's one list: accepted guesses at the visibility of §6.2, with their closeness comments where the answer is shown (§6.3); specials as they happen ("Leaf Fall: 12 numbers fell") | Spring Herald's hint in individual mode (each player's hint is about their own number) |
 | Team standing when teams are on | Anything a player sees only about their own number |
 
 When a round runs, the host sees exactly the view every player sees and plays along: guesses, cooldown, placings and points like any player (owner, decision 16). The host controls (Start round, End round, Abort round, the next round's settings) sit in a small host menu behind one button in the top bar. The host never sees a secret of a running round, as Bingo's admins never see a running match's seed (Bingo 01 §9).
 
 ## 12. Player screen (fast mode)
 
-The whole round view fits the screen without a page scrollbar (desktop 1280 × 720 and up, phone 390 × 844); only its lists scroll, each inside its own box. Everyone gets the same view, the host included (decision 16):
+The whole round view fits the screen without a page scrollbar (desktop 1280 × 720 and up, phone 390 × 844); only the guess list scrolls, inside its own box. Everyone gets the same view, the host included (decision 16):
 
 - **Top bar, one line:** the season chip in the season's colour with its icon and special (and the halving badge), shared or individual, the cooldown value (Heatwave's changes included), the time left (or "Opens in 3 s"), and for the host the host menu button (at least 44 px).
-- **Main area, the largest part:** "The number is somewhere between L and H" in large type and a full-width bar from L to H on which fallen numbers show as gaps, with their count under it; nothing narrowed from the answers (decision 17). With the range hidden: "Any whole number", with a note that negative numbers are possible. Spring Herald's hint under it. Then "Your guesses" as chips with the answer as an arrow ("250 ↓"). Then the input row: the cooldown ring, the number field (it takes a minus sign; a ± button where negative numbers are possible, DECISIONS T57) and a large **Guess** button, disabled while the cooldown runs; Enter sends. Under Frost a chip shows "answer arriving in 2 s".
-- **Desktop:** a right column about 380 px wide with the **Live** list (a fixed-height box, newest at the top, each row a dot in the player's colour, the line, and higher or lower in colour) and, when teams are on, the four teams as small score tiles in one row.
-- **Phone:** the top bar shortened (season chip, cooldown, time, host button), the range block, the guess chips, the Live list filling the remaining height, the team tiles in one row, and the input row pinned at the bottom for the thumb.
+- **Main area, the largest part:** "The number is somewhere between L and H" in large type and a full-width bar from L to H on which fallen numbers show as gaps, with their count under it; nothing narrowed from the answers (decision 17). With the range hidden: "Any whole number", with a note that negative numbers are possible. Spring Herald's hint under it. Then the round's **one list** (owner, decision 20), filling the height that is left, newest at the top: every guess the viewer may see (§6.2) and the round's events. A guess row shows the player's colour dot, the name ("You" for the viewer), the number, higher or lower in colour, and the closeness comment in smaller text under it (§6.3). The viewer's own rows have a tint of the season colour behind them, with the text at 4.5:1 or more in light and dark. Under Frost an own row says "answer arriving in 2 s". Events (Spring Herald, Leaf Fall, Heatwave's steps, halving, solves, the round opening and ending) are quieter one-line rows. Then the input row: the cooldown ring, the number field (it takes a minus sign; a ± button where negative numbers are possible, DECISIONS T57) and a large **Guess** button, disabled while the cooldown runs; Enter sends.
+- **Desktop:** the main area beside a right column about 380 px wide with, when teams are on, the four teams as small score tiles in one row at its top; the rest of the column stays free.
+- **Phone:** the top bar shortened (season chip, cooldown, time, host button), the range block (compact), the guess list filling the remaining height, the team tiles in one row, and the input row pinned at the bottom for the thumb.
 - Lobby, setup and result pages may scroll.
 - Every line is plain English, as in Bingo 01 §13 ("Your cooldown is now 7 s — Heatwave"). Server codes reach the screen as sentences. All animations respect `prefers-reduced-motion`. Sounds are off by default. Accessibility target WCAG 2.2 AA, with full keyboard play (type, Enter).
 

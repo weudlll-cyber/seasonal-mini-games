@@ -1,19 +1,21 @@
 /**
  * @file   apps/web/src/round/RoundScreen.tsx
  * @module web/round
- * @brief  A running round on one screen: top bar, the game's main area, Live and teams, input.
+ * @brief  A running round on one screen: top bar, range and the one guess list, teams, input.
  *
  * Responsibility: the round view everyone gets alike, the host included (O16): a one-line top
  *                 bar (season chip in its token colour with icon and special, the halving
  *                 badge, shared or individual, the cooldown, the time left or "Opens in 3 s",
- *                 and the host menu for the host); the game's main area (the player panel for
- *                 a roster player, else the spectator panel); the side column with the Live
- *                 list and the team tiles; and for a roster player the game's input row with
- *                 the cooldown ring, whose platform refusals appear under it in plain words.
- *                 The layout (round.css) fits the viewport without a page scrollbar; only the
- *                 lists scroll inside themselves. After the end the result screen takes over.
+ *                 and the host menu for the host); the main area with the game's range block
+ *                 (the player panel for a roster player, else the spectator panel) above the
+ *                 round's one list of guesses and events (./RoundLog, O20); the side column
+ *                 with the team tiles; and for a roster player the game's input row with the
+ *                 cooldown ring, whose platform refusals appear under it in plain words. The
+ *                 layout (round.css) fits the viewport without a page scrollbar; only the list
+ *                 scrolls inside itself. After the end the result screen takes over.
  * Depends on:     react, @smg/contracts, @smg-game/registry/web, ../live/*, ../season/*,
- *                 ./CooldownRing, ./RoundSide, ./ResultScreen, ./roundText, ./round.css
+ *                 ./CooldownRing, ./RoundLog, ./RoundSide, ./ResultScreen, ./roundText,
+ *                 ./round.css
  * Used by:        ../match/MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §4, §7, §11, §12; docs/spec/03-seasonal-specials.md §2, §6
  */
@@ -29,7 +31,8 @@ import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASON_NAMES, seasonColor, SPECIALS } from '../season/season.js';
 import { CooldownRing } from './CooldownRing.js';
 import { ResultScreen } from './ResultScreen.js';
-import { Feed, TeamTiles } from './RoundSide.js';
+import { RoundLog } from './RoundLog.js';
+import { TeamTiles } from './RoundSide.js';
 import { codeText, seconds } from './roundText.js';
 import './round.css';
 
@@ -170,9 +173,9 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
         ) : (
           <game.Spectator view={state.game} names={state.names} season={state.season} />
         )}
+        <RoundLog feed={feed} game={game} state={state} viewerKey={props.viewerKey} now={now} />
       </section>
       <aside className="round-side">
-        <Feed feed={feed} game={game} state={state} />
         <TeamTiles state={state} points={props.teamPoints} />
       </aside>
       {player ? (

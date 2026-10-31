@@ -6,7 +6,10 @@
  * Responsibility: for random streams of actions in every secret mode the module supports:
  *                 P1 the same inputs give the same events; P2 no player view, spectator view,
  *                 event or rejection of a running round contains a sentinel secret, while the
- *                 result view does; P3 every view validates against the module's schemas;
+ *                 result view does; and nothing about an answer travels without it: a
+ *                 `comment` sits only beside a `feedback` (O21), and while Frost holds every
+ *                 answer no view shows a `feedback` or a `comment`; P3 every view validates
+ *                 against the module's schemas;
  *                 P4 a rejected action changes nothing; P5 folding the emitted events from a
  *                 fresh round gives the live state; P6 every special's effect is the same for
  *                 every player.
@@ -21,15 +24,24 @@ import { describe, expect, it } from 'vitest';
 import { GAMES } from './index.js';
 
 const PLAYERS = ['p1', 'p2', 'p3'];
-const noRng: RoundRng = {
-  child: () => {
-    throw new Error('the suite gives the secrets directly');
-  },
-};
+// The secrets are given directly; the round's DRBG still draws what else a game picks.
+const RNG: RoundRng = roundRng(new Uint8Array(32).fill(9));
 const stream = fc.array(fc.tuple(fc.integer({ min: 0, max: 2 }), fc.integer()), {
   maxLength: 40,
 });
 type Leaks = (value: unknown) => string[];
+
+// Paths of objects that hold a comment without an answer beside it, or (`held`) any answer.
+function answerless(value: unknown, held = false, path = '$'): string[] {
+  if (value === null || typeof value !== 'object') return [];
+  const node = value as Record<string, unknown>;
+  const own =
+    (node['comment'] != null && node['feedback'] == null) ||
+    (held && (node['comment'] != null || node['feedback'] != null))
+      ? [path]
+      : [];
+  return [...own, ...Object.entries(node).flatMap(([k, v]) => answerless(v, held, `${path}.${k}`))];
+}
 
 // P2 and P3 for every view of a running round.
 function checkViews<S, A, E, Cfg, Sec>(
@@ -41,11 +53,13 @@ function checkViews<S, A, E, Cfg, Sec>(
   const spectator = module.views.spectator(state, ctx);
   const players = PLAYERS.map((id) => module.views.player(state, id, ctx));
   expect(leaks([spectator, players])).toEqual([]);
+  expect(answerless([spectator, players])).toEqual([]);
   expect(module.viewSchemas.spectator.safeParse(spectator).success).toBe(true);
   for (const v of players) expect(module.viewSchemas.player.safeParse(v).success).toBe(true);
 }
 
-// Plays the stream; checks P2, P3 and P4 at every step; returns events and state.
+// Plays the stream; checks P2, P3 and P4 at every step and the Frost hold at its end;
+// returns events and state.
 function play<S, A, E, Cfg, Sec>(
   entry: GameEntry<S, A, E, Cfg, Sec>,
   mode: SecretMode,
@@ -62,10 +76,11 @@ function play<S, A, E, Cfg, Sec>(
     const act = { playerId: PLAYERS[p] ?? 'p1', receiveSeq: k + 1, receivedAt: k * 1_000, action };
     const before = structuredClone(state);
     const code = module.validate(state, act.playerId, action);
-    const ctx = { now: act.receivedAt, cooldownMs: 3_000, secrets, rng: noRng };
+    const ctx = { now: act.receivedAt, cooldownMs: 3_000, secrets, rng: RNG };
     const decision =
       code === null ? module.decide(state, act, ctx) : ({ ok: false, code } as const);
     expect(leaks(decision)).toEqual([]);
+    expect(answerless(decision)).toEqual([]);
     if (!decision.ok) {
       expect(state).toEqual(before);
       continue;
@@ -76,6 +91,13 @@ function play<S, A, E, Cfg, Sec>(
     }
     checkViews(module, state, leaks);
   }
+  // Frost holding every answer of the stream: the views carry none, and no comment either.
+  const held = { releasedBefore: -Infinity };
+  const frozen = [
+    module.views.spectator(state, held),
+    PLAYERS.map((id) => module.views.player(state, id, held)),
+  ];
+  expect(answerless(frozen, true)).toEqual([]);
   return { state, events };
 }
 
