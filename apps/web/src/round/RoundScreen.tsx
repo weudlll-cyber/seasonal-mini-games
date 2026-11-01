@@ -229,7 +229,12 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
   }
   const player = state.role === 'player' && game !== null;
   return (
-    <div className="round-live" style={style} data-testid="round-view">
+    <div
+      className="round-live"
+      style={style}
+      data-testid="round-view"
+      data-layout={game?.layout ?? 'list'}
+    >
       <TopBar state={state} now={now} hostMenu={props.hostMenu} rule={ruleOf(game, state.season)} />
       <div className="smg-panel round-range">
         <GamePart state={state} game={game} />

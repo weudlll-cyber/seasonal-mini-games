@@ -155,7 +155,7 @@
   font-weight: var(--font-weight-strong);
 }
 
-/* A phone: the line and the strip in one row of compact chips; the boxes on the first line of
+/* A phone: the line, then the strip of compact chips in a row of its own; the boxes on the first line of
    the input row, the ring and Try code on the second (6 × 44 px + gaps < 358 px). */
 @media (max-width: 899px) {
   .sc-board {
@@ -171,8 +171,9 @@
     grid-column: 1 / -1;
   }
 
+  /* A row of its own under the line: ten 28 px chips fit 358 px; never cut off (play-through). */
   .sc-strip {
-    flex-wrap: nowrap;
+    grid-column: 1 / -1;
     gap: 0.125rem;
   }
 

@@ -43,6 +43,9 @@ export interface GameWeb {
   readonly text: GameText;
   // The game's own setting definitions: one wording for every form that shows them.
   readonly settings: readonly SettingDef[];
+  // 'board': the input row is the game's board (a map), drawn as the left column at full
+  // height on a desktop, with the list on the right (T123); by default the list leads.
+  readonly layout?: 'board';
 }
 
 export const GAME_SCREENS: Readonly<Record<string, GameWeb>> = {

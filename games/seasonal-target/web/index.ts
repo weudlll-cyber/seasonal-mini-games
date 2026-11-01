@@ -27,4 +27,6 @@ export const seasonalTargetWeb = {
   Result: ResultPanel,
   text: stText,
   settings: stSettings.defs,
+  // The map is the input: the platform's board layout puts it left at full height (T123).
+  layout: 'board' as const,
 };

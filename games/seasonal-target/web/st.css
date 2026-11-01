@@ -41,7 +41,9 @@
 
 /* The map: as large as the height allows, never wider than its box. */
 .st-map {
-  --st-height: min(52dvh, 520px);
+  /* A desktop's board column: the screen less the app bar, the round's top bar and the input
+     controls under the map (T123). */
+  --st-height: min(calc(100dvh - 20rem), 820px);
   display: block;
   justify-self: center;
   width: min(100%, calc(var(--st-height) * var(--st-ratio, 1)));
@@ -49,6 +51,12 @@
   height: auto;
   touch-action: manipulation;
   cursor: crosshair;
+}
+
+/* The result page's map: small enough that the headline, the map and the standings share one
+   screen (owner's screen rule). */
+.st-result .st-map {
+  --st-height: min(34dvh, 300px);
 }
 
 .st-map:focus-visible {
@@ -258,7 +266,7 @@
 /* A phone: the map at full width, no coordinate fields, the panel behind its button. */
 @media (max-width: 899px) {
   .st-map {
-    --st-height: min(44dvh, 420px);
+    --st-height: min(32dvh, 300px);
   }
 
   .st-fields {

@@ -55,6 +55,26 @@
       'main side'
       'input side';
   }
+
+  /* A board game (Seasonal Target, T123): the board is its input, so it takes the whole left
+     column at full height; the right column holds the game's block, the guess list and the
+     team tiles with the chat, the list taking what is left (02d §11). */
+  .round-live[data-layout='board'] {
+    grid-template-columns: minmax(0, 1fr) 420px;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'top top'
+      'input range'
+      'input main'
+      'input side';
+  }
+
+  /* Its chat stays a card, at most this tall (its list scrolls inside), so the list keeps the
+     column's free height. */
+  .round-live[data-layout='board'] .round-chat {
+    flex: none;
+    max-height: 9rem;
+  }
 }
 
 .round-range {
