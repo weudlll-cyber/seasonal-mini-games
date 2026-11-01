@@ -6,7 +6,8 @@
  * Responsibility: from the countdown to the end, the round view alone, filling the screen
  *                 (O16: the host gets the same view and plays along; the host menu sits in its
  *                 top bar; the match chat in its right column, ../round/RoundScreen). Otherwise
- *                 the match lobby of 02 §2: title, code and status with the host menu; join or
+ *                 the match lobby of 02 §2: title, the match's game (O41), code and status with
+ *                 the host menu; join or
  *                 leave; the last round's result, if any; and the waiting area with the team
  *                 picker and the players (./WaitingArea, O23) with the match chat as a panel
  *                 of its own under it, on a phone behind a "Chat" button (07 §2, T116),
@@ -16,8 +17,7 @@
  *                 A closed or aborted match shows its summary (./MatchSummary, O27).
  * Depends on:     react, @smg/contracts, ../chat/*, ../live/*, ../shell/*, ./HostMenu,
  *                 ./MatchSummary, ./WaitingArea, ../round/RoundChat, ../round/RoundScreen,
- *                 ../round/roundText,
- *                 ./match.css
+ *                 ../round/roundText, ../lobby/games, ./match.css
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/02-game-guess-the-number.md §2, §4, §11; docs/spec/03-seasonal-specials.md §5
  */
@@ -29,6 +29,7 @@ import { useChatConfig } from '../chat/useChat.js';
 import { useMatch } from '../live/useMatch.js';
 import { useRound, type RoundLive } from '../live/useRound.js';
 import { RoundChat } from '../round/RoundChat.js';
+import { gameName, useGames } from '../lobby/games.js';
 import { codeText } from '../round/roundText.js';
 import { RoundScreen } from '../round/RoundScreen.js';
 import { api, ApiError } from '../shell/http.js';
@@ -201,6 +202,7 @@ function LobbyView(p: {
   readonly chat: ReactElement | null;
 }): ReactElement {
   const { match } = p;
+  const games = useGames();
   // "Before the round" or "Next round" with the players, and under it the chat as a panel
   // of its own (on a phone behind its "Chat" button, ../round/RoundChat, T116).
   const side = (
@@ -218,6 +220,9 @@ function LobbyView(p: {
     <div className="smg-stack" data-testid="match">
       <header className="match-head">
         <h1>{match.title}</h1>
+        <span className="smg-chip" data-testid="match-game">
+          {gameName(games, match.gameId)}
+        </span>
         <span className="smg-chip">
           Code {match.code} · {match.status}
         </span>

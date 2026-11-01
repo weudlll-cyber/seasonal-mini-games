@@ -75,6 +75,8 @@ export interface PlayerProfileView {
   readonly recent: readonly {
     readonly matchCode: string;
     readonly matchTitle: string;
+    // The match's game: points are earned in every game and count on one board (O41, T121).
+    readonly gameId: string;
     readonly roundId: string;
     readonly endedAt: number;
     readonly secretMode: 'shared' | 'individual';

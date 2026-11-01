@@ -154,43 +154,53 @@ describe('an empty board', () => {
   });
 });
 
-describe('the profile', () => {
-  it('shows the numbers, boards, last rounds and staff adjustments', async () => {
-    serve({
-      '/players/Anna': [
-        200,
+// Anna's profile: one board, one round of a Safecracker match, one staff adjustment.
+const ANNA_ROUTES: Readonly<Record<string, Answer>> = {
+  '/games': [
+    200,
+    {
+      games: [{ id: 'safecracker', name: 'Seasonal Safecracker', secretModes: [], teams: true }],
+    },
+  ],
+  '/players/Anna': [
+    200,
+    {
+      displayName: 'Anna',
+      memberSince: Date.UTC(2026, 0, 15, 12),
+      matchesPlayed: 4,
+      roundsPlayed: 12,
+      wins: 3,
+      solves: 7,
+      bestPlace: 1,
+      boards: [{ period: winter, rank: 2, points: 41 }],
+      recent: [
         {
-          displayName: 'Anna',
-          memberSince: Date.UTC(2026, 0, 15, 12),
-          matchesPlayed: 4,
-          roundsPlayed: 12,
-          wins: 3,
-          solves: 7,
-          bestPlace: 1,
-          boards: [{ period: winter, rank: 2, points: 41 }],
-          recent: [
-            {
-              matchCode: 'ABC234',
-              matchTitle: 'Friday fun',
-              roundId: 'r9',
-              endedAt: Date.UTC(2026, 9, 20, 12),
-              secretMode: 'individual',
-              place: null,
-              solved: false,
-              points: 0,
-            },
-          ],
-          adjustments: [
-            {
-              periodName: 'Winter 2026',
-              delta: -5,
-              reason: 'Shared account',
-              at: Date.UTC(2026, 1, 2, 12),
-            },
-          ],
+          matchCode: 'ABC234',
+          matchTitle: 'Friday fun',
+          gameId: 'safecracker',
+          roundId: 'r9',
+          endedAt: Date.UTC(2026, 9, 20, 12),
+          secretMode: 'individual',
+          place: null,
+          solved: false,
+          points: 0,
         },
       ],
-    });
+      adjustments: [
+        {
+          periodName: 'Winter 2026',
+          delta: -5,
+          reason: 'Shared account',
+          at: Date.UTC(2026, 1, 2, 12),
+        },
+      ],
+    },
+  ],
+};
+
+describe('the profile', () => {
+  it('shows the numbers, boards, last rounds with their game and staff adjustments', async () => {
+    serve(ANNA_ROUTES);
     await show(<ProfilePage displayName="Anna" />);
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Anna');
     expect(screen.getByText('Member since 15 January 2026')).toBeTruthy();
@@ -201,7 +211,11 @@ describe('the profile', () => {
     expect(screen.getByRole('link', { name: 'Winter 2026' }).getAttribute('href')).toBe(
       '#/leaderboard/p1',
     );
-    expect(rowsOf('profile-recent')).toEqual(['Friday fun20 October 2026not solved0Verify']);
+    // The round's game by name once the installed games are known (O41).
+    await screen.findByText(/Seasonal Safecracker/);
+    expect(rowsOf('profile-recent')).toEqual([
+      'Friday funSeasonal Safecracker · 20 October 2026not solved0Verify',
+    ]);
     expect(screen.getByRole('link', { name: 'Verify' }).getAttribute('href')).toBe(
       '#/rounds/r9/verify',
     );

@@ -31,6 +31,8 @@ export interface GameInfo {
 interface Runner {
   readonly info: GameInfo;
   readonly devBot: DevBot<unknown>;
+  // The game's own keys a host may choose per round (the Quick Test sends only these).
+  readonly hostKeys: ReadonlySet<string>;
   create(round: NewRound): Promise<LiveRound>;
   recover(loaded: LoadedRound): LiveRound;
 }
@@ -61,6 +63,7 @@ export class Rounds {
     this.runners.set(meta.id, {
       info: { id: meta.id, name: meta.name, secretModes: meta.secretModes, teams: meta.teams },
       devBot: entry.devBot,
+      hostKeys: new Set(entry.module.settings.defs.filter((d) => d.hostChooses).map((d) => d.key)),
       create: (round) => runner.create(round),
       recover: (loaded) => runner.recover(loaded),
     });
@@ -76,6 +79,10 @@ export class Rounds {
 
   devBot(gameId: string): DevBot<unknown> | null {
     return this.runners.get(gameId)?.devBot ?? null;
+  }
+
+  hostKeys(gameId: string): ReadonlySet<string> {
+    return this.runners.get(gameId)?.hostKeys ?? new Set();
   }
 
   async create(gameId: string, round: NewRound): Promise<LiveRound> {

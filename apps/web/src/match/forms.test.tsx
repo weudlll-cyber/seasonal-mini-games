@@ -38,10 +38,11 @@ function helpByLabel(): Map<string, string> {
 }
 
 describe('the forms', () => {
-  it('give every Quick Test field a help line under it', () => {
+  it('give every Quick Test field a help line under it, the game first (O41)', () => {
     render(<QuickTest />);
     const help = helpByLabel();
     expect([...help.keys()]).toEqual([
+      'Game',
       'Start from the lobby',
       'Team match',
       'Seed',

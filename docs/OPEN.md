@@ -75,6 +75,10 @@ To confirm after the owner has played:
 - 02d §9: closest miss by smallest distance, wording "just missed — the next cell" when touching.
 - 02d §11: map layout (map left, list right on desktop; map full width on a phone), no zoom, arrow cross, typed coordinates on desktop only.
 
+**All games (game choice, owner decision 41)**
+
+- The leaderboards stay one per period for all four games together: points from every game add up on the same season and all-time boards and team boards; each award is a match's, and the match names its game (DECISIONS T121). The alternative is a board per game per period.
+
 ## Spec conflicts
 
 Resolved by the decision rules (owner decisions first, then the more specific section) and listed here for the owner to confirm.

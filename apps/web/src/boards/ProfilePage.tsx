@@ -5,12 +5,14 @@
  *
  * Responsibility: the display name and member-since date; matches and rounds played, round
  *                 wins, solves and best place; each board the player is on (name, rank,
- *                 points, linking to that board); the last rounds (match, place or "took
+ *                 points, linking to that board; one board for every game, O41); the last
+ *                 rounds (match with its game and date, place or "took
  *                 part", points, a link to the round's verification page); and every staff
  *                 adjustment with its reason, public by design (Bingo 03 §11). An unknown
  *                 name says "No player with that name."
  * Depends on:     react, @smg/contracts (PlayerProfileView), ../components/fields,
- *                 ../shell/router, ./useApi, ./boardsText, ./boards.css, ../round/result.css
+ *                 ../lobby/games, ../shell/router, ./useApi, ./boardsText, ./boards.css,
+ *                 ../round/result.css
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/06-data-model-api-realtime.md §3.1
  */
@@ -18,6 +20,7 @@ import type { PlayerProfileView } from '@smg/contracts';
 import type { ReactElement } from 'react';
 
 import { Problem } from '../components/fields.js';
+import { gameName, useGames } from '../lobby/games.js';
 import { hrefOf } from '../shell/router.js';
 import { dateText, deltaText, placeText, pointsText, refusalText } from './boardsText.js';
 import { useApi } from './useApi.js';
@@ -65,6 +68,7 @@ function Boards({ p }: { readonly p: PlayerProfileView }): ReactElement {
 }
 
 function Recent({ p }: { readonly p: PlayerProfileView }): ReactElement {
+  const games = useGames();
   return (
     <section className="smg-panel smg-stack" aria-labelledby="profile-recent">
       <h2 id="profile-recent">Last rounds</h2>
@@ -88,7 +92,9 @@ function Recent({ p }: { readonly p: PlayerProfileView }): ReactElement {
                   <td>
                     <a href={hrefOf({ name: 'match', code: r.matchCode })}>{r.matchTitle}</a>
                     <br />
-                    <small className="smg-muted">{dateText(r.endedAt)}</small>
+                    <small className="smg-muted">
+                      {gameName(games, r.gameId)} · {dateText(r.endedAt)}
+                    </small>
                   </td>
                   <td>{placeText(r.place, r.secretMode)}</td>
                   <td>{r.points}</td>

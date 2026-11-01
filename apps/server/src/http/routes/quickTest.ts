@@ -3,8 +3,9 @@
  * @module server/http
  * @brief  POST /api/v1/dev/quicktest: start a Quick Test round against bots.
  *
- * Responsibility: validate the body with zod and start the Quick Test for the signed-in
- *                 player, at once or through the waiting area (`lobby`, O24). Registered only in development builds (SMG_DEV=1), like every
+ * Responsibility: validate the body with zod and start the Quick Test of the chosen game
+ *                 (O41, with its own settings) for the signed-in player, at once or through the
+ *                 waiting area (`lobby`, O24); settings the game refuses answer 422. Registered only in development builds (SMG_DEV=1), like every
  *                 development route. Replaces Bingo's in-memory runner of the same name.
  * Depends on:     fastify, zod, ../../dev/quickTest, ../../match/play
  * Used by:        ../app
@@ -14,7 +15,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
 import { quickTests } from '../../dev/quickTest.js';
-import type { Play } from '../../match/play.js';
+import { PlayError, type Play } from '../../match/play.js';
 
 const body = z
   .object({
@@ -42,6 +43,12 @@ const body = z
     countdownS: z.number().int().min(3).max(30).default(3),
     seedText: z.string().trim().min(1).max(64).optional(),
     season: z.enum(['spring', 'summer', 'autumn', 'winter']).optional(),
+    // The chosen game's own round settings (O41); each is checked against the game's
+    // definitions when the round is created, an unknown key refused (T121).
+    settings: z
+      .record(z.string().min(1).max(60), z.union([z.string().max(60), z.number(), z.boolean()]))
+      .refine((s) => Object.keys(s).length <= 40)
+      .default({}),
   })
   .strict()
   // At least 10 numbers, as for every round (08 §3).
@@ -60,7 +67,13 @@ export function registerQuickTest(
     if (!deps.play.rounds.hasGame(parsed.data.gameId)) {
       return reply.status(422).send({ code: 'GAME_UNKNOWN' });
     }
-    const started = await quick.start({ ...parsed.data, playerId: accountId });
-    return reply.status(201).send(started);
+    try {
+      const started = await quick.start({ ...parsed.data, playerId: accountId });
+      return await reply.status(201).send(started);
+    } catch (error) {
+      // Settings that do not fit the game: refused in its words, like the host's form.
+      if (error instanceof PlayError) return reply.status(422).send({ code: error.code });
+      throw error;
+    }
   });
 }

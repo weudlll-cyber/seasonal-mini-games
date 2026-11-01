@@ -14,7 +14,10 @@
  *                 round of the match (./bots), the next ones too. A seed text makes the round
  *                 repeatable: the round seed is `sha256("smg-quicktest:" + text)`, and without
  *                 a season given the seed picks it, so a seed shows the same secret and season
- *                 every time. Development builds only (the route exists only with SMG_DEV=1).
+ *                 every time. The match is of the chosen game (O41): the named fields reach
+ *                 only a game that has their keys, and the form's `settings` carry the game's
+ *                 own (DECISIONS T121). Development builds only (the route exists only with
+ *                 SMG_DEV=1).
  * Depends on:     node:crypto, ../match/*, ./bots
  * Used by:        ../http/routes/quickTest
  * Spec:           docs/spec/11-roadmap.md (phase 1 Quick Test); docs/spec/09-testing-strategy.md §1, §5
@@ -53,6 +56,8 @@ export interface QuickTestInput {
   readonly countdownS: number;
   readonly seedText?: string | undefined;
   readonly season?: Season | undefined;
+  // The chosen game's own round settings by key (O41); the settings layer checks them.
+  readonly settings: Readonly<Record<string, string | number | boolean>>;
 }
 
 export interface QuickTestStarted {
@@ -133,7 +138,7 @@ export function quickTests(play: Play, pool: Parameters<typeof openMatch>[0]): Q
     await play.join(match, { key: input.playerId, accountId: input.playerId });
     if (!input.lobby) for (const key of bots) await joinBot(play, match, key, null);
     const round = await play.createRound(match, input.playerId, {
-      choices: choicesOf(input),
+      choices: choicesOf(input, play.rounds.hostKeys(input.gameId)),
       season,
       seed,
       fast: input.fast,
@@ -149,16 +154,25 @@ export function quickTests(play: Play, pool: Parameters<typeof openMatch>[0]): Q
   return { start };
 }
 
-function choicesOf(input: QuickTestInput): Readonly<Record<string, unknown>> {
-  return {
-    'round.secretMode': input.mode,
-    'round.cooldownS': input.cooldownS,
-    'round.countdownS': input.countdownS,
+// The platform's keys, the named game keys the chosen game has (`gameKeys`), then the game
+// settings the form sent, which win.
+function choicesOf(
+  input: QuickTestInput,
+  gameKeys: ReadonlySet<string>,
+): Readonly<Record<string, unknown>> {
+  const named = Object.entries({
     'round.feedbackVisibility': input.visibility,
     'round.rangeLow': input.rangeLow,
     'round.rangeHigh': input.rangeHigh,
     'round.rangeVisible': input.rangeVisible,
     'round.comments': input.comments,
+  }).filter(([key]) => gameKeys.has(key));
+  return {
+    'round.secretMode': input.mode,
+    'round.cooldownS': input.cooldownS,
+    'round.countdownS': input.countdownS,
     'round.halving': input.halving,
+    ...Object.fromEntries(named),
+    ...input.settings,
   };
 }

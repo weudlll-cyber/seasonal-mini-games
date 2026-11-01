@@ -26,7 +26,11 @@ const calls: string[] = [];
 vi.mock('../shell/http.js', () => ({
   api: (path: string) => {
     calls.push(path);
-    return Promise.resolve(undefined);
+    // The installed games, for the summary's game line (O41).
+    const games = [
+      { id: 'guess-the-number', name: 'Guess The Number', secretModes: [], teams: true },
+    ];
+    return Promise.resolve(path === '/games' ? { games } : undefined);
   },
   ApiError: class extends Error {},
   BASE_PATH: '/',
@@ -87,6 +91,13 @@ const ended: MatchDetailsView = {
 };
 
 describe('the match summary', () => {
+  it('names the match’s game (O41)', async () => {
+    render(<MatchSummary match={ended} viewerKey="a" />);
+    await waitFor(() => {
+      expect(screen.getByTestId('match-game').textContent).toBe('Guess The Number');
+    });
+  });
+
   it('names the end, the rounds, the players in standings order, the teams and the way back', () => {
     render(<MatchSummary match={ended} viewerKey="a" />);
     expect(screen.getByTestId('match-end').textContent).toBe('The host ended the match.');

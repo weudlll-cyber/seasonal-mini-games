@@ -4,26 +4,28 @@
  * @brief  The lobby: open matches, a match by its code, opening a match, and the Quick Test.
  *
  * Responsibility: the public matches in the lobby or running (06 §3.1 `GET /matches`), a field
- *                 to go to a match by its code, for hosts (`match.create`) a form to open a
- *                 match of a registered game (title, players at most, and whether it is a team
- *                 match, O34), and in development builds the way to the Quick
+ *                 to go to a match by its code, each match with its game (O41), for hosts
+ *                 (`match.create`) a form to open a match of the game they choose (O41), with
+ *                 its title, players at most, and whether it is a team match (O34), and in
+ *                 development builds the way to the Quick
  *                 Test, and the lobby's chat room (07 §2). Signed-out visitors are asked to
  *                 sign in or register.
  * Depends on:     react, @smg/contracts, ../chat/ChatPanel, ../shell/*, ../components/fields,
- *                 ../round/roundText (refusals), ../match/formHelp
+ *                 ../round/roundText (refusals), ../match/formHelp, ./games
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/02-game-guess-the-number.md §2; docs/spec/06-data-model-api-realtime.md §3.1
  */
-import type { GameInfoView, MatchSummaryView } from '@smg/contracts';
+import type { MatchSummaryView } from '@smg/contracts';
 import { lazy, Suspense, useEffect, useState, type ReactElement, type SyntheticEvent } from 'react';
 
 import { ChatPanel } from '../chat/ChatPanel.js';
-import { NumberField, SwitchField, TextField } from '../components/fields.js';
+import { ChoiceField, NumberField, SwitchField, TextField } from '../components/fields.js';
 import { FORM_HELP } from '../match/formHelp.js';
 import { codeText } from '../round/roundText.js';
 import { api, ApiError } from '../shell/http.js';
 import { hrefOf, navigate } from '../shell/router.js';
 import { useSession } from '../shell/session.js';
+import { gameName, useGames } from './games.js';
 
 // Development only: a production build drops this import with everything behind it.
 const QuickTestLink = import.meta.env.DEV
@@ -33,10 +35,15 @@ const QuickTestLink = import.meta.env.DEV
 const LOBBY = { kind: 'lobby' } as const;
 
 // Opens the match and goes to it; a refusal in plain words.
-function useOpenMatch(games: readonly GameInfoView[]) {
+function useOpenMatch() {
   const [problem, setProblem] = useState<string | null>(null);
-  const openWith = (body: { title: string; maxPlayers: number; teamMatch: boolean }): void => {
-    api<MatchSummaryView>('/matches', { method: 'POST', body: { gameId: games[0]?.id, ...body } })
+  const openWith = (body: {
+    gameId: string;
+    title: string;
+    maxPlayers: number;
+    teamMatch: boolean;
+  }): void => {
+    api<MatchSummaryView>('/matches', { method: 'POST', body })
       .then((m) => {
         navigate({ name: 'match', code: m.code });
       })
@@ -50,23 +57,29 @@ function useOpenMatch(games: readonly GameInfoView[]) {
 }
 
 function OpenMatch(): ReactElement {
-  const [games, setGames] = useState<readonly GameInfoView[]>([]);
+  const games = useGames();
+  // The host's choice, or the first game until they choose (O41).
+  const [chosen, setChosen] = useState('');
   const [title, setTitle] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(50);
   const [teamMatch, setTeamMatch] = useState(true);
-  const { problem, openWith } = useOpenMatch(games);
-  useEffect(() => {
-    void api<{ games: GameInfoView[] }>('/games').then((r) => {
-      setGames(r.games);
-    });
-  }, []);
+  const { problem, openWith } = useOpenMatch();
+  const gameId = chosen === '' ? (games[0]?.id ?? '') : chosen;
   const open = (e: SyntheticEvent): void => {
     e.preventDefault();
-    openWith({ title, maxPlayers, teamMatch });
+    openWith({ gameId, title, maxPlayers, teamMatch });
   };
   return (
     <form className="smg-panel smg-stack" onSubmit={open} data-testid="open-match">
       <h2>Open a match</h2>
+      <ChoiceField
+        label="Game"
+        help={FORM_HELP.game}
+        value={gameId}
+        options={games.map((g) => ({ value: g.id, label: g.name }))}
+        testId="match-game"
+        onChange={setChosen}
+      />
       <TextField
         label="Title"
         value={title}
@@ -88,7 +101,6 @@ function OpenMatch(): ReactElement {
         testId="team-match"
         onChange={setTeamMatch}
       />
-      <p className="smg-muted">Game: {games[0]?.name ?? '…'}</p>
       {problem === null ? null : (
         <p role="alert" className="round-refusal">
           {problem}
@@ -134,6 +146,7 @@ function ByCode(): ReactElement {
 
 export function Lobby({ dev }: { readonly dev: boolean }): ReactElement {
   const { session, can } = useSession();
+  const games = useGames();
   const [matches, setMatches] = useState<readonly MatchSummaryView[] | null>(null);
   useEffect(() => {
     void api<{ matches: MatchSummaryView[] }>('/matches')
@@ -175,8 +188,8 @@ export function Lobby({ dev }: { readonly dev: boolean }): ReactElement {
             {matches.map((m) => (
               <li key={m.code}>
                 <a href={hrefOf({ name: 'match', code: m.code })}>{m.title}</a>{' '}
-                <span className="smg-muted">
-                  · {m.status} · up to {m.maxPlayers} players
+                <span className="smg-muted" data-testid="match-game-name">
+                  · {gameName(games, m.gameId)} · {m.status} · up to {m.maxPlayers} players
                 </span>
               </li>
             ))}

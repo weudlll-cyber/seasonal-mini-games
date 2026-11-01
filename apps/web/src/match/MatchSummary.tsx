@@ -3,7 +3,7 @@
  * @module web/match
  * @brief  The summary of a closed or aborted match, for every player and spectator (O27).
  *
- * Responsibility: how the match ended in plain words (the host ended it; it closed after N
+ * Responsibility: the match's game (O41), how the match ended in plain words (the host ended it; it closed after N
  *                 minutes without a round, O28; it was aborted with its reason), the number of
  *                 rounds played, each player's total points and wins in standings order (the
  *                 result screen's standings table, ../round/MatchStandings, the viewer's line
@@ -13,7 +13,8 @@
  *                 and the rounds played, the teams and the link on the right; on a phone one
  *                 column; with more players than fit, only the standings scroll, inside their
  *                 own box (./summary.css). The server gives the figures; the page renders them.
- * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), ../round/MatchStandings,
+ * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), ../lobby/games,
+ *                 ../round/MatchStandings,
  *                 ../round/result.css, ../season/*, ../shell/router, ./summary.css
  * Used by:        ./MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §2, §12; docs/spec/03-seasonal-specials.md §5
@@ -22,6 +23,7 @@ import type { MatchDetailsView, MatchEndView } from '@smg/contracts';
 import { formatNumber } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
+import { gameName, useGames } from '../lobby/games.js';
 import { MatchStandings } from '../round/MatchStandings.js';
 import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASON_NAMES } from '../season/season.js';
@@ -68,6 +70,7 @@ export function MatchSummary({
   // The signed-in viewer's player key, to mark their line.
   readonly viewerKey: string | null;
 }): ReactElement {
+  const games = useGames();
   const end = match.ended;
   const rounds = end?.roundsPlayed ?? 0;
   return (
@@ -78,6 +81,9 @@ export function MatchSummary({
     >
       <header className="match-summary-head">
         <h1>{match.title} — match over</h1>
+        <p className="smg-muted" data-testid="match-game">
+          {gameName(games, match.gameId)}
+        </p>
         {end === null ? null : <p data-testid="match-end">{endText(match.status, end)}</p>}
       </header>
       <div className="match-summary-standings">

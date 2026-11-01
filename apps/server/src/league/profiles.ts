@@ -76,6 +76,7 @@ async function recent(pool: DbPool, accountId: string): Promise<PlayerProfileVie
   const r = await pool.query<{
     code: string;
     title: string;
+    game_id: string;
     round_id: string;
     ended_at: Date;
     secret_mode: 'shared' | 'individual';
@@ -83,7 +84,7 @@ async function recent(pool: DbPool, accountId: string): Promise<PlayerProfileVie
     solved: boolean;
     points: number;
   }>(
-    `SELECT m.code, m.title, r.id::text AS round_id, r.ended_at, r.secret_mode, rr.place, rr.solved, rr.points
+    `SELECT m.code, m.title, m.game_id, r.id::text AS round_id, r.ended_at, r.secret_mode, rr.place, rr.solved, rr.points
      FROM smg.round_results rr JOIN smg.rounds r ON r.id = rr.round_id
      JOIN smg.matches m ON m.id = r.match_id
      JOIN smg.league_awards la ON la.match_id = m.id AND la.account_id = $1
@@ -94,6 +95,7 @@ async function recent(pool: DbPool, accountId: string): Promise<PlayerProfileVie
   return r.rows.map((x) => ({
     matchCode: x.code,
     matchTitle: x.title,
+    gameId: x.game_id,
     roundId: x.round_id,
     endedAt: x.ended_at.getTime(),
     secretMode: x.secret_mode,
