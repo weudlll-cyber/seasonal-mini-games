@@ -48,7 +48,11 @@ export class Rounds {
     private readonly store: PgRoundStore,
     options: ActorOptions,
   ) {
-    for (const entry of GAMES) this.add(entry, options);
+    for (const game of GAMES) {
+      game.use((entry) => {
+        this.add(entry, options);
+      });
+    }
   }
 
   private add<S, A, E, Cfg, Sec>(entry: GameEntry<S, A, E, Cfg, Sec>, options: ActorOptions) {

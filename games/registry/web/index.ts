@@ -8,7 +8,9 @@
  *                 the client can lay them out (the input row pinned at the bottom of a phone)
  *                 and put its cooldown ring into the row. The player client finds a game's
  *                 screens only here, by the round's game id.
- * Depends on:     react (types), @smg/game-sdk, @smg-game/guess-the-number/web
+ * Depends on:     react (types), @smg/game-sdk, @smg-game/guess-the-number/web,
+ *                 @smg-game/safecracker/web, @smg-game/bomb-defusal/web,
+ *                 @smg-game/seasonal-target/web
  * Used by:        apps/web
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/10-repository-structure.md §1
  */
@@ -20,6 +22,9 @@ import {
   ResultPanel,
   SpectatorPanel,
 } from '@smg-game/guess-the-number/web';
+import { bombDefusalWeb } from '@smg-game/bomb-defusal/web';
+import { safecrackerWeb } from '@smg-game/safecracker/web';
+import { seasonalTargetWeb } from '@smg-game/seasonal-target/web';
 import type {
   GameText,
   SettingDef,
@@ -49,4 +54,7 @@ export const GAME_SCREENS: Readonly<Record<string, GameWeb>> = {
     text: gtnText,
     settings: gtnSettingDefs,
   },
+  safecracker: safecrackerWeb,
+  'bomb-defusal': bombDefusalWeb,
+  'seasonal-target': seasonalTargetWeb,
 };

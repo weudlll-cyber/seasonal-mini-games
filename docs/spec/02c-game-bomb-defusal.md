@@ -133,3 +133,13 @@ Inherited from 02 §12: intro card, top bar, banner above the list, the one list
 - **Desktop 1280 × 720:** the list fills the left column (at least 12 rows, owner decision 35); under it the input area: slots, wire buttons in one row (two rows of four with 8 wires), and the cooldown ring with Undo, Clear and Cut; right column as 02 §12 with the bomb block in place of the range block.
 - **Phone 390 × 844:** top bar, bomb line, the list filling the height left (the only thing that scrolls), team tiles and Chat, then pinned at the bottom: slots in one row, wire buttons in two rows of up to four, and a row with the ring, Undo, Clear and Cut.
 - Both sizes fit one screen without a page scrollbar, light and dark, with every necessary item visible.
+
+## Decided while building (night 4, proposals)
+
+- The answer carries `{ correct, defused }`; `defused` is correct = cuts, because the guess engine's `solved(answer)` does not see the number of cuts.
+- "Leaf Fall: no more harmless wires." is its own event (`HarmlessOver`); the next due fall then adds nothing and the falls end.
+- The server's `SEQUENCE_INVALID` reads "Choose a different wire of this bomb for every slot."; the input row says "Choose 4 different wires of this bomb." before sending anything.
+- Under `own`, other players' rows read "cut a sequence".
+- The explosion overlay covers the whole screen for its moment and lets taps through; the row says "Boom!" with the icon in text.
+- Cut stays enabled with a harmless wire in the slots: pressing it refuses locally with the sentence of §11 and sends nothing; wire buttons are disabled once every slot is filled.
+- `bomb.explosionPenaltyS` is a host round setting like every other: owner decision 40 says the host chooses it, the round form keeps the last choice (OPEN, spec conflicts).

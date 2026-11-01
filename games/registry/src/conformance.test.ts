@@ -202,11 +202,13 @@ function specials<S, A, E, Cfg, Sec>(entry: GameEntry<S, A, E, Cfg, Sec>, mode: 
 }
 
 describe('game module conformance', () => {
-  for (const entry of GAMES) {
-    for (const mode of entry.module.meta.secretModes) {
-      conformance(entry, mode);
-      specials(entry, mode);
-    }
-    if (entry.module.meta.secretModes.includes('individual')) solvedPlayer(entry);
+  for (const game of GAMES) {
+    game.use((entry) => {
+      for (const mode of entry.module.meta.secretModes) {
+        conformance(entry, mode);
+        specials(entry, mode);
+      }
+      if (entry.module.meta.secretModes.includes('individual')) solvedPlayer(entry);
+    });
   }
 });

@@ -126,3 +126,12 @@ The rules of [02](02-game-guess-the-number.md) §12 apply: one screen without a 
 - **History rows** (the round's one list, newest first): the player's dot and name ("You" for the viewer), the code in a monospaced face with spaced digits, then **pegs**: one filled disc per exact and one hollow ring per near, in the text colour with at least 3:1 against the row, so shape and not colour carries the meaning; then the counts in text ("2 right place, 1 wrong place"), and the comment in smaller text. Under `numbers` the code without pegs or text; under `own` "Anna tried a code." Own rows on the season tint; under Frost "answer arriving in 2 s".
 - **Desktop (1280 × 720):** the list with the banner above it fills the left column above the input row (at least 12 rows, owner decision 35); the right column holds the code block, the team tiles and the chat ([02](02-game-guess-the-number.md) §12).
 - **Phone (390 × 844):** the short top bar; the code block compact (the line and the digit strip in one row of chips at least 28 px wide, not interactive); the guess list filling the remaining height; the team tiles with the "Chat" button; the input row pinned at the bottom on two lines when it does not fit one (the boxes on the first, the ring and **Try code** on the second): six boxes need 6 × 44 px plus gaps, inside 358 px. A history row fits one line for the code and pegs, the text and comment on a second.
+
+## Decided while building (night 4, proposals)
+
+- The answer carries `{ exact, near, solved }`; `solved` is exact = length, because the guess engine's `solved(answer)` does not see the code length.
+- Spring Herald draws the position under `springHerald/shared` or `springHerald/<playerId>`, uniformly; in individual mode the room gets one line "Spring Herald: everyone got a free hint." without any digit.
+- A list row's tone is "close" from a score of 0.6 (warm and closer), "far" below it, "correct" when solved; its words "N right place, M wrong place" or "correct — the safe is open"; a hidden code reads "tried a code".
+- The digit strip shows in every season (with Leaf Fall it also marks the fallen digits).
+- A Leaf Fall takes `min(autumn.digitsPerFall, candidates)` digits under `leafFall/<k>`; with no candidate it adds nothing and the falls end.
+- The conformance kit plays codes of length 6: sentinel secrets of the digits 5–9, guesses of the digits 0–4, so every answer is 0 right place, 0 wrong place.

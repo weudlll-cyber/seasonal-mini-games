@@ -135,3 +135,12 @@ Layout, top bar, banner, list, intro and accessibility follow [02](02-game-guess
 - **Coordinates as text:** "Selected: column 12, row 34" beside the Guess button, read out live (`aria-live="polite"`). On a desktop two number fields **Column** and **Row** also set the selection and follow it.
 - **Desktop:** the map on the left with the hint or window line above it and the input row (cooldown ring, selected cell, fields, arrow cross, Guess) under it; a right column about 380 px wide holds the banner and the one list on top, then the team tiles, then the chat. **Phone:** top bar, hint line, the map at full width, the list filling the rest, team tiles with the Chat button, and the input row pinned at the bottom (ring, selected cell, arrow cross, Guess). The Fallen cells panel is a "Fallen (N)" button that opens a sheet, as DECISIONS T115.
 - Never colour alone: own dots by ring, fallen cells by hatch, the quarter by dashed outline and label, answers always in words.
+
+## Decided while building (night 4, proposals)
+
+- On maps up to about 30 × 30, two cells apart is already over 6 % of the diagonal, so `hot` and `burning` cannot occur there; tiers are decided in whole numbers (10 000 · d² against p² · D²), so no cell is placed by float rounding.
+- The input takes 1–100 per coordinate; a server `OUT_OF_MAP` for a cell inside the map reads "outside the target area"; the input row checks fallen and repeated cells locally and keeps the selection inside the target area.
+- In individual mode Spring Herald also sends the room a line "everyone received a hint" (`HintGiven` with `quarter: null`).
+- The secret is stored with the round's answer rule (feedback mode and map size) beside its cell, because the engine's `answer(value, secret)` gets no state; only the cell ever reaches a view, after the end.
+- Until the platform has a board layout for map games, the map sits in the input row under the list, at most `min(52dvh, 520px)` high (OPEN).
+- On the player's own map other players' dots read "Another player" and take season colours in the order the players first appear: the player panel gets no names or roster colours (OPEN).

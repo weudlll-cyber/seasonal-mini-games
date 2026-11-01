@@ -440,9 +440,18 @@ importers:
 
   games/registry:
     dependencies:
+      '@smg-game/bomb-defusal':
+        specifier: workspace:*
+        version: link:../bomb-defusal
       '@smg-game/guess-the-number':
         specifier: workspace:*
         version: link:../guess-the-number
+      '@smg-game/safecracker':
+        specifier: workspace:*
+        version: link:../safecracker
+      '@smg-game/seasonal-target':
+        specifier: workspace:*
+        version: link:../seasonal-target
       '@smg/game-sdk':
         specifier: workspace:*
         version: link:../../packages/game-sdk

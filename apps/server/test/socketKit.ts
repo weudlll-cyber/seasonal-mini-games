@@ -26,8 +26,11 @@ import { attachGateway } from '../src/index.js';
 import { startHarness, stopHarness, type Harness } from './harness.js';
 import { signIn, type Client } from './session.js';
 
-const gtn = GAMES[0].module;
-type Secrets = ReturnType<typeof gtn.deriveSecrets>;
+// The suites play Guess The Number, the registry's first game; its secrets are numbers.
+type Secrets =
+  | { readonly mode: 'shared'; readonly value: number }
+  | { readonly mode: 'individual'; readonly byPlayer: Readonly<Record<string, number>> };
+const GTN = GAMES.find((g) => g.id === 'guess-the-number');
 
 export interface IntentAnswer {
   readonly ok: boolean;
@@ -66,7 +69,14 @@ async function secretsFrom(harness: Harness, roundId: string): Promise<Secrets> 
   const countdown = log.find((e) => e.type === 'CountdownStarted');
   if (created === undefined || countdown === undefined) throw new Error('round not started');
   const input = roundInput(initialRound(created), countdown.roster);
-  return gtn.deriveSecrets(input, roundRng(loaded.seed));
+  if (GTN === undefined) throw new Error('Guess The Number is not installed');
+  const secrets = GTN.use((e) =>
+    e.module.deriveSecrets(
+      input as Parameters<typeof e.module.deriveSecrets>[0],
+      roundRng(loaded.seed),
+    ),
+  );
+  return secrets as Secrets;
 }
 
 function connectedOf(s: Socket): Promise<string> {
