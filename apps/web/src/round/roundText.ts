@@ -6,10 +6,11 @@
  * Responsibility: every platform code a player can meet in plain English (02 §12), the
  *                 solved player's notice (O25), the result's headline ("Walter found it first
  *                 — after 9 guesses", 02 §9), the winning margin, and one event row of the
- *                 round's list per platform event (a solve, Heatwave's new cooldown, the round
- *                 opening and ending); a game's own rows come from the game's text.
+ *                 round's list per platform event (a solve, Heatwave's new waiting time, the
+ *                 round opening and ending), and the banner of a platform special (Heatwave,
+ *                 Spring Herald, O35); a game's own rows and banners come from the game's text.
  * Depends on:     @smg/contracts (shapes), @smg/game-sdk (FeedLine)
- * Used by:        ./RoundScreen, ./ResultScreen, ./RoundLog, ../match/HostMenu
+ * Used by:        ./RoundScreen, ./ResultScreen, ./RoundLog, ./SpecialBanner, ../match/HostMenu
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §12; docs/spec/03-seasonal-specials.md §2
  */
 import type { RoundStateView } from '@smg/contracts';
@@ -96,6 +97,22 @@ export function marginText(state: RoundStateView): string | null {
 
 const roundLine = (text: string): FeedLine => ({ text, playerId: null });
 
+// Heatwave's step in the banner and in the list alike: "Heatwave: waiting time is now 4 s."
+function heatwaveText(cooldownMs: number): string {
+  const s = cooldownMs / 1_000;
+  return `Heatwave: waiting time is now ${Number.isInteger(s) ? String(s) : s.toFixed(1)} s.`;
+}
+
+// The banner of a platform special (O35); the game's specials are the game's to word.
+export function platformBanner(event: unknown): string | null {
+  const e = event as { type?: string; [k: string]: unknown };
+  if (e.type === 'CooldownChanged') return heatwaveText(Number(e['cooldownMs']));
+  if (e.type === 'SpecialFired' && e['special'] === 'springHerald') {
+    return 'Spring Herald: everyone got a free hint.';
+  }
+  return null;
+}
+
 // The list row of a platform event, or null (game events are the game's to word).
 export function platformLine(event: unknown, names: Names): FeedLine | null {
   const e = event as { type?: string; [k: string]: unknown };
@@ -106,7 +123,7 @@ export function platformLine(event: unknown, names: Names): FeedLine | null {
       return { text, playerId: who };
     }
     case 'CooldownChanged':
-      return roundLine(`Heatwave: cooldown now ${seconds(Number(e['cooldownMs']))}.`);
+      return roundLine(heatwaveText(Number(e['cooldownMs'])));
     case 'RoundOpened':
       return roundLine('The round is open — guess!');
     case 'RoundEnded':

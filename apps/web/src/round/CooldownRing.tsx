@@ -7,11 +7,13 @@
  *                 offset) and the cooldown in force, draw the ring and the seconds left, or
  *                 "Ready" (02 §7). Only a display: the server enforces the cooldown.
  *                 Without motion when the player asks for reduced motion.
- * Depends on:     react
+ * Depends on:     react, ./cooldownRing.css
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §7, §12
  */
 import type { ReactElement } from 'react';
+
+import './cooldownRing.css';
 
 interface CooldownRingProps {
   readonly endsAt: number;

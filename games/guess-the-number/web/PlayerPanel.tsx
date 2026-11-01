@@ -4,7 +4,8 @@
  * @brief  The player's two parts: the range block at the top of the main area, and the input row.
  *
  * Responsibility: `PlayerPanel` is the range block (./RangeBar) with Spring Herald's hint under
- *                 it; the platform draws the round's one list of guesses and events beneath it
+ *                 it as a highlighted line for the whole round ("Free hint: …", O35); the
+ *                 platform draws the round's one list of guesses and events beneath it
  *                 (O20). `GuessInput` is the input row, placed by the platform (pinned at the
  *                 bottom on a phone): the platform's cooldown ring, a number field that takes
  *                 a minus sign (with the shared ± button of @smg/ui where negative numbers are
@@ -25,7 +26,7 @@ import { flipSign, SignToggle } from '@smg/ui';
 import { useState, type ReactElement, type ReactNode, type SyntheticEvent } from 'react';
 
 import { RangeBar } from './RangeBar.js';
-import { gtnText, hintText } from './text.js';
+import { freeHint, gtnText } from './text.js';
 
 // The platform hands its cooldown ring in, to sit at the start of the input row.
 export type GtnPlayerProps = PlayerPanelProps & { readonly ring?: ReactNode };
@@ -121,7 +122,7 @@ export function PlayerPanel(props: PlayerPanelProps): ReactElement {
       <RangeBar range={view.range} removed={view.removed} />
       {view.hint === null ? null : (
         <p className="gtn-hint" data-testid="hint">
-          <strong>Spring Herald:</strong> {hintText(view.hint)}
+          {freeHint(view.hint)}
         </p>
       )}
     </div>

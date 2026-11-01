@@ -1,5 +1,25 @@
 # Morning sheet
 
+## Specials visible (2026-11-01, day task)
+
+On `night/2026-10-27`, now the owner's test branch: `feat/guess-the-number` merged into it first (`47d5c5c`, every commit of feat now on night; the only conflict was this sheet's Night 3 pointer, night's full section kept). Nothing goes to `master`; `feat/guess-the-number` stays.
+
+| Step | What                                                                                                                 | Commit                            |
+| ---- | -------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| 1    | O29, O31–O33 recorded; the chat's round-end line names the number (game hook `reveal`), a mute covers the whole chat | `a754036`                         |
+| 2    | Season boards by meteorological season (O30), migration 0011 for quarter boards (T107)                               | `6282f1e`                         |
+| 3    | Team match per match (O34), migration 0012 (T108)                                                                    | `1202ac2`                         |
+| 4    | Round intro screen (O36), countdown 10 s as a proposal (OPEN (ab), T109)                                             | `35c76b9`                         |
+| 5    | Specials in view and more guess rows (O35, T110); journeys 16, 17; this section                                      | the commit that adds this section |
+
+**Guess rows in view** (Chromium, measured with a full list, no page scrollbar at any size): 1280 × 720 — 15 rows, 13 of them guesses (target 12); 1920 × 1080 — 28 rows, 24 guesses (target 20); 390 × 844 — 9 rows (comments wrap under the number on a phone). Before this task 1280 × 720 showed 7 rows. In the play-through below, with lists not yet full at the larger size, the counts were 14–18 rows at 1280 × 720, 15–25 at 1920 × 1080 and 8–11 at 390 × 844.
+
+**Checks:** `pnpm verify` green; every Chromium e2e journey passes (journeys 1–17 and the account checks, 24 tests); CI for the final push: see the report.
+
+**Screenshots:** `reports/specials-visible/` — per season the intro at 1280 × 720 and 390 × 844, the open round with its banner at 1280 × 720, 1920 × 1080 and 390 × 844, each light and dark.
+
+**To try:** http://127.0.0.1:5410/#/quick-test, "Dev sign-in" → player 1; seed `acorn`, Season Spring (then Summer, Autumn, Winter), Lowest number 1, Highest number 100, Show range on, Fast specials on, Start from the lobby on. Start the round from the Host menu: the intro shows for the countdown (10 s by default, also with Fast specials on), then the round with the special's banner when it fires. With Team match off the match has no teams anywhere.
+
 ## Night 3 (2026-11-01)
 
 N1 on `feat/guess-the-number`; N2 merges it into `night/2026-10-27`; N3 and N4 on `night/2026-10-27`; N5 hands over. Nothing goes to `master`. Updated after every piece. The owner tests `feat/guess-the-number` first.

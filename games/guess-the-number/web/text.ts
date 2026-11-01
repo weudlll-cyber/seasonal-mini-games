@@ -3,9 +3,11 @@
  * @module games/guess-the-number/web
  * @brief  Every sentence Guess The Number puts on a screen, in plain English.
  *
- * Responsibility: the game's refusals, the Spring Herald hint, one line per room event for
+ * Responsibility: the game's refusals, the Spring Herald hint (and its highlighted "Free
+ *                 hint: the number is even." in the range block, O35), one line per room event for
  *                 the round's list (02 §12; 03 §2): Leaf Fall with the fallen numbers named,
- *                 the shared hint and halving; and the list's guess rows from the player or
+ *                 the shared hint and halving, and the shorter banner when Leaf Fall or
+ *                 halving strikes ("Leaf Fall: 10 numbers fell.", O35); the list's guess rows from the player or
  *                 spectator view, own guesses and the others' at the round's visibility, with
  *                 answers and comments as far as the view carries them (O20, O21); and the
  *                 closest miss on the shared result (O22); the round intro's line on the
@@ -22,10 +24,19 @@ export type HintView =
   | { readonly kind: 'parity'; readonly odd: boolean }
   | { readonly kind: 'half'; readonly low: number; readonly high: number };
 
-export function hintText(hint: HintView): string {
-  if (hint.kind === 'parity') return `The number is ${hint.odd ? 'odd' : 'even'}.`;
-  return `The number is between ${String(hint.low)} and ${String(hint.high)}.`;
+// The hint's words after a lead-in: "the number is even."
+function hintBody(hint: HintView): string {
+  if (hint.kind === 'parity') return `the number is ${hint.odd ? 'odd' : 'even'}.`;
+  return `the number is between ${String(hint.low)} and ${String(hint.high)}.`;
 }
+
+function hintText(hint: HintView): string {
+  const body = hintBody(hint);
+  return `${body.charAt(0).toUpperCase()}${body.slice(1)}`;
+}
+
+// The range block's highlighted line for the whole round (O35).
+export const freeHint = (hint: HintView): string => `Free hint: ${hintBody(hint)}`;
 
 const CODES: Readonly<Record<string, string>> = {
   OUT_OF_RANGE: 'That number is outside the range.',
@@ -60,6 +71,19 @@ function eventText(e: GtnEvent): FeedLine | null {
     case 'FeedbackGiven':
       return null;
   }
+}
+
+// The banner when Leaf Fall or halving strikes (O35); the list row keeps the details.
+function banner(event: unknown): string | null {
+  const e = event as GtnEvent;
+  if (e.type === 'NumbersRemoved') {
+    const n = e.numbers.length;
+    return `Leaf Fall: ${String(n)} ${n === 1 ? 'number' : 'numbers'} fell.`;
+  }
+  if (e.type !== 'RangeHalved') return null;
+  if (e.range === null) return `Range halved: every range is now ${String(e.size)} numbers.`;
+  const whose = e.playerId === null ? 'the number is' : 'your number is';
+  return `Range halved: ${whose} between ${String(e.range.low)} and ${String(e.range.high)}.`;
 }
 
 type Seen = PlayerView['log'][number];
@@ -108,5 +132,6 @@ export const gtnText: GameText = {
   event: (event) => eventText(event as GtnEvent),
   guesses: guessRows,
   runnerUp,
+  banner,
   intro,
 };

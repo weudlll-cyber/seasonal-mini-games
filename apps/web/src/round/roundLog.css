@@ -4,9 +4,11 @@
  * @brief  The round's one guess list: guess rows, event rows, dots, answers and comments.
  *
  * Responsibility: the list takes the height left under the range block and scrolls inside
- *                 itself, newest at the top (O20); a guess row holds dot, name, number and
- *                 answer on one line with the comment under them, the viewer's own rows on a
- *                 tint of the season colour (T75); an event is one quieter line. Moved out of
+ *                 itself, newest at the top (O20); a guess row is compact (O35: more rows in
+ *                 view): dot, name, number, answer and the comment in small text on one line
+ *                 when it fits, the comment wrapping under them otherwise; the viewer's own
+ *                 rows on a tint of the season colour (T75); Frost's held answer with its
+ *                 seconds in a small badge; an event is one quieter line. Moved out of
  *                 ./round.css to keep each file under the size limit. Colours only from @smg/ui
  *                 tokens.
  * Spec:           docs/spec/02-game-guess-the-number.md §6.3, §12
@@ -27,18 +29,20 @@
   list-style: none;
   display: grid;
   align-content: start;
-  gap: 0.3rem;
+  gap: 0.1rem;
   overflow-y: auto;
 }
 
-/* A guess: dot, name, number and answer on one line, the comment under them. */
+/* A guess on one line: dot, name, number, answer, and the comment while it fits; a comment
+   that does not fit wraps under the others, still in small text. */
 .round-row {
-  display: grid;
-  grid-template-columns: auto minmax(0, max-content) auto 1fr;
+  display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 0 0.5rem;
-  padding: 0.3rem 0.5rem;
+  padding: 0.1rem 0.5rem;
   border-radius: var(--radius);
+  line-height: 1.3;
 }
 
 .round-row[data-own='true'] {
@@ -47,6 +51,9 @@
 }
 
 .round-who {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 12rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -59,7 +66,8 @@
 }
 
 .round-comment {
-  grid-column: 2 / -1;
+  flex: 1 1 10rem;
+  min-width: 0;
   font-size: var(--font-size-small);
 }
 
@@ -68,10 +76,22 @@
   font-weight: var(--font-weight-strong);
 }
 
+/* The seconds until a held answer arrives: a small badge in Frost's colour. */
+.round-arriving-left {
+  display: inline-block;
+  min-width: 2.2em;
+  padding: 0 0.35em;
+  border-radius: var(--radius-pill);
+  border: 1px solid currentColor;
+  font-size: var(--font-size-small);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
 /* An event: one quieter line. */
 .round-row--event {
-  grid-template-columns: auto 1fr;
-  padding-block: 0.15rem;
+  flex-wrap: nowrap;
+  padding-block: 0.05rem;
   font-size: var(--font-size-small);
   color: var(--color-text-muted);
 }

@@ -142,7 +142,17 @@ export async function hostRound(
     else await field.fill(value);
   }
   await form.getByTestId('create-start').click();
-  await expect(host.page.getByTestId('round-banner')).toBeVisible();
+  await roundStarted(host.page);
+}
+
+// The round started: the intro counts down (O36), or the round is already open.
+export async function roundStarted(page: Page): Promise<void> {
+  await expect(page.getByTestId('round-intro').or(page.getByTestId('round-banner'))).toBeVisible();
+}
+
+// The round is open: the intro (10 s by default, OPEN (ab)) has given way to the top bar.
+export async function roundOpen(page: Page): Promise<void> {
+  await expect(page.getByTestId('round-banner')).toBeVisible({ timeout: 20_000 });
 }
 
 // The viewer's own rows of the round's one guess list, newest first (O20).

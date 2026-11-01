@@ -24,6 +24,7 @@ import {
   hostRound,
   person,
   playerRow,
+  roundOpen,
   search,
   type Person,
 } from './play.js';
@@ -94,7 +95,9 @@ test('journey 12: the Quick Test through the lobby, two rounds, End match and th
     // The normal Start in the host menu.
     await hostMenu(p);
     await p.page.getByTestId('host-console').getByTestId('start-round').click();
-    await expect(p.page.getByTestId('round-banner')).toBeVisible();
+    // The intro with the form's countdown (the setting's default), then the round (O36).
+    await expect(p.page.getByTestId('round-intro')).toContainText('Spring Herald');
+    await roundOpen(p.page);
     await search(p);
     await resultShown(p.page);
     // The next round's area: the team is kept for the match, no buttons any more (O26).

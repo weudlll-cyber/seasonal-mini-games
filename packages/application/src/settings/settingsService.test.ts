@@ -91,23 +91,6 @@ describe('SettingsService resets and races', () => {
     expect((await settings.values('matchmaking'))['match.maxPlayers']).toBe(500);
   });
 
-  it('leaves a removed setting out of the view, so the next save drops it', async () => {
-    const { settings, store } = service();
-    store.docs.set('matchmaking', {
-      version: 1,
-      overrides: { 'match.maxPlayers': { value: 300 }, 'gone.setting': { value: 'winter' } },
-      updatedAt: null,
-    });
-    const view = await settings.view('matchmaking', ['settings.game.edit']);
-    // The form sends back what the view gave it.
-    const overrides = { 'match.maxPlayers': { value: 300 } };
-    expect(view.overrides).toEqual(overrides);
-    await settings.update('matchmaking', { version: 1, overrides }, actor(['settings.game.edit']));
-    expect(store.docs.get('matchmaking')?.overrides).toEqual({
-      'match.maxPlayers': { value: 300 },
-    });
-  });
-
   it('keeps unchanged keys of others, and resets a key only with its permission', async () => {
     const { settings, store, audit } = service();
     store.docs.set('security', {
@@ -143,5 +126,24 @@ describe('SettingsService resets and races', () => {
       racing.update('matchmaking', { version: 1, overrides: {} }, actor([])),
     ).rejects.toMatchObject({ code: 'CONFIG_VERSION_CONFLICT' });
     expect(audit.entries).toHaveLength(0);
+  });
+});
+
+describe('SettingsService and a removed setting', () => {
+  it('leaves a removed setting out of the view, so the next save drops it', async () => {
+    const { settings, store } = service();
+    store.docs.set('matchmaking', {
+      version: 1,
+      overrides: { 'match.maxPlayers': { value: 300 }, 'gone.setting': { value: 'winter' } },
+      updatedAt: null,
+    });
+    const view = await settings.view('matchmaking', ['settings.game.edit']);
+    // The form sends back what the view gave it.
+    const overrides = { 'match.maxPlayers': { value: 300 } };
+    expect(view.overrides).toEqual(overrides);
+    await settings.update('matchmaking', { version: 1, overrides }, actor(['settings.game.edit']));
+    expect(store.docs.get('matchmaking')?.overrides).toEqual({
+      'match.maxPlayers': { value: 300 },
+    });
   });
 });

@@ -35,14 +35,15 @@ test('journey 1: a shared round from start to result, also on a phone', async ({
   try {
     await hostRound(host, {
       Cooldown: '3',
-      // Long enough that a slow browser still sees the countdown hold Guess.
+      // Long enough that a slow browser still sees the intro before the round opens.
       'Countdown before opening': '8',
       'Highest number': '30',
       Secret: 'shared',
     });
+    // The countdown is the intro screen (O36): no guess can be typed before the round opens.
     for (const p of [one, two]) {
-      await expect(p.page.getByTestId('round-banner')).toBeVisible();
-      await expect(p.page.getByTestId('guess-button')).toBeDisabled();
+      await expect(p.page.getByTestId('round-intro')).toBeVisible();
+      await expect(p.page.getByTestId('guess-button')).toHaveCount(0);
     }
     await expect(one.page.getByTestId('guess-button')).toBeEnabled({ timeout: 15_000 });
     // The cooldown ring holds Guess after an accepted guess (02 §7).
@@ -53,7 +54,7 @@ test('journey 1: a shared round from start to result, also on a phone', async ({
     await expect(ownRows(one.page).first().or(won)).toBeVisible();
     if (!(await won.isVisible())) {
       await expect(ownRows(one.page).first()).toContainText('15');
-      // The closeness comment under the guess (O21), in smaller text on its own line.
+      // The closeness comment with the guess (O21), in smaller text (O35: on its line if it fits).
       await expect(ownRows(one.page).first().locator('.round-comment')).not.toBeEmpty();
       await expect(one.page.getByTestId('guess-button')).toBeDisabled();
       // The round view is one screen on the phone (02 §12).

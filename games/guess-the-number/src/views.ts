@@ -145,7 +145,7 @@ export const views: GameViews<GtnState, Secrets> = {
       removed: within(state.removed, playerRange),
       guesses: own.map((g) => ({
         receiveSeq: g.receiveSeq,
-        // The client shows "answer arriving in 2 s" from it under Frost.
+        // The client shows "answer arriving… 2 s" from it under Frost.
         receivedAt: g.receivedAt,
         value: g.value,
         ...answerOf(g, released(g, ctx)),

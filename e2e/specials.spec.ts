@@ -4,7 +4,7 @@
  * @brief  Journeys 3 and 4: each season special once, and a halving round on a halving day.
  *
  * Responsibility: journey 3 — in Quick Test rounds of the fast test profile, Spring Herald's
- *                 hint card appears, Heatwave's cooldown drops, Leaf Fall strikes numbers and
+ *                 free hint appears, Heatwave's cooldown drops, Leaf Fall strikes numbers and
  *                 Frost shows "answer arriving", readable on the light page. Journey 4 — with today entered as a halving
  *                 day, a halving round's range halves, and a guess outside the new range is
  *                 refused without cost. The halving day and the matches are removed or aborted.
@@ -45,13 +45,16 @@ test('journey 3: each season special shows itself', async ({ browser }) => {
   const codes: string[] = [];
   try {
     codes.push(await quickRound(p, { season: 'spring' }));
-    await expect(p.page.getByTestId('hint')).toContainText(/The number is (odd|even)\./, {
-      timeout: 10_000,
-    });
+    await expect(p.page.getByTestId('hint')).toContainText(
+      /Free hint: the number is (odd|even)\./,
+      {
+        timeout: 10_000,
+      },
+    );
 
     codes.push(await quickRound(p, { season: 'summer', cooldownS: 8 }));
     await expect.poll(() => cooldownSeconds(p.page), { timeout: 15_000 }).toBeLessThan(8);
-    await expect(p.page.getByTestId('guess-list')).toContainText('Heatwave: cooldown now');
+    await expect(p.page.getByTestId('guess-list')).toContainText('Heatwave: waiting time is now');
 
     codes.push(await quickRound(p, { season: 'autumn' }));
     await expect(p.page.getByTestId('fallen')).toContainText('fallen', { timeout: 15_000 });
@@ -61,7 +64,7 @@ test('journey 3: each season special shows itself', async ({ browser }) => {
     await expect(p.page.getByTestId('guess-button')).toBeEnabled({ timeout: 10_000 });
     await p.page.getByTestId('guess-input').fill('250000');
     await p.page.getByTestId('guess-button').click();
-    await expect(ownRows(p.page)).toContainText('answer arriving in');
+    await expect(ownRows(p.page)).toContainText('answer arriving…');
     // Frost's line in the winter colour on the light page (night run 2, N2).
     await readable(p.page, 'Frost round', ['light']);
     // The answer and its comment arrive together after the delay (O21).
@@ -109,7 +112,7 @@ test('journey 4: a halving round halves the range and refuses a guess outside it
     await expect(p.page.getByTestId('guess-button')).toBeEnabled();
     await p.page.getByTestId('guess-input').fill(String(outside));
     await p.page.getByTestId('guess-button').click();
-    await expect(p.page.getByRole('status')).toContainText('outside the range');
+    await expect(p.page.locator('.gtn-message')).toContainText('outside the range');
     await expect(ownRows(p.page)).toHaveCount(before);
   } finally {
     if (code !== null) await abortMatch(p, code);

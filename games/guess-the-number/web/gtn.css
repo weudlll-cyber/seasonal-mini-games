@@ -5,7 +5,8 @@
  *
  * Responsibility: colours only from the design tokens (light and dark, Bingo 01 §13); the bar
  *                 takes the round's season colour from `--season`, set by the platform's
- *                 round screen, and fallen numbers are gaps in it; the range block stays
+ *                 round screen, and fallen numbers are dark gaps in it, at least 4 px wide; Spring
+ *                 Herald's hint is a highlighted line (O35); the range block stays
  *                 compact, so the platform's guess list under it keeps the room (O20);
  *                 layouts work down to 390 px wide.
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §2.3, §6
@@ -14,26 +15,22 @@
 .gtn-player,
 .gtn-spectator {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-1);
 }
 
 .gtn-range {
   display: grid;
   gap: var(--space-1);
+  container-type: inline-size;
 }
 
+/* Sized by the box the platform gives the range block (a side column on a desktop, the
+   width of a phone), so it stays large and short there (O35). */
 .gtn-range-title {
   margin: 0;
-  font-size: var(--font-size-title);
+  font-size: clamp(1.05rem, 6.2cqi, 1.9rem);
   font-weight: var(--font-weight-heading);
-  line-height: 1.1;
-}
-
-/* A phone keeps the title to two lines, so the guess list below keeps its room. */
-@media (max-width: 899px) {
-  .gtn-range-title {
-    font-size: var(--font-size-lead);
-  }
+  line-height: 1.15;
 }
 
 .gtn-range-note {
@@ -44,25 +41,32 @@
 
 .gtn-range-bar {
   position: relative;
-  height: 1.5rem;
+  height: 1.25rem;
   border-radius: var(--radius-pill);
   background: var(--season, var(--color-accent));
   border: 1px solid var(--color-border);
   overflow: hidden;
 }
 
-/* A fallen number: a gap in the bar, in the page colour behind it */
+/* A fallen number: a gap over its share of the bar (`--gtn-slot`), at least 4 px wide, centred
+   on the number, in the dark colour that stands out on every season colour (O35). */
 .gtn-range-gap {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 3px;
-  margin-left: -1px;
-  background: var(--color-surface);
+  width: max(4px, var(--gtn-slot, 0%));
+  transform: translateX(-50%);
+  background: var(--color-on-season);
 }
 
+/* Spring Herald's hint for the whole round: a highlighted line in the range block (O35). */
 .gtn-hint {
   margin: 0;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius);
+  border-left: 4px solid var(--season, var(--color-accent));
+  background: color-mix(in srgb, var(--season, var(--color-accent)) 22%, var(--color-card));
+  font-weight: var(--font-weight-strong);
 }
 
 .gtn-input {

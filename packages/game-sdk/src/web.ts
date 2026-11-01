@@ -85,6 +85,10 @@ export interface GameText {
     resultView: unknown,
     names: Readonly<Record<string, string>>,
   ) => string | null;
+  // The banner above the round's list when one of the game's special events happens, short
+  // and in the season colour ("Leaf Fall: 10 numbers fell.", O35); null, or no hook, shows
+  // none. The event still gets its list row from `event`.
+  readonly banner?: (event: unknown) => string | null;
   // The round intro's line on the secret ("Shared number between 1 and 100", "Hidden range"),
   // from a player's or spectator's view during the countdown; null, or no hook, shows none.
   readonly intro?: (view: unknown, secretMode: 'shared' | 'individual') => string | null;

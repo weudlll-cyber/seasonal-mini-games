@@ -11,7 +11,8 @@
  *                 so light and dark both work.
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6
  */
-.round-live--intro {
+/* Over the round view's grid (./round.css, loaded later): one card, the whole space. */
+.round-live.round-live--intro {
   display: flex;
 }
 

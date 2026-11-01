@@ -81,7 +81,7 @@ describe('the guess list', () => {
     render(<RoundLog feed={feed} game={game} state={live} viewerKey="a" now={9_000} />);
     const rows = [...screen.getByTestId('guess-list').querySelectorAll('li')];
     expect(rows.map((li) => li.textContent)).toEqual([
-      'You45answer arriving in 2 s',
+      'You45answer arriving… 2 s',
       'Leaf Fall: 12 fell.',
       'Walter70',
       'You40lower ↓Getting cosy.',
@@ -202,7 +202,7 @@ describe('the words', () => {
     expect(marginText({ ...ended, margin: null })).toBeNull();
     expect(marginText({ ...ended, secretMode: 'individual' })).toBeNull();
     expect(platformLine({ type: 'CooldownChanged', cooldownMs: 7_000 }, {})?.text).toBe(
-      'Heatwave: cooldown now 7.0 s.',
+      'Heatwave: waiting time is now 7 s.',
     );
     expect(platformLine({ type: 'PlayerSolved', playerId: 'a', place: 2 }, ended.names)).toEqual({
       text: 'Anna found their number — place 2.',

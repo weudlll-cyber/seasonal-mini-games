@@ -8,9 +8,10 @@
  *                 rows from the live frames; both in one box, newest at the top, that fills the
  *                 height it gets and scrolls only inside itself. A guess row: the player's
  *                 colour dot, the name ("You" for the viewer), the number, higher or lower in
- *                 colour, and the closeness comment in smaller text under it (O21); the
- *                 viewer's own rows have the season colour behind them, and under Frost an own
- *                 row says "answer arriving in 2 s". Events (Spring Herald, Leaf Fall, Heatwave,
+ *                 colour, and the closeness comment in smaller text on the same line when it
+ *                 fits, else under it (O21, O35: more rows in view); the viewer's own rows
+ *                 have the season colour behind them, and under Frost an own row says "answer
+ *                 arriving…" with the seconds left in a small badge. Events (Spring Herald, Leaf Fall, Heatwave,
  *                 halving, solves, the round opening and ending) are quieter one-line rows.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (rows), @smg-game/registry/web (types),
  *                 ../live/useRound, ./RoundSide (colours), ./roundText, ./roundLog.css
@@ -75,7 +76,11 @@ function Answer({ guess, state, now }: Omit<RowProps, 'viewerKey'>): ReactElemen
   }
   if (!guess.pending) return null;
   const left = Math.max(0, Math.ceil((guess.at + (state.frostDelayMs ?? 0) - now) / 1_000));
-  return <span className="round-arriving">answer arriving in {left} s</span>;
+  return (
+    <span className="round-arriving">
+      answer arriving… <span className="round-arriving-left">{left} s</span>
+    </span>
+  );
 }
 
 function GuessLine({ guess, state, viewerKey, now }: RowProps): ReactElement {

@@ -31,6 +31,7 @@ const CI = process.env['CI'] !== undefined;
 const TIMING = [
   'rounds.spec.ts',
   'specials.spec.ts',
+  'seasons.spec.ts',
   'players.spec.ts',
   'access.spec.ts',
   'range.spec.ts',

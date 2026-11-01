@@ -4,16 +4,23 @@
  * @brief  Layout of the round view: top bar, main area with the guess list, team tiles, input.
  *
  * Responsibility: the round view fills the space under the app's top bar exactly and never
- *                 scrolls the page (only the guess list scrolls, inside itself): on a desktop a
- *                 one-line top bar, the main area (range block, then the guess list taking the
- *                 height that is left) beside a 380 px column with the team tiles at its top
- *                 and the match chat under them (./roundChat.css, T101), and the input row under the main area;
- *                 on a phone the top bar, the main area with the list taking the remaining
- *                 height, the team tiles, a "Chat" button whose panel lies over the round above
- *                 the input row, and the input row pinned at the bottom (O20). The list's rows are in ./roundLog.css. The cooldown ring and the platform's refusal line; a solved
- *                 player's notice in place of the input row (O25). Colours
- *                 only from @smg/ui tokens, so light and dark both work (Bingo 01 §13). The result is ./result.css, the match head and the
- *                 host menu ../match/match.css.
+ *                 scrolls the page (only the lists scroll, inside themselves): on a desktop a
+ *                 one-line top bar (the season chip naming the special, the special's info
+ *                 button), the guess list with the special's banner above it taking the whole
+ *                 left column above the input row, and a 380 px right column with the game's
+ *                 range block at its top, the team tiles under it and the match chat in the
+ *                 rest (./roundChat.css, T101), so the list shows as many rows as the screen
+ *                 allows (O35, DECISIONS T110); on a phone the top bar (the chip names the
+ *                 special, the time without "left"), the range block, the list taking the
+ *                 remaining height, the team tiles and the "Chat" button in one row (its panel
+ *                 lies over the round above the input row), and the input row pinned at the
+ *                 bottom (O20). The list's rows are in ./roundLog.css, the banner and the info
+ *                 note in ./roundSpecials.css, the intro screen in ./roundIntro.css, the
+ *                 cooldown ring in ./cooldownRing.css. The platform's refusal line; a solved
+ *                 player's notice in
+ *                 place of the input row (O25). Colours only from @smg/ui tokens, so light and
+ *                 dark both work (Bingo 01 §13). The result is ./result.css, the match head and
+ *                 the host menu ../match/match.css.
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6;
  *                 docs/spec/07-integration.md §2
  */
@@ -32,19 +39,28 @@
   display: grid;
   gap: var(--space-2);
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
-  grid-template-areas: 'top' 'main' 'side' 'input';
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  grid-template-areas: 'top' 'range' 'main' 'side' 'input';
 }
 
+/* A desktop: the guess list takes the whole left column above the input row; the range block
+   sits at the top of the right column, over the team tiles and the chat (O35). */
 @media (min-width: 900px) {
   .round-live {
     grid-template-columns: minmax(0, 1fr) 380px;
-    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
     grid-template-areas:
       'top top'
+      'main range'
       'main side'
       'input side';
   }
+}
+
+.round-range {
+  grid-area: range;
+  min-width: 0;
+  padding: var(--space-2);
 }
 
 /* The top bar: one line, the season chip first, the host menu last. */
@@ -68,6 +84,18 @@
   background: var(--season);
   color: var(--color-on-season);
   overflow: hidden;
+}
+
+/* The chip's words give way with an ellipsis rather than push the bar off the screen. */
+.round-season-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* "Autumn · Leaf Fall": the special's name in the chip (O35). */
+.round-special::before {
+  content: '· ';
 }
 
 .round-season-icon {
@@ -99,10 +127,18 @@
 .round-main {
   grid-area: main;
   display: grid;
+  /* The special's banner (empty when nothing fires) and the guess list. */
   grid-template-rows: auto minmax(0, 1fr);
-  gap: var(--space-2);
+  gap: var(--space-1);
   min-height: 0;
   overflow: hidden;
+  /* Tighter than a panel's padding: the guess list gets the room (O35). */
+  padding: var(--space-2);
+}
+
+/* The empty banner takes no row gap either. */
+.round-special-banner:empty {
+  display: none;
 }
 
 .round-side {
@@ -160,11 +196,36 @@
 /* A phone: the facts that do not fit go (their words stay for screen readers) and the team
    tiles shrink to icon and points; the main area with the list takes the height that is left. */
 @media (max-width: 899px) {
-  .round-mode,
-  .round-special {
+  .round-mode {
     display: none;
   }
 
+  /* The chip names the special; the icon and the colour say the season (O35). The bar's
+     parts sit closer, so "Spring Herald" fits beside the time and the Host button. */
+  .round-top {
+    column-gap: 0.3rem;
+  }
+
+  .round-season {
+    gap: 0.35rem;
+    padding: 0 0.5rem 0 0.25rem;
+    font-size: var(--font-size-small);
+  }
+
+  .round-season-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .round-special::before {
+    content: none;
+  }
+
+  .round-special {
+    font-weight: var(--font-weight-strong);
+  }
+
+  .round-season-name,
   .round-fact-label,
   .round-team-name {
     position: absolute;
@@ -183,51 +244,33 @@
     padding: 0.25rem;
   }
 
-  .round-main {
-    padding: var(--space-2);
+  .round-main,
+  .round-range {
+    padding: var(--space-1) var(--space-2);
   }
-}
 
-.round-ring {
-  position: relative;
-  flex: none;
-  width: 52px;
-  height: 52px;
-}
-
-.round-ring svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.round-ring-track {
-  fill: none;
-  stroke: var(--color-surface-2);
-  stroke-width: 6;
-}
-
-.round-ring-left {
-  fill: none;
-  stroke: var(--season, var(--color-accent));
-  stroke-width: 6;
-  transition: stroke-dashoffset var(--duration-fast) linear;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .round-ring-left {
-    transition: none;
+  /* The team tiles and the Chat button share one row; the list gets the height (O35). */
+  .round-side {
+    flex-direction: row;
+    align-items: stretch;
   }
-}
 
-.round-ring-label {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-weight: var(--font-weight-strong);
-  font-size: var(--font-size-small);
+  .round-side .round-teams {
+    flex: 1;
+  }
+
+  .round-side .round-chat {
+    flex: none;
+  }
+
+  .round-side .round-chat-toggle {
+    height: 100%;
+    padding-inline: var(--space-2);
+  }
+
+  .round-info-button {
+    width: 2rem;
+  }
 }
 
 .round-refusal {

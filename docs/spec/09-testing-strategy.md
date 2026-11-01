@@ -59,7 +59,7 @@
 
 1. Two players and a host: shared round, cooldown 3 s, the host starts it, both guess, one wins, both see the result and the revealed secret; the cooldown ring blocks the button. Also at 390 × 844.
 2. Individual round with three players: placings in solve order; a solved player keeps their own rows, with a notice and their place instead of the input row (owner decision 25); time-up ends the round with "not solved" rows.
-3. Each season special once (fast test profile): Spring hint shown, Heatwave value drops, Leaf Fall strikes numbers, Frost shows "answer arriving".
+3. Each season special once (fast test profile): Spring's free hint shown, Heatwave value drops, Leaf Fall strikes numbers, Frost shows "answer arriving…".
 4. Halving round on a test halving day: the range halves, and a guess outside it is refused without cost.
 5. Teams: four players pick teams in the waiting area, the team standing updates after the round, a team change is refused with `TEAM_LOCKED` once the round started, and the waiting area for the next round follows the result with each player's team and no team buttons, with no player box on the result itself (owner decisions 23, 26).
 6. Reconnect mid-round: the cooldown is unchanged after reconnect, there are no duplicate guesses, and Frost answers arrive after reconnect.
@@ -72,10 +72,12 @@
 13. Boards (roadmap phase 4): four players play two counting matches; the points add up on the season board with the team board beside it, the profile shows them, the round's verification page confirms the seed against the commitment, and aborting the matches takes the points back.
 14. Chat (roadmap phase 5, `builtin`): two players chat in a match; a moderator mutes one, whose next message is refused, lifts the mute and bans; with `integrations.chatProvider` = `none` the chat panel is gone.
 15. Admin (roadmap phase 6): the admin changes a special's default, sees the change in the document's history, rolls it back through the confirm dialog, and aborts a running round with a reason, which the player sees as aborted by staff.
+16. Each season in view (owner decisions 35, 36), one test per season with the range shown and the fast test profile: the countdown is the intro screen with the season, its special and its sentence, the secret line and the cooldown, one screen at 1280 × 720 and 390 × 844; once open, the chip names the special and its info note gives the sentence; the special's banner appears above the guess list (Frost after the player's guess, with "answer arriving…"); Spring's free hint stays highlighted; the round view fits both sizes.
+17. A match without teams (owner decision 34): a Quick Test with Team match off shows no team text, buttons or column in the waiting area, no team tiles in the round and no team result.
 
-Journeys 1, 10 and 11 also check that the round view fits the screen: `document.scrollingElement.scrollHeight` is at most `window.innerHeight` ([02](02-game-guess-the-number.md) §12).
+Journeys 1, 10, 11 and 16 also check that the round view fits the screen: `document.scrollingElement.scrollHeight` is at most `window.innerHeight` ([02](02-game-guess-the-number.md) §12).
 
-The **fast test profile** exists only in development builds (as Bingo 12 §4): shorter countdown, special intervals of a few seconds, and a 3 s cooldown. Published defaults are unchanged, and a test proves it.
+The **fast test profile** exists only in development builds (as Bingo 12 §4): special intervals of a few seconds; the countdown stays as chosen, because it is the round's intro screen (owner decision 36), and scripted Quick Test calls choose 3 s. Published defaults are unchanged, and a test proves it.
 
 ## 5. Load test (release gate)
 

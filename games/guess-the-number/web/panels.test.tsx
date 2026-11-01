@@ -13,7 +13,8 @@
  *                 views hold, the result with the range; the views become the list's guess
  *                 rows, own ones pending while Frost holds them (O20, O21); every room event
  *                 has its plain line, and guesses none (they are rows); the intro line names
- *                 the mode and the range, or that it is hidden (O36).
+ *                 the mode and the range, or that it is hidden (O36); the banners of Leaf Fall
+ *                 and halving, and the hint as "Free hint: …" (O35).
  * Depends on:     vitest, @testing-library/react, ./PlayerPanel, ./RangeBar, ./SpectatorPanel,
  *                 ./ResultPanel, ./text
  * Spec:           docs/spec/02-game-guess-the-number.md §6, §11, §12; docs/spec/09-testing-strategy.md §2
@@ -63,7 +64,7 @@ describe('the player panel', () => {
   it('shows the range and the hint, and the input row waits for the cooldown', () => {
     const props = { view, act: vi.fn(), canAct: false, frostDelayMs: 3_000, now: () => 6_000 };
     render(<PlayerPanel {...props} season="winter" />);
-    expect(screen.getByTestId('hint').textContent).toContain('The number is odd.');
+    expect(screen.getByTestId('hint').textContent).toBe('Free hint: the number is odd.');
     expect(screen.getByTestId('range')).toBeTruthy();
     cleanup();
     render(<GuessInput {...props} season="winter" ring={<span data-testid="ring" />} />);
@@ -224,5 +225,30 @@ describe('the intro line (O36)', () => {
     );
     expect(gtnText.intro?.({ range: null }, 'shared')).toBe('Hidden range');
     expect(gtnText.intro?.(null, 'shared')).toBeNull();
+  });
+});
+
+describe('the banners (O35)', () => {
+  it('say in short what Leaf Fall and halving did, and nothing for other events', () => {
+    const banner = (e: object) => gtnText.banner?.(e) ?? null;
+    expect(banner({ type: 'NumbersRemoved', index: 1, numbers: [3, 9] })).toBe(
+      'Leaf Fall: 2 numbers fell.',
+    );
+    expect(banner({ type: 'NumbersRemoved', index: 1, numbers: [3] })).toBe(
+      'Leaf Fall: 1 number fell.',
+    );
+    const halved = { type: 'RangeHalved', index: 1, size: 51 };
+    expect(banner({ ...halved, playerId: null, range: { low: 25, high: 75 } })).toBe(
+      'Range halved: the number is between 25 and 75.',
+    );
+    expect(banner({ ...halved, playerId: 'p1', range: { low: 25, high: 75 } })).toBe(
+      'Range halved: your number is between 25 and 75.',
+    );
+    expect(banner({ ...halved, playerId: null, range: null })).toBe(
+      'Range halved: every range is now 51 numbers.',
+    );
+    expect(banner({ type: 'HintGiven', playerId: null, hint: { kind: 'parity', odd: true } })).toBe(
+      null,
+    );
   });
 });

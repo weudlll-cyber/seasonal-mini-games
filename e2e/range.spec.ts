@@ -27,6 +27,7 @@ import {
   hostMenu,
   ownRows,
   person,
+  roundOpen,
   search,
 } from './play.js';
 import { PHONE } from './screens.js';
@@ -104,6 +105,11 @@ test('journey 11: a range from -500 to 500 takes negative guesses on a phone', a
   let code = '';
   try {
     code = await quickTestForm(p.page);
+    // The intro names the range first (O36); the form's countdown is the setting's default.
+    await expect(p.page.getByTestId('intro-secret')).toHaveText(
+      'Shared number between -500 and 500',
+    );
+    await roundOpen(p.page);
     await expect(p.page.getByTestId('range')).toContainText(
       'The number is somewhere between -500 and 500',
     );

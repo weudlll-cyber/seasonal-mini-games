@@ -8,11 +8,11 @@
  *                 the block, mask and flag lists (a flagged message enters the queue); the
  *                 rate limit and duplicates; a report resolved by a moderator; a mute covers
  *                 the whole chat (O32), refuses the next message and ends by expiry or
- *                 lifting; a ban refuses; a deleted
- *                 message and a locked room reach the watchers; a round's end writes its
- *                 system line with the number; with the provider `none` or `hostEmbed` the routes and intents
- *                 answer CHAT_DISABLED, /chat/config names the provider and the CSP frames the
- *                 host chat. Settings are restored, the match aborted and the chat rows removed.
+ *                 lifting; a ban refuses; a deleted message and a locked room reach the
+ *                 watchers; a round's end writes its line with the number; with `none` or
+ *                 `hostEmbed` the routes and intents answer CHAT_DISABLED, /chat/config names
+ *                 the provider and the CSP frames the host chat. Settings are restored, the
+ *                 match aborted and the chat rows removed.
  * Depends on:     vitest, ./chatKit, ./harness, ./session, ./socketKit
  * Spec:           docs/spec/07-integration.md §2; Bingo 06 §7, Bingo 03 §12; docs/spec/09-testing-strategy.md §2
  */
@@ -148,27 +148,15 @@ describe('the filters and limits', () => {
   });
 });
 
-const sanction = (displayName: string, kind: 'mute' | 'ban', minutes: number | null) =>
+type Kind = 'mute' | 'ban';
+const sanction = (displayName: string, kind: Kind, minutes: number | null, scope = 'global') =>
   admin.post('/api/v1/admin/chat/sanctions', {
     displayName,
     kind,
-    scope: 'global',
+    scope,
     minutes,
     reason: 'integration test',
   });
-
-describe('a mute', () => {
-  it('covers the whole chat: one kept to a room is refused (O32)', async () => {
-    const inOneRoom = await admin.post('/api/v1/admin/chat/sanctions', {
-      displayName: 'dev-player-1',
-      kind: 'mute',
-      scope: room.id,
-      minutes: 5,
-      reason: 'integration test',
-    });
-    expect(inOneRoom.statusCode).toBe(400);
-  });
-});
 
 describe('reports and sanctions', () => {
   it('takes a report into the queue and lets a moderator resolve it', async () => {
@@ -194,6 +182,7 @@ describe('reports and sanctions', () => {
   });
 
   it('refuses a muted player at once, until the mute is lifted or expires', async () => {
+    expect((await sanction('dev-player-1', 'mute', 5, room.id)).statusCode).toBe(400); // O32
     const muted = await sanction('dev-player-1', 'mute', 5);
     expect(muted.statusCode).toBe(201);
     expect(await say(kit, p1, room.id, 'still here?')).toMatchObject({ code: 'CHAT_MUTED' });
@@ -259,15 +248,12 @@ describe('the round-end line', () => {
       startNow: true,
     });
     const id = round.json<{ id: string }>().id;
-    const secrets = await kit.secretsOf(id);
-    const value = secrets.mode === 'shared' ? secrets.value : 0;
+    const value = await kit.secretsOf(id).then((x) => (x.mode === 'shared' ? x.value : 0));
     const winner = watchers[1];
     if (winner === undefined) throw new Error('no winner socket');
     await until(async () => (await kit.send(winner, 'guess', { roundId: id, value })).ok);
-    const line = (m: { kind: string; text: string | null }) =>
-      m.kind === 'system' &&
-      m.text === `Round 1: dev-player-1 found it first — the number was ${String(value)}`;
-    await until(() => messages(p3).some(line));
+    const text = `Round 1: dev-player-1 found it first — the number was ${String(value)}`;
+    await until(() => messages(p3).some((m) => m.kind === 'system' && m.text === text));
     for (const s of watchers) s.disconnect();
   });
 });
