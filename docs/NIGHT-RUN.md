@@ -1,5 +1,119 @@
 # Morning sheet
 
+## Night 3 (2026-11-01)
+
+N1 on `feat/guess-the-number`; N2 merges it into `night/2026-10-27`; N3 and N4 on `night/2026-10-27`; N5 hands over. Nothing goes to `master`. Updated after every piece. The owner tests `feat/guess-the-number` first.
+
+### Status
+
+| Piece                                                                        | State | Branch                | Commit / CI             |
+| ---------------------------------------------------------------------------- | ----- | --------------------- | ----------------------- |
+| N1 Team once per match, End match, idle close, waiting-area list, two fixes  | done  | feat/guess-the-number | `42ff7b4`, CI running   |
+| N2 Bring `night/2026-10-27` up to date with `feat/guess-the-number`          | done  | night/2026-10-27      | merge commit, CI see N2 |
+| N3 Cleanup: player numbers, KICKED, anti-multi rules, handoff accounts, chat | open  | night/2026-10-27      | —                       |
+| N4 Phase 8 security pass without a VPS                                       | open  | night/2026-10-27      | —                       |
+| N5 Handover                                                                  | open  | both                  | —                       |
+
+### Needs the owner
+
+- Nothing blocks. Spec conflict 2 in [OPEN.md](OPEN.md) (switching teams and the tie-break, resolved by O26) is listed for confirmation.
+
+### N1 — Team once per match, End match, idle close, waiting-area list, two visual fixes
+
+**Built** (owner decisions O26–O28; DECISIONS T82–T86; specs 02 §2, §4, §12, 03 §5, 06 §2.1, §3.1, 08 §4, 09 §2, §4):
+
+- **Team once per match (O26).** A player's team is fixed once a started round of the match named them: `team.choose` then answers `TEAM_LOCKED`, the same over the socket and HTTP (`TEAMS_LOCKED` stays for a newcomer while a round runs). A roster player without a team is placed in the match's smallest team when their first round starts; ties are broken by a hash of the round id and the player key (T82; 03 §5 said "the round seed", listed as spec conflict 2). The team buttons show only before the player's first round; beside a result, a locked player's area holds only the status line and the players. The help sentence says the team is kept for the whole match.
+- **End match (O27).** The last item of the Host menu, asked once more with "End this match for everyone? A running round is aborted." (`POST /matches/:code/close`). Every player and spectator then sees the match summary at the match's address: how it ended, the rounds played, the players' points and wins in standings order, the teams over the match, and "Back to Play". A close keeps its rounds' results.
+- **Idle close (O28).** `match.lobbyIdleCloseMin` (default 60) is applied. A sweep on server start and every minute closes a match with no round created, run or ended for that long, never one with a round counting down or open, by `system` with the reason `idle`; a round only set up is aborted. The summary says "The match closed after 60 minutes without a round." No migration: the existing `aborted_by` and `aborted_reason` columns hold who closed it and why (T83, T84).
+- **Waiting-area rows.** The name, the team (icon and name, or "no team yet" in muted text) and, apart from it, the connection: a filled or hollow dot with "online" or "away".
+- **Result table at 390 × 844.** Fixed number columns and the small text size on a phone: all four columns fit with no sideways scrolling (measured: a 293 px table in a 293 px box), and a long name ends in an ellipsis without breaking ("Bartholomew-Featherstone" shows as "Bartho…").
+- **Pressed team button.** Its icon is drawn as a mask in the button's text colour (`#14171c` on the season colour: at least 4.5:1 for every season in light and dark, unit test).
+- **Defect found and fixed (T86).** The first idle sweep at start loaded an old match's last round, recorded before closeness comments (O21). Its answers have no `comment`, the replay threw, and the development server no longer started. The game now reads a missing comment as none (the result pages of such rounds had the same defect), and the sweep closes each match on its own.
+
+**Tests.** `pnpm verify` green: 257 tests in 55 files. An earlier full run had timeouts in CPU-heavy property tests while another session's installer test loaded the machine; each failed file passed alone, and the next full run was green. New or extended:
+
+- `apps/server/test/matchFlow.integration.test.ts`: `TEAM_LOCKED` over socket and HTTP, the placement, End match with the summary, and the idle close with a fake clock (not a minute early, never with a running round, and after a restart).
+- `apps/web/src/match/waiting.test.tsx` (the buttons only before the first round, the rows) and `summary.test.tsx` (the confirm sentence, the summary).
+- The replay of an old answer in `games/guess-the-number/src/rules.test.ts`; both themes in `apps/web/src/designTokens.test.ts`.
+- E2E in Chromium: all 14 journeys passed. Journey 12 now picks a team, plays two rounds, finds no team buttons after the first result, ends the match and reads the summary, also after a reload; journey 5 checks `TEAM_LOCKED` and the teams in the list.
+
+**Screenshots:** `reports/match-flow/`. For desktop and phone in light and dark: the waiting area with "no team yet", the team chosen, the round, the result with the next-round area, the result table, End match's confirm, and the summary for the host and for a guest. Also a second round on desktop light and phone dark, and the summary of an idle-closed match.
+
+**Lines (before → after):**
+
+- Server: `routes/matches.ts` 227 → 233; `match/matches.ts` 255 → 253; `match/play.ts` 205 → 226; `round/runtime.ts` 85 → 92; `test/rounds.integration.test.ts` 226 → 227.
+- New on the server: `match/idleClose.ts` (92), `match/summary.ts` (66), `match/teams.ts` (94), `test/matchFlow.integration.test.ts` (214).
+- Web: `designTokens.test.ts` 180 → 191; `match/HostMenu.tsx` 243 → 262; `match/MatchPage.tsx` 203 → 207; `match/WaitingArea.tsx` 116 → 143; `match/match.css` 115 → 155; `match/waiting.test.tsx` 86 → 136; `round/ResultScreen.tsx` 138 → 146; `round/result.css` 87 → 138; `round/roundText.ts` 118 → 119; `season/SeasonIcon.tsx` 42 → 62.
+- New on the web: `match/EndMatch.tsx` (71), `match/MatchSummary.tsx` (115), `match/summary.test.tsx` (117).
+- Elsewhere: `e2e/lobby.spec.ts` 65 → 117; `e2e/play.ts` 215 → 221; `e2e/players.spec.ts` 129 → 130; `games/guess-the-number/src/rules.test.ts` 174 → 189; `src/state.ts` 187 → 191; `packages/contracts/src/http/play.ts` 137 → 160; `contracts/src/index.ts` 38 → 39.
+- Docs: DECISIONS 152 → 160, BACKLOG 74 → 76, OPEN 31 → 32, spec 02 190 → 191; specs 03, 06, 08 and 09 rewritten in place.
+
+**Reused:** `play.close` (End match and the idle close share it), `setMatchStatus`, `activePlayers`, `teamStandings`, `currentRoundId`, `runningRound`, `ActionButton` and `Problem`, `PlayerName`, the result page's table classes, `codeText`, `hrefOf`, `useDisclosure`, and the e2e helpers `hostMenu`, `hostRound` and `search`. The inline confirm follows the chat's moderator confirm.
+
+**Removed or extracted:** `setTeam` moved from `match/matches.ts` to `match/teams.ts` with the lock and the placement; the idle sweep and the summary query are their own modules; End match is its own component; the e2e helper `playerRow` replaces matching the old "name here" text.
+
+**Noticed, left alone:**
+
+- On a phone the waiting area keeps a large gap under its status line (the panel's stack gap plus the paragraph margins); it was so before.
+- A match that fails to close is retried every minute without a log line (the round runtime has no logger).
+- Registration allows 5 accounts an hour per address, kept in memory: a script that registers more must wait or restart the server.
+- On Windows the children of `pnpm dev` outlive a stopped background task; the old processes had to be stopped by id.
+
+### N2 — `night/2026-10-27` brought up to date with `feat/guess-the-number`
+
+**Done:** `feat/guess-the-number` (`42ff7b4`) merged into `night/2026-10-27` with a merge commit (no rebase, no force-push). 16 files conflicted; each is resolved by keeping both sides' meaning:
+
+- **Server:** `match/play.ts` places the teams (O26) on the roster that night's anti-multi rules admit, and `close` keeps night's webhooks and league handling with the new `MatchEnd`: a close keeps the league points of its ended rounds, an abort takes them back unless `leaderboard.abortedMatchesCount` keeps them (T88). `match/matches.ts` keeps night's `kickPlayer` and feat's `MatchEnd`; `round/runtime.ts` starts the idle close beside night's metrics observer.
+- **The match summary reuses night's boards:** night already sends the match standings in the match details, so `MatchEndView` keeps only rounds played and how the match ended, and the summary shows the players with the result screen's `MatchStandings` table and the teams from `teamStandings` (T85, updated). `MatchStandings` got the fixed phone columns of the placings.
+- **Chat placement** (T101; BACKLOG item closed; OPEN (w) updated):
+  - The "Live | Chat" switch and its `switch.css` are gone, because the guess list lives in the main area (O20).
+  - In the round view the match chat sits in the right column under the team tiles (`round/RoundChat.tsx`), its list scrolling inside itself; the round view still fits 1280 × 720 (checked on the page).
+  - On a phone a "Chat" button opens the chat over the round, from under the top bar to just above the button, so "Close chat" and the guess input stay in view and usable (the first version covered the button; fixed before the commit).
+  - In the waiting area the match chat sits under the player list. The round view mounts the chat only while the round runs, so a page never holds the room twice.
+- **Tests:** feat's `round.test.tsx` and `result.test.tsx` were taken as the base; night's checks of the standings and the "Verify this round" link moved into `result.test.tsx`. New: `round/roundChat.test.tsx`.
+
+**Renumbering** (night's entries follow feat's highest number; every reference in docs and code comments changed in the merge commit):
+
+| Night's number | Now  | Subject                                       |
+| -------------- | ---- | --------------------------------------------- |
+| T69            | T87  | league points in the `RoundEnded` transaction |
+| T70            | T88  | aborted matches take back their league points |
+| T71            | T89  | the builtin chat's send pipeline              |
+| T72            | T90  | the round-end line in the match room          |
+| T73            | T91  | `hostEmbed` and the CSP `frame-src`           |
+| T74            | T92  | staff two-factor (TOTP)                       |
+| T75            | T93  | staff actions on rounds                       |
+| T76            | T94  | settings history and rollback                 |
+| T77            | T95  | maintenance mode                              |
+| T78            | T96  | observability                                 |
+| T79            | T97  | the JWT handoff                               |
+| T80            | T98  | the embed allowlist                           |
+| T81            | T99  | outbound webhooks                             |
+| T82            | T100 | the public read API                           |
+| e2e journey 12 | 13   | boards (`e2e/boards.spec.ts`)                 |
+| e2e journey 13 | 14   | chat (`e2e/chat.spec.ts`)                     |
+| e2e journey 14 | 15   | admin (`e2e/admin.spec.ts`)                   |
+
+Owner-question letters did not clash: night uses (t)–(y), feat (q), (r), (s) and (z). The only reference not renumbered is the header comment of migration `0006_leaderboards.sql` ("T70", now T88): a published migration is never changed, because its recorded checksum would stop every database where it is applied (note in DECISIONS §2).
+
+**Checks:** `pnpm verify` green on the merged tree, 399 tests in 77 files. E2E in Chromium: all 19 tests passed (journeys 1–15, journey 8 with its two cases, and the account journey's three cases). CI: see the status table.
+
+**Screenshots:** `reports/night-3-merge/`: the round view with the chat on desktop (light, 1280 × 720); the phone (dark, 390 × 844) with the chat closed and open; the waiting area with the chat on both.
+
+**Lines (night → merged; feat's count where the file came from feat):**
+
+- Server: `match/play.ts` 252 → 274 (feat 226); `match/matches.ts` 270 → 269; `round/runtime.ts` 90 → 98; `match/summary.ts` feat 66 → 43.
+- Web: `match/MatchPage.tsx` 235 → 229; `round/RoundScreen.tsx` 200 → 218; `round/RoundSide.tsx` 187 → 60 (the Live list and the switch went); `round/MatchStandings.tsx` 57 → 66; `round/round.css` 275 → 238 (feat 323: the guess list's rules moved to the new `round/roundLog.css`, 99, so the file is under 300 lines again); `match/match.css` 66 → 170; `match/WaitingArea.tsx` feat 143 → 152; `match/MatchSummary.tsx` feat 115 → 78; `round/result.test.tsx` feat 73 → 89; `chat/ChatRoom.tsx` and `chat/chat.test.tsx` (T102).
+- New: `round/RoundChat.tsx` (68), `round/roundChat.css` (84), `round/roundLog.css` (99), `round/roundChat.test.tsx` (43). Removed: `round/switch.css`.
+
+**Reused:** night's `MatchStandings`, `ChatPanel` (bare), `useChatConfig`, `admitted`, `leagueRules`/`withdrawMatch`; `useDisclosure` for the phone chat.
+
+**Defect found and fixed (T102):** in night's chat a second message typed while the first was on its way was wiped when the first was accepted, and its Enter was lost (seen in the desktop screenshot: "Summer team, here we go." never arrived). The field now sends one message at a time and keeps what was typed meanwhile, as the guess input does (T76); `chat.test.tsx` reproduces it on the old code.
+
+**Noticed, left alone:**
+
+- A full-page screenshot draws the sticky app bar in the middle of a long page (a capture artifact, not on screen).
+
 ## Night 2 (2026-10-27)
 
 N1 and N2 on `feat/guess-the-number`; N3 onwards on `night/2026-10-27`, created from `feat/guess-the-number` after N2. Nothing is merged. Updated after every piece.
@@ -128,7 +242,7 @@ Branch `night/2026-10-27` (created from `feat/guess-the-number` at `3783f01`, af
 
 **Built.**
 
-- **League points (DECISIONS T69).** In the transaction that appends a round's `RoundEnded`, a counting match with at least `leaderboard.minPlayersForPoints` (4) distinct accounts awards each account its match standing (points, round wins, solves, rank). The awards go to the all-time board and to the season board of the UTC quarter in which the match's first round ended; the match's teams award their team standing the same way. Awards are replaced as later rounds end; entries are the sums of awards and staff adjustments. One module writes the league tables (`apps/server/src/league/awards.ts`). Migration `0006_leaderboards.sql` adds periods, awards, entries, append-only adjustments, and team awards and entries.
+- **League points (DECISIONS T87).** In the transaction that appends a round's `RoundEnded`, a counting match with at least `leaderboard.minPlayersForPoints` (4) distinct accounts awards each account its match standing (points, round wins, solves, rank). The awards go to the all-time board and to the season board of the UTC quarter in which the match's first round ended; the match's teams award their team standing the same way. Awards are replaced as later rounds end; entries are the sums of awards and staff adjustments. One module writes the league tables (`apps/server/src/league/awards.ts`). Migration `0006_leaderboards.sql` adds periods, awards, entries, append-only adjustments, and team awards and entries.
 - **Boards and profiles over HTTP:**
   - `GET /leaderboards`, `/leaderboards/:periodId?offset=`, `/:periodId/me` (the viewer ±5), `/:periodId/teams`, and `/players/:displayName`.
   - `POST /admin/leaderboard-adjustments` (`leaderboard.adjust`, reason required, audited, shown on the profile).
@@ -139,7 +253,7 @@ Branch `night/2026-10-27` (created from `feat/guess-the-number` at `3783f01`, af
   - The profile page.
   - The fairness verification page (O9): commitment and seed, checked with `crypto.subtle` in the browser; the recomputed secret(s), the roster and the accepted guesses in receive order; "Download the proof".
   - The result screen shows the match standings, and its proof links to "Verify this round".
-- **Proposals (OPEN (t), (u)):** `leaderboard.firstQuarterSeason` (winter names January–March) and `leaderboard.abortedMatchesCount` (off: aborting a match takes back its league points, T70).
+- **Proposals (OPEN (t), (u)):** `leaderboard.firstQuarterSeason` (winter names January–March) and `leaderboard.abortedMatchesCount` (off: aborting a match takes back its league points, T88).
 - **A defect found on the way, fixed.** The server never said "match changed" when a round ended, so a page kept the standings from before the result (the result screen showed none). The gateway now announces a match change with every `RoundEnded` or `RoundAborted` (`apps/server/src/realtime/gateway.ts`, `sendCommitted`), through the existing once-a-second throttle. The header of `useMatch` claimed it reloaded on round frames; it now says what it does.
 
 **Tests.**
@@ -152,7 +266,7 @@ Branch `night/2026-10-27` (created from `feat/guess-the-number` at `3783f01`, af
   - Three accounts, or a match that does not count, award nothing.
   - Aborting a match takes its points back.
   - Invalid input answers 400.
-- **E2E journey 12** (`e2e/boards.spec.ts`, Chromium):
+- **E2E journey 13** (`e2e/boards.spec.ts`, Chromium):
   - Two counting matches of four accounts put 20 points and two team wins on the season board.
   - The board page shows the team board beside the player board, and a name opens the profile.
   - "Verify this round" checks the seed in the browser.
@@ -216,15 +330,15 @@ Branch `night/2026-10-27` (created from `feat/guess-the-number` at `3783f01`, af
 - **Provider switch.** `integrations.chatProvider` chooses the chat (07 §2):
   - `none`: no panel.
   - `builtin`: the platform chat.
-  - `hostEmbed`: an iframe of `integrations.hostChatUrl`, with the CSP's `frame-src` set to that origin only (T73). Behind its setting as specified; no website work.
+  - `hostEmbed`: an iframe of `integrations.hostChatUrl`, with the CSP's `frame-src` set to that origin only (T91). Behind its setting as specified; no website work.
   - With `none` or `hostEmbed`, every chat route and intent except `GET /chat/config` answers `CHAT_DISABLED`.
 - **Builtin chat, Bingo's design** (06 §7, 03 §12, 04 §3.5; Bingo built no chat code):
   - Rooms: one lobby room and one room per match.
   - Messages: at most 300 characters, plain text.
-  - The send pipeline (T71): sanctions, lock and slow modes, the rate limit and duplicates, length, links, normalisation, then the block / mask / flag word lists. Flagged messages enter the report queue.
+  - The send pipeline (T89): sanctions, lock and slow modes, the rate limit and duplicates, length, links, normalisation, then the block / mask / flag word lists. Flagged messages enter the report queue.
   - Reports, mutes with an expiry, bans and lifting; room slow mode and lock. Every staff action is audited.
   - A nightly retention job (`chat.retentionDays`).
-  - With `builtin`, a system line at a round's end ("Round 4: Walter found it first", T72).
+  - With `builtin`, a system line at a round's end ("Round 4: Walter found it first", T90).
   - Migration `0007_chat.sql`, with the permissions `chat.send` (accounts that play or host) and `chat.moderate`. Guests read only.
 - **Settings document `chat`** (Bingo 11 §4, without `typingIndicator`, since there is no typing indicator to switch): `chat.maxLength`, `chat.allowLinks`, `chat.slowModeDefault`, `chat.rateMessages`, `chat.rateWindowS`, `chat.newAccountSlowModeHours`, `chat.retentionDays`.
 - **Routes:**
@@ -250,7 +364,7 @@ Branch `night/2026-10-27` (created from `feat/guess-the-number` at `3783f01`, af
   - the round-end line;
   - the provider switched between `none`, `builtin` and `hostEmbed`: the refusals, `/chat/config` and the CSP.
 - The authorization matrix lists every new route and intent.
-- E2E journey 13 (`e2e/chat.spec.ts`): see Checks.
+- E2E journey 14 (`e2e/chat.spec.ts`): see Checks.
 
 **Reused:** `permitted`, `RateLimiter`, `displayNames`, `findMatch`, the audit log, `settings.values`, `rounds.onCommitted` (as the gateway uses it), the pattern of `auth/retention.ts`; on the client `api`, `gameSocket`/`intent`, `useSession` and the smg-* classes.
 
@@ -264,7 +378,7 @@ Branch `night/2026-10-27` (created from `feat/guess-the-number` at `3783f01`, af
 
 **Built** (a subagent; the migration and contracts are the lead's):
 
-- **Live rounds with staff actions** (06 §3.2; T75):
+- **Live rounds with staff actions** (06 §3.2; T93):
   - The routes:
     - `GET /admin/rounds/live`: counts only, no secret;
     - `GET /admin/rounds/:id`: the staff spectator view;
@@ -273,10 +387,10 @@ Branch `night/2026-10-27` (created from `feat/guess-the-number` at `3783f01`, af
     - `POST /admin/rounds/:id/results/:playerKey/remove`: with a reason, after the end, once.
   - A removed result leaves the standings, the team standings and the league; the row itself stays.
   - Every action is audited.
-- **Settings version history** (T76):
+- **Settings version history** (T94):
   - `GET /admin/settings/:id/versions` shows each version with its changes against the one before.
   - `POST /admin/settings/:id/rollback` writes a new version with an old version's overrides; a conflicting version answers 409.
-- **Two-factor sign-in for staff** (T74):
+- **Two-factor sign-in for staff** (T92):
   - TOTP per RFC 6238 on node:crypto, so no new dependency.
   - The secret is sealed at rest with a key derived from the round key.
   - A code is accepted once, and attempts are rate-limited.
@@ -306,7 +420,7 @@ Branch `night/2026-10-27` (created from `feat/guess-the-number` at `3783f01`, af
   - `adminTwoFactor.integration.test.ts`: enrol, confirm, step-up and its expiry, a recovery code used once, disable, and the gate on and off;
   - `adminHistory.integration.test.ts`: history, rollback and conflict; `/admin/` served.
 - The authorization matrix lists every new route and expects the redirect from `/admin`.
-- E2E journey 14 (`e2e/admin.spec.ts`): see Checks.
+- E2E journey 15 (`e2e/admin.spec.ts`): see Checks.
 
 **Reused:**
 
@@ -321,13 +435,13 @@ Branch `night/2026-10-27` (created from `feat/guess-the-number` at `3783f01`, af
 - `apps/server/test/authzTable.ts` is at about 290 of 300 lines.
 - The admin round view answer has no contract type yet.
 
-**Checks (N5 and N6 together).** `pnpm verify` green: 308 tests in 61 files. E2E in Chromium: all 16 journeys passed (with the dev servers restarted for migrations 0007–0009), journeys 13 (chat: two players chat in a match, a moderator mutes one, whose next message is refused, lifts it and bans; the provider set to `none` removes the panel) and 14 (the admin changes a special's default, sees the diff in the history, rolls it back through the confirm dialog, and aborts a running Quick Test round, which the player sees as aborted by staff) on their first run. CI: see the next update.
+**Checks (N5 and N6 together).** `pnpm verify` green: 308 tests in 61 files. E2E in Chromium: all 16 journeys passed (with the dev servers restarted for migrations 0007–0009), journeys 14 (chat: two players chat in a match, a moderator mutes one, whose next message is refused, lifts it and bans; the provider set to `none` removes the panel) and 15 (the admin changes a special's default, sees the diff in the history, rolls it back through the confirm dialog, and aborts a running Quick Test round, which the player sees as aborted by staff) on their first run. CI: see the next update.
 
 ### N7 — Phase 7 against a test host page
 
 Built by a subagent. The migrations 0009 and 0010 and the contracts are the lead's; the agent stopped once to ask for the missing permission `integration.manage`, which 0010 now grants, as Bingo 05 §3 has it.
 
-**JWT handoff** (T79)
+**JWT handoff** (T97)
 
 - `POST /auth/handoff` checks a host-signed token with node:crypto (no new dependency): the algorithm and key type, the issuer, the audience `seasonal-mini-games`, a life of at most 60 s, and a single-use `jti`.
 - It then links the account by (provider, subject) only and creates it on first login. Mapped roles can never be an admin role. The optional `links` claim is stored as facts only.
@@ -335,7 +449,7 @@ Built by a subagent. The migrations 0009 and 0010 and the contracts are the lead
 - The redirect form `/auth/handoff#token=…` works too.
 - `antiMulti.requireLinkedChat` is now applied. Before, nothing checked it.
 
-**Embedding** (T80)
+**Embedding** (T98)
 
 - The loader `embed.js` (lobby, match, leaderboard, profile; `data-smg-embed`, `smg:*` messages, explicit target origins) is built with the server.
 - The client's embed mode resizes itself, asks the host for a sign-in, and accepts tokens only from allowlisted origins.
@@ -345,12 +459,12 @@ Built by a subagent. The migrations 0009 and 0010 and the contracts are the lead
 
 - Embed origins, identity providers and webhook endpoints. Admin screens for them are still to do.
 
-**Webhooks** (T81)
+**Webhooks** (T99)
 
 - Behind `SMG_FEATURE_WEBHOOKS`, default off. The events are `match.opened`, `round.countdown`, `round.ended` and `match.closed`.
 - Each is signed `X-SMG-Signature: t=,v1=` and sent HTTPS-only to a checked public address. There are four attempts with backoff, and deliveries are kept for the admin.
 
-**Public read API** (T82)
+**Public read API** (T100)
 
 - Open matches, a match's current round, the current season board with the team board, and a round's result.
 - Uncached for 60 s at most, with CORS for allowlisted origins, and names only.
@@ -379,7 +493,7 @@ Built by a subagent. The migrations 0009 and 0010 and the contracts are the lead
 - `antiMulti.minAccountAgeH` is defined but not applied (OPEN (y)).
 - Vite adds CORS headers of its own for loopback origins in development, so the journey posts the refused handoff to 3910 directly.
 
-**Checks (N7).** `pnpm verify` green: 343 tests in 67 files. E2E in Chromium: all 18 tests passed (journeys 1–14, journey 8 with its two cases). CI: see the status table.
+**Checks (N7).** `pnpm verify` green: 343 tests in 67 files. E2E in Chromium: all 18 tests passed (journeys 1–11 and 13–15 as numbered since 2026-11-01, journey 8 with its two cases). CI: see the status table.
 
 **CI so far on `night/2026-10-27`:** `40cb02f` (N3, N4, N8 part 1) green on the first attempt; `7eba672` failed `verify`: the production-bundle check found the Quick Test's path in the server bundle, which my maintenance hook named (I had committed that part after targeted tests only, not a full `verify`); fixed in `8af3951`, green on the first attempt. Runs of commits pushed in quick succession were cancelled by the next push and are not counted. `4bc7920` (N7 and the handover) failed e2e in Firefox: journey 8's refusal case looked inside a frame Firefox had refused and left without a document, and the locator waited until the test timed out; the case now checks from the host page that the game never said `smg:ready` there (Chromium keeps its error-page check), and passes in Chromium, Firefox and WebKit locally.
 
@@ -391,9 +505,9 @@ Built by a subagent. The migrations 0009 and 0010 and the contracts are the lead
   - `SMG_ROUND_KEY` is generated once and kept.
   - There are no SMTP questions, because this server sends no e-mail.
   - `smg update` waits up to 10 minutes for running rounds (`--now` restarts at once), and `smg status` shows them.
-  - Maintenance stops new matches and new rounds in the app (503 `MAINTENANCE`, T77).
+  - Maintenance stops new matches and new rounds in the app (503 `MAINTENANCE`, T95).
 - **Backups:** age-encrypted pg_dump plus the uploads volume, every night at 03:30, 14 daily and 8 weekly kept; `smg restore` and `smg restore --drill`; pulling to Windows or Linux (`ops/pull-backups.ps1`, `.sh`). The restore drill also runs against the dev compose database (`pnpm drill:dev`, `ops/dev-drill.sh`): "6 migrations, 5 accounts, 458 matches, 175 218 events" at its first run.
-- **Observability** (T78): the metrics of 06 §4.6 and Bingo 08 §6's core; the unset placeholder metric is gone.
+- **Observability** (T96): the metrics of 06 §4.6 and Bingo 08 §6's core; the unset placeholder metric is gone.
 - **Operator guide** (`docs/operator-guide.md`), adapted from Bingo's, with an added section on running next to Bingo on one server (a name-by-name table) and one on watching it run.
 
 **The installer, tested in Linux containers** (Docker was available): `ops/test/installer-test.sh` with `ops/test/Dockerfile`, a fresh Ubuntu 24.04 with systemd as PID 1 standing in for a new VPS.

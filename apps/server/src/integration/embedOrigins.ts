@@ -7,7 +7,7 @@
  *                 and handoff flag) and removed; the list in memory for the checks it drives
  *                 (CSP frame-ancestors, the client's postMessage check, the socket Origin, CORS;
  *                 Bingo 07 §3.4), read again at once after a change and otherwise at most every
- *                 5 s in the background, so a request never waits for the database (as T73).
+ *                 5 s in the background, so a request never waits for the database (as T91).
  * Depends on:     @smg/contracts (views, body), ../db/pool
  * Used by:        ../http/app, ../http/plugins/securityHeaders, ../http/routes/*, ../realtime/gateway
  * Spec:           docs/spec/07-integration.md §1; Bingo 07 §3.4; Bingo 04 §3.2

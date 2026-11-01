@@ -7,7 +7,8 @@
  *                 scrolls inside itself and follows new messages; each line the author (or a
  *                 system line, or "Message deleted") with its actions (./ModActions: Report,
  *                 and the moderators' actions with chat.moderate); a text field where Enter
- *                 sends, for viewers with chat.send (guests read only); a hint when the room
+ *                 sends, one message at a time, emptied only if it still holds the message
+ *                 sent (T102), for viewers with chat.send (guests read only); a hint when the room
  *                 is locked or the viewer may not write now; the server's refusal of a message
  *                 in a plain sentence under the field.
  * Depends on:     react, @smg/contracts (views), ../shell/session, ./ModActions, ./useChat
@@ -49,15 +50,23 @@ function Writer(p: {
   readonly send: (text: string) => Promise<string | null>;
 }): ReactElement {
   const [text, setText] = useState('');
+  const [sending, setSending] = useState(false);
   const [refusal, setRefusal] = useState<string | null>(null);
   const submit = (e: SyntheticEvent): void => {
     e.preventDefault();
     const t = text.trim();
-    if (t === '') return;
-    void p.send(t).then((r) => {
-      setRefusal(r);
-      if (r === null) setText('');
-    });
+    if (t === '' || sending) return;
+    setSending(true);
+    void p
+      .send(t)
+      .then((r) => {
+        setRefusal(r);
+        // Only the text that was sent goes; what was typed meanwhile stays (T102).
+        if (r === null) setText((now) => (now === text ? '' : now));
+      })
+      .finally(() => {
+        setSending(false);
+      });
   };
   const hint = p.room.canSend
     ? null
@@ -79,7 +88,7 @@ function Writer(p: {
             setText(e.target.value);
           }}
         />
-        <button type="submit" className="smg-btn" disabled={text.trim() === ''}>
+        <button type="submit" className="smg-btn" disabled={text.trim() === '' || sending}>
           Send
         </button>
       </form>

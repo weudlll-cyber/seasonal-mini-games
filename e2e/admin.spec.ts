@@ -1,7 +1,7 @@
 /**
  * @file   e2e/admin.spec.ts
  * @module e2e
- * @brief  Journey 14: the admin changes a special's default, sees the diff, rolls it back, and
+ * @brief  Journey 15: the admin changes a special's default, sees the diff, rolls it back, and
  *         aborts a running Quick Test round from Live; the player sees the staff abort.
  *
  * Responsibility: the admin signs in to the admin app (development sign-in, port 5411);
@@ -37,12 +37,12 @@ async function changeAndRollBack(page: Page): Promise<void> {
   const field = page.getByLabel(LEAF_FALL);
   await field.fill('12');
   await field.blur();
-  await page.getByLabel('Comment', { exact: true }).fill('journey 14');
+  await page.getByLabel('Comment', { exact: true }).fill('journey 15');
   await page.getByTestId('save-settings').click();
   await expect(page.getByRole('status')).toHaveText('Saved as a new version.');
   await expect.poll(() => versionOf(page)).toBe(before + 1);
   const saved = page.getByTestId(`version-${String(before + 1)}`);
-  await expect(saved).toContainText('journey 14');
+  await expect(saved).toContainText('journey 15');
   await expect(saved).toContainText(/autumn\.minRemaining: .* → 12/);
 
   // Rollback through the confirm dialog: a new version with the values of the one before.
@@ -54,7 +54,7 @@ async function changeAndRollBack(page: Page): Promise<void> {
   await expect(dialog.getByTestId('confirm-effect')).toContainText(
     `A new version ${String(before + 2)} is saved`,
   );
-  await dialog.getByLabel('Comment (goes into the audit log)').fill('journey 14 undo');
+  await dialog.getByLabel('Comment (goes into the audit log)').fill('journey 15 undo');
   await dialog.getByTestId('confirm-action').click();
   await expect(dialog).toBeHidden();
   await expect.poll(() => versionOf(page)).toBe(before + 2);
@@ -72,12 +72,12 @@ async function abortFromLive(page: Page, code: string): Promise<void> {
   await panel.getByRole('button', { name: 'Abort round' }).click();
   const dialog = page.getByRole('dialog', { name: 'Abort this round' });
   await expect(dialog.getByTestId('confirm-effect')).toContainText('aborted by staff');
-  await dialog.getByLabel('Reason (goes into the audit log)').fill('journey 14');
+  await dialog.getByLabel('Reason (goes into the audit log)').fill('journey 15');
   await dialog.getByTestId('confirm-action').click();
-  await expect(panel.getByRole('status')).toContainText('aborted by staff (journey 14)');
+  await expect(panel.getByRole('status')).toContainText('aborted by staff (journey 15)');
 }
 
-test('journey 14: a special default changed and rolled back, a live round aborted by staff', async ({
+test('journey 15: a special default changed and rolled back, a live round aborted by staff', async ({
   browser,
 }) => {
   test.setTimeout(120_000);
@@ -97,7 +97,7 @@ test('journey 14: a special default changed and rolled back, a live round aborte
     await changeAndRollBack(admin);
     await visit(player, started.matchCode);
     await abortFromLive(admin, started.matchCode);
-    await expect(player.page.getByText('The round was aborted: by staff (journey 14)')).toBeVisible(
+    await expect(player.page.getByText('The round was aborted: by staff (journey 15)')).toBeVisible(
       {
         timeout: 10_000,
       },

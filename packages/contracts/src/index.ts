@@ -80,6 +80,7 @@ export type {
   FrameEventView,
   GameInfoView,
   MatchDetailsView,
+  MatchEndView,
   MatchSummaryView,
   PlayerResultView,
   QuickTestStartedView,

@@ -1,18 +1,21 @@
 /**
  * @file   apps/web/src/round/round.css
  * @module web/round
- * @brief  Layout of the round view: top bar, main area, Live list, team tiles, input row.
+ * @brief  Layout of the round view: top bar, main area with the guess list, team tiles, input.
  *
  * Responsibility: the round view fills the space under the app's top bar exactly and never
- *                 scrolls the page (only its lists scroll inside themselves): on a desktop a
- *                 one-line top bar, the main area beside a 380 px column with the Live list
- *                 and the team tiles, and the input row under the main area; on a phone the
- *                 top bar, the main area, the Live list taking the remaining height, the team
- *                 tiles, and the input row pinned at the bottom; the cooldown ring and the
- *                 platform's refusal line. Colours only from @smg/ui tokens, so light and dark
- *                 both work (Bingo 01 §13). The result is ./result.css, the match head and the
+ *                 scrolls the page (only the guess list scrolls, inside itself): on a desktop a
+ *                 one-line top bar, the main area (range block, then the guess list taking the
+ *                 height that is left) beside a 380 px column with the team tiles at its top
+ *                 and the match chat under them (./roundChat.css, T101), and the input row under the main area;
+ *                 on a phone the top bar, the main area with the list taking the remaining
+ *                 height, the team tiles, a "Chat" button whose panel lies over the round above
+ *                 the input row, and the input row pinned at the bottom (O20). The list's rows are in ./roundLog.css. The cooldown ring and the platform's refusal line; a solved
+ *                 player's notice in place of the input row (O25). Colours
+ *                 only from @smg/ui tokens, so light and dark both work (Bingo 01 §13). The result is ./result.css, the match head and the
  *                 host menu ../match/match.css.
- * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6
+ * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6;
+ *                 docs/spec/07-integration.md §2
  */
 
 /* The match page while a round runs: as tall as the space left under the app bar. */
@@ -29,7 +32,7 @@
   display: grid;
   gap: var(--space-2);
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto minmax(6rem, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
   grid-template-areas: 'top' 'main' 'side' 'input';
 }
 
@@ -96,6 +99,8 @@
 .round-main {
   grid-area: main;
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-2);
   min-height: 0;
   overflow: hidden;
 }
@@ -108,64 +113,25 @@
   min-height: 0;
 }
 
+/* No teams: the column holds nothing, and on a phone it takes no row. */
+.round-side:empty {
+  display: none;
+}
+
 .round-input {
   grid-area: input;
   display: grid;
   gap: var(--space-1);
 }
 
-/* The Live list: its own height, newest at the top, scrolling only inside its box. */
-.round-feed {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  padding: var(--space-2);
-}
-
-.round-feed h2 {
-  margin: 0 0 var(--space-1);
-  font-size: var(--font-size-lead);
-}
-
-.round-feed ol {
-  flex: 1;
-  min-height: 0;
+/* Solved (individual mode): a short notice where the input row was, in the season's frame. */
+.round-solved {
   margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  align-content: start;
-  gap: 0.35rem;
-  overflow-y: auto;
-}
-
-.round-feed li {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-}
-
-.round-dot {
-  flex: none;
-  width: 0.7rem;
-  height: 0.7rem;
-  border-radius: 50%;
-  background: var(--dot, transparent);
-  border: 1px solid var(--color-border);
-}
-
-.round-answer {
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--season);
+  border-radius: var(--radius);
+  background: var(--color-surface);
   font-weight: var(--font-weight-strong);
-  white-space: nowrap;
-}
-
-.round-answer[data-feedback='higher'] {
-  color: var(--color-success-text);
-}
-
-.round-answer[data-feedback='lower'] {
-  color: var(--color-danger);
 }
 
 /* The team tiles: four in one row. */
@@ -191,8 +157,8 @@
   font-size: var(--font-size-lead);
 }
 
-/* A phone: the facts that do not fit go (their words stay for screen readers), the team
-   tiles shrink to icon and points, and the Live list takes the height that is left. */
+/* A phone: the facts that do not fit go (their words stay for screen readers) and the team
+   tiles shrink to icon and points; the main area with the list takes the height that is left. */
 @media (max-width: 899px) {
   .round-mode,
   .round-special {
@@ -217,13 +183,8 @@
     padding: 0.25rem;
   }
 
-  .round-feed {
-    padding: var(--space-1) var(--space-2);
-  }
-
   .round-main {
     padding: var(--space-2);
-    max-height: 45dvh;
   }
 }
 

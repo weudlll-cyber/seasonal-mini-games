@@ -6,7 +6,8 @@
  *
  * Responsibility: `none` shows no panel; `hostEmbed` shows the host's room in a sandboxed
  *                 frame; `builtin` shows the room's messages oldest first with system lines and
- *                 deleted messages, sends with Enter and says a refusal in a plain sentence; a
+ *                 deleted messages, sends with Enter (one message at a time, keeping what was
+ *                 typed meanwhile) and says a refusal in a plain sentence; a
  *                 moderator's mute asks a confirm sentence and a reason before it calls the
  *                 server; a guest reads without a field. The refusal and confirm sentences.
  *                 The server and the socket are stand-ins.
@@ -15,7 +16,7 @@
  * Spec:           docs/spec/07-integration.md §2; Bingo 06 §7, Bingo 03 §12
  */
 import type { ChatConfigView, ChatMessageView, ChatRoomView } from '@smg/contracts';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SessionProvider } from '../shell/session.js';
@@ -110,6 +111,31 @@ describe('the ChatPanel boundary', () => {
     expect(frame.getAttribute('sandbox')).toBe(
       'allow-scripts allow-same-origin allow-forms allow-popups',
     );
+  });
+});
+
+describe('the builtin room while a message is on its way', () => {
+  it('keeps what was typed while a message was on its way (T102)', async () => {
+    serve({ provider: 'builtin', hostChatUrl: null }, ['match.watch', 'chat.send']);
+    await screen.findByText('gg');
+    let answer: (v: unknown) => void = () => undefined;
+    intent.mockImplementation(
+      (t: string) =>
+        new Promise((resolve) => {
+          if (t === 'chat.send') answer = resolve;
+        }),
+    );
+    const field = screen.getByTestId<HTMLInputElement>('chat-input');
+    fireEvent.change(field, { target: { value: 'first' } });
+    fireEvent.submit(field.closest('form') as HTMLFormElement);
+    // The next message is typed before the first one is answered.
+    fireEvent.change(field, { target: { value: 'second' } });
+    expect(screen.getByText<HTMLButtonElement>('Send').disabled).toBe(true);
+    answer({ ok: true });
+    await waitFor(() => {
+      expect(screen.getByText<HTMLButtonElement>('Send').disabled).toBe(false);
+    });
+    expect(field.value).toBe('second');
   });
 });
 

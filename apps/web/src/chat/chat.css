@@ -5,7 +5,8 @@
  *
  * Responsibility: the panel is a column whose list takes the free height and scrolls on its
  *                 own (newest at the bottom), so the round view keeps its one-screen layout
- *                 when the chat fills the Live list's place; on the lobby and match pages the
+ *                 when the chat fills the right column (../round/RoundChat); on the lobby, in the
+ *                 waiting area and over the round on a phone the
  *                 panel has a height of its own. Colours only from the @smg/ui tokens.
  * Depends on:     @smg/ui tokens
  * Used by:        ./ChatPanel
@@ -44,7 +45,7 @@
   overflow-wrap: anywhere;
 }
 
-/* A line flows as text, also inside the round's Live box (whose list items are flex rows). */
+/* A line flows as text wherever the chat sits (list items elsewhere are flex rows). */
 .chat-list .chat-line {
   display: block;
 }

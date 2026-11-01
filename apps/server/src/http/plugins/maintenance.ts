@@ -9,7 +9,7 @@
  *                 development build also its quick sign-in) answer 503 MAINTENANCE; everything
  *                 else goes on, so running rounds finish and their results are written (10 §6). The file is looked at most once a second, so a request never
  *                 waits on the disk. A round created before maintenance began can still be
- *                 started: it is not new any more (DECISIONS T77).
+ *                 started: it is not new any more (DECISIONS T95).
  * Depends on:     fastify, node:fs, node:path
  * Used by:        ../app
  * Spec:           docs/spec/10-repository-structure.md §6; Bingo 09 §4

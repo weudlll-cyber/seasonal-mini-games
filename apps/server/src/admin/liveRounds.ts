@@ -114,7 +114,7 @@ export async function removeResult(
     );
     if (added.rowCount !== 1) return 'ALREADY_REMOVED';
     await refreshMatch(c, row.match_id);
-    // An aborted match's points were withdrawn (T70) unless the setting keeps them.
+    // An aborted match's points were withdrawn (T88) unless the setting keeps them.
     if (row.match_status !== 'aborted' || input.rules.abortedMatchesCount) {
       await awardMatch(c, row.match_id, input.rules);
     }

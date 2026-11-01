@@ -8,9 +8,9 @@
  *                 before opening). `onKeyDown` goes on the element around button and panel,
  *                 so Escape closes from anywhere inside (only the innermost open menu when
  *                 menus are nested). One behaviour for the host menu, the account menu of
- *                 the compact top bar and the development sign-in menu.
+ *                 the compact top bar, the development sign-in menu and the round's chat on a phone.
  * Depends on:     react
- * Used by:        ../match/HostMenu, ../shell/AppShell, ../shell/DevTools
+ * Used by:        ../match/HostMenu, ../round/RoundChat, ../shell/AppShell, ../shell/DevTools
  * Spec:           docs/spec/02-game-guess-the-number.md §12 (keyboard play); Bingo 01 §13
  */
 import { useId, useRef, useState, type KeyboardEvent, type RefObject } from 'react';

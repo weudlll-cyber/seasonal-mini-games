@@ -7,8 +7,9 @@
  *                 lobby room or the match's room, ./ChatRoom); with `hostEmbed` the host's one
  *                 room in a sandboxed frame from `integrations.hostChatUrl` (the server's CSP
  *                 admits its origin as frame-src). `bare` drops the panel's frame and heading
- *                 for the round view, where the panel sits behind the "Live | Chat" switch and
- *                 fills the place of the Live list; elsewhere it is a panel of its own height.
+ *                 where the screen gives the chat its own place and heading: the round view's
+ *                 right column (../round/RoundChat) and the match's waiting area; elsewhere
+ *                 (the lobby) it is a panel of its own height.
  *                 A screen that already loaded the config passes it, else the panel loads it.
  * Depends on:     react, @smg/contracts (ChatConfigView), ./ChatRoom, ./useChat, ./chat.css
  * Used by:        ../lobby/Lobby, ../match/MatchPage

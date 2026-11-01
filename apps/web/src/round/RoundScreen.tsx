@@ -1,19 +1,24 @@
 /**
  * @file   apps/web/src/round/RoundScreen.tsx
  * @module web/round
- * @brief  A running round on one screen: top bar, the game's main area, Live and teams, input.
+ * @brief  A running round on one screen: top bar, range and the one guess list, teams, input.
  *
  * Responsibility: the round view everyone gets alike, the host included (O16): a one-line top
  *                 bar (season chip in its token colour with icon and special, the halving
  *                 badge, shared or individual, the cooldown, the time left or "Opens in 3 s",
- *                 and the host menu for the host); the game's main area (the player panel for
- *                 a roster player, else the spectator panel); the side column with the Live
- *                 list (behind a "Live | Chat" switch when the match has a chat) and the team tiles; and for a roster player the game's input row with
- *                 the cooldown ring, whose platform refusals appear under it in plain words.
- *                 The layout (round.css) fits the viewport without a page scrollbar; only the
- *                 lists scroll inside themselves. After the end the result screen takes over.
+ *                 and the host menu for the host); the main area with the game's range block
+ *                 (the player panel for a roster player, else the spectator panel) above the
+ *                 round's one list of guesses and events (./RoundLog, O20); the side column
+ *                 with the team tiles and, under them, the match chat (./RoundChat; a panel
+ *                 over the round on a phone); and for a roster player the game's input row with
+ *                 the cooldown ring, whose platform refusals appear under it in plain words, or
+ *                 once they solved their number a short notice with their place, their own
+ *                 rows staying in the list (O25). The layout (round.css) fits the viewport
+ *                 without a page scrollbar; only the lists scroll inside themselves. After the
+ *                 end the result screen takes over.
  * Depends on:     react, @smg/contracts, @smg-game/registry/web, ../live/*, ../season/*,
- *                 ./CooldownRing, ./RoundSide, ./ResultScreen, ./roundText, ./round.css
+ *                 ./CooldownRing, ./RoundChat, ./RoundLog, ./RoundSide, ./ResultScreen, ./roundText,
+ *                 ./round.css
  * Used by:        ../match/MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §4, §7, §11, §12; docs/spec/03-seasonal-specials.md §2, §6
  */
@@ -29,8 +34,10 @@ import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASON_NAMES, seasonColor, SPECIALS } from '../season/season.js';
 import { CooldownRing } from './CooldownRing.js';
 import { ResultScreen } from './ResultScreen.js';
-import { LiveOrChat, TeamTiles } from './RoundSide.js';
-import { codeText, seconds } from './roundText.js';
+import { RoundChat } from './RoundChat.js';
+import { RoundLog } from './RoundLog.js';
+import { TeamTiles } from './RoundSide.js';
+import { codeText, seconds, solvedText } from './roundText.js';
 import './round.css';
 
 interface RoundScreenProps {
@@ -42,7 +49,7 @@ interface RoundScreenProps {
   readonly teamPoints: readonly { readonly team: TeamName; readonly points: number }[];
   // The match's player standings, for the result screen.
   readonly standings: readonly MatchStandingView[];
-  // The match's chat panel behind the "Live | Chat" switch, or null without a chat.
+  // The match's chat panel, under the team tiles (./RoundChat), or null without a chat.
   readonly chat: ReactNode;
 }
 
@@ -55,7 +62,7 @@ function timeText(state: RoundStateView, now: number): string {
     const secs = Math.floor((left % 60_000) / 1_000);
     return `${String(Math.floor(left / 60_000))}:${String(secs).padStart(2, '0')} left`;
   }
-  return state.status === 'created' ? 'Waiting for the host' : '';
+  return '';
 }
 
 function TopBar(p: {
@@ -103,17 +110,27 @@ interface PlayProps {
   readonly reload: () => Promise<void>;
 }
 
-// A roster player's input row with the ring, and the platform's refusals under it.
+// A roster player's input row with the ring, and the platform's refusals under it; once the
+// player solved (individual mode), a short notice with their place instead (O25).
 function InputRow({ state, game, viewerKey, now, reload }: PlayProps): ReactElement | null {
   const [refusal, setRefusal] = useState<string | null>(null);
   const me = state.roster.find((r) => r.playerKey === viewerKey) ?? null;
   if (me === null || state.game === null) return null;
+  if (me.solved) {
+    return (
+      <p className="round-input round-solved" role="status" data-testid="solved-notice">
+        {solvedText(me.place)}
+      </p>
+    );
+  }
   const act = async (action: unknown): Promise<ActReply> => {
     const reply = await intent('guess', { roundId: state.roundId, ...(action as object) });
     // The game words its own refusals; the platform's are worded here.
     const own = reply.code === undefined ? null : game.text.code(reply.code);
     setRefusal(reply.ok || own !== null ? null : codeText(reply.code, reply.until, serverNow()));
-    void reload();
+    // The answer counts as arrived once the view holds the new cooldown: until then the old
+    // one would show Guess enabled for a send the server refuses (T76).
+    await reload().catch(() => undefined);
     return reply;
   };
   // The cooldown exists only while the round is open.
@@ -126,7 +143,7 @@ function InputRow({ state, game, viewerKey, now, reload }: PlayProps): ReactElem
       <game.Input
         view={state.game}
         act={act}
-        canAct={state.status === 'open' && me.cooldownEndsAt <= now && !me.solved}
+        canAct={state.status === 'open' && me.cooldownEndsAt <= now}
         frostDelayMs={state.frostDelayMs}
         now={serverNow}
         season={state.season}
@@ -181,10 +198,11 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
         ) : (
           <game.Spectator view={state.game} names={state.names} season={state.season} />
         )}
+        <RoundLog feed={feed} game={game} state={state} viewerKey={props.viewerKey} now={now} />
       </section>
       <aside className="round-side">
-        <LiveOrChat feed={feed} game={game} state={state} chat={props.chat} />
         <TeamTiles state={state} points={props.teamPoints} />
+        <RoundChat chat={props.chat} />
       </aside>
       {player ? (
         <InputRow

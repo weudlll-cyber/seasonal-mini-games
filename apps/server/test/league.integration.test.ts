@@ -9,7 +9,7 @@
  *                 wins; `/me` finds the viewer; the profile agrees with the boards; a staff
  *                 adjustment needs a reason, is audited, append-only and public on the profile;
  *                 a match with fewer accounts than `leaderboard.minPlayersForPoints` or one that
- *                 does not count awards nothing; aborting a match takes its points back (T70).
+ *                 does not count awards nothing; aborting a match takes its points back (T88).
  *                 Every match is aborted at the end, which also removes its points.
  * Depends on:     vitest, ./socketKit, ./session
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/06-data-model-api-realtime.md §2.6, §3.1;

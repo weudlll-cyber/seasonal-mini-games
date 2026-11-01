@@ -8,7 +8,9 @@
  *                 to the whole page, so it covers every height), type, a visible accent focus
  *                 ring on every control, buttons as pills (primary solid, secondary glass with
  *                 a hairline, disabled muted on the second surface) and fields at least 44 px high (--hit-target), panels as
- *                 translucent cards with the card radius, chips and the LIVE badge. Layout
+ *                 translucent cards with the card radius, chips and the LIVE badge; a number field
+ *                 that allows negatives has the square ± button beside it (./SignToggle) and its
+ *                 help line turns to the danger colour while the value is out of range. Layout
  *                 works from 360 px phone width up; nothing here sets colours of its own.
  * Spec:           Bingo 01 §13; Seasonal Entertainment docs/DESIGN.md
  */
@@ -183,6 +185,29 @@ a {
 .smg-input::placeholder {
   color: var(--color-text-muted);
   opacity: 1;
+}
+
+/* A field with the ± button (./SignToggle): the control and the button share a row, the
+   help line runs under both. */
+.smg-field--signed {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+}
+
+.smg-field--signed > small {
+  grid-column: 1 / -1;
+}
+
+.smg-sign {
+  flex: none;
+  width: var(--hit-target);
+  padding: 0;
+  font-size: var(--font-size-lead);
+}
+
+/* The help line names the bounds while the typed value is outside them */
+.smg-field-help--error {
+  color: var(--color-danger);
 }
 
 /* Chips and badges */

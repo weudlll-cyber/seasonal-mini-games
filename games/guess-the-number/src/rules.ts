@@ -7,9 +7,12 @@
  *                 shown, not removed, not guessed before when repeats are refused); with a
  *                 hidden range any whole number is accepted and answered, because refusing
  *                 one outside the range would tell where the range is (DECISIONS T53). For an
- *                 accepted guess: the answer to the guesser (held by Frost), the room's line
- *                 at the round's visibility (02 §6.2), and `Solved` when the number was found.
- * Depends on:     @smg/game-sdk (contract, inRange), ./feedback, ./secrets, ./state
+ *                 accepted guess: the answer to the guesser with its closeness comment when the
+ *                 round has them (both held by Frost), the room's line at the round's
+ *                 visibility (02 §6.2) carrying the comment exactly where it carries the answer
+ *                 (T73), and `Solved` when the number was found.
+ * Depends on:     @smg/game-sdk (contract, inRange), ./closeness, ./comments, ./feedback,
+ *                 ./secrets, ./state
  * Used by:        ./module
  * Spec:           docs/spec/02-game-guess-the-number.md §5.1, §6, §8
  */
@@ -21,6 +24,8 @@ import {
   type PlayerAction,
 } from '@smg/game-sdk';
 
+import { tierOf } from './closeness.js';
+import { pickComment, type Comment } from './comments.js';
 import { feedbackFor, type Answer } from './feedback.js';
 import { secretOf, type Secrets } from './secrets.js';
 import type { GtnEvent, GtnState } from './state.js';
@@ -45,12 +50,13 @@ export function validate(state: GtnState, playerId: string, action: GuessAction)
   return null;
 }
 
-// The room's line: individual mode and `own` say only that a guess happened (02 §6.2).
+// The room's line: individual mode and `own` say only that a guess happened (02 §6.2); the
+// comment goes only where the answer goes.
 function fed(
   state: GtnState,
   playerId: string,
   guesses: number,
-  answer: Answer,
+  answer: Answer & { readonly comment: Comment | null },
 ): Emitted<GtnEvent> {
   const base = { type: 'GuessFed', playerId, guesses } as const;
   if (state.mode === 'individual' || state.visibility === 'own') {
@@ -59,7 +65,23 @@ function fed(
   if (state.visibility === 'numbers') {
     return { audience: 'room', event: { ...base, value: answer.value } };
   }
-  return { audience: 'room', feedback: true, event: { ...base, ...answer } };
+  const { comment, ...rest } = answer;
+  const event = comment === null ? { ...base, ...rest } : { ...base, ...rest, comment };
+  return { audience: 'room', feedback: true, event };
+}
+
+// The closeness comment, chosen with the round's DRBG under this guess's own label (T72).
+function commentOn(
+  state: GtnState,
+  act: PlayerAction<GuessAction>,
+  secret: number,
+  rng: GameCtx<Secrets>['rng'],
+): Comment | null {
+  const c = state.comments;
+  if (!c.on) return null;
+  const tier = tierOf(act.action.value, secret, state.initial, c.thresholds);
+  const previous = state.players[act.playerId]?.guesses.at(-1)?.comment?.tier ?? null;
+  return pickComment(tier, previous, c, rng.child('comment', String(act.receiveSeq)));
 }
 
 export function decide(
@@ -70,7 +92,12 @@ export function decide(
   const player = state.players[act.playerId];
   if (player === undefined) return { ok: false, code: 'OUT_OF_RANGE' };
   const { value } = act.action;
-  const answer = { value, feedback: feedbackFor(value, secretOf(ctx.secrets, act.playerId)) };
+  const secret = secretOf(ctx.secrets, act.playerId);
+  const answer = {
+    value,
+    feedback: feedbackFor(value, secret),
+    comment: commentOn(state, act, secret, ctx.rng),
+  };
   const given: GtnEvent = {
     type: 'FeedbackGiven',
     playerId: act.playerId,

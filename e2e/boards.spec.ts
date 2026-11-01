@@ -1,7 +1,7 @@
 /**
  * @file   e2e/boards.spec.ts
  * @module e2e
- * @brief  Journey 12: points of two matches add up on the season board, teams beside, profile
+ * @brief  Journey 13: points of two matches add up on the season board, teams beside, profile
  *         and verification page; aborting the matches takes the points back.
  *
  * Responsibility: four accounts (host and players 1–3, the minimum for league points, O11)
@@ -11,9 +11,9 @@
  *                 side by side on a desktop, a name leads to the profile, and the result's
  *                 "Verify this round" opens the verification page, which checks the seed against
  *                 the commitment in the browser (O9). The matches are aborted at the end, which
- *                 takes their points back (DECISIONS T70): the boards are as before.
+ *                 takes their points back (DECISIONS T88): the boards are as before.
  * Depends on:     @playwright/test, ./play
- * Spec:           docs/spec/09-testing-strategy.md §4 (journey 12); docs/spec/02-game-guess-the-number.md §9, §10
+ * Spec:           docs/spec/09-testing-strategy.md §4 (journey 13); docs/spec/02-game-guess-the-number.md §9, §10
  */
 import { expect, test } from '@playwright/test';
 
@@ -68,7 +68,7 @@ async function playMatch(host: Person, players: readonly Person[], title: string
   return code;
 }
 
-test('journey 12: two matches add up on the season board with the team board beside it', async ({
+test('journey 13: two matches add up on the season board with the team board beside it', async ({
   browser,
 }) => {
   test.setTimeout(240_000);
@@ -81,7 +81,7 @@ test('journey 12: two matches add up on the season board with the team board bes
   const before = await seasonTotals(host);
   const codes: string[] = [];
   try {
-    codes.push(await playMatch(host, players, 'journey 12 a'));
+    codes.push(await playMatch(host, players, 'journey 13 a'));
     // The result names the match standings and leads to the round's verification page.
     await expect(host.page.getByTestId('match-standings')).toContainText('10');
     // The link sits in the result's "Fairness proof" disclosure, as a person finds it.
@@ -91,7 +91,7 @@ test('journey 12: two matches add up on the season board with the team board bes
       'The seed matches the commitment published before the round.',
     );
     await expect(host.page.getByTestId('guesses')).toBeVisible();
-    codes.push(await playMatch(host, players, 'journey 12 b'));
+    codes.push(await playMatch(host, players, 'journey 13 b'));
     const after = await seasonTotals(host);
     expect(after.points - (after.id === before.id ? before.points : 0)).toBe(20);
     expect(after.teamWins - (after.id === before.id ? before.teamWins : 0)).toBe(2);
@@ -111,7 +111,7 @@ test('journey 12: two matches add up on the season board with the team board bes
     for (const code of codes) await abortMatch(host, code);
     await closeAll([host, ...players]);
   }
-  // Aborted matches take their points back (T70).
+  // Aborted matches take their points back (T88).
   const cleanup = await person(browser, 'host');
   const end = await seasonTotals(cleanup);
   expect(end.points).toBe(end.id === before.id ? before.points : 0);

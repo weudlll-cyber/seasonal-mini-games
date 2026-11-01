@@ -9,7 +9,8 @@
  *                 forms and the player's own events), newest first, at most 60. A frame with
  *                 `late` brings Frost's held events; in a Frost round one more load follows
  *                 each frame or reconnect after the delay, so an answer released while the
- *                 page was away still shows. The client renders; the server decides.
+ *                 page was away still shows. An answer for a round the page no longer shows is
+ *                 dropped (T81). The client renders; the server decides.
  * Depends on:     react, @smg/contracts (shapes), ../shell/http, ./socket
  * Used by:        ../match/MatchPage, ../round/RoundScreen
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1, §4.4, §4.5
@@ -34,31 +35,49 @@ export interface RoundLive {
 
 const FEED_LIMIT = 60;
 
-export function useRound(roundId: string | null): RoundLive {
+// The state of the round shown now: an answer for another one (a reload of the last round
+// still on its way when the next round loaded) is dropped, so it never shows over the new
+// round (T81). `take` says whether it took the answer.
+function useShownState(roundId: string | null) {
   const [state, setState] = useState<RoundStateView | null>(null);
+  const shown = useRef(roundId);
+  shown.current = roundId;
+  const take = useCallback((next: RoundStateView): boolean => {
+    if (next.roundId !== shown.current) return false;
+    setState(next);
+    return true;
+  }, []);
+  const clear = useCallback(() => {
+    setState(null);
+  }, []);
+  return { state, take, clear };
+}
+
+export function useRound(roundId: string | null): RoundLive {
+  const { state, take, clear } = useShownState(roundId);
   const [feed, setFeed] = useState<readonly FeedItem[]>([]);
   const pending = useRef<number | null>(null);
   const later = useRef<number | null>(null);
   const reload = useCallback(async () => {
     if (roundId === null) return;
-    setState(await api<RoundStateView>(`/rounds/${roundId}/state`));
-  }, [roundId]);
+    take(await api<RoundStateView>(`/rounds/${roundId}/state`));
+  }, [roundId, take]);
   // Under Frost an answer can be released while the page reconnects and miss its frame;
   // one more load after the delay shows it anyway (03 §2.4). Only after a frame or a
   // connect, never after itself, so it never loops.
   const reloadAndFollow = useCallback(async () => {
     if (roundId === null) return;
     const next = await api<RoundStateView>(`/rounds/${roundId}/state`);
-    setState(next);
+    if (!take(next)) return;
     if (next.frostDelayMs === null || next.status !== 'open') return;
     if (later.current !== null) window.clearTimeout(later.current);
     later.current = window.setTimeout(() => {
       later.current = null;
       void reload();
     }, next.frostDelayMs + 250);
-  }, [roundId, reload]);
+  }, [roundId, reload, take]);
   useEffect(() => {
-    setState(null);
+    clear();
     setFeed([]);
     void reloadAndFollow();
     const socket = gameSocket();
@@ -90,6 +109,6 @@ export function useRound(roundId: string | null): RoundLive {
         timer.current = null;
       }
     };
-  }, [roundId, reloadAndFollow]);
+  }, [roundId, reloadAndFollow, clear]);
   return { state, feed, reload };
 }

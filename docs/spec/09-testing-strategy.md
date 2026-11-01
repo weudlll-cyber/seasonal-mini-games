@@ -10,16 +10,16 @@
 | Test pyramid and its tools (Vitest, fast-check, Testcontainers, contract tests, Testing Library, Playwright in Chromium, Firefox and WebKit mobile, security tests); coverage targets domain ≥ 95 %, application ≥ 85 % | Bingo 12 §2 | `game-sdk` and every `games/*/src` also have a ≥ 95 % target. Load testing uses a Node.js driver (DECISIONS T9). |
 | Security tests (authz matrix generated from the permission table, CSRF, headers, rate limits, fuzzing, JWT, upload, SSRF, ZAP baseline) | Bingo 12 §6 | Additions in §6. |
 | Test data and determinism (fixed seeds, failing seeds turned into regression tests, shared builders, tests remove their accounts and abort their matches, timing specs in their own Playwright projects, fixed local ports) | Bingo 12 §7 | Ports from [10](10-repository-structure.md) §4. Builders: `aRound().shared().withPlayers(500)`. |
-| Manual acceptance by the owner with a Quick Test seed | Bingo 12 §8 | The Quick Test plays one round against bots (§5). |
+| Manual acceptance by the owner with a Quick Test seed | Bingo 12 §8 | The Quick Test plays rounds against bots (§5), through the waiting area or started at once (owner decision 24). |
 
 ## 2. Levels specific to this platform
 
 | Level | Scope |
 |---|---|
-| Unit and property | `domain` (lifecycle, cooldown, ordering, placings, teams, special scheduling), `game-sdk` (DRBG helpers, range arithmetic), `games/guess-the-number/src` (feedback, hints, Leaf Fall, halving) |
+| Unit and property | `domain` (lifecycle, cooldown, ordering, placings, teams, special scheduling), `game-sdk` (DRBG helpers, range arithmetic), `games/guess-the-number/src` (feedback, hints, Leaf Fall, halving, the closest miss: ties, none, a hidden range) |
 | Conformance | One shared suite run against every module in `games/registry` (invariants P1–P6). A new game is green only when it passes. |
-| Engine integration | The round actor with real Postgres: group commit, restart recovery, scheduler precision, Frost after restart |
-| Component | Range bar, cooldown ring, guess list, roster, team standing, result screen |
+| Engine integration | The round actor with real Postgres: group commit, restart recovery, scheduler precision, Frost after restart; the match flow (owner decisions 26–28): `TEAM_LOCKED` over socket and HTTP, the placement in the smallest team, End match with the summary, and the idle close with a fake clock and after a restart |
+| Component | Range bar, cooldown ring, guess list, roster, team standing, result screen; the input row keeps typed text across the round opening and while an answer is on its way; the waiting area's team buttons only before the player's first round and its player rows (team, connection); End match's confirm sentence and the match summary |
 | E2E | Journeys in §4 |
 | Load | §5, release gate |
 
@@ -28,7 +28,7 @@
 **Platform conformance (every game module):**
 
 - **P1 Determinism.** Same seed, same settings and the same ordered inputs ⇒ identical event list.
-- **P2 No secret leaks.** With unique sentinel secrets, no serialized player view, spectator view, room frame or rejection answer of a running round contains a sentinel. Result views contain them only after the end. With a hidden range, its bounds count as sentinels too (DECISIONS T52).
+- **P2 No secret leaks.** With unique sentinel secrets, no serialized player view, spectator view, room frame or rejection answer of a running round contains a sentinel. Result views contain them only after the end. With a hidden range, its bounds count as sentinels too (DECISIONS T52). Nothing about an answer travels without it: a closeness comment sits only beside its feedback, and while Frost holds every answer no view shows either (owner decision 21, DECISIONS T73). In individual mode a player who solved their own secret sees that one mark in their view and no other, their solve tells no one else their mark, and no other view holds it (owner decision 25; the kit's `solve` action).
 - **P3 Valid views.** Every view validates against the module's `viewSchemas`.
 - **P4 Rejections are free.** A rejected action produces no event and leaves state equal (deep equality).
 - **P5 Replay equals live.** Folding the round's event log with `evolve` gives the actor's state.
@@ -58,19 +58,20 @@
 ## 4. E2E journeys
 
 1. Two players and a host: shared round, cooldown 3 s, the host starts it, both guess, one wins, both see the result and the revealed secret; the cooldown ring blocks the button. Also at 390 × 844.
-2. Individual round with three players: placings in solve order; a solved player becomes a spectator; time-up ends the round with "not solved" rows.
+2. Individual round with three players: placings in solve order; a solved player keeps their own rows, with a notice and their place instead of the input row (owner decision 25); time-up ends the round with "not solved" rows.
 3. Each season special once (fast test profile): Spring hint shown, Heatwave value drops, Leaf Fall strikes numbers, Frost shows "answer arriving".
 4. Halving round on a test halving day: the range halves, and a guess outside it is refused without cost.
-5. Teams: four players pick teams, the team standing updates after the round, and teams lock during the countdown.
+5. Teams: four players pick teams in the waiting area, the team standing updates after the round, a team change is refused with `TEAM_LOCKED` once the round started, and the waiting area for the next round follows the result with each player's team and no team buttons, with no player box on the result itself (owner decisions 23, 26).
 6. Reconnect mid-round: the cooldown is unchanged after reconnect, there are no duplicate guesses, and Frost answers arrive after reconnect.
 7. Spectator (guest): sees the feed at the round's visibility and never a number or feedback under `own`.
 8. Embedded: JWT handoff from a test host page (`e2e/host-page`, port 5420) signs the player in inside the iframe; the same page from an origin that is not on the allowlist cannot frame the game and its handoff is refused (Bingo journey 7).
 9. Accessibility: axe checks on lobby, round and result; keyboard-only guessing.
 10. Hidden range (owner decision 19), 1280 × 720: the round view says "Any whole number", no bound is on the page, a guess far outside the range is answered, and the result reveals the range.
-11. Negative bounds (owner decision 18), 390 × 844: a range from −500 to 500 is shown, the ± button makes a typed number negative, the guess is answered, and the round plays to its result.
-12. Boards (roadmap phase 4): four players play two counting matches; the points add up on the season board with the team board beside it, the profile shows them, the round's verification page confirms the seed against the commitment, and aborting the matches takes the points back.
-13. Chat (roadmap phase 5, `builtin`): two players chat in a match; a moderator mutes one, whose next message is refused, lifts the mute and bans; with `integrations.chatProvider` = `none` the chat panel is gone.
-14. Admin (roadmap phase 6): the admin changes a special's default, sees the change in the document's history, rolls it back through the confirm dialog, and aborts a running round with a reason, which the player sees as aborted by staff.
+11. Negative bounds (owner decision 18), 390 × 844: the Quick Test form takes "-500" typed key by key into Lowest number and, with "Start from the lobby" off, starts a round from −500 to 500 at once (T69); the range is shown, the ± button makes a typed number negative, the guess is answered, and the round plays to its result.
+12. Quick Test through the lobby (owner decisions 22–24, 26, 27): the form with "Start from the lobby" on opens the waiting area; the bots appear one after another, online, with their teams; the player ("no team yet") picks a team, which shows pressed; the host menu's Start starts the round; the round runs with the bots playing; the result names the closest miss (or the margin, when a second correct guess came within its window); the waiting area for the next round follows with the team kept and no team buttons; a second round from the host menu; then End match with its confirm sentence, and the match summary with two rounds, the four players and the link back to Play, also after a reload.
+13. Boards (roadmap phase 4): four players play two counting matches; the points add up on the season board with the team board beside it, the profile shows them, the round's verification page confirms the seed against the commitment, and aborting the matches takes the points back.
+14. Chat (roadmap phase 5, `builtin`): two players chat in a match; a moderator mutes one, whose next message is refused, lifts the mute and bans; with `integrations.chatProvider` = `none` the chat panel is gone.
+15. Admin (roadmap phase 6): the admin changes a special's default, sees the change in the document's history, rolls it back through the confirm dialog, and aborts a running round with a reason, which the player sees as aborted by staff.
 
 Journeys 1, 10 and 11 also check that the round view fits the screen: `document.scrollingElement.scrollHeight` is at most `window.innerHeight` ([02](02-game-guess-the-number.md) §12).
 

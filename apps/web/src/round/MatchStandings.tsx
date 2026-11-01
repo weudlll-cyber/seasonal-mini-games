@@ -4,8 +4,9 @@
  * @brief  The match's player standings on the result screen: rank, player, points, round wins.
  *
  * Responsibility: the sum over the match's ended rounds as the server ranks it (02 §9), as a
- *                 table with the viewer's line highlighted like the placings; nothing before
- *                 the match has a standing.
+ *                 table with the viewer's line highlighted like the placings, with the
+ *                 placings' fixed columns so it fits a 390 px phone; nothing before the match
+ *                 has a standing. The match summary shows the same table (../match/MatchSummary).
  * Depends on:     react, @smg/contracts (MatchStandingView), ./PlayerName
  * Used by:        ./ResultScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §9
@@ -31,10 +32,16 @@ export function MatchStandings({
           <caption className="smg-visually-hidden">Match standings</caption>
           <thead>
             <tr>
-              <th scope="col">Rank</th>
+              <th scope="col" className="round-col-place">
+                Rank
+              </th>
               <th scope="col">Player</th>
-              <th scope="col">Points</th>
-              <th scope="col">Wins</th>
+              <th scope="col" className="round-col-num">
+                Points
+              </th>
+              <th scope="col" className="round-col-num">
+                Wins
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -42,8 +49,10 @@ export function MatchStandings({
               <tr key={s.playerKey} className={s.playerKey === viewerKey ? 'round-you' : undefined}>
                 <td>{s.rank}</td>
                 <td>
-                  <PlayerName name={s.name} />
-                  {s.playerKey === viewerKey ? ' (you)' : ''}
+                  <span className="round-player">
+                    <PlayerName name={s.name} />
+                    {s.playerKey === viewerKey ? <span> (you)</span> : null}
+                  </span>
                 </td>
                 <td>{s.points}</td>
                 <td>{s.wins}</td>

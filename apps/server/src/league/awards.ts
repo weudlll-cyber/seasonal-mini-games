@@ -9,10 +9,10 @@
  *                 distinct accounts over its ended rounds (development bots are no accounts,
  *                 O11) awards each account its match standing — points, round wins, solves and
  *                 its rank — to the season board of the quarter its first round ended in and to
- *                 the all-time board (DECISIONS T69); its teams award their match team
+ *                 the all-time board (DECISIONS T87); its teams award their match team
  *                 standing the same way. Awards are replaced as later rounds end, so a match
  *                 awards once per board. Withdrawing removes a match's awards (an aborted
- *                 match, T70). Every change recomputes the affected entries as the sum of
+ *                 match, T88). Every change recomputes the affected entries as the sum of
  *                 awards and staff adjustments. A result staff removed counts for nothing here
  *                 (no account, no solve; the standings leave it out already, ../round/pgResults).
  *                 Only this module writes league tables (Bingo 03 §11).

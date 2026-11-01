@@ -5,17 +5,18 @@
  *         and the embedded views.
  *
  * Responsibility: parse `location.hash` into a route and back, and a hook that follows
- *                 hash changes. Hash routing keeps every screen reachable from the dev
- *                 server and from a static host without server rewrites (as Bingo). The
- *                 boards: `#/leaderboard` (optionally `/<periodId>`), a profile
- *                 `#/players/<displayName>` and a round's proof `#/rounds/<roundId>/verify`; inside a
- *                 host page's frame `#/embed/<lobby|match|leaderboard|profile>[/<code or name>]`.
+ *                 hash changes, including one between its first render and its listener.
+ *                 Hash routing keeps every screen reachable from the dev server and from a
+ *                 static host without server rewrites (as Bingo). The boards: `#/leaderboard`
+ *                 (optionally `/<periodId>`), a profile `#/players/<displayName>` and a round's
+ *                 proof `#/rounds/<roundId>/verify`; inside a host page's frame
+ *                 `#/embed/<lobby|match|leaderboard|profile>[/<code or name>]`.
  * Depends on:     react
  * Used by:        ./AppShell, ../account/*, ./DevTools, ../boards/*, ../round/ResultScreen,
  *                 ../embed/*, ../main
  * Spec:           Bingo 01 §13; docs/spec/02-game-guess-the-number.md §9; docs/spec/07-integration.md §1
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export type Route =
   | { readonly name: 'lobby' }
@@ -107,15 +108,19 @@ export function navigate(route: Route): void {
 }
 
 export function useRoute(): Route {
-  const [route, setRoute] = useState(() => parseRoute(window.location.hash));
+  // The hash text, not the parsed route: setting the same text again renders nothing.
+  const [hash, setHash] = useState(() => window.location.hash);
   useEffect(() => {
     const onChange = (): void => {
-      setRoute(parseRoute(window.location.hash));
+      setHash(window.location.hash);
     };
     window.addEventListener('hashchange', onChange);
+    // A hash set after the first render but before the listener existed fired no event for
+    // it (e2e journey 11 in WebKit went to #/quick-test and stayed on the lobby): read it now.
+    onChange();
     return () => {
       window.removeEventListener('hashchange', onChange);
     };
   }, []);
-  return route;
+  return useMemo(() => parseRoute(hash), [hash]);
 }

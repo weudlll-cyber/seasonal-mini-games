@@ -1,0 +1,84 @@
+/**
+ * @file   apps/web/src/round/roundChat.css
+ * @module web/round
+ * @brief  The match chat in the round view: a card in the right column, a panel on a phone.
+ *
+ * Responsibility: on a wide screen the chat card takes the right column's free height under
+ *                 the team tiles; below 900 px a "Chat" button in the side row, and the open
+ *                 chat as an opaque panel over the round whose top and bottom ./RoundChat
+ *                 measures. Colours only from @smg/ui tokens.
+ * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/07-integration.md §2
+ */
+/* The match chat under the team tiles (./RoundChat): a card that takes the column's free
+   height, its list scrolling inside itself, so the view still fits one screen. */
+.round-chat {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-card);
+}
+
+.round-chat-head h2 {
+  margin: 0;
+  font-size: var(--font-size-lead);
+}
+
+.round-chat-toggle {
+  display: none;
+}
+
+.round-chat-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* A phone: one "Chat" button in the side row; open, the chat lies over the round between the
+   top bar and the input row (its edges measured on opening), opaque as menus are. */
+@media (max-width: 899px) {
+  .round-chat {
+    flex: none;
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+
+  .round-chat-head h2 {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .round-chat-toggle {
+    display: inline-flex;
+    justify-content: center;
+    width: 100%;
+    min-height: var(--hit-target);
+  }
+
+  .round-chat-body {
+    display: none;
+  }
+
+  .round-chat[data-open='true'] .round-chat-body {
+    display: flex;
+    position: fixed;
+    left: var(--gutter);
+    right: var(--gutter);
+    z-index: 30;
+    padding: var(--space-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-raised);
+  }
+}

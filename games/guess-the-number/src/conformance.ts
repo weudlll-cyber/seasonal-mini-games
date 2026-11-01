@@ -6,7 +6,8 @@
  * Responsibility: a range of 1–1 000 000 with secrets at 777 777 (shared) or 900 001 + k
  *                 (individual), and guesses from 1 to 600 000, so no guess hits or borders a
  *                 secret; a leaked secret is then the only way its digits can appear in a
- *                 view or event.
+ *                 view or event. `solve` guesses a player's own number, for the check that a
+ *                 solved player sees no other secret (O25).
  * Depends on:     @smg/game-sdk (ConformanceKit), ./rules, ./secrets, ./settings
  * Used by:        ./index, games/registry
  * Spec:           docs/spec/09-testing-strategy.md §3 P2
@@ -32,6 +33,9 @@ export const gtnConformance: ConformanceKit<GuessAction, GtnConfig, Secrets> = {
       rangeHigh: 1_000_000,
       rangeVisible: true,
       feedbackVisibility: 'full',
+      comments: true,
+      thresholds: { wayOff: 50, cold: 25, cool: 10, warm: 3, hot: 1 },
+      trendPercent: 33,
       repeatGuessRejected: true,
       springHintType: 'parity',
       autumnMinRemaining: 10,
@@ -51,4 +55,7 @@ export const gtnConformance: ConformanceKit<GuessAction, GtnConfig, Secrets> = {
     };
   },
   action: (n) => ({ value: 1 + (Math.abs(Math.trunc(n)) % 600_000) }),
+  solve: (secrets, playerId) => ({
+    value: secrets.mode === 'shared' ? secrets.value : (secrets.byPlayer[playerId] ?? 0),
+  }),
 };

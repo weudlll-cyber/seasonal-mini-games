@@ -5,7 +5,7 @@
  *
  * Responsibility: found by display name (unique, case-insensitive). Every number comes from
  *                 the all-time board's awards, so a profile agrees with the boards: matches
- *                 that count for the leaderboard and were not taken back (DECISIONS T70).
+ *                 that count for the leaderboard and were not taken back (DECISIONS T88).
  *                 The boards list the player's rank and points on each board they are on, the
  *                 recent list their last ten rounds of such matches, and staff adjustments are
  *                 shown with their reason (Bingo 03 §11). No e-mail and no account id leave the

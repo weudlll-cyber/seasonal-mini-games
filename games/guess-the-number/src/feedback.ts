@@ -7,7 +7,7 @@
  *                 server computes no narrowed range from the answers: each player sees their
  *                 own guesses with their answers and nothing derived from them (O17).
  * Depends on:     nothing
- * Used by:        ./rules, ./state, ./views
+ * Used by:        ./rules, ./state
  * Spec:           docs/spec/02-game-guess-the-number.md §6.1
  */
 

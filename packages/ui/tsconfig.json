@@ -3,10 +3,13 @@
  * @module ui
  * @brief  TypeScript settings for @smg/ui.
  *
- * Responsibility: extend the shared strict base and limit the program to src/.
+ * Responsibility: extend the shared strict base with React's JSX and limit the program to src/.
  * Spec:           docs/spec/10-repository-structure.md §2
  */
 {
   "extends": "../../tsconfig.bundler.json",
+  "compilerOptions": {
+    "jsx": "react-jsx"
+  },
   "include": ["src"]
 }

@@ -34,6 +34,7 @@ const TIMING = [
   'players.spec.ts',
   'access.spec.ts',
   'range.spec.ts',
+  'lobby.spec.ts',
   'boards.spec.ts',
   // Not timing, but it changes platform-wide chat settings: never two browsers at once.
   'chat.spec.ts',

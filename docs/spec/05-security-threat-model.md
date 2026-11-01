@@ -122,10 +122,12 @@ Method and Bingo's threats T1–T28 are adopted (Bingo 13 §1–§4; trust bound
 | M11 | 5 | S | Spoofed or wrong In Season feed | 1 | 1 | HTTPS allowlist through `SafeHttpClient`; worst case a wrong season, equal for all; host can always pick by hand |
 | M12 | 1 | T | Fake halving day to run a halving round | 1 | 1 | Server checks the calendar at round creation; list edits audited (§8) |
 | M13 | 1 | E | A spectator or another player receives a player's private frames | 2 | 2 | Per-player rooms, audience routing, authz matrix test ([09](09-testing-strategy.md) §6) |
+| M14 | 1 | I | Learning more from closeness comments than from higher or lower | 3 | 1 | Accepted by the owner (O21, 2026-10-31); see §10. The tier is computed on the server; the client never gets the secret; the comment rides on the events that carry the answer, so Frost and the visibility rules hide it exactly as they hide the answer (DECISIONS T73); no line holds a digit or names the range; a guess outside a hidden range gets the farthest tier |
 
 ## 10. Residual risks (accepted)
 
 - Several real, verified accounts in the hands of one person still multiply their guess rate in shared mode (§6).
 - Latency decides between correct guesses that arrive close together (§7). This follows from owner decision 4.
 - An operator with shell access and `SMG_ROUND_KEY` can decrypt seeds of running rounds. The operator is trusted, as in Bingo.
+- Closeness comments (owner decision 21, chosen on 2026-10-31) tell more than higher or lower: a tier says how far a guess was from the secret as a share of the range, so two or three tiers narrow the search much faster than the answers alone, and under `full` visibility everyone reads them. With a hidden range many tiers together hint at the range's size (a guess that is "cold" at a known distance bounds the width), even though no line states the bounds. The host can switch the comments off per round (`round.comments`).
 - Bingo 13 §5's residual risks (DDoS beyond the uplink, lost backup key) apply unchanged.

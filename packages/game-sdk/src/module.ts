@@ -144,11 +144,14 @@ export interface GameModule<S, A, E, Cfg, Sec> {
 
 // What a game gives the platform's conformance suite (04 §4.5, 09 §2): a round input, secrets
 // with marks that must appear in no view or event of a running round, and actions from
-// integers (none of which may hit or neighbour a secret, so no answer reveals one).
+// integers (none of which may hit or neighbour a secret, so no answer reveals one). `solve`,
+// for a game with individual secrets, is the action that solves a player's own one: a solved
+// player may then see their own mark, but no other (O25).
 export interface ConformanceKit<A, Cfg, Sec> {
   readonly input: (mode: SecretMode, playerIds: readonly string[]) => RoundInput<Cfg>;
   readonly sentinels: (input: RoundInput<Cfg>) => { secrets: Sec; marks: readonly string[] };
   readonly action: (n: number) => A;
+  readonly solve?: (secrets: Sec, playerId: string) => A;
 }
 
 // The next action of a development bot (Quick Test, 09 §5) from its own player view, or

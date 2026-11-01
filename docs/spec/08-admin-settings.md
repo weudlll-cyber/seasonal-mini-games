@@ -29,6 +29,13 @@
 | `round.countdownS` | 5 | 3 | 30 | owner (O15) | host | frozen |
 | `round.maxDurationMin` | 10 | 1 | 60 | owner (O15) | host | frozen |
 | `round.feedbackVisibility` | `full` | — | — (`own`, `numbers`, `full`) | owner (O8) | host (shared mode) | frozen |
+| `round.comments` | true | — | — | owner (O21): a closeness comment on every guess, seen exactly where its answer is seen (02 §6.3) | host | frozen |
+| `comments.wayOffAbove` | 50 % | 20 | 90 | proposal: a guess farther from the secret than this share of the range's width is "way off" (02 §6.3) | game admin | frozen |
+| `comments.coldAbove` | 25 % | 10 | 60 | proposal: "cold" above this share | game admin | frozen |
+| `comments.coolAbove` | 10 % | 3 | 40 | proposal: "cool" above this share | game admin | frozen |
+| `comments.warmAbove` | 3 % | 1 | 20 | proposal: "warm" above this share | game admin | frozen |
+| `comments.hotAbove` | 1 % | 0.5 | 10 | proposal: "hot" above this share; at or under it "burning" (more than 2 away). The five thresholds must fall from way off to hot | game admin | frozen |
+| `comments.trendPercent` | 33 % | 0 | 100 | proposal: how often a guess in another tier than the player's last one gets a trend line ("getting warmer") instead of a tier line (DECISIONS T71) | game admin | frozen |
 | `round.marginWindowS` | 2 | 0.5 | 10 | proposal: how long after the winning guess a correct guess still counts for the winning margin (02 §9) | game admin | frozen |
 | `round.seasonSource` | `inSeason` | — | — (`inSeason`, `manual`) | owner (default: O15) | host | frozen |
 | `round.specialOn` | true | — | — | owner (O15) | host | frozen |
@@ -59,10 +66,10 @@ The host form shows each host-chosen value with its default preselected and refu
 |---|---|---|---|---|---|---|
 | `match.minPlayersPerRound` | 2 | 1 | 50 | owner (O15) | game admin | next: read when a countdown starts |
 | `match.maxPlayers` | 500 | 2 | 1 000 | owner (O15) | game admin (host picks up to it) | next: read on join |
-| `match.lobbyIdleCloseMin` | 60 | 10 | 1 440 | owner (O15): a match with no round for this long closes itself | game admin | immediate |
+| `match.lobbyIdleCloseMin` | 60 | 10 | 1 440 | owner (O15, O28): a match with no round for this long closes itself, counted from the later of its creation and its last round's creation or end; checked every minute and on server start ([02](02-game-guess-the-number.md) §2) | game admin | immediate |
 | `match.maxConcurrentRounds` | 20 | 1 | 100 | technical (per server) | game admin | next: read at round creation |
 | `leaderboard.minPlayersForPoints` | 4 | 2 | 50 | owner (O11) | game admin | next: read at round end |
-| `leaderboard.periodLength` | quarter, named after the season | — | — | adopted (Bingo 01 §10); fixed to the calendar quarter in UTC, not a stored setting (DECISIONS T69) | — | — |
+| `leaderboard.periodLength` | quarter, named after the season | — | — | adopted (Bingo 01 §10); fixed to the calendar quarter in UTC, not a stored setting (DECISIONS T87) | — | — |
 | `leaderboard.firstQuarterSeason` | winter | spring, summer, autumn, winter | — | *proposal* (OPEN (t)): the season that names January to March; the other quarters follow in the order of the year | game admin | next: read at round end |
 | `leaderboard.abortedMatchesCount` | off | — | — | *proposal* (OPEN (u)): off, aborting a match takes back its league points | game admin | immediate |
 

@@ -12,7 +12,7 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
-import { abortMatch, call, closeAll, hostMenu, person } from './play.js';
+import { abortMatch, call, closeAll, hostMenu, ownRows, person } from './play.js';
 
 async function noSeriousViolations(page: Page, where: string): Promise<void> {
   const result = await new AxeBuilder({ page })
@@ -52,7 +52,7 @@ test('journey 9: lobby, round and result pass axe; a guess by keyboard only', as
     await expect(input).toBeFocused();
     await p.page.keyboard.type('10');
     await p.page.keyboard.press('Enter');
-    await expect(p.page.getByTestId('own-guesses')).toContainText('10');
+    await expect(ownRows(p.page).first()).toContainText('10');
     // The Quick Test player hosts the round: End round in the host menu brings the result.
     await hostMenu(p);
     await p.page.getByTestId('end-round').click();

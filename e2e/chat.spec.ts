@@ -1,7 +1,7 @@
 /**
  * @file   e2e/chat.spec.ts
  * @module e2e
- * @brief  Journey 13: two players chat in a match, a moderator mutes and bans, the provider
+ * @brief  Journey 14: two players chat in a match, a moderator mutes and bans, the provider
  *         switched to none removes the panel.
  *
  * Responsibility: two players of a match write in its chat and read each other; the admin
@@ -49,7 +49,7 @@ async function moderate(admin: Person, text: string, action: string): Promise<vo
   const line = admin.page.getByTestId('chat-messages').locator('li', { hasText: text });
   await line.getByRole('button', { name: 'Moderate' }).click();
   await line.getByRole('button', { name: action }).click();
-  await line.getByLabel('Reason').fill('journey 13');
+  await line.getByLabel('Reason').fill('journey 14');
   await line.getByRole('button', { name: 'Confirm' }).click();
 }
 
@@ -64,7 +64,7 @@ async function liftAll(admin: Person): Promise<void> {
   }
 }
 
-test('journey 13: a match chat, a mute and a ban by a moderator, and no chat with none', async ({
+test('journey 14: a match chat, a mute and a ban by a moderator, and no chat with none', async ({
   browser,
 }) => {
   test.setTimeout(120_000);
@@ -79,7 +79,7 @@ test('journey 13: a match chat, a mute and a ban by a moderator, and no chat wit
     restore.push(
       await setSettings(admin, 'chat', { 'chat.newAccountSlowModeHours': { value: 0 } }),
     );
-    code = await openMatch(host, [one, two], 'journey 13');
+    code = await openMatch(host, [one, two], 'journey 14');
     await visit(admin, code);
     await say(one.page, 'Hello from one');
     await expect(two.page.getByTestId('chat-messages')).toContainText('Hello from one');

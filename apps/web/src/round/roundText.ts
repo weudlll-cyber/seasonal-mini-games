@@ -4,11 +4,12 @@
  * @brief  The platform's sentences for a round: refusals, end reasons, feed lines, the margin.
  *
  * Responsibility: every platform code a player can meet in plain English (02 §12), the
- *                 result's headline ("Walter found it first — after 9 guesses", 02 §9), the
- *                 winning margin, and one live-list row per platform event (a solve, Heatwave's
- *                 new cooldown, the end); a game's own rows come from the game's text.
+ *                 solved player's notice (O25), the result's headline ("Walter found it first
+ *                 — after 9 guesses", 02 §9), the winning margin, and one event row of the
+ *                 round's list per platform event (a solve, Heatwave's new cooldown, the round
+ *                 opening and ending); a game's own rows come from the game's text.
  * Depends on:     @smg/contracts (shapes), @smg/game-sdk (FeedLine)
- * Used by:        ./RoundScreen, ./ResultScreen, ./Feed, ../match/HostMenu
+ * Used by:        ./RoundScreen, ./ResultScreen, ./RoundLog, ../match/HostMenu
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §12; docs/spec/03-seasonal-specials.md §2
  */
 import type { RoundStateView } from '@smg/contracts';
@@ -30,6 +31,7 @@ const CODES: Readonly<Record<string, string>> = {
   IN_SEASON_UNAVAILABLE: 'In Season is not available right now. Pick a season.',
   NOT_ENOUGH_PLAYERS: 'Not enough connected players to start.',
   TEAMS_LOCKED: 'Teams are locked while a round runs.',
+  TEAM_LOCKED: 'You keep your team for the whole match.',
   MATCH_FULL: 'This match is full.',
   MATCH_CLOSED: 'This match has ended.',
   NOT_THE_HOST: 'Only the host can do that.',
@@ -77,22 +79,29 @@ export function endHeadline(state: RoundStateView): string {
   }
 }
 
+// In place of the input row once a player solved their own number (O25).
+export function solvedText(place: number | null): string {
+  const at = place === null ? '' : ` — place ${String(place)}`;
+  return `You found your number${at}. Your guesses stay here while the others play on.`;
+}
+
+// The winning margin when a second correct guess came within the window (O13), else null:
+// the game's closest miss takes its place (O22).
 export function marginText(state: RoundStateView): string | null {
-  if (state.secretMode !== 'shared' || state.winner === null) return null;
-  if (state.margin === null) return 'Nobody else was close.';
+  if (state.secretMode !== 'shared' || state.margin === null) return null;
   return `Found it ${seconds(state.margin.ms)} before ${nameOf(state.names, state.margin.playerId)}.`;
 }
 
-const roundLine = (text: string): FeedLine => ({ text, playerId: null, feedback: null });
+const roundLine = (text: string): FeedLine => ({ text, playerId: null });
 
-// The live-list row of a platform event, or null (game events are the game's to word).
+// The list row of a platform event, or null (game events are the game's to word).
 export function platformLine(event: unknown, names: Names): FeedLine | null {
   const e = event as { type?: string; [k: string]: unknown };
   switch (e.type) {
     case 'PlayerSolved': {
       const who = String(e['playerId']);
       const text = `${nameOf(names, who)} found ${e['place'] === 1 ? 'it' : 'their number'} — place ${String(e['place'])}.`;
-      return { text, playerId: who, feedback: null };
+      return { text, playerId: who };
     }
     case 'CooldownChanged':
       return roundLine(`Heatwave: cooldown now ${seconds(Number(e['cooldownMs']))}.`);

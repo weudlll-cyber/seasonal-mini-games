@@ -1,0 +1,99 @@
+/**
+ * @file   apps/web/src/round/roundLog.css
+ * @module web/round
+ * @brief  The round's one guess list: guess rows, event rows, dots, answers and comments.
+ *
+ * Responsibility: the list takes the height left under the range block and scrolls inside
+ *                 itself, newest at the top (O20); a guess row holds dot, name, number and
+ *                 answer on one line with the comment under them, the viewer's own rows on a
+ *                 tint of the season colour (T75); an event is one quieter line. Moved out of
+ *                 ./round.css to keep each file under the size limit. Colours only from @smg/ui
+ *                 tokens.
+ * Spec:           docs/spec/02-game-guess-the-number.md §6.3, §12
+ */
+/* The guess list: the height left under the range block, newest at the top, scrolling only
+   inside its box. */
+.round-log {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.round-log ol {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  align-content: start;
+  gap: 0.3rem;
+  overflow-y: auto;
+}
+
+/* A guess: dot, name, number and answer on one line, the comment under them. */
+.round-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, max-content) auto 1fr;
+  align-items: baseline;
+  gap: 0 0.5rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--radius);
+}
+
+.round-row[data-own='true'] {
+  background: color-mix(in srgb, var(--season) 22%, var(--color-card));
+  box-shadow: inset 4px 0 0 var(--season);
+}
+
+.round-who {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--font-weight-strong);
+}
+
+.round-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-strong);
+}
+
+.round-comment {
+  grid-column: 2 / -1;
+  font-size: var(--font-size-small);
+}
+
+.round-arriving {
+  color: var(--color-winter-text);
+  font-weight: var(--font-weight-strong);
+}
+
+/* An event: one quieter line. */
+.round-row--event {
+  grid-template-columns: auto 1fr;
+  padding-block: 0.15rem;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+.round-dot {
+  flex: none;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--dot, transparent);
+  border: 1px solid var(--color-border);
+}
+
+.round-answer {
+  font-weight: var(--font-weight-strong);
+  white-space: nowrap;
+}
+
+.round-answer[data-feedback='higher'] {
+  color: var(--color-success-text);
+}
+
+.round-answer[data-feedback='lower'] {
+  color: var(--color-danger);
+}

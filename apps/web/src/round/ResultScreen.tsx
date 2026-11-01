@@ -4,7 +4,8 @@
  * @brief  The result of a round: headline, margin, placings, teams, the secret and the proof.
  *
  * Responsibility: the end in plain words ("Walter found it first — after 9 guesses"), the
- *                 winning margin in shared mode ("found it 0.4 s before Anna"), placings with
+ *                 winning margin in shared mode ("found it 0.4 s before Anna") or, without one,
+ *                 the game's closest miss ("bot-01 missed by just 1 (92).", O22), placings with
  *                 points (the viewer's line highlighted; "took part" in shared mode, "not
  *                 solved" in individual mode), the team result when teams played, the match
  *                 standings, the game's result panel with the secret(s), and the fairness
@@ -45,10 +46,16 @@ function Placings({
         <caption className="smg-visually-hidden">Placings</caption>
         <thead>
           <tr>
-            <th scope="col">Place</th>
+            <th scope="col" className="round-col-place">
+              Place
+            </th>
             <th scope="col">Player</th>
-            <th scope="col">Guesses</th>
-            <th scope="col">Points</th>
+            <th scope="col" className="round-col-num">
+              Guesses
+            </th>
+            <th scope="col" className="round-col-num">
+              Points
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -56,9 +63,11 @@ function Placings({
             <tr key={r.playerId} className={r.playerId === viewerKey ? 'round-you' : undefined}>
               <td>{placeText(state, r.place)}</td>
               <td>
-                {r.team === null ? null : <SeasonIcon season={r.team} size="1rem" />}{' '}
-                <PlayerName name={state.names[r.playerId] ?? r.playerId} />
-                {r.playerId === viewerKey ? ' (you)' : ''}
+                <span className="round-player">
+                  {r.team === null ? null : <SeasonIcon season={r.team} size="1rem" />}{' '}
+                  <PlayerName name={state.names[r.playerId] ?? r.playerId} />
+                  {r.playerId === viewerKey ? <span> (you)</span> : null}
+                </span>
               </td>
               <td>{r.guesses}</td>
               <td>{r.points}</td>
@@ -122,10 +131,13 @@ export function ResultScreen({
   readonly standings: readonly MatchStandingView[];
 }): ReactElement {
   const margin = marginText(state);
+  // Without a margin, the game's line about the closest miss stands in its place (O22).
+  const miss = margin === null ? (game?.text.runnerUp(state.game, state.names) ?? null) : null;
   return (
     <section className="smg-panel round-result" data-testid="result">
       <h1>{endHeadline(state)}</h1>
       {margin === null ? null : <p data-testid="margin">{margin}</p>}
+      {miss === null ? null : <p data-testid="closest-miss">{miss}</p>}
       {game === null ? null : (
         <game.Result view={state.game} names={state.names} viewerKey={viewerKey} />
       )}
