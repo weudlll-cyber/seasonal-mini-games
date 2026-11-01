@@ -6,17 +6,64 @@ N1 on `feat/guess-the-number`; N2 merges it into `night/2026-10-27`; N3 and N4 o
 
 ### Status
 
-| Piece                                                                        | State | Branch                | Commit / CI                                                       |
-| ---------------------------------------------------------------------------- | ----- | --------------------- | ----------------------------------------------------------------- |
-| N1 Team once per match, End match, idle close, waiting-area list, two fixes  | done  | feat/guess-the-number | `42ff7b4`, CI: e2e rerun (first attempt hung installing browsers) |
-| N2 Bring `night/2026-10-27` up to date with `feat/guess-the-number`          | done  | night/2026-10-27      | `a88990e`, CI green                                               |
-| N3 Cleanup: player numbers, KICKED, anti-multi rules, handoff accounts, chat | done  | night/2026-10-27      | see N3; CI pending                                                |
-| N4 Phase 8 security pass without a VPS                                       | done  | night/2026-10-27      | see N4; CI pending                                                |
-| N5 Handover                                                                  | open  | both                  | —                                                                 |
+| Piece                                                                        | State | Branch                | Commit / CI                           |
+| ---------------------------------------------------------------------------- | ----- | --------------------- | ------------------------------------- |
+| N1 Team once per match, End match, idle close, waiting-area list, two fixes  | done  | feat/guess-the-number | `42ff7b4`; CI green with `b21469d`    |
+| N2 Bring `night/2026-10-27` up to date with `feat/guess-the-number`          | done  | night/2026-10-27      | `a88990e`, CI green                   |
+| N3 Cleanup: player numbers, KICKED, anti-multi rules, handoff accounts, chat | done  | night/2026-10-27      | `5245dc9`; CI green with `0aea9f9`    |
+| N4 Phase 8 security pass without a VPS                                       | done  | night/2026-10-27      | `0aea9f9`, CI green                   |
+| N5 Handover                                                                  | done  | both                  | `b21469d` (feat), this commit (night) |
 
 ### Needs the owner
 
-- Nothing blocks. Spec conflict 2 in [OPEN.md](OPEN.md) (switching teams and the tie-break, resolved by O26) is listed for confirmation.
+- Nothing blocks. What the owner should approve before `master` is listed under the handover below: the merge order, the owner questions (q)–(aa) in [OPEN.md](OPEN.md), spec conflict 2, the renumbering, and what phase 8 still needs.
+
+### Handover (Night 3)
+
+**Branches (confirmed with `git ls-remote origin`):**
+
+- `feat/guess-the-number`: `b21469d` (N1 and the pointer to this sheet). CI green (verify, e2e in three browsers, security, docs). It covers N1: the run of `42ff7b4` hung installing its browsers, was cancelled, and its rerun gave way to this push.
+- `night/2026-10-27`: the commit that adds this handover, on top of N4 `0aea9f9`. CI green for `0aea9f9` (verify, e2e in three browsers, security, docs), which covers N3 too: the run of `5245dc9` was cancelled by the next push. The merge `a88990e` (N2) was green on its own.
+
+**Running on this machine:** `pnpm dev` on `feat/guess-the-number` at `b21469d`, because the owner tests that branch first: server http://127.0.0.1:3910, player client http://127.0.0.1:5410, admin app http://127.0.0.1:5411, PostgreSQL on 5510 (Docker `smg-dev`). The development database also holds the night branch's tables (migrations 0006–0010); `feat/guess-the-number` starts on it unchanged. On its first start the idle close closed the development matches left open for more than an hour (they were test leftovers).
+
+**Quick Test:** http://127.0.0.1:5410/#/quick-test. Open "Dev sign-in" in the header, choose "Sign in as player 1", open the Quick Test and enter:
+
+| Field                | Value   |
+| -------------------- | ------- |
+| Seed                 | `acorn` |
+| Lowest number        | 1       |
+| Highest number       | 100     |
+| Start from the lobby | on      |
+
+That opens the waiting area of a spring round. The bots arrive with their teams. Pick a team (it shows pressed, its icon drawn in the button's text colour). Start the round from the Host menu and play it; the result has the closest miss and the next-round area with the players' teams and no team buttons any more. Start a second round from the Host menu if you like, then "End match" (last in the Host menu) and its confirm sentence lead to the match summary.
+
+**On `night/2026-10-27` now** (not merged; to look at it, stop `pnpm dev`, `git switch night/2026-10-27`, start `pnpm dev` again):
+
+- Everything of `feat/guess-the-number` up to `42ff7b4` (N2 merged it), with the chat in its new places: the round view's right column, a "Chat" button over the round on a phone, under the waiting area's players.
+- The boards, chat and moderation, the admin remainder, the website integration and the production tools of Night 2.
+- N3: player numbers instead of account ids in everything public; KICKED; the anti-multi rules; account deletion for handoff accounts.
+- N4: the security pass without a VPS, results in `docs/security-pass.md`.
+- `b21469d`'s two changes on `feat/guess-the-number` (the pointer and the same test fix) are not on the night branch yet; they merge without conflict.
+
+**Before both branches can go to `master`, the owner should approve:**
+
+1. The merge order. `night/2026-10-27` holds `feat/guess-the-number` (all but the pointer commit), so one review of the night branch and a merge of it after `feat/guess-the-number` covers both. Proposal: merge `feat/guess-the-number` first (the game the owner tested), then `night/2026-10-27`.
+2. The owner questions in [OPEN.md](OPEN.md), each built as proposed:
+   - (q) the margin window;
+   - (r) the load gate on the reference VPS;
+   - (s) halving with a hidden range;
+   - (t) which season names a quarter;
+   - (u) aborted matches and league points;
+   - (w) the chat on screen, now with its new places (T101);
+   - (x) staff actions as players see them, now with KICKED;
+   - (y) the game embedded;
+   - (z) the closeness comment thresholds;
+   - (aa) the fairness proof with player numbers.
+3. Spec conflict 2 in OPEN.md: switching teams and the tie-break, resolved by O26 with a hash of round id and player key.
+4. The renumbering of the night branch's decisions T69–T82 to T87–T100 and its e2e journeys 12–14 to 13–15 (N2).
+5. Open in phase 8 (BACKLOG): the load gate and a ZAP baseline on the reference VPS, and the admin app's Trusted Types header after a browser check of its built bundle.
+6. The release itself (v1.0.0) is not prepared.
 
 ### N1 — Team once per match, End match, idle close, waiting-area list, two visual fixes
 
