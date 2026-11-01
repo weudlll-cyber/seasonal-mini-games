@@ -1,11 +1,31 @@
 /**
  * @file   games/safecracker/web/index.ts
  * @module games/safecracker/web
- * @brief  The screens of Seasonal Safecracker for the player client (being built in night 4).
+ * @brief  The screens of Seasonal Safecracker for the player client.
  *
- * Responsibility: the game's panels, text and setting definitions for the registry's web half.
- * Depends on:     nothing yet
+ * Responsibility: the game's player panel (the code block) and input row (the digit boxes),
+ *                 spectator and result panels, its text and its setting definitions (for the
+ *                 forms' labels and help), as one `GameWeb` line for the registry's web half
+ *                 (04 §4.6), and the game's styles.
+ * Depends on:     @smg-game/safecracker (settings), ./Board, ./CodeInput, ./ResultPanel,
+ *                 ./text, ./sc.css
  * Used by:        games/registry/web (once registered)
- * Spec:           docs/spec/02b-game-safecracker.md
+ * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/02b-game-safecracker.md §10
  */
-export const GAME_NAME = 'Seasonal Safecracker';
+import { scSettings } from '@smg-game/safecracker';
+
+import { PlayerPanel, SpectatorPanel } from './Board.js';
+import { CodeInput } from './CodeInput.js';
+import { ResultPanel } from './ResultPanel.js';
+import { safecrackerText } from './text.js';
+
+import './sc.css';
+
+export const safecrackerWeb = {
+  Player: PlayerPanel,
+  Input: CodeInput,
+  Spectator: SpectatorPanel,
+  Result: ResultPanel,
+  text: safecrackerText,
+  settings: scSettings.defs,
+};

@@ -1,0 +1,194 @@
+/*
+ * @file   games/safecracker/web/sc.css
+ * @module games/safecracker/web
+ * @brief  Styles of the Safecracker panels: code block, digit strip, hint, digit boxes, result.
+ *
+ * Responsibility: colours only from the design tokens (light and dark); the season colour
+ *                 (`--season`, set by the platform's round screen) only as tint and border,
+ *                 never behind text without the card colour mixed in; a fallen digit struck
+ *                 through, dimmed and crossed, so colour is never the only sign; digit boxes at
+ *                 least 44 × 44 px; on a phone the code block is one row of chips at least
+ *                 28 px wide and the input row wraps to two lines (boxes, then ring and button),
+ *                 six boxes fitting 358 px (02b §10). Classes are prefixed `sc-`.
+ * Spec:           docs/spec/02b-game-safecracker.md §10; docs/spec/02-game-guess-the-number.md §12
+ */
+.sc-board {
+  display: grid;
+  gap: var(--space-1);
+  container-type: inline-size;
+}
+
+/* Sized by the box the platform gives the code block, so it stays large and short (O35). */
+.sc-line {
+  margin: 0;
+  font-size: clamp(1.05rem, 6.2cqi, 1.9rem);
+  font-weight: var(--font-weight-heading);
+  line-height: 1.15;
+}
+
+.sc-strip {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.sc-chip {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  min-width: 2rem;
+  min-height: 2rem;
+  border-radius: var(--radius);
+  border: 1px solid var(--season, var(--color-border));
+  background: color-mix(in srgb, var(--season, var(--color-accent)) 14%, var(--color-card));
+  color: var(--color-text);
+  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-strong);
+}
+
+/* A fallen digit: struck through, dimmed and crossed — three signs, none of them colour. */
+.sc-chip[data-fallen='true'] {
+  background: var(--color-card);
+  border-style: dashed;
+  border-color: var(--color-border);
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+.sc-cross {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.2rem;
+  font-size: 0.7rem;
+  color: var(--color-text);
+  text-decoration: none;
+}
+
+/* Spring Herald's hint for the whole round: a highlighted line (O35). */
+.sc-hint {
+  margin: 0;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius);
+  border-left: 4px solid var(--season, var(--color-accent));
+  background: color-mix(in srgb, var(--season, var(--color-accent)) 22%, var(--color-card));
+  color: var(--color-text);
+  font-weight: var(--font-weight-strong);
+}
+
+.sc-input {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.sc-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.sc-boxes {
+  display: flex;
+  gap: 0.375rem;
+}
+
+.sc-box {
+  width: max(var(--hit-target, 44px), 2.75rem);
+  height: max(var(--hit-target, 44px), 3.25rem);
+  padding: 0;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-card);
+  color: var(--color-text);
+  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+  font-size: var(--font-size-lead);
+  text-align: center;
+}
+
+.sc-box:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 1px;
+}
+
+/* The large Try code button */
+.sc-go {
+  flex: none;
+  min-height: 3.25rem;
+  padding: 0 1.5rem;
+  font-size: var(--font-size-lead);
+}
+
+.sc-message {
+  margin: 0;
+  color: var(--color-danger);
+}
+
+.sc-result {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+}
+
+.sc-secret {
+  margin: 0;
+  font-size: var(--font-size-lead);
+}
+
+.sc-code {
+  font-family: ui-monospace, 'SF Mono', Consolas, monospace;
+  letter-spacing: 0.15em;
+}
+
+.sc-players {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: var(--space-1);
+  overflow-y: auto;
+}
+
+.sc-you {
+  font-weight: var(--font-weight-strong);
+}
+
+/* A phone: the line and the strip in one row of compact chips; the boxes on the first line of
+   the input row, the ring and Try code on the second (6 × 44 px + gaps < 358 px). */
+@media (max-width: 899px) {
+  .sc-board {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .sc-line {
+    font-size: var(--font-size-lead);
+  }
+
+  .sc-hint {
+    grid-column: 1 / -1;
+  }
+
+  .sc-strip {
+    flex-wrap: nowrap;
+    gap: 0.125rem;
+  }
+
+  .sc-chip {
+    min-width: 1.75rem;
+    min-height: 1.75rem;
+  }
+
+  .sc-boxes {
+    order: -1;
+    flex: 1 0 100%;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+
+  .sc-go {
+    flex: 1 1 auto;
+  }
+}
