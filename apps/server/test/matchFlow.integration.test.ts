@@ -7,7 +7,9 @@
  * Responsibility: a player without a team is placed in the smallest team when their first
  *                 round starts and keeps it; after their first round `team.choose` is refused
  *                 with TEAM_LOCKED over the socket and over HTTP alike, while a newcomer still
- *                 chooses; the host's close aborts a round only set up, keeps the ended rounds'
+ *                 chooses; a match without teams refuses a team choice with TEAMS_OFF on both
+ *                 ways, places nobody and plays its rounds without teams or team points even
+ *                 when the host asks for them (O34); the host's close aborts a round only set up, keeps the ended rounds'
  *                 results, and every viewer reads the summary; a match without a round closes
  *                 itself after `match.lobbyIdleCloseMin` (not a minute before), never while a
  *                 round runs, aborts a round only set up, says how long it was idle, and a
@@ -116,6 +118,65 @@ describe('the season team, once per match (O26)', () => {
       team: 'autumn',
     });
     expect(late.statusCode).toBe(204);
+  }, 60_000);
+});
+
+// Guesses the shared secret until the round takes it, then waits for the round's end.
+async function win(s: Socket, id: string): Promise<void> {
+  const secrets = await kit.secretsOf(id);
+  const value = secrets.mode === 'shared' ? secrets.value : 0;
+  for (let tries = 0; tries < 80; tries += 1) {
+    if ((await kit.send(s, 'guess', { roundId: id, value })).ok) break;
+    await new Promise((done) => setTimeout(done, 100));
+  }
+  for (let tries = 0; tries < 50; tries += 1) {
+    const st = await kit.clients.host.get(`/api/v1/rounds/${id}/state`);
+    if (st.json<{ status: string }>().status === 'ended') return;
+    await new Promise((done) => setTimeout(done, 100));
+  }
+}
+
+describe('a match without teams (O34)', () => {
+  it('refuses team choices and plays its rounds without teams or team points', async () => {
+    const made = await kit.clients.host.post('/api/v1/matches', {
+      gameId: 'guess-the-number',
+      title: 'no teams',
+      maxPlayers: 10,
+      teamMatch: false,
+    });
+    const code = made.json<{ code: string }>().code;
+    opened.push(code);
+    for (const who of ['player-1', 'player-2'] as const)
+      await kit.clients[who].post(`/api/v1/matches/${code}/join`, {});
+    const [, p1] = await watching(code, ['host', 'player-1', 'player-2']);
+    if (p1 === undefined) throw new Error('sockets');
+    const http = await kit.clients['player-1'].post(`/api/v1/matches/${code}/team`, {
+      team: 'spring',
+    });
+    expect(http.statusCode).toBe(409);
+    expect(http.json<unknown>()).toEqual({ code: 'TEAMS_OFF' });
+    expect(await kit.send(p1, 'team.choose', { code, team: 'spring' })).toMatchObject({
+      ok: false,
+      code: 'TEAMS_OFF',
+    });
+    // The host asks for teams in the round; the match overrules it.
+    const round = await kit.clients.host.post(`/api/v1/matches/${code}/rounds`, {
+      settings: { 'round.countdownS': 3, 'round.teamsOn': true },
+      season: 'spring',
+      startNow: true,
+    });
+    const id = round.json<{ id: string }>().id;
+    const state = (await kit.clients['player-1'].get(`/api/v1/rounds/${id}/state`)).json<{
+      teamsOn: boolean;
+      roster: { team: string | null }[];
+    }>();
+    expect(state.teamsOn).toBe(false);
+    expect(state.roster.map((r) => r.team)).toEqual([null, null, null]);
+    await win(p1, id);
+    expect(Object.values(await teamsOf(code))).toEqual([null, null, null]);
+    const after = await details('player-1', code);
+    expect(after).toMatchObject({ teamMatch: false, teamStandings: [] });
+    expect(after.standings.length).toBeGreaterThan(0);
   }, 60_000);
 });
 

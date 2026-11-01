@@ -8,7 +8,8 @@
  *                 menu opens on its own before the first round, closes with Escape (focus goes
  *                 back to the button) and after a successful action. Inside: while a round
  *                 runs, Start (a created round), End and Abort with a reason; otherwise a form
- *                 with every setting the host chooses per round, prefilled with the
+ *                 with every setting the host chooses per round (in a match without teams not
+ *                 the season teams, O34), prefilled with the
  *                 last round's choices or the document's values and limited to the bounds in
  *                 force (08 §3; the server checks again), the season (In Season when it is
  *                 usable, or one by hand), the halving round only on a halving day; then
@@ -47,8 +48,12 @@ interface RoundFormProps {
   readonly done: (used: Values) => void;
 }
 
+// The settings the host chooses per round; in a match without teams not the teams (O34).
+const shown = (match: MatchDetailsView, key: string) =>
+  !OWN_CONTROLS.has(key) && (match.teamMatch || key !== 'round.teamsOn');
+
 function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
-  const fields = doc.defs.filter((d) => d.hostChooses && !OWN_CONTROLS.has(d.key));
+  const fields = doc.defs.filter((d) => d.hostChooses && shown(match, d.key));
   const [values, setValues] = useState<Values>(() =>
     Object.fromEntries(fields.map((d) => [d.key, last?.[d.key] ?? doc.values[d.key] ?? d.default])),
   );

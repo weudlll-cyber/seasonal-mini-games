@@ -6,7 +6,8 @@
  * Responsibility: the match title with its code and the host menu button; the waiting area
  *                 beside the last result on a wide screen, under it on a phone (T79), with the
  *                 team buttons (the chosen one in its season colour with a check) and the
- *                 player rows (name, team, a filled or hollow connection dot) and the match
+ *                 player rows (name, team, a filled or hollow connection dot; without teams
+ *                 the name and the dot only, O34) and the match
  *                 chat under them; the match
  *                 summary's tables; the host menu's panel over the page
  *                 (opaque, as menus are, scrolling inside itself); the grid of the host's round
@@ -101,6 +102,11 @@
 .match-player-team,
 .match-presence {
   white-space: nowrap;
+}
+
+/* A match without teams (O34): the name and the connection only. */
+.match-players[data-teams='false'] li {
+  grid-template-columns: minmax(0, 1fr) auto;
 }
 
 /* Online: a filled dot; away: a hollow one. The word says it too. */

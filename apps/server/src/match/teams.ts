@@ -9,7 +9,8 @@
  *                 a team is placed in the match's smallest team when their first round starts;
  *                 ties between teams are broken by a hash of the round id and the player key,
  *                 so anyone can recompute the placement (DECISIONS T82). The placed team is
- *                 then stored and fixed like a chosen one.
+ *                 then stored and fixed like a chosen one. A match without teams (O34) places
+ *                 nobody, and its rounds run with the round setting `round.teamsOn` off.
  * Depends on:     node:crypto, @smg/game-sdk (RosterPlayer), ../db/pool, ./matches (types)
  * Used by:        ./play
  * Spec:           docs/spec/02-game-guess-the-number.md §2; docs/spec/03-seasonal-specials.md §5
@@ -19,7 +20,7 @@ import { createHash } from 'node:crypto';
 import type { RosterPlayer } from '@smg/game-sdk';
 
 import type { DbPool } from '../db/pool.js';
-import type { PlayerRow, Team } from './matches.js';
+import type { MatchRow, PlayerRow, Team } from './matches.js';
 
 const TEAMS: readonly Team[] = ['spring', 'summer', 'autumn', 'winter'];
 
@@ -70,6 +71,22 @@ export function placeTeams(
     return { ...p, team: pick };
   });
   return { roster: out, placed };
+}
+
+// The roster as the round gets it: with match teams in a team match, without any otherwise.
+export function teamRoster(
+  match: Pick<MatchRow, 'teamMatch'>,
+  roster: readonly RosterPlayer[],
+  players: readonly PlayerRow[],
+  roundId: string,
+): ReturnType<typeof placeTeams> {
+  if (match.teamMatch) return placeTeams(roster, players, roundId);
+  return { roster: roster.map((p) => ({ ...p, team: null })), placed: [] };
+}
+
+// The host's round choices a match without teams overrules: no team plays its rounds (O34).
+export function teamChoices(match: Pick<MatchRow, 'teamMatch'>): Record<string, unknown> {
+  return match.teamMatch ? {} : { 'round.teamsOn': false };
 }
 
 // An index below `n` from a hash of the round id and the player key (T82).

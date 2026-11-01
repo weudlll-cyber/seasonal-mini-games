@@ -35,6 +35,11 @@ const body = z
     // Through the waiting area, the host starting the round (O24). Off here, so scripted
     // callers keep the direct start; the Quick Test form sends it on by default.
     lobby: z.boolean().default(false),
+    // A team match (O34), as matches are by default.
+    teamMatch: z.boolean().default(true),
+    // Short for scripted callers; the Quick Test form sends the round setting's default, so
+    // the intro screen shows as long as in a normal round (O36).
+    countdownS: z.number().int().min(3).max(30).default(3),
     seedText: z.string().trim().min(1).max(64).optional(),
     season: z.enum(['spring', 'summer', 'autumn', 'winter']).optional(),
   })

@@ -11,7 +11,9 @@
  *                 the four team buttons, the chosen one pressed, in its season colour with its
  *                 icon in the text colour and a check (03 §5); afterwards no buttons, and
  *                 beside a result the area holds only the status line and the players. Team
- *                 refusals in plain words. The match chat, when there is one, sits under the
+ *                 refusals in plain words. A match without teams (O34) shows no team text,
+ *                 buttons or column: the rows hold the name and the connection only. The match
+ *                 chat, when there is one, sits under the
  *                 players in a box of its own height that scrolls inside itself (07 §2).
  * Depends on:     react, @smg/contracts, ../live/socket, ../round/roundText, ../season/*
  * Used by:        ./MatchPage
@@ -78,8 +80,19 @@ function Teams({ match, viewerKey, reload }: Props): ReactElement {
 // alone: a filled or a hollow dot, and the word).
 function Players({ match }: { readonly match: MatchDetailsView }): ReactElement {
   const connected = new Set(match.connected);
+  const team = (t: TeamName | null): ReactElement =>
+    t === null ? (
+      <span className="smg-muted">no team yet</span>
+    ) : (
+      <span className="match-player-team">
+        <span aria-hidden="true">
+          <SeasonIcon season={t} size="1rem" />
+        </span>{' '}
+        {SEASON_NAMES[t]}
+      </span>
+    );
   return (
-    <ul className="match-players" data-testid="match-players">
+    <ul className="match-players" data-testid="match-players" data-teams={match.teamMatch}>
       {match.players.map((p) => {
         const online = connected.has(p.playerKey);
         return (
@@ -87,16 +100,7 @@ function Players({ match }: { readonly match: MatchDetailsView }): ReactElement 
           // does not render them.
           <li key={p.playerKey}>
             <span className="match-player-name">{p.name}</span>{' '}
-            {p.team === null ? (
-              <span className="smg-muted">no team yet</span>
-            ) : (
-              <span className="match-player-team">
-                <span aria-hidden="true">
-                  <SeasonIcon season={p.team} size="1rem" />
-                </span>{' '}
-                {SEASON_NAMES[p.team]}
-              </span>
-            )}{' '}
+            {match.teamMatch ? <>{team(p.team)} </> : null}
             <span className="match-presence" data-online={online}>
               <span className="match-dot" aria-hidden="true" /> {online ? 'online' : 'away'}
             </span>
@@ -121,8 +125,8 @@ function stateText(match: MatchDetailsView): string {
 
 export function WaitingArea(p: Props): ReactElement {
   const { match } = p;
-  // The team is chosen once, before the player's first round (O26).
-  const choosing = match.youPlayer && !match.teamLocked;
+  // The team is chosen once, before the player's first round (O26), in a team match (O34).
+  const choosing = match.teamMatch && match.youPlayer && !match.teamLocked;
   return (
     <section
       className="smg-panel smg-stack match-waiting"
@@ -131,7 +135,7 @@ export function WaitingArea(p: Props): ReactElement {
     >
       <h2 id="waiting-title">{p.after ? 'Next round' : 'Before the round'}</h2>
       <p data-testid="waiting-state">{stateText(match)}</p>
-      {choosing || (!match.youPlayer && !p.after) ? (
+      {choosing || (match.teamMatch && !match.youPlayer && !p.after) ? (
         <p className="smg-muted">
           Pick a season team for this match: in shared rounds the winner’s team gets a point. You
           keep it for the whole match; without a choice you join the smallest team when your first

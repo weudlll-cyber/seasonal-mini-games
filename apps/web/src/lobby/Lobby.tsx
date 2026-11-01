@@ -5,11 +5,12 @@
  *
  * Responsibility: the public matches in the lobby or running (06 §3.1 `GET /matches`), a field
  *                 to go to a match by its code, for hosts (`match.create`) a form to open a
- *                 match of a registered game, and in development builds the way to the Quick
+ *                 match of a registered game (title, players at most, and whether it is a team
+ *                 match, O34), and in development builds the way to the Quick
  *                 Test, and the lobby's chat room (07 §2). Signed-out visitors are asked to
  *                 sign in or register.
  * Depends on:     react, @smg/contracts, ../chat/ChatPanel, ../shell/*, ../components/fields,
- *                 ../round/roundText (refusals)
+ *                 ../round/roundText (refusals), ../match/formHelp
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/02-game-guess-the-number.md §2; docs/spec/06-data-model-api-realtime.md §3.1
  */
@@ -17,7 +18,8 @@ import type { GameInfoView, MatchSummaryView } from '@smg/contracts';
 import { lazy, Suspense, useEffect, useState, type ReactElement, type SyntheticEvent } from 'react';
 
 import { ChatPanel } from '../chat/ChatPanel.js';
-import { NumberField, TextField } from '../components/fields.js';
+import { NumberField, SwitchField, TextField } from '../components/fields.js';
+import { FORM_HELP } from '../match/formHelp.js';
 import { codeText } from '../round/roundText.js';
 import { api, ApiError } from '../shell/http.js';
 import { hrefOf, navigate } from '../shell/router.js';
@@ -30,20 +32,11 @@ const QuickTestLink = import.meta.env.DEV
 
 const LOBBY = { kind: 'lobby' } as const;
 
-function OpenMatch(): ReactElement {
-  const [games, setGames] = useState<readonly GameInfoView[]>([]);
-  const [title, setTitle] = useState('');
-  const [maxPlayers, setMaxPlayers] = useState(50);
+// Opens the match and goes to it; a refusal in plain words.
+function useOpenMatch(games: readonly GameInfoView[]) {
   const [problem, setProblem] = useState<string | null>(null);
-  useEffect(() => {
-    void api<{ games: GameInfoView[] }>('/games').then((r) => {
-      setGames(r.games);
-    });
-  }, []);
-  const open = (e: SyntheticEvent): void => {
-    e.preventDefault();
-    const body = { gameId: games[0]?.id, title, maxPlayers };
-    api<MatchSummaryView>('/matches', { method: 'POST', body })
+  const openWith = (body: { title: string; maxPlayers: number; teamMatch: boolean }): void => {
+    api<MatchSummaryView>('/matches', { method: 'POST', body: { gameId: games[0]?.id, ...body } })
       .then((m) => {
         navigate({ name: 'match', code: m.code });
       })
@@ -52,6 +45,24 @@ function OpenMatch(): ReactElement {
         const worded = code === 'MATCH_TOO_LARGE' || code === 'MAINTENANCE';
         setProblem(worded ? codeText(code) : 'The match could not be opened.');
       });
+  };
+  return { problem, openWith };
+}
+
+function OpenMatch(): ReactElement {
+  const [games, setGames] = useState<readonly GameInfoView[]>([]);
+  const [title, setTitle] = useState('');
+  const [maxPlayers, setMaxPlayers] = useState(50);
+  const [teamMatch, setTeamMatch] = useState(true);
+  const { problem, openWith } = useOpenMatch(games);
+  useEffect(() => {
+    void api<{ games: GameInfoView[] }>('/games').then((r) => {
+      setGames(r.games);
+    });
+  }, []);
+  const open = (e: SyntheticEvent): void => {
+    e.preventDefault();
+    openWith({ title, maxPlayers, teamMatch });
   };
   return (
     <form className="smg-panel smg-stack" onSubmit={open} data-testid="open-match">
@@ -69,6 +80,13 @@ function OpenMatch(): ReactElement {
         min={2}
         max={1_000}
         onChange={setMaxPlayers}
+      />
+      <SwitchField
+        label="Team match"
+        help={FORM_HELP.teamMatch}
+        checked={teamMatch}
+        testId="team-match"
+        onChange={setTeamMatch}
       />
       <p className="smg-muted">Game: {games[0]?.name ?? '…'}</p>
       {problem === null ? null : (

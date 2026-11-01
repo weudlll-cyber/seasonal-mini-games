@@ -32,6 +32,7 @@ const CODES: Readonly<Record<string, string>> = {
   NOT_ENOUGH_PLAYERS: 'Not enough connected players to start.',
   TEAMS_LOCKED: 'Teams are locked while a round runs.',
   TEAM_LOCKED: 'You keep your team for the whole match.',
+  TEAMS_OFF: 'This match is played without teams.',
   MATCH_FULL: 'This match is full.',
   KICKED: 'You were removed from this match by the host.',
   MATCH_CLOSED: 'This match has ended.',

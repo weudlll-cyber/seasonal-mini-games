@@ -35,6 +35,8 @@ export interface MatchSummaryView {
   readonly visibility: 'public' | 'unlisted';
   readonly maxPlayers: number;
   readonly countsForLeaderboard: boolean;
+  // The season teams play (O34): without, no view shows a team.
+  readonly teamMatch: boolean;
   readonly createdAt: number;
 }
 

@@ -43,6 +43,7 @@ describe('the forms', () => {
     const help = helpByLabel();
     expect([...help.keys()]).toEqual([
       'Start from the lobby',
+      'Team match',
       'Seed',
       'Secret',
       'Season',

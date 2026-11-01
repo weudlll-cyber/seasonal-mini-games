@@ -8,7 +8,8 @@
  *                 confirmed, Cancel asks nothing of the server; the summary says how the match
  *                 ended (the host, the idle close with its minutes, an abort with its reason),
  *                 how many rounds were played, every player's points and wins in standings
- *                 order, the teams over the match, and links back to Play.
+ *                 order, the teams over the match (none without teams, O34), and links back
+ *                 to Play.
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./EndMatch, ./MatchSummary
  *                 (with ../shell/http replaced)
  * Spec:           docs/spec/02-game-guess-the-number.md §2
@@ -62,6 +63,7 @@ const ended: MatchDetailsView = {
   visibility: 'public',
   maxPlayers: 10,
   countsForLeaderboard: true,
+  teamMatch: true,
   createdAt: 0,
   youHost: false,
   youPlayer: true,
@@ -97,6 +99,12 @@ describe('the match summary', () => {
       ' Summer: 2 points Winter: 0 points',
     );
     expect(screen.getByRole('link', { name: 'Back to Play' }).getAttribute('href')).toBe('#/');
+  });
+
+  it('leaves the team standing out of a match without teams (O34)', () => {
+    render(<MatchSummary match={{ ...ended, teamMatch: false }} viewerKey="a" />);
+    expect(screen.queryByTestId('match-teams')).toBeNull();
+    expect(screen.getByTestId('match-summary').textContent).not.toMatch(/team/i);
   });
 
   it('says why it ended: the idle close with its minutes, or an abort with its reason', () => {

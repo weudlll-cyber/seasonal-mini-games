@@ -47,6 +47,8 @@ const openBody = z
     visibility: z.enum(['public', 'unlisted']).default('public'),
     maxPlayers: z.number().int().min(2).max(1_000),
     countsForLeaderboard: z.boolean().default(true),
+    // A team match by default, as every match was before O34.
+    teamMatch: z.boolean().default(true),
   })
   .strict();
 const listQuery = z.object({
@@ -71,6 +73,7 @@ export function summaryOf(m: MatchRow): MatchSummaryView {
     visibility: m.visibility,
     maxPlayers: m.maxPlayers,
     countsForLeaderboard: m.countsForLeaderboard,
+    teamMatch: m.teamMatch,
     createdAt: m.createdAt,
   };
 }

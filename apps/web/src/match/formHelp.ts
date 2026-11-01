@@ -19,4 +19,5 @@ export const FORM_HELP = {
   bots: 'Players run by the server; they guess from their own answers.',
   fast: 'Specials every few seconds instead of every half minute.',
   lobby: 'Wait in the lobby while the bots join, pick a team, then start the round yourself.',
+  teamMatch: 'Players pick a season team, and the winner’s team scores the round.',
 } as const;

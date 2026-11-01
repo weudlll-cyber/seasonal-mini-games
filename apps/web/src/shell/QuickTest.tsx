@@ -6,8 +6,8 @@
  * Responsibility: choose whether to start from the lobby (on by default, O24), the seed text
  *                 (the same text gives the same secret and season), the secret mode, the
  *                 season (or the seed's), what others see, the bots, the cooldown, the lowest
- *                 and highest number, whether the range is shown, the closeness comments (O21)
- *                 and the fast test profile; start it (`POST /dev/quicktest`) and go to the
+ *                 and highest number, whether the range is shown, the closeness comments (O21),
+ *                 the fast test profile and whether it is a team match (O34); start it (`POST /dev/quicktest`) and go to the
  *                 match, where the player hosts it: in the waiting area, where the bots join
  *                 and the player starts the round from the host menu, or with the round
  *                 counting down at once. Every field has
@@ -69,6 +69,7 @@ interface Extra {
   readonly bots: number;
   readonly fast: boolean;
   readonly lobby: boolean;
+  readonly teamMatch: boolean;
 }
 
 type Values = Readonly<Record<string, SettingValue>>;
@@ -110,6 +111,7 @@ function bodyOf(values: Values, extra: Extra) {
     bots: extra.bots,
     fast: extra.fast,
     lobby: extra.lobby,
+    teamMatch: extra.teamMatch,
     ...(extra.seedText.trim() === '' ? {} : { seedText: extra.seedText }),
     ...(extra.season === '' ? {} : { season: extra.season }),
   };
@@ -159,7 +161,7 @@ function extraFields(p: { readonly extra: Extra; readonly set: (e: Partial<Extra
   };
 }
 
-// The two switches that are not settings: fast specials and the start from the lobby.
+// The switches that are not settings: fast specials, the start from the lobby, team match.
 function switchFields(p: { readonly extra: Extra; readonly set: (e: Partial<Extra>) => void }) {
   const { extra, set } = p;
   return {
@@ -184,6 +186,17 @@ function switchFields(p: { readonly extra: Extra; readonly set: (e: Partial<Extr
         }}
       />
     ),
+    teamMatch: (
+      <SwitchField
+        label="Team match"
+        help={FORM_HELP.teamMatch}
+        checked={extra.teamMatch}
+        testId="quick-team-match"
+        onChange={(teamMatch) => {
+          set({ teamMatch });
+        }}
+      />
+    ),
   };
 }
 
@@ -195,6 +208,7 @@ export function QuickTest(): ReactElement {
     bots: 3,
     fast: true,
     lobby: true,
+    teamMatch: true,
   });
   const [problem, setProblem] = useState<string | null>(null);
   const set = (key: string, v: SettingValue): void => {
@@ -227,6 +241,7 @@ export function QuickTest(): ReactElement {
       </p>
       <div className="host-form">
         {more.lobby}
+        {more.teamMatch}
         {more.seed}
         <SettingFields keys={KEYS.slice(0, 1)} values={values} set={set} />
         {more.season}

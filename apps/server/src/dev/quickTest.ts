@@ -47,6 +47,10 @@ export interface QuickTestInput {
   readonly halving: boolean;
   // Through the waiting area: the host starts the round (O24).
   readonly lobby: boolean;
+  // A team match (O34): without it the bots join without a team.
+  readonly teamMatch: boolean;
+  // The round's countdown, the intro screen (O36).
+  readonly countdownS: number;
   readonly seedText?: string | undefined;
   readonly season?: Season | undefined;
 }
@@ -72,6 +76,18 @@ async function joinBot(play: Play, match: MatchRow, key: string, team: Season | 
   play.presence.enter(match.id, key);
   await play.join(match, { key, accountId: null });
   if (team !== null) await play.chooseTeam(match, key, team);
+}
+
+// From the lobby: the bots arrive one after another, each with a random team in a team match.
+// One that cannot join any more (the match was closed) is simply missing.
+function arrive(play: Play, match: MatchRow, bots: readonly string[]): void {
+  void (async () => {
+    for (const key of bots) {
+      await wait(ARRIVAL_MS / bots.length);
+      const team = match.teamMatch ? (SEASONS[randomInt(4)] ?? 'spring') : null;
+      await joinBot(play, match, key, team);
+    }
+  })().catch(() => undefined);
 }
 
 export interface QuickTests {
@@ -106,6 +122,7 @@ export function quickTests(play: Play, pool: Parameters<typeof openMatch>[0]): Q
       visibility: 'unlisted',
       maxPlayers: input.bots + 1,
       countsForLeaderboard: false,
+      teamMatch: input.teamMatch,
       hostId: input.playerId,
     });
     const bots = Array.from(
@@ -121,16 +138,9 @@ export function quickTests(play: Play, pool: Parameters<typeof openMatch>[0]): Q
       seed,
       fast: input.fast,
     });
-    if (input.lobby) {
-      // The answer goes back now; the bots arrive in the waiting area meanwhile. One that
-      // cannot join any more (the match was closed) is simply missing.
-      void (async () => {
-        for (const key of bots) {
-          await wait(ARRIVAL_MS / bots.length);
-          await joinBot(play, match, key, SEASONS[randomInt(4)] ?? 'spring');
-        }
-      })().catch(() => undefined);
-    } else {
+    // From the lobby the answer goes back now; the bots arrive in the waiting area meanwhile.
+    if (input.lobby) arrive(play, match, bots);
+    else {
       const roster = [input.playerId, ...bots].map((playerId) => ({ playerId, team: null }));
       await play.startRound(match, round, roster);
     }
@@ -143,7 +153,7 @@ function choicesOf(input: QuickTestInput): Readonly<Record<string, unknown>> {
   return {
     'round.secretMode': input.mode,
     'round.cooldownS': input.cooldownS,
-    'round.countdownS': 3,
+    'round.countdownS': input.countdownS,
     'round.feedbackVisibility': input.visibility,
     'round.rangeLow': input.rangeLow,
     'round.rangeHigh': input.rangeHigh,

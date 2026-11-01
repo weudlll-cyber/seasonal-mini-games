@@ -33,6 +33,8 @@ export interface MatchRow {
   readonly visibility: 'public' | 'unlisted';
   readonly maxPlayers: number;
   readonly countsForLeaderboard: boolean;
+  // The season teams play in this match (O34).
+  readonly teamMatch: boolean;
   readonly hostId: string | null;
   readonly createdAt: number;
 }
@@ -53,12 +55,13 @@ interface Row {
   visibility: 'public' | 'unlisted';
   max_players: number;
   counts_for_leaderboard: boolean;
+  team_match: boolean;
   created_by: string | null;
   created_at: Date;
 }
 
 const COLUMNS = `id::text, code, game_id, title, status, visibility, max_players,
-  counts_for_leaderboard, created_by::text, created_at`;
+  counts_for_leaderboard, team_match, created_by::text, created_at`;
 
 const toMatch = (r: Row): MatchRow => ({
   id: r.id,
@@ -69,6 +72,7 @@ const toMatch = (r: Row): MatchRow => ({
   visibility: r.visibility,
   maxPlayers: r.max_players,
   countsForLeaderboard: r.counts_for_leaderboard,
+  teamMatch: r.team_match,
   hostId: r.created_by,
   createdAt: r.created_at.getTime(),
 });
@@ -79,6 +83,7 @@ export interface NewMatch {
   readonly visibility: 'public' | 'unlisted';
   readonly maxPlayers: number;
   readonly countsForLeaderboard: boolean;
+  readonly teamMatch: boolean;
   readonly hostId: string;
 }
 
@@ -91,9 +96,19 @@ export async function openMatch(pool: DbPool, m: NewMatch): Promise<MatchRow> {
     ).join('');
     try {
       const r = await pool.query<Row>(
-        `INSERT INTO smg.matches (code, game_id, title, visibility, max_players, counts_for_leaderboard, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING ${COLUMNS}`,
-        [code, m.gameId, m.title, m.visibility, m.maxPlayers, m.countsForLeaderboard, m.hostId],
+        `INSERT INTO smg.matches (code, game_id, title, visibility, max_players,
+           counts_for_leaderboard, team_match, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING ${COLUMNS}`,
+        [
+          code,
+          m.gameId,
+          m.title,
+          m.visibility,
+          m.maxPlayers,
+          m.countsForLeaderboard,
+          m.teamMatch,
+          m.hostId,
+        ],
       );
       const row = r.rows[0];
       if (row !== undefined) return toMatch(row);

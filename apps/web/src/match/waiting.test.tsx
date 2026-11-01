@@ -10,7 +10,8 @@
  *                 player's team is fixed there are no buttons, and beside a result only the
  *                 status line and the players remain; every player row names the team (or
  *                 "no team yet") and, apart from it, "online" or "away" with a dot; the line on
- *                 top says whether the next round is set up and who acts.
+ *                 top says whether the next round is set up and who acts; a match without
+ *                 teams shows no team text, buttons or column (O34).
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./WaitingArea
  * Spec:           docs/spec/02-game-guess-the-number.md §2; docs/spec/03-seasonal-specials.md §5
  */
@@ -32,6 +33,7 @@ const match: MatchDetailsView = {
   visibility: 'unlisted',
   maxPlayers: 4,
   countsForLeaderboard: false,
+  teamMatch: true,
   createdAt: 0,
   youHost: false,
   youPlayer: true,
@@ -117,6 +119,18 @@ describe('the player rows', () => {
     const presence = rows.map((li) => li.querySelector('.match-presence'));
     expect(presence.map((p) => p?.getAttribute('data-online'))).toEqual(['true', 'false', 'true']);
     expect(presence.every((p) => p?.querySelector('.match-dot[aria-hidden="true"]'))).toBe(true);
+  });
+});
+
+describe('a match without teams (O34)', () => {
+  it('shows no team text or buttons, and rows of name and connection only', () => {
+    show({ ...match, teamMatch: false }, 'a');
+    const area = screen.getByTestId('waiting-area');
+    expect(teamButtons()).toHaveLength(0);
+    expect(area.textContent).not.toMatch(/team/i);
+    const rows = [...screen.getByTestId('match-players').querySelectorAll('li')];
+    expect(rows.map((li) => li.children.length)).toEqual([2, 2, 2]);
+    expect(rows[1]?.textContent.replace(/\s+/g, ' ').trim()).toBe('Anna away');
   });
 });
 

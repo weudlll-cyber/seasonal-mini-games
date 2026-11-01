@@ -7,7 +7,8 @@
  *                 minutes without a round, O28; it was aborted with its reason), the number of
  *                 rounds played, each player's total points and wins in standings order (the
  *                 result screen's standings table, ../round/MatchStandings, the viewer's line
- *                 highlighted), the team standing over the match, and a link back to Play.
+ *                 highlighted), the team standing over the match (a team match only, O34),
+ *                 and a link back to Play.
  *                 The server gives the figures; the page renders them.
  * Depends on:     react, @smg/contracts, ../round/MatchStandings, ../round/result.css,
  *                 ../season/*, ../shell/router
@@ -55,7 +56,7 @@ export function MatchSummary({
       </p>
       {/* Without an ended round there is no standing, and the table is left out. */}
       <MatchStandings standings={match.standings} viewerKey={viewerKey} />
-      {match.teamStandings.length === 0 ? null : (
+      {!match.teamMatch || match.teamStandings.length === 0 ? null : (
         <section aria-labelledby="match-teams-title">
           <h2 id="match-teams-title">Teams over the match</h2>
           <ol className="round-teams-result" data-testid="match-teams">

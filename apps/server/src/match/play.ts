@@ -10,7 +10,8 @@
  *                 the players connected right now, the host among them (O16, 02 §4), every one
  *                 with their match team (placed in the smallest team when none, O26); host end
  *                 and abort; team choice once per match (TEAM_LOCKED after the player's first
- *                 round, TEAMS_LOCKED while a round counts down or runs); joining and leaving
+ *                 round, TEAMS_LOCKED while a round counts down or runs, TEAMS_OFF in a match
+ *                 without teams, whose rounds run without them, O34); joining and leaving
  *                 (leaving ends a round whose roster all left, "no players left"); staff kick a
  *                 player, who leaves the same way and whose guesses the running round refuses
  *                 from then on; closing or aborting the match (O27, O28); every change of
@@ -54,7 +55,7 @@ import { admitted } from './rosterRules.js';
 import type { Seasons } from '../seasons/seasons.js';
 import type { Presence } from './presence.js';
 import { PlayerNumbers } from './publicIds.js';
-import { fixTeams, placeTeams, setTeam, teamLocked } from './teams.js';
+import { fixTeams, setTeam, teamChoices, teamLocked, teamRoster } from './teams.js';
 
 export type PlayCode =
   | 'ROUND_RUNNING'
@@ -63,6 +64,7 @@ export type PlayCode =
   | 'NOT_A_HALVING_DAY'
   | 'TEAMS_LOCKED'
   | 'TEAM_LOCKED'
+  | 'TEAMS_OFF'
   | 'MATCH_CLOSED';
 
 // The host's End match (O27).
@@ -180,7 +182,7 @@ export class Play {
       const round = await this.rounds.create(match.gameId, {
         matchId: match.id,
         overrides: doc.overrides,
-        choices: { ...req.choices, 'round.seasonSource': source },
+        choices: { ...req.choices, ...teamChoices(match), 'round.seasonSource': source },
         season,
         seasonSource: source,
         createdBy: hostId,
@@ -219,7 +221,7 @@ export class Play {
     // A given roster (the Quick Test) is taken as it is; others pass the anti-multi rules (05 §6).
     const chosen =
       roster ?? (await admitted(this.pool, this.settings, round.id, this.present(match, players)));
-    const teams = placeTeams(chosen, players, round.id);
+    const teams = teamRoster(match, chosen, players, round.id);
     const values = await this.settings.values('matchmaking');
     const minPlayers = values['match.minPlayersPerRound'] as number;
     const reply = await round.run({
@@ -236,6 +238,7 @@ export class Play {
 
   // Once per match: refused after the player's first round (O26), and while a round runs.
   async chooseTeam(match: MatchRow, playerKey: string, team: Team): Promise<boolean> {
+    if (!match.teamMatch) throw new PlayError('TEAMS_OFF');
     if (await teamLocked(this.pool, match.id, playerKey)) throw new PlayError('TEAM_LOCKED');
     const running = await this.runningRound(match);
     if (running !== null && running.status() !== 'created') throw new PlayError('TEAMS_LOCKED');
