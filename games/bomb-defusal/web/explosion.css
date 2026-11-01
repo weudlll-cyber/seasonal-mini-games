@@ -1,0 +1,80 @@
+/*
+ * @file   games/bomb-defusal/web/explosion.css
+ * @module games/bomb-defusal/web
+ * @brief  The explosion's flash over the screen: at most twice a second, static with reduced motion.
+ *
+ * Responsibility: the tinted layer over the screen for about 1 s with the icon and "Boom!" on a
+ *                 surface pill in the text colour (contrast from the design tokens, light and
+ *                 dark); two flashes in the second and a shake, under three flashes a second
+ *                 (WCAG 2.3.1); with reduced motion one static tinted frame and no movement.
+ *                 Never in the way of a tap. Classes start with `bd-`.
+ * Spec:           docs/spec/02c-game-bomb-defusal.md §5.2
+ */
+/* The explosion: over the screen for about 1 s, never in the way of a tap. */
+.bd-boom {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: var(--space-1);
+  pointer-events: none;
+  background: color-mix(in srgb, var(--color-danger) 30%, transparent);
+  animation: bd-flash 1s linear both;
+}
+
+.bd-boom strong {
+  padding: 0.3rem 1rem;
+  border-radius: var(--radius-pill);
+  border: 3px solid var(--color-danger);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 2rem;
+  animation: bd-shake 0.25s ease-in-out 4;
+}
+
+.bd-boom-icon {
+  font-size: 4rem;
+  line-height: 1;
+}
+
+/* Two flashes in the second: under three a second (WCAG 2.3.1). */
+@keyframes bd-flash {
+  0% {
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  45% {
+    opacity: 0.35;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes bd-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
+}
+
+/* Reduced motion: one static tinted frame with the icon and "Boom!", no movement. */
+@media (prefers-reduced-motion: reduce) {
+  .bd-boom,
+  .bd-boom strong {
+    animation: none;
+  }
+}

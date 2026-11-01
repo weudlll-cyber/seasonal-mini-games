@@ -1,0 +1,276 @@
+/*
+ * @file   games/bomb-defusal/web/bd.css
+ * @module games/bomb-defusal/web
+ * @brief  Styles of the Seasonal Bomb Defusal panels: bomb block, slots, wire buttons, result.
+ *
+ * Responsibility: text colours only from the design tokens (light and dark); wire colours are
+ *                 swatch fills with the wire's name in text beside them, each swatch with a
+ *                 border in the text colour (3:1 against the background, white and black
+ *                 included); wire buttons, Undo, Clear and Cut at least 44 px (`--hit-target`);
+ *                 wires in one row on a desktop (two rows of four with 8), two rows of up to
+ *                 four on a phone; the explosion's own styles are ./explosion.css. Every
+ *                 class starts with `bd-`. Layouts work down to 390 px wide.
+ * Spec:           docs/spec/02c-game-bomb-defusal.md §5.2, §11
+ */
+.bd-bomb {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.bd-bomb-title {
+  margin: 0;
+  font-size: var(--font-size-lead);
+  font-weight: var(--font-weight-heading);
+  line-height: 1.2;
+}
+
+.bd-bomb-note {
+  margin: 0;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+/* Spring Herald's hint for the whole round: a highlighted line (O35). */
+.bd-hint {
+  margin: 0;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius);
+  border-left: 4px solid var(--season, var(--color-accent));
+  background: color-mix(in srgb, var(--season, var(--color-accent)) 22%, var(--color-card));
+  font-weight: var(--font-weight-strong);
+}
+
+.bd-chips,
+.bd-sequence {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.bd-sequence {
+  counter-reset: bd-step;
+}
+
+/* A numbered chip of a revealed sequence: "1", "2", … before the chip. */
+.bd-sequence li::before {
+  counter-increment: bd-step;
+  content: counter(bd-step) '. ';
+  font-variant-numeric: tabular-nums;
+}
+
+.bd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-card);
+  font-size: var(--font-size-small);
+}
+
+/* A harmless wire: struck through, and it says so in words. */
+.bd-chip[data-harmless='true'] .bd-chip-name {
+  text-decoration: line-through;
+}
+
+.bd-chip-note,
+.bd-wire-note {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+/* A wire's colour: a fill only, its name always beside it. */
+.bd-swatch {
+  flex: none;
+  inline-size: 0.9rem;
+  block-size: 0.9rem;
+  border-radius: 50%;
+  border: 2px solid var(--color-text);
+}
+
+.bd-swatch[data-wire='red'] {
+  background: #d32f2f;
+}
+.bd-swatch[data-wire='blue'] {
+  background: #1e5bd6;
+}
+.bd-swatch[data-wire='yellow'] {
+  background: #f5c518;
+}
+.bd-swatch[data-wire='green'] {
+  background: #2e9e48;
+}
+.bd-swatch[data-wire='white'] {
+  background: #ffffff;
+}
+.bd-swatch[data-wire='black'] {
+  background: #111111;
+}
+.bd-swatch[data-wire='orange'] {
+  background: #f57c00;
+}
+.bd-swatch[data-wire='purple'] {
+  background: #7b3fbf;
+}
+
+/* The input row: slots, wire buttons, then the ring with Undo, Clear and Cut. */
+.bd-input {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.bd-slots {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  gap: 0.3rem;
+}
+
+.bd-slot {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 2.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.3rem;
+  border-radius: var(--radius);
+  border: 1px dashed var(--color-border-strong);
+  overflow: hidden;
+}
+
+.bd-slot[data-filled='true'] {
+  border-style: solid;
+}
+
+/* Slot 1 with Spring Herald's hint: a highlighted outline. */
+.bd-slot[data-hint='true'] {
+  outline: 3px solid var(--season, var(--color-accent));
+  outline-offset: -1px;
+}
+
+.bd-slot-number {
+  font-weight: var(--font-weight-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.bd-slot-hint {
+  font-size: var(--font-size-small);
+  white-space: nowrap;
+}
+
+.bd-slot .bd-chip {
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+/* One row of wires on a desktop, two rows of four with 8 wires. */
+.bd-wires {
+  display: grid;
+  grid-template-columns: repeat(var(--bd-cols, 6), minmax(0, 1fr));
+  gap: 0.3rem;
+}
+
+.bd-wires[data-count='4'] {
+  --bd-cols: 4;
+}
+.bd-wires[data-count='5'] {
+  --bd-cols: 5;
+}
+.bd-wires[data-count='7'] {
+  --bd-cols: 7;
+}
+.bd-wires[data-count='8'] {
+  --bd-cols: 4;
+}
+
+.bd-wire {
+  min-height: var(--hit-target);
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0 0.4rem;
+}
+
+.bd-wire[data-harmless='true'] .bd-wire-name {
+  text-decoration: line-through;
+}
+
+.bd-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.bd-action {
+  min-height: var(--hit-target);
+  padding-inline: var(--space-2);
+}
+
+.bd-cut {
+  flex: 1 1 auto;
+  min-height: var(--hit-target);
+  font-size: var(--font-size-lead);
+}
+
+.bd-message {
+  margin: 0;
+  color: var(--color-danger);
+}
+
+/* A phone: two rows of up to four wires; the row stays short above the bottom edge. */
+@media (max-width: 899px) {
+  .bd-wires {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .bd-bomb-title {
+    font-size: var(--font-size-body);
+  }
+
+  .bd-slot-number {
+    font-size: var(--font-size-small);
+  }
+}
+
+.bd-result {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+}
+
+.bd-secret {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--font-size-lead);
+}
+
+.bd-secret p {
+  margin: 0;
+}
+
+.bd-players {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: var(--space-1);
+  overflow-y: auto;
+}
+
+.bd-players li {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.bd-you {
+  font-weight: var(--font-weight-strong);
+}
