@@ -25,6 +25,8 @@ Every round belongs to exactly one of the four seasons (owner). The season is ch
 
 With the special off, the round still carries its season for visuals and teams, but plays by the plain rules of [02](02-game-guess-the-number.md).
 
+This section words Spring Herald, Leaf Fall and halving for Guess The Number. The other games give them their own form (a revealed digit, wire colour or map quarter; fallen digits, harmless wires or fallen cells; Seasonal Target's halved map), each in its own section ([02b](02b-game-safecracker.md), [02c](02c-game-bomb-defusal.md), [02d](02d-game-seasonal-target.md)), under the same principles (§1) and the same candidate rule of owner decision 37 (§2.3). Heatwave and Frost are the platform's and apply to every game unchanged. Safecracker and Bomb Defusal have no halving; a halving day runs a normal season round for them, as owner decision 29 does for a hidden range.
+
 ### 2.1 Spring — Spring Herald
 
 - **Trigger:** `opensAt`, once.

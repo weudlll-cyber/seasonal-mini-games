@@ -54,4 +54,4 @@ Listed in the order of the vision. Each one starts only after an owner decision 
 5. Seasonal Higher Or Lower
 6. Seasonal Mystery Object
 
-Whether Guess The Number, Safecracker, Bomb Defusal and Seasonal Target share one guess engine is an architect decision, taken when the second of these games starts (DECISIONS T21). Until then, Guess The Number is built without that generalisation (simplicity, [01](01-vision.md) §3), but it does not rule it out: secret, guess and feedback live in their own files of the game module.
+Seasonal Target, Seasonal Safecracker and Seasonal Bomb Defusal are the next games (owner, decision 38): their designs are [02d](02d-game-seasonal-target.md), [02b](02b-game-safecracker.md) and [02c](02c-game-bomb-defusal.md), with the architect's rules as proposals to confirm once the owner has played. They and Guess The Number share one guess engine ([04](04-software-architecture.md) §4.7, DECISIONS T117, which closes T21).

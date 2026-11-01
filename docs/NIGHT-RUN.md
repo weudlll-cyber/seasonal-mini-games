@@ -2,6 +2,31 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Night 4 (2026-11-01)
+
+Branch `feat/guess-games` from `master` `10f4cd3`. Nothing goes to `master`: the owner plays the games first. 14 logical cores; at most three subagents at once (one per new game), the lead alone on the shared packages.
+
+| Piece              | State | What                                                                                                                                                      | Commit                            |
+| ------------------ | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| N0 spec            | done  | The guess engine (04 §4.7), 02b Safecracker, 02c Bomb Defusal, 02d Seasonal Target, settings (08 §3.1–§3.3), tests (09), threats (05), O38–O41, T117–T120 | the commit that adds this section |
+| N1 engine          | open  | —                                                                                                                                                         | —                                 |
+| N2 Safecracker     | open  | —                                                                                                                                                         | —                                 |
+| N3 Bomb Defusal    | open  | —                                                                                                                                                         | —                                 |
+| N4 Seasonal Target | open  | —                                                                                                                                                         | —                                 |
+| N5 game choice     | open  | —                                                                                                                                                         | —                                 |
+| N6 checks          | open  | —                                                                                                                                                         | —                                 |
+| N7 handover        | open  | —                                                                                                                                                         | —                                 |
+
+**Needs the owner:** the proposals in [OPEN.md](OPEN.md) under "To confirm after the owner has played" (nothing blocks the night).
+
+### N0 — spec first
+
+- Built: the spec only, no code. Engine decision T117 closes T21 and supersedes R7.
+- Lines: docs/spec/02b-game-safecracker.md new, 128 lines; 02c-game-bomb-defusal.md new, 135 lines; 02d-game-seasonal-target.md new, 137 lines; 04 +29, 05 +31, 08 +36, 09 +41, 03 +2, README +3, 02 ±1, 11 ±1; DECISIONS +O38–O41, T117–T120 (T21, R7 superseded); OPEN +50; BACKLOG +3.
+- Drafted by three subagents in parallel (one file each), merged and checked by the lead; their gaps were decided as proposals (OPEN): Safecracker's and Bomb Defusal's tier tables rescaled so every tier occurs; the explosion penalty under Frost as an accepted residual risk instead of a platform special case; Seasonal Target's O39 choice as a round setting (spec conflict in OPEN).
+- Reused: Guess The Number's sections (02 §2–§12) are cited, not repeated; the platform's special settings, Heatwave and Frost apply unchanged.
+- Noticed, left alone: every game's settings document carries the platform's `autumn.count` and `round.halving`; Safecracker and Bomb Defusal use their own per-fall setting and have no halving, so those keys mean nothing there (listed in OPEN).
+
 ## Leaf Fall (2026-11-01, day task)
 
 On `night/2026-10-27`. Nothing goes to `master`.

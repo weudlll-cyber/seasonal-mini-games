@@ -25,6 +25,56 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 
 **(ab) The countdown before a round (2026-11-01).** The countdown is now the round's intro screen (owner decision 36): the season, its special and what it does, the secret and its range, the cooldown and the seconds left. Proposal: `round.countdownS` 10 s instead of 5 s, so the screen can be read; the range stays 3–30 s (02 §3, 08 §3; DECISIONS T109).
 
+## To confirm after the owner has played (night 4)
+
+The architect's rules of 2026-11-01 for the three new games (owner decision 38), built as written; each is a proposal until the owner has played. Engine: DECISIONS T117–T120.
+
+**Seasonal Safecracker**
+
+- Safecracker's rules as a whole (02b): Mastermind feedback `{ exact, near }` with repeats, code length 3–6 (default 4), digits 4–10 (default 10), repeats allowed.
+- Safecracker validation codes `CODE_INVALID` and `DIGIT_REMOVED`, checked in the order of 02b §4.
+- Safecracker tier table (fixed): score (2·exact + near) / (2·length) with cold < 0.25, cool < 0.45, warm < 0.60, hot < 0.75, burning otherwise; way off at score 0; just missed at length − 1 exact; a fixed proposal table, not settings.
+- Safecracker Spring Herald: one position's digit revealed (shared to all, individual each their own).
+- Safecracker Leaf Fall: `autumn.digitsPerFall` digits per fall (default 1, 1–3), candidates per 02b §7.3 (0/0 answers prove absence under shared `full`), falls end when no candidate is left; `autumn.count` and `autumn.minRemaining` unused.
+- Safecracker has no halving; a halving day runs a normal season round.
+- Safecracker closest miss: most exact, then most near, then earlier ("Closest: Anna, 3 right place, 1 wrong place (0427).").
+- Safecracker screen: per-digit boxes with auto-advance, filled/hollow pegs plus text, the digit strip as the Leaf Fall panel, input row on two lines on a phone.
+
+**Seasonal Bomb Defusal**
+
+- Bomb Defusal: wires 6 (4–8), cuts 4 (3–6), palette order red, blue, yellow, green, white, black, orange, purple.
+- Bomb Defusal: feedback is the length of the correct start; a wrong first cut explodes.
+- Bomb Defusal: explosion penalty default 5 s, maximum 30 s, chosen per match (O40 decides only that the host chooses and 0 is allowed).
+- Bomb Defusal (residual risk): the explosion penalty is part of the cooldown at once (T120), so under Frost the guesser's ring shows a wrong first cut up to `winter.delayS` early, and another player's longer cooldown may be noticed where the platform shows cooldown state.
+- Bomb Defusal: tier rule: 0 wayOff, cuts − 1 justMissed, k = 1 … cuts − 2 spread evenly over cold … burning.
+- Bomb Defusal: Spring Herald names the first wire to cut.
+- Bomb Defusal: Leaf Fall marks `autumn.wiresPerFall` (1, 1–2) harmless wires; falls stop when no candidate is left ("Leaf Fall: no more harmless wires."). Outside shared `full` candidates exclude wires used in any guess, so falls usually end after the first few sequences — judge after playing.
+- Bomb Defusal: in individual mode with several players there is often no wire outside every bomb, so Leaf Fall does nothing — accept, or give each player their own marks (same count, same moment, as Spring Herald)?
+- Bomb Defusal: no halving; a halving day runs a normal season round.
+- Bomb Defusal: closest miss is the longest correct start, no line when it is 0.
+- Bomb Defusal: keyboard 1–8 for wires, Backspace Undo, Escape Clear, Enter Cut; the explosion animation (about 1 s, static flash with reduced motion).
+
+**Seasonal Target**
+
+Spec conflicts:
+
+- O39 says per match; built as the host's round setting, chosen in the round form (the match keeps it unless the host changes it). (02d §3)
+
+To confirm after the owner has played:
+
+- 02d §6: others' dots on the map are only their newest 60 guesses (engine view limit, T74).
+- 02d §3: map size 50 × 50 (each 20–100) as host settings.
+- 02d §4: rejection sentences "That cell is not on the map.", "That cell is outside the target area.", "That cell has fallen.", "You already tried that cell."
+- 02d §5: distance rounded to the nearest whole cell, 8 compass sectors of 45°, shown as "9 cells away, to the north-east ↗".
+- 02d §5: in `closeness` mode the tier word is shown even with comments off.
+- 02d §6: dots per player colour, own dots ringed and all shown, others' only the engine's newest 60, with an arrow restating a `direction` answer.
+- 02d §7: closeness tiers by share of the map diagonal (40 / 25 / 12 / 6 / 3 %, touching = just missed) as a fixed table, not admin settings.
+- 02d §8.1: Spring Herald names the map quarter (west/north halves rounded up).
+- 02d §8.3: Leaf Fall candidates for both feedback modes; `autumn.minCellsLeft` default 10; individual-mode candidates within any player's window.
+- 02d §8.4: halving halves the longer side (width on a tie); `halving.minCells` default 16; the map zooms to the target area.
+- 02d §9: closest miss by smallest distance, wording "just missed — the next cell" when touching.
+- 02d §11: map layout (map left, list right on desktop; map full width on a phone), no zoom, arrow cross, typed coordinates on desktop only.
+
 ## Spec conflicts
 
 Resolved by the decision rules (owner decisions first, then the more specific section) and listed here for the owner to confirm.

@@ -72,6 +72,10 @@ packages/domain       Platform rules: match and round lifecycle, roster, cooldow
                       placings, season and special scheduling, teams, standings. Pure.
 packages/application  Use cases and ports (Clock, SecureRandom, RoundStore, Scheduler, EventBus,
                       SeasonFeed). Hosts the round engine (§5). No framework imports.
+packages/guess-engine The shared guess engine (§4.7, DECISIONS T117): secrets, guesses, feedback
+                      events, closeness tiers and comments, Frost-aware views at the round's
+                      visibility, the closest miss and the Leaf Fall candidate rule, for the games
+                      that are "find the secret by guessing". Pure. Depends on game-sdk and zod.
 packages/contracts    Zod schemas for every platform wire shape and settings document.
 packages/ui           Shared React components and design tokens.
 games/<game>/src      One game's rules, settings schema and views. Pure. Implements game-sdk.
@@ -88,9 +92,9 @@ apps/admin            Admin client (as Bingo). apps/embed-loader: embed.js (as B
 **Dependency rule** (enforced with `eslint-plugin-boundaries`, as Bingo 02 §3):
 
 - `game-sdk` ← `domain` ← `application` ← `apps/server`. `contracts` may be imported by `application`, `apps/*` and `games/*/web`.
-- `games/<game>/src` may import `game-sdk` and zod only. `games/<game>/web` may import `game-sdk`, `ui`, React and its own `src`.
+- `games/<game>/src` may import `game-sdk`, `guess-engine` and zod only. `games/<game>/web` may import `game-sdk`, `ui`, React and its own `src`. `guess-engine` imports only `game-sdk` and zod; no platform package imports it.
 - No platform package imports `games/<game>` directly. Only `apps/server` and `apps/web` import `games/registry` (its `src` and its `web` half respectively).
-- No game imports another game. Shared code between games goes into `game-sdk` (decided per case; whether there is one shared guess engine is decided when the second game that could use it starts, DECISIONS T21).
+- No game imports another game. Code that guessing games share goes into `guess-engine` (§4.7); code every game may use goes into `game-sdk`.
 
 ## 4. The game-module contract
 
@@ -140,7 +144,9 @@ The registry lists each game as one entry `{ module, conformance, devBot }`, whe
 
 ### 4.2 What a game gives back
 
-`Decision<E>` is `{ ok: true, events: Emitted<E>[], signals: Signal[] } | { ok: false, code: string }`.
+`Decision<E>` is `{ ok: true, events: Emitted<E>[], signals: Signal[], extraCooldownMs?: number } | { ok: false, code: string }`.
+
+- `extraCooldownMs` lengthens this player's cooldown after this action by that many milliseconds on top of the round's cooldown (Seasonal Bomb Defusal's explosion, owner decision 40; DECISIONS T120). The platform still computes `cooldownEndsAt` and records it in `GuessAccepted`, so a replay needs no game call; the value comes from a frozen setting, so it is the same for every player. Frost does not delay it (the cooldown is never delayed, [03](03-seasonal-specials.md) §2.4).
 
 - `events` are the game's own domain events, each with its `audience` (`room`, `player:<id>` or `host`) and optionally `feedback: true`, which makes the platform hold it back for Frost (§4.4). The platform appends them to the round's log, folds them with `evolve` and routes each to its audience.
 - `signals` tell the platform about outcomes without the platform knowing the game:
@@ -173,11 +179,29 @@ The platform runs one shared conformance test suite against every module in `gam
 
 ### 4.6 Adding a game
 
-1. Create `games/<game>/` with `src/` (module, settings defaults, tests) and `web/` (screens, strings). The web half gives the player's main area and input row apart (the platform places them and puts its cooldown ring into the row), the spectator and result panels, the rows of the round's one list (`GuessRow`s from its player or spectator view, and `FeedLine`s for its events), which the platform draws (owner decision 20; DECISIONS T62, T74), and the line about the best of the rest that the result page shows where the winning margin goes when there is none (`runnerUp`, owner decision 22; DECISIONS T77), and optionally the round intro's line on the secret (`intro`, owner decision 36; DECISIONS T109). A `FeedLine` marked `special` is a special's own row, which the platform draws on the season's tint with its icon; the panels learn whether the round's special is on (`specialOn`), so a game can show a special's own parts only then (DECISIONS T115).
+1. Create `games/<game>/` with `src/` (module, settings defaults, tests) and `web/` (screens, strings). The web half gives the player's main area and input row apart (the platform places them and puts its cooldown ring into the row), the spectator and result panels, the rows of the round's one list (`GuessRow`s from its player or spectator view, and `FeedLine`s for its events), which the platform draws (owner decision 20; DECISIONS T62, T74), and the line about the best of the rest that the result page shows where the winning margin goes when there is none (`runnerUp`, owner decision 22; DECISIONS T77), and optionally the round intro's line on the secret (`intro`, owner decision 36; DECISIONS T109). A `FeedLine` marked `special` is a special's own row, which the platform draws on the season's tint with its icon; the panels learn whether the round's special is on (`specialOn`), so a game can show a special's own parts only then (DECISIONS T115). A `GuessRow` whose guess is not a number gives it as `text` ("0427", "red, blue, green, white", "(12, 34)"), and an answer other than higher/lower as `answer` (`text`, a `tone` for its colour and optional `pegs`), which the platform draws in the same row, always with its words (DECISIONS T119). A game whose special works differently from the platform's sentence words it itself (`GameText.specialRule(season)`, used on the intro screen and in the top bar's info note; DECISIONS T119).
 2. Add one line to each half of `games/registry` (`src/index.ts` and `web/index.ts`).
 3. Add its settings to [08](08-admin-settings.md) and its rules to a new spec section.
 
 No file in `packages/` or `apps/` changes. If a game needs something the contract does not offer, the contract is changed first in its own task with its own spec change, and is never worked around inside the game.
+
+### 4.7 The guess engine (architect decision 2026-11-01, DECISIONS T117; closes T21 and R7)
+
+Guess The Number ([02](02-game-guess-the-number.md)), Seasonal Safecracker ([02b](02b-game-safecracker.md)), Seasonal Bomb Defusal ([02c](02c-game-bomb-defusal.md)) and Seasonal Target ([02d](02d-game-seasonal-target.md)) are one kind of game: a secret per round or per player, guesses answered by a rule, the first correct guess received wins. `packages/guess-engine` (`@smg/guess-engine`) holds what they share; each game plugs in its own rules and stays a `GameModule` of §4, so the platform sees no difference.
+
+| The engine gives | The game gives |
+|---|---|
+| Secrets per round or per player: one draw per secret under the label `secret/shared` or `secret/<playerId>` (§5.4), never stored, never in the state (`deriveSecrets`, `secretOf`, `allSecrets`) | `drawSecret(rng, config)`: one secret of its kind |
+| The guess list per player with receive number, receive time, value, answer and comment; the events `FeedbackGiven` (to the guesser, `feedback: true` so Frost holds it) and `GuessFed` (the room's line at the round's visibility: `own` that someone guessed, `numbers` also the guess, `full` also the answer and comment; individual mode only that someone guessed); folding them into the state | its value type and its zod schema, its own checks before the engine's repeat check, `answer(value, secret)` (the feedback rule), `solved(answer)`, its own state parts and events |
+| The closeness tiers from way off to correct, the trend between two tiers, and picking a comment line from a game's catalogue with the round's DRBG under `comment/<receiveSeq>`, with no line of a pool again before the pool is used up (02 §6.3, DECISIONS T71, T72) | `tier(state, value, secret, answer)` and its catalogue of lines per tier and trend pool |
+| Views: the viewer's own guesses, the others' newest 60 at the round's visibility, answers and comments held back while Frost holds them (`releasedBefore`), the result's guesses | the rest of each view (range, map, hints, fallen values) and the view schemas, built with the engine's guess schemas |
+| The closest miss: the best wrong guess of anyone but the winner, the earlier on a tie (02 §9) | how far a guess is from the secret, where the game shows a closest miss |
+| The Leaf Fall candidate rule (owner, decision 37): the answers every player can see (a shared secret with `full` visibility, delivered by the Frost cut) or none, the values guessed so far, and a uniform draw of distinct values from a list | which values are its candidates (numbers, digits, wires, cells) and what is still possible given the public answers |
+| Optional `extraCooldownMs` from the game's rules on an accepted guess (§4.2) | when it applies (Bomb Defusal's explosion) |
+| The shared setting definitions `round.feedbackVisibility`, `round.comments`, `comments.trendPercent`, `round.repeatGuessRejected` ([08](08-admin-settings.md) §3), each game wording their help in its own terms | its own keys |
+| `guessModule(game)`: the `GameModule` of §4 from these parts (validate: the game's checks, then repeat; decide; evolve: the engine's events, then the game's) | specials hooks, `reveal`, dev bot and conformance kit as for every game |
+
+Guess The Number runs on the engine with no change in behaviour: the same events, views, secrets, Leaf Fall drops and comment lines for the same seed and guesses, proven by a golden test recorded before the move ([09](09-testing-strategy.md) §2). A game that is not "find the secret by guessing" implements `GameModule` directly and does not use the engine.
 
 ## 5. The round engine
 

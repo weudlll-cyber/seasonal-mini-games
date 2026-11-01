@@ -60,6 +60,42 @@
 
 The host form shows each host-chosen value with its default preselected and refuses values outside the bounds with a plain sentence. The server validates again (`ROUND_SETTINGS_INVALID`).
 
+### 3.1 Seasonal Safecracker (document `game.safecracker`, [02b](02b-game-safecracker.md))
+
+Platform round keys (`round.secretMode`, `round.cooldownS`, `round.countdownS`, `round.maxDurationMin`, `round.marginWindowS`, `round.seasonSource`, `round.specialOn`, `round.teamsOn`, `points.*`, `fairness.commitReveal`) and the special timings (`summer.*`, `autumn.intervalS`, `winter.delayS`) as in §3. Shared guess keys as in 08 §3 (`round.feedbackVisibility`, `round.comments`, `comments.trendPercent`, `round.repeatGuessRejected`). Not used by this game: `round.rangeLow`, `round.rangeHigh`, `round.rangeVisible`, `comments.*Above`, `spring.hintType`, `autumn.count`, `autumn.minRemaining`, `round.halving` and `halving.*` (`halvingAllowed` off, 02b §7.4).
+
+| Key | Default | Min | Max | Status | Who | Running rounds |
+|---|---|---|---|---|---|---|
+| `code.length` | 4 | 3 | 6 | *proposal*: digits in the secret code (02b §3) | host | frozen |
+| `code.digits` | 10 | 4 | 10 | *proposal*: the digits 0 … digits − 1 are in use; repeats allowed (02b §3) | host | frozen |
+| `autumn.digitsPerFall` | 1 | 1 | 3 | *proposal*: digits that fall per Leaf Fall; replaces `autumn.count` for this game (02b §7.3) | game admin | frozen |
+| Tier score bounds | 0.25 / 0.45 / 0.60 / 0.75 | — | — | *proposal* (not a setting): fixed table of 02b §6 | — | — |
+
+### 3.2 Seasonal Bomb Defusal (document `game.bomb-defusal`, [02c](02c-game-bomb-defusal.md))
+
+Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.countdownS`, `round.maxDurationMin`, `round.feedbackVisibility`, `round.comments`, `comments.trendPercent`, `round.marginWindowS`, `round.seasonSource`, `round.specialOn`, `round.teamsOn`, `round.repeatGuessRejected`, `summer.*`, `autumn.intervalS`, `winter.delayS`, `points.*`, `fairness.commitReveal`). Not used by this game: `round.rangeLow`, `round.rangeHigh`, `round.rangeVisible`, `round.halving`, `halving.*`, `spring.hintType`, `autumn.count`, `autumn.minRemaining`, the `comments.*Above` thresholds.
+
+| Key | Default | Min | Max | Status | Who | Running rounds |
+|---|---|---|---|---|---|---|
+| `bomb.wires` | 6 | 4 | 8 | proposal: the first N colours of red, blue, yellow, green, white, black, orange, purple (02c §3) | host | frozen |
+| `bomb.cuts` | 4 | 3 | 6 | proposal; at most `bomb.wires` | host | frozen |
+| `bomb.explosionPenaltyS` | 5 | 0 | 30 | owner (O40): host chooses, 0 allowed; default and max: proposal. Added to the cooldown on a wrong first cut (02c §5.2) | host (per match) | frozen (copied from the match into each round) |
+| `autumn.wiresPerFall` | 1 | 1 | 2 | proposal: wires marked harmless per Leaf Fall (02c §8.3) | game admin | frozen |
+| Tier rule | fixed | — | — | proposal, not a setting: k = 1 … cuts − 2 spread evenly over cold … burning (02c §7) | — | — |
+
+### 3.3 Seasonal Target (document `game.seasonal-target`, [02d](02d-game-seasonal-target.md))
+
+Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.countdownS`, `round.maxDurationMin`, `round.feedbackVisibility`, `round.comments`, `comments.trendPercent`, `round.marginWindowS`, `round.seasonSource`, `round.specialOn`, `round.teamsOn`, `round.halving`, `round.repeatGuessRejected`, `summer.*`, `autumn.intervalS`, `autumn.count`, `winter.delayS`, `halving.intervalS`, `points.*`, `fairness.commitReveal`). Not used: `round.rangeLow`, `round.rangeHigh`, `round.rangeVisible`, `comments.*Above`, `spring.hintType`, `halving.minRangeSize`.
+
+| Key | Default | Min | Max | Status | Who | Running rounds |
+|---|---|---|---|---|---|---|
+| `map.width` | 50 | 20 | 100 | proposal: the map's width in cells (02d §3) | host | frozen |
+| `map.height` | 50 | 20 | 100 | proposal: the map's height in cells; row 1 is north (02d §3) | host | frozen |
+| `target.feedback` | `direction` | — | — (`direction`, `closeness`) | owner (O39, default owner): the host's round setting, chosen in the round form; the next round's form keeps the last choice (02d §3, §5) | host | frozen |
+| `autumn.minCellsLeft` | 10 | 2 | 1 000 | proposal: Leaf Fall stops when fewer candidate cells would remain (02d §8.3) | game admin | frozen |
+| `halving.minCells` | 16 | 4 | 400 | proposal: halving stops once the target area has this many cells or fewer (02d §8.4) | game admin | frozen |
+| Closeness tier table (40 / 25 / 12 / 6 / 3 % of the diagonal, touching = just missed) | — | — | — | proposal, not a setting: Leaf Fall's `closeness` candidates depend on it (02d §7) | — | — |
+
 ## 4. Match settings (document `matchmaking`)
 
 | Key | Default | Min | Max | Status | Who | Running rounds |
