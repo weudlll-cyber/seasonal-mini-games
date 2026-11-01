@@ -1,5 +1,23 @@
 # Morning sheet
 
+## Leaf Fall (2026-11-01, day task)
+
+On `night/2026-10-27`. Nothing goes to `master`.
+
+| Step | What                                                                                                                                                  | Commit                            |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| 1    | O37 recorded: Leaf Fall drops only numbers still possible from the public answers, never a secret; "Already fallen." at once, no cooldown (T111–T113) | `6e60ba6`                         |
+| 2    | Thousands separators everywhere through one formatter; the phone chip names the season (T114)                                                         | `061b4fc`                         |
+| 3    | Leaf Fall row on the season's tint, Fallen numbers panel (T115); journey 18                                                                           | `13bc41f`                         |
+| 4–5  | Match summary on one screen; the chat a panel of its own between rounds (T116); journey 19                                                            | `6581a56`                         |
+| —    | Play-through fixes (special row icon, phone summary), screenshots, this section                                                                       | the commit that adds this section |
+
+**Guess rows in view at 1280 × 720** (Chromium, play-through with a full list): 13–14 rows, 12 of them guesses, beside two-line Leaf Fall rows in the fast profile.
+
+**Screenshots:** `reports/leaf-fall/` — autumn rounds 1–100 and 1–1,000,000 with `full`, 1–1,000,000 with `own` (each at 1280 × 720 and 390 × 844, the phone also with the Fallen sheet open), the waiting area before the first round and beside a result, and the summary after 3 rounds, each light and dark; `play-through.txt` holds the fallen numbers and the row counts.
+
+**To try:** http://127.0.0.1:5410/#/quick-test, "Dev sign-in" → player 1; seed `acorn`, Season Autumn, Lowest number 1, Highest number 100, Show range on, Fast specials on, Start from the lobby on. Start the round from the Host menu, guess once, and watch the falls land only where the number can still be; the "Fallen numbers" panel sits under the range (a "Fallen (N)" button on a phone).
+
 ## Specials visible (2026-11-01, day task)
 
 On `night/2026-10-27`, now the owner's test branch: `feat/guess-the-number` merged into it first (`47d5c5c`, every commit of feat now on night; the only conflict was this sheet's Night 3 pointer, night's full section kept). Nothing goes to `master`; `feat/guess-the-number` stays.

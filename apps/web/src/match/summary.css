@@ -16,7 +16,10 @@
   flex: 1;
   min-height: 0;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  /* The standings take what their table needs and shrink, scrolling, when that is more than
+     the screen has left; the rest follows right under them. */
+  grid-template-rows: auto minmax(0, max-content) auto;
+  align-content: start;
   grid-template-areas: 'head' 'standings' 'side';
   gap: var(--space-2);
   padding: var(--space-3);
@@ -25,7 +28,7 @@
 @media (min-width: 900px) {
   .match-summary {
     grid-template-columns: minmax(0, 1fr) 20rem;
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, max-content);
     grid-template-areas:
       'head head'
       'standings side';
