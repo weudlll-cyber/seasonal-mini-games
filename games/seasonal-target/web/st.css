@@ -1,0 +1,296 @@
+/*
+ * @file   games/seasonal-target/web/st.css
+ * @module games/seasonal-target/web
+ * @brief  Styles of the Seasonal Target panels: the map, its lines, the input row, the result.
+ *
+ * Responsibility: colours only from the design tokens (light and dark); the map scaled to the
+ *                 largest size the space allows without a page scrollbar (`--st-ratio` is its
+ *                 width over height, set by ./MapBoard), grid lines and ticks in the strong
+ *                 border and muted text tokens, fallen cells hatched (shape, not colour alone),
+ *                 the quarter dashed, own dots ringed, the selection a thick square in the text
+ *                 colour; the arrow cross and Guess at least 44 px; the Column and Row fields on
+ *                 a desktop only; the Fallen cells panel a sheet on a phone (T115). Classes are
+ *                 prefixed `st-`.
+ * Spec:           docs/spec/02d-game-seasonal-target.md §6, §8, §11
+ */
+.st-player,
+.st-spectator,
+.st-input,
+.st-result {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.st-area,
+.st-note {
+  margin: 0;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+/* Spring Herald's quarter for the whole round: a highlighted line (O35). */
+.st-hint {
+  margin: 0;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius);
+  border-left: 4px solid var(--season, var(--color-accent));
+  background: color-mix(in srgb, var(--season, var(--color-accent)) 22%, var(--color-card));
+  font-weight: var(--font-weight-strong);
+}
+
+/* The map: as large as the height allows, never wider than its box. */
+.st-map {
+  --st-height: min(52dvh, 520px);
+  display: block;
+  justify-self: center;
+  width: min(100%, calc(var(--st-height) * var(--st-ratio, 1)));
+  aspect-ratio: var(--st-ratio, 1);
+  height: auto;
+  touch-action: manipulation;
+  cursor: crosshair;
+}
+
+.st-map:focus-visible {
+  outline: 3px solid var(--color-text);
+  outline-offset: 2px;
+}
+
+.st-ground {
+  fill: var(--color-board);
+}
+
+.st-line {
+  stroke: var(--color-board-line);
+  stroke-width: 0.04;
+}
+
+.st-line--ten {
+  stroke: var(--color-border-strong);
+  stroke-width: 0.12;
+}
+
+.st-ticks text {
+  fill: var(--color-text-muted);
+}
+
+.st-fallen {
+  fill: url(#st-hatch);
+  stroke: var(--color-border-strong);
+  stroke-width: 0.05;
+}
+
+.st-hatch-line {
+  stroke: var(--color-border-strong);
+  stroke-width: 0.2;
+}
+
+.st-quarter rect {
+  fill: none;
+  stroke: var(--color-board-ink);
+  stroke-width: 0.15;
+  stroke-dasharray: 0.6 0.4;
+}
+
+.st-quarter text {
+  fill: var(--color-board-ink);
+  font-weight: var(--font-weight-strong);
+}
+
+.st-dot circle {
+  stroke: var(--color-board-ink);
+  stroke-width: 0.06;
+}
+
+/* The viewer's own dots: a ring and a bolder fill. */
+.st-dot[data-own='true'] circle {
+  stroke-width: 0.16;
+}
+
+.st-dot text {
+  fill: var(--color-board-ink);
+}
+
+.st-arrow {
+  stroke: var(--color-board-ink);
+  stroke-width: 0.12;
+  stroke-linecap: round;
+}
+
+.st-selection rect,
+.st-selection line {
+  fill: none;
+  stroke: var(--color-board-ink);
+  stroke-width: 0.18;
+}
+
+.st-target circle {
+  fill: none;
+  stroke: var(--season, var(--color-accent));
+  stroke-width: 0.25;
+}
+
+.st-target circle + circle {
+  fill: var(--color-board-ink);
+  stroke: none;
+}
+
+/* The row under the map: ring, selected cell, fields, arrow cross, Guess. */
+.st-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.st-selected {
+  margin: 0;
+  flex: 1 1 9rem;
+  font-weight: var(--font-weight-strong);
+}
+
+.st-fields {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.st-field {
+  display: grid;
+  font-size: var(--font-size-small);
+}
+
+.st-field input {
+  width: 4.5rem;
+  min-height: var(--hit-target);
+}
+
+.st-cross {
+  display: grid;
+  grid-template-columns: repeat(4, var(--hit-target));
+  gap: 0.25rem;
+}
+
+.st-move {
+  min-width: var(--hit-target);
+  min-height: var(--hit-target);
+  padding: 0;
+  font-size: var(--font-size-lead);
+}
+
+.st-go {
+  min-height: 3.25rem;
+  padding: 0 1.75rem;
+  font-size: var(--font-size-lead);
+}
+
+.st-message {
+  margin: 0;
+  color: var(--color-danger);
+}
+
+.st-last {
+  margin: 0;
+  font-size: var(--font-size-small);
+}
+
+.st-secret {
+  margin: 0;
+  font-size: var(--font-size-lead);
+  font-weight: var(--font-weight-strong);
+}
+
+.st-players {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: var(--space-1);
+  overflow-y: auto;
+  max-height: 10rem;
+}
+
+.st-you {
+  font-weight: var(--font-weight-strong);
+}
+
+/* The Fallen cells panel: a short box of chips on a desktop. */
+.st-fallen-toggle,
+.st-fallen-close {
+  display: none;
+}
+
+.st-fallen-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+}
+
+.st-fallen-head h3 {
+  margin: 0;
+  font-size: var(--font-size-small);
+}
+
+.st-fallen-body {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.st-fallen-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+  max-height: 5.4rem;
+  overflow-y: auto;
+}
+
+.st-fallen-list li {
+  padding: 0 0.4rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--season, var(--color-border));
+  background: color-mix(in srgb, var(--season, var(--color-accent)) 14%, var(--color-card));
+  font-size: var(--font-size-small);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A phone: the map at full width, no coordinate fields, the panel behind its button. */
+@media (max-width: 899px) {
+  .st-map {
+    --st-height: min(44dvh, 420px);
+  }
+
+  .st-fields {
+    display: none;
+  }
+
+  .st-fallen-toggle,
+  .st-fallen-close {
+    display: inline-flex;
+    min-height: var(--hit-target);
+  }
+
+  .st-fallen-body {
+    display: none;
+  }
+
+  .st-fallen[data-open='true'] .st-fallen-body {
+    display: grid;
+    position: fixed;
+    left: var(--gutter);
+    right: var(--gutter);
+    bottom: var(--gutter);
+    z-index: 30;
+    max-height: 60dvh;
+    padding: var(--space-2);
+    border: 2px solid var(--season, var(--color-border));
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-raised);
+  }
+
+  .st-fallen[data-open='true'] .st-fallen-list {
+    max-height: none;
+  }
+}
