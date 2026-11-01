@@ -33,6 +33,10 @@ const TIMING = [
   'specials.spec.ts',
   'seasons.spec.ts',
   'leafFall.spec.ts',
+  // The guess games' journeys 20–22: specials and the explosion's cooldown.
+  'safecracker.spec.ts',
+  'bombDefusal.spec.ts',
+  'target.spec.ts',
   'players.spec.ts',
   'access.spec.ts',
   'range.spec.ts',
