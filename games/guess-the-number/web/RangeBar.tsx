@@ -5,7 +5,7 @@
  *
  * Responsibility: "The number is somewhere between L and H" in large type and a full-width
  *                 bar from L to H on which fallen numbers show as gaps (at most 200 drawn; the
- *                 count is always named under it): each gap covers its number's share of the
+ *                 Fallen numbers panel beside it names them all, ./FallenNumbers): each gap covers its number's share of the
  *                 bar, at least 4 px wide, in the dark colour that stands out on every season
  *                 colour, so even one fallen number is seen (O35); with a hidden range "Any whole number" and
  *                 a note that negative numbers are possible (O19). Nothing narrowed from the
@@ -53,11 +53,6 @@ export function RangeBar({ range, removed }: RangeBarProps): ReactElement {
           <span key={v} className="gtn-range-gap" style={{ left: at(v) }} />
         ))}
       </div>
-      {removed.length === 0 ? null : (
-        <p className="gtn-range-note" data-testid="fallen">
-          {removed.length} {removed.length === 1 ? 'number has' : 'numbers have'} fallen.
-        </p>
-      )}
     </section>
   );
 }

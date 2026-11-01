@@ -11,10 +11,13 @@
  *                 colour, and the closeness comment in smaller text on the same line when it
  *                 fits, else under it (O21, O35: more rows in view); the viewer's own rows
  *                 have the season colour behind them, and under Frost an own row says "answer
- *                 arriving…" with the seconds left in a small badge. Events (Spring Herald, Leaf Fall, Heatwave,
- *                 halving, solves, the round opening and ending) are quieter one-line rows.
+ *                 arriving…" with the seconds left in a small badge. Events (Spring Herald,
+ *                 Heatwave, halving, solves, the round opening and ending) are quieter one-line
+ *                 rows; a special's own row (Leaf Fall naming the fallen numbers) stands out on
+ *                 the season's tint with the season icon in bold (T115).
  * Depends on:     react, @smg/contracts, @smg/game-sdk (rows, formatNumber), @smg-game/registry/web (types),
- *                 ../live/useRound, ./RoundSide (colours), ./roundText, ./roundLog.css
+ *                 ../live/useRound, ../season/SeasonIcon, ./RoundSide (colours), ./roundText,
+ *                 ./roundLog.css
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §6.2, §6.3, §12; docs/spec/03-seasonal-specials.md §2.4
  */
@@ -24,6 +27,7 @@ import { formatNumber, type FeedLine, type GuessRow } from '@smg/game-sdk';
 import type { CSSProperties, ReactElement } from 'react';
 
 import type { FeedItem } from '../live/useRound.js';
+import { SeasonIcon } from '../season/SeasonIcon.js';
 import { playerColor } from './RoundSide.js';
 import { platformLine } from './roundText.js';
 import './roundLog.css';
@@ -101,6 +105,27 @@ function GuessLine({ guess, state, viewerKey, now }: RowProps): ReactElement {
   );
 }
 
+// An event: a quiet line with the player's dot, or the special's row in the season colour
+// with its icon (Leaf Fall, T115).
+function EventLine(p: { readonly line: FeedLine; readonly state: RoundStateView }): ReactElement {
+  if (p.line.special === true) {
+    return (
+      <li className="round-row round-row--event round-row--special" data-testid="special-row">
+        <span className="round-row-icon" aria-hidden="true">
+          <SeasonIcon season={p.state.season} size="1rem" />
+        </span>
+        <span>{p.line.text}</span>
+      </li>
+    );
+  }
+  return (
+    <li className="round-row round-row--event">
+      <span className="round-dot" aria-hidden="true" style={dot(p.state, p.line.playerId)} />
+      <span>{p.line.text}</span>
+    </li>
+  );
+}
+
 export function RoundLog(p: {
   readonly feed: readonly FeedItem[];
   readonly game: GameWeb | null;
@@ -125,14 +150,7 @@ export function RoundLog(p: {
                 now={p.now}
               />
             ) : (
-              <li key={row.key} className="round-row round-row--event">
-                <span
-                  className="round-dot"
-                  aria-hidden="true"
-                  style={dot(p.state, row.line.playerId)}
-                />
-                <span>{row.line.text}</span>
-              </li>
+              <EventLine key={row.key} line={row.line} state={p.state} />
             ),
           )}
         </ol>

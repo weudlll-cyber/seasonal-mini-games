@@ -11,13 +11,13 @@
  *                 field and the button stay in view and usable; the button ("Close chat") or
  *                 Escape closes it again. The chat stays
  *                 mounted either way, so it keeps its room and what was typed (07 §2).
- * Depends on:     react, ../components/useDisclosure, ./roundChat.css
+ * Depends on:     react, @smg/ui (useDisclosure), ./roundChat.css
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/07-integration.md §2; docs/spec/02-game-guess-the-number.md §12
  */
 import { useState, type CSSProperties, type ReactElement, type ReactNode } from 'react';
+import { useDisclosure } from '@smg/ui';
 
-import { useDisclosure } from '../components/useDisclosure.js';
 import './roundChat.css';
 
 // Where the panel lies on a phone: between the round's top bar and the Chat button, which

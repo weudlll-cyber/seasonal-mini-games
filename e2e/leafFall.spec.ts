@@ -1,0 +1,142 @@
+/**
+ * @file   e2e/leafFall.spec.ts
+ * @module e2e
+ * @brief  Journey 18: Leaf Fall drops only still-possible numbers, shown in the Fallen panel.
+ *
+ * Responsibility: an autumn Quick Test with `full` visibility and the fast test profile; the
+ *                 player guesses once, then for two falls every newly fallen number lies inside
+ *                 the candidate set the public answers left before the fall and is no guessed
+ *                 number (O37); the Fallen numbers panel lists exactly the fallen numbers,
+ *                 ascending with thousands separators, and the list's Leaf Fall row stands out
+ *                 (T115); a fallen number typed in gets "Already fallen." at once; the round
+ *                 view fits 1280 × 720 and 390 × 844, where the panel opens as a sheet from its
+ *                 "Fallen (N)" button and closes with Escape. The match is aborted at the end.
+ * Depends on:     @playwright/test, ./play, ./screens
+ * Spec:           docs/spec/09-testing-strategy.md §4 (journey 18); docs/spec/03-seasonal-specials.md §2.3
+ */
+import { expect, test, type Page } from '@playwright/test';
+
+import { abortMatch, call, closeAll, fitsScreen, person, roundOpen, type Person } from './play.js';
+import { PHONE } from './screens.js';
+
+const WIDE = { width: 1280, height: 720 };
+
+interface Seen {
+  readonly value: number | null;
+  readonly feedback: 'higher' | 'lower' | 'correct' | null;
+}
+
+interface State {
+  readonly game: {
+    readonly range: { readonly low: number; readonly high: number } | null;
+    readonly removed: readonly number[];
+    readonly guesses: readonly Seen[];
+    readonly log: readonly Seen[];
+  };
+}
+
+const read = (p: Person, roundId: string) => call<State>(p, 'GET', `/rounds/${roundId}/state`);
+
+// The candidates the public answers leave (O37): the range cut by every answer, without the
+// numbers guessed and fallen.
+function candidates(s: State) {
+  const all = [...s.game.guesses, ...s.game.log];
+  let low = s.game.range?.low ?? -Infinity;
+  let high = s.game.range?.high ?? Infinity;
+  for (const g of all) {
+    if (g.value === null) continue;
+    if (g.feedback === 'higher') low = Math.max(low, g.value + 1);
+    if (g.feedback === 'lower') high = Math.min(high, g.value - 1);
+  }
+  const out = new Set([
+    ...s.game.removed,
+    ...all.flatMap((g) => (g.value === null ? [] : [g.value])),
+  ]);
+  return (v: number) => v >= low && v <= high && !out.has(v);
+}
+
+// The panel's chips as numbers.
+async function panelNumbers(page: Page): Promise<number[]> {
+  const chips = await page.getByTestId('fallen-list').locator('li').allTextContents();
+  return chips.map((t) => Number(t.replaceAll(',', '')));
+}
+
+// Waits for the next fall and checks every new number against the state before it.
+async function nextFallInCandidates(p: Person, roundId: string): Promise<void> {
+  const before = await read(p, roundId);
+  const possible = candidates(before);
+  let after = before;
+  await expect
+    .poll(
+      async () => {
+        after = await read(p, roundId);
+        return after.game.removed.length;
+      },
+      { timeout: 15_000 },
+    )
+    .toBeGreaterThan(before.game.removed.length);
+  const fresh = after.game.removed.filter((v) => !before.game.removed.includes(v));
+  expect(fresh.length).toBeGreaterThan(0);
+  for (const v of fresh) expect(possible(v), `${String(v)} was still possible`).toBe(true);
+}
+
+test('journey 18: Leaf Fall drops only still-possible numbers, in the Fallen panel', async ({
+  browser,
+}) => {
+  test.setTimeout(120_000);
+  const p = await person(browser, 'player-1', WIDE);
+  let code = '';
+  try {
+    const started = await call<{ matchCode: string; roundId: string }>(
+      p,
+      'POST',
+      '/dev/quicktest',
+      {
+        season: 'autumn',
+        bots: 1,
+        rangeHigh: 1_000_000,
+        rangeVisible: true,
+        visibility: 'full',
+        cooldownS: 8,
+        fast: true,
+      },
+    );
+    code = started.matchCode;
+    await p.page.goto(`./#/match/${code}`);
+    await roundOpen(p.page);
+    await p.page.getByTestId('guess-input').fill('600000');
+    await p.page.getByTestId('guess-button').click();
+    await expect(p.page.locator('[data-testid="guess-list"] li[data-own="true"]')).toHaveCount(1);
+    await nextFallInCandidates(p, started.roundId);
+    await nextFallInCandidates(p, started.roundId);
+    // The panel lists exactly the fallen numbers, ascending, grouped.
+    // Read against a fresh state each time: another fall may come meanwhile.
+    await expect
+      .poll(async () => {
+        const now = (await read(p, started.roundId)).game.removed;
+        return JSON.stringify(await panelNumbers(p.page)) === JSON.stringify(now);
+      })
+      .toBe(true);
+    const removed = (await read(p, started.roundId)).game.removed;
+    const first = await p.page.getByTestId('fallen-list').locator('li').first().textContent();
+    expect(first).toMatch(/^\d{1,3}(,\d{3})*$/);
+    await expect(p.page.getByTestId('special-row').first()).toContainText(/^Leaf Fall: .+ fell\.$/);
+    // A fallen number is refused at once, in the server's words.
+    await p.page.getByTestId('guess-input').fill(String(removed[0]));
+    await p.page.getByTestId('guess-button').click();
+    await expect(p.page.locator('.gtn-message')).toHaveText('Already fallen.');
+    await fitsScreen(p.page);
+    // A phone: the panel lies behind its button and opens as a sheet over the round.
+    await p.page.setViewportSize(PHONE);
+    await expect(p.page.getByTestId('fallen-list')).toBeHidden();
+    await p.page.getByTestId('fallen-toggle').click();
+    await expect(p.page.getByTestId('fallen-list')).toBeVisible();
+    await fitsScreen(p.page);
+    await p.page.keyboard.press('Escape');
+    await expect(p.page.getByTestId('fallen-list')).toBeHidden();
+    await fitsScreen(p.page);
+  } finally {
+    if (code !== '') await abortMatch(p, code);
+    await closeAll([p]);
+  }
+});

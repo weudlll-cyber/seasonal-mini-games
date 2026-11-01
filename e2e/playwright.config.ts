@@ -32,6 +32,7 @@ const TIMING = [
   'rounds.spec.ts',
   'specials.spec.ts',
   'seasons.spec.ts',
+  'leafFall.spec.ts',
   'players.spec.ts',
   'access.spec.ts',
   'range.spec.ts',

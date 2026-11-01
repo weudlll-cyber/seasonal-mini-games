@@ -35,12 +35,16 @@ export interface PlayerPanelProps {
   // Server time, corrected by the measured clock offset (06 §4.1).
   readonly now: () => number;
   readonly season: Season;
+  // Whether the round's season special is on: a game shows a special's own parts (Guess The
+  // Number's fallen numbers in autumn) only then.
+  readonly specialOn: boolean;
 }
 
 export interface SpectatorPanelProps {
   readonly view: unknown;
   readonly names: Readonly<Record<string, string>>;
   readonly season: Season;
+  readonly specialOn: boolean;
 }
 
 export interface ResultPanelProps {
@@ -50,10 +54,12 @@ export interface ResultPanelProps {
 }
 
 // An event row of the round's list: the line and the player it is about (for the colour
-// dot), or null for the round as a whole.
+// dot), or null for the round as a whole. `special`: the row of the season special striking
+// (Leaf Fall), drawn on the season's tint with its icon in bold instead of a quiet line.
 export interface FeedLine {
   readonly text: string;
   readonly playerId: string | null;
+  readonly special?: boolean;
 }
 
 // One guess in the round's list, as far as this viewer's view shows it (O20, O21).

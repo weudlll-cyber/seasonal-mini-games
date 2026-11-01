@@ -63,9 +63,10 @@ const roundLine = (text: string): FeedLine => ({ text, playerId: null });
 
 function eventText(e: GtnEvent): FeedLine | null {
   switch (e.type) {
-    // The fallen numbers by name: with a hidden range this line is the only place (T54).
+    // The fallen numbers by name, a row in the season colour (T115); with a hidden range it
+    // and the Fallen numbers panel are where they are named (T54).
     case 'NumbersRemoved':
-      return roundLine(`Leaf Fall: ${listOf(e.numbers)} fell.`);
+      return { ...roundLine(`Leaf Fall: ${listOf(e.numbers)} fell.`), special: true };
     case 'HintGiven':
       return e.playerId === null ? roundLine(`Spring Herald: ${hintText(e.hint)}`) : null;
     case 'RangeHalved':

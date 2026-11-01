@@ -58,14 +58,14 @@ const guesses = [
     tier: 'warm',
     comment: 'Getting cosy.',
   },
-  { ...row, key: '2', at: 5_000, playerId: 'w', value: 70 },
+  { ...row, key: '2', at: 5_000, playerId: 'w', value: 7_000 },
   { ...row, key: '3', at: 8_000, playerId: null, value: 45, pending: true },
 ];
 const gameWith = (rows: readonly object[]) =>
   ({
     text: {
       code: () => null,
-      event: () => ({ text: 'Leaf Fall: 12 fell.', playerId: null }),
+      event: () => ({ text: 'Leaf Fall: 12 fell.', playerId: null, special: true }),
       guesses: () => rows,
     },
   }) as never;
@@ -83,7 +83,7 @@ describe('the guess list', () => {
     expect(rows.map((li) => li.textContent)).toEqual([
       'You45answer arriving… 2 s',
       'Leaf Fall: 12 fell.',
-      'Walter70',
+      'Walter7,000',
       'You40lower ↓Getting cosy.',
       'The round is open — guess!',
     ]);
@@ -101,7 +101,10 @@ describe('the guess list', () => {
     expect(rows[0]?.querySelector<HTMLElement>('.round-dot')?.style.getPropertyValue('--dot')).toBe(
       'var(--color-winter)',
     );
-    expect(rows[1]?.className).toContain('round-row--event');
+    // Leaf Fall's row stands out: the season's tint and icon (T115); numbers are grouped.
+    expect(rows[1]?.className).toContain('round-row--special');
+    expect(rows[1]?.querySelector('.round-row-icon')).not.toBeNull();
+    expect(rows[4]?.className).toBe('round-row round-row--event');
   });
 
   it('says so when nothing has happened yet', () => {

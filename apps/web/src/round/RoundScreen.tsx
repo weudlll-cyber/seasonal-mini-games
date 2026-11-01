@@ -156,6 +156,7 @@ function InputRow({ state, game, viewerKey, now, reload }: PlayProps): ReactElem
         frostDelayMs={state.frostDelayMs}
         now={serverNow}
         season={state.season}
+        specialOn={state.specialOn}
         ring={ring}
       />
       {refusal === null ? null : (
@@ -174,7 +175,14 @@ function GamePart(p: { readonly state: RoundStateView; readonly game: GameWeb | 
     return <p className="smg-muted">The round starts soon.</p>;
   }
   if (state.role !== 'player') {
-    return <game.Spectator view={state.game} names={state.names} season={state.season} />;
+    return (
+      <game.Spectator
+        view={state.game}
+        names={state.names}
+        season={state.season}
+        specialOn={state.specialOn}
+      />
+    );
   }
   // The main area only shows; guesses go through the input row.
   return (
@@ -185,6 +193,7 @@ function GamePart(p: { readonly state: RoundStateView; readonly game: GameWeb | 
       frostDelayMs={state.frostDelayMs}
       now={serverNow}
       season={state.season}
+      specialOn={state.specialOn}
     />
   );
 }

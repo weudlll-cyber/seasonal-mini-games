@@ -14,7 +14,8 @@
  *                 views hold, the result with the range; the views become the list's guess
  *                 rows, own ones pending while Frost holds them (O20, O21); every room event
  *                 has its plain line, and guesses none (they are rows); the intro line names
- *                 the mode and the range, or that it is hidden (O36); the banners of Leaf Fall
+ *                 the mode and the range, or that it is hidden (O36); the Fallen numbers panel
+ *                 of a Leaf Fall round and its marked list row (T115); the banners of Leaf Fall
  *                 and halving, and the hint as "Free hint: …" (O35).
  * Depends on:     vitest, @testing-library/react, ./PlayerPanel, ./RangeBar, ./SpectatorPanel,
  *                 ./ResultPanel, ./text
@@ -52,7 +53,6 @@ describe('the range block', () => {
     expect(screen.getByTestId('range').textContent).toContain(
       'The number is somewhere between -500 and 500',
     );
-    expect(screen.getByTestId('fallen').textContent).toBe('2 numbers have fallen.');
     cleanup();
     render(<RangeBar range={null} removed={[]} />);
     expect(screen.getByTestId('range').textContent).toBe(
@@ -61,14 +61,55 @@ describe('the range block', () => {
   });
 });
 
+describe('the Fallen numbers panel (T115)', () => {
+  const base = { act: vi.fn(), canAct: false, frostDelayMs: null, now: () => 0 };
+  const fallen = { ...view, removed: [7, 1_500, 250_000] };
+
+  it('lists every fallen number ascending, grouped, in a Leaf Fall round only', () => {
+    render(<PlayerPanel {...base} view={fallen} season="autumn" specialOn />);
+    expect(screen.getByTestId('fallen').textContent).toBe('Fallen numbers (3)');
+    const chips = screen.getAllByRole('listitem').map((li) => li.textContent);
+    expect(chips).toEqual(['7', '1,500', '250,000']);
+    expect(screen.getByTestId('fallen-toggle').textContent).toBe('Fallen (3)');
+    cleanup();
+    render(<PlayerPanel {...base} view={fallen} season="autumn" specialOn={false} />);
+    expect(screen.queryByTestId('fallen-panel')).toBeNull();
+    cleanup();
+    render(<SpectatorPanel view={{ ...fallen, log: [] }} names={{}} season="spring" specialOn />);
+    expect(screen.queryByTestId('fallen-panel')).toBeNull();
+  });
+
+  it('opens as a sheet from its button and closes with Escape', () => {
+    render(<SpectatorPanel view={{ ...view, log: [] }} names={{}} season="autumn" specialOn />);
+    const panel = screen.getByTestId('fallen-panel');
+    fireEvent.click(screen.getByTestId('fallen-toggle'));
+    expect(panel.dataset['open']).toBe('true');
+    fireEvent.keyDown(panel, { key: 'Escape' });
+    expect(panel.dataset['open']).toBe('false');
+  });
+
+  it('says so while nothing has fallen', () => {
+    render(<PlayerPanel {...base} view={{ ...view, removed: [] }} season="autumn" specialOn />);
+    expect(screen.getByTestId('fallen-panel').textContent).toContain('None yet.');
+  });
+
+  it('names the fallen numbers in a list row marked as the special’s', () => {
+    expect(gtnText.event({ type: 'NumbersRemoved', index: 1, numbers: [3, 1_200] }, {})).toEqual({
+      text: 'Leaf Fall: 3 and 1,200 fell.',
+      playerId: null,
+      special: true,
+    });
+  });
+});
+
 describe('the player panel', () => {
   it('shows the range and the hint, and the input row waits for the cooldown', () => {
     const props = { view, act: vi.fn(), canAct: false, frostDelayMs: 3_000, now: () => 6_000 };
-    render(<PlayerPanel {...props} season="winter" />);
+    render(<PlayerPanel {...props} season="winter" specialOn />);
     expect(screen.getByTestId('hint').textContent).toBe('Free hint: the number is odd.');
     expect(screen.getByTestId('range')).toBeTruthy();
     cleanup();
-    render(<GuessInput {...props} season="winter" ring={<span data-testid="ring" />} />);
+    render(<GuessInput {...props} season="winter" specialOn ring={<span data-testid="ring" />} />);
     expect(screen.getByTestId<HTMLButtonElement>('guess-button').disabled).toBe(true);
     expect(screen.getByTestId('ring')).toBeTruthy();
   });
@@ -84,6 +125,7 @@ describe('the player panel', () => {
         frostDelayMs={null}
         now={() => 0}
         season="autumn"
+        specialOn
       />,
     );
     fireEvent.change(screen.getByTestId('guess-input'), { target: { value: '2.5' } });
@@ -102,7 +144,15 @@ describe('the player panel', () => {
   it('refuses a fallen number at once without sending it (O37)', () => {
     const act = vi.fn();
     render(
-      <GuessInput view={view} act={act} canAct frostDelayMs={null} now={() => 0} season="autumn" />,
+      <GuessInput
+        view={view}
+        act={act}
+        canAct
+        frostDelayMs={null}
+        now={() => 0}
+        season="autumn"
+        specialOn
+      />,
     );
     fireEvent.change(screen.getByTestId('guess-input'), { target: { value: '6' } });
     fireEvent.click(screen.getByTestId('guess-button'));
@@ -113,7 +163,13 @@ describe('the player panel', () => {
 });
 
 describe('the input row keeps what the player typed (T76)', () => {
-  const props = { view, frostDelayMs: null, now: () => 0, season: 'spring' as const };
+  const props = {
+    view,
+    frostDelayMs: null,
+    now: () => 0,
+    season: 'spring' as const,
+    specialOn: true,
+  };
 
   it('across the round opening', () => {
     const { rerender } = render(<GuessInput {...props} act={vi.fn()} canAct={false} />);
@@ -167,7 +223,7 @@ async function actAsync(f: () => void): Promise<void> {
 describe('the spectator and result panels', () => {
   it('show what their views hold', () => {
     const spectator = { range: { low: 1, high: 100 }, removed: [], hint: null, log: [] };
-    render(<SpectatorPanel view={spectator} names={{ p1: 'Anna' }} season="spring" />);
+    render(<SpectatorPanel view={spectator} names={{ p1: 'Anna' }} season="spring" specialOn />);
     expect(screen.getByTestId('range').textContent).toContain('between 1 and 100');
     cleanup();
     const result = {

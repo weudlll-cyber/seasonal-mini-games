@@ -7,15 +7,15 @@
  *                 the top bar with the special's one plain sentence, the same as on the intro
  *                 screen (O35, O36); the button or Escape closes it again and the focus goes
  *                 back to the button. With the special off there is no button.
- * Depends on:     react, @smg/contracts, ../components/useDisclosure, ../season/season,
+ * Depends on:     react, @smg/contracts, @smg/ui (useDisclosure), ../season/season,
  *                 ./roundSpecials.css
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §2
  */
 import type { SeasonName } from '@smg/contracts';
 import type { ReactElement } from 'react';
+import { useDisclosure } from '@smg/ui';
 
-import { useDisclosure } from '../components/useDisclosure.js';
 import { SPECIALS } from '../season/season.js';
 import './roundSpecials.css';
 

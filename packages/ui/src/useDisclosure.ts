@@ -1,6 +1,6 @@
 /**
- * @file   apps/web/src/components/useDisclosure.ts
- * @module web/components
+ * @file   packages/ui/src/useDisclosure.ts
+ * @module ui
  * @brief  React hook: a button that opens and closes a panel, closed again with Escape.
  *
  * Responsibility: the open state, the panel's id for `aria-controls`, the button's ref, and
@@ -8,9 +8,11 @@
  *                 before opening). `onKeyDown` goes on the element around button and panel,
  *                 so Escape closes from anywhere inside (only the innermost open menu when
  *                 menus are nested). One behaviour for the host menu, the account menu of
- *                 the compact top bar, the development sign-in menu and the round's chat on a phone.
+ *                 the compact top bar, the development sign-in menu, the round's chat on a phone
+ *                 and a game's sheets (Guess The Number's fallen numbers).
  * Depends on:     react
- * Used by:        ../match/HostMenu, ../round/RoundChat, ../shell/AppShell, ../shell/DevTools
+ * Used by:        ./index; apps/web (match/HostMenu, round/RoundChat, round/SpecialInfo,
+ *                 shell/AppShell, shell/DevTools); games/guess-the-number/web/FallenNumbers
  * Spec:           docs/spec/02-game-guess-the-number.md §12 (keyboard play); Bingo 01 §13
  */
 import { useId, useRef, useState, type KeyboardEvent, type RefObject } from 'react';

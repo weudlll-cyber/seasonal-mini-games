@@ -25,9 +25,9 @@
 import type { MatchDetailsView } from '@smg/contracts';
 import type { SettingValue } from '@smg/game-sdk';
 import { useState, type ReactElement, type SyntheticEvent } from 'react';
+import { useDisclosure } from '@smg/ui';
 
 import { ActionButton, Problem } from '../components/fields.js';
-import { useDisclosure } from '../components/useDisclosure.js';
 import { intent } from '../live/socket.js';
 import { codeText } from '../round/roundText.js';
 import { api, ApiError } from '../shell/http.js';

@@ -14,12 +14,13 @@
  *                 The navigation has Play and Leaderboard; the compact bar keeps Play only.
  *                 Bingo's shell, without its game screens.
  * Depends on:     react, ./router, ./session, ./ThemeToggle, ./DevTools (lazy, development
- *                 only), ../components/useDisclosure, ../lobby/Lobby, ../account/*,
+ *                 only), @smg/ui (useDisclosure), ../lobby/Lobby, ../account/*,
  *                 ../match/MatchPage, ../boards/*, ./shell.css, assets/brand/emblem.webp
  * Used by:        ../main
  * Spec:           Bingo 01 §13; Bingo 05 §2.1
  */
 import { lazy, Suspense, type ReactElement } from 'react';
+import { useDisclosure } from '@smg/ui';
 
 import emblem from '../../../../assets/brand/emblem.webp';
 import { AccountPage } from '../account/AccountPage.js';
@@ -28,7 +29,6 @@ import { SignIn } from '../account/SignIn.js';
 import { LeaderboardPage } from '../boards/LeaderboardPage.js';
 import { ProfilePage } from '../boards/ProfilePage.js';
 import { VerifyPage } from '../boards/VerifyPage.js';
-import { useDisclosure } from '../components/useDisclosure.js';
 import { Lobby } from '../lobby/Lobby.js';
 import { MatchPage } from '../match/MatchPage.js';
 import { hrefOf, useRoute, type Route } from './router.js';

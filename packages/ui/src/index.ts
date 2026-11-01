@@ -4,8 +4,9 @@
  * @brief  Public entry point of @smg/ui.
  *
  * Responsibility: shared React components and design tokens for web, admin and the game
- *                 screens: the ± sign toggle so far (./SignToggle), the CSS files beside it.
- * Depends on:     ./SignToggle
+ *                 screens: the ± sign toggle (./SignToggle), the open-and-close hook of menus
+ *                 and panels (./useDisclosure), the CSS files beside it.
+ * Depends on:     ./SignToggle, ./useDisclosure
  * Used by:        ./index.test, apps/web, games/guess-the-number/web
  * Spec:           docs/spec/10-repository-structure.md §1
  */
@@ -14,3 +15,4 @@
 export const PACKAGE_NAME = '@smg/ui';
 
 export { flipSign, SignToggle } from './SignToggle.js';
+export { useDisclosure, type Disclosure } from './useDisclosure.js';

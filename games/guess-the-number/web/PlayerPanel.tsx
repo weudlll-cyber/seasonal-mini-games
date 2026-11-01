@@ -4,7 +4,8 @@
  * @brief  The player's two parts: the range block at the top of the main area, and the input row.
  *
  * Responsibility: `PlayerPanel` is the range block (./RangeBar) with Spring Herald's hint under
- *                 it as a highlighted line for the whole round ("Free hint: …", O35); the
+ *                 it as a highlighted line for the whole round ("Free hint: …", O35) and, in a
+ *                 Leaf Fall round, the Fallen numbers panel (./FallenNumbers, T115); the
  *                 platform draws the round's one list of guesses and events beneath it
  *                 (O20). `GuessInput` is the input row, placed by the platform (pinned at the
  *                 bottom on a phone): the platform's cooldown ring, a number field that takes
@@ -17,7 +18,8 @@
  *                 shown by the platform. A fallen number gets "Already fallen." at once,
  *                 without being sent (O37).
  * Depends on:     react, @smg/game-sdk (props), @smg/ui (sign toggle),
- *                 @smg-game/guess-the-number (types, limit), ./RangeBar, ./text
+ *                 @smg-game/guess-the-number (types, limit), ./FallenNumbers, ./RangeBar,
+ *                 ./text
  * Used by:        ./index
  * Spec:           docs/spec/02-game-guess-the-number.md §6, §12; docs/spec/03-seasonal-specials.md §2.1, §2.4
  */
@@ -26,6 +28,7 @@ import type { PlayerPanelProps } from '@smg/game-sdk';
 import { flipSign, SignToggle } from '@smg/ui';
 import { useState, type ReactElement, type ReactNode, type SyntheticEvent } from 'react';
 
+import { FallenNumbers, leafFallOn } from './FallenNumbers.js';
 import { RangeBar } from './RangeBar.js';
 import { freeHint, gtnText } from './text.js';
 
@@ -132,6 +135,7 @@ export function PlayerPanel(props: PlayerPanelProps): ReactElement {
           {freeHint(view.hint)}
         </p>
       )}
+      {leafFallOn(props) ? <FallenNumbers removed={view.removed} /> : null}
     </div>
   );
 }
