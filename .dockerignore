@@ -1,0 +1,21 @@
+# @file   .dockerignore
+# @module repo
+# @brief  Keeps the Docker build context small and free of secrets.
+#
+# Responsibility: exclude dependencies, git data, docs, source artwork, build and test
+#                 output, and local env files from every image build.
+# Spec:           Bingo 08 §4
+node_modules
+**/node_modules
+.git
+docs
+assets/seasons/source
+**/dist
+coverage
+test-results
+playwright-report
+# Local env files hold secrets.
+.env
+.env.*
+**/.env
+**/.env.*

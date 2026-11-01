@@ -1,0 +1,84 @@
+/**
+ * @file   apps/web/src/round/roundSpecials.css
+ * @module web/round
+ * @brief  The season special in the running round: the banner above the list, the info note.
+ *
+ * Responsibility: the banner (./SpecialBanner) is one line in the season colour with the
+ *                 text colour made for it, directly above the guess list; empty it takes no
+ *                 room, so the list keeps its height when nothing fires; it eases in unless
+ *                 the person asked for reduced motion. The info button (./SpecialInfo) is a
+ *                 round "i" beside the season chip, at least 44 px to tap, and its note an
+ *                 opaque card under the top bar (O35). Colours only from @smg/ui tokens.
+ * Spec:           docs/spec/03-seasonal-specials.md §6; docs/spec/02-game-guess-the-number.md §12
+ */
+.round-special-banner p {
+  margin: 0;
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius);
+  background: var(--season);
+  color: var(--color-on-season);
+  font-weight: var(--font-weight-strong);
+  animation: round-banner-in var(--duration-fast) ease-out;
+}
+
+@keyframes round-banner-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.25rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .round-special-banner p {
+    animation: none;
+  }
+}
+
+.round-info {
+  position: relative;
+  flex: none;
+}
+
+/* The tap target is 44 px; the visible circle inside it stays small. */
+.round-info-button {
+  display: grid;
+  place-items: center;
+  width: var(--hit-target);
+  height: var(--hit-target);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.round-info-button span {
+  display: grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  border: 2px solid var(--season);
+  background: var(--color-surface);
+  font-family: Georgia, serif;
+  font-style: italic;
+  font-weight: var(--font-weight-heading);
+}
+
+.round-info-note {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  z-index: 25;
+  width: min(22rem, calc(100vw - 2 * var(--gutter)));
+  padding: var(--space-2);
+  border: 2px solid var(--season);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-raised);
+  white-space: normal;
+}
+
+.round-info-note[hidden] {
+  display: none;
+}

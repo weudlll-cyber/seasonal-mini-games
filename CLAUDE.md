@@ -9,7 +9,7 @@ Everything in this repository is English: code, comments, commit messages, docs,
 - The specification in `docs/spec/` governs behaviour. Read the sections a task names before changing code, and cite them in the report.
 - If the spec is silent or contradictory on a point you need, do not invent a rule: implement the rest, and list the question in the report.
 - Decisions and their reasons are in `docs/DECISIONS.md`. Do not reverse one without a task that says so.
-- Settings defaults live in `packages/contracts/src/settings/defaults/` (platform) and `games/<game>/src/settings/defaults.ts` (per game), as catalogued in docs/spec/08-admin-settings.md. Do not change a default unless the task says so.
+- Settings definitions with their defaults live in `packages/contracts/src/settings/` (platform) and `games/<game>/src/settings/` (per game), as catalogued in docs/spec/08-admin-settings.md. Do not change a default unless the task says so.
 
 ## Architecture rules
 

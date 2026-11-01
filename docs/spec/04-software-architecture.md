@@ -65,7 +65,9 @@ Each row is built as Bingo specifies, with the names of §2.2. "Difference" list
 
 ```
 packages/game-sdk     The game-module contract (types) and pure helpers every game may use:
-                      DRBG integer draws, range arithmetic, view helpers. Depends only on zod.
+                      setting definitions, range arithmetic, view helpers. Free of node:crypto.
+                      Its second entry @smg/game-sdk/crypto holds the DRBG and the commitment
+                      for the platform (a game only receives a RoundRng). Depends only on zod.
 packages/domain       Platform rules: match and round lifecycle, roster, cooldown, receive order,
                       placings, season and special scheduling, teams, standings. Pure.
 packages/application  Use cases and ports (Clock, SecureRandom, RoundStore, Scheduler, EventBus,
@@ -74,10 +76,12 @@ packages/contracts    Zod schemas for every platform wire shape and settings doc
 packages/ui           Shared React components and design tokens.
 games/<game>/src      One game's rules, settings schema and views. Pure. Implements game-sdk.
 games/<game>/web      That game's screen (React). Depends on game-sdk, ui and its own src.
-games/registry.ts     The list of installed game modules: the only place that names them.
+games/registry        The list of installed game modules (package @smg-game/registry; src/ for
+                      the server, web/ for the player client): the only place that names them.
+                      Game packages are named @smg-game/<game> (DECISIONS T22).
 apps/server           Adapters (Fastify, Socket.IO, Postgres, identity, scheduler, feed client) and
-                      the composition root. Imports games/registry.ts, never a game directly.
-apps/web              Player client. Renders a game through games/registry.ts (web entries).
+                      the composition root. Imports games/registry, never a game directly.
+apps/web              Player client. Renders a game through games/registry (web entries).
 apps/admin            Admin client (as Bingo). apps/embed-loader: embed.js (as Bingo).
 ```
 
@@ -85,69 +89,71 @@ apps/admin            Admin client (as Bingo). apps/embed-loader: embed.js (as B
 
 - `game-sdk` ← `domain` ← `application` ← `apps/server`. `contracts` may be imported by `application`, `apps/*` and `games/*/web`.
 - `games/<game>/src` may import `game-sdk` and zod only. `games/<game>/web` may import `game-sdk`, `ui`, React and its own `src`.
-- No platform package imports `games/<game>` directly. Only `apps/server` and `apps/web` import `games/registry.ts`.
+- No platform package imports `games/<game>` directly. Only `apps/server` and `apps/web` import `games/registry` (its `src` and its `web` half respectively).
 - No game imports another game. Shared code between games goes into `game-sdk` (decided per case; whether there is one shared guess engine is decided when the second game that could use it starts, DECISIONS T21).
 
 ## 4. The game-module contract
 
-A game is one object that implements `GameModule` from `packages/game-sdk`. Below is the shape, written as TypeScript for precision. The exact types are fixed in the first work package that builds `game-sdk`, and any change to them is a spec change.
+A game is one object that implements `GameModule` from `packages/game-sdk` (`packages/game-sdk/src/module.ts`). The shape below is the one built in the first work package (night run P3, DECISIONS T29). Any change to it is a spec change.
 
 ```ts
-interface GameModule<S, A, E, Cfg> {
+interface GameModule<S, A, E, Cfg, Sec> {
   meta: {
     id: string;                 // 'guess-the-number' — URL- and DB-safe, never reused
     name: string;               // 'Guess The Number'
     contractVersion: 1;         // the game-sdk contract version it implements
-    timing: 'cooldown' | 'own'; // §4.3
+    timing: 'cooldown';         // §4.3 ('own' joins with the first long-running game)
     secretModes: ReadonlyArray<'shared' | 'individual'>;
     teams: boolean;             // supports season teams (shared mode)
   };
   settings: {
-    schema: ZodType<Cfg>;       // game settings with .describe() help, min/max as zod bounds
-    defaults: Cfg;              // games/<game>/src/settings/defaults.ts
+    defs: SettingDef[];         // the game's own keys of document game.<id> (08 §3)
+    read(values): Cfg;          // frozen values → the game's config
+    problem(cfg: Cfg): string | null;  // a rule across keys
   };
   actionSchema: ZodType<A>;     // the payload of one player action (a guess)
-  createRound(input: RoundInput<Cfg>, rng: Drbg): S;          // secrets are made here
-  decide(state: S, cmd: GameCommand<A>, ctx: GameCtx): Decision<E>;
+  deriveSecrets(input: RoundInput<Cfg>, rng: RoundRng): Sec;  // secrets are made here, never stored
+  createRound(input: RoundInput<Cfg>): S;                     // state holds no secret
+  validate(state: S, playerId: string, action: A): string | null; // the game's own checks
+  decide(state: S, act: PlayerAction<A>, ctx: GameCtx<Sec>): Decision<E>;
   evolve(state: S, event: E): S;
   views: {
-    player(state: S, playerId: string): unknown;     // zod-validated by viewSchemas.player
-    spectator(state: S): unknown;
-    result(state: S): unknown;                       // only after the round has ended
+    player(state: S, playerId: string, ctx: ViewCtx): unknown; // zod-validated by viewSchemas.player
+    spectator(state: S, ctx: ViewCtx): unknown;
+    result(state: S, secrets: Sec): unknown;   // only after the round has ended
   };
   viewSchemas: { player: ZodType; spectator: ZodType; result: ZodType };
-  specials?: Partial<SpecialHooks<S, E>>;            // §4.4
-  ownTimers?(state: S): ReadonlyArray<{ key: string; dueAt: number }>; // timing 'own' only
+  specials?: Partial<SpecialHooks<S, E>>;      // §4.4, joins with the seasonal specials
+  reveal?(result: unknown, winner: string | null): string | null; // the secret in words for the chat's round-end line (07 §2, owner decision 32)
 }
 ```
 
+The registry lists each game as one entry `{ module, conformance, devBot }`, where `conformance` is the game's kit for the shared suite (§4.5): a round input, sentinel secrets and actions that never hit a secret; `devBot` picks a development bot's next action from that bot's own player view (Quick Test, DECISIONS T36).
+
 ### 4.1 What the platform gives a game
 
-- `RoundInput`: round id, the frozen roster (player ids and teams), secret mode, range and other platform round settings, the game's own frozen settings, the season and whether a halving round runs.
-- `Drbg`: the round's deterministic generator (§5.4), already separated by label. A game asks `rng.child('secret', playerId).intBetween(lo, hi)`, so it never sees the seed.
-- `GameCommand<A>`, one of:
-  - `PlayerAction { playerId, receiveSeq, receivedAt, action: A }`: a validated, ordered player action. It arrives only after the platform's checks (round open, on roster, not solved, cooldown over).
-  - `SpecialDue { special, index }` (§4.4),
-  - `TimerDue { key }` (timing `own` only),
-  - `EndRequested { reason }`.
-- `GameCtx`: `now` (the processing time), the round's current platform values (for example the cooldown), and `rng` for this step.
+- `RoundInput`: round id, the frozen roster (player ids and teams), secret mode, the season, whether a halving round runs, and the game's own frozen config. The platform's round values (cooldown, countdown, points, …) are keys of every game's document as well, defined once in `packages/game-sdk/src/roundSettings.ts`.
+- `RoundRng`: the round's deterministic generator (§5.4), separated by label. A game asks `rng.child('secret', playerId).intBetween(lo, hi)`, so it never sees the seed.
+- `PlayerAction { playerId, receiveSeq, receivedAt, action: A }`: an ordered player action that passed every check (round open, on roster, not solved, the game's `validate`, cooldown over).
+- `GameCtx`: `now` (the processing time), the cooldown in force, the round's `secrets` and `rng`.
+- `ViewCtx`: `releasedBefore`. Answers to guesses received at or after it are still held by Frost and appear in no view.
 
 ### 4.2 What a game gives back
 
-`Decision<E>` is `{ ok: true, events: E[], signals: Signal[] } | { ok: false, code: string }`.
+`Decision<E>` is `{ ok: true, events: Emitted<E>[], signals: Signal[] } | { ok: false, code: string }`.
 
-- `events` are the game's own domain events. The platform appends them to the round's log, folds them with `evolve`, and routes each one by its `audience`: `room`, `player:<id>` or `host`. An event can carry `feedback: true`, which makes the platform hold it back for Frost (§4.4).
+- `events` are the game's own domain events, each with its `audience` (`room`, `player:<id>` or `host`) and optionally `feedback: true`, which makes the platform hold it back for Frost (§4.4). The platform appends them to the round's log, folds them with `evolve` and routes each to its audience.
 - `signals` tell the platform about outcomes without the platform knowing the game:
   - `Solved { playerId }`: this action solved the player's secret.
   - `RoundShouldEnd { reason }`: for game-specific end conditions.
-- A rejection `code` comes from the game's own error list (for example `NUMBER_REMOVED`). The platform's codes (`COOLDOWN_ACTIVE`, `ROUND_OVER`, …) are checked first and never reach the game.
+- Rejections come in the order of [02](02-game-guess-the-number.md) §5.1: the platform's codes for state, roster and solved (`ROUND_NOT_OPEN`, `ROUND_OVER`, `NOT_IN_ROUND`, `ALREADY_SOLVED`), then the game's `validate` (for example `OUT_OF_RANGE`, `NUMBER_REMOVED`), then the platform's `COOLDOWN_ACTIVE`. `validate` is pure and gives no event. `decide` runs only for an action that passed all of them.
 
 **Winning stays in the platform.** From the `Solved` signals and their receive order, the platform applies the owner's rules: in shared mode the first `Solved` wins and ends the round, and in individual mode solve order is placing order (owner, decisions 4 and 5). Every later game with these modes inherits the rules unchanged.
 
 ### 4.3 Timing classes
 
 - `cooldown`: the platform enforces the per-player cooldown of owner decision 3 (range 3–60 s, the same for all, no global tick) before a `PlayerAction` reaches the game. Heatwave and Frost apply automatically.
-- `own`: for games designed as long-running (owner, decision 3). The game declares its timers with `ownTimers`, and the platform schedules them. There is no cooldown, Heatwave or Frost. No v1 game uses this class. It exists so that one can be added without a platform change.
+- `own`: for games designed as long-running (owner, decision 3). The game will declare its timers (`ownTimers`), and the platform schedules them. There is no cooldown, Heatwave or Frost. No v1 game uses this class, so it joins the contract with the first long-running game, as a contract change of its own (§4.6).
 
 ### 4.4 Specials
 
@@ -155,20 +161,20 @@ interface GameModule<S, A, E, Cfg> {
 |---|---|---|
 | Heatwave | Platform | Changes the round's cooldown value. The game sees it only through `ctx`. |
 | Frost | Platform | Delays delivery of events marked `feedback: true` by `winter.delayS`. Signals and order are not delayed ([03](03-seasonal-specials.md) §2.4). |
-| Spring Herald | Game hook `springHerald(state, ctx) → E[]` | Returns one hint event per player (or one room event in shared mode). |
-| Leaf Fall | Game hook `leafFall(state, ctx, count) → E[]` | Removes `count` values that are no one's secret. |
-| Halving | Game hook `halving(state, ctx) → E[]` | Halves the range around each secret. |
+| Spring Herald | Game hook `springHerald(state, ctx) → Emitted<E>[]` | Returns one hint event per player (or one room event in shared mode). |
+| Leaf Fall | Game hook `leafFall(state, ctx, { index, count, releasedBefore }) → Emitted<E>[]` | Removes `count` values that are no one's secret; an empty list ends the falls. `releasedBefore` is the views' Frost cut: answers to guesses received at or after it are not public yet (DECISIONS T112). |
+| Halving | Game hook `halving(state, ctx, index) → Emitted<E>[]` | Halves the range around each secret; an empty list ends the halving. |
 
 A season whose special the game does not implement still runs as a season round without a special. The host form says "This game has no Autumn special". The halving option is offered only for games that implement `halving`.
 
 ### 4.5 Rules every game module must pass
 
-The platform runs one shared conformance test suite against every module in `games/registry.ts` ([09](09-testing-strategy.md) §3, invariants P1–P6): determinism from the seed, no secret in any player or spectator view, views valid against `viewSchemas`, rejections free of side effects, `evolve` replay equal to live state, and special hooks that change the same things for every player.
+The platform runs one shared conformance test suite against every module in `games/registry` ([09](09-testing-strategy.md) §3, invariants P1–P6): determinism from the seed, no secret in any player or spectator view, views valid against `viewSchemas`, rejections free of side effects, `evolve` replay equal to live state, and special hooks that change the same things for every player.
 
 ### 4.6 Adding a game
 
-1. Create `games/<game>/` with `src/` (module, settings defaults, tests) and `web/` (screen, strings).
-2. Add one line to `games/registry.ts`.
+1. Create `games/<game>/` with `src/` (module, settings defaults, tests) and `web/` (screens, strings). The web half gives the player's main area and input row apart (the platform places them and puts its cooldown ring into the row), the spectator and result panels, the rows of the round's one list (`GuessRow`s from its player or spectator view, and `FeedLine`s for its events), which the platform draws (owner decision 20; DECISIONS T62, T74), and the line about the best of the rest that the result page shows where the winning margin goes when there is none (`runnerUp`, owner decision 22; DECISIONS T77), and optionally the round intro's line on the secret (`intro`, owner decision 36; DECISIONS T109). A `FeedLine` marked `special` is a special's own row, which the platform draws on the season's tint with its icon; the panels learn whether the round's special is on (`specialOn`), so a game can show a special's own parts only then (DECISIONS T115).
+2. Add one line to each half of `games/registry` (`src/index.ts` and `web/index.ts`).
 3. Add its settings to [08](08-admin-settings.md) and its rules to a new spec section.
 
 No file in `packages/` or `apps/` changes. If a game needs something the contract does not offer, the contract is changed first in its own task with its own spec change, and is never worked around inside the game.
@@ -190,6 +196,7 @@ Platform commands on a round: `createRound`, `startCountdown`, `openRound`, `sub
 
 - Processing results (events) are appended to `round_events` in **batches**: a batch closes after 20 ms or 200 events, whichever comes first, and is written in one transaction.
 - Acknowledgements, feedback and broadcasts for a batch are sent **only after its transaction commits**. A crash can therefore lose at most guesses that were never answered. It can never undo a winner who has already been announced.
+- The room broadcasts of a round are merged over a short window (`SMG_ROOM_FRAME_MS`, 100 ms): the first frame after a quiet window goes out at once, the next ones together at the window's end. Acknowledgements and a player's own feedback are not merged (DECISIONS T49).
 - While a batch is being written, the actor keeps processing into the next batch. Order is preserved because batches commit in sequence.
 - Recovery: the round actor is rebuilt from the latest snapshot plus the tail of `round_events` (Bingo 02 §5.2). Guesses whose batch did not commit never happened; their senders get no acknowledgement and resend.
 

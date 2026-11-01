@@ -1,0 +1,17 @@
+/**
+ * @file   games/guess-the-number/tsconfig.json
+ * @module games/guess-the-number
+ * @brief  TypeScript settings for the Guess The Number module.
+ *
+ * Responsibility: extend the shared strict base and limit the program to src/. node types
+ *                 are included for the tests, which build round randomness with the SDK's
+ *                 crypto entry; the module itself only receives a RoundRng.
+ * Spec:           docs/spec/10-repository-structure.md §2
+ */
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

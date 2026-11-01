@@ -1,0 +1,18 @@
+/**
+ * @file   apps/admin/tsconfig.json
+ * @module admin
+ * @brief  TypeScript settings for @smg/admin.
+ *
+ * Responsibility: the bundler settings of the browser with React's JSX, limited to src/ and
+ *                 the Vite config.
+ * Spec:           docs/spec/10-repository-structure.md §2
+ */
+{
+  "extends": "../../tsconfig.bundler.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "types": ["vite/client"]
+  },
+  "include": ["src", "vite.config.ts"]
+}

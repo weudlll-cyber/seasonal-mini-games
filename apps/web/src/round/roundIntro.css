@@ -1,0 +1,108 @@
+/**
+ * @file   apps/web/src/round/roundIntro.css
+ * @module web/round
+ * @brief  The round intro screen during the countdown: one card in the season's colours.
+ *
+ * Responsibility: the intro fills the round's space under the app bar and never scrolls the
+ *                 page: a card framed and tinted in the season colour, everything centred, the
+ *                 season name in the largest type, the special's name and sentence, the
+ *                 facts, and the seconds left; sizes follow the viewport's smaller side, so it
+ *                 fits 1280 × 720 and 390 × 844 alike (O36). Colours only from @smg/ui tokens,
+ *                 so light and dark both work.
+ * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6
+ */
+/* Over the round view's grid (./round.css, loaded later): one card, the whole space. */
+.round-live.round-live--intro {
+  display: flex;
+}
+
+.round-intro {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.5rem, 2.5vmin, 1.5rem);
+  padding: var(--space-3);
+  border: 3px solid var(--season);
+  border-radius: var(--radius-card);
+  background: color-mix(in srgb, var(--season) 16%, var(--color-surface));
+  text-align: center;
+}
+
+/* The host menu stays where the top bar had it: the top right corner. */
+.round-intro-host {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-2);
+  text-align: left;
+}
+
+.round-intro-head {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-1);
+}
+
+/* The token icon on a disc of the page colour, as on the round's season chip. */
+.round-intro-icon {
+  display: grid;
+  place-items: center;
+  width: clamp(4rem, 14vmin, 7.5rem);
+  height: clamp(4rem, 14vmin, 7.5rem);
+  padding: 0.6rem;
+  border-radius: 50%;
+  border: 3px solid var(--season);
+  background: var(--color-surface);
+}
+
+.round-intro-head h1 {
+  margin: 0;
+  font-size: var(--font-size-ball);
+  line-height: 1;
+}
+
+/* The halving badge on the tint instead of on the season colour. */
+.round-intro-head .round-badge {
+  border-color: var(--season);
+  padding-block: 0.15rem;
+  font-weight: var(--font-weight-strong);
+}
+
+.round-intro-special {
+  max-width: 34rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.round-intro-special h2 {
+  margin: 0;
+  font-size: var(--font-size-title);
+}
+
+.round-intro-special p {
+  margin: 0;
+  font-size: var(--font-size-lead);
+}
+
+.round-intro-facts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.15rem;
+  font-weight: var(--font-weight-strong);
+}
+
+.round-intro-count {
+  margin: 0;
+  font-size: var(--font-size-lead);
+}
+
+.round-intro-count strong {
+  font-size: var(--font-size-title);
+  font-variant-numeric: tabular-nums;
+}

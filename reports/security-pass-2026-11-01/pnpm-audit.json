@@ -1,0 +1,133 @@
+{
+  "advisories": {
+    "1244012": {
+      "findings": [
+        {
+          "version": "10.2.6",
+          "paths": [
+            ".>eslint-config-prettier>eslint>@eslint/config-array>minimatch",
+            ".>eslint-config-prettier>eslint>minimatch",
+            ".>eslint-import-resolver-typescript>eslint>@eslint/config-array>minimatch",
+            ".>eslint-import-resolver-typescript>eslint>minimatch",
+            ".>eslint>@eslint/config-array>minimatch",
+            ".>eslint>minimatch",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>eslint>@eslint/config-array>minimatch",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>eslint>minimatch",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>@typescript-eslint/typescript-estree>minimatch",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>eslint>@eslint/config-array>minimatch",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>eslint>minimatch",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>@typescript-eslint/utils>@typescript-eslint/typescript-estree>minimatch",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>@typescript-eslint/utils>@eslint-community/eslint-utils>eslint>@eslint/config-array>minimatch",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>@typescript-eslint/utils>@eslint-community/eslint-utils>eslint>minimatch",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>@typescript-eslint/utils>eslint>@eslint/config-array>minimatch",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/type-utils>@typescript-eslint/utils>eslint>minimatch",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/parser>@typescript-eslint/typescript-estree>minimatch",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/parser>eslint>@eslint/config-array>minimatch",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/parser>eslint>minimatch",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/utils>@typescript-eslint/typescript-estree>minimatch",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/utils>@eslint-community/eslint-utils>eslint>@eslint/config-array>minimatch",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/utils>@eslint-community/eslint-utils>eslint>minimatch",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/utils>eslint>@eslint/config-array>minimatch",
+            ".>typescript-eslint>@typescript-eslint/eslint-plugin>@typescript-eslint/utils>eslint>minimatch",
+            ".>typescript-eslint>eslint>@eslint/config-array>minimatch",
+            ".>typescript-eslint>eslint>minimatch",
+            ".>typescript-eslint>@typescript-eslint/utils>@typescript-eslint/typescript-estree>minimatch",
+            ".>typescript-eslint>@typescript-eslint/utils>@eslint-community/eslint-utils>eslint>@eslint/config-array>minimatch",
+            ".>typescript-eslint>@typescript-eslint/utils>@eslint-community/eslint-utils>eslint>minimatch",
+            ".>typescript-eslint>@typescript-eslint/utils>eslint>@eslint/config-array>minimatch",
+            ".>typescript-eslint>@typescript-eslint/utils>eslint>minimatch",
+            ".>typescript-eslint>@typescript-eslint/typescript-estree>minimatch",
+            ".>typescript-eslint>@typescript-eslint/parser>@typescript-eslint/typescript-estree>minimatch",
+            ".>typescript-eslint>@typescript-eslint/parser>eslint>@eslint/config-array>minimatch",
+            ".>typescript-eslint>@typescript-eslint/parser>eslint>minimatch",
+            ".>eslint-plugin-boundaries>eslint>@eslint/config-array>minimatch",
+            ".>eslint-plugin-boundaries>eslint>minimatch",
+            ".>eslint-plugin-boundaries>@boundaries/elements>eslint-module-utils>@typescript-eslint/parser>@typescript-eslint/typescript-estree>minimatch",
+            ".>eslint-plugin-boundaries>@boundaries/elements>eslint-module-utils>@typescript-eslint/parser>eslint>@eslint/config-array>minimatch",
+            ".>eslint-plugin-boundaries>@boundaries/elements>eslint-module-utils>@typescript-eslint/parser>eslint>minimatch",
+            ".>eslint-plugin-boundaries>@boundaries/elements>eslint-module-utils>eslint-import-resolver-typescript>eslint>@eslint/config-array>minimatch",
+            ".>eslint-plugin-boundaries>@boundaries/elements>eslint-module-utils>eslint-import-resolver-typescript>eslint>minimatch",
+            ".>eslint-plugin-boundaries>@boundaries/elements>eslint-module-utils>eslint>@eslint/config-array>minimatch",
+            ".>eslint-plugin-boundaries>@boundaries/elements>eslint-module-utils>eslint>minimatch",
+            ".>eslint-plugin-boundaries>eslint-module-utils>@typescript-eslint/parser>@typescript-eslint/typescript-estree>minimatch",
+            ".>eslint-plugin-boundaries>eslint-module-utils>@typescript-eslint/parser>eslint>@eslint/config-array>minimatch",
+            ".>eslint-plugin-boundaries>eslint-module-utils>@typescript-eslint/parser>eslint>minimatch",
+            ".>eslint-plugin-boundaries>eslint-module-utils>eslint-import-resolver-typescript>eslint>@eslint/config-array>minimatch",
+            ".>eslint-plugin-boundaries>eslint-module-utils>eslint-import-resolver-typescript>eslint>minimatch",
+            ".>eslint-plugin-boundaries>eslint-module-utils>eslint>@eslint/config-array>minimatch",
+            ".>eslint-plugin-boundaries>eslint-module-utils>eslint>minimatch",
+            ".>@eslint/js>eslint>@eslint/config-array>minimatch",
+            ".>@eslint/js>eslint>minimatch"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        },
+        {
+          "version": "5.1.9",
+          "paths": [
+            "apps__server>@testcontainers/postgresql>testcontainers>archiver>readdir-glob>minimatch"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        },
+        {
+          "version": "9.0.9",
+          "paths": [
+            "apps__server>@testcontainers/postgresql>testcontainers>archiver>archiver-utils>glob>minimatch",
+            "apps__server>@testcontainers/postgresql>testcontainers>archiver>zip-stream>archiver-utils>glob>minimatch"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1244012,
+      "title": "minimatch has potential denial of service via globparts amplification",
+      "module_name": "minimatch",
+      "vulnerable_versions": "<11.0.1",
+      "patched_versions": ">=11.0.1",
+      "severity": "moderate",
+      "cwe": "CWE-405",
+      "github_advisory_id": "GHSA-g3hv-75wg-m249",
+      "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249"
+    },
+    "1244013": {
+      "findings": [
+        {
+          "version": "10.5.0",
+          "paths": [
+            "apps__server>@testcontainers/postgresql>testcontainers>archiver>archiver-utils>glob",
+            "apps__server>@testcontainers/postgresql>testcontainers>archiver>zip-stream>archiver-utils>glob"
+          ],
+          "dev": true,
+          "optional": false,
+          "bundled": false
+        }
+      ],
+      "id": 1244013,
+      "title": "Glob: AbortSignal cancellation bypass allows post-timeout filesystem traversal",
+      "module_name": "glob",
+      "vulnerable_versions": ">=9.0.0 <=14.0.1",
+      "patched_versions": ">=14.0.2",
+      "severity": "moderate",
+      "cwe": "CWE-400",
+      "github_advisory_id": "GHSA-3g3m-2fjr-6pw4",
+      "url": "https://github.com/advisories/GHSA-3g3m-2fjr-6pw4"
+    }
+  },
+  "metadata": {
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 2,
+      "high": 0,
+      "critical": 0
+    },
+    "dependencies": 114,
+    "devDependencies": 460,
+    "optionalDependencies": 125,
+    "totalDependencies": 602
+  }
+}

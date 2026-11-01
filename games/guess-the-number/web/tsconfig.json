@@ -1,0 +1,18 @@
+/**
+ * @file   games/guess-the-number/web/tsconfig.json
+ * @module games/guess-the-number/web
+ * @brief  TypeScript settings for the Guess The Number web half (screens for the player client).
+ *
+ * Responsibility: the bundler settings of the player client with React's JSX, limited to
+ *                 this folder; the server half keeps its own tsconfig.
+ * Spec:           docs/spec/10-repository-structure.md §2
+ */
+{
+  "extends": "../../../tsconfig.bundler.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "types": ["vite/client"]
+  },
+  "include": ["."]
+}

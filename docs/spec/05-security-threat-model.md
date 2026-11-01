@@ -41,9 +41,11 @@ The cooldown (owner, decision 3) exists **only** on the server. The client's coo
 - **Derived, not stored.** Secrets are derived from the encrypted round seed inside the round engine ([04](04-software-architecture.md) §5.4). No table has a secret column. A database dump without `SMG_ROUND_KEY` reveals no secret of a running round.
 - **Views per viewer.** Every frame and every HTTP state answer is built from the game module's `views.player`, `views.spectator` or (after the end) `views.result`, and is validated against its zod schema before sending. The player and spectator schemas have no field that can hold a secret. The conformance test P2 ([09](09-testing-strategy.md) §3) fills rounds with unique sentinel secrets and searches every serialized view and room frame for them.
 - **Audience routing.** Events addressed to `player:<id>` never go to the room. Frost-held events are not part of any state answer until they are delivered (no early read through `GET …/state`).
-- **No other path.** The admin API, the host console, logs (Pino redaction of `seed`, `secret*`), error messages, metrics labels and webhooks never carry a secret or seed of a running round. The host and admins see what a spectator sees (Bingo 01 §9 principle).
+- **No other path.** The admin API, the host console, logs (Pino redaction of `seed`, `secret*`), error messages, metrics labels and webhooks never carry a secret or seed of a running round. When a round runs, the host gets the same player view as every player and plays along (owner decision 16, DECISIONS S10); admins who are not playing get the spectator view. Neither view holds a secret (Bingo 01 §9 principle).
 - **No timing side channel.** The work done for a guess does not depend on how close it is to the secret: one comparison and constant-size answers. With Frost, every answer is held for exactly the same delay.
-- **After the end:** the secret or secrets are public (shown on the result). With the fairness proof on, so is the seed ([02](02-game-guess-the-number.md) §10).
+- **A hidden range is a secret too.** With the range hidden ([02](02-game-guess-the-number.md) §3, owner decision 19), its bounds reach no client while the round runs: the views carry `range: null`, no guess is refused as out of range, Spring Herald gives no half hint and no halving runs (DECISIONS T52–T56). P2 searches for the bounds as for the secrets.
+- **Leaf Fall hints by design (owner decision 37).** In autumn rounds with visibility `full` the fallen numbers are drawn only from the numbers still possible given the public answers, so they reveal the candidate region around the shared number. This is accepted as an exception to owner decision 17; the candidates use no answer a player could not see (a Frost-held answer counts once delivered), never contain a secret, and no view carries a narrowed range (DECISIONS T111). With `own`, `numbers` and in individual mode no answer is used. As before, fallen numbers lie inside a hidden range.
+- **After the end:** the secret or secrets are public (shown on the result), and so is the range. With the fairness proof on, so is the seed ([02](02-game-guess-the-number.md) §10).
 
 ## 4. Cryptographic randomness
 
@@ -78,7 +80,7 @@ The round queue is bounded at 5 000 items. Beyond that, new guesses are refused 
 - the account is at least `antiMulti.minAccountAgeH` hours old (default 0 = off, max 720), and/or
 - in website installs, the account is linked to Telegram or Discord on the website, as reported in the handoff token's claims (`antiMulti.requireLinkedChat`, default off).
 
-Both can only be checked on a fact the server holds. Standalone installs have no Telegram or Discord link, so there the second rule cannot be switched on.
+Both can only be checked on a fact the server holds. Standalone installs have no Telegram or Discord link, so there the second rule cannot be switched on. Built (DECISIONS T103): the account age is checked when a shared roster freezes; an install is a website install when it has an enabled JWT handoff provider, and without one the admin form disables the second rule with its reason and the server refuses it.
 
 **Residual:** a determined person with several verified, aged, linked accounts can still multiply their rate. That is accepted and stated in §10.
 
@@ -117,14 +119,16 @@ Method and Bingo's threats T1–T28 are adopted (Bingo 13 §1–§4; trust bound
 | M7 | 1 | D | Guess flood against one round's queue | 2 | 3 | Per-account and per-socket limits, bounded queue, Caddy limits (§5) |
 | M8 | 1 | T | Replayed or duplicated guess intents | 2 | 1 | Per-socket `seq` (Bingo 06 §4); `ALREADY_GUESSED` (02 §5.1) |
 | M9 | 1 | I | Learning Frost-held answers early | 2 | 2 | Held events excluded from state answers until delivered (§3) |
-| M10 | 1/6 | I | Host or admin learns the secret and plays with another account | 1 | 3 | Host and admin views equal spectator views; seed encrypted; operator with shell and key remains trusted (§10) |
+| M10 | 1/6 | I | Host or admin learns the secret and plays with another account | 1 | 3 | The host's view is the same player view as everyone's (O16), an admin who is not playing gets the spectator view, and no view or host control holds a secret; with a hidden range the host knows the bounds they chose, which every host of such a round does; seed encrypted; operator with shell and key remains trusted (§10) |
 | M11 | 5 | S | Spoofed or wrong In Season feed | 1 | 1 | HTTPS allowlist through `SafeHttpClient`; worst case a wrong season, equal for all; host can always pick by hand |
 | M12 | 1 | T | Fake halving day to run a halving round | 1 | 1 | Server checks the calendar at round creation; list edits audited (§8) |
 | M13 | 1 | E | A spectator or another player receives a player's private frames | 2 | 2 | Per-player rooms, audience routing, authz matrix test ([09](09-testing-strategy.md) §6) |
+| M14 | 1 | I | Learning more from closeness comments than from higher or lower | 3 | 1 | Accepted by the owner (O21, 2026-10-31); see §10. The tier is computed on the server; the client never gets the secret; the comment rides on the events that carry the answer, so Frost and the visibility rules hide it exactly as they hide the answer (DECISIONS T73); no line holds a digit or names the range; a guess outside a hidden range gets the farthest tier |
 
 ## 10. Residual risks (accepted)
 
 - Several real, verified accounts in the hands of one person still multiply their guess rate in shared mode (§6).
 - Latency decides between correct guesses that arrive close together (§7). This follows from owner decision 4.
 - An operator with shell access and `SMG_ROUND_KEY` can decrypt seeds of running rounds. The operator is trusted, as in Bingo.
+- Closeness comments (owner decision 21, chosen on 2026-10-31) tell more than higher or lower: a tier says how far a guess was from the secret as a share of the range, so two or three tiers narrow the search much faster than the answers alone, and under `full` visibility everyone reads them. With a hidden range many tiers together hint at the range's size (a guess that is "cold" at a known distance bounds the width), even though no line states the bounds. The host can switch the comments off per round (`round.comments`).
 - Bingo 13 §5's residual risks (DDoS beyond the uplink, lost backup key) apply unchanged.

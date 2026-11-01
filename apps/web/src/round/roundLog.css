@@ -1,0 +1,149 @@
+/**
+ * @file   apps/web/src/round/roundLog.css
+ * @module web/round
+ * @brief  The round's one guess list: guess rows, event rows, dots, answers and comments.
+ *
+ * Responsibility: the list takes the height left under the range block and scrolls inside
+ *                 itself, newest at the top (O20); a guess row is compact (O35: more rows in
+ *                 view): dot, name, number, answer and the comment in small text on one line
+ *                 when it fits, the comment wrapping under them otherwise; the viewer's own
+ *                 rows on a tint of the season colour (T75); Frost's held answer with its
+ *                 seconds in a small badge; an event is one quieter line, a special's own row
+ *                 (Leaf Fall) one on the season's tint with its icon in bold (T115). Moved out of
+ *                 ./round.css to keep each file under the size limit. Colours only from @smg/ui
+ *                 tokens.
+ * Spec:           docs/spec/02-game-guess-the-number.md §6.3, §12
+ */
+/* The guess list: the height left under the range block, newest at the top, scrolling only
+   inside its box. */
+.round-log {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.round-log ol {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  align-content: start;
+  gap: 0.1rem;
+  overflow-y: auto;
+}
+
+/* A guess on one line: dot, name, number, answer, and the comment while it fits; a comment
+   that does not fit wraps under the others, still in small text. */
+.round-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.5rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--radius);
+  line-height: 1.3;
+}
+
+.round-row[data-own='true'] {
+  background: color-mix(in srgb, var(--season) 22%, var(--color-card));
+  box-shadow: inset 4px 0 0 var(--season);
+}
+
+.round-who {
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--font-weight-strong);
+}
+
+.round-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-strong);
+}
+
+.round-comment {
+  flex: 1 1 10rem;
+  min-width: 0;
+  font-size: var(--font-size-small);
+}
+
+.round-arriving {
+  color: var(--color-winter-text);
+  font-weight: var(--font-weight-strong);
+}
+
+/* The seconds until a held answer arrives: a small badge in Frost's colour. */
+.round-arriving-left {
+  display: inline-block;
+  min-width: 2.2em;
+  padding: 0 0.35em;
+  border-radius: var(--radius-pill);
+  border: 1px solid currentColor;
+  font-size: var(--font-size-small);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* An event: one quieter line. */
+.round-row--event {
+  flex-wrap: nowrap;
+  padding-block: 0.05rem;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+/* A special's row (Leaf Fall): on the season's tint with the season icon, in bold text of
+   the normal colour, wrapping when it names many numbers; readable in light and dark. */
+.round-row--special {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  padding: 0.2rem 0.5rem;
+  border-left: 4px solid var(--season);
+  background: color-mix(in srgb, var(--season) 26%, var(--color-card));
+  color: var(--color-text);
+  font-size: inherit;
+  font-weight: var(--font-weight-strong);
+}
+
+/* The text wraps beside the icon, never under it. */
+.round-row--special > span:last-child {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.round-row-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  background: var(--color-surface);
+}
+
+.round-dot {
+  flex: none;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: var(--dot, transparent);
+  border: 1px solid var(--color-border);
+}
+
+.round-answer {
+  font-weight: var(--font-weight-strong);
+  white-space: nowrap;
+}
+
+.round-answer[data-feedback='higher'] {
+  color: var(--color-success-text);
+}
+
+.round-answer[data-feedback='lower'] {
+  color: var(--color-danger);
+}

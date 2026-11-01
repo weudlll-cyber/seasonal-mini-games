@@ -15,7 +15,8 @@ seasonal-mini-games/
 ├─ .vscode/  .github/                                        as Bingo (workflows, shared setup action, PR template)
 ├─ assets/                                                   copied from Bingo assets/ with its manifest (03 §6)
 ├─ packages/
-│  ├─ game-sdk/src/        contract.ts (GameModule and its types), drbg.ts, range.ts, views.ts, conformance/
+│  ├─ game-sdk/src/        contract.ts (GameModule and its types), random.ts, settings.ts, range.ts,
+│  │                       crypto.ts (entry @smg/game-sdk/crypto: drbg.ts, commitment.ts), conformance/
 │  ├─ domain/src/          match/, round/ (lifecycle, roster, cooldown, order, placings), specials/
 │  │                       (scheduling, Heatwave, Frost), teams/, seasons/, standings/
 │  ├─ application/src/     round/ (engine.ts: the round actor, batcher.ts, queue.ts), match/, seasons/,
@@ -23,7 +24,7 @@ seasonal-mini-games/
 │  ├─ contracts/src/       http/, ws/, events/, settings/ (schemas and defaults/), errors.ts
 │  └─ ui/                  shared React components, design tokens (as Bingo)
 ├─ games/
-│  ├─ registry.ts          the list of installed game modules (04 §3)
+│  ├─ registry/            src/index.ts (modules), web/index.ts (screens): the installed games (04 §3)
 │  └─ guess-the-number/
 │     ├─ src/              module.ts, feedback.ts, hints.ts, leafFall.ts, halving.ts, views.ts, events.ts,
 │     │                    settings/ (schema.ts, defaults.ts), *.test.ts
@@ -46,7 +47,7 @@ seasonal-mini-games/
 
 ## 2. Size and structure rules (adopted)
 
-As Bingo 10 §2, enforced by ESLint and `tsc`: file ≤ 300 lines (tests ≤ 400), function ≤ 60 lines, complexity ≤ 12, at most 4 parameters, layer boundaries from [04](04-software-architecture.md) §3 (`eslint-plugin-boundaries`, with zones for `game-sdk`, `games/*/src`, `games/*/web` and `games/registry.ts`), no default exports, no `any`, no non-null `!`, no unused variables or imports. In addition, `Math.random` is forbidden in `packages/` and `games/*/src` ([05](05-security-threat-model.md) §4).
+As Bingo 10 §2, enforced by ESLint and `tsc`: file ≤ 300 lines (tests ≤ 400), function ≤ 60 lines, complexity ≤ 12, at most 4 parameters, layer boundaries from [04](04-software-architecture.md) §3 (`eslint-plugin-boundaries`, with zones for `game-sdk`, `games/*/src`, `games/*/web` and the two halves of `games/registry`), no default exports, no `any`, no non-null `!`, no unused variables or imports. In addition, `Math.random` is forbidden in `packages/` and `games/*/src` ([05](05-security-threat-model.md) §4).
 
 ## 3. Standard file header (adopted from Bingo 10 §3)
 
@@ -81,6 +82,7 @@ Every port of this repository differs from every port used in the Bingo reposito
 | Mailpit SMTP (dev compose) | **1110** | 1090 |
 | Mailpit web UI (dev compose) | **8510** | 8490 |
 | App port inside its container | **3100** | 3000 |
+| Test host page for e2e journey 8 (development only) | **5420** | — |
 | Metrics port inside its container | **9465** | 9464 |
 
 Container-side ports of the third-party images (PostgreSQL 5432, Mailpit 1025 and 8025) are not bound on the host and are the same in both repositories.
@@ -103,6 +105,6 @@ Differences:
 
 - **Website install type:** the website's Caddy forwards `/games/mini-games/*` (HTTP and WebSocket) to the app's port 3100 on the website's Docker network. The installer writes the route snippet to `/opt/smg/website-mini-games.caddy`. `SMG_BASE_PATH=/games/mini-games/`.
 - **Next to Bingo on one server:** both can be installed as the website type on the same server. They keep separate databases, containers, volumes, env files and backup timers. Two **standalone** installs cannot share a server, because both need ports 80 and 443. The installer's port check refuses, as Bingo's does (Bingo `ops/lib/host.sh`).
-- **Maintenance:** `smg maintenance on` stops new matches and new rounds. Running rounds finish.
+- **Maintenance:** `smg maintenance on` stops new matches and new rounds (503 `MAINTENANCE` for opening a match, creating a round and the Quick Test). Running rounds finish (DECISIONS T95).
 - **Updates during play:** `smg update` waits up to 10 minutes for open rounds to end, or with `--now` restarts at once. Open rounds then resume from their event log ([04](04-software-architecture.md) §5.3); cooldowns and Frost-held answers are rebuilt.
 - **Secrets generated at install:** `SMG_ROUND_KEY` (32 random bytes) in addition to Bingo's set.

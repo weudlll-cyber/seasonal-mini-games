@@ -7,9 +7,9 @@
 | Topic | Bingo reference | Difference here |
 |---|---|---|
 | Conventions: PostgreSQL 17, UUIDv7 keys, `timestamptz` UTC, snake_case, `text` + `CHECK` instead of enums, `jsonb` only for documents and event payloads, **no monetary columns**, DB roles | Bingo 04 §1 | Schema `smg`, roles `smg_*`. |
-| Identity and access tables (`accounts`, `sessions`, `identity_providers`, `external_identities`, `roles`, `role_permissions`, `role_assignments`, `totp_factors`, `recovery_codes`, token tables, `player_profiles`, badges) | Bingo 04 §3.1 | `player_profiles` counts `rounds_played`, `wins`, `solves` instead of Bingo's counters. |
+| Identity and access tables (`accounts`, `sessions`, `identity_providers`, `external_identities`, `roles`, `role_permissions`, `role_assignments`, `totp_factors`, `recovery_codes`, token tables, `player_profiles`, badges) | Bingo 04 §3.1 | No profile counters: a public profile is computed from the league awards, so it always agrees with the boards (DECISIONS T87). |
 | Configuration tables (`settings_documents`, `settings_versions`, `embed_origins`) | Bingo 04 §3.2 | No `rulesets`, `ruleset_versions` or `patterns`. Per-game settings are settings documents with id `game.<gameId>` ([08](08-admin-settings.md)). |
-| Leaderboard tables (`leaderboard_periods`, `league_entries`, `league_awards`, `leaderboard_adjustments`) | Bingo 04 §3.4 | `league_entries` counts `wins` and `solves` instead of `season_completes`. Adds `team_league_entries` (§2.6). |
+| Leaderboard tables (`leaderboard_periods`, `league_entries`, `league_awards`, `leaderboard_adjustments`) | Bingo 04 §3.4 | `league_entries` counts `wins` and `solves` instead of `season_completes`. `league_awards` hold a match's standing per board and account (replaced as its rounds end); `leaderboard_adjustments` are append-only. Adds `team_league_awards` and `team_league_entries` (§2.6). |
 | Chat and moderation tables | Bingo 04 §3.5 | None. |
 | Notifications, uploads, `audit_log`, `jwt_replay_cache` | Bingo 04 §3.6 | None. |
 | `scheduled_actions` with leases | Bingo 04 §3.3 | The `kind` values differ (§2.5). |
@@ -17,7 +17,7 @@
 | Migrations: hand-written SQL, checksummed own migrator, applied on start; seed on first install | Bingo 04 §6 | The seed has no rulesets. It holds the settings documents from defaults and the `game.guess-the-number` document. |
 | API conventions: `/api/v1`, zod contracts, OpenAPI generation, RFC 9457 problems, cursor pagination, `Idempotency-Key`, session cookie plus CSRF or bearer embed token, rate-limit headers | Bingo 05 §1 | None. |
 | Session, auth and profile routes | Bingo 05 §2.1, §2.2 | `POST /dev/sign-in` as Bingo (development builds only). |
-| Leaderboard, chat, notification and misc routes (`/config/public`, `/assets`, `/healthz`, `/readyz`, `/metrics` internal only) | Bingo 05 §2.4, §2.5 | Leaderboards add `GET /leaderboards/:periodId/teams`. |
+| Leaderboard, chat, notification and misc routes (`/config/public`, `/assets`, `/healthz`, `/readyz`, `/metrics` internal only) | Bingo 05 §2.4, §2.5 | Leaderboards add `GET /leaderboards/:periodId/teams`; pages are `?offset=` steps of 50. The public profile is `GET /players/:displayName` (Bingo 05 §2.2). |
 | Admin route layout, permissions per route, audit on every write, step-up | Bingo 05 §3 | Rulesets, patterns and the simulator are replaced by settings documents and `halving-days` (§3.2). |
 | Realtime transport (Socket.IO over WebSocket only, `/ws`, namespaces `/play` and `/admin`, connection state recovery, frame limits) | Bingo 06 §1 | None. |
 | Handshake and auth, session revocation push | Bingo 06 §2 | A socket may be in at most 3 match rooms. |
@@ -38,9 +38,10 @@
 | visibility | text | `public`, `unlisted` |
 | max_players | int | within `match.maxPlayers` bounds |
 | counts_for_leaderboard | bool | default true |
+| team_match | bool | default true: the season teams play (owner decision 34; migration 0012) |
 | created_by | uuid FK accounts | the host |
 | created_at, closed_at | timestamptz | |
-| aborted_reason, aborted_by | text NULL | as Bingo D17 (`host` or `system`) |
+| aborted_reason, aborted_by | text NULL | as Bingo D17 (`host` or `system`); for a closed match how it closed: the host with no reason, or `system` with `idle` (owner decisions 27, 28; DECISIONS T83) |
 | version | bigint | optimistic concurrency |
 
 ### 2.2 `match_players`
@@ -93,39 +94,43 @@
 
 - **season_feed_state** — single row: `season text NULL`, `token text NULL`, `since timestamptz NULL`, `fetched_at timestamptz NULL`, `last_error text NULL`.
 - **halving_days** — `day date`, `token text`, `source` (`feed` / `admin`), `created_by NULL`, `created_at`. PK `(day, token)`. Edits are audited.
+- **team_league_awards** — `period_id`, `team`, `match_id`, `points`, `wins`. PK `(period_id, team, match_id)`: a match's team standing on one board.
 - **team_league_entries** — `period_id`, `team`, `points int`, `wins int`, `updated_at`. PK `(period_id, team)`.
+- **How points reach the boards** (DECISIONS T87, T88): in the transaction that appends a round's `RoundEnded`, a match with `counts_for_leaderboard` and at least `leaderboard.minPlayersForPoints` distinct accounts over its ended rounds awards every account its match standing (points, round wins, solves, rank) and every team its team standing, to the all-time board and to the season board of the meteorological season (UTC, owner decision 30; DECISIONS T107) in which the match's first round ended. Entries are the sums of awards and adjustments. Aborting a match removes its awards unless `leaderboard.abortedMatchesCount` is on; a match ended normally keeps them (owner, decision 31).
 
 ### 2.7 Round event types (platform)
 
-`RoundCreated` (settings, commitment), `CountdownStarted` (roster, teams, `opensAt`), `RoundOpened`, `GuessAccepted` (`playerKey`, `receiveSeq`, `receivedAt`, `value`, `cooldownEndsAt`), `SpecialFired` (special, index, effect summary), `CooldownChanged` (new value), `PlayerSolved` (`playerKey`, `receiveSeq`, `place`), `HeldDelivered` (Frost: the event seqs delivered), `RoundEnded` (reason, placings, team results, seed when revealed), `RoundAborted` (reason, by).
+`RoundCreated` (settings, commitment), `CountdownStarted` (roster, teams, `opensAt`), `RoundOpened`, `GuessAccepted` (`playerKey`, `receiveSeq`, `receivedAt`, `value`, `cooldownEndsAt`), `SpecialFired` (special, index, effect summary), `CooldownChanged` (new value), `PlayerSolved` (`playerKey`, `receiveSeq`, `place`), `HeldDelivered` (Frost: `upTo`, the last log seq delivered; written by the round actor, DECISIONS T41), `RoundEnded` (reason, placings, team results, seed when revealed), `RoundAborted` (reason, by), `MarginNoted` (`playerKey`, `ms`: the first would-be correct guess after a shared win inside `round.marginWindowS`, [02](02-game-guess-the-number.md) §9). A game event is logged as `Game` (`audience`, `feedback`, `event`).
 
-Game events of Guess The Number: `FeedbackGiven` (`playerKey`, `receiveSeq`, `feedback`, `bandLow`, `bandHigh`; marked `feedback: true`), `HintGiven` (Spring Herald), `NumbersRemoved` (Leaf Fall), `RangeHalved` (per player or shared).
+Game events of Guess The Number: `FeedbackGiven` (`playerKey`, `receiveSeq`, `receivedAt`, `value`, `feedback`, `comment`; to the guesser, marked `feedback: true`), `GuessFed` (`playerKey`, `guesses`, plus `value` and `feedback` as the visibility allows, and `comment` exactly where `feedback` is; to the room, marked `feedback: true` when it carries an answer). `comment` is the closeness comment ([02](02-game-guess-the-number.md) §6.3): `tier`, the line's `text`, and its `pool` and `index` in the catalogue, or null when the round has the comments off (owner decision 21, DECISIONS T73). No event carries a narrowed range (owner decision 17), `HintGiven` (Spring Herald: `playerKey` or null for the shared hint, `hint`), `NumbersRemoved` (Leaf Fall: `index`, `numbers`), `RangeHalved` (`index`, `playerKey` or null, `range` or null, `size`: the shared window, a player's own range, or the room's line with the size).
 
 Rejected guesses are **not** events. They are counted in metrics and in the abuse score only.
 
 ### 2.8 Sizing
 
-A shared round with 500 players, 10 s cooldown, lasting 5 minutes: at most 15 000 accepted guesses, about 30 000 events, about 6 MB. At 50 such rounds a day that is under 10 GB a month before compaction. The events of rounds older than 90 days are compacted: `round_results` stay, `round_events` of type `GuessAccepted`/`FeedbackGiven` move to a compressed archive table, and the hash of the moved rows stays in place so that the log remains verifiable.
+A shared round with 500 players, 10 s cooldown, lasting 5 minutes: at most 15 000 accepted guesses, about 45 000 events (`GuessAccepted`, `FeedbackGiven`, `GuessFed` per guess), about 9 MB. At 50 such rounds a day that is under 10 GB a month before compaction. The events of rounds older than 90 days are compacted: `round_results` stay, `round_events` of type `GuessAccepted`, `FeedbackGiven` and `GuessFed` move to a compressed archive table, and the hash of the moved rows stays in place so that the log remains verifiable.
 
 ## 3. HTTP API
 
 ### 3.1 Player and host routes (base `/api/v1`)
 
+Every public answer and frame names a player by their number in the match, `p1`, `p2`, … in join order (left and kicked players keep theirs), never by account id; the viewer's own number is `you` in the match details and the round state. Bots keep their keys. Only the admin routes (§3.2) show account ids (DECISIONS T104).
+
 | Method | Path | Body | Who |
 |---|---|---|---|
 | GET | `/games` | — | anyone: registered games with name and supported modes |
 | GET | `/matches?status=&game=` | — | anyone: public matches in the lobby or open, and those ended in the last day |
-| POST | `/matches` | `{ gameId, title, visibility, maxPlayers, countsForLeaderboard? }` | `match.create` |
-| GET | `/matches/:code` | — | anyone: summary (`youHost`, player count, current round summary, `nextRoundDefaults` for the host) |
-| POST | `/matches/:code/join` · `/leave` | `{}` | `match.join` |
-| POST | `/matches/:code/team` | `{ team }` | a match player; refused with `TEAMS_LOCKED` during a countdown or open round |
+| POST | `/matches` | `{ gameId, title, visibility, maxPlayers, countsForLeaderboard?, teamMatch? }` (`teamMatch` default true, owner decision 34) | `match.create`; the host joins as the match's first player (owner decision 16) |
+| GET | `/matches/:code` | — | anyone: summary (`youHost`, `teamLocked` for the viewer, player count, current round summary, `teamStandings`, `nextRoundDefaults` for the host, `standings`, and `ended` once the match is closed or aborted: rounds played and how it ended, the summary taking the players' totals from `standings` and the teams from `teamStandings`; DECISIONS T85) |
+| POST | `/matches/:code/join` · `/leave` | `{}` | `match.join`; a player staff removed from the match is refused with 409 `KICKED` |
+| POST | `/matches/:code/team` | `{ team }` | a match player, once per match: refused with `TEAM_LOCKED` once the player was on a started round's roster (owner decision 26), and with `TEAMS_LOCKED` during a countdown or open round; in a match without teams always with `TEAMS_OFF` (owner decision 34) |
 | POST | `/matches/:code/rounds` | `{ settings, startNow? }` (platform round settings of [02](02-game-guess-the-number.md) §3 and the game's settings) | the host (`round.manage`); 422 `ROUND_SETTINGS_INVALID`, 409 `ROUND_RUNNING`, 409 `NOT_A_HALVING_DAY`, 409 `IN_SEASON_UNAVAILABLE` |
 | POST | `/rounds/:id/start` · `/end` · `/abort` | `{}` · `{}` · `{ reason }` | the host |
 | GET | `/rounds/:id/state?since=` | — | anyone allowed to watch: the caller's view (player, spectator or result) and the event seq; `since` gives a delta |
 | POST | `/rounds/:id/guesses` | `{ value }` | a roster player: the HTTP fallback, same queue and checks |
 | GET | `/rounds/:id/result` | — | anyone, after the end: placings, team results, secret(s), seed if revealed |
 | GET | `/rounds/:id/verify` | — | anyone, after the end with the fairness proof on: seed, settings, roster, the accepted guesses in receive order |
-| POST | `/matches/:code/close` · `/abort` | `{}` · `{ reason }` | the host |
+| POST | `/matches/:code/close` · `/abort` | `{}` · `{ reason }` | the host; close is the host menu's End match (owner decision 27): a round set up or running is aborted, ended rounds keep their points. The system closes an idle match the same way (decision 28) |
 | GET | `/seasons/current` | — | anyone: the In Season answer if usable, today's halving status |
 | GET | `/me/matches` | — | the signed-in account |
 
@@ -137,6 +142,7 @@ As Bingo 05 §3 for dashboard, settings, integrations, accounts, moderation, upl
 |---|---|---|
 | Matches and rounds | `GET /matches`, `GET /rounds/:id`, `POST /rounds/:id/abort`, `POST /matches/:id/kick`, `POST /rounds/:id/results/:playerKey/remove` (reason required) | `match.abort` / `match.manage` / `leaderboard.adjust` |
 | Seasons | `GET /seasons/feed`, `POST /seasons/feed/refresh`, `GET/POST/DELETE /halving-days` | `season.manage` |
+| Leaderboards | `POST /leaderboard-adjustments` (`{ periodId, displayName, delta, reason }`, reason required, audited, public on the profile) | `leaderboard.adjust` |
 | Game settings | `GET/PUT /settings/game.<gameId>` with versions and rollback as Bingo | `settings.game.edit` |
 
 ## 4. Realtime
@@ -168,16 +174,16 @@ As Bingo 05 §3 for dashboard, settings, integrations, accounts, moderation, upl
 
 ### 4.4 Server → client events
 
-On the wire, committed events arrive as `events` frames `{ s, events: [{ s, at, event }] }` (Bingo 06 §4, as built). The `event` values are the projected public or per-player forms below:
+On the wire, committed events arrive as `events` frames (Bingo 06 §4, as built; DECISIONS T35). The match room gets `{ roundId, s, events: [{ s, at, event }] }` with every seq of the batch, so a gap means a missed frame; an event not meant for the room is `null` there. A player's room gets `{ roundId, events }` with only that player's own events, the host room likewise. The `event` values are the projected public or per-player forms below:
 
 | Event | Room | Data |
 |---|---|---|
 | `match.updated` | match | status, player count, teams |
-| `round.created` | match | round summary: season, special, halving, mode, cooldown, range, commitment |
+| `round.created` | match | round summary: season, special, halving, mode, cooldown, range (none while the range is hidden, DECISIONS T52), commitment |
 | `round.countdown` | match | `opensAt`, roster size, teams |
 | `round.opened` | match | — |
 | `guess.feed` | match | per `feedbackVisibility` ([02](02-game-guess-the-number.md) §6.2): `{ player, guesses }`, plus `value` and/or `feedback` when allowed |
-| `guess.result` | player | `{ receiveSeq, value, feedback, band }`; under Frost sent at `receivedAt + delay` |
+| `guess.result` | player | `{ receiveSeq, value, feedback }`; under Frost sent at `receivedAt + delay` |
 | `hint` | player (individual) / match (shared) | Spring Herald text and type |
 | `special.fired` | match | `{ special, index, summary }`, e.g. Leaf Fall's removed numbers, Heatwave's new cooldown, a shared halving window |
 | `range.changed` | player | individual-mode halving: the player's own new range |
@@ -203,4 +209,4 @@ Budget at 500 players and a 3 s cooldown: about 170 accepted guesses a second fo
 
 ### 4.6 Metrics (in addition to Bingo 06 §10)
 
-`smg_guess_total{result}`, `smg_guess_ack_seconds`, `smg_round_queue_depth`, `smg_round_batch_seconds`, `smg_special_lag_seconds`, `smg_frost_delivery_lag_seconds`, `smg_ws_rtt_seconds`, `smg_rounds{status}`, `smg_season_feed_age_seconds`.
+`smg_guess_total{result}`, `smg_guess_ack_seconds`, `smg_round_queue_depth`, `smg_round_batch_seconds`, `smg_special_lag_seconds`, `smg_frost_delivery_lag_seconds`, `smg_ws_rtt_seconds` (as the client measured it at its previous clock sync), `smg_rounds{status}`, `smg_season_feed_age_seconds` (−1 before the first good answer). From Bingo 08 §6: `smg_http_requests_total{method,route,status}`, `smg_http_duration_seconds{method}`, `smg_ws_connections`, `smg_ws_intents_total{type,result}`. Labels are route patterns and codes, never match codes or accounts (DECISIONS T96).

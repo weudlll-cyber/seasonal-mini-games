@@ -1,0 +1,138 @@
+/**
+ * @file   apps/web/src/round/result.css
+ * @module web/round
+ * @brief  The result page: headline, placings table, player names, the proof's hex values.
+ *
+ * Responsibility: placings (and the match summary's standings) as a table with fixed number
+ *                 columns that fits a 390 px phone without scrolling, words wrapping whole and
+ *                 tighter cells below 480 px; a player's name on one line, shrinking with an
+ *                 ellipsis until focus or a tap shows it whole (./PlayerName); the
+ *                 viewer's own line highlighted; the team result list. Colours only from
+ *                 @smg/ui tokens.
+ * Spec:           docs/spec/02-game-guess-the-number.md §9, §12
+ */
+.round-result {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.round-result h1 {
+  margin: 0;
+  font-size: var(--font-size-title);
+}
+
+/* A table never widens the page; with the fixed columns below it fits a 390 px phone. */
+.round-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Words wrap whole inside the table (the panel's `anywhere` split "Place" into "Plac e").
+   Fixed layout: the number columns keep their width and the player column takes the rest,
+   so all four fit at 390 px and a long name gives way with its ellipsis. */
+.round-table {
+  width: 100%;
+  border-collapse: collapse;
+  overflow-wrap: normal;
+  table-layout: fixed;
+}
+
+.round-col-place {
+  width: 5.5rem;
+}
+
+.round-col-num {
+  width: 5rem;
+}
+
+/* The player cell: icon, name and "(you)" on one line; only the name shrinks. */
+.round-player {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.round-player .player-name {
+  min-width: 0;
+  max-width: none;
+}
+
+/* Asked for in full (focus or a tap), the name wraps inside its cell instead. */
+.round-player .player-name:focus-visible,
+.round-player .player-name[data-full='true'] {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.round-result {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.round-table th,
+.round-table td {
+  text-align: left;
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* A phone fits all four columns with the small text size, tighter cells and narrower number
+   columns, so the player column keeps room for a name ("took part" wraps whole). */
+@media (max-width: 480px) {
+  .round-table {
+    font-size: var(--font-size-small);
+  }
+
+  .round-table th,
+  .round-table td {
+    padding: var(--space-1);
+  }
+
+  .round-col-place {
+    width: 3.5rem;
+  }
+
+  .round-col-num {
+    width: 4.25rem;
+  }
+
+  /* The last column ("Points", "Wins") needs less than "Guesses". */
+  .round-col-num:last-child {
+    width: 3.5rem;
+  }
+}
+
+/* A name never breaks inside a word; too long, it ends in an ellipsis until focus or a tap
+   shows it whole (./PlayerName). */
+.player-name {
+  display: inline-block;
+  max-width: 9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.player-name:focus-visible,
+.player-name[data-full='true'] {
+  max-width: none;
+}
+
+.round-you {
+  background: var(--color-active-bg);
+  font-weight: var(--font-weight-strong);
+}
+
+.round-hex {
+  overflow-wrap: anywhere;
+  font-size: var(--font-size-small);
+}
+
+.round-teams-result {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: var(--space-1);
+}

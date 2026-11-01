@@ -1,0 +1,66 @@
+/**
+ * @file   apps/server/src/http/routes/quickTest.ts
+ * @module server/http
+ * @brief  POST /api/v1/dev/quicktest: start a Quick Test round against bots.
+ *
+ * Responsibility: validate the body with zod and start the Quick Test for the signed-in
+ *                 player, at once or through the waiting area (`lobby`, O24). Registered only in development builds (SMG_DEV=1), like every
+ *                 development route. Replaces Bingo's in-memory runner of the same name.
+ * Depends on:     fastify, zod, ../../dev/quickTest, ../../match/play
+ * Used by:        ../app
+ * Spec:           docs/spec/11-roadmap.md (phase 1 Quick Test); docs/spec/09-testing-strategy.md §1
+ */
+import type { FastifyInstance } from 'fastify';
+import { z } from 'zod';
+
+import { quickTests } from '../../dev/quickTest.js';
+import type { Play } from '../../match/play.js';
+
+const body = z
+  .object({
+    gameId: z.string().min(1).max(40).default('guess-the-number'),
+    mode: z.enum(['shared', 'individual']).default('shared'),
+    bots: z.number().int().min(1).max(50).default(3),
+    cooldownS: z.number().int().min(3).max(60).default(3),
+    visibility: z.enum(['own', 'numbers', 'full']).default('full'),
+    // A short search for a quick look; negative bounds and a hidden range too (O18, O19).
+    rangeLow: z.number().int().min(-1_000_000).max(1_000_000).default(1),
+    rangeHigh: z.number().int().min(-1_000_000).max(1_000_000).default(1_000),
+    rangeVisible: z.boolean().default(true),
+    // Closeness comments on every guess (O21), on as for every round.
+    comments: z.boolean().default(true),
+    // The fast test profile (09 §4): specials every few seconds. On by default here.
+    fast: z.boolean().default(true),
+    halving: z.boolean().default(false),
+    // Through the waiting area, the host starting the round (O24). Off here, so scripted
+    // callers keep the direct start; the Quick Test form sends it on by default.
+    lobby: z.boolean().default(false),
+    // A team match (O34), as matches are by default.
+    teamMatch: z.boolean().default(true),
+    // Short for scripted callers; the Quick Test form sends the round setting's default, so
+    // the intro screen shows as long as in a normal round (O36).
+    countdownS: z.number().int().min(3).max(30).default(3),
+    seedText: z.string().trim().min(1).max(64).optional(),
+    season: z.enum(['spring', 'summer', 'autumn', 'winter']).optional(),
+  })
+  .strict()
+  // At least 10 numbers, as for every round (08 §3).
+  .refine((b) => b.rangeHigh >= b.rangeLow + 9);
+
+export function registerQuickTest(
+  app: FastifyInstance,
+  deps: { readonly play: Play; readonly pool: Parameters<typeof quickTests>[1] },
+): void {
+  const quick = quickTests(deps.play, deps.pool);
+  app.post('/api/v1/dev/quicktest', async (request, reply) => {
+    const accountId = request.session?.accountId ?? null;
+    if (accountId === null) return reply.status(401).send({ code: 'SIGN_IN_REQUIRED' });
+    const parsed = body.safeParse(request.body ?? {});
+    if (!parsed.success) return reply.status(400).send({ code: 'VALIDATION_FAILED' });
+    if (!deps.play.rounds.hasGame(parsed.data.gameId)) {
+      return reply.status(422).send({ code: 'GAME_UNKNOWN' });
+    }
+    const started = await quick.start({ ...parsed.data, playerId: accountId });
+    return reply.status(201).send(started);
+  });
+}

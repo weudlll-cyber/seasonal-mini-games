@@ -10,7 +10,7 @@ Monorepo and tooling taken over from Bingo and renamed (pnpm workspaces includin
 **Done when:** `pnpm dev` shows a placeholder lobby on 5410 with the dev badge, CI is green on `master`, and the image builds.
 
 ### Phase 1 — One round on one screen
-`game-sdk` (contract, DRBG, range helpers, conformance suite), the platform round rules in `domain` (lifecycle, roster, cooldown, receive order, placings), and the Guess The Number module with feedback. A **Quick Test** in development builds: one player against bots in a shared or individual round, with a seed field.
+`game-sdk` (contract, DRBG, range helpers, conformance suite), the platform round rules in `domain` (lifecycle, roster, cooldown, receive order, placings), and the Guess The Number module with feedback. A **Quick Test** in development builds: one player against bots in a shared or individual round, with a seed field; it runs through the normal waiting area and host start, or starts at once (owner decision 24, [02](02-game-guess-the-number.md) §2).
 **Done when:** the owner plays a shared and an individual round against bots in the browser, the cooldown blocks guesses, and the same seed gives the same round.
 ### Phase 2 — Real players, together
 Accounts and sessions (Bingo's built auth adopted), matches and the lobby, the round actor with group commit and restart recovery, the WebSocket gateway with guess intents, clock offset and per-player rooms, the host console (create, start, end and abort rounds), the result screen, and reconnect.
@@ -36,7 +36,7 @@ JWT handoff with the website (including the optional `links` claim), the embed l
 **Done when:** the game runs embedded on a test host page with single sign-on, and then on the Seasonal Entertainment website once its side is ready.
 
 ### Phase 8 — Production readiness
-Installer and `smg` CLI (both install types, beside Bingo on one server), backups and restore drill, observability, a security pass (ZAP, authz matrix, secret scan), the load gate ([09](09-testing-strategy.md) §5), the operator guide, and the v1.0.0 release.
+Installer and `smg` CLI (both install types, beside Bingo on one server), backups and restore drill, observability, a security pass (ZAP, authz matrix, secret scan; results in [../security-pass.md](../security-pass.md)), the load gate ([09](09-testing-strategy.md) §5), the operator guide, and the v1.0.0 release.
 **Done when:** a fresh VPS goes from nothing to a running, backed-up instance with one script, the load gate passes, and v1.0.0 is tagged.
 
 ## 2. After v1 (not scheduled)

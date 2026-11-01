@@ -5,9 +5,10 @@
 ## 1. Principles (adopted)
 
 - The admin app, its navigation model, and forms generated from the same zod schemas the server validates with (defaults, bounds and help text from schema metadata) are as in Bingo 11 §1.
+- The host's round form and the development Quick Test show every field's help as one line under the field, in the words of the setting's definition (DECISIONS T64).
 - Every change is a new version of its settings document, with history, diff and rollback, and is audited ([05](05-security-threat-model.md) §8). Confirm dialogs and 2FA step-up apply as in Bingo 11 §1.
 - Bingo's settings documents `security`, `rate_limits`, `branding`, `theme`, `notifications`, `features` and `chat` are adopted with their keys (Bingo 11 §4). This catalogue lists only the keys that are new or different.
-- Defaults live in `packages/contracts/src/settings/defaults/` (platform) and `games/guess-the-number/src/settings/defaults.ts` (game). The tables below are the specification of those files.
+- Definitions with their defaults live in `packages/contracts/src/settings/` (platform) and `games/guess-the-number/src/settings/` (game). The tables below are the specification of those files. A document stores only what an admin changed: per key a new default and, for numbers, narrowed bounds (never wider than the table).
 - Navigation differs from Bingo 11 §2: **Game rules** becomes **Games** (per-game settings and bounds), and a new **Seasons** area holds the feed status and halving days.
 
 ## 2. How to read the tables
@@ -22,12 +23,20 @@
 |---|---|---|---|---|---|---|
 | `round.secretMode` | `shared` | — | — (`shared`, `individual`) | modes: owner; default: owner (O15) | host | frozen |
 | `round.cooldownS` | 10 | 3 | 60 | bounds: owner; default: owner (O15) | host | frozen (changed only by Heatwave) |
-| `round.rangeLow` | 1 | 0 | 999 990 | owner (O15) | host | frozen |
-| `round.rangeHigh` | 1 000 | `rangeLow` + 9 | 1 000 000 | owner (O15) | host | frozen |
-| `round.countdownS` | 5 | 3 | 30 | owner (O15) | host | frozen |
+| `round.rangeLow` | 1 | −1 000 000 | 1 000 000 | owner (O18); `rangeHigh` ≥ `rangeLow` + 9 | host | frozen |
+| `round.rangeHigh` | 1 000 | −1 000 000 | 1 000 000 | owner (O18); `rangeHigh` ≥ `rangeLow` + 9 | host | frozen |
+| `round.rangeVisible` | true | — | — | owner (O19): off hides the range until the end (02 §3) | host | frozen |
+| `round.countdownS` | 10 | 3 | 30 | *proposal* (OPEN (ab)): long enough to read the round's intro screen (owner decision 36); was 5 (O15) | host | frozen |
 | `round.maxDurationMin` | 10 | 1 | 60 | owner (O15) | host | frozen |
 | `round.feedbackVisibility` | `full` | — | — (`own`, `numbers`, `full`) | owner (O8) | host (shared mode) | frozen |
-| `round.marginWindowS` | 2 | 0.5 | 10 | proposal: how long after the winning guess a correct guess still counts for the winning margin (02 §9) | game admin | frozen |
+| `round.comments` | true | — | — | owner (O21): a closeness comment on every guess, seen exactly where its answer is seen (02 §6.3) | host | frozen |
+| `comments.wayOffAbove` | 50 % | 20 | 90 | proposal: a guess farther from the secret than this share of the range's width is "way off" (02 §6.3) | game admin | frozen |
+| `comments.coldAbove` | 25 % | 10 | 60 | proposal: "cold" above this share | game admin | frozen |
+| `comments.coolAbove` | 10 % | 3 | 40 | proposal: "cool" above this share | game admin | frozen |
+| `comments.warmAbove` | 3 % | 1 | 20 | proposal: "warm" above this share | game admin | frozen |
+| `comments.hotAbove` | 1 % | 0.5 | 10 | proposal: "hot" above this share; at or under it "burning" (more than 2 away). The five thresholds must fall from way off to hot | game admin | frozen |
+| `comments.trendPercent` | 33 % | 0 | 100 | proposal: how often a guess in another tier than the player's last one gets a trend line ("getting warmer") instead of a tier line (DECISIONS T71) | game admin | frozen |
+| `round.marginWindowS` | 2 | 0.5 | 10 | owner (O33): how long after the winning guess a correct guess still counts for the winning margin (02 §9) | game admin | frozen |
 | `round.seasonSource` | `inSeason` | — | — (`inSeason`, `manual`) | owner (default: O15) | host | frozen |
 | `round.specialOn` | true | — | — | owner (O15) | host | frozen |
 | `round.teamsOn` | true | — | — | owner (O15) | host (shared mode) | frozen |
@@ -57,10 +66,11 @@ The host form shows each host-chosen value with its default preselected and refu
 |---|---|---|---|---|---|---|
 | `match.minPlayersPerRound` | 2 | 1 | 50 | owner (O15) | game admin | next: read when a countdown starts |
 | `match.maxPlayers` | 500 | 2 | 1 000 | owner (O15) | game admin (host picks up to it) | next: read on join |
-| `match.lobbyIdleCloseMin` | 60 | 10 | 1 440 | owner (O15): a match with no round for this long closes itself | game admin | immediate |
+| `match.lobbyIdleCloseMin` | 60 | 10 | 1 440 | owner (O15, O28): a match with no round for this long closes itself, counted from the later of its creation and its last round's creation or end; checked every minute and on server start ([02](02-game-guess-the-number.md) §2) | game admin | immediate |
 | `match.maxConcurrentRounds` | 20 | 1 | 100 | technical (per server) | game admin | next: read at round creation |
 | `leaderboard.minPlayersForPoints` | 4 | 2 | 50 | owner (O11) | game admin | next: read at round end |
-| `leaderboard.periodLength` | quarter, named after the season | — | — | adopted (Bingo 01 §10) | game admin | next period |
+| `leaderboard.periodLength` | meteorological season | — | — | owner (O30): spring March–May, summer June–August, autumn September–November, winter December–February, in UTC; not a stored setting (DECISIONS T107) | — | — |
+| `leaderboard.abortedMatchesCount` | off | — | — | owner (O31): off, aborting a match takes back its league points; a match ended normally keeps them | game admin | immediate |
 
 ## 5. Seasons (documents `seasons`, `integrations`)
 
@@ -78,15 +88,15 @@ The host form shows each host-chosen value with its default preselected and refu
 
 | Key | Default | Min | Max | Status | Who | Running rounds |
 |---|---|---|---|---|---|---|
-| `antiMulti.minAccountAgeH` | 0 (off) | 0 | 720 | owner (O10) | security admin | next: read when a roster freezes |
-| `antiMulti.requireLinkedChat` | false | — | — | owner (O10); website installs only | security admin | next: read when a roster freezes |
-| `rate_limits.ws.guessPerAccount` | 4 / s, burst 4 | 1 / s | 10 / s | technical | security admin | immediate |
-| `rate_limits.http.guessPerSession` | 1 / s | 1 / 5 s | 4 / s | technical | security admin | immediate |
-| `rate_limits.ws.teamChoose` | 1 / 5 s | 1 / 60 s | 1 / s | technical | security admin | immediate |
-| `rate_limits.host.roundCommands` | 1 / 2 s | 1 / 10 s | 2 / s | technical | security admin | immediate |
-| `rate_limits.round.queueBound` | 5 000 | 1 000 | 20 000 | technical | security admin | immediate |
-| `security.abuse.cooldownRejectsPerMin` | 20 | 5 | 200 | technical | security admin | immediate |
-| `security.abuse.botTimingWindowMs` | 30 | 5 | 200 | technical: guesses this close to `cooldownEndsAt`, repeatedly, raise the abuse score | security admin | immediate |
+| `antiMulti.minAccountAgeH` | 0 (off) | 0 | 720 | owner (O10); a younger account is left off a shared roster (DECISIONS T103) | security admin | next: read when a roster freezes |
+| `antiMulti.requireLinkedChat` | false | — | — | owner (O10); website installs only: without a JWT handoff provider the form disables it with its reason and the server refuses it (DECISIONS T103) | security admin | next: read when a roster freezes |
+| `rate.guessPerAccountPerS` | 4 / s | 1 / s | 10 / s | technical | security admin | immediate |
+| `rate.httpGuessPerSessionPerMin` | 60 / min | 12 / min | 240 / min | technical | security admin | immediate |
+| `rate.teamChoosePerMin` | 12 / min | 1 / min | 60 / min | technical | security admin | immediate |
+| `rate.hostRoundCommandsPerMin` | 30 / min | 6 / min | 120 / min | technical | security admin | immediate |
+| `rate.roundQueueBound` | 5 000 | 1 000 | 20 000 | technical | security admin | immediate |
+| `abuse.cooldownRejectsPerMin` | 20 | 5 | 200 | technical | security admin | immediate |
+| `abuse.botTimingWindowMs` | 30 | 5 | 200 | technical: guesses this close to `cooldownEndsAt`, repeatedly, raise the abuse score | security admin | immediate |
 
 All Bingo security and rate-limit keys (Bingo 03 §13, Bingo 11 §3.10) keep their defaults and bounds. Loosening beyond a shipped default shows a warning, as in Bingo.
 
@@ -100,4 +110,6 @@ These are operator settings in `/etc/smg/<env>.env`, validated at start ([10](10
 | `SMG_ENGINE_BATCH_MS` | 20 | 5 | 100 | technical: group-commit window ([04](04-software-architecture.md) §5.3) |
 | `SMG_ENGINE_BATCH_MAX` | 200 | 50 | 1 000 | technical |
 | `SMG_SCHEDULER_POLL_MS` | 100 | 50 | 1 000 | technical |
+| `SMG_ROOM_FRAME_MS` | 100 | 0 | 250 | technical: a round's room frames are merged over this window, the first sent at once (DECISIONS T49) |
+| `SMG_DEV_FEED_URL` | unset | — | — | technical: development builds only, a local In Season feed (DECISIONS T42) |
 | Others (`SMG_PUBLIC_URL`, `SMG_BASE_PATH`, `SMG_TRUSTED_PROXIES`, `DATABASE_URL`, …) | as Bingo's `SBR_*` counterparts | | | adopted (Bingo 08 §5, 09 §1) |

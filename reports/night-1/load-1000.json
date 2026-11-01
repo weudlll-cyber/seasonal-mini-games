@@ -1,0 +1,42 @@
+{
+  "players": 1000,
+  "spectators": 100,
+  "roundS": 78,
+  "runS": 89,
+  "ackMs": {
+    "p50": 2846,
+    "p95": 4603,
+    "p99": 4791,
+    "count": 17305
+  },
+  "ownAnswerMs": {
+    "p50": 2844,
+    "p95": 4601,
+    "p99": 4791,
+    "count": 17305
+  },
+  "refused": {},
+  "integrity": {
+    "proofOk": true,
+    "acceptedInLog": 18086,
+    "acknowledged": 17305,
+    "acknowledgedButMissing": 0,
+    "duplicates": 0,
+    "gapFree": true,
+    "ownOrderKept": true,
+    "winners": 1,
+    "endReason": "solved"
+  },
+  "server": {
+    "cpuPeakCores": "0.91",
+    "cpuMeanCores": "0.67",
+    "rssPeakMiB": 484,
+    "loopLagP99PeakMs": 197
+  },
+  "driverBusiestWorker": "0.54",
+  "problems": {
+    "http": 0,
+    "socket": 0,
+    "examples": []
+  }
+}

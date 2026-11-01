@@ -1,0 +1,141 @@
+/**
+ * @file   games/guess-the-number/web/PlayerPanel.tsx
+ * @module games/guess-the-number/web
+ * @brief  The player's two parts: the range block at the top of the main area, and the input row.
+ *
+ * Responsibility: `PlayerPanel` is the range block (./RangeBar) with Spring Herald's hint under
+ *                 it as a highlighted line for the whole round ("Free hint: …", O35) and, in a
+ *                 Leaf Fall round, the Fallen numbers panel (./FallenNumbers, T115); the
+ *                 platform draws the round's one list of guesses and events beneath it
+ *                 (O20). `GuessInput` is the input row, placed by the platform (pinned at the
+ *                 bottom on a phone): the platform's cooldown ring, a number field that takes
+ *                 a minus sign (with the shared ± button of @smg/ui where negative numbers are
+ *                 possible, since phone keypads often lack one, T57) and a large Guess button;
+ *                 Enter sends. Guess waits while a guess is on its way, and the field is
+ *                 emptied only if it still holds the guess sent, so nothing typed is lost
+ *                 (T76). The field takes whole numbers from −1 000 000 000 to 1 000 000 000
+ *                 (T53). The game's own refusals are shown in plain words; the platform's are
+ *                 shown by the platform. A fallen number gets "Already fallen." at once,
+ *                 without being sent (O37).
+ * Depends on:     react, @smg/game-sdk (props), @smg/ui (sign toggle),
+ *                 @smg-game/guess-the-number (types, limit), ./FallenNumbers, ./RangeBar,
+ *                 ./text
+ * Used by:        ./index
+ * Spec:           docs/spec/02-game-guess-the-number.md §6, §12; docs/spec/03-seasonal-specials.md §2.1, §2.4
+ */
+import { GUESS_LIMIT, type PlayerView } from '@smg-game/guess-the-number';
+import type { PlayerPanelProps } from '@smg/game-sdk';
+import { flipSign, SignToggle } from '@smg/ui';
+import { useState, type ReactElement, type ReactNode, type SyntheticEvent } from 'react';
+
+import { FallenNumbers, leafFallOn } from './FallenNumbers.js';
+import { RangeBar } from './RangeBar.js';
+import { freeHint, gtnText } from './text.js';
+
+// The platform hands its cooldown ring in, to sit at the start of the input row.
+export type GtnPlayerProps = PlayerPanelProps & { readonly ring?: ReactNode };
+
+// A whole number the field takes, or null.
+function parsed(text: string): number | null {
+  const t = text.trim().replace('−', '-');
+  if (!/^-?\d+$/.test(t)) return null;
+  const n = Number(t);
+  return Math.abs(n) <= GUESS_LIMIT ? n : null;
+}
+
+// The field's text, the game's refusal line, sending, and flipping the sign.
+function useGuess(act: PlayerPanelProps['act'], removed: readonly number[]) {
+  const [value, setValue] = useState('');
+  const [message, setMessage] = useState<string | null>(null);
+  // A guess on its way: Guess waits for its answer, so the next one is never sent early.
+  const [sending, setSending] = useState(false);
+  const submit = (e: SyntheticEvent): void => {
+    e.preventDefault();
+    const n = parsed(value);
+    if (n === null) {
+      setMessage(gtnText.code('INVALID_ACTION'));
+      return;
+    }
+    // A fallen number is refused at once, the server's words, nothing sent (O37); the server
+    // still refuses it the same way without a cooldown should the view be behind.
+    if (removed.includes(n)) {
+      setMessage(gtnText.code('NUMBER_REMOVED'));
+      return;
+    }
+    const sent = value;
+    setSending(true);
+    void act({ value: n })
+      .then((reply) => {
+        setMessage(reply.ok ? null : gtnText.code(reply.code ?? ''));
+        // Empty the field only if it still holds the guess sent: text typed while the answer
+        // was on its way is the player's next guess and stays.
+        if (reply.ok) setValue((now) => (now === sent ? '' : now));
+      })
+      .finally(() => {
+        setSending(false);
+      });
+  };
+  const flip = (): void => {
+    setValue(flipSign);
+  };
+  return { value, setValue, message, sending, submit, flip };
+}
+
+export function GuessInput(props: GtnPlayerProps): ReactElement {
+  const view = props.view as PlayerView;
+  const { value, setValue, message, sending, submit, flip } = useGuess(props.act, view.removed);
+  const negative = view.range === null || view.range.low < 0;
+  return (
+    <div className="gtn-input">
+      <form className="gtn-guess" onSubmit={submit}>
+        {props.ring}
+        <label className="smg-visually-hidden" htmlFor="gtn-value">
+          Your guess
+        </label>
+        <input
+          id="gtn-value"
+          className="smg-input"
+          inputMode="numeric"
+          autoComplete="off"
+          enterKeyHint="send"
+          // The range block above names the range; a phone has no room for it in the field.
+          placeholder="Your guess"
+          value={value}
+          onChange={(e) => {
+            setValue(e.target.value);
+          }}
+          data-testid="guess-input"
+        />
+        {negative ? <SignToggle label="Change the sign" onFlip={flip} /> : null}
+        <button
+          className="smg-btn smg-btn--primary gtn-go"
+          type="submit"
+          disabled={!props.canAct || sending}
+          data-testid="guess-button"
+        >
+          Guess
+        </button>
+      </form>
+      {message === null ? null : (
+        <p className="gtn-message" role="status">
+          {message}
+        </p>
+      )}
+    </div>
+  );
+}
+
+export function PlayerPanel(props: PlayerPanelProps): ReactElement {
+  const view = props.view as PlayerView;
+  return (
+    <div className="gtn-player" data-testid="gtn-player">
+      <RangeBar range={view.range} removed={view.removed} />
+      {view.hint === null ? null : (
+        <p className="gtn-hint" data-testid="hint">
+          {freeHint(view.hint)}
+        </p>
+      )}
+      {leafFallOn(props) ? <FallenNumbers removed={view.removed} /> : null}
+    </div>
+  );
+}

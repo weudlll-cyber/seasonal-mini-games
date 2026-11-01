@@ -1,0 +1,12 @@
+# @file   osv-scanner.toml
+# @module repo
+# @brief  Accepted osv-scanner findings, each with a reason and an expiry date.
+#
+# Responsibility: let the CI security job pass on findings that are reviewed and not
+#                 exploitable here; every entry expires so it is reviewed again.
+# Used by:        .github/workflows/ci.yml (job security)
+# Spec:           Bingo 03 §18
+#
+# No entry now: the braces advisory GHSA-vfj7-8cjw-p6xm no longer matches the locked version
+# (osv-scanner 2.7.0 reported the ignore as unused, night run 3, N4). Add an entry here with
+# its reason and expiry only for a finding that is reviewed and not exploitable.

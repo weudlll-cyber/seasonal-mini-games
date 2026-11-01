@@ -1,0 +1,17 @@
+/**
+ * @file   games/registry/tsconfig.json
+ * @module games/registry
+ * @brief  TypeScript settings for the game registry.
+ *
+ * Responsibility: extend the shared strict base and limit the program to src/. node types
+ *                 are included for the conformance suite, which builds round randomness with the
+ *                 SDK crypto entry.
+ * Spec:           docs/spec/10-repository-structure.md §2
+ */
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["src"]
+}
