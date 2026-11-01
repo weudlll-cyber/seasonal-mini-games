@@ -24,7 +24,7 @@ import type { StEvent, StState } from './state.js';
 export const defaultConfig: StConfig = {
   width: 50,
   height: 50,
-  feedback: 'direction',
+  feedback: 'distance',
   feedbackVisibility: 'full',
   comments: true,
   trendPercent: 33,

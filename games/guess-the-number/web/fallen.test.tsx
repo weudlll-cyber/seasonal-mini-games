@@ -30,8 +30,11 @@ const view = {
   hint: null,
 };
 
+// The platform's per-player props: no cooldown running, no names or colours needed here.
+const who = { waitS: null, names: {}, colors: {} };
+
 describe('the Fallen numbers panel (T115)', () => {
-  const base = { act: vi.fn(), canAct: false, frostDelayMs: null, now: () => 0 };
+  const base = { act: vi.fn(), canAct: false, frostDelayMs: null, now: () => 0, ...who };
   const fallen = { ...view, removed: [7, 1_500, 250_000] };
 
   it('lists every fallen number ascending, grouped, in a Leaf Fall round only', () => {
@@ -44,12 +47,28 @@ describe('the Fallen numbers panel (T115)', () => {
     render(<PlayerPanel {...base} view={fallen} season="autumn" specialOn={false} />);
     expect(screen.queryByTestId('fallen-panel')).toBeNull();
     cleanup();
-    render(<SpectatorPanel view={{ ...fallen, log: [] }} names={{}} season="spring" specialOn />);
+    render(
+      <SpectatorPanel
+        view={{ ...fallen, log: [] }}
+        names={{}}
+        colors={{}}
+        season="spring"
+        specialOn
+      />,
+    );
     expect(screen.queryByTestId('fallen-panel')).toBeNull();
   });
 
   it('opens as a sheet from its button and closes with Escape', () => {
-    render(<SpectatorPanel view={{ ...view, log: [] }} names={{}} season="autumn" specialOn />);
+    render(
+      <SpectatorPanel
+        view={{ ...view, log: [] }}
+        names={{}}
+        colors={{}}
+        season="autumn"
+        specialOn
+      />,
+    );
     const panel = screen.getByTestId('fallen-panel');
     fireEvent.click(screen.getByTestId('fallen-toggle'));
     expect(panel.dataset['open']).toBe('true');

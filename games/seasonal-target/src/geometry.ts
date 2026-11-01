@@ -5,7 +5,8 @@
  *
  * Responsibility: a cell `(x, y)` (1-based, row 1 north), a rectangular area of cells, and
  *                 the answer to a guess: correct, or in `direction` mode the rounded distance
- *                 and one of eight compass sectors, in `closeness` mode only the tier (02d §5).
+ *                 and one of eight compass sectors, in `distance` mode only the rounded
+ *                 distance, in `closeness` mode only the tier (02d §5, O43).
  *                 The rounding (`isqrt`), the sector test and the tier table's thresholds are
  *                 integer comparisons, so no cell is ever decided by a floating-point accident
  *                 (02d §5, §7). Shared by the rules, Leaf Fall's candidates (a cell gets the
@@ -34,7 +35,9 @@ export interface Area {
   readonly bottom: number;
 }
 
-export type FeedbackMode = 'direction' | 'closeness';
+// The host's three answer modes, easiest first (O43); `distance` is the default.
+export const FEEDBACK_MODES = ['direction', 'distance', 'closeness'] as const;
+export type FeedbackMode = (typeof FEEDBACK_MODES)[number];
 
 export const COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const;
 export type Compass = (typeof COMPASS)[number];
@@ -44,6 +47,7 @@ export type MissTier = Exclude<Tier, 'correct'>;
 export type Feedback =
   | { readonly kind: 'correct' }
   | { readonly kind: 'direction'; readonly distance: number; readonly direction: Compass }
+  | { readonly kind: 'distance'; readonly distance: number }
   | { readonly kind: 'closeness'; readonly tier: MissTier };
 
 // What the answer rule needs besides the two cells: the round's mode and map (frozen settings).
@@ -142,6 +146,8 @@ export function answerOf(g: Cell, s: Cell, rule: AnswerRule): Feedback {
   if (rule.mode === 'closeness') {
     return { kind: 'closeness', tier: tierOf(g, s, rule.map) as MissTier };
   }
+  if (rule.mode === 'distance')
+    return { kind: 'distance', distance: roundedDistance(squared(g, s)) };
   return {
     kind: 'direction',
     distance: roundedDistance(squared(g, s)),
@@ -154,6 +160,7 @@ export function sameAnswer(a: Feedback, b: Feedback): boolean {
   if (a.kind === 'direction' && b.kind === 'direction') {
     return a.distance === b.distance && a.direction === b.direction;
   }
+  if (a.kind === 'distance' && b.kind === 'distance') return a.distance === b.distance;
   if (a.kind === 'closeness' && b.kind === 'closeness') return a.tier === b.tier;
   return a.kind === b.kind;
 }

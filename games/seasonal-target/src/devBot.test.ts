@@ -15,13 +15,16 @@ import { describe, expect, it } from 'vitest';
 
 import { stDevBot } from './devBot.js';
 import { input, Table } from './fakes.js';
+import { FEEDBACK_MODES } from './geometry.js';
 import { seasonalTarget } from './module.js';
 import type { PlayerView } from './views.js';
 
 const ALL = { releasedBefore: Infinity };
+// The most guesses the bot needs per answer mode: the less an answer says, the more it takes.
+const LIMITS = { direction: 8, distance: 40, closeness: 150 } as const;
 
 describe('development bot', () => {
-  for (const feedback of ['direction', 'closeness'] as const) {
+  for (const feedback of FEEDBACK_MODES) {
     it(`finds the target with valid guesses (${feedback})`, () => {
       fc.assert(
         fc.property(fc.uint8Array({ minLength: 32, maxLength: 32 }), (seed) => {
@@ -37,7 +40,7 @@ describe('development bot', () => {
           }
           const view = seasonalTarget.views.player(t.state, 'bot', ALL) as PlayerView;
           expect(view.guesses.at(-1)?.feedback).toEqual({ kind: 'correct' });
-          expect(guesses).toBeLessThan(feedback === 'direction' ? 8 : 150);
+          expect(guesses).toBeLessThan(LIMITS[feedback]);
         }),
         { numRuns: 30 },
       );

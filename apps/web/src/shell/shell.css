@@ -156,6 +156,12 @@
   height: 100dvh;
 }
 
+/* Such a view never scrolls the page, so no gutter is kept for a scrollbar (the empty strip
+   at the right edge the night-5 review found). */
+html:has(.one-screen) {
+  scrollbar-gutter: auto;
+}
+
 .shell-main:has(.one-screen) {
   flex: 1;
   min-height: 0;

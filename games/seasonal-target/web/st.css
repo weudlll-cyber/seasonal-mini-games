@@ -7,9 +7,12 @@
  *                 largest size the space allows without a page scrollbar (`--st-ratio` is its
  *                 width over height, set by ./MapBoard), grid lines and ticks in the strong
  *                 border and muted text tokens, fallen cells hatched (shape, not colour alone),
- *                 the quarter dashed, own dots ringed, the selection a thick square in the text
- *                 colour; the arrow cross and Guess at least 44 px; the Column and Row fields on
- *                 a desktop only; the Fallen cells panel a sheet on a phone (T115). Classes are
+ *                 the quarter dashed, dots in their player's colour with an ink outline, own
+ *                 dots ringed, a focused dot outlined, the selection a thick square in the text
+ *                 colour; tick numbers at least 11 px on a phone (`--st-m` is the map's tick
+ *                 margin in cells, set by ./MapBoard); the small legend on a desktop; the
+ *                 arrow cross 44 × 44 px and Guess at least 44 px; compact Column and Row fields
+ *                 everywhere. The Fallen cells panel's styles are in ./fallen.css. Classes are
  *                 prefixed `st-`.
  * Spec:           docs/spec/02d-game-seasonal-target.md §6, §8, §11
  */
@@ -115,6 +118,47 @@
   stroke-width: 0.16;
 }
 
+/* A focused dot (it names its player): a thick ink ring. */
+.st-dot:focus {
+  outline: none;
+}
+
+.st-dot:focus-visible circle {
+  stroke-width: 0.3;
+}
+
+/* The legend under the map: a swatch and the name of each player with dots, own first. */
+.st-legend {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.75rem;
+  font-size: var(--font-size-small);
+}
+
+.st-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.st-legend li[data-own='true'] {
+  font-weight: var(--font-weight-strong);
+}
+
+.st-swatch {
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  border: 1px solid var(--color-board-ink);
+}
+
+.st-legend li[data-own='true'] .st-swatch {
+  border-width: 3px;
+}
+
 .st-dot text {
   fill: var(--color-board-ink);
 }
@@ -168,7 +212,7 @@
 }
 
 .st-field input {
-  width: 4.5rem;
+  width: 4rem;
   min-height: var(--hit-target);
 }
 
@@ -179,6 +223,8 @@
 }
 
 .st-move {
+  width: var(--hit-target);
+  height: var(--hit-target);
   min-width: var(--hit-target);
   min-height: var(--hit-target);
   padding: 0;
@@ -220,85 +266,22 @@
   font-weight: var(--font-weight-strong);
 }
 
-/* The Fallen cells panel: a short box of chips on a desktop. */
-.st-fallen-toggle,
-.st-fallen-close {
-  display: none;
-}
-
-.st-fallen-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-1);
-}
-
-.st-fallen-head h3 {
-  margin: 0;
-  font-size: var(--font-size-small);
-}
-
-.st-fallen-body {
-  display: grid;
-  gap: 0.25rem;
-}
-
-.st-fallen-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.2rem;
-  max-height: 5.4rem;
-  overflow-y: auto;
-}
-
-.st-fallen-list li {
-  padding: 0 0.4rem;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--season, var(--color-border));
-  background: color-mix(in srgb, var(--season, var(--color-accent)) 14%, var(--color-card));
-  font-size: var(--font-size-small);
-  font-variant-numeric: tabular-nums;
-}
-
-/* A phone: the map at full width, no coordinate fields, the panel behind its button. */
+/* A phone: the map at full width, larger tick numbers, compact fields, no legend. */
 @media (max-width: 899px) {
   .st-map {
     --st-height: min(32dvh, 300px);
   }
 
-  .st-fields {
+  /* Larger tick numbers: at 0.75 of the margin they stay at 11 px or more on a phone map. */
+  .st-ticks {
+    font-size: calc(var(--st-m, 4) * 0.75px);
+  }
+
+  .st-field input {
+    width: 3.5rem;
+  }
+
+  .st-legend {
     display: none;
-  }
-
-  .st-fallen-toggle,
-  .st-fallen-close {
-    display: inline-flex;
-    min-height: var(--hit-target);
-  }
-
-  .st-fallen-body {
-    display: none;
-  }
-
-  .st-fallen[data-open='true'] .st-fallen-body {
-    display: grid;
-    position: fixed;
-    left: var(--gutter);
-    right: var(--gutter);
-    bottom: var(--gutter);
-    z-index: 30;
-    max-height: 60dvh;
-    padding: var(--space-2);
-    border: 2px solid var(--season, var(--color-border));
-    border-radius: var(--radius-card);
-    background: var(--color-surface);
-    box-shadow: var(--shadow-raised);
-  }
-
-  .st-fallen[data-open='true'] .st-fallen-list {
-    max-height: none;
   }
 }

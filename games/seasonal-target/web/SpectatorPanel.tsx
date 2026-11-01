@@ -5,11 +5,11 @@
  *
  * Responsibility: the shared target area and quarter (individual mode: only the size every
  *                 area has, never anyone's own area or quarter, 02d §10), the map with the dots
- *                 of shared `numbers`/`full` (arrows under `full` and `direction`), named by
- *                 the players' names, the fallen cells, and in a Leaf Fall round the Fallen
+ *                 of shared `numbers`/`full` (arrows under `full` and `direction`), in each
+ *                 player's list colour and named, with a legend, the fallen cells, and in a Leaf Fall round the Fallen
  *                 cells panel. Nothing about a target, and nothing narrowed from the answers.
  * Depends on:     react, @smg/game-sdk (props), @smg-game/seasonal-target (types), ./dots,
- *                 ./FallenCells, ./MapBoard, ./PlayerPanel (MapLines), ./words
+ *                 ./FallenCells, ./Legend, ./MapBoard, ./PlayerPanel (MapLines), ./words
  * Used by:        ./index
  * Spec:           docs/spec/02d-game-seasonal-target.md §10
  */
@@ -19,6 +19,7 @@ import type { ReactElement } from 'react';
 
 import { dotsOf } from './dots.js';
 import { FallenCells, leafFallOn } from './FallenCells.js';
+import { Legend } from './Legend.js';
 import { MapBoard } from './MapBoard.js';
 import { MapLines } from './PlayerPanel.js';
 import { sizeText } from './words.js';
@@ -32,16 +33,18 @@ export function SpectatorPanel(props: SpectatorPanelProps): ReactElement {
     v.area === null && halved
       ? `Every target area: ${sizeText(v.areaSize.width, v.areaSize.height)}`
       : null;
+  const dots = dotsOf([], v.log, props);
   return (
     <div className="st-spectator" data-testid="st-spectator">
       <MapLines map={v.map} area={v.area} sizeLine={sizeLine} hint={v.hint} />
       <MapBoard
         shown={shown}
-        dots={dotsOf([], v.log, props.names)}
+        dots={dots}
         fallen={v.fallen}
         quarter={v.hint}
         label="The map with the players' guesses."
       />
+      <Legend dots={dots} />
       {leafFallOn(props) ? <FallenCells fallen={v.fallen} /> : null}
     </div>
   );

@@ -118,6 +118,16 @@
   content: '· ';
 }
 
+/* The pill's words in the strong weight: thin text on a season colour read pale (review). */
+.round-season-text {
+  font-weight: var(--font-weight-strong);
+}
+
+/* "Wait" is the phone's short word for the cooldown. */
+.round-fact-short {
+  display: none;
+}
+
 .round-season-icon {
   flex: none;
   display: grid;
@@ -238,6 +248,14 @@
     height: 1.75rem;
   }
 
+  .round-fact-short {
+    display: inline;
+  }
+
+  .round-fact {
+    font-size: var(--font-size-small);
+  }
+
   .round-special,
   .round-fact-label,
   .round-team-name {
@@ -279,10 +297,6 @@
   .round-side .round-chat-toggle {
     height: 100%;
     padding-inline: var(--space-2);
-  }
-
-  .round-info-button {
-    width: 2rem;
   }
 }
 

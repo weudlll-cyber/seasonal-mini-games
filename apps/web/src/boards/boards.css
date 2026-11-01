@@ -17,6 +17,13 @@
   align-items: start;
 }
 
+/* The board and the game pickers side by side, wrapping on a phone (O44). */
+.boards-pickers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+}
+
 @media (min-width: 900px) {
   .boards-grid {
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);

@@ -8,8 +8,8 @@
  *                 Backspace in an empty box clears the one before and goes there; arrows move;
  *                 a full paste fills every box, a short one is refused; a digit outside the
  *                 digits in use or a fallen one is refused with its sentence and not sent; Try
- *                 code waits for a full code, the cooldown and an answer on its way; Enter
- *                 sends; the boxes empty after an accepted code unless typed on meanwhile, and
+ *                 code waits for a full code, the cooldown and an answer on its way, and reads
+ *                 "Wait 6 s" during the cooldown (T125); Enter sends; the boxes empty after an accepted code unless typed on meanwhile, and
  *                 a refusal is worded.
  * Depends on:     vitest, @testing-library/react, ./CodeInput
  * Spec:           docs/spec/02b-game-safecracker.md §4, §10
@@ -26,17 +26,23 @@ afterEach(() => {
 
 const view = { length: 4, digits: 8, fallen: [7], hint: null, guesses: [], log: [] };
 
-function setup(reply: () => Promise<ActReply> = () => Promise.resolve({ ok: true })) {
+function setup(
+  reply: () => Promise<ActReply> = () => Promise.resolve({ ok: true }),
+  waitS: number | null = null,
+) {
   const send = vi.fn(reply);
   render(
     <CodeInput
       view={view}
       act={send}
-      canAct
+      canAct={waitS === null}
       frostDelayMs={null}
       now={() => 0}
       season="autumn"
       specialOn
+      waitS={waitS}
+      names={{ p1: 'Anna' }}
+      colors={{ p1: 'var(--color-autumn)' }}
       ring={<span data-testid="ring" />}
     />,
   );
@@ -146,6 +152,15 @@ describe('sending', () => {
       await Promise.resolve();
     });
     expect(screen.getByRole('status').textContent).toBe('Enter 4 digits, each from 0 to 7.');
+  });
+
+  it('reads Try code, and "Wait 6 s" while the cooldown runs', () => {
+    const { button } = setup();
+    expect(button.textContent).toBe('Try code');
+    cleanup();
+    const waiting = setup(undefined, 6);
+    expect(waiting.button.textContent).toBe('Wait 6 s');
+    expect(waiting.button.hasAttribute('disabled')).toBe(true);
   });
 
   it('does not send an incomplete code', () => {

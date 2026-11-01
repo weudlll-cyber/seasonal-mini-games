@@ -6,15 +6,41 @@
 
 Branch `feat/guess-games` (same thread, from `a02e9cc`). Nothing goes to `master`. 14 logical cores; subagents only on disjoint folders, the lead alone on shared code.
 
-| Piece                            | State | What                                                          | Commit                        |
-| -------------------------------- | ----- | ------------------------------------------------------------- | ----------------------------- |
-| N1 owner decisions O42–O44       | open  | —                                                             | —                             |
-| N2 stale displays                | done  | Cause measured and fixed once in the shared round hook (T124) | the commit that adds this row |
-| N3 display and layout defects    | open  | —                                                             | —                             |
-| N4 checks and fresh play-through | open  | —                                                             | —                             |
-| N5 handover                      | open  | —                                                             | —                             |
+| Piece                            | State | What                                                                                                                            | Commit                        |
+| -------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| N1 owner decisions O42–O44       | done  | O42 Bomb Leaf Fall, O43 three Target modes, O44 game boards; docs, OPEN closed, BACKLOG; verify green                           | the commit that adds this row |
+| N2 stale displays                | done  | Cause measured and fixed once in the shared round hook (T124)                                                                   | `4ef175f`                     |
+| N3 display and layout defects    | done  | Shared fixes by the lead (Frost banner, Wait buttons, header, event rows, gutter, phone rows), per-game fixes by four subagents | the commit that adds this row |
+| N4 checks and fresh play-through | open  | —                                                                                                                               | —                             |
+| N5 handover                      | open  | —                                                                                                                               | —                             |
 
 **Needs the owner:** nothing yet.
+
+### N1 — owner decisions O42–O44
+
+- Recorded in DECISIONS §1 (O39 marked amended by O43); spec 02c §8.3, 02d §3 §5 §8.3, 06 §1, 08 §3.2 §3.3, 09 §4 §4.1; OPEN items closed (Bomb Leaf Fall and individual mode, O39 per match, the shared boards, the board layout, the dot names) and moved to BACKLOG part two.
+- O42 (subagent, `games/bomb-defusal`): each Leaf Fall marks one wire outside every secret sequence, whatever the guesses; the fall that marks the last one also says "Leaf Fall: every harmless wire is marked." and the falls stop; individual mode counts only wires outside every player's sequence. `autumn.wiresPerFall` removed; `src/leafFall.ts` (the O37 proof rule for wires) deleted, −70. Tests: one wire per fall, the stop and its line, marking whatever the cuts, individual mode, no candidates, a 200-run property.
+- O43 (subagent, `games/seasonal-target`): `target.feedback` takes `direction`, `distance` (new, the default) and `closeness`; a distance answer is "9 cells away"; Leaf Fall under `full` keeps the cells at the same rounded distance; tests for all three modes, the default and the bot.
+- O44 (lead): `?game=<id>` on the three board routes, summed from the awards of that game's matches; the total stays the stored entries (staff adjustments count in the total only, T126); a Game picker on the leaderboard page ("All games" first); profile rows already name the game. Tests: `league.integration.test.ts` (total, each game, teams, an unknown game empty, a malformed one 400), `boards.test.tsx` (the picker asks for the game's board).
+
+### N3 — display and layout defects
+
+Shared (lead):
+
+- Frost: a banner "Frost: answers arrive N s late." for the round's first 3 s (`SpecialBanner.tsx`, test); held own answers already read "answer arriving… N s".
+- Panels learn `waitS`, `names`, `colors`; `buttonText` makes every send button read "Wait 6 s" during the cooldown (T125).
+- Season pill: its words in the strong weight (the token pair is about 7:1, the thin special name read pale); the N4 play-through measures the computed contrast on every season.
+- Phone header: "Wait 15 s" and "9:50 left" in the small size; the info button keeps its 44 px (a phone rule had narrowed it to 32 px).
+- A special's list row: a dashed outline in the season colour without tint or bar, so it never looks like the viewer's own row.
+- The right-edge strip: `scrollbar-gutter: stable` was kept on one-screen views that never scroll; now `auto` there (`shell.css`).
+- Phone list rows: the comment on its own line under the name, not under the dot.
+
+Per game (four subagents in parallel, one folder each):
+
+- Guess The Number: 500 vs 502 is not a defect — both are `cold` (secret 891 for seed `acorn`, 39.1 % and 38.9 % of the range); the two lines are random picks of the same pool (`cold[9]`, `cold[17]`); a regression test pins it, and the tier property test already exists. Range bar: gaps closer than 1.5 % merge, hatched where not every number fell; the heading never breaks between the numbers; five off-theme lines replaced (golden file re-recorded for those lines only).
+- Safecracker: empty boxes with a 2 px border (7:1 light); fallen digits at full contrast with a strike, dashed border and a badge inside the chip; 0–9 in one row on desktop; plurals ("1 right place", "2 right places"); three "treasure" lines replaced.
+- Bomb Defusal: a harmless wire by a crossed, dimmed swatch, a struck name and an accessible label; slot 1's hint wraps; slots at least 44 px; the phone grid splits evenly; "The first cut was right."; one off-theme line replaced.
+- Seasonal Target: dots in each player's list colour with their name (focusable, titled, a legend on desktop); room for the axis labels on every edge; phone ticks ≥ 11 px, Column and Row fields, arrows 44 × 44; twelve off-theme lines replaced.
 
 ### N2 — stale displays after events
 

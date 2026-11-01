@@ -6,7 +6,8 @@
  * Responsibility: for about 3 s after a special fires, one line in the season colour says
  *                 what happened: Leaf Fall's numbers falling and the range halved in the
  *                 game's words (its `banner` hook), Heatwave's new waiting time and Spring
- *                 Herald's hint in the platform's (./roundText); under Frost, while the
+ *                 Herald's hint in the platform's (./roundText); under Frost, for the first
+ *                 3 s of the round that answers arrive late, and while the
  *                 viewer's newest guess has just been sent and its answer is held, when it
  *                 will arrive. Derived from the live feed and the view on every tick, so no
  *                 timer of its own; the newest event wins. The same events keep their rows
@@ -45,7 +46,16 @@ function frostText(state: RoundStateView, game: GameWeb | null, now: number): st
   return `Frost: your answer arrives in ${String(left)} s.`;
 }
 
-// The banner to show now, or null: the newest special event of the last 3 s, else Frost's.
+// Frost in its first 3 s: the round opened with answers held (night-5 review: Frost had no
+// sign of itself until the first guess).
+function frostOpening(state: RoundStateView, now: number): string | null {
+  if (state.frostDelayMs === null || state.opensAt === null) return null;
+  if (now < state.opensAt || now - state.opensAt >= BANNER_MS) return null;
+  return `Frost: answers arrive ${String(Math.round(state.frostDelayMs / 1_000))} s late.`;
+}
+
+// The banner to show now, or null: the newest special event of the last 3 s, else Frost's at
+// the opening, else Frost's for the viewer's held answer.
 export function bannerOf(
   feed: readonly FeedItem[],
   state: RoundStateView,
@@ -58,7 +68,7 @@ export function bannerOf(
     const text = textOf(item.event, game);
     if (text !== null) return text;
   }
-  return frostText(state, game, now);
+  return frostOpening(state, now) ?? frostText(state, game, now);
 }
 
 export function SpecialBanner(p: {

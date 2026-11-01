@@ -26,7 +26,7 @@ import { api } from '../shell/http.js';
 import { hrefOf } from '../shell/router.js';
 import { useSession } from '../shell/session.js';
 import { refusalText } from './boardsText.js';
-import { useApi } from './useApi.js';
+import { useApi, withGame } from './useApi.js';
 
 export function BoardTable(p: {
   readonly caption: string;
@@ -79,14 +79,15 @@ interface Pages {
 }
 
 // The pages loaded so far; "Show more" appends the next one.
-function usePages(periodId: string) {
-  const first = useApi<LeaderboardPageView>(`/leaderboards/${periodId}`);
+function usePages(periodId: string, game: string | null) {
+  const first = useApi<LeaderboardPageView>(withGame(`/leaderboards/${periodId}`, game));
   const [more, setMore] = useState<Pages | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const shown = more ?? first.data;
   const loadMore = (): void => {
     if (shown?.next == null) return;
-    api<LeaderboardPageView>(`/leaderboards/${periodId}?offset=${String(shown.next)}`).then(
+    const path = withGame(`/leaderboards/${periodId}?offset=${String(shown.next)}`, game);
+    api<LeaderboardPageView>(path).then(
       (page) => {
         setMore({ rows: [...shown.rows, ...page.rows], next: page.next });
         setProblem(null);
@@ -100,13 +101,13 @@ function usePages(periodId: string) {
 }
 
 // The rows around a signed-in viewer; nothing for a guest or a viewer without a row.
-function useNeighbourhood(periodId: string): readonly LeaderboardRowView[] {
+function useNeighbourhood(periodId: string, game: string | null): readonly LeaderboardRowView[] {
   const signedIn = useSession().session?.account != null;
   const [rows, setRows] = useState<readonly LeaderboardRowView[]>([]);
   useEffect(() => {
     if (!signedIn) return;
     let current = true;
-    api<{ rows: LeaderboardRowView[] }>(`/leaderboards/${periodId}/me`).then(
+    api<{ rows: LeaderboardRowView[] }>(withGame(`/leaderboards/${periodId}/me`, game)).then(
       (r) => {
         if (current) setRows(r.rows);
       },
@@ -115,13 +116,20 @@ function useNeighbourhood(periodId: string): readonly LeaderboardRowView[] {
     return () => {
       current = false;
     };
-  }, [periodId, signedIn]);
+  }, [periodId, game, signedIn]);
   return signedIn ? rows : [];
 }
 
-export function PlayerBoard({ period }: { readonly period: LeaderboardPeriodView }): ReactElement {
-  const { shown, error, problem, loadMore } = usePages(period.id);
-  const around = useNeighbourhood(period.id);
+export function PlayerBoard({
+  period,
+  game,
+}: {
+  readonly period: LeaderboardPeriodView;
+  // One game's board, or null for the total over every game (O44).
+  readonly game: string | null;
+}): ReactElement {
+  const { shown, error, problem, loadMore } = usePages(period.id, game);
+  const around = useNeighbourhood(period.id, game);
   if (error !== null) return <Problem text={refusalText(error)} />;
   if (shown === null) return <p className="smg-muted">Loading the board…</p>;
   if (shown.rows.length === 0) return <p data-testid="board-empty">No points on this board yet.</p>;

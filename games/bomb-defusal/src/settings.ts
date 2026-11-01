@@ -3,16 +3,15 @@
  * @module games/bomb-defusal
  * @brief  The game's own keys of document `game.bomb-defusal` and its frozen config.
  *
- * Responsibility: wires, cuts and the explosion penalty (host, 08 §3.2) and the wires Leaf
- *                 Fall marks per fall (game admin) as setting definitions, beside the guess
- *                 engine's shared ones (feedback visibility, comments, trend lines, the
- *                 repeated-sequence rule) worded for wires; reading frozen values into the
+ * Responsibility: wires, cuts and the explosion penalty (host, 08 §3.2) as setting
+ *                 definitions, beside the guess engine's shared ones (feedback visibility,
+ *                 comments, trend lines, the repeated-sequence rule) worded for wires; reading frozen values into the
  *                 config; the cross-key rule that cuts never exceed wires; and that this game
  *                 has no halving (02c §8.5): a halving day runs a normal season round. The
  *                 platform's round keys come first in the document (game-sdk).
  * Depends on:     @smg/game-sdk (SettingDef, GameSettings), @smg/guess-engine (shared keys)
  * Used by:        ./module, ./state, ./index, ./web (forms)
- * Spec:           docs/spec/08-admin-settings.md §3.2; docs/spec/02c-game-bomb-defusal.md §3, §8.3, §8.5
+ * Spec:           docs/spec/08-admin-settings.md §3.2; docs/spec/02c-game-bomb-defusal.md §3, §8.5
  */
 import type { GameSettings, SettingDef } from '@smg/game-sdk';
 import {
@@ -29,12 +28,10 @@ export interface BdConfig extends GuessConfig {
   readonly cuts: number;
   // Added to the cooldown on a wrong first cut (O40); 0 explodes without extra waiting.
   readonly explosionPenaltyS: number;
-  readonly wiresPerFall: number;
 }
 
 const GAME_ADMIN = 'settings.game.edit';
 const host = { editPermission: GAME_ADMIN, hostChooses: true, running: 'frozen' } as const;
-const admin = { editPermission: GAME_ADMIN, hostChooses: false, running: 'frozen' } as const;
 const proposal = { status: 'proposal', spec: '08 §3.2' } as const;
 
 const defs: readonly SettingDef[] = [
@@ -82,18 +79,6 @@ const defs: readonly SettingDef[] = [
   COMMENTS_DEF,
   TREND_DEF,
   repeatDef('A cutting order the player already tried is refused without cost.'),
-  {
-    key: 'autumn.wiresPerFall',
-    kind: 'int',
-    label: 'Leaf Fall wires',
-    help: 'How many wires each Leaf Fall marks harmless. In individual mode with several players there is often no wire left that is in no bomb.',
-    default: 1,
-    min: 1,
-    max: 2,
-    unit: '',
-    ...proposal,
-    ...admin,
-  },
 ];
 
 export const bdSettings: GameSettings<BdConfig> = {
@@ -103,7 +88,6 @@ export const bdSettings: GameSettings<BdConfig> = {
     cuts: values['bomb.cuts'] as number,
     explosionPenaltyS: values['bomb.explosionPenaltyS'] as number,
     ...readGuessConfig(values),
-    wiresPerFall: values['autumn.wiresPerFall'] as number,
   }),
   problem: (cfg) =>
     cfg.cuts > cfg.wires ? 'The number of cuts must not be more than the number of wires.' : null,

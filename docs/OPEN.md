@@ -48,17 +48,11 @@ The architect's rules of 2026-11-01 for the three new games (owner decision 38),
 - Bomb Defusal (residual risk): the explosion penalty is part of the cooldown at once (T120), so under Frost the guesser's ring shows a wrong first cut up to `winter.delayS` early, and another player's longer cooldown may be noticed where the platform shows cooldown state.
 - Bomb Defusal: tier rule: 0 wayOff, cuts − 1 justMissed, k = 1 … cuts − 2 spread evenly over cold … burning.
 - Bomb Defusal: Spring Herald names the first wire to cut.
-- Bomb Defusal: Leaf Fall marks `autumn.wiresPerFall` (1, 1–2) harmless wires; falls stop when no candidate is left ("Leaf Fall: no more harmless wires."). Outside shared `full` candidates exclude wires used in any guess, so falls usually end after the first few sequences — judge after playing.
-- Bomb Defusal: in individual mode with several players there is often no wire outside every bomb, so Leaf Fall does nothing — accept, or give each player their own marks (same count, same moment, as Spring Herald)?
 - Bomb Defusal: no halving; a halving day runs a normal season round.
 - Bomb Defusal: closest miss is the longest correct start, no line when it is 0.
 - Bomb Defusal: keyboard 1–8 for wires, Backspace Undo, Escape Clear, Enter Cut; the explosion animation (about 1 s, static flash with reduced motion).
 
 **Seasonal Target**
-
-Spec conflicts:
-
-- O39 says per match; built as the host's round setting, chosen in the round form (the match keeps it unless the host changes it). (02d §3)
 
 To confirm after the owner has played:
 
@@ -78,10 +72,7 @@ To confirm after the owner has played:
 **All games (game choice, owner decision 41)**
 
 - Owner decision 40 says the host chooses the explosion's waiting time "per match"; like Seasonal Target's feedback mode (O39) it is built as the host's round setting, which the round form keeps from round to round (spec conflict, as for O39).
-- Seasonal Target's map is part of the input row (selecting a cell is input), and the round layout puts the input row under the list; 02d §11 wants the map left and the list right. Until the platform has a board layout for such games the map is capped at `min(52dvh, 520px)` (see the play-through in NIGHT-RUN).
-- The player panel gets no player names or roster colours, so on Seasonal Target's map other players' dots read "Another player" in season colours by first appearance, not the list's colours. Proposal: hand the panels `names` and the colour of each player.
 - To look at (found in CI, night 4): a player who goes from one match with a running round straight to another match in the same tab, by its address, may see the new round's intro stop at "Opens in 0 s" until the page is reloaded. Not reproduced locally; the e2e journeys reload, as before.
-- The leaderboards stay one per period for all four games together: points from every game add up on the same season and all-time boards and team boards; each award is a match's, and the match names its game (DECISIONS T121). The alternative is a board per game per period.
 
 ## Spec conflicts
 

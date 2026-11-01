@@ -11,7 +11,7 @@
  *                 folds its own events; `evolveGame` folds the hints and the marks.
  * Depends on:     @smg/game-sdk (RoundInput), @smg/guess-engine (state base, events), ./settings,
  *                 ./wires
- * Used by:        ./module, ./rules, ./views, ./specials, ./leafFall, ./fakes
+ * Used by:        ./module, ./rules, ./views, ./specials, ./fakes
  * Spec:           docs/spec/02c-game-bomb-defusal.md §3, §8.1, §8.3; docs/spec/04-software-architecture.md §4.7
  */
 import type { RoundInput } from '@smg/game-sdk';
@@ -35,10 +35,9 @@ export interface BdState extends GuessBase<Sequence, Feedback> {
   readonly wires: readonly Wire[];
   readonly cuts: number;
   readonly penaltyMs: number;
-  readonly wiresPerFall: number;
   // Marked harmless by Leaf Fall, in palette order.
   readonly harmless: readonly Wire[];
-  // Leaf Fall found no candidate any more and said so once (02c §8.3).
+  // Leaf Fall marked every harmless wire and said so once (O42, 02c §8.3).
   readonly fallsOver: boolean;
   // Shared mode: the one hint everyone got.
   readonly hint: Wire | null;
@@ -64,7 +63,6 @@ export function createState(input: RoundInput<BdConfig>): BdState {
     wires: wiresOf(c.wires),
     cuts: c.cuts,
     penaltyMs: c.explosionPenaltyS * 1_000,
-    wiresPerFall: c.wiresPerFall,
     harmless: [],
     fallsOver: false,
     hint: null,

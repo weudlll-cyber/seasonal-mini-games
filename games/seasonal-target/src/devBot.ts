@@ -8,7 +8,7 @@
  *                 answer it got — the reasoning a player does with the arrows or tiers on the
  *                 map (the server sends nothing narrowed, O17). It picks one of them at random,
  *                 so bots do not all guess alike and a round ends within a few guesses in
- *                 `direction` mode. Used by the Quick Test.
+ *                 `direction` mode, a few more in `distance` mode. Used by the Quick Test.
  * Depends on:     @smg/game-sdk (DevBot), ./geometry, ./rules, ./views
  * Used by:        ./index, games/registry
  * Spec:           docs/spec/09-testing-strategy.md §5; docs/spec/02d-game-seasonal-target.md §5

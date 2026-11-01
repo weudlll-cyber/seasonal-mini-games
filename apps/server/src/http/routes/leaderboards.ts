@@ -25,7 +25,23 @@ import { profile } from '../../league/profiles.js';
 import { permitted } from './adminGuard.js';
 
 const periodParams = z.object({ periodId: z.uuid() });
-const pageQuery = z.object({ offset: z.coerce.number().int().min(0).max(1_000_000).default(0) });
+// `game`: one game's board instead of the total over every game (O44); an id of no installed
+// game gives an empty board.
+const gameQuery = z.object({
+  game: z
+    .string()
+    .regex(/^[a-z][a-z0-9-]{0,39}$/)
+    .optional(),
+});
+const pageQuery = gameQuery.extend({
+  offset: z.coerce.number().int().min(0).max(1_000_000).default(0),
+});
+
+// The board a valid request names.
+const boardOf = (periodId: string, game: string | undefined) => ({
+  periodId,
+  game: game ?? null,
+});
 const playerParams = z.object({ displayName: z.string().min(3).max(24) });
 
 interface LeaderboardRouteDeps {
@@ -51,7 +67,7 @@ export function registerLeaderboardRoutes(app: FastifyInstance, deps: Leaderboar
     const q = pageQuery.safeParse(request.query);
     if (!q.success) return reply.status(400).send({ code: 'VALIDATION_FAILED' });
     const viewer = request.session?.accountId ?? null;
-    const page = await boardPage(pool, p.id, q.data.offset, viewer);
+    const page = await boardPage(pool, boardOf(p.id, q.data.game), q.data.offset, viewer);
     const view: LeaderboardPageView = { period: p, ...page };
     return view;
   });
@@ -61,13 +77,17 @@ export function registerLeaderboardRoutes(app: FastifyInstance, deps: Leaderboar
     if (viewer === null) return reply.status(401).send({ code: 'SIGN_IN_REQUIRED' });
     const p = await periodOr404(pool, request.params, reply);
     if (p === null) return reply;
-    return { period: p, rows: await boardAround(pool, p.id, viewer) };
+    const q = gameQuery.safeParse(request.query);
+    if (!q.success) return reply.status(400).send({ code: 'VALIDATION_FAILED' });
+    return { period: p, rows: await boardAround(pool, boardOf(p.id, q.data.game), viewer) };
   });
 
   app.get('/api/v1/leaderboards/:periodId/teams', async (request, reply) => {
     const p = await periodOr404(pool, request.params, reply);
     if (p === null) return reply;
-    return { period: p, rows: await teamBoard(pool, p.id) };
+    const q = gameQuery.safeParse(request.query);
+    if (!q.success) return reply.status(400).send({ code: 'VALIDATION_FAILED' });
+    return { period: p, rows: await teamBoard(pool, boardOf(p.id, q.data.game)) };
   });
 
   app.get('/api/v1/players/:displayName', async (request, reply) => {

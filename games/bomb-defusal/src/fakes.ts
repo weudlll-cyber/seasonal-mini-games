@@ -29,7 +29,6 @@ export const defaultConfig: BdConfig = {
   comments: true,
   trendPercent: 33,
   repeatGuessRejected: true,
-  wiresPerFall: 1,
 };
 
 export function input(

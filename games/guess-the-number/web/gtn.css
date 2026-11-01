@@ -5,10 +5,11 @@
  *
  * Responsibility: colours only from the design tokens (light and dark, Bingo 01 §13); the bar
  *                 takes the round's season colour from `--season`, set by the platform's
- *                 round screen, and fallen numbers are dark gaps in it, at least 4 px wide; Spring
- *                 Herald's hint is a highlighted line (O35); the Fallen numbers panel of a Leaf
- *                 Fall round as wrapping chips under the bar, on a phone a sheet behind its
- *                 "Fallen (N)" button (T115); the range block stays
+ *                 round screen, and fallen numbers are dark gaps in it, at least 4 px wide,
+ *                 close ones merged into hatched gaps; the heading keeps its two numbers
+ *                 together; Spring Herald's hint is a highlighted line (O35); the Fallen
+ *                 numbers panel of a Leaf Fall round as wrapping chips under the bar, on a
+ *                 phone a sheet behind its "Fallen (N)" button (T115); the range block stays
  *                 compact, so the platform's guess list under it keeps the room (O20);
  *                 layouts work down to 390 px wide.
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §2.3, §6
@@ -50,15 +51,26 @@
   overflow: hidden;
 }
 
-/* A fallen number: a gap over its share of the bar (`--gtn-slot`), at least 4 px wide, centred
-   on the number, in the dark colour that stands out on every season colour (O35). */
+/* The two numbers of the heading stay on one line together ("1 and 1,000"). */
+.gtn-nowrap {
+  white-space: nowrap;
+}
+
+/* Fallen numbers: a gap over their share of the bar (`--gtn-span`), at least 4 px wide,
+   centred on them, in the dark colour that stands out on every season colour (O35). */
 .gtn-range-gap {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: max(4px, var(--gtn-slot, 0%));
+  width: max(4px, var(--gtn-span, 0%));
   transform: translateX(-50%);
   background: var(--color-on-season);
+}
+
+/* Close fallen numbers merged with ones still in play between them (./RangeBar): hatched in
+   the same dark colour, so the bar still reads as a bar with holes. */
+.gtn-range-gap--merged {
+  background: repeating-linear-gradient(135deg, var(--color-on-season) 0 2px, transparent 2px 5px);
 }
 
 /* The Fallen numbers panel (./FallenNumbers): on a desktop under the bar in the range block,

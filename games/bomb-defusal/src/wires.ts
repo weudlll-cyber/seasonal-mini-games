@@ -10,7 +10,7 @@
  *                 fixed tier rule of 02c §7 (k = 0 way off, k = 1 … cuts − 2 spread over cold
  *                 … burning, k = cuts − 1 just missed).
  * Depends on:     zod, @smg/guess-engine (Tier)
- * Used by:        ./settings, ./state, ./rules, ./leafFall, ./specials, ./views, ./devBot,
+ * Used by:        ./settings, ./state, ./rules, ./specials, ./views, ./devBot,
  *                 ./conformance, ./index
  * Spec:           docs/spec/02c-game-bomb-defusal.md §3, §5.1, §7
  */

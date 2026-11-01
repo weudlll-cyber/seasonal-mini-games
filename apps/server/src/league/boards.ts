@@ -93,11 +93,23 @@ interface EntryRow {
   matches: number;
 }
 
+// A board's entries: the period's totals over every game, or with `$game` (the parameter's
+// number) one game's, summed from the awards of that game's matches (O44, T126). Staff
+// adjustments belong to a period, not a game, so they count in the total only.
+const entries = (game: string | null): string =>
+  game === null
+    ? 'smg.league_entries'
+    : `(SELECT la.period_id, la.account_id, SUM(la.points)::int AS points,
+          SUM(la.wins)::int AS wins, SUM(la.solves)::int AS solves, COUNT(*)::int AS matches
+        FROM smg.league_awards la JOIN smg.matches m ON m.id = la.match_id
+        WHERE m.game_id = ${game} GROUP BY la.period_id, la.account_id)`;
+
 // Every entry of a board with its rank and its position in the listing order.
-const RANKED = `SELECT rank() OVER (ORDER BY e.points DESC, e.wins DESC, e.solves DESC) AS rank,
+const ranked = (game: string | null) =>
+  `SELECT rank() OVER (ORDER BY e.points DESC, e.wins DESC, e.solves DESC) AS rank,
     row_number() OVER (ORDER BY e.points DESC, e.wins DESC, e.solves DESC, a.display_name_key) AS pos,
     e.account_id::text, a.display_name, e.points, e.wins, e.solves, e.matches
-  FROM smg.league_entries e JOIN smg.accounts a ON a.id = e.account_id
+  FROM ${entries(game)} e JOIN smg.accounts a ON a.id = e.account_id
   WHERE e.period_id = $1 AND a.status <> 'deleted'`;
 
 const rowView =
@@ -112,15 +124,22 @@ const rowView =
     you: e.account_id === viewer,
   });
 
+// Which board: a period, and a game or null for the total over every game (O44).
+export interface BoardOf {
+  readonly periodId: string;
+  readonly game: string | null;
+}
+
 export async function boardPage(
   pool: DbPool,
-  periodId: string,
+  board: BoardOf,
   offset: number,
   viewer: string | null,
 ): Promise<{ rows: LeaderboardRowView[]; next: number | null }> {
+  const game = board.game === null ? [] : [board.game];
   const r = await pool.query<EntryRow>(
-    `SELECT * FROM (${RANKED}) x ORDER BY pos OFFSET $2 LIMIT $3`,
-    [periodId, offset, PAGE + 1],
+    `SELECT * FROM (${ranked(board.game === null ? null : '$4')}) x ORDER BY pos OFFSET $2 LIMIT $3`,
+    [board.periodId, offset, PAGE + 1, ...game],
   );
   const more = r.rows.length > PAGE;
   return { rows: r.rows.slice(0, PAGE).map(rowView(viewer)), next: more ? offset + PAGE : null };
@@ -129,23 +148,34 @@ export async function boardPage(
 // The viewer's row with five rows above and below it (Bingo 05 §2.4); empty without a row.
 export async function boardAround(
   pool: DbPool,
-  periodId: string,
+  board: BoardOf,
   viewer: string,
 ): Promise<LeaderboardRowView[]> {
+  const game = board.game === null ? [] : [board.game];
   const r = await pool.query<EntryRow>(
-    `WITH ranked AS (${RANKED})
+    `WITH ranked AS (${ranked(board.game === null ? null : '$3')})
      SELECT ranked.* FROM ranked, (SELECT pos FROM ranked WHERE account_id = $2) me
      WHERE ranked.pos BETWEEN me.pos - 5 AND me.pos + 5 ORDER BY ranked.pos`,
-    [periodId, viewer],
+    [board.periodId, viewer, ...game],
   );
   return r.rows.map(rowView(viewer));
 }
 
-export async function teamBoard(pool: DbPool, periodId: string): Promise<TeamLeagueRowView[]> {
+// The teams' entries: the period's totals, or one game's summed from its matches' awards.
+const teamEntries = (game: string | null): string =>
+  game === null
+    ? 'smg.team_league_entries'
+    : `(SELECT ta.period_id, ta.team, SUM(ta.points)::int AS points, SUM(ta.wins)::int AS wins
+        FROM smg.team_league_awards ta JOIN smg.matches m ON m.id = ta.match_id
+        WHERE m.game_id = ${game} GROUP BY ta.period_id, ta.team)`;
+
+export async function teamBoard(pool: DbPool, board: BoardOf): Promise<TeamLeagueRowView[]> {
+  const game = board.game === null ? [] : [board.game];
   const r = await pool.query<{ rank: string; team: TeamName; points: number; wins: number }>(
     `SELECT rank() OVER (ORDER BY points DESC, wins DESC) AS rank, team, points, wins
-     FROM smg.team_league_entries WHERE period_id = $1 ORDER BY rank, team`,
-    [periodId],
+     FROM ${teamEntries(board.game === null ? null : '$2')} t WHERE period_id = $1
+     ORDER BY rank, team`,
+    [board.periodId, ...game],
   );
   return r.rows.map((t) => ({
     rank: Number(t.rank),

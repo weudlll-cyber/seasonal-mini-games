@@ -1,13 +1,15 @@
 /**
  * @file   games/seasonal-target/src/commentLines.ts
  * @module games/seasonal-target
- * @brief  The closeness comments of Seasonal Target, in the voice of a map and a treasure hunt.
+ * @brief  The closeness comments of Seasonal Target: a treasure hunt across the seasons' land.
  *
  * Responsibility: data only, easy to extend: fifteen lines for every round per tier and per
  *                 trend pool, plus three lines per pool that only a round of their season uses
- *                 (02d §7). Friendly, never insulting, never about a name, no digits, and no
- *                 compass word or anything else that says where the target lies: in
- *                 `closeness` mode the tier is all a player may learn (./comments.test checks).
+ *                 (02d §7). Seasonal and outdoors (meadows, forests, weather): no sailing,
+ *                 pirates, islands or captains. Friendly, never insulting, never about a name,
+ *                 no digits, and no compass word or anything else that says where the target
+ *                 lies: in `distance` and `closeness` mode no direction may leak (O43;
+ *                 ./comments.test checks).
  *                 `stComments` binds the engine's reproducible, repeat-free picking to them.
  * Depends on:     @smg/guess-engine (CommentLines, commentPicker)
  * Used by:        ./module, ./comments.test
@@ -22,16 +24,16 @@ export const COMMENT_LINES: CommentLines = {
     'Not even on the same page of the map.',
     'The treasure cannot hear you from there.',
     'A bold expedition — to the wrong place.',
-    'Here be dragons, but no treasure.',
-    'You could sail for weeks from there.',
+    'Nothing out here but wind and wildflowers.',
+    'A whole season’s walk from the prize.',
     'The map is big, and that was the far end of it.',
-    'The parrot squawks: nowhere near!',
+    'The birds in the trees chirp: nowhere near!',
     'Pack a lunch, it is a long walk from there.',
     'Lovely scenery. No treasure, though.',
     'That spot is off the edge of every hint.',
     'The compass spins politely and says nothing.',
     'Far, far away. Keep exploring.',
-    'Not this island, captain.',
+    'Not this valley, explorer.',
     { text: 'Lost in a spring meadow, miles from the prize.', season: 'spring' },
     { text: 'Far away and buried under falling leaves.', season: 'autumn' },
     { text: 'Snowed in at the wrong end of the map.', season: 'winter' },
@@ -84,11 +86,11 @@ export const COMMENT_LINES: CommentLines = {
     'Now we are getting somewhere.',
     'Warm. Keep your shovel ready.',
     'Footprints! Fresh ones.',
-    'The parrot looks interested.',
+    'The birds start singing around you.',
     'A promising patch of map.',
     'The treasure is not far from your thoughts.',
     'Good instinct, explorer.',
-    'Warm sand, warm hopes.',
+    'Warm sunshine, warm hopes.',
     'You are reading the map well.',
     'That spot has potential.',
     'The hunt is heating up.',
@@ -101,7 +103,7 @@ export const COMMENT_LINES: CommentLines = {
     'The X must be close.',
     'Your shovel is tingling.',
     'Smoke on the horizon, you are close.',
-    'The parrot is flapping wildly.',
+    'The bees are buzzing with excitement.',
     'Hot ground. Dig nearby.',
     'You can hear the treasure chest humming.',
     'Almost there, explorer.',
@@ -123,7 +125,7 @@ export const COMMENT_LINES: CommentLines = {
     'The treasure can see you.',
     'Scorching! Look around your feet.',
     'The chest is practically in reach.',
-    'So close the parrot is screaming.',
+    'So close the robins are cheering.',
     'Burning hot. A tiny step more.',
     'You can feel the gold through your boots.',
     'Blazing! The X is very near.',
@@ -148,7 +150,7 @@ export const COMMENT_LINES: CommentLines = {
     'The very next square, explorer.',
     'Elbow to elbow with the gold.',
     'Practically there. Practically.',
-    'The parrot faints: so close!',
+    'The squirrel next door has seen it!',
     'Brushing past it.',
     'One small step to glory.',
     'Close enough to hear it breathe.',
@@ -169,7 +171,7 @@ export const COMMENT_LINES: CommentLines = {
     'Right on target.',
     'Found it. Legendary.',
     'A perfect landing.',
-    'The parrot cheers!',
+    'The whole forest cheers!',
     'Hit! Right on the mark.',
     'That is the one!',
     { text: 'Found it among the spring flowers!', season: 'spring' },
@@ -190,7 +192,7 @@ export const COMMENT_LINES: CommentLines = {
     'Nice correction.',
     'Each step brings you nearer.',
     'A better spot than the last.',
-    'The parrot nods approvingly.',
+    'The wind is at your back now.',
     'Closing in.',
     { text: 'Warmer, like spring arriving.', season: 'spring' },
     { text: 'Closer, as the leaves keep falling.', season: 'autumn' },
@@ -205,7 +207,7 @@ export const COMMENT_LINES: CommentLines = {
     'The map frowns a little.',
     'Not this direction, it seems.',
     'Backtrack a bit, maybe.',
-    'The parrot shakes its head.',
+    'The weather turns against you.',
     'Cooling off.',
     'The footprints point elsewhere.',
     'A step away from the prize.',

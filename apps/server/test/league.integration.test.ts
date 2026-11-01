@@ -199,6 +199,49 @@ describe('league points', () => {
   }, 120_000);
 });
 
+// After the league points above: the two counting matches of the first test remain.
+describe('boards per game', () => {
+  it('show the total over every game and each game on its own (O44)', async () => {
+    const { allTime } = await boards();
+    const periodId = allTime?.id ?? '';
+    // The first match, player 1's win, becomes a Safecracker match for this check.
+    const pool = kit.harness.pool;
+    await pool.query(`UPDATE smg.matches SET game_id = 'safecracker' WHERE code = $1`, [opened[0]]);
+    try {
+      const of = async (game: string) => {
+        const page = await kit.clients['player-1'].get(
+          `/api/v1/leaderboards/${periodId}?game=${game}`,
+        );
+        const teams = await kit.clients.host.get(
+          `/api/v1/leaderboards/${periodId}/teams?game=${game}`,
+        );
+        return {
+          rows: page.json<{ rows: Row[] }>().rows,
+          teamPoints: teams
+            .json<{ rows: { points: number }[] }>()
+            .rows.reduce((s, t) => s + t.points, 0),
+        };
+      };
+      await expectTwoMatches(periodId);
+      const safe = await of('safecracker');
+      expect(byName(safe.rows, 'dev-player-1')).toMatchObject({ points: 10, wins: 1, matches: 1 });
+      expect(byName(safe.rows, 'dev-player-2')).toMatchObject({ points: 0, matches: 1 });
+      expect(safe.teamPoints).toBe(1);
+      const gtn = await of('guess-the-number');
+      expect(byName(gtn.rows, 'dev-player-2')).toMatchObject({ points: 10, wins: 1, matches: 1 });
+      expect(byName(gtn.rows, 'dev-player-1')).toMatchObject({ points: 0, matches: 1 });
+      expect(gtn.teamPoints).toBe(1);
+      expect((await of('seasonal-target')).rows).toEqual([]);
+      const bad = await kit.clients.host.get(`/api/v1/leaderboards/${periodId}?game=DROP%20TABLE`);
+      expect(bad.statusCode).toBe(400);
+    } finally {
+      await pool.query(`UPDATE smg.matches SET game_id = 'guess-the-number' WHERE code = $1`, [
+        opened[0],
+      ]);
+    }
+  }, 60_000);
+});
+
 describe('leaderboard adjustments', () => {
   it('show a staff adjustment with its reason; it cannot be changed', async () => {
     const { allTime } = await boards();

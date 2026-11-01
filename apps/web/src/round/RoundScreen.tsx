@@ -41,7 +41,7 @@ import { ResultScreen } from './ResultScreen.js';
 import { RoundChat } from './RoundChat.js';
 import { RoundIntro } from './RoundIntro.js';
 import { RoundLog } from './RoundLog.js';
-import { TeamTiles } from './RoundSide.js';
+import { colorsOf, TeamTiles } from './RoundSide.js';
 import { SpecialBanner } from './SpecialBanner.js';
 import { ruleOf, SpecialInfo } from './SpecialInfo.js';
 import { codeText, seconds, solvedText } from './roundText.js';
@@ -100,13 +100,13 @@ function TopBar(p: {
         {state.secretMode === 'shared' ? 'Shared' : 'Individual'}
       </span>
       <span className="round-fact" data-testid="round-cooldown">
+        {/* A phone says "Wait 15 s", a desktop "Cooldown 15 s" (night-5 review). */}
         <span className="round-fact-label">Cooldown </span>
+        <span className="round-fact-short">Wait </span>
         {seconds(state.cooldownMs)}
       </span>
       <span className="round-fact" data-testid="countdown">
-        {timeText(state, p.now)}
-        {/* A phone shows "9:30"; screen readers always hear "left". */}
-        <span className="round-fact-label"> left</span>
+        {timeText(state, p.now)} left
       </span>
       {p.hostMenu}
     </header>
@@ -119,6 +119,12 @@ interface PlayProps {
   readonly viewerKey: string | null;
   readonly now: number;
   readonly reload: () => Promise<void>;
+}
+
+// Whole seconds left of the viewer's cooldown in an open round, else null (T125).
+function waitOf(state: RoundStateView, endsAt: number, now: number): number | null {
+  if (state.status !== 'open' || endsAt <= now) return null;
+  return Math.ceil((endsAt - now) / 1_000);
 }
 
 // A roster player's input row with the ring, and the platform's refusals under it; once the
@@ -159,6 +165,9 @@ function InputRow({ state, game, viewerKey, now, reload }: PlayProps): ReactElem
         now={serverNow}
         season={state.season}
         specialOn={state.specialOn}
+        waitS={waitOf(state, me.cooldownEndsAt, now)}
+        names={state.names}
+        colors={colorsOf(state)}
         ring={ring}
       />
       {refusal === null ? null : (
@@ -181,6 +190,7 @@ function GamePart(p: { readonly state: RoundStateView; readonly game: GameWeb | 
       <game.Spectator
         view={state.game}
         names={state.names}
+        colors={colorsOf(state)}
         season={state.season}
         specialOn={state.specialOn}
       />
@@ -196,6 +206,9 @@ function GamePart(p: { readonly state: RoundStateView; readonly game: GameWeb | 
       now={serverNow}
       season={state.season}
       specialOn={state.specialOn}
+      waitS={null}
+      names={state.names}
+      colors={colorsOf(state)}
     />
   );
 }

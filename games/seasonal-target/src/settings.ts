@@ -3,8 +3,8 @@
  * @module games/seasonal-target
  * @brief  The game's own keys of document `game.seasonal-target` and its frozen config.
  *
- * Responsibility: the map's width and height, the feedback mode (`direction` or `closeness`,
- *                 owner O39) and where Leaf Fall and halving stop (08 §3.3), beside the guess
+ * Responsibility: the map's width and height, the answer mode (`direction`, `distance` — the
+ *                 default — or `closeness`, owner O39 amended by O43) and where Leaf Fall and halving stop (08 §3.3), beside the guess
  *                 engine's shared keys (feedback visibility, comments, trend lines, the repeat
  *                 rule) worded for cells; reading frozen values into the config. No rule across
  *                 keys: every width, height and stop inside its bounds makes a playable round.
@@ -12,7 +12,7 @@
  *                 platform's round keys (`autumn.count`, `halving.intervalS` …) come first in
  *                 the document (game-sdk).
  * Depends on:     @smg/game-sdk (SettingDef, GameSettings), @smg/guess-engine (shared keys),
- *                 ./geometry (FeedbackMode)
+ *                 ./geometry (FEEDBACK_MODES, FeedbackMode)
  * Used by:        ./module, ./index, ../web/index
  * Spec:           docs/spec/08-admin-settings.md §3.3; docs/spec/02d-game-seasonal-target.md §3
  */
@@ -26,7 +26,7 @@ import {
   type GuessConfig,
 } from '@smg/guess-engine';
 
-import type { FeedbackMode } from './geometry.js';
+import { FEEDBACK_MODES, type FeedbackMode } from './geometry.js';
 
 export interface StConfig extends GuessConfig {
   readonly width: number;
@@ -62,11 +62,13 @@ const defs: readonly SettingDef[] = [
     key: 'target.feedback',
     kind: 'enum',
     label: 'Answers',
-    help: 'direction: how many cells away and the compass direction; closeness: only warm or cold.',
-    default: 'direction',
-    options: ['direction', 'closeness'],
+    help:
+      'direction: cells away and the compass direction (easier); distance: only how many cells ' +
+      'away; closeness: only warm or cold (harder).',
+    default: 'distance',
+    options: FEEDBACK_MODES,
     status: 'owner',
-    decision: 'O39',
+    decision: 'O43',
     spec: '08 §3.3',
     ...host,
   },

@@ -6,8 +6,9 @@
  * Responsibility: the action schema refuses anything but two whole coordinates; `OUT_OF_MAP`
  *                 (map and halving window) before `CELL_REMOVED` before `ALREADY_GUESSED`, a
  *                 repeat allowed with the rule off; the answer to the guesser and the room line
- *                 per visibility and mode; `Solved` on the cell; closeness answers carry only
- *                 the tier; the settings document, its config and halving allowed; secrets drawn
+ *                 per visibility and mode; `Solved` on the cell; distance answers (the default,
+ *                 O43) carry no direction, closeness answers only the tier; the settings
+ *                 document with its three answer modes, its config and halving allowed; secrets drawn
  *                 the same from the same seed; the chat's reveal clause.
  * Depends on:     vitest, @smg/game-sdk, ./fakes, ./module, ./settings, ./views
  * Spec:           docs/spec/02d-game-seasonal-target.md §3, §4, §5; docs/spec/08-admin-settings.md §3.3
@@ -86,7 +87,7 @@ describe('validation', () => {
 
 describe('answers', () => {
   it('answers the guesser with distance and direction, and the room under full', () => {
-    const t = shared();
+    const t = shared({ feedback: 'direction' });
     const d = t.play('a', { x: 12, y: 34 });
     if (!d.ok) throw new Error('refused');
     const [own, room] = d.events;
@@ -102,6 +103,14 @@ describe('answers', () => {
     expect(win.ok && win.signals).toEqual([{ type: 'Solved', playerId: 'b' }]);
   });
 
+  it('answers only the rounded distance by default, with no direction', () => {
+    const d = shared().play('a', { x: 12, y: 34 });
+    expect(d.ok && d.events[0]?.event).toMatchObject({
+      feedback: { kind: 'distance', distance: 9 },
+    });
+    expect(d.ok && d.events[0]?.event).not.toHaveProperty('feedback.direction');
+  });
+
   it('answers only the tier in closeness mode, also without comments', () => {
     const t = shared({ feedback: 'closeness', comments: false });
     const d = t.play('a', { x: 12, y: 34 });
@@ -114,7 +123,7 @@ describe('answers', () => {
   it('tells the room only that someone guessed under own and in individual mode', () => {
     const own = shared({ feedbackVisibility: 'own' }).play('a', { x: 1, y: 1 });
     expect(own.ok && own.events[1]?.event).toEqual({ type: 'GuessFed', playerId: 'a', guesses: 1 });
-    const inp = input('individual', ['a', 'b']);
+    const inp = input('individual', ['a', 'b'], { feedback: 'direction' });
     const t = new Table(
       targets(inp, [
         { x: 3, y: 3 },
@@ -135,6 +144,10 @@ describe('settings and secrets', () => {
   it('reads the defaults of 08 §3.3 into the config, with no cross-key problem', () => {
     const cfg = stSettings.read(resolveSettings(stSettings.defs, {}));
     expect(cfg).toEqual(defaultConfig);
+    // O43: the host picks one of three answer modes; distance only is the default.
+    expect(cfg.feedback).toBe('distance');
+    const answers = stSettings.defs.find((d) => d.key === 'target.feedback');
+    expect(answers).toMatchObject({ options: ['direction', 'distance', 'closeness'] });
     expect(stSettings.problem(cfg)).toBeNull();
     expect(stSettings.halvingAllowed?.(cfg)).toBe(true);
     const keys = stSettings.defs.map((d) => d.key);

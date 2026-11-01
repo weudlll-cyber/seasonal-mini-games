@@ -18,10 +18,18 @@ import { Problem } from '../components/fields.js';
 import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASON_NAMES } from '../season/season.js';
 import { refusalText } from './boardsText.js';
-import { useApi } from './useApi.js';
+import { useApi, withGame } from './useApi.js';
 
-export function TeamBoard({ period }: { readonly period: LeaderboardPeriodView }): ReactElement {
-  const { data, error } = useApi<{ rows: TeamLeagueRowView[] }>(`/leaderboards/${period.id}/teams`);
+export function TeamBoard({
+  period,
+  game,
+}: {
+  readonly period: LeaderboardPeriodView;
+  readonly game: string | null;
+}): ReactElement {
+  const { data, error } = useApi<{ rows: TeamLeagueRowView[] }>(
+    withGame(`/leaderboards/${period.id}/teams`, game),
+  );
   if (error !== null) return <Problem text={refusalText(error)} />;
   if (data === null) return <p className="smg-muted">Loading the teams…</p>;
   if (data.rows.length === 0) return <p>No team points on this board yet.</p>;

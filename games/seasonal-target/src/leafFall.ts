@@ -7,7 +7,8 @@
  *                 (shared) or inside at least one player's area (individual), not fallen, no
  *                 secret, guessed by no one; with a shared target and visibility `full` also
  *                 giving every answer Frost has delivered the same answer the target gave (the
- *                 same rounded distance and direction, or the same tier). With `own`,
+ *                 same rounded distance and direction, the same rounded distance alone, or the
+ *                 same tier: each mode's public answer, O43). With `own`,
  *                 `numbers` and in individual mode no answer is public (T111). A fall removes
  *                 `count` candidates uniformly with the DRBG it is given, and only as many as
  *                 leave `minCellsLeft` candidates. The answer test stops at the first answer a

@@ -7,9 +7,10 @@
  *                 swatch fills with the wire's name in text beside them, each swatch with a
  *                 border in the text colour (3:1 against the background, white and black
  *                 included); wire buttons, Undo, Clear and Cut at least 44 px (`--hit-target`);
- *                 wires in one row on a desktop (two rows of four with 8), two rows of up to
- *                 four on a phone; the explosion's own styles are ./explosion.css. Every
- *                 class starts with `bd-`. Layouts work down to 390 px wide.
+ *                 wires in one row on a desktop (two rows of four with 8), two even rows of
+ *                 up to four on a phone; slots at least 44 px, the hint in slot 1 wrapping
+ *                 rather than cut off; a harmless wire's swatch dimmed and crossed; the
+ *                 explosion's own styles are ./explosion.css. Every class starts with `bd-`. Layouts work down to 390 px wide.
  * Spec:           docs/spec/02c-game-bomb-defusal.md §5.2, §11
  */
 .bd-bomb {
@@ -72,12 +73,11 @@
   font-size: var(--font-size-small);
 }
 
-/* A harmless wire: struck through, and it says so in words. */
+/* A harmless wire: a struck name beside a crossed swatch; the word is for screen readers. */
 .bd-chip[data-harmless='true'] .bd-chip-name {
   text-decoration: line-through;
 }
 
-.bd-chip-note,
 .bd-wire-note {
   color: var(--color-text-muted);
   font-size: var(--font-size-small);
@@ -85,6 +85,7 @@
 
 /* A wire's colour: a fill only, its name always beside it. */
 .bd-swatch {
+  position: relative;
   flex: none;
   inline-size: 0.9rem;
   block-size: 0.9rem;
@@ -117,6 +118,22 @@
   background: #7b3fbf;
 }
 
+/* A harmless wire's swatch: its colour dimmed towards the card, crossed out in the text
+   colour (a mark of at least 3:1 on the dimmed fill, light and dark). */
+.bd-swatch[data-crossed='true'] {
+  box-shadow: inset 0 0 0 1rem color-mix(in srgb, var(--color-card) 65%, transparent);
+}
+
+.bd-cross {
+  position: absolute;
+  inset: -3px;
+  inline-size: calc(100% + 6px);
+  block-size: calc(100% + 6px);
+  stroke: var(--color-text);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
 /* The input row: slots, wire buttons, then the ring with Undo, Clear and Cut. */
 .bd-input {
   display: grid;
@@ -134,7 +151,7 @@
 .bd-slot {
   flex: 1 1 0;
   min-width: 0;
-  min-height: 2.4rem;
+  min-height: var(--hit-target);
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -159,9 +176,15 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* "hint: red" wraps onto two lines in a narrow slot rather than being cut off. */
 .bd-slot-hint {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0.25em;
   font-size: var(--font-size-small);
-  white-space: nowrap;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
 }
 
 .bd-slot .bd-chip {
@@ -227,10 +250,20 @@
   color: var(--color-danger);
 }
 
-/* A phone: two rows of up to four wires; the row stays short above the bottom edge. */
+/* A phone: two even rows of up to four wires (3 + 3 with six, 4 + 4 with eight, 3 + 2 with
+   five, 4 + 3 with seven, one row with four); the slot with the hint gets more room. */
 @media (max-width: 899px) {
   .bd-wires {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    --bd-cols: 3;
+  }
+  .bd-wires[data-count='4'],
+  .bd-wires[data-count='7'],
+  .bd-wires[data-count='8'] {
+    --bd-cols: 4;
+  }
+
+  .bd-slot[data-hint='true'] {
+    flex-grow: 1.6;
   }
 
   .bd-bomb-title {

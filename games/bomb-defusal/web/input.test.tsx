@@ -5,8 +5,9 @@
  * @brief  The input row: building a sequence by taps and keys, Cut, refusals and the explosion.
  *
  * Responsibility: tapping wires fills the slots in order, a used wire is disabled with its
- *                 slot number, a harmless one with "harmless"; Undo and Clear; Cut is enabled
- *                 only with every slot filled and the cooldown over, sends the whole sequence
+ *                 slot number, a harmless one crossed with the label "black, harmless"; Undo
+ *                 and Clear; Cut reads "Wait 6 s" during the cooldown, is enabled only with
+ *                 every slot filled and the cooldown over, sends the whole sequence
  *                 once, and the slots empty only if they still hold it (T76); the game's
  *                 refusal in words; a wire marked harmless while in the slots says "take it
  *                 out" and is refused without sending; keys 1–8, Backspace, Escape and Enter;
@@ -43,6 +44,9 @@ const props = (over: object = {}) => ({
   now: () => 0,
   season: 'spring' as const,
   specialOn: false,
+  waitS: null as number | null,
+  names: {},
+  colors: {},
   ...over,
 });
 
@@ -84,6 +88,14 @@ describe('building a sequence', () => {
     expect(p.act).toHaveBeenCalledWith({ value: ['red', 'blue', 'yellow', 'green'] });
     expect(slots()).toBe('1234');
   });
+
+  it('words the Cut button "Wait 6 s" during the cooldown (T125)', () => {
+    const p = props();
+    const { rerender } = render(<WireInput {...p} canAct={false} waitS={6} />);
+    expect(cutButton().textContent).toBe('Wait 6 s');
+    rerender(<WireInput {...p} />);
+    expect(cutButton().textContent).toBe('Cut');
+  });
 });
 
 describe('sending a sequence', () => {
@@ -122,12 +134,16 @@ describe('sending a sequence', () => {
 });
 
 describe('the specials in the input row', () => {
-  it('shows the hint in slot 1 and harmless wires struck and disabled', () => {
+  it('shows the hint in slot 1 and harmless wires crossed and disabled', () => {
     render(<WireInput {...props({ view: { ...view, hint: 'red', harmless: ['black'] } })} />);
     expect(slots()).toBe('1hint: red234');
     const black = screen.getByTestId<HTMLButtonElement>('wire-black');
     expect(black.disabled).toBe(true);
-    expect(black.textContent).toBe('blackharmless');
+    // A crossed swatch and the label, not the word inside the button (O42 display).
+    expect(black.textContent).toBe('black');
+    expect(black.getAttribute('aria-label')).toBe('black, harmless');
+    expect(black.querySelector('.bd-swatch')?.getAttribute('data-crossed')).toBe('true');
+    expect(screen.getByRole('button', { name: 'black, harmless' })).toBe(black);
   });
 
   it('says to take out a wire marked harmless while in the slots, and does not send', () => {

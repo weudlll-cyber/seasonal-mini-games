@@ -4,21 +4,23 @@
  * @brief  The input row: sequence slots, wire buttons, and the ring with Undo, Clear and Cut.
  *
  * Responsibility: `cuts` numbered slots, a filled one with swatch and name, slot 1 outlined
- *                 with "hint: red" when Spring Herald named the first cut; one button per wire
- *                 in palette order (swatch and name, at least 44 px), disabled with its slot
- *                 number once in the slots, struck with "harmless" once Leaf Fall marked it; a
+ *                 with "hint: red" (wrapping, never cut off) when Spring Herald named the first
+ *                 cut; one button per wire in palette order (swatch and name, at least 44 px),
+ *                 disabled with its slot number once in the slots, with a crossed swatch, a
+ *                 struck name and the label "red, harmless" once Leaf Fall marked it; a
  *                 slot holding a wire marked harmless afterwards stays, marked, with "take it
  *                 out"; the platform's cooldown ring at the start of the row with Undo, Clear
  *                 and Cut, Cut enabled only with every slot filled, the cooldown over and no cut
- *                 on its way; the game's refusals in words; the explosion when a wrong first
- *                 cut's answer arrives (02c §5.2, §11). Building is local (./useSequence).
- * Depends on:     react, @smg/game-sdk (props), @smg-game/bomb-defusal (types), ./Explosion,
- *                 ./text, ./useSequence, ./WireChip
+ *                 on its way, reading "Wait 6 s" during the cooldown (T125); the game's
+ *                 refusals in words; the explosion when a wrong first cut's answer arrives
+ *                 (02c §5.2, §11). Building is local (./useSequence).
+ * Depends on:     react, @smg/game-sdk (props, buttonText), @smg-game/bomb-defusal (types),
+ *                 ./Explosion, ./text, ./useSequence, ./WireChip
  * Used by:        ./index
  * Spec:           docs/spec/02c-game-bomb-defusal.md §5.2, §11
  */
 import type { PlayerView, Wire } from '@smg-game/bomb-defusal';
-import type { PlayerPanelProps } from '@smg/game-sdk';
+import { buttonText, type PlayerPanelProps } from '@smg/game-sdk';
 import type { ReactElement, ReactNode } from 'react';
 
 import { Explosion, useExplosion } from './Explosion.js';
@@ -37,7 +39,11 @@ function Slots(p: { readonly slots: readonly Wire[]; readonly view: PlayerView }
           <li key={i} className="bd-slot" data-hint={hint} data-filled={wire !== undefined}>
             <span className="bd-slot-number">{i + 1}</span>
             {wire === undefined ? (
-              hint && <span className="bd-slot-hint">hint: {view.hint}</span>
+              hint && (
+                <span className="bd-slot-hint">
+                  <span>hint:</span> <span>{view.hint}</span>
+                </span>
+              )
             ) : (
               <WireChip wire={wire} harmless={view.harmless.includes(wire)} />
             )}
@@ -61,16 +67,16 @@ function WireButton(p: {
       type="button"
       className="smg-btn bd-wire"
       data-harmless={p.harmless}
+      aria-label={p.harmless ? `${p.wire}, harmless` : undefined}
       disabled={used || p.harmless || p.full}
       onClick={() => {
         p.onAdd(p.wire);
       }}
       data-testid={`wire-${p.wire}`}
     >
-      <Swatch wire={p.wire} />
+      <Swatch wire={p.wire} crossed={p.harmless} />
       <span className="bd-wire-name">{p.wire}</span>
       {used ? <span className="bd-wire-note">{p.slot + 1}</span> : null}
-      {p.harmless ? <span className="bd-wire-note">harmless</span> : null}
     </button>
   );
 }
@@ -120,7 +126,7 @@ export function WireInput(props: PlayerPanelProps & { readonly ring?: ReactNode 
           disabled={!s.full || !props.canAct || s.sending}
           data-testid="cut-button"
         >
-          Cut
+          {buttonText('Cut', props.waitS)}
         </button>
       </div>
       {stale === undefined ? null : <p className="bd-message">{takeOutText(stale)}</p>}

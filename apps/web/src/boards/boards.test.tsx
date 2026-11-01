@@ -141,6 +141,34 @@ describe('the leaderboard', () => {
   });
 });
 
+describe('a board for one game (O44)', () => {
+  it('shows the total over every game first, and one game’s board when chosen', async () => {
+    const row = { rank: 1, points: 0, wins: 0, solves: 0, matches: 1, you: false };
+    const asked = serve({
+      '/games': [200, { games: [{ id: 'safecracker', name: 'Seasonal Safecracker' }] }],
+      '/leaderboards': [200, { periods: [winter] }],
+      '/leaderboards/p1': [
+        200,
+        { period: winter, rows: [{ ...row, displayName: 'All', points: 30 }], next: null },
+      ],
+      '/leaderboards/p1?game=safecracker': [
+        200,
+        { period: winter, rows: [{ ...row, displayName: 'Safe', points: 10 }], next: null },
+      ],
+      '/leaderboards/p1/me': [200, { period: winter, rows: [] }],
+      '/leaderboards/p1/me?game=safecracker': [200, { period: winter, rows: [] }],
+      '/leaderboards/p1/teams': [200, { period: winter, rows: [] }],
+      '/leaderboards/p1/teams?game=safecracker': [200, { period: winter, rows: [] }],
+    });
+    await show(<LeaderboardPage periodId={null} />);
+    expect(await screen.findByText('All')).toBeTruthy();
+    await screen.findByRole('option', { name: 'Seasonal Safecracker' });
+    fireEvent.change(screen.getByTestId('board-game'), { target: { value: 'safecracker' } });
+    expect(await screen.findByText('Safe')).toBeTruthy();
+    expect(asked).toContain('/leaderboards/p1/teams?game=safecracker');
+  });
+});
+
 describe('an empty board', () => {
   it('says so when a board has no points yet', async () => {
     serve({

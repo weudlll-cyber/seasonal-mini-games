@@ -6,7 +6,7 @@
  * Responsibility: the candidates of a fall, steps 1–4 of 02b §7.3: the digits in use without
  *                 those fallen; without every digit of any secret of the round; with a shared
  *                 code and visibility `full`, without every digit of a public guess answered
- *                 0 right place, 0 wrong place before the Frost cut (the only deduction used);
+ *                 0 right places, 0 wrong places before the Frost cut (the only deduction used);
  *                 otherwise without every digit of any accepted guess (DECISIONS T111). A fall
  *                 takes `perFall` candidates chosen uniformly, or all of them when fewer are
  *                 left, and none once the candidates are gone. The platform's `count` and

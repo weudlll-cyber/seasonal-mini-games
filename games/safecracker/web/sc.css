@@ -5,9 +5,12 @@
  *
  * Responsibility: colours only from the design tokens (light and dark); the season colour
  *                 (`--season`, set by the platform's round screen) only as tint and border,
- *                 never behind text without the card colour mixed in; a fallen digit struck
- *                 through, dimmed and crossed, so colour is never the only sign; digit boxes at
- *                 least 44 × 44 px; on a phone the code block is one row of chips at least
+ *                 never behind text without the card colour mixed in; the digit strip in one
+ *                 row (0–9 side by side on a desktop); a fallen digit in full-contrast text,
+ *                 struck through with a thick line, a dashed border and a × badge inside its own
+ *                 chip, so colour is never the only sign and nothing overlaps the next chip;
+ *                 digit boxes at least 44 × 44 px with a border of at least 3:1 even when empty
+ *                 (the muted text colour: 7:1 light, 9:1 dark); on a phone the code block is one row of chips at least
  *                 28 px wide and the input row wraps to two lines (boxes, then ring and button),
  *                 six boxes fitting 358 px (02b §10). Classes are prefixed `sc-`.
  * Spec:           docs/spec/02b-game-safecracker.md §10; docs/spec/02-game-guess-the-number.md §12
@@ -31,7 +34,7 @@
   padding: 0;
   list-style: none;
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 0.25rem;
 }
 
@@ -39,7 +42,8 @@
   position: relative;
   display: inline-grid;
   place-items: center;
-  min-width: 2rem;
+  flex: 0 1 2.25rem;
+  min-width: 1.5rem;
   min-height: 2rem;
   border-radius: var(--radius);
   border: 1px solid var(--season, var(--color-border));
@@ -50,22 +54,23 @@
   font-weight: var(--font-weight-strong);
 }
 
-/* A fallen digit: struck through, dimmed and crossed — three signs, none of them colour. */
+/* A fallen digit: struck through, a dashed border and a × badge — three signs, none of them
+   colour; the digit keeps the full text colour so it stays readable. */
 .sc-chip[data-fallen='true'] {
   background: var(--color-card);
   border-style: dashed;
-  border-color: var(--color-border);
-  color: var(--color-text-muted);
-  text-decoration: line-through;
+  border-color: var(--color-text-muted);
+  text-decoration: line-through 2px;
 }
 
+/* The badge sits inside the chip's top right corner, never over the next chip. */
 .sc-cross {
   position: absolute;
-  top: -0.35rem;
-  right: -0.2rem;
-  font-size: 0.7rem;
+  top: 0.05rem;
+  right: 0.1rem;
+  font-size: 0.55rem;
+  line-height: 1;
   color: var(--color-text);
-  text-decoration: none;
 }
 
 /* Spring Herald's hint for the whole round: a highlighted line (O35). */
@@ -100,7 +105,7 @@
   width: max(var(--hit-target, 44px), 2.75rem);
   height: max(var(--hit-target, 44px), 3.25rem);
   padding: 0;
-  border: 2px solid var(--color-border);
+  border: 2px solid var(--color-text-muted);
   border-radius: var(--radius);
   background: var(--color-card);
   color: var(--color-text);
@@ -171,13 +176,14 @@
     grid-column: 1 / -1;
   }
 
-  /* A row of its own under the line: ten 28 px chips fit 358 px; never cut off (play-through). */
+  /* A row of its own under the line: ten chips fit 358 px; never cut off (play-through). */
   .sc-strip {
     grid-column: 1 / -1;
     gap: 0.125rem;
   }
 
   .sc-chip {
+    flex-basis: 1.75rem;
     min-width: 1.75rem;
     min-height: 1.75rem;
   }

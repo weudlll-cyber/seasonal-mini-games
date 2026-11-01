@@ -5,10 +5,10 @@
  *
  * Responsibility: the game's refusals (02c §4); one line per room event for the round's list
  *                 (the shared Spring Herald hint, the wires Leaf Fall marks harmless and the
- *                 end of the falls) and the banner when a fall strikes (02c §8, O35); the
+ *                 last fall, O42) and the banner when a fall strikes (02c §8, O35); the
  *                 list's guess rows from the player or spectator view: the sequence as
  *                 "red → blue → …" where the view shows it, else "cut a sequence", and the
- *                 answer in words ("first 2 right", "Boom!" with the explosion icon,
+ *                 answer in words ("The first 2 cuts were right.", "Boom!" with the icon,
  *                 "Defused!") with its tone (T119); the closest miss on the shared result
  *                 (02c §9); the intro's line on the bomb (02c §3); the season special in this
  *                 game's terms (T119). Server codes never reach the screen as codes.
@@ -62,7 +62,7 @@ function eventText(e: BdEvent): FeedLine | null {
     case 'WiresHarmless':
       return { ...roundLine(harmlessText(e.wires)), special: true };
     case 'HarmlessOver':
-      return { ...roundLine('Leaf Fall: no more harmless wires.'), special: true };
+      return { ...roundLine('Leaf Fall: every harmless wire is marked.'), special: true };
     // An individual hint is the player's own; the platform's row says everyone got one.
     case 'HintGiven':
       return e.playerId === null ? roundLine(`Spring Herald: cut ${e.wire} first.`) : null;
@@ -78,8 +78,9 @@ function banner(event: unknown): string | null {
   return e.type === 'WiresHarmless' ? harmlessText(e.wires) : null;
 }
 
-// "first cut right", "first 2 right".
-const rightText = (k: number): string => (k === 1 ? 'first cut right' : `first ${String(k)} right`);
+// "The first cut was right.", "The first 2 cuts were right." (02c §5.1).
+const rightText = (k: number): string =>
+  k === 1 ? 'The first cut was right.' : `The first ${String(k)} cuts were right.`;
 
 // The answer in words with its tone (T119): the explosion, the right start, or defused.
 export function answerText(f: Feedback, cuts: number): GuessAnswer {

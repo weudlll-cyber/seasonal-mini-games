@@ -66,7 +66,7 @@ For an accepted sequence `g` and the guesser's secret `s`, the answer is `{ corr
 
 ## 6. What others learn
 
-As 02 §6.2 with the sequence in place of the number (owner, decision 8): `own` — "Anna cut a sequence — not defused."; `numbers` — also the sequence; `full` — also "first 2 right" (or Boom), the explosion icon and the comment. Individual mode: only "Anna cut a sequence", plus solves and placings. Spectators see what `numbers` or `full` allow (§10).
+As 02 §6.2 with the sequence in place of the number (owner, decision 8): `own` — "Anna cut a sequence — not defused."; `numbers` — also the sequence; `full` — also "The first 2 cuts were right." (or Boom), the explosion icon and the comment. Individual mode: only "Anna cut a sequence", plus solves and placings. Spectators see what `numbers` or `full` allow (§10).
 
 ## 7. Closeness tiers and comments *(proposal)*
 
@@ -91,17 +91,9 @@ At `opensAt` the free hint names the first cut's colour: shared mode one hint to
 
 Platform feature, unchanged (03 §2.2). The explosion penalty is added on top of the cooldown in force and is never shortened (§5.2).
 
-### 8.3 Autumn — Leaf Fall *(proposal)*
+### 8.3 Autumn — Leaf Fall (owner, decision 42)
 
-Every `autumn.intervalS`, `autumn.wiresPerFall` wires (default 1, 1 – 2) are **marked harmless**, chosen uniformly with the round DRBG under `leafFall/<k>` from the **candidates** (owner, decision 37). `autumn.count` and `autumn.minRemaining` do not apply. The candidates at a fall are the round's wires minus:
-
-1. wires already marked;
-2. every wire in any secret of the round (shared: the one sequence; individual: every roster player's) — no secret wire is ever marked;
-3. with a shared secret and visibility `full` only: every wire **proven harmless** by delivered public answers. An answer counts once Frost has delivered it (the views' cut `releasedBefore`, DECISIONS T111). A wire `w` is proven harmless when for **every** position `j` from 1 to `cuts` a delivered answer rules it out: either an answer with `correct ≥ j` whose sequence has another wire at `j` (position `j` is known), or an answer with `correct = j − 1` whose sequence has `w` at `j` (`w` is not at `j`). Prefix answers rarely prove this, so in practice nearly every unmarked non-secret wire stays a candidate.
-
-4. outside shared `full` (visibility `own` or `numbers`, and individual mode): every wire that appears in any accepted sequence of the round so far.
-
-Under rule 4 falls usually end after the first few sequences (with 6 wires and 4 cuts the first one almost always contains a harmless wire); the owner judges this after playing *(OPEN)*. When a fall is due and no candidate is left, one event row says "Leaf Fall: no more harmless wires." and the timer stops; the last fall marks only as many as are left. With a shared secret of 6 wires and 4 cuts there are two harmless wires in all. In individual mode, with several players, there is often no wire that is in no bomb from the start (shown in the host form's help line) *(OPEN)*. One set of marks for everyone, at one moment (03 §1). A sequence with a marked wire is refused at no cost (`WIRE_HARMLESS`); the client says so without sending it. Banner and row: "Leaf Fall: the orange wire is harmless." on the season's tint with the season icon (02 §12).
+Every `autumn.intervalS` **one** wire that is not part of the sequence is **marked harmless**, chosen uniformly with the round DRBG under `leafFall/<k>` from the **candidates**: the round's wires minus the wires already marked and minus every wire in any secret of the round (shared: the one sequence; individual: every roster player's), so no secret wire is ever marked. Whether anyone has cut a wire, and every answer, play no part (decision 42 replaces the decision-37 candidate rule for this game). `autumn.count` and `autumn.minRemaining` do not apply, and the game has no setting for the number of wires per fall. The fall that marks the last candidate also adds one event row "Leaf Fall: every harmless wire is marked." and the falls end; the line appears only then. With a shared secret of 6 wires and 4 cuts there are two harmless wires in all, marked by the first two falls. In individual mode, with several players, there is often no wire that is in no bomb from the start: then no fall marks anything and no line appears *(proposal)*. One set of marks for everyone, at one moment (03 §1). A sequence with a marked wire is refused at no cost (`WIRE_HARMLESS`); the client says so without sending it. Banner and row: "Leaf Fall: the orange wire is harmless." on the season's tint with the season icon (02 §12).
 
 ### 8.4 Winter — Frost
 
@@ -125,19 +117,19 @@ As 02 §11, with these differences *(proposal)*: visible are the wires of the ro
 
 Inherited from 02 §12: intro card, top bar, banner above the list, the one list, host menu, team tiles, chat, plain English, WCAG 2.2 AA. Own *(proposal)*:
 
-- **Bomb block** (desktop: top of the right column; phone: compact line under the top bar): "6 wires, cut 4 in the right order", the explosion penalty ("Wrong first cut: +5 s"), the free hint, and the harmless wires as struck chips with their names.
-- **Sequence slots:** `cuts` numbered slots ("1", "2", …) above the wires; a filled slot shows swatch and colour name; slot 1 shows the free hint as a highlighted outline with "hint: red".
-- **Wire buttons:** one per wire, colour swatch plus colour name, at least 44 × 44 px, in palette order. Tapping appends to the next free slot. A wire already in the slots is disabled and shows its slot number; a harmless wire is disabled with a strike and "harmless". Swatches have a border of 3:1 against the background (white and black included); every label meets 4.5:1 in light and dark. Never colour alone: every wire, chip and list entry carries its name.
-- **Undo** removes the last slot, **Clear** empties all, **Cut** sends; Cut is enabled only with every slot filled, the cooldown over and no cut on its way. A wire marked harmless while in the slots stays there, marked, with "The orange wire is harmless now — take it out." The sequence survives the round opening and is cleared only when its answer arrives (as DECISIONS T76). Keyboard: Tab and Space, keys 1–8 for the wires in order, Backspace = Undo, Escape = Clear, Enter = Cut.
-- **List rows:** name, the sequence as small chips with names, "first 2 right" in text (or the explosion icon and "Boom!"), the comment under it; own rows tinted as 02 §12.
+- **Bomb block** (desktop: top of the right column; phone: compact line under the top bar): "6 wires, cut 4 in the right order", the explosion penalty ("Wrong first cut: +5 s"), the free hint, and the harmless wires as chips with a crossed swatch and a struck name.
+- **Sequence slots:** `cuts` numbered slots ("1", "2", …) above the wires, at least 44 px tall; a filled slot shows swatch and colour name; slot 1 shows the free hint as a highlighted outline with "hint: red", which wraps rather than being cut off on a phone.
+- **Wire buttons:** one per wire, colour swatch plus colour name, at least 44 × 44 px, in palette order. Tapping appends to the next free slot. A wire already in the slots is disabled and shows its slot number; a harmless wire is disabled with a crossed, dimmed swatch, a struck name and the accessible label "red, harmless" (no word "harmless" inside the button, so nothing overflows). Swatches have a border of 3:1 against the background (white and black included); every label meets 4.5:1 in light and dark. Never colour alone: every wire, chip and list entry carries its name.
+- **Undo** removes the last slot, **Clear** empties all, **Cut** sends; Cut is enabled only with every slot filled, the cooldown over and no cut on its way, and reads "Wait 6 s" during the cooldown (DECISIONS T125). A wire marked harmless while in the slots stays there, marked, with "The orange wire is harmless now — take it out." The sequence survives the round opening and is cleared only when its answer arrives (as DECISIONS T76). Keyboard: Tab and Space, keys 1–8 for the wires in order, Backspace = Undo, Escape = Clear, Enter = Cut.
+- **List rows:** name, the sequence as small chips with names, "The first 2 cuts were right." ("The first cut was right.") in text (or the explosion icon and "Boom!"), the comment under it; own rows tinted as 02 §12.
 - **Desktop 1280 × 720:** the list fills the left column (at least 12 rows, owner decision 35); under it the input area: slots, wire buttons in one row (two rows of four with 8 wires), and the cooldown ring with Undo, Clear and Cut; right column as 02 §12 with the bomb block in place of the range block.
-- **Phone 390 × 844:** top bar, bomb line, the list filling the height left (the only thing that scrolls), team tiles and Chat, then pinned at the bottom: slots in one row, wire buttons in two rows of up to four, and a row with the ring, Undo, Clear and Cut.
+- **Phone 390 × 844:** top bar, bomb line, the list filling the height left (the only thing that scrolls), team tiles and Chat, then pinned at the bottom: slots in one row, wire buttons (at least 44 px tall) in two even rows of up to four (3 + 3 with six wires, 4 + 4 with eight, 3 + 2 with five, 4 + 3 with seven; one row with four), and a row with the ring, Undo, Clear and Cut.
 - Both sizes fit one screen without a page scrollbar, light and dark, with every necessary item visible.
 
 ## Decided while building (night 4, proposals)
 
 - The answer carries `{ correct, defused }`; `defused` is correct = cuts, because the guess engine's `solved(answer)` does not see the number of cuts.
-- "Leaf Fall: no more harmless wires." is its own event (`HarmlessOver`); the next due fall then adds nothing and the falls end.
+- "Leaf Fall: every harmless wire is marked." is its own event (`HarmlessOver`), sent with the fall that marks the last candidate (O42); the next due fall then adds nothing and the falls end.
 - The server's `SEQUENCE_INVALID` reads "Choose a different wire of this bomb for every slot."; the input row says "Choose 4 different wires of this bomb." before sending anything.
 - Under `own`, other players' rows read "cut a sequence".
 - The explosion overlay covers the whole screen for its moment and lets taps through; the row says "Boom!" with the icon in text.

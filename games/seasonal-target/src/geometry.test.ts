@@ -19,6 +19,7 @@ import {
   cellsOf,
   COMPASS,
   directionOf,
+  FEEDBACK_MODES,
   isqrt,
   roundedDistance,
   sameAnswer,
@@ -63,6 +64,7 @@ describe('distance and direction', () => {
 
   it('answers the worked examples of 02d §5', () => {
     const rule = { mode: 'direction', map: { width: 50, height: 50 } } as const;
+    const dist = { mode: 'distance', map: { width: 50, height: 50 } } as const;
     const close = { mode: 'closeness', map: { width: 50, height: 50 } } as const;
     const cases = [
       [{ x: 12, y: 34 }, { x: 20, y: 30 }, 9, 'NE', 'cool'],
@@ -72,19 +74,17 @@ describe('distance and direction', () => {
     ] as const;
     for (const [g, s, distance, direction, tier] of cases) {
       expect(answerOf(g, s, rule)).toEqual({ kind: 'direction', distance, direction });
+      expect(answerOf(g, s, dist)).toEqual({ kind: 'distance', distance });
       expect(answerOf(g, s, close)).toEqual({ kind: 'closeness', tier });
     }
     expect(squared({ x: 49, y: 2 }, { x: 3, y: 47 })).toBe(4_141);
   });
 
-  it('answers correct on the cell in both modes', () => {
+  it('answers correct on the cell in every mode', () => {
     const c = { x: 5, y: 5 };
-    expect(answerOf(c, c, { mode: 'direction', map: { width: 20, height: 20 } })).toEqual({
-      kind: 'correct',
-    });
-    expect(answerOf(c, c, { mode: 'closeness', map: { width: 20, height: 20 } })).toEqual({
-      kind: 'correct',
-    });
+    for (const mode of FEEDBACK_MODES) {
+      expect(answerOf(c, c, { mode, map: { width: 20, height: 20 } })).toEqual({ kind: 'correct' });
+    }
   });
 });
 
@@ -153,5 +153,10 @@ describe('sameAnswer', () => {
     ).toBe(false);
     expect(sameAnswer({ kind: 'correct' }, { kind: 'correct' })).toBe(true);
     expect(sameAnswer({ kind: 'correct' }, d)).toBe(false);
+    const m = { kind: 'distance', distance: 3 } as const;
+    expect(sameAnswer(m, { ...m })).toBe(true);
+    expect(sameAnswer(m, { ...m, distance: 4 })).toBe(false);
+    // Distance alone never equals an answer that also names a direction.
+    expect(sameAnswer(m, d)).toBe(false);
   });
 });

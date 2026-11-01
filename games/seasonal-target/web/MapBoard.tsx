@@ -7,11 +7,14 @@
  *                 scaled up with coordinates staying absolute, 02d §8.4): grid lines, a heavier
  *                 line and an edge tick with its number every 10 cells, fallen cells greyed
  *                 and hatched, Spring's quarter as a dashed outline with its name in a corner,
- *                 the dots (own ones ringed, a pending own one hollow with "…", the answer's
- *                 arrow on a direction answer), the selection as a thick square with crosshair
- *                 ticks, and on the result the target with a ring. A click or tap selects the
- *                 nearest cell; nothing here sends anything (05 §3.1). Every dot has its words
- *                 as a title (hover) beside its row in the list; colour is never alone.
+ *                 the dots (each in its player's colour, own ones ringed, a pending own one
+ *                 hollow with "…", the answer's arrow on a direction answer), the selection as a
+ *                 thick square with crosshair ticks, and on the result the target with a ring.
+ *                 A margin on every edge holds the tick numbers, the last ones ("50") included.
+ *                 A click or tap selects the nearest cell; nothing here sends anything (05 §3.1).
+ *                 Every dot is focusable and names the player, the cell and the answer as its
+ *                 title (hover) and label (focus), beside its row in the list; colour is never
+ *                 alone.
  * Depends on:     react, @smg-game/seasonal-target (types), ./dots
  * Used by:        ./TargetInput, ./SpectatorPanel, ./ResultPanel
  * Spec:           docs/spec/02d-game-seasonal-target.md §6, §8, §9, §11
@@ -51,12 +54,14 @@ const ANGLE: Readonly<Record<Compass, number>> = {
   NW: 315,
 };
 
-// The view box: the shown cells, with a margin on the top and left for the edge ticks.
+// The view box: the shown cells and margins for the edge ticks, in a share `m` of the longer
+// side: m on the top, 1.4 m on the left (a three-digit row number in a phone's larger type),
+// and half of m on the right and bottom, where the last tick's number reaches past the edge.
 function frame(a: Area) {
   const w = a.right - a.left + 1;
   const h = a.bottom - a.top + 1;
-  const m = Math.max(w, h) * 0.07;
-  return { x: a.left - 1 - m, y: a.top - 1 - m, w: w + m, h: h + m, m };
+  const m = Math.max(w, h) * 0.08;
+  return { x: a.left - 1 - m * 1.4, y: a.top - 1 - m, w: w + m * 1.9, h: h + m * 1.5, m };
 }
 
 // Every line between cells, heavier on multiples of 10.
@@ -109,7 +114,15 @@ function DotMark({ d }: { readonly d: Dot }): ReactElement {
   const cx = d.cell.x - 0.5;
   const cy = d.cell.y - 0.5;
   return (
-    <g className="st-dot" data-own={d.own} data-pending={d.pending} data-testid="map-dot">
+    <g
+      className="st-dot"
+      data-own={d.own}
+      data-pending={d.pending}
+      data-testid="map-dot"
+      tabIndex={0}
+      role="img"
+      aria-label={d.label}
+    >
       <title>{d.label}</title>
       <circle
         cx={cx}
@@ -241,8 +254,8 @@ export function MapBoard(p: MapBoardProps): ReactElement {
     <svg
       className="st-map"
       viewBox={`${String(f.x)} ${String(f.y)} ${String(f.w)} ${String(f.h)}`}
-      style={{ '--st-ratio': String(f.w / f.h) } as CSSProperties}
-      role="img"
+      style={{ '--st-ratio': String(f.w / f.h), '--st-m': String(f.m) } as CSSProperties}
+      role="group"
       aria-label={p.label}
       tabIndex={p.onKeyDown === undefined ? undefined : 0}
       onClick={click}

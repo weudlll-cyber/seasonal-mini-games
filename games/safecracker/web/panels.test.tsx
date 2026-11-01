@@ -6,7 +6,7 @@
  *
  * Responsibility: the code line, the digit strip with a fallen digit labelled and struck, the
  *                 free hint; the result with the code or every player's; the guess rows (code
- *                 as text, answer words with pegs, "tried a code", own rows pending under
+ *                 as text, answer words with pegs and plurals, "tried a code", own rows pending under
  *                 Frost); refusal words; event lines and the Leaf Fall banner; the closest-miss
  *                 line; the intro line; the special's sentence; the `GameWeb` line.
  * Depends on:     vitest, @testing-library/react, ./Board, ./ResultPanel, ./text, ./index
@@ -18,7 +18,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { PlayerPanel, SpectatorPanel } from './Board.js';
 import { safecrackerWeb } from './index.js';
 import { ResultPanel } from './ResultPanel.js';
-import { answerOf, safecrackerText as text } from './text.js';
+import { answerOf, counts, safecrackerText as text } from './text.js';
 
 afterEach(() => {
   cleanup();
@@ -36,8 +36,16 @@ const view = {
   ],
   log: [{ receiveSeq: 2, receivedAt: 2_000, playerId: 'p2', value: null, ...held }],
 };
-const props = { act: () => Promise.resolve({ ok: true }), canAct: true, frostDelayMs: null };
 const names = { p1: 'Anna', p2: 'Ben' };
+const colors = { p1: 'var(--color-spring)', p2: 'var(--color-autumn)' };
+const props = {
+  act: () => Promise.resolve({ ok: true }),
+  canAct: true,
+  frostDelayMs: null,
+  waitS: null,
+  names,
+  colors,
+};
 
 describe('the code block', () => {
   it('shows the line, the strip with the fallen digit and the free hint', () => {
@@ -56,6 +64,7 @@ describe('the code block', () => {
       <SpectatorPanel
         view={{ ...board, hint: null, log: [] }}
         names={names}
+        colors={colors}
         season="autumn"
         specialOn
       />,
@@ -77,12 +86,12 @@ describe('the result panel', () => {
       },
       closestMiss: null,
     };
-    render(<ResultPanel view={result} names={names} viewerKey="p2" />);
+    render(<ResultPanel view={result} names={names} colors={colors} viewerKey="p2" />);
     expect(screen.getByTestId('sc-result').textContent).toContain(
       'The code was 0427 (4 digits, 0–9).',
     );
     const rows = screen.getAllByRole('listitem').map((li) => li.textContent);
-    expect(rows).toEqual(['Ben: 1312 (0 right place, 1 wrong place)', 'Anna: 0427 open']);
+    expect(rows).toEqual(['Ben: 1312 (0 right places, 1 wrong place)', 'Anna: 0427 open']);
   });
 
   it('shows every player’s own code in individual mode', () => {
@@ -94,7 +103,7 @@ describe('the result panel', () => {
       guesses: { p1: [], p2: [] },
       closestMiss: null,
     };
-    render(<ResultPanel view={result} names={names} viewerKey={null} />);
+    render(<ResultPanel view={result} names={names} colors={colors} viewerKey={null} />);
     expect(screen.getByTestId('sc-result').textContent).toContain(
       'Everyone had their own code (3 digits, 0–5).',
     );
@@ -106,6 +115,12 @@ describe('the result panel', () => {
 });
 
 describe('the text', () => {
+  it('says place for exactly one and places otherwise', () => {
+    expect(counts(f(1, 1))).toBe('1 right place, 1 wrong place');
+    expect(counts(f(2, 2))).toBe('2 right places, 2 wrong places');
+    expect(counts(f(0, 0))).toBe('0 right places, 0 wrong places');
+  });
+
   it('turns a view into rows with codes, answers and pegs', () => {
     const rows = text.guesses(view);
     expect(rows[0]).toMatchObject({
@@ -116,7 +131,7 @@ describe('the text', () => {
       pending: false,
     });
     expect(rows[0]?.answer).toEqual({
-      text: '1 right place, 3 wrong place',
+      text: '1 right place, 3 wrong places',
       tone: 'close',
       pegs: ['hit', 'near', 'near', 'near'],
     });
@@ -161,7 +176,7 @@ describe('the sentences', () => {
     expect(text.event({ type: 'HintGiven', playerId: 'p1', hint }, names)).toBeNull();
     expect(text.event({ type: 'GuessFed' }, names)).toBeNull();
     const miss = { closestMiss: { playerId: 'p1', value: '0427', exact: 3, near: 1 } };
-    expect(text.runnerUp(miss, names)).toBe('Closest: Anna, 3 right place, 1 wrong place (0427).');
+    expect(text.runnerUp(miss, names)).toBe('Closest: Anna, 3 right places, 1 wrong place (0427).');
     expect(text.runnerUp({ closestMiss: null }, names)).toBeNull();
     expect(text.intro?.(view, 'shared')).toBe('Shared 4-digit code, digits 0–9');
     expect(text.intro?.(view, 'individual')).toBe(

@@ -8,7 +8,7 @@
  *                 wires (struck, by name); a spectator also sees the wires; the result shows
  *                 the secret as numbered chips or each player's own; the views become the
  *                 list's rows with the sequence in words and the answer with its tone ("Boom!"
- *                 with its icon, "first 2 right", "Defused!"), own rows pending under Frost,
+ *                 with its icon, "The first 2 cuts were right.", "Defused!"), own rows pending under Frost,
  *                 hidden sequences as "cut a sequence"; the event lines and the Leaf Fall
  *                 banner; the refusals; the closest miss; the intro; the special's sentence;
  *                 the web entry has the registry's shape.
@@ -57,6 +57,9 @@ describe('the bomb block', () => {
       canAct: true,
       frostDelayMs: null,
       now: () => 0,
+      waitS: null,
+      names: {},
+      colors: {},
     };
     render(<PlayerPanel {...props} season="autumn" specialOn />);
     expect(screen.getByTestId('bomb-block').textContent).toContain(
@@ -69,7 +72,7 @@ describe('the bomb block', () => {
 
   it('shows a spectator the wires, and a penalty of 0 as no extra wait', () => {
     const v = { ...view, penaltyS: 0, hint: null };
-    render(<SpectatorPanel view={v} names={{}} season="winter" specialOn={false} />);
+    render(<SpectatorPanel view={v} names={{}} colors={{}} season="winter" specialOn={false} />);
     expect(screen.getByLabelText('Wires').textContent).toBe(
       'redblueyellowgreenwhiteblack harmless',
     );
@@ -92,7 +95,7 @@ describe('the result panel', () => {
       guesses,
       closestMiss: null,
     };
-    render(<ResultPanel view={v} names={{ a: 'Anna' }} viewerKey="b" />);
+    render(<ResultPanel view={v} names={{ a: 'Anna' }} viewerKey="b" colors={{}} />);
     expect(screen.getByTestId('secret').textContent).toBe('redblueyellowwhite');
     expect(screen.getByText('red → blue → yellow → white: Defused!')).toBeTruthy();
     expect(screen.getByText('no sequences')).toBeTruthy();
@@ -107,7 +110,7 @@ describe('the result panel', () => {
       guesses,
       closestMiss: null,
     };
-    render(<ResultPanel view={v} names={{ a: 'Anna' }} viewerKey="a" />);
+    render(<ResultPanel view={v} names={{ a: 'Anna' }} viewerKey="a" colors={{}} />);
     expect(screen.queryByTestId('secret')).toBeNull();
     expect(screen.getByLabelText("Anna's sequence").textContent).toBe('redblueyellowwhite');
     expect(screen.getByLabelText("b's sequence").textContent).toBe('whiteredbluegreen');
@@ -128,12 +131,12 @@ describe('the game text', () => {
     ).toEqual([
       [null, 'blue → red → yellow → white', '💥 Boom!', 'boom', false],
       [null, 'blue → red → yellow → white', null, null, true],
-      ['p2', 'blue → red → yellow → white', 'first 2 right', 'close', false],
+      ['p2', 'blue → red → yellow → white', 'The first 2 cuts were right.', 'close', false],
       ['p3', 'cut a sequence', null, null, false],
     ]);
     const more = bdText.guesses({ ...view, guesses: [own(1, 1), own(2, 4)], log: [] });
     expect(more.map((r) => [r.answer?.text, r.answer?.tone])).toEqual([
-      ['first cut right', 'far'],
+      ['The first cut was right.', 'far'],
       ['Defused!', 'correct'],
     ]);
   });
@@ -151,7 +154,7 @@ describe('the game text: events and results', () => {
       bdText.event({ type: 'WiresHarmless', index: 1, wires: ['orange', 'purple'] }, names)?.text,
     ).toBe('Leaf Fall: the orange and purple wires are harmless.');
     expect(bdText.event({ type: 'HarmlessOver', index: 3 }, names)?.text).toBe(
-      'Leaf Fall: no more harmless wires.',
+      'Leaf Fall: every harmless wire is marked.',
     );
     expect(bdText.event({ type: 'HintGiven', playerId: null, wire: 'red' }, names)?.text).toBe(
       'Spring Herald: cut red first.',

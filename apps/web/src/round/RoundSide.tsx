@@ -28,6 +28,10 @@ export function playerColor(state: RoundStateView, key: string): string {
   return seasonColor(SEASONS[Math.max(0, row) % SEASONS.length] ?? 'spring');
 }
 
+// Every roster player's colour by key, for a game that draws players beyond the list (T125).
+export const colorsOf = (state: RoundStateView): Readonly<Record<string, string>> =>
+  Object.fromEntries(state.roster.map((r) => [r.playerKey, playerColor(state, r.playerKey)]));
+
 export function TeamTiles({
   state,
   points,

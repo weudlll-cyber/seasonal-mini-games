@@ -81,6 +81,13 @@ describe('the special banner', () => {
     expect(bannerOf([], frost, gameWith(theirs), 10_200)).toBeNull();
   });
 
+  it('says for 3 s after a Frost round opens that answers arrive late', () => {
+    const frost = { ...open, season: 'winter', frostDelayMs: 3_000, opensAt: 20_000 } as const;
+    expect(bannerOf([], frost, gameWith(), 20_500)).toBe('Frost: answers arrive 3 s late.');
+    expect(bannerOf([], frost, gameWith(), 23_100)).toBeNull();
+    expect(bannerOf([], { ...frost, frostDelayMs: null }, gameWith(), 20_500)).toBeNull();
+  });
+
   it('keeps an empty live region while nothing fires', () => {
     render(<SpecialBanner feed={[]} state={open} game={gameWith()} now={0} />);
     const region = screen.getByTestId('special-banner');

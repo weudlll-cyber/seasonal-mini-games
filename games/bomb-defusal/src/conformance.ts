@@ -58,7 +58,6 @@ export const bombDefusalConformance: ConformanceKit<GuessAction, BdConfig, Secre
       comments: true,
       trendPercent: 33,
       repeatGuessRejected: true,
-      wiresPerFall: 1,
     },
   }),
   sentinels: (input) => {

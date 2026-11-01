@@ -6,8 +6,8 @@
  * Responsibility: a shared spring round from the Quick Test form through the lobby: the intro
  *                 names the map, Spring's quarter shows on the map; a click selects a cell, an
  *                 arrow button and an arrow key move it, its coordinates show as text, Guess
- *                 sends and the own dot and row appear with distance and direction (O39's
- *                 default); then an individual autumn round with closeness only (O39): the row
+ *                 sends and the own dot and row appear with the distance only (O43's
+ *                 default); then an individual autumn round with closeness only (O43): the row
  *                 has no distance, and cells fall and show on the map. Each round view fits
  *                 1280 × 720 and 390 × 844, the map left of the list on the desktop (T123). The
  *                 matches are aborted.
@@ -19,9 +19,12 @@ import { expect, test } from '@playwright/test';
 import { direct, fitsBoth, fromLobby, WIDE } from './guessGames.js';
 import { abortMatch, closeAll, ownRows, person, roundOpen } from './play.js';
 
-const DIRECTION = /\d+ away, (N|NE|E|SE|S|SW|W|NW)|correct/;
+// Distance only, the default (O43): the cells away and no compass direction.
+const DISTANCE = /^\d+ away$|correct/;
 
-test('journey 22: Seasonal Target, distance and direction, closeness only', async ({ browser }) => {
+test('journey 22: Seasonal Target, distance only (the default) and closeness only', async ({
+  browser,
+}) => {
   test.setTimeout(150_000);
   const p = await person(browser, 'player-1', WIDE);
   const codes: string[] = [];
@@ -43,7 +46,7 @@ test('journey 22: Seasonal Target, distance and direction, closeness only', asyn
     await p.page.getByTestId('map').press('ArrowRight');
     await expect(selected).toHaveText(/column \d+, row \d+/);
     await p.page.getByTestId('guess-button').click();
-    await expect(ownRows(p.page).first().locator('.round-answer')).toHaveText(DIRECTION, {
+    await expect(ownRows(p.page).first().locator('.round-answer')).toHaveText(DISTANCE, {
       timeout: 10_000,
     });
     await expect(p.page.locator('[data-testid="map-dot"][data-own="true"]')).toHaveCount(1);

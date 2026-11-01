@@ -190,7 +190,6 @@ describe('settings (08 §3.2)', () => {
       'bomb.wires': 6,
       'bomb.cuts': 4,
       'bomb.explosionPenaltyS': 5,
-      'autumn.wiresPerFall': 1,
       'round.feedbackVisibility': 'full',
     });
     expect(settings.read(values)).toEqual(defaultConfig);

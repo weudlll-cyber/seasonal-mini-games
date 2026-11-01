@@ -34,6 +34,7 @@ export type {
   ViewCtx,
 } from './module.js';
 export { formatNumber } from './format.js';
+export { buttonText } from './web.js';
 export { inRange, rangeSize, type Range } from './range.js';
 export type { Drbg, RoundRng } from './random.js';
 export { HEATWAVE_FLOOR_MS, type SpecialTiming } from './specialSettings.js';

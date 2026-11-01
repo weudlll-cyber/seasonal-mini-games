@@ -1,16 +1,17 @@
 /**
  * @file   games/seasonal-target/web/dots.ts
  * @module games/seasonal-target/web
- * @brief  The map's dots from a view: own guesses with a ring, others' in their colours.
+ * @brief  The map's dots from a view: each player's in their one colour, own ones ringed.
  *
  * Responsibility: one dot per guess whose cell the view carries (own always; others' from
- *                 `numbers` on in shared mode, the engine's newest 60, 02d §6), each with a
- *                 colour, the answer's arrow where the answer is a direction, "pending" while
- *                 Frost holds an own answer, and a label naming the player, the cell and the
- *                 answer for hover and screen readers (never colour alone). Others' colours
- *                 come from the four season tokens in the order players first appear.
+ *                 `numbers` on in shared mode, the engine's newest 60, 02d §6), each with the
+ *                 player's one colour from the platform's list (`colors`, the colour of their
+ *                 list row, T125), the answer's arrow where the answer is a direction,
+ *                 "pending" while Frost holds an own answer, and a label naming the player (by
+ *                 `names`), the cell and the answer for hover, focus and screen readers (never
+ *                 colour alone); the legend's entries: every player with a dot, own first.
  * Depends on:     @smg-game/seasonal-target (types), ./words
- * Used by:        ./TargetInput, ./SpectatorPanel, ./ResultPanel
+ * Used by:        ./TargetInput, ./SpectatorPanel, ./ResultPanel, ./MapBoard
  * Spec:           docs/spec/02d-game-seasonal-target.md §6
  */
 import type { Cell, Compass, Feedback, PlayerView } from '@smg-game/seasonal-target';
@@ -21,21 +22,24 @@ export interface Dot {
   readonly key: string;
   readonly cell: Cell;
   readonly own: boolean;
+  readonly name: string;
   readonly color: string;
   readonly arrow: Compass | null;
   readonly pending: boolean;
   readonly label: string;
 }
 
-const PALETTE = [
-  'var(--color-spring)',
-  'var(--color-summer)',
-  'var(--color-autumn)',
-  'var(--color-winter)',
-];
+// The players a map draws: names and list colours by player key; the viewer's own colour
+// where the panel knows the viewer, else the season colour own list rows are highlighted in.
+export interface Players {
+  readonly names: Readonly<Record<string, string>>;
+  readonly colors: Readonly<Record<string, string>>;
+  readonly ownColor?: string | undefined;
+}
 
-// The viewer's own dots: the season colour, with a ring (./st.css).
-export const OWN_COLOR = 'var(--season, var(--color-accent))';
+const SEASON = 'var(--season, var(--color-accent))';
+// A player the list has no colour for (none expected): a neutral mark, still named.
+const NEUTRAL = 'var(--color-text-muted)';
 
 interface Seen {
   readonly receiveSeq: number;
@@ -54,6 +58,7 @@ function dot(
     key,
     cell,
     own: who.own,
+    name: who.name,
     color: who.color,
     arrow: feedback?.kind === 'direction' ? feedback.direction : null,
     pending: who.own && feedback === null,
@@ -65,28 +70,34 @@ function dot(
 export function dotsOf(
   own: readonly Seen[],
   log: readonly (Seen & { readonly playerId: string })[],
-  names: Readonly<Record<string, string>> = {},
+  players: Players,
 ): Dot[] {
-  const order: string[] = [];
   const others = log.flatMap((g) => {
     if (g.value === null) return [];
-    if (!order.includes(g.playerId)) order.push(g.playerId);
-    const color = PALETTE[order.indexOf(g.playerId) % PALETTE.length] ?? OWN_COLOR;
-    const name = names[g.playerId] ?? 'Another player';
-    return [dot(`o${String(g.receiveSeq)}`, g.value, g.feedback, { own: false, name, color })];
+    const who = {
+      own: false,
+      name: players.names[g.playerId] ?? g.playerId,
+      color: players.colors[g.playerId] ?? NEUTRAL,
+    };
+    return [dot(`o${String(g.receiveSeq)}`, g.value, g.feedback, who)];
   });
+  const me = { own: true, name: 'You', color: players.ownColor ?? SEASON };
   const mine = own.flatMap((g) =>
-    g.value === null
-      ? []
-      : [
-          dot(`m${String(g.receiveSeq)}`, g.value, g.feedback, {
-            own: true,
-            name: 'You',
-            color: OWN_COLOR,
-          }),
-        ],
+    g.value === null ? [] : [dot(`m${String(g.receiveSeq)}`, g.value, g.feedback, me)],
   );
   return [...others, ...mine];
 }
 
-export const playerDots = (v: PlayerView): Dot[] => dotsOf(v.guesses, v.log);
+export const playerDots = (v: PlayerView, players: Players): Dot[] =>
+  dotsOf(v.guesses, v.log, players);
+
+export type LegendEntry = Pick<Dot, 'name' | 'color' | 'own'>;
+
+// One entry per player with a dot on the map, own first, then in the order their dots come.
+export function legendOf(dots: readonly Dot[]): LegendEntry[] {
+  const seen = new Map<string, LegendEntry>();
+  for (const d of dots) {
+    if (!seen.has(d.name)) seen.set(d.name, { name: d.name, color: d.color, own: d.own });
+  }
+  return [...seen.values()].sort((a, b) => Number(b.own) - Number(a.own));
+}

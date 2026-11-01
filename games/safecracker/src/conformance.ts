@@ -7,7 +7,7 @@
  *                 with times and ids in JSON). The sentinels use only the digits 5–9 —
  *                 `989898` shared, `987xyz` per player, distinct — and every guess of a run
  *                 only the digits 0–4, so no guess holds or borders a sentinel, every answer
- *                 is 0 right place, 0 wrong place, and integers that map to the same code give
+ *                 is 0 right places, 0 wrong places, and integers that map to the same code give
  *                 a repeat. A leaked secret is then the only way a mark can appear in a view
  *                 or event. `solve` tries a player's own code (O25).
  * Depends on:     @smg/game-sdk (ConformanceKit), @smg/guess-engine (Secrets), ./rules,

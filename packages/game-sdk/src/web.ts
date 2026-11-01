@@ -12,7 +12,9 @@
  *                 event rows (`FeedLine`); the client draws both, in one list. On the result
  *                 page the game words the line about the best of the rest (`runnerUp`, O22).
  *                 A game whose guesses are not numbers gives them and their answers in words
- *                 (`text`, `answer`), and words its own special (`specialRule`, T119).
+ *                 (`text`, `answer`), and words its own special (`specialRule`, T119). The
+ *                 panels learn the cooldown's seconds left and the players' names and colours,
+ *                 and `buttonText` words every send button during the cooldown (T125).
  * Depends on:     ./module
  * Used by:        ./index, games/<game>/web, games/registry/web, apps/web
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/02-game-guess-the-number.md §12
@@ -40,11 +42,19 @@ export interface PlayerPanelProps {
   // Whether the round's season special is on: a game shows a special's own parts (Guess The
   // Number's fallen numbers in autumn) only then.
   readonly specialOn: boolean;
+  // Whole seconds left of the viewer's cooldown while the round is open, else null: the
+  // send button then reads "Wait 6 s" (`buttonText`), not as broken (T125).
+  readonly waitS: number | null;
+  // The round's players by key: display names and the one colour each has in the list, for
+  // a game that draws players elsewhere too (Seasonal Target's dots, T125).
+  readonly names: Readonly<Record<string, string>>;
+  readonly colors: Readonly<Record<string, string>>;
 }
 
 export interface SpectatorPanelProps {
   readonly view: unknown;
   readonly names: Readonly<Record<string, string>>;
+  readonly colors: Readonly<Record<string, string>>;
   readonly season: Season;
   readonly specialOn: boolean;
 }
@@ -52,8 +62,14 @@ export interface SpectatorPanelProps {
 export interface ResultPanelProps {
   readonly view: unknown;
   readonly names: Readonly<Record<string, string>>;
+  readonly colors: Readonly<Record<string, string>>;
   readonly viewerKey: string | null;
 }
+
+// A send button's words: its own while the player may act, "Wait 6 s" during the cooldown
+// (T125), the same for every game.
+export const buttonText = (label: string, waitS: number | null): string =>
+  waitS === null ? label : `Wait ${String(waitS)} s`;
 
 // An event row of the round's list: the line and the player it is about (for the colour
 // dot), or null for the round as a whole. `special`: the row of the season special striking

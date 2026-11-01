@@ -19,7 +19,11 @@ import { areaText, longAnswer, shortAnswer, toneOf } from './words.js';
 const ne = { kind: 'direction', distance: 9, direction: 'NE' } as const;
 
 describe('answers', () => {
-  it('words direction, closeness and correct answers', () => {
+  it('words direction, distance, closeness and correct answers', () => {
+    expect(longAnswer({ kind: 'distance', distance: 9 })).toBe('9 cells away');
+    expect(longAnswer({ kind: 'distance', distance: 1 })).toBe('1 cell away');
+    expect(shortAnswer({ kind: 'distance', distance: 9 })).toBe('9 away');
+    expect(toneOf({ kind: 'distance', distance: 3 })).toBe('close');
     expect(longAnswer(ne)).toBe('9 cells away, to the north-east');
     expect(shortAnswer(ne)).toBe('9 away, NE ↗');
     expect(longAnswer({ kind: 'direction', distance: 1, direction: 'N' })).toBe(

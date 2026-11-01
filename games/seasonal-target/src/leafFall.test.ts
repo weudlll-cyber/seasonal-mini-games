@@ -4,8 +4,8 @@
  * @brief  Leaf Fall's candidate cells (O37) as properties, in every mode and visibility.
  *
  * Responsibility: with a shared target and `full`, every fallen cell gets from every delivered
- *                 public guess the same answer as the target did (distance and direction, or
- *                 the tier), and an answer Frost holds does not cut the set; otherwise the
+ *                 public guess the same answer as the target did (distance and direction,
+ *                 the distance alone, or the tier: all three modes, O43), and an answer Frost holds does not cut the set; otherwise the
  *                 candidates are exactly the cells in the area(s), not fallen, not guessed, no
  *                 secret; no fall hits a guess or a secret; falls stop exactly at
  *                 `autumn.minCellsLeft`; a halving first keeps the candidates in its window;
@@ -20,7 +20,18 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
 import { input, Table } from './fakes.js';
-import { answerOf, cellKey, cellsOf, inArea, sameAnswer, wholeMap, type Cell } from './geometry.js';
+import {
+  answerOf,
+  cellKey,
+  cellsOf,
+  FEEDBACK_MODES,
+  inArea,
+  roundedDistance,
+  sameAnswer,
+  squared,
+  wholeMap,
+  type Cell,
+} from './geometry.js';
 import { candidatesOf } from './leafFall.js';
 import { seasonalTarget } from './module.js';
 import { cellOf } from './secrets.js';
@@ -32,7 +43,7 @@ const round = fc.record({
   guesses: fc.array(cell, { maxLength: 12 }),
   // Guesses received at or after this time are still held by Frost.
   cut: fc.integer({ min: 0, max: 12_000 }),
-  feedback: fc.constantFrom('direction' as const, 'closeness' as const),
+  feedback: fc.constantFrom(...FEEDBACK_MODES),
 });
 type Round = typeof round extends fc.Arbitrary<infer T> ? T : never;
 
@@ -96,6 +107,19 @@ describe('Leaf Fall with a shared target and full', () => {
     expect(candidatesOf(t.state, t.secrets, 5_000)).toHaveLength(398);
     // Delivered: only cells 13 away to the south-east of the guess are left.
     expect(candidatesOf(t.state, t.secrets, 5_001).length).toBeLessThan(40);
+  });
+
+  it('keeps every cell at the same rounded distance in distance mode, whatever its direction', () => {
+    const rule = { mode: 'distance', map: { width: 20, height: 20 } } as const;
+    const inp = input('shared', PLAYERS, { width: 20, height: 20, feedback: 'distance' });
+    const t = new Table({ mode: 'shared', value: { x: 10, y: 10, rule } }, inp);
+    t.play('a', { x: 1, y: 1 });
+    const pool = candidatesOf(t.state, t.secrets, Infinity);
+    // Rounded √162 = 13: the target's own answer, and every candidate's.
+    expect(pool.every((c) => roundedDistance(squared({ x: 1, y: 1 }, c)) === 13)).toBe(true);
+    // Due east and due south of the guess stay: the answer names no direction.
+    expect(pool).toContainEqual({ x: 14, y: 1 });
+    expect(pool).toContainEqual({ x: 1, y: 14 });
   });
 });
 

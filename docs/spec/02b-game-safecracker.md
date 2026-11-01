@@ -52,9 +52,9 @@ Worked example with the secret **1123**:
 
 | Guess | Exact | Common digits (min per digit) | Near | Words |
 |---|---|---|---|---|
-| 1312 | 1 (first 1) | 1: 2, 2: 1, 3: 1 → 4 | 3 | "1 right place, 3 wrong place" |
-| 1111 | 2 (first two 1s) | 1: min(4, 2) = 2 → 2 | 0 | "2 right place, 0 wrong place" — the extra 1s count for nothing |
-| 2211 | 0 | 1: 2, 2: 1 → 3 | 3 | "0 right place, 3 wrong place" — only one 2 counts |
+| 1312 | 1 (first 1) | 1: 2, 2: 1, 3: 1 → 4 | 3 | "1 right place, 3 wrong places" |
+| 1111 | 2 (first two 1s) | 1: min(4, 2) = 2 → 2 | 0 | "2 right places, 0 wrong places" — the extra 1s count for nothing |
+| 2211 | 0 | 1: 2, 2: 1 → 3 | 3 | "0 right places, 3 wrong places" — only one 2 counts |
 | 1123 | 4 | — | 0 | correct |
 
 Feedback goes to the guesser, held by Frost like every answer ([02](02-game-guess-the-number.md) §6.1, [03](03-seasonal-specials.md) §2.4). No deduction is computed for anyone: the server never shows which codes or digits are still possible, apart from Leaf Fall's fallen digits (owner, decisions 17 and 37).
@@ -111,7 +111,7 @@ None *(proposal)*. Safecracker implements no `halving` hook and sets `halvingAll
 
 Winning, placings, end conditions, points and the winning margin are [02](02-game-guess-the-number.md) §8 and §9. The reveal shows the code (shared) or every player's code (individual), and the result's secret line reads "The code was 1123 (4 digits, 0–9)."
 
-**Closest miss** *(proposal)*, shared mode with a winner and no second correct guess inside the margin window (owner, decision 22): among the wrong guesses of players other than the winner, the one with the most `exact`, then the most `near`, then the earlier receive order: "Closest: Anna, 3 right place, 1 wrong place (0427)." Without such a guess there is no line. It is computed at the round's end and carried only in the result view ([02](02-game-guess-the-number.md) §9, DECISIONS T77).
+**Closest miss** *(proposal)*, shared mode with a winner and no second correct guess inside the margin window (owner, decision 22): among the wrong guesses of players other than the winner, the one with the most `exact`, then the most `near`, then the earlier receive order: "Closest: Anna, 3 right places, 1 wrong place (0427)." Without such a guess there is no line. It is computed at the round's end and carried only in the result view ([02](02-game-guess-the-number.md) §9, DECISIONS T77).
 
 ## 9. What a spectator sees
 
@@ -121,9 +121,9 @@ As [02](02-game-guess-the-number.md) §11, with the code taking the number's pla
 
 The rules of [02](02-game-guess-the-number.md) §12 apply: one screen without a page scrollbar at 1280 × 720 and 390 × 844 with all necessary information visible, only the guess list scrolling inside its own box, text at 4.5:1 in light and dark, touch targets at least 44 px, never colour alone, `prefers-reduced-motion`, full keyboard play. The game's parts *(proposal)*:
 
-- **Code block** (in the range block's place): "4-digit code, digits 0–9" in large type; a **digit strip** with one chip per digit in use, a fallen digit struck through, dimmed and marked with a cross (its label says "7, fallen"), so the strip itself is the Leaf Fall panel (at most 10 digits, no separate panel or sheet); Spring Herald's hint as a highlighted line under it for the whole round.
-- **Input row:** the cooldown ring, one box per digit (each at least 44 × 44 px, `inputmode="numeric"`, one character), and a large **Try code** button. Typing a digit moves the focus to the next box; Backspace in an empty box goes back and clears it; arrow keys move between boxes; pasting a full code fills every box; Enter sends when every box is filled. A digit outside the digits in use or a fallen digit is refused in its box with the sentence of §4. The button is disabled during the cooldown, while a guess is on its way, and until the code is complete. Typed digits are never lost (DECISIONS T76).
-- **History rows** (the round's one list, newest first): the player's dot and name ("You" for the viewer), the code in a monospaced face with spaced digits, then **pegs**: one filled disc per exact and one hollow ring per near, in the text colour with at least 3:1 against the row, so shape and not colour carries the meaning; then the counts in text ("2 right place, 1 wrong place"), and the comment in smaller text. Under `numbers` the code without pegs or text; under `own` "Anna tried a code." Own rows on the season tint; under Frost "answer arriving in 2 s".
+- **Code block** (in the range block's place): "4-digit code, digits 0–9" in large type; a **digit strip** with one chip per digit in use, in one row (0–9 side by side on a desktop too), a fallen digit kept in full-contrast text, struck through with a thick line, on a dashed border and marked with a small × badge inside its own chip, never over the next one (its label says "7, fallen"), so the strip itself is the Leaf Fall panel (at most 10 digits, no separate panel or sheet); Spring Herald's hint as a highlighted line under it for the whole round.
+- **Input row:** the cooldown ring, one box per digit (each at least 44 × 44 px, `inputmode="numeric"`, one character, with a border of at least 3:1 against the background even when empty, light and dark), and a large **Try code** button. Typing a digit moves the focus to the next box; Backspace in an empty box goes back and clears it; arrow keys move between boxes; pasting a full code fills every box; Enter sends when every box is filled. A digit outside the digits in use or a fallen digit is refused in its box with the sentence of §4. The button is disabled during the cooldown, while a guess is on its way, and until the code is complete; during the cooldown it reads "Wait 6 s" in readable text (`buttonText`, T125). Typed digits are never lost (DECISIONS T76).
+- **History rows** (the round's one list, newest first): the player's dot and name ("You" for the viewer), the code in a monospaced face with spaced digits, then **pegs**: one filled disc per exact and one hollow ring per near, in the text colour with at least 3:1 against the row, so shape and not colour carries the meaning; then the counts in text ("2 right places, 1 wrong place"; singular for exactly 1, plural otherwise, everywhere: rows, result, closest miss), and the comment in smaller text. Under `numbers` the code without pegs or text; under `own` "Anna tried a code." Own rows on the season tint; under Frost "answer arriving in 2 s".
 - **Desktop (1280 × 720):** the list with the banner above it fills the left column above the input row (at least 12 rows, owner decision 35); the right column holds the code block, the team tiles and the chat ([02](02-game-guess-the-number.md) §12).
 - **Phone (390 × 844):** the short top bar; the code block compact (the line and the digit strip in one row of chips at least 28 px wide, not interactive); the guess list filling the remaining height; the team tiles with the "Chat" button; the input row pinned at the bottom on two lines when it does not fit one (the boxes on the first, the ring and **Try code** on the second): six boxes need 6 × 44 px plus gaps, inside 358 px. A history row fits one line for the code and pegs, the text and comment on a second.
 
@@ -131,7 +131,7 @@ The rules of [02](02-game-guess-the-number.md) §12 apply: one screen without a 
 
 - The answer carries `{ exact, near, solved }`; `solved` is exact = length, because the guess engine's `solved(answer)` does not see the code length.
 - Spring Herald draws the position under `springHerald/shared` or `springHerald/<playerId>`, uniformly; in individual mode the room gets one line "Spring Herald: everyone got a free hint." without any digit.
-- A list row's tone is "close" from a score of 0.6 (warm and closer), "far" below it, "correct" when solved; its words "N right place, M wrong place" or "correct — the safe is open"; a hidden code reads "tried a code".
+- A list row's tone is "close" from a score of 0.6 (warm and closer), "far" below it, "correct" when solved; its words "N right places, M wrong places" (singular for 1) or "correct — the safe is open"; a hidden code reads "tried a code".
 - The digit strip shows in every season (with Leaf Fall it also marks the fallen digits).
 - A Leaf Fall takes `min(autumn.digitsPerFall, candidates)` digits under `leafFall/<k>`; with no candidate it adds nothing and the falls end.
-- The conformance kit plays codes of length 6: sentinel secrets of the digits 5–9, guesses of the digits 0–4, so every answer is 0 right place, 0 wrong place.
+- The conformance kit plays codes of length 6: sentinel secrets of the digits 5–9, guesses of the digits 0–4, so every answer is 0 right places, 0 wrong places.

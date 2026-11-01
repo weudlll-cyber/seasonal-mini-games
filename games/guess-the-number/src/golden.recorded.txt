@@ -630,7 +630,7 @@
        "feedback": "higher",
        "comment": {
         "tier": "wayOff",
-        "text": "Right idea, wrong planet.",
+        "text": "Right idea, wrong season.",
         "pool": "wayOff",
         "index": 22
        }
@@ -647,7 +647,7 @@
        "feedback": "higher",
        "comment": {
         "tier": "wayOff",
-        "text": "Right idea, wrong planet.",
+        "text": "Right idea, wrong season.",
         "pool": "wayOff",
         "index": 22
        }
@@ -1647,7 +1647,7 @@
        "feedback": "higher",
        "comment": {
         "tier": "wayOff",
-        "text": "Right idea, wrong planet.",
+        "text": "Right idea, wrong season.",
         "pool": "wayOff",
         "index": 22
        }
@@ -4621,7 +4621,7 @@
        "feedback": "higher",
        "comment": {
         "tier": "wayOff",
-        "text": "If guesses had passports, that one needs a visa.",
+        "text": "That guess wandered off past the orchard.",
         "pool": "wayOff",
         "index": 15
        }
@@ -4638,7 +4638,7 @@
        "feedback": "higher",
        "comment": {
         "tier": "wayOff",
-        "text": "If guesses had passports, that one needs a visa.",
+        "text": "That guess wandered off past the orchard.",
         "pool": "wayOff",
         "index": 15
        }
@@ -5248,7 +5248,7 @@
        "value": 120,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "If guesses had passports, that one needs a visa."
+       "comment": "That guess wandered off past the orchard."
       },
       {
        "receiveSeq": 7,
@@ -5438,7 +5438,7 @@
        "value": 120,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "If guesses had passports, that one needs a visa."
+       "comment": "That guess wandered off past the orchard."
       },
       {
        "receiveSeq": 5,
@@ -5763,7 +5763,7 @@
        "feedback": "higher",
        "comment": {
         "tier": "wayOff",
-        "text": "If guesses had passports, that one needs a visa.",
+        "text": "That guess wandered off past the orchard.",
         "pool": "wayOff",
         "index": 15
        }
@@ -6264,7 +6264,7 @@
        "value": 120,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "If guesses had passports, that one needs a visa."
+       "comment": "That guess wandered off past the orchard."
       },
       {
        "receiveSeq": 7,
@@ -9012,7 +9012,7 @@
        "feedback": "higher",
        "comment": {
         "tier": "wayOff",
-        "text": "Right idea, wrong planet.",
+        "text": "Right idea, wrong season.",
         "pool": "wayOff",
         "index": 22
        }
@@ -9029,7 +9029,7 @@
        "feedback": "higher",
        "comment": {
         "tier": "wayOff",
-        "text": "Right idea, wrong planet.",
+        "text": "Right idea, wrong season.",
         "pool": "wayOff",
         "index": 22
        }
@@ -9180,7 +9180,7 @@
        "feedback": "higher",
        "comment": {
         "tier": "wayOff",
-        "text": "Lost at sea, that one.",
+        "text": "Lost in the fog, that one.",
         "pool": "wayOff",
         "index": 17
        }
@@ -9197,7 +9197,7 @@
        "feedback": "higher",
        "comment": {
         "tier": "wayOff",
-        "text": "Lost at sea, that one.",
+        "text": "Lost in the fog, that one.",
         "pool": "wayOff",
         "index": 17
        }
@@ -9348,7 +9348,7 @@
        "feedback": "higher",
        "comment": {
         "tier": "wayOff",
-        "text": "Wrong direction, captain.",
+        "text": "Wrong turn on the woodland path.",
         "pool": "farther",
         "index": 3
        }
@@ -9365,7 +9365,7 @@
        "feedback": "higher",
        "comment": {
         "tier": "wayOff",
-        "text": "Wrong direction, captain.",
+        "text": "Wrong turn on the woodland path.",
         "pool": "farther",
         "index": 3
        }
@@ -9751,7 +9751,7 @@
        "value": 250,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "Right idea, wrong planet."
+       "comment": "Right idea, wrong season."
       },
       {
        "receiveSeq": 3,
@@ -9778,7 +9778,7 @@
        "value": 370,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "Lost at sea, that one."
+       "comment": "Lost in the fog, that one."
       },
       {
        "receiveSeq": 8,
@@ -9881,7 +9881,7 @@
        "value": 250,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "Right idea, wrong planet."
+       "comment": "Right idea, wrong season."
       },
       {
        "receiveSeq": 3,
@@ -9917,7 +9917,7 @@
        "value": 370,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "Lost at sea, that one."
+       "comment": "Lost in the fog, that one."
       },
       {
        "receiveSeq": 7,
@@ -10158,7 +10158,7 @@
        "feedback": "higher",
        "comment": {
         "tier": "wayOff",
-        "text": "Right idea, wrong planet.",
+        "text": "Right idea, wrong season.",
         "pool": "wayOff",
         "index": 22
        }
@@ -10290,7 +10290,7 @@
        "feedback": "higher",
        "comment": {
         "tier": "wayOff",
-        "text": "Lost at sea, that one.",
+        "text": "Lost in the fog, that one.",
         "pool": "wayOff",
         "index": 17
        }
@@ -10422,7 +10422,7 @@
        "feedback": "higher",
        "comment": {
         "tier": "wayOff",
-        "text": "Wrong direction, captain.",
+        "text": "Wrong turn on the woodland path.",
         "pool": "farther",
         "index": 3
        }

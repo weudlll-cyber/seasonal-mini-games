@@ -47,8 +47,13 @@ const CODES: Readonly<Record<string, string>> = {
   ALREADY_GUESSED: 'You already tried that code.',
 };
 
+// "1 right place", "2 right places", "0 right places".
+const places = (n: number, kind: string): string =>
+  `${String(n)} ${kind} place${n === 1 ? '' : 's'}`;
+
+// "1 right place, 2 wrong places": the rows, the result and the closest miss (02b §5.2, §8).
 export const counts = (f: { readonly exact: number; readonly near: number }): string =>
-  `${String(f.exact)} right place, ${String(f.near)} wrong place`;
+  `${places(f.exact, 'right')}, ${places(f.near, 'wrong')}`;
 
 // The answer in words with its pegs; "close" from a score of 0.6 on (the warm/hot line, 02b §6).
 export function answerOf(f: Feedback, length: number): GuessAnswer {
@@ -112,7 +117,7 @@ function guessRows(view: unknown): readonly GuessRow[] {
   return [...(v.guesses ?? []).map((g) => row(g, null)), ...v.log.map((g) => row(g, g.playerId))];
 }
 
-// "Closest: Anna, 3 right place, 1 wrong place (0427)." (02b §8)
+// "Closest: Anna, 3 right places, 1 wrong place (0427)." (02b §8)
 function runnerUp(view: unknown, names: Readonly<Record<string, string>>): string | null {
   const miss = (view as Partial<ResultView>).closestMiss ?? null;
   if (miss === null) return null;

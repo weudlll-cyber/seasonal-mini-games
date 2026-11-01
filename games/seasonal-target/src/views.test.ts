@@ -46,11 +46,8 @@ describe('visibility', () => {
       expect(seen?.value !== null).toBe(value);
       expect(seen?.feedback !== null).toBe(answer);
       expect(seen?.comment !== null).toBe(answer);
-      expect(playerView(t, 'a').guesses[0]?.feedback).toEqual({
-        kind: 'direction',
-        distance: 9,
-        direction: 'NE',
-      });
+      // The default answer mode (O43): the rounded distance only.
+      expect(playerView(t, 'a').guesses[0]?.feedback).toEqual({ kind: 'distance', distance: 9 });
       expect(viewSchemas.player.safeParse(playerView(t, 'b')).success).toBe(true);
     }
   });

@@ -9,7 +9,7 @@
  *                 phone a "Fallen (N)" button that opens it as a sheet, closed by Close, the
  *                 button or Escape (T115). The map shows the same cells hatched.
  * Depends on:     react, @smg/game-sdk (Season), @smg/ui (useDisclosure),
- *                 @smg-game/seasonal-target (types), ./words
+ *                 @smg-game/seasonal-target (types), ./words, ./fallen.css
  * Used by:        ./PlayerPanel, ./SpectatorPanel
  * Spec:           docs/spec/02d-game-seasonal-target.md §8.3, §11; docs/spec/03-seasonal-specials.md §2.3
  */
@@ -19,6 +19,7 @@ import { useDisclosure } from '@smg/ui';
 import type { ReactElement } from 'react';
 
 import { cellText } from './words.js';
+import './fallen.css';
 
 // The panel belongs to rounds where Leaf Fall is active: autumn with its special on.
 export const leafFallOn = (p: { readonly season: Season; readonly specialOn: boolean }): boolean =>

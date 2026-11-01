@@ -66,7 +66,7 @@ test('journey 21: Seasonal Bomb Defusal, shared through the lobby and individual
     });
     codes.push(started.matchCode);
     await expect(p.page.getByTestId('special-row').first()).toHaveText(
-      /^Leaf Fall: the \w+ wire is harmless\.$|^Leaf Fall: no more harmless wires\.$/,
+      /^Leaf Fall: the \w+ wire is harmless\.$|^Leaf Fall: every harmless wire is marked\.$/,
       { timeout: 20_000 },
     );
     await fitsBoth(p.page);

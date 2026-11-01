@@ -5,19 +5,25 @@
  *
  * Responsibility: every tier has at least 25 general lines, a correct guess 15, each trend
  *                 direction 10; no line has a digit or names the range, and none repeats in
- *                 its pool; a season's own lines appear only in its rounds; within a round no
+ *                 its pool; every line keeps to the seasonal theme; a season's own lines
+ *                 appear only in its rounds; two guesses of one tier get that tier's lines
+ *                 (the Quick Test seed `acorn`, 500 then 502); within a round no
  *                 line of a pool comes back until the pool is used up (T72); the same seed
  *                 gives the same lines, another seed other ones.
- * Depends on:     vitest, @smg/game-sdk/crypto, ./commentLines, ./comments, ./fakes
+ * Depends on:     node:crypto, vitest, @smg/game-sdk/crypto, ./closeness, ./commentLines,
+ *                 ./comments, ./fakes, ./module
  * Spec:           docs/spec/02-game-guess-the-number.md §6.3
  */
-import { createDrbg, SEED_BYTES } from '@smg/game-sdk/crypto';
+import { createHash } from 'node:crypto';
+
+import { createDrbg, roundRng, SEED_BYTES } from '@smg/game-sdk/crypto';
 import { describe, expect, it } from 'vitest';
 
 import { TIERS } from './closeness.js';
 import { COMMENT_LINES, type Pool } from './commentLines.js';
 import { linesOf, noteUsed, pickComment, type UsedLines } from './comments.js';
 import { input, Table } from './fakes.js';
+import { guessTheNumber } from './module.js';
 
 const general = (pool: Pool) => COMMENT_LINES[pool].filter((l) => typeof l === 'string');
 
@@ -39,6 +45,14 @@ describe('the catalogue', () => {
       ).toEqual([]);
       expect(new Set(texts).size, pool).toBe(texts.length);
     }
+  });
+
+  it('keeps to the seasonal theme: no sea, ships, islands, captains or space', () => {
+    const off = /\b(sea|ships?|sail\w*|islands?|captain|pirates?|space|planets?|passports?)\b/i;
+    const texts = Object.values(COMMENT_LINES).flatMap((lines) =>
+      lines.map((l) => (typeof l === 'string' ? l : l.text)),
+    );
+    expect(texts.filter((t) => off.test(t))).toEqual([]);
   });
 
   it('offers a season’s own lines only in its rounds', () => {
@@ -72,6 +86,22 @@ describe('choosing a line', () => {
     };
     expect(lines(1)).toEqual(lines(1));
     expect(lines(1)).not.toEqual(lines(2));
+  });
+
+  it('gives two guesses of one tier lines of that tier, never a trend line (seed acorn)', () => {
+    // The Quick Test round of seed `acorn` (winter, shared): the secret is 891, so 500 and 502
+    // are both 39 % of the range away, "cold"; the two lines are two draws from the cold pool.
+    const rng = roundRng(createHash('sha256').update('smg-quicktest:acorn').digest());
+    const roundInput = { ...input('shared', ['a']), season: 'winter' as const };
+    const secrets = guessTheNumber.deriveSecrets(roundInput, rng);
+    expect(secrets).toEqual({ mode: 'shared', value: 891 });
+    const t = new Table(secrets, roundInput);
+    for (const v of [500, 502]) t.play('a', v);
+    const comments = t.state.players.a?.guesses.map((g) => g.comment);
+    expect(comments?.map((c) => [c?.tier, c?.pool])).toEqual([
+      ['cold', 'cold'],
+      ['cold', 'cold'],
+    ]);
   });
 
   it('may answer a change of tier with a trend line, never a found number', () => {

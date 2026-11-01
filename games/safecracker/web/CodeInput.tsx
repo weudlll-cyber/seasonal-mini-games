@@ -6,18 +6,19 @@
  * Responsibility: typing a digit fills its box and moves on; Backspace in an empty box goes
  *                 back and clears that one; the arrow keys move between boxes; pasting a full
  *                 code fills every box; Enter sends when every box is filled (the form's own
- *                 submit, blocked while the button is disabled). A digit outside the digits in
+ *                 submit, blocked while the button is disabled; during the cooldown it reads
+ *                 "Wait 6 s", `buttonText`, T125). A digit outside the digits in
  *                 use, or a fallen one, is refused in its box with the sentence of 02b §4 and
  *                 nothing is sent (T113); the server checks again. Try code is disabled during
  *                 the cooldown, while a guess is on its way and until the code is complete. The
  *                 boxes are emptied only if they still hold the code sent, so nothing typed is
  *                 lost (T76). Typing sends nothing (05 §3.1).
- * Depends on:     react, @smg/game-sdk (props), @smg-game/safecracker (types), ./text
+ * Depends on:     react, @smg/game-sdk (props, buttonText), @smg-game/safecracker (types), ./text
  * Used by:        ./index
  * Spec:           docs/spec/02b-game-safecracker.md §4, §10
  */
 import type { PlayerView } from '@smg-game/safecracker';
-import type { PlayerPanelProps } from '@smg/game-sdk';
+import { buttonText, type PlayerPanelProps } from '@smg/game-sdk';
 import {
   useRef,
   useState,
@@ -167,7 +168,7 @@ export function CodeInput(props: CodeInputProps): ReactElement {
           disabled={!props.canAct || send.sending || !send.complete}
           data-testid="guess-button"
         >
-          Try code
+          {buttonText('Try code', props.waitS)}
         </button>
       </form>
       {boxes.message === null ? null : (

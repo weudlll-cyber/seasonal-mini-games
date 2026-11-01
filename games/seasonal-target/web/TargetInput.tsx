@@ -6,23 +6,25 @@
  * Responsibility: the map of the player's target area (./MapBoard) with every dot the view
  *                 carries, the fallen cells and Spring's quarter; a local selection, set by a
  *                 click or tap, moved by the N/W/S/E buttons and the keyboard arrows with the
- *                 map focused, and on a desktop by the Column and Row fields that follow it,
+ *                 map focused, and by the compact Column and Row fields that follow it,
  *                 always clamped to the target area; "Selected: column 12, row 34" read out
- *                 live; the platform's cooldown ring at the row's start and a large Guess (Enter
- *                 on the map guesses too). Nothing is sent before Guess (05 §3.1). A cell
+ *                 live; the platform's cooldown ring at the row's start and a large Guess that
+ *                 reads "Wait 6 s" during the cooldown (`buttonText`, T125; Enter on the map
+ *                 guesses too). Dots in each player's list colour, named, with a legend. Nothing is sent before Guess (05 §3.1). A cell
  *                 outside the area, a fallen one or one already tried is refused at once with
  *                 its sentence, Guess staying enabled (02d §4, T113). Guess waits while a guess
  *                 is on its way (T76). The latest own answer stands in words under the row.
- * Depends on:     react, @smg/game-sdk (props), @smg-game/seasonal-target (types, helpers),
- *                 ./dots, ./MapBoard, ./text, ./words
+ * Depends on:     react, @smg/game-sdk (props, buttonText), @smg-game/seasonal-target (types,
+ *                 helpers), ./dots, ./Legend, ./MapBoard, ./text, ./words
  * Used by:        ./index
  * Spec:           docs/spec/02d-game-seasonal-target.md §4, §11; docs/spec/05-security-threat-model.md §3.1
  */
 import { inArea, sameCell, type Area, type Cell, type PlayerView } from '@smg-game/seasonal-target';
-import type { PlayerPanelProps } from '@smg/game-sdk';
+import { buttonText, type PlayerPanelProps } from '@smg/game-sdk';
 import { useState, type KeyboardEvent, type ReactElement, type ReactNode } from 'react';
 
 import { playerDots } from './dots.js';
+import { Legend } from './Legend.js';
 import { MapBoard } from './MapBoard.js';
 import { CODES } from './text.js';
 import { cellWords, longAnswer } from './words.js';
@@ -99,7 +101,7 @@ function useTarget(view: PlayerView, act: PlayerPanelProps['act']) {
   return { selected, select, move, guess, message, sending };
 }
 
-// One coordinate field of a desktop: it shows the selection and sets it.
+// One coordinate field: it shows the selection and sets it.
 function Field(p: { label: string; value: number; set: (v: number) => void }): ReactElement {
   return (
     <label className="st-field">
@@ -125,7 +127,7 @@ const ARROW_BUTTONS = [
   ['south', '↓', 0, 1],
 ] as const;
 
-// The desktop's Column and Row fields and the arrow cross: both move the local selection.
+// The Column and Row fields and the arrow cross: both move the local selection.
 function Steer(t: {
   readonly selected: Cell;
   readonly select: (c: Cell) => void;
@@ -179,11 +181,12 @@ export function TargetInput(props: StInputProps): ReactElement {
     e.preventDefault();
   };
   const last = view.guesses.at(-1)?.feedback ?? null;
+  const dots = playerDots(view, props);
   return (
     <div className="st-input" data-testid="st-input">
       <MapBoard
         shown={view.area}
-        dots={playerDots(view)}
+        dots={dots}
         fallen={view.fallen}
         quarter={view.hint}
         selection={t.selected}
@@ -191,6 +194,7 @@ export function TargetInput(props: StInputProps): ReactElement {
         onSelect={t.select}
         onKeyDown={onKeyDown}
       />
+      <Legend dots={dots} />
       <div className="st-row">
         {props.ring}
         <p className="st-selected" aria-live="polite" data-testid="selected">
@@ -204,7 +208,7 @@ export function TargetInput(props: StInputProps): ReactElement {
           onClick={t.guess}
           data-testid="guess-button"
         >
-          Guess
+          {buttonText('Guess', props.waitS)}
         </button>
       </div>
       {t.message === null ? null : (

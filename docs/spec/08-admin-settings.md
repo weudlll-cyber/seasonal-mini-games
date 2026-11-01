@@ -80,7 +80,7 @@ Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.co
 | `bomb.wires` | 6 | 4 | 8 | proposal: the first N colours of red, blue, yellow, green, white, black, orange, purple (02c §3) | host | frozen |
 | `bomb.cuts` | 4 | 3 | 6 | proposal; at most `bomb.wires` | host | frozen |
 | `bomb.explosionPenaltyS` | 5 | 0 | 30 | owner (O40): host chooses, 0 allowed; default and max: proposal. Added to the cooldown on a wrong first cut (02c §5.2) | host (per match) | frozen (copied from the match into each round) |
-| `autumn.wiresPerFall` | 1 | 1 | 2 | proposal: wires marked harmless per Leaf Fall (02c §8.3) | game admin | frozen |
+| `autumn.wiresPerFall` | — | — | — | removed by owner decision 42 (2026-11-02): each Leaf Fall marks one wire (02c §8.3) | — | — |
 | Tier rule | fixed | — | — | proposal, not a setting: k = 1 … cuts − 2 spread evenly over cold … burning (02c §7) | — | — |
 
 ### 3.3 Seasonal Target (document `game.seasonal-target`, [02d](02d-game-seasonal-target.md))
@@ -91,7 +91,7 @@ Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.co
 |---|---|---|---|---|---|---|
 | `map.width` | 50 | 20 | 100 | proposal: the map's width in cells (02d §3) | host | frozen |
 | `map.height` | 50 | 20 | 100 | proposal: the map's height in cells; row 1 is north (02d §3) | host | frozen |
-| `target.feedback` | `direction` | — | — (`direction`, `closeness`) | owner (O39, default owner): the host's round setting, chosen in the round form; the next round's form keeps the last choice (02d §3, §5) | host | frozen |
+| `target.feedback` | `distance` | — | — (`direction`, `distance`, `closeness`) | owner (O43, amends O39): distance and direction, distance only (default), warm/cold only; the host's round setting, chosen in the round form; the next round's form keeps the last choice (02d §3, §5) | host | frozen |
 | `autumn.minCellsLeft` | 10 | 2 | 1 000 | proposal: Leaf Fall stops when fewer candidate cells would remain (02d §8.3) | game admin | frozen |
 | `halving.minCells` | 16 | 4 | 400 | proposal: halving stops once the target area has this many cells or fewer (02d §8.4) | game admin | frozen |
 | Closeness tier table (40 / 25 / 12 / 6 / 3 % of the diagonal, touching = just missed) | — | — | — | proposal, not a setting: Leaf Fall's `closeness` candidates depend on it (02d §7) | — | — |

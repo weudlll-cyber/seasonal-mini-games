@@ -27,6 +27,7 @@ import { SEASON_NAMES } from '../season/season.js';
 import { hrefOf } from '../shell/router.js';
 import { MatchStandings } from './MatchStandings.js';
 import { PlayerName } from './PlayerName.js';
+import { colorsOf } from './RoundSide.js';
 import { endHeadline, marginText } from './roundText.js';
 import './result.css';
 
@@ -141,7 +142,12 @@ export function ResultScreen({
       {margin === null ? null : <p data-testid="margin">{margin}</p>}
       {miss === null ? null : <p data-testid="closest-miss">{miss}</p>}
       {game === null ? null : (
-        <game.Result view={state.game} names={state.names} viewerKey={viewerKey} />
+        <game.Result
+          view={state.game}
+          names={state.names}
+          colors={colorsOf(state)}
+          viewerKey={viewerKey}
+        />
       )}
       <Placings state={state} viewerKey={viewerKey} />
       <Teams state={state} />

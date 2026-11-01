@@ -9,8 +9,11 @@
  *                 and stays inside the area; "Selected: column …, row …" says where; Guess sends
  *                 `{ value: { x, y } }` and nothing else is sent; a fallen or tried cell is
  *                 refused at once without sending; a server `OUT_OF_MAP` on the map says
- *                 "outside the target area"; Guess is disabled during the cooldown; Enter on the
- *                 map guesses; own dots are ringed and a held one pending; the player panel
+ *                 "outside the target area"; Guess is disabled and reads "Wait 6 s" during the
+ *                 cooldown; Enter on the map guesses; own dots are ringed and a held one
+ *                 pending; others' dots take their list colour, name the player on hover and
+ *                 focus and appear in the legend; the map leaves room for its last ticks; the
+ *                 player panel
  *                 shows the hint and area lines and the Fallen cells in autumn; the spectator
  *                 and result panels draw what their views hold.
  * Depends on:     vitest, @testing-library/react, ./PlayerPanel, ./TargetInput,
@@ -18,7 +21,7 @@
  * Spec:           docs/spec/02d-game-seasonal-target.md §4, §6, §8, §9, §11
  */
 import type { PlayerView } from '@smg-game/seasonal-target';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { PlayerPanel } from './PlayerPanel.js';
@@ -30,6 +33,11 @@ afterEach(cleanup);
 
 const ne = { kind: 'direction', distance: 9, direction: 'NE' } as const;
 const seen = { tier: null, comment: null };
+// The platform's list: each player's name and one colour (T125).
+const roster = {
+  names: { a: 'Walter', b: 'Anna' },
+  colors: { a: 'var(--color-summer)', b: 'var(--color-winter)' },
+};
 
 function playerView(over: Partial<PlayerView> = {}): PlayerView {
   return {
@@ -45,12 +53,14 @@ function playerView(over: Partial<PlayerView> = {}): PlayerView {
   };
 }
 
-function renderInput(view: PlayerView, canAct = true) {
+function renderInput(view: PlayerView, canAct = true, waitS: number | null = null) {
   const send = vi.fn(() => Promise.resolve({ ok: true }));
   const props = {
     view,
     act: send,
     canAct,
+    waitS,
+    ...roster,
     frostDelayMs: null,
     now: () => 0,
     season: 'spring' as const,
@@ -91,9 +101,10 @@ describe('input row', () => {
       }),
     );
     const map = screen.getByTestId('map');
-    // The view box is 21.4 units square (20 cells and a 1.4 margin) drawn at 214 px.
-    map.getBoundingClientRect = () => ({ left: 0, top: 0, width: 214, height: 214 }) as DOMRect;
-    fireEvent.click(map, { clientX: 14 + 25, clientY: 14 + 95 });
+    // The view box is 23.04 × 22.4 units (20 cells, margins 2.24 left, 1.6 top, 0.8 right and
+    // bottom) drawn at 10 px a unit.
+    map.getBoundingClientRect = () => ({ left: 0, top: 0, width: 230.4, height: 224 }) as DOMRect;
+    fireEvent.click(map, { clientX: 22.4 + 25, clientY: 16 + 95 });
     expect(selected()).toBe('Selected: column 3, row 10');
   });
 });
@@ -135,6 +146,8 @@ describe('guessing', () => {
         now={() => 0}
         season="winter"
         specialOn
+        waitS={null}
+        {...roster}
       />,
     );
     fireEvent.click(screen.getByTestId('guess-button'));
@@ -144,9 +157,11 @@ describe('guessing', () => {
 });
 
 describe('cooldown and dots', () => {
-  it('keeps Guess disabled during the cooldown, and Enter does nothing', () => {
-    const send = renderInput(playerView(), false);
-    expect(screen.getByTestId<HTMLButtonElement>('guess-button').disabled).toBe(true);
+  it('keeps Guess disabled and counting during the cooldown, and Enter does nothing', () => {
+    const send = renderInput(playerView(), false, 6);
+    const button = screen.getByTestId<HTMLButtonElement>('guess-button');
+    expect(button.disabled).toBe(true);
+    expect(button.textContent).toBe('Wait 6 s');
     fireEvent.keyDown(screen.getByTestId('map'), { key: 'Enter' });
     expect(send).not.toHaveBeenCalled();
   });
@@ -166,15 +181,34 @@ describe('cooldown and dots', () => {
     expect(dots.map((d) => d.getAttribute('data-own'))).toEqual(['false', 'true', 'true']);
     expect(dots[2]?.getAttribute('data-pending')).toBe('true');
     expect(dots[2]?.textContent).toContain('You (2, 2) — answer arriving');
-    expect(dots[0]?.textContent).toContain(
-      'Another player (9, 9) — 9 cells away, to the north-east',
-    );
+    expect(dots[0]?.textContent).toBe('Anna (9, 9) — 9 cells away, to the north-east');
+    expect(dots[0]?.getAttribute('aria-label')).toBe(dots[0]?.textContent);
+    expect(dots[0]?.getAttribute('tabindex')).toBe('0');
+    // Anna's dot has her list colour; own dots the season colour own rows are lit in.
+    expect(dots[0]?.querySelector('circle')?.style.fill).toBe('var(--color-winter)');
+    expect(dots[1]?.querySelector('circle')?.style.fill).toBe('var(--season, var(--color-accent))');
+    expect(screen.getByTestId('map-legend').textContent).toBe('YouAnna');
+    expect(screen.queryByText(/Another player/)).toBeNull();
+  });
+
+  it('leaves room on every edge for the tick numbers', () => {
+    renderInput(playerView());
+    // 50 cells, a margin of 4: 5.6 on the left, 4 on top, 2 on the right and bottom.
+    const box = screen.getByTestId('map').getAttribute('viewBox')?.split(' ').map(Number);
+    expect(box).toEqual([-5.6, -4, 57.6, 56]);
   });
 });
 
 describe('panels', () => {
   const quarter = { name: 'north-west', left: 1, right: 25, top: 1, bottom: 25 } as const;
-  const base = { act: vi.fn(), canAct: false, frostDelayMs: null, now: () => 0 };
+  const base = {
+    act: vi.fn(),
+    canAct: false,
+    frostDelayMs: null,
+    now: () => 0,
+    waitS: null,
+    ...roster,
+  };
 
   it('shows the hint, the area line and the Fallen cells in autumn', () => {
     const view = playerView({
@@ -220,9 +254,10 @@ describe('spectator panel', () => {
       fallen: [],
       log,
     };
-    render(<SpectatorPanel view={view} names={{ b: 'Anna' }} season="autumn" specialOn />);
+    render(<SpectatorPanel view={view} {...roster} season="autumn" specialOn />);
     expect(screen.getByTestId('area-line').textContent).toBe('Every target area: 25 × 50 cells');
     expect(screen.getByTestId('map-dot').textContent).toBe('Anna (9, 9)');
+    expect(screen.getByTestId('map-legend').textContent).toBe('Anna');
     expect(screen.getByTestId('fallen').textContent).toBe('Fallen cells (0)');
   });
 });
@@ -240,12 +275,23 @@ describe('result panel', () => {
       fallen: [{ x: 1, y: 1 }],
       closestMiss: null,
     };
-    render(<ResultPanel view={view} names={{ a: 'Walter' }} viewerKey="b" />);
+    render(
+      <ResultPanel view={view} names={{ a: 'Walter' }} colors={roster.colors} viewerKey="b" />,
+    );
     expect(screen.getByTestId('secret').textContent).toBe('Target: column 5, row 5');
-    expect(screen.getAllByTestId('map-dot')).toHaveLength(2);
+    const dots = screen.getAllByTestId('map-dot');
+    expect(dots).toHaveLength(2);
+    // Each player's own colour; the viewer's dot ringed in theirs.
+    expect(dots.map((d) => d.querySelector('circle')?.style.fill)).toEqual([
+      'var(--color-summer)',
+      'var(--color-winter)',
+    ]);
+    expect(screen.getByTestId('map-legend').textContent).toBe('YouWalter');
     expect(screen.getByTestId('map-target')).toBeTruthy();
     expect(screen.getAllByTestId('map-fallen')).toHaveLength(1);
-    const items = screen.getAllByRole('listitem').map((li) => li.textContent);
+    const items = within(screen.getByRole('list', { name: 'Every guess' }))
+      .getAllByRole('listitem')
+      .map((li) => li.textContent);
     expect(items).toEqual([
       'b — target (5, 5): (12, 34) 9 away, NE ↗',
       'Walter — target (20, 30): (20, 30) Target found!',

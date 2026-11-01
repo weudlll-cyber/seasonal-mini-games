@@ -28,7 +28,15 @@ import {
 } from '@smg/guess-engine';
 import { z } from 'zod';
 
-import { COMPASS, inArea, roundedDistance, squared, type Area, type Cell } from './geometry.js';
+import {
+  COMPASS,
+  FEEDBACK_MODES,
+  inArea,
+  roundedDistance,
+  squared,
+  type Area,
+  type Cell,
+} from './geometry.js';
 import { cellOf, type Secrets } from './secrets.js';
 import type { StState } from './state.js';
 
@@ -42,10 +50,11 @@ const quarter = area
 const feedback = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('correct') }).strict(),
   z.object({ kind: z.literal('direction'), distance: coord, direction: z.enum(COMPASS) }).strict(),
+  z.object({ kind: z.literal('distance'), distance: coord }).strict(),
   z.object({ kind: z.literal('closeness'), tier: z.enum(TIERS).exclude(['correct']) }).strict(),
 ]);
 const guesses = guessSchemas(cell, feedback);
-const mode = z.enum(['direction', 'closeness']);
+const mode = z.enum(FEEDBACK_MODES);
 
 export const viewSchemas = {
   player: z

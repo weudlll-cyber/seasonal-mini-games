@@ -4,7 +4,7 @@
  * @brief  The code block of the player and spectator main area: line, digit strip and hint.
  *
  * Responsibility: "4-digit code, digits 0–9" in large type; the digit strip, one chip per digit
- *                 in use, a fallen digit struck through, dimmed and crossed, labelled "7,
+ *                 in use, a fallen digit struck through and crossed, labelled "7,
  *                 fallen" (the strip is the Leaf Fall panel, 02b §10); Spring Herald's hint as
  *                 a highlighted line for the whole round (O35). The player panel shows the
  *                 viewer's hint (shared or own); the spectator panel only a shared one (02b §9).

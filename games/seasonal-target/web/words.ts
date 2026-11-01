@@ -4,8 +4,8 @@
  * @brief  How Seasonal Target words a cell, an area, a quarter and an answer.
  *
  * Responsibility: "(12, 34)" and "column 12, row 34", "columns 13–37, rows 1–50", the quarter
- *                 hint, and an answer long ("9 cells away, to the north-east") and short
- *                 ("9 away, NE ↗"), the tier words of `closeness` mode, and the tone the
+ *                 hint, and an answer long ("9 cells away, to the north-east", "9 cells away")
+ *                 and short ("9 away, NE ↗", "9 away"), the tier words of `closeness` mode, and the tone the
  *                 platform colours a row by. Every number through `formatNumber` (T114).
  * Depends on:     @smg/game-sdk (formatNumber, GuessAnswer), @smg-game/seasonal-target (types)
  * Used by:        ./text, ./MapBoard, ./TargetInput, ./PlayerPanel, ./SpectatorPanel, ./ResultPanel
@@ -69,17 +69,18 @@ export const TIER_WORDS: Readonly<Record<string, string>> = {
 
 const FOUND = 'Target found!';
 
-// "9 cells away, to the north-east", "Warm".
+// "9 cells away, to the north-east", "9 cells away", "Warm".
 export function longAnswer(f: Feedback): string {
   if (f.kind === 'correct') return FOUND;
   if (f.kind === 'closeness') return TIER_WORDS[f.tier] ?? f.tier;
-  const unit = f.distance === 1 ? 'cell' : 'cells';
-  return `${n(f.distance)} ${unit} away, to the ${WORDS[f.direction]}`;
+  const away = `${n(f.distance)} ${f.distance === 1 ? 'cell' : 'cells'} away`;
+  return f.kind === 'direction' ? `${away}, to the ${WORDS[f.direction]}` : away;
 }
 
-// "9 away, NE ↗" for the list.
+// "9 away, NE ↗" or "9 away" for the list.
 export function shortAnswer(f: Feedback): string {
   if (f.kind === 'direction') return `${n(f.distance)} away, ${f.direction} ${ARROWS[f.direction]}`;
+  if (f.kind === 'distance') return `${n(f.distance)} away`;
   return longAnswer(f);
 }
 
