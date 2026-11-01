@@ -13,8 +13,8 @@
  *                 beside a result the area holds only the status line and the players. Team
  *                 refusals in plain words. A match without teams (O34) shows no team text,
  *                 buttons or column: the rows hold the name and the connection only. The match
- *                 chat, when there is one, sits under the
- *                 players in a box of its own height that scrolls inside itself (07 §2).
+ *                 chat is not part of the area: the match page shows it as a panel of its own
+ *                 (./MatchPage, T116).
  * Depends on:     react, @smg/contracts, ../live/socket, ../round/roundText, ../season/*
  * Used by:        ./MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §2, §4; docs/spec/03-seasonal-specials.md §5
@@ -34,8 +34,6 @@ interface Props {
   // The signed-in viewer's player key, to mark their team.
   readonly viewerKey: string | null;
   readonly reload: () => void;
-  // The match chat (bare), under the players; null without a chat (07 §2).
-  readonly chat?: ReactElement | null;
 }
 
 function Teams({ match, viewerKey, reload }: Props): ReactElement {
@@ -145,12 +143,6 @@ export function WaitingArea(p: Props): ReactElement {
       {choosing ? <Teams {...p} /> : null}
       <h3>Players</h3>
       <Players match={match} />
-      {p.chat == null ? null : (
-        <div className="match-chat" data-testid="waiting-chat">
-          <h3>Chat</h3>
-          {p.chat}
-        </div>
-      )}
     </section>
   );
 }

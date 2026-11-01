@@ -8,8 +8,9 @@
  *                 confirmed, Cancel asks nothing of the server; the summary says how the match
  *                 ended (the host, the idle close with its minutes, an abort with its reason),
  *                 how many rounds were played, every player's points and wins in standings
- *                 order, the teams over the match (none without teams, O34), and links back
- *                 to Play.
+ *                 order with grouped numbers, the teams over the match (none without teams,
+ *                 O34), and links back to Play; the standings and the rest in their own parts
+ *                 of a one-screen page.
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./EndMatch, ./MatchSummary
  *                 (with ../shell/http replaced)
  * Spec:           docs/spec/02-game-guess-the-number.md §2
@@ -78,7 +79,7 @@ const ended: MatchDetailsView = {
     { team: 'winter', points: 0 },
   ],
   standings: [
-    { rank: 1, playerKey: 'a', name: 'Anna', points: 20, wins: 2 },
+    { rank: 1, playerKey: 'a', name: 'Anna', points: 1_250, wins: 2 },
     { rank: 2, playerKey: 'bot-01', name: 'bot-01', points: 0, wins: 0 },
   ],
   nextRoundDefaults: null,
@@ -92,13 +93,21 @@ describe('the match summary', () => {
     expect(screen.getByText('2 rounds played.')).toBeTruthy();
     const rows = [...screen.getByTestId('match-standings').querySelectorAll('tbody tr')];
     expect(rows.map((r) => [...r.children].map((c) => c.textContent))).toEqual([
-      ['1', 'Anna (you)', '20', '2'],
+      ['1', 'Anna (you)', '1,250', '2'],
       ['2', 'bot-01', '0', '0'],
     ]);
     expect(screen.getByTestId('match-teams').textContent).toBe(
       ' Summer: 2 points Winter: 0 points',
     );
     expect(screen.getByRole('link', { name: 'Back to Play' }).getAttribute('href')).toBe('#/');
+    // One screen: the standings in their own column, the rest beside them (./summary.css).
+    const summary = screen.getByTestId('match-summary');
+    expect(summary.className).toContain('one-screen');
+    const standings = summary.querySelector('.match-summary-standings');
+    const side = summary.querySelector('.match-summary-side');
+    expect(standings?.contains(screen.getByTestId('match-standings'))).toBe(true);
+    expect(side?.contains(screen.getByTestId('match-teams'))).toBe(true);
+    expect(side?.textContent).toContain('2 rounds played.');
   });
 
   it('leaves the team standing out of a match without teams (O34)', () => {

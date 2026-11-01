@@ -1,0 +1,102 @@
+/**
+ * @file   apps/web/src/match/summary.css
+ * @module web/match
+ * @brief  The match summary on one screen: standings, rounds played, teams, the way back.
+ *
+ * Responsibility: the summary fills the space under the app bar exactly (the shell's
+ *                 `one-screen` rule) and never scrolls the page: on a desktop the standings in
+ *                 the left column and the rounds played, the team standing and "Back to Play"
+ *                 in a 20 rem right column; on a phone one column, the standings between the
+ *                 head and the rest. Rows are compact, so 12 players fit 1280 × 720 and
+ *                 390 × 844; with more, only the standings table scrolls inside its own box,
+ *                 its header staying in view. Colours only from @smg/ui tokens.
+ * Spec:           docs/spec/02-game-guess-the-number.md §2, §12
+ */
+.match-summary {
+  flex: 1;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'head' 'standings' 'side';
+  gap: var(--space-2);
+  padding: var(--space-3);
+}
+
+@media (min-width: 900px) {
+  .match-summary {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      'head head'
+      'standings side';
+    column-gap: var(--space-4);
+  }
+}
+
+/* The result page's grid sets the spacing, not the paragraphs' margins. */
+.match-summary p,
+.match-summary h2 {
+  margin: 0;
+}
+
+.match-summary h2 {
+  font-size: var(--font-size-lead);
+}
+
+.match-summary-head {
+  grid-area: head;
+  display: grid;
+  gap: 0.25rem;
+}
+
+/* The standings: the heading, then the table in a box that scrolls only inside itself. */
+.match-summary-standings {
+  grid-area: standings;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.match-summary-standings > section {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.match-summary-standings .round-table-wrap {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.match-summary .round-table th,
+.match-summary .round-table td {
+  padding-block: 0.3rem;
+}
+
+.match-summary .round-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--color-card);
+}
+
+.match-summary-side {
+  grid-area: side;
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+}
+
+/* A phone: the four teams in two columns, so the side part stays short. */
+@media (max-width: 899px) {
+  .match-summary {
+    padding: var(--space-2);
+  }
+
+  .match-summary-teams {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding-left: 0;
+    list-style-position: inside;
+  }
+}

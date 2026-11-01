@@ -7,9 +7,9 @@
  *                 navigation as pills with the current one solid, the round light/dark toggle,
  *                 account and the dev sign-in menu) over a centred main column, sticky from 640 px with focus kept below
  *                 it; on phones the bar wraps into two rows, scrolls away with the page and
- *                 the navigation scrolls sideways. While a round runs, the page is one screen
- *                 high and the round view fills what the bar leaves; on a phone the bar is
- *                 then one row of at most 56 px with the account behind "Menu" and Play as the
+ *                 the navigation scrolls sideways. While a round runs, and on a match's
+ *                 summary, the page is one screen high (`.one-screen`) and the view fills what
+ *                 the bar leaves; on a phone the bar is then one row of at most 56 px with the account behind "Menu" and Play as the
  *                 only navigation pill. Colours come
  *                 from @smg/ui.
  * Spec:           Bingo 01 §13; docs/spec/02-game-guess-the-number.md §12
@@ -147,15 +147,16 @@
   padding: var(--space-3) var(--gutter) var(--space-4);
 }
 
-/* While a round runs the page is exactly one screen: the bar on top, the round view in the
-   rest (../round/round.css), and no page scrollbar. */
-#root:has(.match-live) {
+/* A one-screen view (a running round, a match summary) makes the page exactly one screen:
+   the bar on top, the view in the rest (../round/round.css, ../match/summary.css), and no
+   page scrollbar. */
+#root:has(.one-screen) {
   display: flex;
   flex-direction: column;
   height: 100dvh;
 }
 
-.shell-main:has(.match-live) {
+.shell-main:has(.one-screen) {
   flex: 1;
   min-height: 0;
   display: flex;
@@ -201,17 +202,17 @@
   }
 }
 
-/* While a round runs on a phone the bar is one row of 55 px (44 px controls, 5 px above and
+/* On a phone a one-screen view gets a bar of one row of 55 px (44 px controls, 5 px above and
    below, the hairline): the emblem without the wordmark (its name is still read out), the
    theme toggle, Play, and "Menu" with the account and the development menu (DECISIONS T67).
    A second pill (Leaderboard) does not fit beside them at 390 px, so it is left out here. */
 @media (max-width: 640px) {
-  #root:has(.match-live) .shell-bar {
+  #root:has(.one-screen) .shell-bar {
     flex-wrap: nowrap;
     padding-block: 5px;
   }
 
-  #root:has(.match-live) .shell-brand span {
+  #root:has(.one-screen) .shell-brand span {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -220,24 +221,24 @@
     white-space: nowrap;
   }
 
-  #root:has(.match-live) .shell-menu {
+  #root:has(.one-screen) .shell-menu {
     width: auto;
   }
 
-  #root:has(.match-live) .shell-nav-boards {
+  #root:has(.one-screen) .shell-nav-boards {
     display: none;
   }
 
-  #root:has(.match-live) .shell-menu-button {
+  #root:has(.one-screen) .shell-menu-button {
     display: inline-flex;
   }
 
-  #root:has(.match-live) .shell-account {
+  #root:has(.one-screen) .shell-account {
     display: none;
   }
 
   /* The open menu covers the page under the button, opaque like every menu */
-  #root:has(.match-live) .shell-account[data-open='true'] {
+  #root:has(.one-screen) .shell-account[data-open='true'] {
     position: absolute;
     right: 0;
     top: calc(100% + 0.4rem);
@@ -252,7 +253,7 @@
   }
 
   /* Inside the open menu the development menu's items follow in place */
-  #root:has(.match-live) .dev-menu-panel {
+  #root:has(.one-screen) .dev-menu-panel {
     position: static;
     width: auto;
     margin-top: var(--space-1);

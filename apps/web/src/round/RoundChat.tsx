@@ -1,7 +1,8 @@
 /**
  * @file   apps/web/src/round/RoundChat.tsx
  * @module web/round
- * @brief  The match chat in the round view: in the right column, or over the round on a phone.
+ * @brief  The match chat as a panel: in the round view's right column or beside the waiting
+ *         area, and over the page from a "Chat" button on a phone.
  *
  * Responsibility: on a wide screen the chat sits in the right column under the team tiles
  *                 and takes the column's free height, its list scrolling inside itself, so
@@ -9,10 +10,11 @@
  *                 opens it as a panel over the round, from under the top bar to just above the
  *                 button (which sits above the input row), measured when it opens, so the guess
  *                 field and the button stay in view and usable; the button ("Close chat") or
- *                 Escape closes it again. The chat stays
- *                 mounted either way, so it keeps its room and what was typed (07 §2).
+ *                 Escape closes it again. Between rounds the match page puts the same panel
+ *                 under the waiting area, apart from it (T116). The chat stays mounted either
+ *                 way, so it keeps its room and what was typed (07 §2).
  * Depends on:     react, @smg/ui (useDisclosure), ./roundChat.css
- * Used by:        ./RoundScreen
+ * Used by:        ./RoundScreen, ../match/MatchPage
  * Spec:           docs/spec/07-integration.md §2; docs/spec/02-game-guess-the-number.md §12
  */
 import { useState, type CSSProperties, type ReactElement, type ReactNode } from 'react';
@@ -20,10 +22,13 @@ import { useDisclosure } from '@smg/ui';
 
 import './roundChat.css';
 
-// Where the panel lies on a phone: between the round's top bar and the Chat button, which
-// sits above the input row, so the button (to close it) and the input stay in view.
+// Where the panel lies on a phone: between the round's top bar (the app's bar outside a
+// round) and the Chat button, which sits above the input row, so the button (to close it)
+// and the input stay in view.
 function overlayBox(button: HTMLElement): CSSProperties {
-  const top = button.closest('.round-live')?.querySelector('.round-top');
+  const top =
+    button.closest('.round-live')?.querySelector('.round-top') ??
+    document.querySelector('.shell-bar');
   const gap = 8;
   return {
     top: `${String(Math.round((top?.getBoundingClientRect().bottom ?? 0) + gap))}px`,
