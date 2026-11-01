@@ -7,7 +7,7 @@
  *                 axe cannot judge (it leaves such text "incomplete"). So for every visible
  *                 text — text nodes, typed values and placeholders — the text colour is read
  *                 from the page (its alpha times the opacity of its ancestors; text covered by
- *                 an open menu is left out), then all text
+ *                 an open menu and text for screen readers only are left out), then all text
  *                 is made transparent, the window is captured, and the colour behind each
  *                 line of text is the median pixel of that line's box. The ratio is WCAG's
  *                 (relative luminance, 2.x). The screenshot is decoded on a canvas in the
@@ -60,10 +60,19 @@ function collect(): TextBox[] {
     const hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
     return hit === null || el.contains(hit) || hit.contains(el);
   };
+  // Text for screen readers only (1 px, clipped away): never painted, so never measured.
+  const unpainted = (el: Element): boolean => {
+    for (let e: Element | null = el; e !== null; e = e.parentElement) {
+      const style = getComputedStyle(e);
+      if (style.clipPath === 'inset(50%)' && e.getBoundingClientRect().width <= 1) return true;
+    }
+    return false;
+  };
   const fromText = (node: Node): TextBox | null => {
     const el = node.parentElement;
     const text = node.textContent?.trim() ?? '';
     if (el === null || text === '' || el.closest('script, style, option') !== null) return null;
+    if (unpainted(el)) return null;
     const range = document.createRange();
     range.selectNodeContents(node);
     const rects = [...range.getClientRects()].filter((r) => shown(r) && onTop(el, r));

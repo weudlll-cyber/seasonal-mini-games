@@ -66,7 +66,9 @@ test('journey 3: each season special shows itself', async ({ browser }) => {
     await expect(p.page.getByTestId('guess-list')).toContainText('Heatwave: waiting time is now');
 
     codes.push(await quickRound(p, { season: 'autumn' }));
-    await expect(p.page.getByTestId('fallen')).toContainText('fallen', { timeout: 15_000 });
+    await expect(p.page.getByTestId('fallen')).toHaveText(/^Fallen numbers \([1-9]\d*\)$/, {
+      timeout: 15_000,
+    });
     await expect(p.page.getByTestId('guess-list')).toContainText('Leaf Fall:');
 
     codes.push(await quickRound(p, { season: 'winter' }));
