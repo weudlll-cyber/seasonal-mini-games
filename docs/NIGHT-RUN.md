@@ -1,5 +1,7 @@
 # Morning sheet
 
+**2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
+
 ## Leaf Fall (2026-11-01, day task)
 
 On `night/2026-10-27`. Nothing goes to `master`.
