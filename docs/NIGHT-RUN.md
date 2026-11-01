@@ -2,6 +2,28 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Night 5 (2026-11-02)
+
+Branch `feat/guess-games` (same thread, from `a02e9cc`). Nothing goes to `master`. 14 logical cores; subagents only on disjoint folders, the lead alone on shared code.
+
+| Piece                            | State | What                                                          | Commit                        |
+| -------------------------------- | ----- | ------------------------------------------------------------- | ----------------------------- |
+| N1 owner decisions O42–O44       | open  | —                                                             | —                             |
+| N2 stale displays                | done  | Cause measured and fixed once in the shared round hook (T124) | the commit that adds this row |
+| N3 display and layout defects    | open  | —                                                             | —                             |
+| N4 checks and fresh play-through | open  | —                                                             | —                             |
+| N5 handover                      | open  | —                                                             | —                             |
+
+**Needs the owner:** nothing yet.
+
+### N2 — stale displays after events
+
+- Measured first (a probe in a real autumn round, every 50 ms for 40 s): after each Leaf Fall the list's row and the Fallen numbers panel disagreed for 248, 308, 250 and 246 ms, then agreed. Nothing stayed stale; the review's screenshots were taken inside that window.
+- Cause: `apps/web/src/live/useRound.ts` — the list took each event straight from the live frame (`onFrame`, `setFeed`), while the state that feeds the panels, the digit strip and the top bar's cooldown was reloaded 250 ms later (`pending.current ??= window.setTimeout(…, 250)`) plus the request. One render showed two moments. A second, latent fault in the same place: two reloads crossing on the way could put the older state over the newer one.
+- Fix (shared, once for all four games, T124): a feed event is shown only once the loaded state holds it (`s ≤ state.seq`, the field the state view already had), and an older state answer is dropped. After the fix the probe found 0 disagreements in 660 samples.
+- Tests: `apps/web/src/live/useRoundFeed.test.tsx` new (an event waits for its state; a crossing older answer is dropped); feed fixtures of `round.test.tsx` and `banner.test.tsx` carry the event's place.
+- Lines: useRound.ts +29/−2; useRoundFeed.test.tsx new, 93 lines; round.test.tsx ±2; banner.test.tsx ±1.
+
 ## Night 4 (2026-11-01)
 
 Branch `feat/guess-games` from `master` `10f4cd3`. Nothing goes to `master`: the owner plays the games first. 14 logical cores; at most three subagents at once (one per new game), the lead alone on the shared packages.

@@ -40,7 +40,7 @@ const gameWith = (rows: readonly object[] = []) =>
       guesses: () => rows,
     },
   }) as never;
-const item = (key: string, at: number, event: unknown) => ({ key, at, event });
+const item = (key: string, at: number, event: unknown) => ({ key, s: Number(key), at, event });
 const game = (type: string) => ({ type: 'Game', event: { type } });
 
 describe('the special banner', () => {

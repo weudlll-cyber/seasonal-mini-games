@@ -75,8 +75,8 @@ const live = { ...ended, status: 'open', frostDelayMs: 3_000, game: {} } as cons
 describe('the guess list', () => {
   it('merges guesses and events newest first, with "You", answers, comments and Frost', () => {
     const feed = [
-      { key: '9', at: 6_000, event: { type: 'Game', event: {} } },
-      { key: '1', at: 1_000, event: { type: 'RoundOpened' } },
+      { key: '9', s: 9, at: 6_000, event: { type: 'Game', event: {} } },
+      { key: '1', s: 1, at: 1_000, event: { type: 'RoundOpened' } },
     ];
     render(<RoundLog feed={feed} game={game} state={live} viewerKey="a" now={9_000} />);
     const rows = [...screen.getByTestId('guess-list').querySelectorAll('li')];

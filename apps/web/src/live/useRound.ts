@@ -6,7 +6,9 @@
  * Responsibility: load `GET /rounds/:id/state` (the viewer's own view, 02 §11) and load it
  *                 again shortly after each frame of the round, at most four times a second;
  *                 keep the round's events as they arrive for the feed (the room's public
- *                 forms and the player's own events), newest first, at most 60. A frame with
+ *                 forms and the player's own events), newest first, at most 60, each shown
+ *                 only once the loaded state holds it, so the list and the panels never
+ *                 disagree (T124: measured, they did for 250–310 ms after each event). A frame with
  *                 `late` brings Frost's held events; in a Frost round one more load follows
  *                 each frame or reconnect after the delay, so an answer released while the
  *                 page was away still shows. An answer for a round the page no longer shows is
@@ -23,6 +25,8 @@ import { gameSocket } from './socket.js';
 
 export interface FeedItem {
   readonly key: string;
+  // The event's place in the round's log: shown once the state holds it (T124).
+  readonly s: number;
   readonly at: number;
   readonly event: unknown;
 }
@@ -37,21 +41,33 @@ const FEED_LIMIT = 60;
 
 // The state of the round shown now: an answer for another one (a reload of the last round
 // still on its way when the next round loaded) is dropped, so it never shows over the new
-// round (T81). `take` says whether it took the answer.
+// round (T81); so is an answer older than the one shown (two reloads crossing on the way,
+// T124). `take` says whether it took the answer.
 function useShownState(roundId: string | null) {
   const [state, setState] = useState<RoundStateView | null>(null);
   const shown = useRef(roundId);
+  const shownSeq = useRef<number | null>(null);
+  if (shown.current !== roundId) shownSeq.current = null;
   shown.current = roundId;
   const take = useCallback((next: RoundStateView): boolean => {
     if (next.roundId !== shown.current) return false;
+    if (shownSeq.current !== null && next.seq < shownSeq.current) return false;
+    shownSeq.current = next.seq;
     setState(next);
     return true;
   }, []);
   const clear = useCallback(() => {
+    shownSeq.current = null;
     setState(null);
   }, []);
   return { state, take, clear };
 }
+
+// The events the shown state already holds (T124): a frame arrives before the reload that
+// brings its effects (the fallen numbers, the new cooldown), so an event waits for that state
+// and the list, the panels and the header always show the same moment.
+const heldBy = (feed: readonly FeedItem[], state: RoundStateView | null): readonly FeedItem[] =>
+  state === null ? [] : feed.filter((item) => item.s <= state.seq);
 
 export function useRound(roundId: string | null): RoundLive {
   const { state, take, clear } = useShownState(roundId);
@@ -87,6 +103,7 @@ export function useRound(roundId: string | null): RoundLive {
         .filter((e) => e.event !== null)
         .map((e) => ({
           key: `${String(e.s)}${frame.s === undefined ? 'p' : 'r'}`,
+          s: e.s,
           at: e.at,
           event: e.event,
         }));
@@ -110,5 +127,5 @@ export function useRound(roundId: string | null): RoundLive {
       }
     };
   }, [roundId, reloadAndFollow, clear]);
-  return { state, feed, reload };
+  return { state, feed: heldBy(feed, state), reload };
 }
