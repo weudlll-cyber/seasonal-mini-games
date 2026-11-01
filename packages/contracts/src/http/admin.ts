@@ -47,6 +47,9 @@ export interface SettingsDocumentView {
   readonly values: Readonly<Record<string, SettingValue>>;
   // Whether the viewer may edit each key (by its edit permission).
   readonly editable: readonly string[];
+  // Keys this install cannot switch on, each with the one-line reason the form shows
+  // (`antiMulti.requireLinkedChat` in a standalone install, 05 §6).
+  readonly unavailable?: Readonly<Record<string, string>>;
 }
 
 export interface AuditEntryView {

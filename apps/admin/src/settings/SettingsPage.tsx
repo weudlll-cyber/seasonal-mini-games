@@ -79,6 +79,7 @@ function Table({
               value={doc.values[def.key]}
               override={draft[def.key] ?? {}}
               editable={editable.has(def.key)}
+              unavailable={doc.unavailable?.[def.key]}
               change={(o) => {
                 setDraft((d) => ({ ...d, [def.key]: o }));
               }}

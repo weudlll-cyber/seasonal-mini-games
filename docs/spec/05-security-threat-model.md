@@ -79,7 +79,7 @@ The round queue is bounded at 5 000 items. Beyond that, new guesses are refused 
 - the account is at least `antiMulti.minAccountAgeH` hours old (default 0 = off, max 720), and/or
 - in website installs, the account is linked to Telegram or Discord on the website, as reported in the handoff token's claims (`antiMulti.requireLinkedChat`, default off).
 
-Both can only be checked on a fact the server holds. Standalone installs have no Telegram or Discord link, so there the second rule cannot be switched on.
+Both can only be checked on a fact the server holds. Standalone installs have no Telegram or Discord link, so there the second rule cannot be switched on. Built (DECISIONS T103): the account age is checked when a shared roster freezes; an install is a website install when it has an enabled JWT handoff provider, and without one the admin form disables the second rule with its reason and the server refuses it.
 
 **Residual:** a determined person with several verified, aged, linked accounts can still multiply their rate. That is accepted and stated in §10.
 

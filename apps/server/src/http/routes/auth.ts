@@ -5,7 +5,8 @@
  *
  * Responsibility: GET /session (account summary, permissions, CSRF token, feature flags),
  *                 POST /auth/register, /auth/login, /auth/logout, /auth/guest, and DELETE /me
- *                 (the account, after its password is checked). Login answers
+ *                 (the account, after its password is checked, or for an account made by the
+ *                 website's handoff, which has none, after its display name is typed). Login answers
  *                 uniformly and verifies a dummy hash for unknown e-mails, so timing and
  *                 text never reveal whether an account exists (03 §2.1); a wrong password for a
  *                 known account adds one abuse signal for moderators (05 §2). Login and
@@ -168,16 +169,34 @@ export async function startSession(
 }
 
 // DELETE /me { password } (05 §2.2): the account is deleted after its password is checked.
-const deleteBody = z.object({ password: z.string().max(128) });
+// An account with a password confirms with it; one made by the website's handoff has none
+// and types its display name instead (07 §4, DECISIONS T105).
+const deleteBody = z.object({
+  password: z.string().max(128).optional(),
+  confirm: z.string().max(64).optional(),
+});
+
+async function deletionConfirmed(
+  request: FastifyRequest,
+  deps: AuthDeps,
+  accountId: string,
+): Promise<'ok' | 'PASSWORD_REQUIRED' | 'CONFIRMATION_REQUIRED'> {
+  const parsed = deleteBody.safeParse(request.body);
+  const body = parsed.success ? parsed.data : {};
+  const encoded = await passwordHashOf(deps.pool, accountId);
+  if (encoded === null) {
+    const name = request.session?.displayName ?? null;
+    return name !== null && body.confirm?.trim() === name ? 'ok' : 'CONFIRMATION_REQUIRED';
+  }
+  const password = body.password ?? '';
+  return (await verifyPassword(encoded, password)) ? 'ok' : 'PASSWORD_REQUIRED';
+}
 
 async function deleteMe(request: FastifyRequest, reply: FastifyReply, deps: AuthDeps) {
   const accountId = request.session?.accountId ?? null;
   if (accountId === null) return reply.status(401).send({ code: 'SIGN_IN_REQUIRED' });
-  const parsed = deleteBody.safeParse(request.body);
-  const encoded = await passwordHashOf(deps.pool, accountId);
-  const valid =
-    parsed.success && encoded !== null && (await verifyPassword(encoded, parsed.data.password));
-  if (!valid) return reply.status(403).send({ code: 'PASSWORD_REQUIRED' });
+  const confirmed = await deletionConfirmed(request, deps, accountId);
+  if (confirmed !== 'ok') return reply.status(403).send({ code: confirmed });
   const sessions = await accountSessionIds(deps.pool, accountId);
   await deleteAccount(deps.pool, accountId);
   deps.sessionEnds.end(sessions);

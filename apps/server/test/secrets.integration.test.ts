@@ -10,7 +10,9 @@
  *                 API) is searched for each secret and each bound as a number or a whole word,
  *                 with guesses that never touch a secret, a bound or their neighbours (a guess
  *                 outside the hidden range is accepted, T53); after the end the result shows
- *                 them all (T52). The Quick Test runs a real round against bots to
+ *                 them all (T52). No public view or frame, during the round or after it (result
+ *                 and proof included), holds an account id: players are named by their number
+ *                 in the match (T104); only the admin API keeps account ids. The Quick Test runs a real round against bots to
  *                 its end, and the same seed text gives the same season and secret. Hosts,
  *                 players and guests are held to their permissions.
  * Depends on:     vitest, ./socketKit, ./harness
@@ -53,6 +55,23 @@ function leaks(value: unknown, secrets: readonly number[]): string[] {
   return found;
 }
 
+// Every place an account id shows: inside a string or as an object key (T104).
+function idLeaks(value: unknown, ids: readonly string[]): string[] {
+  const found: string[] = [];
+  const walk = (v: unknown, path: string): void => {
+    if (typeof v === 'string' && ids.some((id) => v.includes(id))) found.push(`${path}="${v}"`);
+    else if (Array.isArray(v)) for (const [i, x] of v.entries()) walk(x, `${path}[${String(i)}]`);
+    else if (v !== null && typeof v === 'object') {
+      for (const [k, x] of Object.entries(v)) {
+        if (ids.some((id) => k.includes(id))) found.push(`${path} key ${k}`);
+        walk(x, `${path}.${k}`);
+      }
+    }
+  };
+  walk(value, '$');
+  return found;
+}
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const PLAYERS: Who[] = ['player-1', 'player-2'];
 const WATCHERS = ['host', 'player-1', 'player-2', 'player-3'] as const;
@@ -87,9 +106,10 @@ async function guessAround(
   return acks;
 }
 
-// Every HTTP answer a viewer of the match can get, and the admin API.
+// Every HTTP answer a viewer of the match can get (`http`), and the admin API (`staff`).
 async function answers(id: string, code: string) {
   const http: unknown[] = [];
+  const staff: unknown[] = [];
   for (const w of WATCHERS) {
     const c = kit.clients[w];
     for (const url of [
@@ -107,9 +127,9 @@ async function answers(id: string, code: string) {
     '/api/v1/admin/abuse',
     '/api/v1/admin/settings/game.guess-the-number',
   ]) {
-    http.push((await admin.get(url)).json<unknown>());
+    staff.push((await admin.get(url)).json<unknown>());
   }
-  return http;
+  return { http, staff };
 }
 
 // The hidden range's bounds: odd values that no default, limit or guess holds.
@@ -139,11 +159,11 @@ describe('secrets and a hidden range of a running round', () => {
     const marks = [...secrets, LOW, HIGH];
     await sleep(3_100);
     const acks = await guessAround(sockets, id, marks);
-    const http = await answers(id, code);
+    const { http, staff } = await answers(id, code);
     expect(acks.every((x) => (x as { ok: boolean }).ok)).toBe(true);
     const frames = sockets.map(({ s }) => kit.frames(s));
     expect(frames.flat().length).toBeGreaterThan(0);
-    expect(leaks({ frames, acks, http }, marks)).toEqual([]);
+    expect(leaks({ frames, acks, http, staff }, marks)).toEqual([]);
     const end = await kit.clients.host.post(`/api/v1/rounds/${id}/end`, {});
     expect(end.statusCode).toBe(200);
     const result = (
@@ -151,6 +171,15 @@ describe('secrets and a hidden range of a running round', () => {
     ).json<unknown>();
     expect(leaks(result, marks).length).toBeGreaterThanOrEqual(marks.length);
     expect(result).toMatchObject({ game: { range: { low: LOW, high: HIGH } } });
+    // No public view or frame, during the round or after it, holds an account id (T104).
+    const proof = (
+      await kit.clients['player-3'].get(`/api/v1/rounds/${id}/verify`)
+    ).json<unknown>();
+    const after = await answers(id, code);
+    const ids = await Promise.all(WATCHERS.map((w) => kit.accountId(w)));
+    const shown = { frames, acks, http, result, proof, after: after.http };
+    expect(JSON.stringify(shown)).toContain('"p1"');
+    expect(idLeaks(shown, ids)).toEqual([]);
   }, 60_000);
 });
 

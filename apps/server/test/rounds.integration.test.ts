@@ -8,7 +8,7 @@
  *                 refused before the open, the cooldown held across socket and HTTP, the first
  *                 correct guess wins and later ones are ROUND_OVER, results, standings and the
  *                 fairness proof); frames carry no guessed value to the room and a player's
- *                 answers only to that player; the event log is gap-free and append-only; a
+ *                 answers only to that player, naming players by number, never by account id (T104); the event log is gap-free and append-only; a
  *                 second server on the same database recovers a running round with its
  *                 cooldowns; one round at a time and a roster player's fixed team (O26);
  *                 matches are aborted at the end.
@@ -19,6 +19,7 @@
 import type { Socket } from 'socket.io-client';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { toPublic } from '../src/match/publicIds.js';
 import { buildOn, SUITE_TIMEOUT_MS } from './harness.js';
 import { startSocketKit, type SocketKit, type Who } from './socketKit.js';
 
@@ -129,15 +130,21 @@ describe('a shared round', () => {
     });
     expect(again.json<unknown>()).toMatchObject({ code: 'ROUND_RUNNING' });
     expect((await kit.send(s.host, 'round.start', { roundId: id })).ok).toBe(true);
+    // Public answers name players by their number in the match (T104); the database keeps
+    // account ids.
+    const [host, n1, n2] = [
+      await kit.numberOf(code, 'host'),
+      await kit.numberOf(code, 'player-1'),
+      await kit.numberOf(code, 'player-2'),
+    ];
     const [p1, p2] = [await kit.accountId('player-1'), await kit.accountId('player-2')];
-    const host = await kit.accountId('host');
     const state = (await kit.clients.host.get(`/api/v1/rounds/${id}/state`)).json<{
       roster: { playerKey: string }[];
       role: string;
     }>();
     // The host joined first and plays along with a player's view (O16); a roster player's
     // team is fixed from their first round on (O26).
-    expect(state.roster.map((r) => r.playerKey)).toEqual([host, p1, p2]);
+    expect(state.roster.map((r) => r.playerKey)).toEqual([host, n1, n2]);
     expect(state.role).toBe('player');
     const team = await kit.clients['player-1'].post(`/api/v1/matches/${code}/team`, {
       team: 'winter',
@@ -146,9 +153,9 @@ describe('a shared round', () => {
     const secrets = await kit.secretsOf(id);
     const secret = secrets.mode === 'shared' ? secrets.value : 0;
     await playShared(s, id, secret);
-    await checkResult(id, secret, p2);
+    await checkResult(id, secret, n2);
     await checkStorage(id, code, p2);
-    await checkFrames(s, id, p1);
+    await checkFrames(s, id, { number: n1, account: p1 });
     // The guesses reached the metrics with their results (06 §4.6).
     const metrics = await kit.harness.built.fastify.inject({ method: 'GET', url: '/metrics' });
     expect(metrics.body).toMatch(/smg_guess_total\{result="ok"\} [2-9]/);
@@ -186,7 +193,11 @@ async function checkStorage(roundId: string, code: string, winner: string) {
   expect(teams.rows[0]).toEqual({ points: 1, rank: 1 });
 }
 
-async function checkFrames(s: Record<'host' | 'player-1', Socket>, roundId: string, p1: string) {
+async function checkFrames(
+  s: Record<'host' | 'player-1', Socket>,
+  roundId: string,
+  p1: { number: string; account: string },
+) {
   await until(() => Promise.resolve(kit.frames(s['player-1']).length > 0 ? true : null));
   const all = JSON.stringify(kit.frames(s.host));
   expect(all).toContain('GuessAccepted');
@@ -195,8 +206,9 @@ async function checkFrames(s: Record<'host' | 'player-1', Socket>, roundId: stri
   expect(all).not.toContain('FeedbackGiven');
   const own = JSON.stringify(kit.frames(s['player-1']));
   expect(own).toContain('FeedbackGiven');
-  expect(own).toContain(p1);
+  expect(own).toContain(`"${p1.number}"`);
   expect(own).toContain(roundId);
+  expect(own).not.toContain(p1.account);
 }
 
 describe('recovery after a restart', () => {
@@ -220,7 +232,13 @@ describe('recovery after a restart', () => {
       expect(round).not.toBeNull();
       const p1 = await kit.accountId('player-1');
       const after = round?.view(p1) as Record<string, unknown>;
-      expect({ ...after, seq: 0 }).toEqual({ ...before, seq: 0, names: undefined });
+      const numbers = await second.runtime.play.numbers.ready(round?.matchId ?? '');
+      expect({ ...toPublic(after, numbers), seq: 0 }).toEqual({
+        ...before,
+        seq: 0,
+        names: undefined,
+        you: undefined,
+      });
       expect(await round?.guess(p1, { value: wrong + 1 })).toMatchObject({
         code: 'COOLDOWN_ACTIVE',
       });

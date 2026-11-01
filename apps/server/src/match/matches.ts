@@ -158,7 +158,7 @@ export async function activePlayers(pool: DbPool, matchId: string): Promise<Play
   }));
 }
 
-export type JoinResult = 'joined' | 'MATCH_FULL' | 'MATCH_CLOSED';
+export type JoinResult = 'joined' | 'MATCH_FULL' | 'MATCH_CLOSED' | 'KICKED';
 
 export async function joinMatch(
   pool: DbPool,
@@ -176,11 +176,14 @@ export async function joinMatch(
     [match.id, player.key, player.accountId, match.maxPlayers],
   );
   if (r.rowCount === 1) return 'joined';
-  const already = await pool.query(
-    `SELECT 1 FROM smg.match_players WHERE match_id = $1 AND player_key = $2 AND state = 'active'`,
+  // Not inserted: already in, removed by staff (they cannot join again), or the match is full.
+  const row = await pool.query<{ state: PlayerRow['state'] }>(
+    `SELECT state FROM smg.match_players WHERE match_id = $1 AND player_key = $2`,
     [match.id, player.key],
   );
-  return already.rowCount === 1 ? 'joined' : 'MATCH_FULL';
+  const state = row.rows[0]?.state;
+  if (state === 'active') return 'joined';
+  return state === 'kicked' ? 'KICKED' : 'MATCH_FULL';
 }
 
 export async function leaveMatch(pool: DbPool, matchId: string, playerKey: string): Promise<void> {

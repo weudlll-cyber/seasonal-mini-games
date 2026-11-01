@@ -6,13 +6,13 @@ N1 on `feat/guess-the-number`; N2 merges it into `night/2026-10-27`; N3 and N4 o
 
 ### Status
 
-| Piece                                                                        | State | Branch                | Commit / CI             |
-| ---------------------------------------------------------------------------- | ----- | --------------------- | ----------------------- |
-| N1 Team once per match, End match, idle close, waiting-area list, two fixes  | done  | feat/guess-the-number | `42ff7b4`, CI running   |
-| N2 Bring `night/2026-10-27` up to date with `feat/guess-the-number`          | done  | night/2026-10-27      | merge commit, CI see N2 |
-| N3 Cleanup: player numbers, KICKED, anti-multi rules, handoff accounts, chat | open  | night/2026-10-27      | —                       |
-| N4 Phase 8 security pass without a VPS                                       | open  | night/2026-10-27      | —                       |
-| N5 Handover                                                                  | open  | both                  | —                       |
+| Piece                                                                        | State   | Branch                | Commit / CI                                                       |
+| ---------------------------------------------------------------------------- | ------- | --------------------- | ----------------------------------------------------------------- |
+| N1 Team once per match, End match, idle close, waiting-area list, two fixes  | done    | feat/guess-the-number | `42ff7b4`, CI: e2e rerun (first attempt hung installing browsers) |
+| N2 Bring `night/2026-10-27` up to date with `feat/guess-the-number`          | done    | night/2026-10-27      | `a88990e`, CI green                                               |
+| N3 Cleanup: player numbers, KICKED, anti-multi rules, handoff accounts, chat | done    | night/2026-10-27      | see N3; CI pending                                                |
+| N4 Phase 8 security pass without a VPS                                       | running | night/2026-10-27      | —                                                                 |
+| N5 Handover                                                                  | open    | both                  | —                                                                 |
 
 ### Needs the owner
 
@@ -113,6 +113,48 @@ Owner-question letters did not clash: night uses (t)–(y), feat (q), (r), (s) a
 **Noticed, left alone:**
 
 - A full-page screenshot draws the sticky app bar in the middle of a long page (a capture artifact, not on screen).
+
+### N3 — Cleanup: player numbers, KICKED, anti-multi rules, handoff accounts, the chat-room item
+
+**Built** (DECISIONS T103–T105; specs 05 §6, 06 §3.1, 07 §4, 08 §6, 09 §6; OPEN (v) closed, (x) and (y) updated, (aa) new):
+
+1. **Player numbers instead of account ids (T104).** Every public answer and frame names a player by their number in the match, `p1`, `p2`, … in join order over everyone who ever joined (left and kicked players keep theirs): match details (players, connected, standings), the round state, result and proof, and every socket frame. The server keeps account ids inside, and one translation at the boundary (`match/publicIds.ts`) replaces them, game views included, without the game knowing. The numbers are held in memory, loaded on a join, at a round's start and for recovered rounds, so frames are translated without waiting. The viewer's own number is `you`, and the client uses it instead of the session's account id. Bots keep their keys; the admin API keeps account ids (staff only). The sentinel test now also finds no account id in any frame, acknowledgement or public answer, during the round or after it.
+2. **KICKED.** A player staff removed from a match who joins again gets 409 `KICKED`, "You were removed from this match by the host.", instead of `MATCH_FULL`.
+3. **Anti-multi rules (05 §6, T103).** `antiMulti.minAccountAgeH` is applied: a shared roster leaves out accounts younger than that. An install is a website install when it has an enabled JWT handoff provider. Without one, the admin form disables `antiMulti.requireLinkedChat` with the line "Standalone install: no website hands players over, so no account can show a linked Telegram or Discord.", the server refuses switching it on (422 `SETTING_UNAVAILABLE`, rollbacks included), and a rule left on after the last provider went is not applied.
+4. **Handoff accounts (T105).** `DELETE /me` asks an account without a password (made by the handoff) for its display name typed exactly (`{ confirm }`), refused with 403 `CONFIRMATION_REQUIRED` otherwise; accounts with a password still give it. OPEN (y)'s spec question is closed.
+5. **The Night 2 item about the "chat-room counter".** No version of the morning sheet in the history holds those words. I searched the sheet as it stood at the N5 commit (`6366ab2`), the hand-over (`4bc7920`, `db10108`), the commit messages, and the code. The one counter of chat rooms in the code is the per-socket limit of four joined rooms (`realtime/chatIntents.ts`, `TOO_MANY_ROOMS`): the client leaves a room when its screen goes (`chat/useChat.ts`), and a reconnect starts a fresh count, so it is no defect; a new unit test now checks it (four rooms, a room counted once, a left room freeing its place). The one unfinished line in that sheet was N5 and N6's "CI: see the next update."; it now names the run (green with `8af3951`).
+
+**New owner question (aa):** an individual round's secret is derived with the label `secret/<account id>`, so with account ids hidden an outsider can check the commitment and a shared secret from the proof, but not recompute an individual player's secret; the server's own check still shows them all. Proposal: keep it so, or derive from the match number in a later seed version.
+
+**Tests:** `pnpm verify`: 404 of 405 tests passed. The one failure, Heatwave's cooldown step in `specials.integration.test.ts` (6 000 ms where under 6 000 was expected), passed alone (6 of 6); it depends on a timer and slipped while all suites ran at once. New or extended:
+
+- the authorization matrix: rows beyond permissions in `apps/server/test/authzMatchRules.ts` (KICKED and another player joining; the linked-chat rule unavailable and refused in a standalone install; a younger account off a shared roster);
+- `handoff.integration.test.ts`: a handoff account deletes itself with its name, not a password; with a provider the rule is available;
+- `secrets.integration.test.ts`: no account id in any public answer or frame;
+- `adminLive.integration.test.ts`: KICKED on joining again;
+- `realtime/chatIntents.test.ts`: the room count;
+- `rounds.integration.test.ts`, `handoff.integration.test.ts` and `adminLive.integration.test.ts` now expect numbers in public answers.
+
+E2E in Chromium: all 19 tests passed (journeys 1–15, journey 8's two cases, the account journey's three cases). CI: see the status table.
+
+**Lines (before → after):**
+
+- Server: `http/routes/adminSettings.ts` 92 → 132; `http/routes/auth.ts` 190 → 209; `http/routes/matches.ts` 234 → 239; `http/routes/rounds.ts` 189 → 199; `match/matches.ts` 269 → 272; `match/play.ts` 274 → 294; `match/rosterRules.ts` 41 → 84; `realtime/gateway.ts` 222 → 226; `round/runtime.ts` 98 → 100.
+- New on the server: `match/publicIds.ts` (90), `realtime/chatIntents.test.ts` (54), `test/authzMatchRules.ts` (125).
+- Server tests: `adminLive` 239 → 242; `authzMatrix` 208 → 225; `handoff` 257 → 295; `rounds` 231 → 249; `secrets` 219 → 248; `socketKit.ts` 171 → 177.
+- Clients: `admin/settings/SettingRow.tsx` 163 → 184; `admin/settings/SettingsPage.tsx` 225 → 226; `web/match/MatchPage.tsx` 229 → 229; `web/round/roundText.ts` 121 → 122; `summary.test.tsx` 111 → 112; `waiting.test.tsx` 137 → 138.
+- Contracts: `http/admin.ts` 170 → 173; `http/play.ts` 156 → 163.
+
+**Reused:** `permitted`, the settings service's view and update, `displayNames`, `kickPlayer` and its admin route, `passwordHashOf`/`verifyPassword`, the socket kit and the matrix world, `leaks` beside the new `idLeaks`.
+
+**Removed or extracted:** the linked-chat query became `linked()` beside `aged()` in `rosterRules.ts`; the verify route has its own register function (`rounds.ts` was over the function limit); the match page no longer reads the session's account id.
+
+**Noticed, left alone:**
+
+- The player client has no screen to delete an account; the route exists (T105).
+- The KICKED sentence says "by the host", as the task gives it, although staff do the kicking.
+- `chat.integration.test.ts` is at 299 of 300 lines.
+- Heatwave's step check in `specials.integration.test.ts` slips by a few milliseconds when every suite runs at once.
 
 ## Night 2 (2026-10-27)
 
@@ -435,7 +477,7 @@ Branch `night/2026-10-27` (created from `feat/guess-the-number` at `3783f01`, af
 - `apps/server/test/authzTable.ts` is at about 290 of 300 lines.
 - The admin round view answer has no contract type yet.
 
-**Checks (N5 and N6 together).** `pnpm verify` green: 308 tests in 61 files. E2E in Chromium: all 16 journeys passed (with the dev servers restarted for migrations 0007–0009), journeys 14 (chat: two players chat in a match, a moderator mutes one, whose next message is refused, lifts it and bans; the provider set to `none` removes the panel) and 15 (the admin changes a special's default, sees the diff in the history, rolls it back through the confirm dialog, and aborts a running Quick Test round, which the player sees as aborted by staff) on their first run. CI: see the next update.
+**Checks (N5 and N6 together).** `pnpm verify` green: 308 tests in 61 files. E2E in Chromium: all 16 journeys passed (with the dev servers restarted for migrations 0007–0009), journeys 14 (chat: two players chat in a match, a moderator mutes one, whose next message is refused, lifts it and bans; the provider set to `none` removes the panel) and 15 (the admin changes a special's default, sees the diff in the history, rolls it back through the confirm dialog, and aborts a running Quick Test round, which the player sees as aborted by staff) on their first run. CI: green with `8af3951`, the fix of the bundle check that `7eba672` failed (see "CI so far" under N7).
 
 ### N7 — Phase 7 against a test host page
 

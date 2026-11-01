@@ -10,7 +10,9 @@
  *                 stores `links` and refreshes it at the next login; a spent `jti`, another
  *                 audience, a disabled provider are refused; mapped roles apply; the handoff
  *                 answers CORS only for allowlisted handoff origins; with
- *                 `antiMulti.requireLinkedChat` a shared round keeps only linked players.
+ *                 `antiMulti.requireLinkedChat` a shared round keeps only linked players, and
+ *                 with a provider the rule is available; an account the handoff made (no
+ *                 password) deletes itself with its display name typed (T103, T105).
  * Depends on:     vitest, node:crypto, ../src/auth/accounts, ./session, ./socketKit
  * Spec:           docs/spec/07-integration.md §1, §4; docs/spec/05-security-threat-model.md §6;
  *                 Bingo 07 §2.1, §2.2, §3.4; docs/spec/09-testing-strategy.md §2
@@ -248,10 +250,46 @@ describe('the linked-chat roster rule (05 §6)', () => {
     });
     const id = created.json<{ id: string }>().id;
     const state = await kit.clients.host.get(`/api/v1/rounds/${id}/state`);
-    const roster = state.json<{ roster: { playerKey: string }[] }>().roster.map((r) => r.playerKey);
-    expect(roster.sort()).toEqual(
-      [people[0]?.session.account.id, people[1]?.session.account.id].sort(),
-    );
+    // The roster by name: public answers name players by number, never account id (T104).
+    const view = state.json<{
+      roster: { playerKey: string }[];
+      names: Record<string, string>;
+    }>();
+    const roster = view.roster.map((r) => view.names[r.playerKey]);
+    expect(roster.sort()).toEqual(['Linked1', 'Linked2']);
     await kit.clients.host.post(`/api/v1/matches/${code}/abort`, { reason: 'test done' });
+  });
+});
+
+describe('an account made by the handoff (no password)', () => {
+  it('deletes itself with its display name typed, not with a password (T105)', async () => {
+    const me = await clientOf(await handoff(token({ sub: 'leaving', name: 'Leaving1' })));
+    const csrf = (
+      await app.inject({ method: 'GET', url: '/api/v1/session', headers: { cookie: me.cookie } })
+    ).json<{ csrfToken: string }>().csrfToken;
+    const remove = (payload: object) =>
+      app.inject({
+        method: 'DELETE',
+        url: '/api/v1/me',
+        payload,
+        headers: { cookie: me.cookie, 'x-csrf-token': csrf },
+      });
+    for (const wrong of [{ password: 'anything' }, { confirm: 'leaving1' }, {}]) {
+      const r = await remove(wrong);
+      expect({ status: r.statusCode, body: r.json<unknown>() }).toEqual({
+        status: 403,
+        body: { code: 'CONFIRMATION_REQUIRED' },
+      });
+    }
+    expect((await remove({ confirm: 'Leaving1' })).statusCode).toBe(204);
+    const gone = await kit.harness.pool.query('SELECT 1 FROM smg.accounts WHERE id = $1', [
+      me.session.account.id,
+    ]);
+    expect(gone.rowCount).toBe(0);
+  });
+
+  it('lets the linked-chat rule be switched on once a handoff provider exists', async () => {
+    const doc = await admin.get('/api/v1/admin/settings/security');
+    expect(doc.json<{ unavailable?: unknown }>().unavailable).toBeUndefined();
   });
 });

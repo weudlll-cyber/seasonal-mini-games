@@ -102,7 +102,6 @@ function phaseOf(match: MatchDetailsView, status: string | null): Phase {
 
 export function MatchPage({ code }: { readonly code: string }): ReactElement {
   const { match, missing, reload } = useMatch(code);
-  const viewer = useSession().session?.account?.id ?? null;
   const live = useRound(match?.round?.id ?? null);
   if (missing)
     return (
@@ -113,7 +112,7 @@ export function MatchPage({ code }: { readonly code: string }): ReactElement {
     );
   if (match === null) return <p className="smg-muted">Loading the match…</p>;
   // An ended match stays readable at its address as its summary (O27).
-  if (match.ended !== null) return <MatchSummary match={match} viewerKey={viewer} />;
+  if (match.ended !== null) return <MatchSummary match={match} viewerKey={match.you} />;
   return <MatchView match={match} live={live} reload={reload} />;
 }
 
@@ -133,7 +132,8 @@ function MatchView(p: {
   readonly reload: () => Promise<void>;
 }): ReactElement {
   const { match, live } = p;
-  const viewer = useSession().session?.account?.id ?? null;
+  // The viewer's number in the match: every player key the page reads is one (T104).
+  const viewer = match.you;
   const [last, setLast] = useState<Values | null>(null);
   const refresh = (): void => {
     void p.reload();

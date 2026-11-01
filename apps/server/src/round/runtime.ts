@@ -81,6 +81,8 @@ export function createRoundRuntime(
       limits.start();
       seasons.start();
       const recovered = await rounds.recoverRunning();
+      // Their frames name players by number at once (../match/publicIds).
+      await play.loadRunningNumbers();
       scheduler.start();
       // Matches that went idle while the server was down close now (O28).
       await idle.sweep();

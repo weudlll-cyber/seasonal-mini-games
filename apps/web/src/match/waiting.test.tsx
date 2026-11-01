@@ -35,6 +35,7 @@ const match: MatchDetailsView = {
   createdAt: 0,
   youHost: false,
   youPlayer: true,
+  you: 'p2',
   teamLocked: false,
   host: 'h',
   players: [

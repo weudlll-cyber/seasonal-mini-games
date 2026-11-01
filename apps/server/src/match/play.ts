@@ -16,9 +16,10 @@
  *                 from then on; closing or aborting the match (O27, O28); every change of
  *                 players, teams or status is told to listeners, and a match opened or closed to
  *                 the lifecycle listeners (webhooks, 07 §3.2); in shared mode the roster keeps
- *                 only players the anti-multi rules admit (./rosterRules).
+ *                 only players the anti-multi rules admit (./rosterRules). It keeps each match's
+ *                 player numbers for the public answers (./publicIds).
  * Depends on:     node:crypto, @smg/application (settings), ../round/*, ../seasons/seasons,
- *                 ./matches, ./presence, ./rosterRules, ./teams, ../db/pool
+ *                 ./matches, ./presence, ./publicIds, ./rosterRules, ./teams, ../db/pool
  * Used by:        ../http/routes/*, ../realtime/intents, ../dev/quickTest
  * Spec:           docs/spec/02-game-guess-the-number.md §2–§4, §8.3; docs/spec/06-data-model-api-realtime.md §3.1
  */
@@ -52,6 +53,7 @@ import {
 import { admitted } from './rosterRules.js';
 import type { Seasons } from '../seasons/seasons.js';
 import type { Presence } from './presence.js';
+import { PlayerNumbers } from './publicIds.js';
 import { fixTeams, placeTeams, setTeam, teamLocked } from './teams.js';
 
 export type PlayCode =
@@ -92,6 +94,8 @@ export class Play {
   private readonly lifecycleListeners: MatchLifecycle[] = [];
 
   readonly presence: Presence;
+  // Per-match player numbers for every public answer and frame (./publicIds, T104).
+  readonly numbers: PlayerNumbers;
   private readonly seasons: Seasons;
 
   constructor(
@@ -102,6 +106,15 @@ export class Play {
   ) {
     this.presence = live.presence;
     this.seasons = live.seasons;
+    this.numbers = new PlayerNumbers(pool);
+  }
+
+  // The numbers of the matches whose rounds a starting server recovered (./publicIds).
+  async loadRunningNumbers(): Promise<void> {
+    const r = await this.pool.query<{ match_id: string }>(
+      `SELECT DISTINCT match_id::text FROM smg.rounds WHERE status IN ('created', 'countdown', 'open')`,
+    );
+    for (const row of r.rows) await this.numbers.load(row.match_id);
   }
 
   // Players, their presence, teams or status of a match changed: the gateway tells its room.
@@ -129,7 +142,10 @@ export class Play {
     player: { key: string; accountId: string | null },
   ): Promise<JoinResult> {
     const result = await joinMatch(this.pool, match, player);
-    if (result === 'joined') this.changed(match.id);
+    if (result === 'joined') {
+      await this.numbers.load(match.id);
+      this.changed(match.id);
+    }
     return result;
   }
 
@@ -198,6 +214,8 @@ export class Play {
     roster?: readonly RosterPlayer[],
   ): Promise<Reply> {
     const players = await activePlayers(this.pool, match.id);
+    // Every roster player has a number before the round's first frame goes out.
+    await this.numbers.load(match.id);
     // A given roster (the Quick Test) is taken as it is; others pass the anti-multi rules (05 §6).
     const chosen =
       roster ?? (await admitted(this.pool, this.settings, round.id, this.present(match, players)));
@@ -263,6 +281,8 @@ export class Play {
       });
     }
     await setMatchStatus(this.pool, match.id, end.status, end);
+    // The round's last frames went out with the abort above; the numbers can go.
+    this.numbers.forget(match.id);
     for (const l of this.lifecycleListeners) l('closed', { ...match, status: end.status });
     // A close keeps the league points of its ended rounds (O27, O28); an aborted match takes
     // them back unless the setting keeps them (T88).

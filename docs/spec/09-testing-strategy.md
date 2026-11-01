@@ -102,9 +102,9 @@ Short and direct: each scenario runs for minutes, not hours (Bingo 12 §1).
 ## 6. Security tests (in addition to Bingo 12 §6)
 
 - **Cooldown bypass:** one account guesses from two sockets, from a socket plus the HTTP fallback, and across a reconnect. Exactly one guess per cooldown is accepted.
-- **Secret scan:** P2 also runs as an integration test over real frames and every HTTP answer of a running round, the admin API included.
+- **Secret scan:** P2 also runs as an integration test over real frames and every HTTP answer of a running round, the admin API included. The same test finds no account id in any public answer or frame, during the round or after it (result and proof included): players are named by their number in the match (DECISIONS T104).
 - **Frost early read:** `GET …/state` during the delay never contains the held answer.
 - **Audience:** a spectator socket and a second player's socket never receive another player's `guess.result`, `hint` (individual) or `range.changed`.
 - **Rate limits:** a guess flood above the per-account limit is refused with `RATE_LIMITED` and raises the abuse score. The queue bound answers `ROUND_BUSY`.
-- **Authz matrix:** every new route and intent (rounds, teams, seasons, halving days) for anonymous, guest, player, roster player, another host, the host and staff.
+- **Authz matrix:** every new route and intent (rounds, teams, seasons, halving days) for anonymous, guest, player, roster player, another host, the host and staff; and rows beyond permissions: a kicked player joining again (`KICKED`), the linked-chat rule in a standalone install (`SETTING_UNAVAILABLE`), and the minimum account age on a shared roster.
 - **Feed:** a feed URL pointing to a private range, a redirect to one, an oversized answer or an invalid schema are all refused, and the last good answer stays.

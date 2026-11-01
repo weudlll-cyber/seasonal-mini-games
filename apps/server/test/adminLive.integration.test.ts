@@ -156,9 +156,10 @@ describe('staff actions on a running round', () => {
     expect(
       (await kit.send(sockets['player-1'] as Socket, 'guess', { roundId: id, value: 1 })).code,
     ).toBe('NOT_IN_ROUND');
-    expect(
-      (await kit.clients['player-1'].post(`/api/v1/matches/${code}/join`, {})).statusCode,
-    ).not.toBe(200);
+    // Joining again is refused with its own reason, not as a full match.
+    const again = await kit.clients['player-1'].post(`/api/v1/matches/${code}/join`, {});
+    expect(again.statusCode).toBe(409);
+    expect(again.json<unknown>()).toEqual({ code: 'KICKED' });
   });
 
   it('aborts as staff: the players read who and why, the audit log keeps the reason', async () => {
@@ -212,9 +213,11 @@ describe('removing a round result', () => {
     await won(id, sockets['player-1']);
     for (const s of Object.values(sockets)) s.disconnect();
     const p1 = await kit.accountId('player-1');
+    // The public standings name the player by number; staff routes keep the account id (T104).
+    const n1 = await kit.numberOf(code, 'player-1');
     const match = () => standingsOf(code);
     const teamPoints = async () => (await match()).teamStandings.reduce((n, t) => n + t.points, 0);
-    expect((await match()).standings.find((s) => s.playerKey === p1)?.points).toBe(10);
+    expect((await match()).standings.find((s) => s.playerKey === n1)?.points).toBe(10);
     expect(await teamPoints()).toBe(1);
     expect((await board()).find((r) => r.displayName === 'dev-player-1')?.points).toBe(10);
 
@@ -222,7 +225,7 @@ describe('removing a round result', () => {
     expect((await admin.post(url, {})).statusCode).toBe(400);
     const r = await admin.post(url, { reason: 'used a second account' });
     expect(r.json()).toEqual({ removed: [p1] });
-    expect((await match()).standings.find((s) => s.playerKey === p1)).toBeUndefined();
+    expect((await match()).standings.find((s) => s.playerKey === n1)).toBeUndefined();
     expect(await teamPoints()).toBe(0);
     // Three accounts are left, under the four that league points need: nobody keeps points.
     expect((await board()).find((row) => row.points > 0)).toBeUndefined();

@@ -9,7 +9,9 @@
  *                 it, and plays along (O16). A summary tells the viewer whether they host or
  *                 play and whether their team is fixed (O26), names the players, gives the
  *                 team standings, gives the host the next round's defaults (the host-chosen
- *                 keys of the game's document), and once the match ended its summary (O27).
+ *                 keys of the game's document), and once the match ended its summary (O27);
+ *                 players by their number in the match, never by account id, with `you` the
+ *                 viewer's own (T104).
  * Depends on:     fastify, zod, @smg/application, @smg/contracts (shapes), ../../match/*,
  *                 ../../league/boards (match standings), ./adminGuard
  * Used by:        ../app
@@ -32,6 +34,7 @@ import {
 } from '../../match/matches.js';
 import { matchStandings } from '../../league/boards.js';
 import { PlayError, type Play } from '../../match/play.js';
+import { forViewer } from '../../match/publicIds.js';
 import { matchEnd } from '../../match/summary.js';
 import { teamLocked } from '../../match/teams.js';
 import { permitted } from './adminGuard.js';
@@ -136,7 +139,7 @@ async function matchDetails(
   const round = roundId === null ? null : await deps.play.rounds.get(roundId);
   const youHost = viewer !== null && viewer === match.hostId;
   const youPlayer = players.some((p) => p.playerKey === viewer);
-  return {
+  const details = {
     ...summaryOf(match),
     youHost,
     youPlayer,
@@ -154,6 +157,8 @@ async function matchDetails(
     nextRoundDefaults: youHost ? await deps.settings.view(`game.${match.gameId}`, []) : null,
     ended: await matchEnd(deps.pool, match),
   };
+  // Players by their number in the match; `you` is the viewer's own (T104).
+  return forViewer(details, await deps.play.numbers.ready(match.id), viewer);
 }
 
 function registerPlayerRoutes(app: FastifyInstance, deps: MatchRouteDeps): void {

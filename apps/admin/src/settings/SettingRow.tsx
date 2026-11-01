@@ -8,7 +8,10 @@
  *                 never wider than the catalogue, 08 §1); who may change it; when a change
  *                 applies; where it comes from. A key the viewer may edit gets inputs for its
  *                 value and, for numbers, its narrowed bounds; a cleared field means "as the
- *                 catalogue". The server checks everything again.
+ *                 catalogue". A key this install cannot switch on (the server names it with
+ *                 its reason, e.g. the linked-chat rule in a standalone install, 05 §6) keeps
+ *                 its editor disabled with the reason under it. The server checks everything
+ *                 again.
  * Depends on:     react, @smg/game-sdk (definitions, bounds), ./settingText
  * Used by:        ./SettingsPage
  * Spec:           docs/spec/08-admin-settings.md §1–§6
@@ -28,6 +31,8 @@ interface SettingRowProps {
   readonly value: SettingValue | undefined;
   readonly override: SettingOverride;
   readonly editable: boolean;
+  // Why this install cannot switch the key on (the editor is then disabled), if so.
+  readonly unavailable?: string | undefined;
   readonly change: (next: SettingOverride) => void;
 }
 
@@ -51,9 +56,11 @@ function shown(v: SettingValue | undefined): string {
   return String(v);
 }
 
-type EditorProps = Pick<SettingRowProps, 'def' | 'override' | 'change'>;
+type EditorProps = Pick<SettingRowProps, 'def' | 'override' | 'change'> & {
+  readonly disabled?: boolean;
+};
 
-function ValueEditor({ def, override, change }: EditorProps): ReactElement {
+function ValueEditor({ def, override, change, disabled = false }: EditorProps): ReactElement {
   const set = (text: string) => {
     change({ ...override, value: parse(def, text) });
   };
@@ -65,6 +72,7 @@ function ValueEditor({ def, override, change }: EditorProps): ReactElement {
         className="smg-select"
         aria-label={label}
         value={shown(override.value)}
+        disabled={disabled}
         onChange={(e) => {
           set(e.target.value);
         }}
@@ -132,6 +140,7 @@ export function SettingRow({
   value,
   override,
   editable,
+  unavailable,
   change,
 }: SettingRowProps): ReactElement {
   const b = numeric(def) ? effectiveBounds(def, override) : null;
@@ -153,7 +162,19 @@ export function SettingRow({
       <td>{statusText(def)}</td>
       <td>
         {editable ? (
-          <Editor def={def} override={override} change={change} />
+          <>
+            <Editor
+              def={def}
+              override={override}
+              change={change}
+              disabled={unavailable !== undefined}
+            />
+            {unavailable === undefined ? null : (
+              <small className="smg-muted" data-testid="setting-unavailable">
+                {unavailable}
+              </small>
+            )}
+          </>
         ) : (
           <span className="smg-muted">view only</span>
         )}

@@ -13,7 +13,8 @@
  *                 after another per socket (./inOrder). Committed round events go out as
  *                 frames `{ roundId, s, events }`: the public form to `match:<id>` (merged over
  *                 `roomFrameMs`, ./roomFrames), a player's own events to
- *                 `match:<id>:player:<key>`, host events to `match:<id>:host`.
+ *                 `match:<id>:player:<key>`, host events to `match:<id>:host`, every frame
+ *                 naming players by their number in the match, never by account id (T104).
  *                 "Match changed" goes out at most once a second per match (./perKeyAtMost),
  *                 also when a round ends or is aborted, so pages load the new standings.
  *                 Chat events go to `chat:<roomId>` as `chat` frames (ChatEventView).
@@ -33,6 +34,7 @@ import type { Chat } from '../chat/chat.js';
 import type { DbPool } from '../db/pool.js';
 import type { MetricsHandle } from '../http/routes/metrics.js';
 import type { Play } from '../match/play.js';
+import { toPublic } from '../match/publicIds.js';
 import type { GuessLimits } from '../round/guessLimits.js';
 import { inOrder } from './inOrder.js';
 import { perKeyAtMost } from './perKeyAtMost.js';
@@ -132,24 +134,26 @@ function sendCommitted(
 ): void {
   const { round, events, how } = c;
   const frames = round.frames(events, how.held);
+  // Players by their number in the match, never by account id (T104).
+  const numbers = match.numbers.of(round.matchId);
   const s = events.at(-1)?.seq ?? 0;
   // Released Frost events repeat earlier seqs: `late` tells the client they are no gap.
   const room = {
     roundId: round.id,
     s,
-    events: frames.room,
+    events: toPublic(frames.room, numbers),
     ...(how.late ? { late: true as const } : {}),
   };
   toRoom(round.matchId, room);
   for (const [key, own] of frames.players) {
     play
       .to(`match:${round.matchId}:player:${key}`)
-      .emit('events', { roundId: round.id, events: own });
+      .emit('events', { roundId: round.id, events: toPublic(own, numbers) });
   }
   if (frames.host.length > 0) {
     play
       .to(`match:${round.matchId}:host`)
-      .emit('events', { roundId: round.id, events: frames.host });
+      .emit('events', { roundId: round.id, events: toPublic(frames.host, numbers) });
   }
   // A round's end changes the match: its standings and team standings (02 §9).
   if (events.some((e) => e.type === 'RoundEnded' || e.type === 'RoundAborted')) {

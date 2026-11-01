@@ -89,8 +89,8 @@ The host form shows each host-chosen value with its default preselected and refu
 
 | Key | Default | Min | Max | Status | Who | Running rounds |
 |---|---|---|---|---|---|---|
-| `antiMulti.minAccountAgeH` | 0 (off) | 0 | 720 | owner (O10) | security admin | next: read when a roster freezes |
-| `antiMulti.requireLinkedChat` | false | — | — | owner (O10); website installs only | security admin | next: read when a roster freezes |
+| `antiMulti.minAccountAgeH` | 0 (off) | 0 | 720 | owner (O10); a younger account is left off a shared roster (DECISIONS T103) | security admin | next: read when a roster freezes |
+| `antiMulti.requireLinkedChat` | false | — | — | owner (O10); website installs only: without a JWT handoff provider the form disables it with its reason and the server refuses it (DECISIONS T103) | security admin | next: read when a roster freezes |
 | `rate.guessPerAccountPerS` | 4 / s | 1 / s | 10 / s | technical | security admin | immediate |
 | `rate.httpGuessPerSessionPerMin` | 60 / min | 12 / min | 240 / min | technical | security admin | immediate |
 | `rate.teamChoosePerMin` | 12 / min | 1 / min | 60 / min | technical | security admin | immediate |

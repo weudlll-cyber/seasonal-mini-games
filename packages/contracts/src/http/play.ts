@@ -7,7 +7,9 @@
  *                 games, match summaries and details (with the match standings and a closed
  *                 match's end), the round view per viewer (platform part
  *                 plus the game's own view, unknown here), frames, Quick Test and seasons. The
- *                 server's routes return these types; the client never guesses a shape.
+ *                 server's routes return these types; the client never guesses a shape. A
+ *                 player key or id in any of them is the player's number in the match (`p3`),
+ *                 never an account id (DECISIONS T104).
  * Depends on:     ./admin (settings document view), ./boards (match standings)
  * Used by:        ../index, apps/server (routes), apps/web
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1, §4.4
@@ -50,6 +52,9 @@ export interface MatchEndView {
 export interface MatchDetailsView extends MatchSummaryView {
   readonly youHost: boolean;
   readonly youPlayer: boolean;
+  // The viewer's number in this match (`p3`), or null; every player key here is such a
+  // number, never an account id (DECISIONS T104).
+  readonly you: string | null;
   // The viewer's team is fixed: they played a round of this match (O26).
   readonly teamLocked: boolean;
   readonly host: string | null;
@@ -123,6 +128,8 @@ export interface RoundStateView {
   }[];
   readonly seed?: string | null;
   readonly names: Readonly<Record<string, string>>;
+  // The viewer's number in the match, or null for a spectator who never joined (T104).
+  readonly you?: string | null;
 }
 
 // One committed event in a frame; `null` where the event is not for this room (06 §4.4).

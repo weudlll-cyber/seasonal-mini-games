@@ -65,6 +65,7 @@ const ended: MatchDetailsView = {
   createdAt: 0,
   youHost: false,
   youPlayer: true,
+  you: 'p2',
   teamLocked: true,
   host: 'Hanna',
   players: [],

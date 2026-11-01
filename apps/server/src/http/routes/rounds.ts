@@ -6,7 +6,9 @@
  * Responsibility: the round routes of 06 §3.1. The match's host (T48) creates, starts,
  *                 ends and aborts; anyone allowed to watch reads the state (their own view, 02 §11); a roster player guesses through the same
  *                 queue and checks as the socket (the HTTP fallback, with its own rate limit);
- *                 the result and the proof only after the end. Codes map to 409 / 422 / 429.
+ *                 the result and the proof only after the end. Every answer names players by
+ *                 their number in the match, never by account id; the state adds `you`, the
+ *                 viewer's own number (T104). Codes map to 409 / 422 / 429.
  * Depends on:     fastify, zod, ../../match/*, ../../round/*
  * Used by:        ../app
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1, §4.3; docs/spec/02-game-guess-the-number.md §4, §10, §11
@@ -17,6 +19,7 @@ import { z } from 'zod';
 
 import { displayNames, findMatch, matchById, type MatchRow } from '../../match/matches.js';
 import { PlayError, type Play } from '../../match/play.js';
+import { forViewer, toPublic } from '../../match/publicIds.js';
 import type { GuessLimits } from '../../round/guessLimits.js';
 import type { LiveRound } from '../../round/liveRound.js';
 import type { PgRoundStore } from '../../round/pgRoundStore.js';
@@ -84,6 +87,7 @@ const announced = (round: LiveRound) => (round.view(null) as { role: string }).r
 export function registerRoundRoutes(app: FastifyInstance, deps: RoundRouteDeps): void {
   registerHostRoutes(app, deps);
   registerReadRoutes(app, deps);
+  registerVerifyRoute(app, deps);
 }
 
 function registerHostRoutes(app: FastifyInstance, deps: RoundRouteDeps): void {
@@ -139,14 +143,16 @@ function registerReadRoutes(app: FastifyInstance, deps: RoundRouteDeps): void {
     }
     const round = await roundOr404(deps, request, reply);
     if (round === null) return reply;
-    const view = round.view(request.session.accountId) as {
+    const viewer = request.session.accountId;
+    const view = round.view(viewer) as {
       roster: { playerKey: string }[];
     };
     const names = await displayNames(
       deps.pool,
       view.roster.map((r) => r.playerKey),
     );
-    return { ...view, names };
+    // Players by their number in the match; `you` is the viewer's own (T104).
+    return forViewer({ ...view, names }, await deps.play.numbers.ready(round.matchId), viewer);
   });
 
   app.post('/api/v1/rounds/:id/guesses', async (request, reply) => {
@@ -167,9 +173,12 @@ function registerReadRoutes(app: FastifyInstance, deps: RoundRouteDeps): void {
     if (round === null) return reply;
     // Ended and announced: under Frost a win is shown only after the delay (03 §2.4).
     if (!announced(round)) return reply.status(409).send({ code: 'ROUND_NOT_ENDED' });
-    return round.view(null);
+    return toPublic(round.view(null), await deps.play.numbers.ready(round.matchId));
   });
+}
 
+// The fairness proof after the end (02 §10).
+function registerVerifyRoute(app: FastifyInstance, deps: RoundRouteDeps): void {
   app.get('/api/v1/rounds/:id/verify', async (request, reply) => {
     const round = await roundOr404(deps, request, reply);
     if (round === null) return reply;
@@ -184,6 +193,7 @@ function registerReadRoutes(app: FastifyInstance, deps: RoundRouteDeps): void {
     const shown = log.filter((e) =>
       ['RoundCreated', 'CountdownStarted', 'GuessAccepted', 'RoundEnded'].includes(e.type),
     );
-    return { ok: true, secrets: verified.secrets, events: shown.map((e) => e.event) };
+    const proof = { ok: true, secrets: verified.secrets, events: shown.map((e) => e.event) };
+    return toPublic(proof, await deps.play.numbers.ready(round.matchId));
   });
 }

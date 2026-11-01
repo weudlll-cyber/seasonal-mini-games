@@ -51,6 +51,8 @@ export interface SocketKit {
   // A Guess The Number match of the host with the given players joined.
   openMatch(players: readonly Who[]): Promise<string>;
   accountId(who: Who): Promise<string>;
+  // The player's number in a match, as every public answer names them (T104).
+  numberOf(code: string, who: Who): Promise<string>;
   secretsOf(roundId: string): Promise<Secrets>;
   close(): Promise<void>;
 }
@@ -160,6 +162,10 @@ export async function startSocketKit(overrides: Record<string, string> = {}): Pr
     accountId: async (who) => {
       const r = await clients[who].get('/api/v1/session');
       return r.json<{ account: { id: string } }>().account.id;
+    },
+    numberOf: async (code, who) => {
+      const r = await clients[who].get(`/api/v1/matches/${code}`);
+      return r.json<{ you: string }>().you;
     },
     secretsOf: (roundId) => secretsFrom(harness, roundId),
     close: async () => {

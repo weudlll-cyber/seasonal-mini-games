@@ -33,6 +33,7 @@ const CODES: Readonly<Record<string, string>> = {
   TEAMS_LOCKED: 'Teams are locked while a round runs.',
   TEAM_LOCKED: 'You keep your team for the whole match.',
   MATCH_FULL: 'This match is full.',
+  KICKED: 'You were removed from this match by the host.',
   MATCH_CLOSED: 'This match has ended.',
   NOT_THE_HOST: 'Only the host can do that.',
   ROUND_STATE_INVALID: 'That is not possible at this point of the round.',

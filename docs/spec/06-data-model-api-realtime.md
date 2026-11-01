@@ -113,13 +113,15 @@ A shared round with 500 players, 10 s cooldown, lasting 5 minutes: at most 15 00
 
 ### 3.1 Player and host routes (base `/api/v1`)
 
+Every public answer and frame names a player by their number in the match, `p1`, `p2`, … in join order (left and kicked players keep theirs), never by account id; the viewer's own number is `you` in the match details and the round state. Bots keep their keys. Only the admin routes (§3.2) show account ids (DECISIONS T104).
+
 | Method | Path | Body | Who |
 |---|---|---|---|
 | GET | `/games` | — | anyone: registered games with name and supported modes |
 | GET | `/matches?status=&game=` | — | anyone: public matches in the lobby or open, and those ended in the last day |
 | POST | `/matches` | `{ gameId, title, visibility, maxPlayers, countsForLeaderboard? }` | `match.create`; the host joins as the match's first player (owner decision 16) |
 | GET | `/matches/:code` | — | anyone: summary (`youHost`, `teamLocked` for the viewer, player count, current round summary, `teamStandings`, `nextRoundDefaults` for the host, `standings`, and `ended` once the match is closed or aborted: rounds played and how it ended, the summary taking the players' totals from `standings` and the teams from `teamStandings`; DECISIONS T85) |
-| POST | `/matches/:code/join` · `/leave` | `{}` | `match.join` |
+| POST | `/matches/:code/join` · `/leave` | `{}` | `match.join`; a player staff removed from the match is refused with 409 `KICKED` |
 | POST | `/matches/:code/team` | `{ team }` | a match player, once per match: refused with `TEAM_LOCKED` once the player was on a started round's roster (owner decision 26), and with `TEAMS_LOCKED` during a countdown or open round |
 | POST | `/matches/:code/rounds` | `{ settings, startNow? }` (platform round settings of [02](02-game-guess-the-number.md) §3 and the game's settings) | the host (`round.manage`); 422 `ROUND_SETTINGS_INVALID`, 409 `ROUND_RUNNING`, 409 `NOT_A_HALVING_DAY`, 409 `IN_SEASON_UNAVAILABLE` |
 | POST | `/rounds/:id/start` · `/end` · `/abort` | `{}` · `{}` · `{ reason }` | the host |

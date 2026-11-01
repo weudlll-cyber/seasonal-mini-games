@@ -11,7 +11,9 @@
  *                 the routes of a server with the built client and admin app, and of a build
  *                 without SMG_DEV, are listed too. The host plays their round with a player view while an admin
  *                 who is not on the roster watches and may not guess (S10). One write per route
- *                 group is refused without the CSRF token or with another session's. Matches
+ *                 group is refused without the CSRF token or with another session's. Rows
+ *                 beyond permissions (./authzMatchRules): KICKED, the linked-chat rule in a
+ *                 standalone install, the minimum account age on a shared roster. Matches
  *                 are aborted and the accounts made here removed at the end.
  *                 Adapted from Bingo's authzMatrix.integration.test.ts.
  * Depends on:     vitest, fastify (inject), ../src/auth/*, ../src/realtime/intents, ./authzRoles,
@@ -26,6 +28,7 @@ import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { INTENT_TYPES } from '../src/realtime/intents.js';
+import { accountAgeRow, kickedRow, linkedChatRow } from './authzMatchRules.js';
 import { ROLES, SESSION } from './authzRoles.js';
 import { INTENTS, REFUSALS, ROUTES, CSRF_WRITES, type RouteCase } from './authzTable.js';
 import {
@@ -186,6 +189,20 @@ describe('the host plays, an admin watches (S10, O16)', () => {
       code: 'NOT_IN_ROUND',
     });
   });
+});
+
+describe('match rules beyond permissions (KICKED, anti-multi, 05 §6)', () => {
+  it('refuses a kicked player with KICKED and lets another player join', async () => {
+    await kickedRow(w);
+  });
+
+  it('keeps the linked-chat rule off in a standalone install', async () => {
+    await linkedChatRow(w);
+  });
+
+  it('leaves an account younger than antiMulti.minAccountAgeH off a shared roster', async () => {
+    await accountAgeRow(w);
+  }, 60_000);
 });
 
 describe('CSRF on every route group', () => {
