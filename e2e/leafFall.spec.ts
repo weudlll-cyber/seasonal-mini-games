@@ -10,7 +10,8 @@
  *                 ascending with thousands separators, and the list's Leaf Fall row stands out
  *                 (T115); a fallen number typed in gets "Already fallen." at once; the round
  *                 view fits 1280 × 720 and 390 × 844, where the panel opens as a sheet from its
- *                 "Fallen (N)" button and closes with Escape. The match is aborted at the end.
+ *                 "Fallen (N)" button (after a reload at that size) and closes with its Close
+ *                 button. The match is aborted at the end.
  * Depends on:     @playwright/test, ./play, ./screens
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 18); docs/spec/03-seasonal-specials.md §2.3
  */
@@ -80,6 +81,24 @@ async function nextFallInCandidates(p: Person, roundId: string): Promise<void> {
   for (const v of fresh) expect(possible(v), `${String(v)} was still possible`).toBe(true);
 }
 
+// A phone: the panel lies behind its button and opens as a sheet over the round.
+async function phoneSheet(p: Person): Promise<void> {
+  // Loaded again at the phone size: WebKit's mobile emulation keeps the wide layout after a
+  // resize until the page is laid out afresh.
+  await p.page.setViewportSize(PHONE);
+  await p.page.reload();
+  await roundOpen(p.page);
+  await expect(p.page.getByTestId('fallen-toggle')).toBeVisible();
+  await expect(p.page.getByTestId('fallen-list')).toBeHidden();
+  await p.page.getByTestId('fallen-toggle').click();
+  await expect(p.page.getByTestId('fallen-list')).toBeVisible();
+  await fitsScreen(p.page);
+  // Closed by its Close button: a phone has no Escape key (fallen.test covers Escape).
+  await p.page.getByTestId('fallen-panel').getByRole('button', { name: 'Close' }).click();
+  await expect(p.page.getByTestId('fallen-list')).toBeHidden();
+  await fitsScreen(p.page);
+}
+
 test('journey 18: Leaf Fall drops only still-possible numbers, in the Fallen panel', async ({
   browser,
 }) => {
@@ -126,15 +145,7 @@ test('journey 18: Leaf Fall drops only still-possible numbers, in the Fallen pan
     await p.page.getByTestId('guess-button').click();
     await expect(p.page.locator('.gtn-message')).toHaveText('Already fallen.');
     await fitsScreen(p.page);
-    // A phone: the panel lies behind its button and opens as a sheet over the round.
-    await p.page.setViewportSize(PHONE);
-    await expect(p.page.getByTestId('fallen-list')).toBeHidden();
-    await p.page.getByTestId('fallen-toggle').click();
-    await expect(p.page.getByTestId('fallen-list')).toBeVisible();
-    await fitsScreen(p.page);
-    await p.page.keyboard.press('Escape');
-    await expect(p.page.getByTestId('fallen-list')).toBeHidden();
-    await fitsScreen(p.page);
+    await phoneSheet(p);
   } finally {
     if (code !== '') await abortMatch(p, code);
     await closeAll([p]);
