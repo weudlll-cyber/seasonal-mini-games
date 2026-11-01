@@ -1,5 +1,9 @@
 # Morning sheet
 
+## Night 3 (2026-11-01)
+
+The morning sheet of Night 3 is on `night/2026-10-27` (`docs/NIGHT-RUN.md`, section "Night 3"): status, the handover and what needs the owner. On this branch Night 3 added N1, `42ff7b4`: the season team once per match (O26), End match with the match summary (O27), the idle close (O28), the waiting area's player rows, the result table at 390 × 844 and the pressed team icon (T82–T86, screenshots in `reports/match-flow/`). This branch is the one the development servers run for the owner's test.
+
 ## Night 2 (2026-10-27)
 
 N1 and N2 on `feat/guess-the-number`; N3 onwards on `night/2026-10-27`, created from `feat/guess-the-number` after N2. Nothing is merged. Updated after every piece.
