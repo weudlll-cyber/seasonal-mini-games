@@ -9,12 +9,12 @@
  *                 round's list per platform event (a solve, Heatwave's new waiting time, the
  *                 round opening and ending), and the banner of a platform special (Heatwave,
  *                 Spring Herald, O35); a game's own rows and banners come from the game's text.
- * Depends on:     @smg/contracts (shapes), @smg/game-sdk (FeedLine)
+ * Depends on:     @smg/contracts (shapes), @smg/game-sdk (FeedLine, formatNumber)
  * Used by:        ./RoundScreen, ./ResultScreen, ./RoundLog, ./SpecialBanner, ../match/HostMenu
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §12; docs/spec/03-seasonal-specials.md §2
  */
 import type { RoundStateView } from '@smg/contracts';
-import type { FeedLine } from '@smg/game-sdk';
+import { formatNumber, type FeedLine } from '@smg/game-sdk';
 
 const CODES: Readonly<Record<string, string>> = {
   ROUND_NOT_OPEN: 'The round has not opened yet.',
@@ -68,7 +68,7 @@ export function endHeadline(state: RoundStateView): string {
   const guesses = state.roster.find((r) => r.playerKey === state.winner)?.guesses ?? 0;
   switch (state.endReason) {
     case 'solved':
-      return `${winner ?? 'Someone'} found it first — after ${String(guesses)} ${guesses === 1 ? 'guess' : 'guesses'}.`;
+      return `${winner ?? 'Someone'} found it first — after ${formatNumber(guesses)} ${guesses === 1 ? 'guess' : 'guesses'}.`;
     case 'allSolved':
       return 'Everyone found their number.';
     case 'timeUp':
@@ -84,7 +84,7 @@ export function endHeadline(state: RoundStateView): string {
 
 // In place of the input row once a player solved their own number (O25).
 export function solvedText(place: number | null): string {
-  const at = place === null ? '' : ` — place ${String(place)}`;
+  const at = place === null ? '' : ` — place ${formatNumber(place)}`;
   return `You found your number${at}. Your guesses stay here while the others play on.`;
 }
 
@@ -119,7 +119,7 @@ export function platformLine(event: unknown, names: Names): FeedLine | null {
   switch (e.type) {
     case 'PlayerSolved': {
       const who = String(e['playerId']);
-      const text = `${nameOf(names, who)} found ${e['place'] === 1 ? 'it' : 'their number'} — place ${String(e['place'])}.`;
+      const text = `${nameOf(names, who)} found ${e['place'] === 1 ? 'it' : 'their number'} — place ${formatNumber(Number(e['place']))}.`;
       return { text, playerId: who };
     }
     case 'CooldownChanged':

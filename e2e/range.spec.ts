@@ -26,9 +26,11 @@ import {
   fitsScreen,
   hostMenu,
   ownRows,
+  NUMBER,
   person,
   roundOpen,
   search,
+  shownNumber,
 } from './play.js';
 import { PHONE } from './screens.js';
 
@@ -55,20 +57,21 @@ test('journey 10: a hidden range reaches no screen and a guess outside it is ans
     await fitsScreen(p.page);
     await readable(p.page, 'round view with a hidden range');
     // Every whole number on the page, so a guess like -14644321 does not count as -4321.
-    const shown = ((await p.page.locator('body').textContent()) ?? '').match(/-?\d+/g) ?? [];
-    const numbers = shown.map((n) => Math.abs(Number(n)));
+    const shown =
+      ((await p.page.locator('body').textContent()) ?? '').match(new RegExp(NUMBER, 'g')) ?? [];
+    const numbers = shown.map((n) => Math.abs(shownNumber(n)));
     expect(numbers).not.toContain(4_321);
     expect(numbers).not.toContain(8_765);
     await p.page.getByTestId('guess-input').fill('900000000');
     await p.page.getByTestId('guess-button').click();
     const row = ownRows(p.page).first();
     await expect(row.locator('.round-answer')).toHaveAttribute('data-feedback', 'lower');
-    await expect(row).toContainText('900000000');
+    await expect(row).toContainText('900,000,000');
     // Outside the hidden range: the farthest tier, with a comment that names no bound (O21).
     await expect(row).toHaveAttribute('data-tier', 'wayOff');
     await hostMenu(p);
     await p.page.getByTestId('end-round').click();
-    await expect(p.page.getByTestId('result-range')).toHaveText('The range was -4321 to 8765.', {
+    await expect(p.page.getByTestId('result-range')).toHaveText('The range was -4,321 to 8,765.', {
       timeout: 10_000,
     });
   } finally {

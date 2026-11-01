@@ -13,14 +13,14 @@
  *                 have the season colour behind them, and under Frost an own row says "answer
  *                 arriving…" with the seconds left in a small badge. Events (Spring Herald, Leaf Fall, Heatwave,
  *                 halving, solves, the round opening and ending) are quieter one-line rows.
- * Depends on:     react, @smg/contracts, @smg/game-sdk (rows), @smg-game/registry/web (types),
+ * Depends on:     react, @smg/contracts, @smg/game-sdk (rows, formatNumber), @smg-game/registry/web (types),
  *                 ../live/useRound, ./RoundSide (colours), ./roundText, ./roundLog.css
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §6.2, §6.3, §12; docs/spec/03-seasonal-specials.md §2.4
  */
 import type { GameWeb } from '@smg-game/registry/web';
 import type { RoundStateView } from '@smg/contracts';
-import type { FeedLine, GuessRow } from '@smg/game-sdk';
+import { formatNumber, type FeedLine, type GuessRow } from '@smg/game-sdk';
 import type { CSSProperties, ReactElement } from 'react';
 
 import type { FeedItem } from '../live/useRound.js';
@@ -92,7 +92,9 @@ function GuessLine({ guess, state, viewerKey, now }: RowProps): ReactElement {
     <li className="round-row" data-own={own} data-tier={guess.tier ?? undefined}>
       <span className="round-dot" aria-hidden="true" style={dot(state, key)} />
       <span className="round-who">{name}</span>
-      <span className="round-value">{guess.value === null ? 'guessed' : guess.value}</span>
+      <span className="round-value">
+        {guess.value === null ? 'guessed' : formatNumber(guess.value)}
+      </span>
       <Answer guess={guess} state={state} now={now} />
       {guess.comment === null ? null : <span className="round-comment">{guess.comment}</span>}
     </li>

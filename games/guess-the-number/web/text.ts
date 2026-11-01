@@ -12,13 +12,19 @@
  *                 answers and comments as far as the view carries them (O20, O21); and the
  *                 closest miss on the shared result (O22); the round intro's line on the
  *                 number and its range (O36). Server codes never reach the screen
- *                 as codes.
- * Depends on:     @smg/game-sdk (GameText, GuessRow), ../src (types)
+ *                 as codes; every number is written with thousands separators (formatNumber).
+ * Depends on:     @smg/game-sdk (GameText, GuessRow, formatNumber), ../src (types, limit)
  * Used by:        ./PlayerPanel, ./SpectatorPanel, ./ResultPanel, ./index
  * Spec:           docs/spec/02-game-guess-the-number.md §6, §9, §12; docs/spec/03-seasonal-specials.md §2
  */
-import type { GtnEvent, PlayerView, ResultView, SpectatorView } from '@smg-game/guess-the-number';
-import type { FeedLine, GameText, GuessRow } from '@smg/game-sdk';
+import {
+  GUESS_LIMIT,
+  type GtnEvent,
+  type PlayerView,
+  type ResultView,
+  type SpectatorView,
+} from '@smg-game/guess-the-number';
+import { formatNumber, type FeedLine, type GameText, type GuessRow } from '@smg/game-sdk';
 
 export type HintView =
   | { readonly kind: 'parity'; readonly odd: boolean }
@@ -27,7 +33,7 @@ export type HintView =
 // The hint's words after a lead-in: "the number is even."
 function hintBody(hint: HintView): string {
   if (hint.kind === 'parity') return `the number is ${hint.odd ? 'odd' : 'even'}.`;
-  return `the number is between ${String(hint.low)} and ${String(hint.high)}.`;
+  return `the number is between ${formatNumber(hint.low)} and ${formatNumber(hint.high)}.`;
 }
 
 function hintText(hint: HintView): string {
@@ -42,12 +48,12 @@ const CODES: Readonly<Record<string, string>> = {
   OUT_OF_RANGE: 'That number is outside the range.',
   NUMBER_REMOVED: 'Already fallen.',
   ALREADY_GUESSED: 'You guessed that number already. It costs nothing — try another one.',
-  INVALID_ACTION: 'Please type a whole number between −1 000 000 000 and 1 000 000 000.',
+  INVALID_ACTION: `Please type a whole number between ${formatNumber(-GUESS_LIMIT)} and ${formatNumber(GUESS_LIMIT)}.`,
 };
 
 // "3", "3 and 9", "3, 9 and 12".
 function listOf(numbers: readonly number[]): string {
-  const all = numbers.map(String);
+  const all = numbers.map(formatNumber);
   const last = all.pop() ?? '';
   return all.length === 0 ? last : `${all.join(', ')} and ${last}`;
 }
@@ -64,8 +70,10 @@ function eventText(e: GtnEvent): FeedLine | null {
       return e.playerId === null ? roundLine(`Spring Herald: ${hintText(e.hint)}`) : null;
     case 'RangeHalved':
       if (e.range === null)
-        return roundLine(`Halving: every range is now ${String(e.size)} numbers.`);
-      return roundLine(`Halving: the range is now ${String(e.range.low)}–${String(e.range.high)}.`);
+        return roundLine(`Halving: every range is now ${formatNumber(e.size)} numbers.`);
+      return roundLine(
+        `Halving: the range is now ${formatNumber(e.range.low)}–${formatNumber(e.range.high)}.`,
+      );
     // Guesses are rows of their own, from the view (`guessRows`), so they survive a reload.
     case 'GuessFed':
     case 'FeedbackGiven':
@@ -78,12 +86,12 @@ function banner(event: unknown): string | null {
   const e = event as GtnEvent;
   if (e.type === 'NumbersRemoved') {
     const n = e.numbers.length;
-    return `Leaf Fall: ${String(n)} ${n === 1 ? 'number' : 'numbers'} fell.`;
+    return `Leaf Fall: ${formatNumber(n)} ${n === 1 ? 'number' : 'numbers'} fell.`;
   }
   if (e.type !== 'RangeHalved') return null;
-  if (e.range === null) return `Range halved: every range is now ${String(e.size)} numbers.`;
+  if (e.range === null) return `Range halved: every range is now ${formatNumber(e.size)} numbers.`;
   const whose = e.playerId === null ? 'the number is' : 'your number is';
-  return `Range halved: ${whose} between ${String(e.range.low)} and ${String(e.range.high)}.`;
+  return `Range halved: ${whose} between ${formatNumber(e.range.low)} and ${formatNumber(e.range.high)}.`;
 }
 
 type Seen = PlayerView['log'][number];
@@ -109,8 +117,8 @@ function runnerUp(view: unknown, names: Readonly<Record<string, string>>): strin
   const miss = (view as Partial<ResultView>).closestMiss ?? null;
   if (miss === null) return null;
   const name = names[miss.playerId] ?? miss.playerId;
-  const n = String(miss.distance);
-  const guess = String(miss.value);
+  const n = formatNumber(miss.distance);
+  const guess = formatNumber(miss.value);
   return miss.distance <= 2
     ? `${name} missed by just ${n} (${guess}).`
     : `Closest miss: ${name}, ${n} away (${guess}).`;
@@ -121,7 +129,7 @@ function intro(view: unknown, secretMode: 'shared' | 'individual'): string | nul
   const v = view as Partial<Pick<PlayerView, 'range'>> | null;
   if (v?.range === undefined) return null;
   if (v.range === null) return 'Hidden range';
-  const between = `between ${String(v.range.low)} and ${String(v.range.high)}`;
+  const between = `between ${formatNumber(v.range.low)} and ${formatNumber(v.range.high)}`;
   return secretMode === 'shared'
     ? `Shared number ${between}`
     : `Everyone has their own number ${between}`;

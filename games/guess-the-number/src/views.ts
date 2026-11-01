@@ -16,12 +16,12 @@
  *                 `releasedBefore` are still held by Frost and appear in no view. Only
  *                 `result` takes the secrets; it alone carries the closest miss (O22).
  *                 `reveal` words the secret for the chat's round-end line (O32).
- * Depends on:     zod, @smg/game-sdk (GameViews, Range), ./closeness, ./closestMiss, ./secrets,
+ * Depends on:     zod, @smg/game-sdk (GameViews, Range, formatNumber), ./closeness, ./closestMiss, ./secrets,
  *                 ./state
  * Used by:        ./module
  * Spec:           docs/spec/02-game-guess-the-number.md §6, §9, §11, §12; docs/spec/05-security-threat-model.md §3
  */
-import type { GameViews, Range, ViewCtx } from '@smg/game-sdk';
+import { formatNumber, type GameViews, type Range, type ViewCtx } from '@smg/game-sdk';
 import { z } from 'zod';
 
 import { closestMiss } from './closestMiss.js';
@@ -179,7 +179,7 @@ export const views: GameViews<GtnState, Secrets> = {
 // The chat's round-end clause (O32): the shared number, or in individual mode the winner's own.
 export function reveal(result: unknown, winner: string | null): string | null {
   const r = result as Pick<ResultView, 'secret' | 'secrets'>;
-  if (r.secret !== null) return `the number was ${String(r.secret)}`;
+  if (r.secret !== null) return `the number was ${formatNumber(r.secret)}`;
   const own = winner === null ? undefined : r.secrets?.[winner];
-  return own === undefined ? null : `their number was ${String(own)}`;
+  return own === undefined ? null : `their number was ${formatNumber(own)}`;
 }

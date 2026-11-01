@@ -7,11 +7,13 @@
  *                 table with the viewer's line highlighted like the placings, with the
  *                 placings' fixed columns so it fits a 390 px phone; nothing before the match
  *                 has a standing. The match summary shows the same table (../match/MatchSummary).
- * Depends on:     react, @smg/contracts (MatchStandingView), ./PlayerName
+ * Depends on:     react, @smg/contracts (MatchStandingView), @smg/game-sdk (formatNumber),
+ *                 ./PlayerName
  * Used by:        ./ResultScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §9
  */
 import type { MatchStandingView } from '@smg/contracts';
+import { formatNumber } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
 import { PlayerName } from './PlayerName.js';
@@ -47,15 +49,15 @@ export function MatchStandings({
           <tbody>
             {standings.map((s) => (
               <tr key={s.playerKey} className={s.playerKey === viewerKey ? 'round-you' : undefined}>
-                <td>{s.rank}</td>
+                <td>{formatNumber(s.rank)}</td>
                 <td>
                   <span className="round-player">
                     <PlayerName name={s.name} />
                     {s.playerKey === viewerKey ? <span> (you)</span> : null}
                   </span>
                 </td>
-                <td>{s.points}</td>
-                <td>{s.wins}</td>
+                <td>{formatNumber(s.points)}</td>
+                <td>{formatNumber(s.wins)}</td>
               </tr>
             ))}
           </tbody>

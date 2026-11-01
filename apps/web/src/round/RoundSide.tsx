@@ -9,11 +9,12 @@
  *                 per season team with its match points and its players in this round, shown
  *                 only when teams play (03 §5); they sit at the top of the right column, whose
  *                 rest stays free since the guess list moved to the main area (O20).
- * Depends on:     react, @smg/contracts, ../season/*
+ * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), ../season/*
  * Used by:        ./RoundScreen, ./RoundLog
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §5
  */
 import type { RoundStateView, TeamName } from '@smg/contracts';
+import { formatNumber } from '@smg/game-sdk';
 import type { CSSProperties, ReactElement } from 'react';
 
 import { SeasonIcon } from '../season/SeasonIcon.js';
@@ -48,7 +49,7 @@ export function TeamTiles({
           >
             <SeasonIcon season={team} size="1.1rem" />
             <span className="round-team-name">{SEASON_NAMES[team]}</span>
-            <strong className="round-team-points">{score}</strong>
+            <strong className="round-team-points">{formatNumber(score)}</strong>
             <span className="smg-visually-hidden">
               {score === 1 ? 'point' : 'points'}, {players} {players === 1 ? 'player' : 'players'}
             </span>

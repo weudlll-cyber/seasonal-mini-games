@@ -11,13 +11,15 @@
  *                 standings, the game's result panel with the secret(s), and the fairness
  *                 proof: the commitment published at creation, the seed revealed now, and the
  *                 link to the round's verification page (02 §9, §10; 03 §5).
- * Depends on:     react, @smg/contracts, @smg-game/registry/web (types), ../season/SeasonIcon,
+ * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber),
+ *                 @smg-game/registry/web (types), ../season/SeasonIcon,
  *                 ../shell/router, ./MatchStandings, ./PlayerName, ./roundText, ./result.css
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §10; docs/spec/03-seasonal-specials.md §5
  */
 import type { GameWeb } from '@smg-game/registry/web';
 import type { MatchStandingView, RoundStateView } from '@smg/contracts';
+import { formatNumber } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
 import { SeasonIcon } from '../season/SeasonIcon.js';
@@ -29,7 +31,7 @@ import { endHeadline, marginText } from './roundText.js';
 import './result.css';
 
 function placeText(state: RoundStateView, place: number | null): string {
-  if (place !== null) return String(place);
+  if (place !== null) return formatNumber(place);
   return state.secretMode === 'shared' ? 'took part' : 'not solved';
 }
 
@@ -69,8 +71,8 @@ function Placings({
                   {r.playerId === viewerKey ? <span> (you)</span> : null}
                 </span>
               </td>
-              <td>{r.guesses}</td>
-              <td>{r.points}</td>
+              <td>{formatNumber(r.guesses)}</td>
+              <td>{formatNumber(r.points)}</td>
             </tr>
           ))}
         </tbody>
@@ -88,9 +90,9 @@ function Teams({ state }: { readonly state: RoundStateView }): ReactElement | nu
       <ul className="round-teams-result" data-testid="team-result">
         {teams.map((t) => (
           <li key={t.team}>
-            <SeasonIcon season={t.team} size="1rem" /> {SEASON_NAMES[t.team]}: {t.points}{' '}
-            {t.points === 1 ? 'point' : 'points'}
-            {t.won ? ' — the winner’s team' : ''} ({t.members}{' '}
+            <SeasonIcon season={t.team} size="1rem" /> {SEASON_NAMES[t.team]}:{' '}
+            {formatNumber(t.points)} {t.points === 1 ? 'point' : 'points'}
+            {t.won ? ' — the winner’s team' : ''} ({formatNumber(t.members)}{' '}
             {t.members === 1 ? 'player' : 'players'})
           </li>
         ))}

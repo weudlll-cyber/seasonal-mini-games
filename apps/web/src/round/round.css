@@ -11,7 +11,7 @@
  *                 range block at its top, the team tiles under it and the match chat in the
  *                 rest (./roundChat.css, T101), so the list shows as many rows as the screen
  *                 allows (O35, DECISIONS T110); on a phone the top bar (the chip names the
- *                 special, the time without "left"), the range block, the list taking the
+ *                 season, the special behind its info button, the time without "left"), the range block, the list taking the
  *                 remaining height, the team tiles and the "Chat" button in one row (its panel
  *                 lies over the round above the input row), and the input row pinned at the
  *                 bottom (O20). The list's rows are in ./roundLog.css, the banner and the info
@@ -200,8 +200,9 @@
     display: none;
   }
 
-  /* The chip names the special; the icon and the colour say the season (O35). The bar's
-     parts sit closer, so "Spring Herald" fits beside the time and the Host button. */
+  /* The chip names the season; the special's name goes to screen readers, and the info
+     button beside the chip says what it is and does. The bar's parts sit closer, so the
+     chip fits beside the time and the Host button. */
   .round-top {
     column-gap: 0.3rem;
   }
@@ -217,15 +218,7 @@
     height: 1.75rem;
   }
 
-  .round-special::before {
-    content: none;
-  }
-
-  .round-special {
-    font-weight: var(--font-weight-strong);
-  }
-
-  .round-season-name,
+  .round-special,
   .round-fact-label,
   .round-team-name {
     position: absolute;

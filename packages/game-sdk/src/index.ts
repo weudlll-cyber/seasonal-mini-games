@@ -3,13 +3,13 @@
  * @module game-sdk
  * @brief  Public entry point of @smg/game-sdk: what every game module and the platform share.
  *
- * Responsibility: the game-module contract, range arithmetic, the random-number types,
- *                 setting definitions with their checks and the platform's round keys; free
- *                 of node:crypto, so browser code may import it. The DRBG and the
- *                 commitment are the separate entry @smg/game-sdk/crypto.
- * Depends on:     ./module, ./range, ./random, ./roundSettings, ./settings, ./specialSettings,
- *                 ./web
- * Used by:        packages/domain, packages/contracts, games/*, apps/server
+ * Responsibility: the game-module contract, range arithmetic, the one number formatter, the
+ *                 random-number types, setting definitions with their checks and the
+ *                 platform's round keys; free of node:crypto, so browser code may import it.
+ *                 The DRBG and the commitment are the separate entry @smg/game-sdk/crypto.
+ * Depends on:     ./format, ./module, ./range, ./random, ./roundSettings, ./settings,
+ *                 ./specialSettings, ./web
+ * Used by:        packages/domain, packages/contracts, games/*, apps/server, apps/web
  * Spec:           docs/spec/04-software-architecture.md §3, §4
  */
 export type {
@@ -33,6 +33,7 @@ export type {
   SpecialHooks,
   ViewCtx,
 } from './module.js';
+export { formatNumber } from './format.js';
 export { inRange, rangeSize, type Range } from './range.js';
 export type { Drbg, RoundRng } from './random.js';
 export { HEATWAVE_FLOOR_MS, type SpecialTiming } from './specialSettings.js';

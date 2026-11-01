@@ -10,10 +10,11 @@
  *                 colour, so even one fallen number is seen (O35); with a hidden range "Any whole number" and
  *                 a note that negative numbers are possible (O19). Nothing narrowed from the
  *                 answers is drawn (O17). The same facts are text for screen readers.
- * Depends on:     react
+ * Depends on:     react, @smg/game-sdk (formatNumber)
  * Used by:        ./PlayerPanel, ./SpectatorPanel
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §2.3, §4
  */
+import { formatNumber } from '@smg/game-sdk';
 import type { CSSProperties, ReactElement } from 'react';
 
 interface RangeView {
@@ -45,7 +46,7 @@ export function RangeBar({ range, removed }: RangeBarProps): ReactElement {
   return (
     <section className="gtn-range" aria-label="The range" data-testid="range">
       <p className="gtn-range-title">
-        The number is somewhere between {range.low} and {range.high}
+        The number is somewhere between {formatNumber(range.low)} and {formatNumber(range.high)}
       </p>
       <div className="gtn-range-bar" aria-hidden="true" style={bar}>
         {removed.slice(0, MAX_GAPS).map((v) => (

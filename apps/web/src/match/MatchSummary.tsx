@@ -10,12 +10,13 @@
  *                 highlighted), the team standing over the match (a team match only, O34),
  *                 and a link back to Play.
  *                 The server gives the figures; the page renders them.
- * Depends on:     react, @smg/contracts, ../round/MatchStandings, ../round/result.css,
+ * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), ../round/MatchStandings, ../round/result.css,
  *                 ../season/*, ../shell/router
  * Used by:        ./MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §2; docs/spec/03-seasonal-specials.md §5
  */
 import type { MatchDetailsView, MatchEndView } from '@smg/contracts';
+import { formatNumber } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
 import { MatchStandings } from '../round/MatchStandings.js';
@@ -52,7 +53,7 @@ export function MatchSummary({
       <h1>{match.title} — match over</h1>
       {end === null ? null : <p data-testid="match-end">{endText(match.status, end)}</p>}
       <p>
-        {rounds} {rounds === 1 ? 'round' : 'rounds'} played.
+        {formatNumber(rounds)} {rounds === 1 ? 'round' : 'rounds'} played.
       </p>
       {/* Without an ended round there is no standing, and the table is left out. */}
       <MatchStandings standings={match.standings} viewerKey={viewerKey} />
@@ -62,8 +63,8 @@ export function MatchSummary({
           <ol className="round-teams-result" data-testid="match-teams">
             {match.teamStandings.map((t) => (
               <li key={t.team}>
-                <SeasonIcon season={t.team} size="1rem" /> {SEASON_NAMES[t.team]}: {t.points}{' '}
-                {t.points === 1 ? 'point' : 'points'}
+                <SeasonIcon season={t.team} size="1rem" /> {SEASON_NAMES[t.team]}:{' '}
+                {formatNumber(t.points)} {t.points === 1 ? 'point' : 'points'}
               </li>
             ))}
           </ol>

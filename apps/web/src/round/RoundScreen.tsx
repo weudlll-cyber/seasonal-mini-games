@@ -81,10 +81,12 @@ function TopBar(p: {
         <span className="round-season-icon">
           <SeasonIcon season={state.season} size="1.25rem" />
         </span>
-        {/* On a phone the special's name stays and the season's goes to screen readers: the
-            icon and the colour still say the season (O35). */}
+        {/* On a phone the season's name stays and the special's goes to screen readers: the
+            info button beside the chip names it and says what it does. */}
         <span className="round-season-text">
-          <strong className="round-season-name">{SEASON_NAMES[state.season]} </strong>
+          <strong className="round-season-name" data-testid="round-season">
+            {SEASON_NAMES[state.season]}{' '}
+          </strong>
           <span className="round-special" data-testid="round-special">
             {state.specialOn ? SPECIALS[state.season].name : 'no special'}
           </span>

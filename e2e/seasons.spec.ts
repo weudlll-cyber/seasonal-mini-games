@@ -79,7 +79,9 @@ async function introFits(page: Page, s: Season): Promise<void> {
   await expect(intro).toBeVisible();
   await expect(intro.getByRole('heading', { level: 1 })).toHaveText(s.name);
   await expect(intro.getByTestId('intro-special')).toHaveText(`${s.special}${s.rule}`);
-  await expect(intro.getByTestId('intro-secret')).toHaveText('Shared number between 1 and 1000000');
+  await expect(intro.getByTestId('intro-secret')).toHaveText(
+    'Shared number between 1 and 1,000,000',
+  );
   await expect(intro).toContainText('Cooldown 8.0 s between guesses');
   await fitsScreen(page);
   await page.setViewportSize(PHONE);
@@ -135,7 +137,9 @@ for (const s of SEASONS) {
       }
       await fitsScreen(p.page);
       await p.page.setViewportSize(PHONE);
-      await expect(p.page.getByTestId('round-special')).toBeVisible();
+      // A phone's chip names the season; the special is behind the info button.
+      await expect(p.page.getByTestId('round-season')).toBeVisible();
+      await expect(p.page.getByTestId('round-season')).toHaveText(s.name);
       await fitsScreen(p.page);
     } finally {
       if (code !== '') await abortMatch(p, code);

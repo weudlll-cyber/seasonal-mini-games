@@ -160,6 +160,10 @@ export function ownRows(page: Page): Locator {
   return page.locator('[data-testid="guess-list"] li[data-own="true"]');
 }
 
+// A number as the screen writes it, thousands separators included ("1,000,000", T114).
+export const NUMBER = String.raw`-?\d{1,3}(?:,\d{3})+|-?\d+`;
+export const shownNumber = (text: string): number => Number(text.replaceAll(',', ''));
+
 // What the player knows, worked out as a person does (the server sends no narrowed range,
 // O17): the range on screen, or the input's span while it is hidden, cut by their own answers.
 async function stillPossible(page: Page): Promise<{ low: number; high: number }> {
@@ -168,15 +172,15 @@ async function stillPossible(page: Page): Promise<{ low: number; high: number }>
       .getByTestId('range')
       .textContent({ timeout: 3_000 })
       .catch(() => '')) ?? '';
-  const shown = /between (-?\d+) and (-?\d+)/.exec(text);
-  let low = shown === null ? -1_000_000_000 : Number(shown[1]);
-  let high = shown === null ? 1_000_000_000 : Number(shown[2]);
+  const shown = new RegExp(`between (${NUMBER}) and (${NUMBER})`).exec(text);
+  let low = shown === null ? -1_000_000_000 : shownNumber(shown[1] ?? '');
+  let high = shown === null ? 1_000_000_000 : shownNumber(shown[2] ?? '');
   const answers = await ownRows(page)
     .evaluateAll((items) =>
       items.map(
         (li) =>
           [
-            Number(li.querySelector('.round-value')?.textContent),
+            Number(li.querySelector('.round-value')?.textContent.replaceAll(',', '')),
             li.querySelector<HTMLElement>('.round-answer')?.dataset['feedback'],
           ] as const,
       ),

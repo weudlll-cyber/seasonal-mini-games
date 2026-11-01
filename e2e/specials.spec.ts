@@ -14,7 +14,16 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { readable } from './contrast.js';
-import { abortMatch, call, closeAll, ownRows, person, type Person } from './play.js';
+import {
+  abortMatch,
+  call,
+  closeAll,
+  NUMBER,
+  ownRows,
+  person,
+  shownNumber,
+  type Person,
+} from './play.js';
 
 interface Started {
   readonly matchCode: string;
@@ -94,8 +103,8 @@ test('journey 4: a halving round halves the range and refuses a guess outside it
       // Bounded: once the round is over the range is gone, and an unbounded read would make
       // the poll report the last range it saw instead of saying so.
       const text = (await p.page.getByTestId('range').textContent({ timeout: 2_000 })) ?? '';
-      const m = /between (-?\d+) and (-?\d+)/.exec(text);
-      return m === null ? [0, -1] : [Number(m[1]), Number(m[2])];
+      const m = new RegExp(`between (${NUMBER}) and (${NUMBER})`).exec(text);
+      return m === null ? [0, -1] : [shownNumber(m[1] ?? ''), shownNumber(m[2] ?? '')];
     };
     await expect
       .poll(
