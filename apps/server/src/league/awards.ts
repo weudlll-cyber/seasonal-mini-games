@@ -8,7 +8,8 @@
  *                 for the leaderboard and has at least `leaderboard.minPlayersForPoints`
  *                 distinct accounts over its ended rounds (development bots are no accounts,
  *                 O11) awards each account its match standing — points, round wins, solves and
- *                 its rank — to the season board of the quarter its first round ended in and to
+ *                 its rank — to the season board of the meteorological season its first round
+ *                 ended in (O30) and to
  *                 the all-time board (DECISIONS T87); its teams award their match team
  *                 standing the same way. Awards are replaced as later rounds end, so a match
  *                 awards once per board. Withdrawing removes a match's awards (an aborted
@@ -16,24 +17,22 @@
  *                 awards and staff adjustments. A result staff removed counts for nothing here
  *                 (no account, no solve; the standings leave it out already, ../round/pgResults).
  *                 Only this module writes league tables (Bingo 03 §11).
- * Depends on:     pg, @smg/domain (quarterPeriod), @smg/game-sdk (Season)
+ * Depends on:     pg, @smg/domain (seasonPeriod)
  * Used by:        ../round/pgRoundStore, ../match/play, ./adjustments, ../admin/liveRounds
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/06-data-model-api-realtime.md §2.6
  */
-import { quarterPeriod } from '@smg/domain';
-import type { Season } from '@smg/game-sdk';
+import { seasonPeriod } from '@smg/domain';
 import type pg from 'pg';
 
 export interface LeagueRules {
   readonly minPlayers: number;
-  readonly firstQuarterSeason: Season;
 }
 
 type Db = Pick<pg.PoolClient, 'query'>;
 
-// The all-time board and the season board of the quarter holding `at` (created on first use).
-async function periodsFor(c: Db, at: Date, first: Season): Promise<string[]> {
-  const q = quarterPeriod(at.getTime(), first);
+// The all-time board and the season board of the season holding `at` (created on first use).
+async function periodsFor(c: Db, at: Date): Promise<string[]> {
+  const q = seasonPeriod(at.getTime());
   await c.query(
     `INSERT INTO smg.leaderboard_periods (kind, name, starts_at, ends_at)
      VALUES ('season', $1, $2, $3) ON CONFLICT (kind, starts_at) DO NOTHING`,
@@ -76,7 +75,7 @@ export async function awardMatch(c: Db, matchId: string, rules: LeagueRules): Pr
     await refreshEntries(c, touched);
     return;
   }
-  for (const periodId of await periodsFor(c, e.firstEnd, rules.firstQuarterSeason)) {
+  for (const periodId of await periodsFor(c, e.firstEnd)) {
     await c.query(
       `INSERT INTO smg.league_awards (period_id, account_id, match_id, points, wins, solves, place)
        SELECT $1, a.id, $2, s.points, s.wins,

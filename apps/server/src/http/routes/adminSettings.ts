@@ -111,8 +111,9 @@ function registerHistory(app: FastifyInstance, settings: SettingsService, pool: 
     const { id } = request.params as { id: string };
     if (!settings.ids().includes(id)) return reply.status(404).send({ code: 'NOT_FOUND' });
     const { version, toVersion, comment } = parsed.data;
-    const overrides = await versionOverrides(pool, id, toVersion);
-    if (overrides === null) return reply.status(404).send({ code: 'VERSION_NOT_FOUND' });
+    const stored = await versionOverrides(pool, id, toVersion);
+    if (stored === null) return reply.status(404).send({ code: 'VERSION_NOT_FOUND' });
+    const overrides = settings.known(id, stored);
     const key = await refusedKey(pool, id, overrides);
     if (key !== null) return unavailableReply(reply, key);
     const change = {

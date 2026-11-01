@@ -33,7 +33,7 @@ export {
   type Scored,
   type StandingRow,
 } from './round/results.js';
-export { quarterPeriod, type QuarterPeriod } from './league/periods.js';
+export { seasonPeriod, type SeasonPeriod } from './league/periods.js';
 export { frostDelay, nextDue } from './round/specials.js';
 export { stepRound } from './round/step.js';
 export type {

@@ -9,12 +9,18 @@
  *                 wins; `/me` finds the viewer; the profile agrees with the boards; a staff
  *                 adjustment needs a reason, is audited, append-only and public on the profile;
  *                 a match with fewer accounts than `leaderboard.minPlayersForPoints` or one that
- *                 does not count awards nothing; aborting a match takes its points back (T88).
+ *                 does not count awards nothing; aborting a match takes its points back (T88);
+ *                 the season board is the meteorological season (O30), and migration 0011
+ *                 moves a quarter board's awards to their season, keeping a quarter board that
+ *                 holds adjustments closed under a quarter name (T107).
  *                 Every match is aborted at the end, which also removes its points.
  * Depends on:     vitest, ./socketKit, ./session
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/06-data-model-api-realtime.md §2.6, §3.1;
  *                 docs/spec/09-testing-strategy.md §2
  */
+import { readFileSync } from 'node:fs';
+
+import { seasonPeriod } from '@smg/domain';
 import type { Socket } from 'socket.io-client';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -26,6 +32,7 @@ let kit: SocketKit;
 let admin: Client;
 const opened: string[] = [];
 const EVERYONE: readonly Who[] = ['host', 'player-1', 'player-2', 'player-3'];
+const MIGRATION = new URL('../src/db/migrations/0011_meteorological_seasons.sql', import.meta.url);
 
 beforeAll(async () => {
   kit = await startSocketKit();
@@ -160,7 +167,7 @@ describe('league points', () => {
     await wonMatch(['player-1', 'player-2', 'player-3'], 'player-2');
     const { list, allTime, season } = await boards();
     expect(list[0]?.kind).toBe('all_time');
-    expect(season?.name).toMatch(/^(Winter|Spring|Summer|Autumn) \d{4}$/);
+    expect(season?.name).toBe(seasonPeriod(Date.now()).name);
     for (const p of [allTime, season]) await expectTwoMatches(p?.id ?? '');
     const me = (
       await kit.clients['player-3'].get(`/api/v1/leaderboards/${allTime?.id ?? ''}/me`)
@@ -229,4 +236,46 @@ describe('leaderboard adjustments', () => {
     const r = await admin.post('/api/v1/admin/leaderboard-adjustments', { delta: 0 });
     expect(r.statusCode).toBe(400);
   });
+});
+
+// A season board as a server before O30 made it: one calendar quarter of 2020.
+async function quarterBoard(start: string, name: string): Promise<string> {
+  const r = await kit.harness.pool.query<{ id: string }>(
+    `INSERT INTO smg.leaderboard_periods (kind, name, starts_at, ends_at)
+     VALUES ('season', $1, $2::timestamptz, $2::timestamptz + interval '3 months')
+     RETURNING id::text`,
+    [name, start],
+  );
+  return r.rows[0]?.id ?? '';
+}
+
+describe('the move to meteorological seasons (migration 0011)', () => {
+  it('moves quarter awards to their season and keeps a quarter holding adjustments', async () => {
+    const pool = kit.harness.pool;
+    const code = await wonMatch(['player-1', 'player-2', 'player-3'], 'player-1');
+    const { season } = await boards();
+    const before = await rows(season?.id ?? '');
+    const old = await quarterBoard('2020-01-01T00:00:00Z', 'Winter 2020');
+    const kept = await quarterBoard('2020-04-01T00:00:00Z', 'Spring 2020');
+    for (const table of ['league_awards', 'team_league_awards']) {
+      await pool.query(
+        `UPDATE smg.${table} a SET period_id = $1 FROM smg.matches m
+         WHERE m.id = a.match_id AND m.code = $2 AND a.period_id = $3`,
+        [old, code, season?.id],
+      );
+    }
+    await pool.query(
+      `INSERT INTO smg.leaderboard_adjustments (period_id, account_id, delta, reason)
+       SELECT $1, id, 3, 'before O30' FROM smg.accounts WHERE display_name = 'dev-player-2'`,
+      [kept],
+    );
+    await pool.query(readFileSync(MIGRATION, 'utf8'));
+    const after = await boards();
+    expect(after.season?.id).toBe(season?.id);
+    expect(await rows(season?.id ?? '')).toEqual(before);
+    const names = after.list.map((p) => p.name);
+    expect(names).toContain('Q2 2020 (quarter)');
+    expect(names).not.toContain('Winter 2020');
+    expect(byName(await rows(kept), 'dev-player-2')?.points).toBe(3);
+  }, 120_000);
 });

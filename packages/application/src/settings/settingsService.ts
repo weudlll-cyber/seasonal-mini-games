@@ -8,7 +8,9 @@
  *                 definition and the editor's permissions, refuses a stale version, writes a
  *                 new version and one audit entry with the before/after diff (./diff); a
  *                 rollback is such an update with an earlier version's overrides, audited as
- *                 `settings.rollback`. The documents
+ *                 `settings.rollback`. A stored override of a setting that no longer exists
+ *                 is left out of the view and of a rollback (`known`), so the next save drops
+ *                 it instead of being refused for an unknown key. The documents
  *                 are passed in (platform ones from contracts, game ones from the registry),
  *                 so this layer never names a game.
  * Depends on:     @smg/game-sdk (checks), @smg/contracts (shapes), ./ports, ./diff, ../audit/ports
@@ -56,10 +58,17 @@ export class SettingsService {
     return resolveSettings(defs, stored?.overrides ?? {});
   }
 
+  // The overrides of settings the document still defines; a removed setting's override is
+  // left behind (DECISIONS T107: `leaderboard.firstQuarterSeason`).
+  known<O>(id: string, overrides: Readonly<Record<string, O>>): Record<string, O> {
+    const keys = new Set(this.defs(id).map((d) => d.key));
+    return Object.fromEntries(Object.entries(overrides).filter(([key]) => keys.has(key)));
+  }
+
   async view(id: string, permissions: readonly string[]): Promise<SettingsDocumentView> {
     const defs = this.defs(id);
     const stored = await this.store.load(id);
-    const overrides = stored?.overrides ?? {};
+    const overrides = this.known(id, stored?.overrides ?? {});
     return {
       id,
       version: stored?.version ?? 1,

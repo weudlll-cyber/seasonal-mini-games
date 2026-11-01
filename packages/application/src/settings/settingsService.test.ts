@@ -7,7 +7,8 @@
  *                 permission and a fitting value makes a new version and one audit entry;
  *                 unknown keys, wrong values, widened bounds, missing permissions and stale
  *                 versions are refused without a write; resetting a key needs the same
- *                 permission; a lost save race is a version conflict.
+ *                 permission; a lost save race is a version conflict; a removed setting's
+ *                 override is left out of the view and dropped by the next save.
  * Depends on:     vitest, ./settingsService, ../fakes, @smg/contracts
  * Spec:           docs/spec/08-admin-settings.md §1, §2
  */
@@ -88,6 +89,23 @@ describe('SettingsService resets and races', () => {
     const { settings } = service();
     expect(settings.ids()).toContain('matchmaking');
     expect((await settings.values('matchmaking'))['match.maxPlayers']).toBe(500);
+  });
+
+  it('leaves a removed setting out of the view, so the next save drops it', async () => {
+    const { settings, store } = service();
+    store.docs.set('matchmaking', {
+      version: 1,
+      overrides: { 'match.maxPlayers': { value: 300 }, 'gone.setting': { value: 'winter' } },
+      updatedAt: null,
+    });
+    const view = await settings.view('matchmaking', ['settings.game.edit']);
+    // The form sends back what the view gave it.
+    const overrides = { 'match.maxPlayers': { value: 300 } };
+    expect(view.overrides).toEqual(overrides);
+    await settings.update('matchmaking', { version: 1, overrides }, actor(['settings.game.edit']));
+    expect(store.docs.get('matchmaking')?.overrides).toEqual({
+      'match.maxPlayers': { value: 300 },
+    });
   });
 
   it('keeps unchanged keys of others, and resets a key only with its permission', async () => {
