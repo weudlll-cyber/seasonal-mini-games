@@ -6,13 +6,13 @@ N1 on `feat/guess-the-number`; N2 merges it into `night/2026-10-27`; N3 and N4 o
 
 ### Status
 
-| Piece                                                                        | State   | Branch                | Commit / CI                                                       |
-| ---------------------------------------------------------------------------- | ------- | --------------------- | ----------------------------------------------------------------- |
-| N1 Team once per match, End match, idle close, waiting-area list, two fixes  | done    | feat/guess-the-number | `42ff7b4`, CI: e2e rerun (first attempt hung installing browsers) |
-| N2 Bring `night/2026-10-27` up to date with `feat/guess-the-number`          | done    | night/2026-10-27      | `a88990e`, CI green                                               |
-| N3 Cleanup: player numbers, KICKED, anti-multi rules, handoff accounts, chat | done    | night/2026-10-27      | see N3; CI pending                                                |
-| N4 Phase 8 security pass without a VPS                                       | running | night/2026-10-27      | —                                                                 |
-| N5 Handover                                                                  | open    | both                  | —                                                                 |
+| Piece                                                                        | State | Branch                | Commit / CI                                                       |
+| ---------------------------------------------------------------------------- | ----- | --------------------- | ----------------------------------------------------------------- |
+| N1 Team once per match, End match, idle close, waiting-area list, two fixes  | done  | feat/guess-the-number | `42ff7b4`, CI: e2e rerun (first attempt hung installing browsers) |
+| N2 Bring `night/2026-10-27` up to date with `feat/guess-the-number`          | done  | night/2026-10-27      | `a88990e`, CI green                                               |
+| N3 Cleanup: player numbers, KICKED, anti-multi rules, handoff accounts, chat | done  | night/2026-10-27      | see N3; CI pending                                                |
+| N4 Phase 8 security pass without a VPS                                       | done  | night/2026-10-27      | see N4; CI pending                                                |
+| N5 Handover                                                                  | open  | both                  | —                                                                 |
 
 ### Needs the owner
 
@@ -126,7 +126,7 @@ Owner-question letters did not clash: night uses (t)–(y), feat (q), (r), (s) a
 
 **New owner question (aa):** an individual round's secret is derived with the label `secret/<account id>`, so with account ids hidden an outsider can check the commitment and a shared secret from the proof, but not recompute an individual player's secret; the server's own check still shows them all. Proposal: keep it so, or derive from the match number in a later seed version.
 
-**Tests:** `pnpm verify`: 404 of 405 tests passed. The one failure, Heatwave's cooldown step in `specials.integration.test.ts` (6 000 ms where under 6 000 was expected), passed alone (6 of 6); it depends on a timer and slipped while all suites ran at once. New or extended:
+**Tests:** `pnpm verify`: 404 of 405 tests passed. The one failure, Heatwave's cooldown step in `specials.integration.test.ts` (6 000 ms where under 6 000 was expected), passed alone (6 of 6). The cause, found in N4: the test waited from the first round's opening and checked Heatwave in a second round created after it, which only worked while that creation took under 0.6 s; N3's extra query on each join made it slower under load. The test now waits for the later opening (fixed with N4). New or extended:
 
 - the authorization matrix: rows beyond permissions in `apps/server/test/authzMatchRules.ts` (KICKED and another player joining; the linked-chat rule unavailable and refused in a standalone install; a younger account off a shared roster);
 - `handoff.integration.test.ts`: a handoff account deletes itself with its name, not a password; with a provider the rule is available;
@@ -154,7 +154,33 @@ E2E in Chromium: all 19 tests passed (journeys 1–15, journey 8's two cases, th
 - The player client has no screen to delete an account; the route exists (T105).
 - The KICKED sentence says "by the host", as the task gives it, although staff do the kicking.
 - `chat.integration.test.ts` is at 299 of 300 lines.
-- Heatwave's step check in `specials.integration.test.ts` slips by a few milliseconds when every suite runs at once.
+
+### N4 — Phase 8 security pass, the parts that need no VPS
+
+**Done** (DECISIONS T106; results in [security-pass.md](security-pass.md), raw reports in `reports/security-pass-2026-11-01/`). The scans ran in a subagent that only scanned and reported; the fixes are mine.
+
+- **Secret scan of the whole history:** gitleaks 8.30.1 (the image CI uses) over all refs, 65 commits: no finding. CI's own gitleaks job covers the same history on every push.
+- **Dependencies:** `pnpm audit` (pnpm 12.14.0) and osv-scanner 2.7.0 on `pnpm-lock.yaml`: two moderate advisories, minimatch (ReDoS, eslint only) and glob (AbortSignal, Testcontainers only). Both are false positives for the product: development dependencies only, not in the image, and `pnpm audit --prod` is clean.
+- **OWASP ZAP 2.17.0 baseline** against the player app (5410), the admin app (5411) and the server (3910, whose headers are the production ones): no FAIL. The Vite servers' missing headers are development-only, because the production pages come from the server, which passes those rules. Each warning is in the file with its verdict.
+
+**Fixed (real, both low):**
+
+- `font-src` was helmet's default `'self' https: data:`; it is now `'self'`.
+- The admin app could be framed by its own origin; it now sends `frame-ancestors 'none'` and `X-Frame-Options: DENY`, as Bingo 03 §7 (adopted by 05 §1) asks.
+
+Both are tested in `embed.integration.test.ts`. A stale osv-scanner ignore entry was removed.
+
+**False positives with reasons:** see the table in [security-pass.md](security-pass.md). `style-src 'unsafe-inline'` is accepted for now, because the placeholder pages use inline styles and `script-src 'self'` stays strict.
+
+**Left open (BACKLOG part one):** the admin app's Trusted Types header (`require-trusted-types-for 'script'`, Bingo 03 §7), waiting for a browser check of the built admin app; and a ZAP baseline against a production install on the VPS.
+
+**Lines:** `apps/server/src/http/plugins/securityHeaders.ts` 77 → 79; `apps/server/test/embed.integration.test.ts` (+3); `osv-scanner.toml` 15 → 12; new `docs/security-pass.md`; DECISIONS, BACKLOG, specs 09 §6 and 11 phase 8.
+
+**Tests:** `pnpm verify` green, 406 tests in 78 files, including the corrected Heatwave wait in `specials.integration.test.ts` (see N3).
+
+**Reused:** the CI's pinned gitleaks and osv-scanner images, the existing header test.
+
+**Noticed, left alone:** the placeholder pages' inline styles keep `'unsafe-inline'` in `style-src`.
 
 ## Night 2 (2026-10-27)
 

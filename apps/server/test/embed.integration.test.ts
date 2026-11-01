@@ -77,8 +77,9 @@ describe('the embed allowlist', () => {
     expect(ancestors(page.headers['content-security-policy'])).toBe(`'self' ${SITE}`);
     expect(page.headers['x-frame-options']).toBeUndefined();
     const adminApi = await admin.get('/api/v1/admin/embed-origins');
-    expect(ancestors(adminApi.headers['content-security-policy'])).toBe("'self'");
-    expect(adminApi.headers['x-frame-options']).toBe('SAMEORIGIN');
+    // The admin app is framed by nobody, its own origin included (Bingo 03 §7).
+    expect(ancestors(adminApi.headers['content-security-policy'])).toBe("'none'");
+    expect(adminApi.headers['x-frame-options']).toBe('DENY');
   });
 
   it('admits an allowlisted Origin at the socket handshake, and no other', async () => {
@@ -218,5 +219,12 @@ describe('the public read API', () => {
     expect((await get('/')).headers['x-frame-options']).toBe('SAMEORIGIN');
     const cookie = kit.clients['player-1'].cookie;
     expect(await kit.connected(kit.open(cookie, SITE))).toBe('ORIGIN_NOT_ALLOWED');
+  });
+});
+
+describe('the page CSP', () => {
+  it('takes fonts only from this origin (ZAP 10055, security pass 2026-11-01)', async () => {
+    const page = await get('/');
+    expect(String(page.headers['content-security-policy'])).toContain("font-src 'self';");
   });
 });

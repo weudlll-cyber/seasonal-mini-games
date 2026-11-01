@@ -92,7 +92,12 @@ describe('specials in the fast test profile', () => {
   it('Leaf Fall strikes numbers for everyone and Heatwave lowers the cooldown', async () => {
     const autumn = await quick('autumn');
     const summer = await quick('summer', { cooldownS: 6 });
-    const opensAt = (await state(autumn.roundId)).opensAt;
+    // Leaf Fall and Heatwave come 5 s after each round's own opening: wait for the later one
+    // (the summer round is created second, so it opens later).
+    const opensAt = Math.max(
+      (await state(autumn.roundId)).opensAt,
+      (await state(summer.roundId)).opensAt,
+    );
     await sleep(Math.max(0, opensAt - Date.now()) + 5_600);
     const fell = await state(autumn.roundId);
     expect(fell.game.removed.length).toBeGreaterThan(0);

@@ -7,8 +7,10 @@
  *                 and styles), frame and referrer rules, nosniff and a Permissions-Policy
  *                 that denies camera, microphone, geolocation and payment; `frame-src` admits
  *                 the host chat's origin while the chat provider is hostEmbed; `frame-ancestors`
- *                 admits the embed allowlist (07 §1, Bingo 07 §3.4) except for the admin app, and
- *                 X-Frame-Options is dropped where it would contradict it. HSTS comes from the TLS proxy.
+ *                 admits the embed allowlist (07 §1, Bingo 07 §3.4), and X-Frame-Options is
+ *                 dropped where it would contradict it; the admin app is framed by nobody
+ *                 (`frame-ancestors 'none'`, X-Frame-Options DENY); fonts only from this origin.
+ *                 HSTS comes from the TLS proxy.
  * Depends on:     @fastify/helmet
  * Used by:        ../app.ts
  * Spec:           Bingo 03 §7, Bingo 05 §1; Bingo 07 §3.4
@@ -34,13 +36,13 @@ export async function registerSecurityHeaders(
 ): Promise<void> {
   const ancestors = (req: IncomingMessage) =>
     isAdminPath(req.url)
-      ? "'self'"
+      ? "'none'"
       : ["'self'", ...embedOrigins().filter((o) => PLAIN_ORIGIN.test(o))].join(' ');
   await app.register(helmet, {
     contentSecurityPolicy: {
-      // "default-src 'self'" plus explicit directives for the placeholder page. The admin
-      // app (apps/admin) will raise its own stricter CSP with frame-ancestors 'none' when
-      // its routes are wired (WP-19).
+      // "default-src 'self'" plus explicit directives; the admin paths are framed by nobody
+      // ('none', Bingo 03 §7). Fonts only from this origin: helmet's default would add any
+      // https: host (ZAP 10055, night run 3 N4).
       directives: {
         'default-src': ["'self'"],
         'base-uri': ["'self'"],
@@ -48,6 +50,7 @@ export async function registerSecurityHeaders(
         'form-action': ["'self'"],
         'object-src': ["'none'"],
         'img-src': ["'self'", 'data:'],
+        'font-src': ["'self'"],
         'style-src': ["'self'", "'unsafe-inline'"],
         'script-src': ["'self'"],
         'connect-src': ["'self'"],
@@ -66,9 +69,9 @@ export async function registerSecurityHeaders(
   app.addHook('onSend', (request, reply, _payload, done) => {
     reply.header('permissions-policy', PERMISSIONS_POLICY);
     // X-Frame-Options knows no list of sites: with an allowlist, frame-ancestors decides alone.
-    if (embedOrigins().length > 0 && !isAdminPath(request.raw.url)) {
-      reply.removeHeader('x-frame-options');
-    }
+    // The admin app is framed by nobody, its own origin included (Bingo 03 §7).
+    if (isAdminPath(request.raw.url)) reply.header('x-frame-options', 'DENY');
+    else if (embedOrigins().length > 0) reply.removeHeader('x-frame-options');
     done();
   });
 }

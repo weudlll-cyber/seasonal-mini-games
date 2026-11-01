@@ -101,6 +101,8 @@ Short and direct: each scenario runs for minutes, not hours (Bingo 12 §1).
 
 ## 6. Security tests (in addition to Bingo 12 §6)
 
+The results of each security pass (secret scan of the history, dependency audits, ZAP baseline) are kept in [../security-pass.md](../security-pass.md), newest first, with the raw reports in `reports/` (DECISIONS T106).
+
 - **Cooldown bypass:** one account guesses from two sockets, from a socket plus the HTTP fallback, and across a reconnect. Exactly one guess per cooldown is accepted.
 - **Secret scan:** P2 also runs as an integration test over real frames and every HTTP answer of a running round, the admin API included. The same test finds no account id in any public answer or frame, during the round or after it (result and proof included): players are named by their number in the match (DECISIONS T104).
 - **Frost early read:** `GET …/state` during the delay never contains the held answer.

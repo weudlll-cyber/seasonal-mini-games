@@ -6,10 +6,7 @@
 #                 exploitable here; every entry expires so it is reviewed again.
 # Used by:        .github/workflows/ci.yml (job security)
 # Spec:           Bingo 03 §18
-
-[[IgnoredVulns]]
-id = "GHSA-vfj7-8cjw-p6xm"
-ignoreUntil = 2027-01-19
-reason = """braces 3.0.3 (stack exhaustion on deeply nested patterns) has no fixed release. \
-It is a dev-only dependency (eslint-plugin-boundaries -> micromatch) that only expands \
-the repository's own lint globs, never untrusted input, and it is not in the image."""
+#
+# No entry now: the braces advisory GHSA-vfj7-8cjw-p6xm no longer matches the locked version
+# (osv-scanner 2.7.0 reported the ignore as unused, night run 3, N4). Add an entry here with
+# its reason and expiry only for a finding that is reviewed and not exploitable.

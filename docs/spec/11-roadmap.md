@@ -36,7 +36,7 @@ JWT handoff with the website (including the optional `links` claim), the embed l
 **Done when:** the game runs embedded on a test host page with single sign-on, and then on the Seasonal Entertainment website once its side is ready.
 
 ### Phase 8 — Production readiness
-Installer and `smg` CLI (both install types, beside Bingo on one server), backups and restore drill, observability, a security pass (ZAP, authz matrix, secret scan), the load gate ([09](09-testing-strategy.md) §5), the operator guide, and the v1.0.0 release.
+Installer and `smg` CLI (both install types, beside Bingo on one server), backups and restore drill, observability, a security pass (ZAP, authz matrix, secret scan; results in [../security-pass.md](../security-pass.md)), the load gate ([09](09-testing-strategy.md) §5), the operator guide, and the v1.0.0 release.
 **Done when:** a fresh VPS goes from nothing to a running, backed-up instance with one script, the load gate passes, and v1.0.0 is tagged.
 
 ## 2. After v1 (not scheduled)
