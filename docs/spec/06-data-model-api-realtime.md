@@ -168,7 +168,7 @@ As Bingo 05 §3 for dashboard, settings, integrations, accounts, moderation, upl
 |---|---|---|
 | `match.watch` / `match.unwatch` | `{ code }` | As Bingo |
 | `time.sync` | `{}` | Answers `{ serverTime }` |
-| `guess` | `{ roundId, value }` | Acknowledged with `{ ok: true, receiveSeq, cooldownEndsAt }` or `{ ok: false, code, until? }`. Codes: `ROUND_NOT_OPEN`, `ROUND_OVER`, `NOT_IN_ROUND`, `ALREADY_SOLVED`, `OUT_OF_RANGE`, `NUMBER_REMOVED`, `ALREADY_GUESSED`, `COOLDOWN_ACTIVE` (with `until`), `RATE_LIMITED`, `ROUND_BUSY`, `RESYNC`. The ack comes after group commit ([04](04-software-architecture.md) §5.3). |
+| `guess` | `{ roundId, value }`: `value` a number, a string of up to 32 characters, up to 16 strings of up to 16 characters, or a record of up to 4 numbers; its exact shape is the round's game's (Guess The Number a whole number, Safecracker a code, Bomb Defusal a list of wires, Seasonal Target a cell; DECISIONS T122) | Acknowledged with `{ ok: true, receiveSeq, cooldownEndsAt }` or `{ ok: false, code, until? }`. Codes: `ROUND_NOT_OPEN`, `ROUND_OVER`, `NOT_IN_ROUND`, `ALREADY_SOLVED`, the game's own (Guess The Number: `OUT_OF_RANGE`, `NUMBER_REMOVED`; the others in 02b–02d), `ALREADY_GUESSED`, `COOLDOWN_ACTIVE` (with `until`), `RATE_LIMITED`, `ROUND_BUSY`, `RESYNC`. The ack comes after group commit ([04](04-software-architecture.md) §5.3). |
 | `team.choose` | `{ code, team }` | Same rule as `POST …/team` |
 | `round.start` / `round.end` / `round.abort` | `{ roundId, reason? }` | Host; same as the HTTP routes |
 | `chat.send`, `chat.typing`, `presence.ping` | as Bingo 06 §4.1 | |
