@@ -173,7 +173,7 @@ The platform runs one shared conformance test suite against every module in `gam
 
 ### 4.6 Adding a game
 
-1. Create `games/<game>/` with `src/` (module, settings defaults, tests) and `web/` (screens, strings). The web half gives the player's main area and input row apart (the platform places them and puts its cooldown ring into the row), the spectator and result panels, the rows of the round's one list (`GuessRow`s from its player or spectator view, and `FeedLine`s for its events), which the platform draws (owner decision 20; DECISIONS T62, T74), and the line about the best of the rest that the result page shows where the winning margin goes when there is none (`runnerUp`, owner decision 22; DECISIONS T77).
+1. Create `games/<game>/` with `src/` (module, settings defaults, tests) and `web/` (screens, strings). The web half gives the player's main area and input row apart (the platform places them and puts its cooldown ring into the row), the spectator and result panels, the rows of the round's one list (`GuessRow`s from its player or spectator view, and `FeedLine`s for its events), which the platform draws (owner decision 20; DECISIONS T62, T74), and the line about the best of the rest that the result page shows where the winning margin goes when there is none (`runnerUp`, owner decision 22; DECISIONS T77), and optionally the round intro's line on the secret (`intro`, owner decision 36; DECISIONS T109).
 2. Add one line to each half of `games/registry` (`src/index.ts` and `web/index.ts`).
 3. Add its settings to [08](08-admin-settings.md) and its rules to a new spec section.
 

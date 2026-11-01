@@ -52,12 +52,14 @@ const ROUND_SETTINGS: readonly SettingDef[] = [
     key: 'round.countdownS',
     kind: 'int',
     label: 'Countdown before opening',
-    help: 'Time between Start round and the first guess.',
-    default: 5,
+    help: 'The intro screen with the season and its special, before the first guess.',
+    // Proposal (OPEN (ab)): long enough to read the intro screen (O36); was 5 s.
+    default: 10,
     min: 3,
     max: 30,
     unit: 's',
-    ...owner('O15'),
+    status: 'proposal',
+    spec: '08 §3',
     ...host,
   },
   {

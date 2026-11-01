@@ -26,7 +26,7 @@ describe('platform round settings', () => {
     expect(config).toEqual({
       secretMode: 'shared',
       cooldownMs: 10_000,
-      countdownMs: 5_000,
+      countdownMs: 10_000,
       maxDurationMs: 600_000,
       marginWindowMs: 2_000,
       specialOn: true,

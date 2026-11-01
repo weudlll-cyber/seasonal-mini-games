@@ -5,7 +5,8 @@
  *
  * Responsibility: the original Seasonal Tokens icons from assets/seasons (Vite copies them
  *                 into the bundle, used as delivered, never redrawn), each season's colour
- *                 token, its name, and its special's name and one-line rule (03 §2, §6).
+ *                 token, its name, and its special's name and the one plain sentence on what
+ *                 it does, in the owner's words (O35, O36; 03 §2, §6).
  *                 Adapted from Bingo's seasonIcons.ts and types.ts.
  * Depends on:     @smg/contracts (SeasonName), assets/seasons/*.svg
  * Used by:        ./SeasonIcon, ../round/*, ../match/*, ../lobby/*
@@ -37,11 +38,17 @@ export const SEASON_NAMES: Readonly<Record<SeasonName, string>> = {
 export const SPECIALS: Readonly<
   Record<SeasonName, { readonly name: string; readonly rule: string }>
 > = {
-  spring: { name: 'Spring Herald', rule: 'Everyone gets one free hint at the start.' },
-  summer: { name: 'Heatwave', rule: 'The cooldown shrinks step by step, never below 3 s.' },
-  autumn: { name: 'Leaf Fall', rule: 'Every so often, wrong numbers fall from the range.' },
-  winter: { name: 'Frost', rule: 'Every answer arrives a few seconds late.' },
+  spring: { name: 'Spring Herald', rule: 'Everyone gets one free hint when the round opens.' },
+  summer: {
+    name: 'Heatwave',
+    rule: 'The waiting time between guesses gets shorter as the round goes on.',
+  },
+  autumn: { name: 'Leaf Fall', rule: 'Every so often, some wrong numbers fall out of the game.' },
+  winter: { name: 'Frost', rule: 'Answers arrive a few seconds late.' },
 };
+
+// A round with its season's special switched off.
+export const NO_SPECIAL = 'No special this round.';
 
 export function seasonColor(season: SeasonName): string {
   return `var(--color-${season})`;

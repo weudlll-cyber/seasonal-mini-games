@@ -3,10 +3,11 @@
  * @module web/round
  * @brief  A running round on one screen: top bar, range and the one guess list, teams, input.
  *
- * Responsibility: the round view everyone gets alike, the host included (O16): a one-line top
+ * Responsibility: the round view everyone gets alike, the host included (O16): during the
+ *                 countdown the intro screen (./RoundIntro, O36); once open a one-line top
  *                 bar (season chip in its token colour with icon and special, the halving
- *                 badge, shared or individual, the cooldown, the time left or "Opens in 3 s",
- *                 and the host menu for the host); the main area with the game's range block
+ *                 badge, shared or individual, the cooldown, the time left, and the host menu
+ *                 for the host); the main area with the game's range block
  *                 (the player panel for a roster player, else the spectator panel) above the
  *                 round's one list of guesses and events (./RoundLog, O20); the side column
  *                 with the team tiles and, under them, the match chat (./RoundChat; a panel
@@ -17,8 +18,8 @@
  *                 without a page scrollbar; only the lists scroll inside themselves. After the
  *                 end the result screen takes over.
  * Depends on:     react, @smg/contracts, @smg-game/registry/web, ../live/*, ../season/*,
- *                 ./CooldownRing, ./RoundChat, ./RoundLog, ./RoundSide, ./ResultScreen, ./roundText,
- *                 ./round.css
+ *                 ./CooldownRing, ./RoundChat, ./RoundIntro, ./RoundLog, ./RoundSide,
+ *                 ./ResultScreen, ./roundText, ./round.css
  * Used by:        ../match/MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §4, §7, §11, §12; docs/spec/03-seasonal-specials.md §2, §6
  */
@@ -35,6 +36,7 @@ import { SEASON_NAMES, seasonColor, SPECIALS } from '../season/season.js';
 import { CooldownRing } from './CooldownRing.js';
 import { ResultScreen } from './ResultScreen.js';
 import { RoundChat } from './RoundChat.js';
+import { RoundIntro } from './RoundIntro.js';
 import { RoundLog } from './RoundLog.js';
 import { TeamTiles } from './RoundSide.js';
 import { codeText, seconds, solvedText } from './roundText.js';
@@ -53,10 +55,8 @@ interface RoundScreenProps {
   readonly chat: ReactNode;
 }
 
+// The time left of an open round (the countdown is the intro screen's).
 function timeText(state: RoundStateView, now: number): string {
-  if (state.status === 'countdown' && state.opensAt !== null) {
-    return `Opens in ${String(Math.max(0, Math.ceil((state.opensAt - now) / 1_000)))} s`;
-  }
   if (state.status === 'open' && state.endsAt !== null) {
     const left = Math.max(0, state.endsAt - now);
     const secs = Math.floor((left % 60_000) / 1_000);
@@ -158,6 +158,28 @@ function InputRow({ state, game, viewerKey, now, reload }: PlayProps): ReactElem
   );
 }
 
+// The game's part of the main area: a roster player's range block, or the spectator's.
+function GamePart(p: { readonly state: RoundStateView; readonly game: GameWeb | null }) {
+  const { state, game } = p;
+  if (game === null || state.game === null) {
+    return <p className="smg-muted">The round starts soon.</p>;
+  }
+  if (state.role !== 'player') {
+    return <game.Spectator view={state.game} names={state.names} season={state.season} />;
+  }
+  // The main area only shows; guesses go through the input row.
+  return (
+    <game.Player
+      view={state.game}
+      act={() => Promise.resolve({ ok: false })}
+      canAct={false}
+      frostDelayMs={state.frostDelayMs}
+      now={serverNow}
+      season={state.season}
+    />
+  );
+}
+
 export function RoundScreen(props: RoundScreenProps): ReactElement {
   const { state, feed } = props.live;
   useTicker(state !== null && state.status !== 'ended' && state.status !== 'aborted');
@@ -178,26 +200,19 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
   }
   const now = serverNow();
   const style = { '--season': seasonColor(state.season) } as CSSProperties;
+  if (state.status === 'countdown') {
+    return (
+      <div className="round-live round-live--intro" style={style} data-testid="round-view">
+        <RoundIntro state={state} game={game} now={now} hostMenu={props.hostMenu} />
+      </div>
+    );
+  }
   const player = state.role === 'player' && game !== null;
   return (
     <div className="round-live" style={style} data-testid="round-view">
       <TopBar state={state} now={now} hostMenu={props.hostMenu} />
       <section className="smg-panel round-main" aria-label="The round">
-        {game === null || state.game === null ? (
-          <p className="smg-muted">The round starts soon.</p>
-        ) : player ? (
-          // The main area only shows; guesses go through the input row.
-          <game.Player
-            view={state.game}
-            act={() => Promise.resolve({ ok: false })}
-            canAct={false}
-            frostDelayMs={state.frostDelayMs}
-            now={serverNow}
-            season={state.season}
-          />
-        ) : (
-          <game.Spectator view={state.game} names={state.names} season={state.season} />
-        )}
+        <GamePart state={state} game={game} />
         <RoundLog feed={feed} game={game} state={state} viewerKey={props.viewerKey} now={now} />
       </section>
       <aside className="round-side">

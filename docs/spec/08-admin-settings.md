@@ -26,7 +26,7 @@
 | `round.rangeLow` | 1 | −1 000 000 | 1 000 000 | owner (O18); `rangeHigh` ≥ `rangeLow` + 9 | host | frozen |
 | `round.rangeHigh` | 1 000 | −1 000 000 | 1 000 000 | owner (O18); `rangeHigh` ≥ `rangeLow` + 9 | host | frozen |
 | `round.rangeVisible` | true | — | — | owner (O19): off hides the range until the end (02 §3) | host | frozen |
-| `round.countdownS` | 5 | 3 | 30 | owner (O15) | host | frozen |
+| `round.countdownS` | 10 | 3 | 30 | *proposal* (OPEN (ab)): long enough to read the round's intro screen (owner decision 36); was 5 (O15) | host | frozen |
 | `round.maxDurationMin` | 10 | 1 | 60 | owner (O15) | host | frozen |
 | `round.feedbackVisibility` | `full` | — | — (`own`, `numbers`, `full`) | owner (O8) | host (shared mode) | frozen |
 | `round.comments` | true | — | — | owner (O21): a closeness comment on every guess, seen exactly where its answer is seen (02 §6.3) | host | frozen |

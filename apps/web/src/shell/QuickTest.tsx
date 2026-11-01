@@ -5,7 +5,8 @@
  *
  * Responsibility: choose whether to start from the lobby (on by default, O24), the seed text
  *                 (the same text gives the same secret and season), the secret mode, the
- *                 season (or the seed's), what others see, the bots, the cooldown, the lowest
+ *                 season (or the seed's), what others see, the bots, the cooldown, the
+ *                 countdown with the round's intro screen (O36), the lowest
  *                 and highest number, whether the range is shown, the closeness comments (O21),
  *                 the fast test profile and whether it is a team match (O34); start it (`POST /dev/quicktest`) and go to the
  *                 match, where the player hosts it: in the waiting area, where the bots join
@@ -36,7 +37,12 @@ import '../match/match.css';
 
 const GAME = 'guess-the-number';
 // The settings the Quick Test offers, in the form's order, with its own starting values.
-const KEYS = ['round.secretMode', 'round.feedbackVisibility', 'round.cooldownS'] as const;
+const KEYS = [
+  'round.secretMode',
+  'round.feedbackVisibility',
+  'round.cooldownS',
+  'round.countdownS',
+] as const;
 const RANGE_KEYS = [
   'round.rangeLow',
   'round.rangeHigh',
@@ -104,6 +110,8 @@ function bodyOf(values: Values, extra: Extra) {
     mode: values['round.secretMode'],
     visibility: values['round.feedbackVisibility'],
     cooldownS: values['round.cooldownS'],
+    // The intro screen as long as in a normal round: the setting's default unless changed.
+    countdownS: values['round.countdownS'] ?? defOf('round.countdownS')?.default,
     rangeLow: values['round.rangeLow'],
     rangeHigh: values['round.rangeHigh'],
     rangeVisible: values['round.rangeVisible'],

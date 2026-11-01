@@ -8,7 +8,8 @@
  *                 the shared hint and halving; and the list's guess rows from the player or
  *                 spectator view, own guesses and the others' at the round's visibility, with
  *                 answers and comments as far as the view carries them (O20, O21); and the
- *                 closest miss on the shared result (O22). Server codes never reach the screen
+ *                 closest miss on the shared result (O22); the round intro's line on the
+ *                 number and its range (O36). Server codes never reach the screen
  *                 as codes.
  * Depends on:     @smg/game-sdk (GameText, GuessRow), ../src (types)
  * Used by:        ./PlayerPanel, ./SpectatorPanel, ./ResultPanel, ./index
@@ -91,9 +92,21 @@ function runnerUp(view: unknown, names: Readonly<Record<string, string>>): strin
     : `Closest miss: ${name}, ${n} away (${guess}).`;
 }
 
+// The intro's line (O36): the mode and the range, or that the range is hidden (O19).
+function intro(view: unknown, secretMode: 'shared' | 'individual'): string | null {
+  const v = view as Partial<Pick<PlayerView, 'range'>> | null;
+  if (v?.range === undefined) return null;
+  if (v.range === null) return 'Hidden range';
+  const between = `between ${String(v.range.low)} and ${String(v.range.high)}`;
+  return secretMode === 'shared'
+    ? `Shared number ${between}`
+    : `Everyone has their own number ${between}`;
+}
+
 export const gtnText: GameText = {
   code: (code) => CODES[code] ?? null,
   event: (event) => eventText(event as GtnEvent),
   guesses: guessRows,
   runnerUp,
+  intro,
 };

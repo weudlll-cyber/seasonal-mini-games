@@ -85,4 +85,7 @@ export interface GameText {
     resultView: unknown,
     names: Readonly<Record<string, string>>,
   ) => string | null;
+  // The round intro's line on the secret ("Shared number between 1 and 100", "Hidden range"),
+  // from a player's or spectator's view during the countdown; null, or no hook, shows none.
+  readonly intro?: (view: unknown, secretMode: 'shared' | 'individual') => string | null;
 }

@@ -50,6 +50,7 @@ describe('the forms', () => {
       'What others see of a guess',
       'Bots',
       'Cooldown',
+      'Countdown before opening',
       'Lowest number',
       'Highest number',
       'Show range',

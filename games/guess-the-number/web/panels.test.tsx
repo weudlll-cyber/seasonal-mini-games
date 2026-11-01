@@ -12,7 +12,8 @@
  *                 opening and while an answer is on its way (T76); the spectator and result panels show what their
  *                 views hold, the result with the range; the views become the list's guess
  *                 rows, own ones pending while Frost holds them (O20, O21); every room event
- *                 has its plain line, and guesses none (they are rows).
+ *                 has its plain line, and guesses none (they are rows); the intro line names
+ *                 the mode and the range, or that it is hidden (O36).
  * Depends on:     vitest, @testing-library/react, ./PlayerPanel, ./RangeBar, ./SpectatorPanel,
  *                 ./ResultPanel, ./text
  * Spec:           docs/spec/02-game-guess-the-number.md §6, §11, §12; docs/spec/09-testing-strategy.md §2
@@ -211,5 +212,17 @@ describe('the words', () => {
       null,
       null,
     ]);
+  });
+});
+
+describe('the intro line (O36)', () => {
+  it('names the mode and the range, or that the range is hidden', () => {
+    const range = { low: 1, high: 100 };
+    expect(gtnText.intro?.({ range }, 'shared')).toBe('Shared number between 1 and 100');
+    expect(gtnText.intro?.({ range }, 'individual')).toBe(
+      'Everyone has their own number between 1 and 100',
+    );
+    expect(gtnText.intro?.({ range: null }, 'shared')).toBe('Hidden range');
+    expect(gtnText.intro?.(null, 'shared')).toBeNull();
   });
 });

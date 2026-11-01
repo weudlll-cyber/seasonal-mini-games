@@ -23,6 +23,8 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 
 **(aa) The fairness proof and player numbers (2026-11-01).** Public answers now name players by their number in the match, never by account id (DECISIONS T104, closing the former question (v)). In an individual round each player's secret is derived from the seed with the label `secret/<account id>`, so an outsider holding only the published proof can check the commitment and the shared secret, but cannot recompute an individual player's secret without that player's account id; the server's own check (`/rounds/:id/verify`) recomputes and shows them all. Proposal: keep it so; a new seed version could derive individual secrets from the match number instead, which would change nothing for rounds already played (their stored seeds keep the old labels).
 
+**(ab) The countdown before a round (2026-11-01).** The countdown is now the round's intro screen (owner decision 36): the season, its special and what it does, the secret and its range, the cooldown and the seconds left. Proposal: `round.countdownS` 10 s instead of 5 s, so the screen can be read; the range stays 3–30 s (02 §3, 08 §3; DECISIONS T109).
+
 ## Spec conflicts
 
 Resolved by the decision rules (owner decisions first, then the more specific section) and listed here for the owner to confirm.
