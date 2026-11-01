@@ -56,7 +56,11 @@ export async function direct(
     cooldownS: 3,
     ...body,
   });
+  // A fresh page load, as the other journeys open a match: coming straight from another
+  // match's running round by the address alone, CI once saw the countdown stop at 0 s
+  // (NIGHT-RUN, night 4 N6).
   await p.page.goto(`./#/match/${started.matchCode}`);
+  await p.page.reload();
   await roundOpen(p.page);
   return started;
 }

@@ -80,6 +80,7 @@ To confirm after the owner has played:
 - Owner decision 40 says the host chooses the explosion's waiting time "per match"; like Seasonal Target's feedback mode (O39) it is built as the host's round setting, which the round form keeps from round to round (spec conflict, as for O39).
 - Seasonal Target's map is part of the input row (selecting a cell is input), and the round layout puts the input row under the list; 02d §11 wants the map left and the list right. Until the platform has a board layout for such games the map is capped at `min(52dvh, 520px)` (see the play-through in NIGHT-RUN).
 - The player panel gets no player names or roster colours, so on Seasonal Target's map other players' dots read "Another player" in season colours by first appearance, not the list's colours. Proposal: hand the panels `names` and the colour of each player.
+- To look at (found in CI, night 4): a player who goes from one match with a running round straight to another match in the same tab, by its address, may see the new round's intro stop at "Opens in 0 s" until the page is reloaded. Not reproduced locally; the e2e journeys reload, as before.
 - The leaderboards stay one per period for all four games together: points from every game add up on the same season and all-time boards and team boards; each award is a match's, and the match names its game (DECISIONS T121). The alternative is a board per game per period.
 
 ## Spec conflicts
