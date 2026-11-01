@@ -8,7 +8,8 @@
  *                 number" while the range is hidden, and nothing narrowed (O17); the player
  *                 panel shows the range and the hint; the input row keeps Guess disabled while
  *                 the player cannot act, takes negative whole numbers (± flips the sign),
- *                 words the game's own refusal, and keeps what was typed across the round
+ *                 words the game's own refusal, refuses a fallen number at once without
+ *                 sending it ("Already fallen.", O37), and keeps what was typed across the round
  *                 opening and while an answer is on its way (T76); the spectator and result panels show what their
  *                 views hold, the result with the range; the views become the list's guess
  *                 rows, own ones pending while Frost holds them (O20, O21); every room event
@@ -95,7 +96,19 @@ describe('the player panel', () => {
       fireEvent.click(screen.getByTestId('guess-button'));
     });
     expect(act).toHaveBeenCalledWith({ value: -5 });
-    expect(screen.getByRole('status').textContent).toContain('fell in Leaf Fall');
+    expect(screen.getByRole('status').textContent).toBe('Already fallen.');
+  });
+
+  it('refuses a fallen number at once without sending it (O37)', () => {
+    const act = vi.fn();
+    render(
+      <GuessInput view={view} act={act} canAct frostDelayMs={null} now={() => 0} season="autumn" />,
+    );
+    fireEvent.change(screen.getByTestId('guess-input'), { target: { value: '6' } });
+    fireEvent.click(screen.getByTestId('guess-button'));
+    expect(screen.getByRole('status').textContent).toBe('Already fallen.');
+    expect(act).not.toHaveBeenCalled();
+    expect(screen.getByTestId<HTMLInputElement>('guess-input').value).toBe('6');
   });
 });
 

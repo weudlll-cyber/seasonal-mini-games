@@ -14,7 +14,8 @@
  *                 emptied only if it still holds the guess sent, so nothing typed is lost
  *                 (T76). The field takes whole numbers from −1 000 000 000 to 1 000 000 000
  *                 (T53). The game's own refusals are shown in plain words; the platform's are
- *                 shown by the platform.
+ *                 shown by the platform. A fallen number gets "Already fallen." at once,
+ *                 without being sent (O37).
  * Depends on:     react, @smg/game-sdk (props), @smg/ui (sign toggle),
  *                 @smg-game/guess-the-number (types, limit), ./RangeBar, ./text
  * Used by:        ./index
@@ -40,7 +41,7 @@ function parsed(text: string): number | null {
 }
 
 // The field's text, the game's refusal line, sending, and flipping the sign.
-function useGuess(act: PlayerPanelProps['act']) {
+function useGuess(act: PlayerPanelProps['act'], removed: readonly number[]) {
   const [value, setValue] = useState('');
   const [message, setMessage] = useState<string | null>(null);
   // A guess on its way: Guess waits for its answer, so the next one is never sent early.
@@ -50,6 +51,12 @@ function useGuess(act: PlayerPanelProps['act']) {
     const n = parsed(value);
     if (n === null) {
       setMessage(gtnText.code('INVALID_ACTION'));
+      return;
+    }
+    // A fallen number is refused at once, the server's words, nothing sent (O37); the server
+    // still refuses it the same way without a cooldown should the view be behind.
+    if (removed.includes(n)) {
+      setMessage(gtnText.code('NUMBER_REMOVED'));
       return;
     }
     const sent = value;
@@ -73,7 +80,7 @@ function useGuess(act: PlayerPanelProps['act']) {
 
 export function GuessInput(props: GtnPlayerProps): ReactElement {
   const view = props.view as PlayerView;
-  const { value, setValue, message, sending, submit, flip } = useGuess(props.act);
+  const { value, setValue, message, sending, submit, flip } = useGuess(props.act, view.removed);
   const negative = view.range === null || view.range.low < 0;
   return (
     <div className="gtn-input">

@@ -9,7 +9,8 @@
  *                 halving fire at `opensAt + k × interval` until the round ends or the special
  *                 has run its course, several due at one instant in the order halving, Leaf
  *                 Fall, Heatwave (03 §1 rule 6). Heatwave lowers the cooldown by its step to the
- *                 owner's 3 s floor (03 §2.2). Frost holds answers back by its delay (03 §2.4).
+ *                 owner's 3 s floor (03 §2.2). Frost holds answers back by its delay (03 §2.4);
+ *                 a fall learns which answers are still held (O37).
  *                 Everything is a step in the round's one queue, so a guess before a firing
  *                 sees the old state and one after it the new state, for everyone alike.
  * Depends on:     @smg/game-sdk (hooks, floor), ./builder, ./types
@@ -121,10 +122,13 @@ function fire<S, A, E, Cfg, Sec>(
   const game = step.state.game;
   if (hooks === undefined || game === null) return;
   const ctx = ctxOf(step, at);
+  // Answers Frost still holds are not public yet (O37), the same cut as the views'.
+  const delay = frostDelay(step.state);
+  const releasedBefore = delay === null ? Infinity : at - delay;
+  const count = step.state.config.specials.leafFall.count;
   const events =
     special === 'leafFall'
-      ? (hooks.leafFall?.(game, ctx, { index, count: step.state.config.specials.leafFall.count }) ??
-        [])
+      ? (hooks.leafFall?.(game, ctx, { index, count, releasedBefore }) ?? [])
       : (hooks.halving?.(game, ctx, index) ?? []);
   emitGame(step, events);
   step.emit({ type: 'SpecialFired', special, index, at, summary: null, last: events.length === 0 });

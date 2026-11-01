@@ -49,11 +49,16 @@ With the special off, the round still carries its season for visuals and teams, 
 ### 2.3 Autumn — Leaf Fall
 
 - **Trigger:** every `autumn.intervalS` (default 20 s) after `opensAt`.
-- **Effect:** `autumn.count` numbers (default 10) are removed from the range. They are chosen uniformly with the round seed from the **candidates**: numbers inside the current range that have not been removed yet and are not the secret of anyone in the round. A guess for a removed number is rejected without cost (`NUMBER_REMOVED`).
-- **End:** falls stop when the numbers still in the range (removed ones excluded) would drop below `autumn.minRemaining` (default 10). The last fall removes only as many as that allows.
+- **Effect:** `autumn.count` numbers (default 10) are removed from the range. They are chosen uniformly with the round seed from the **candidates**, the numbers still possible given the answers every player can see (owner decision 37; DECISIONS T111):
+  - With a shared number and visibility `full`: the current range (shown or hidden), minus every number excluded by a higher or lower answer delivered so far, minus the numbers guessed and the numbers already removed. An answer Frost still holds counts only once it is delivered.
+  - With visibility `own` or `numbers`, and in individual mode, no answer is public: the current range minus the numbers guessed and the numbers already removed.
+  - The secret of anyone in the round is never removed.
+- **Rejection:** a guess for a removed number is rejected without cost (`NUMBER_REMOVED`, "Already fallen."); the input row says so at once without sending it (T113).
+- **End:** falls stop when the candidates would drop below `autumn.minRemaining` (default 10). The last fall removes only as many as that allows.
+- **What it hints:** with `full` visibility the fallen numbers lie where the number can still be, so they hint at its region. The owner accepts this as an exception to owner decision 17 (no narrowed range); nothing narrowed is drawn ([05](05-security-threat-model.md) §3).
 - **Visible to all:** the removed numbers go to every watcher, players and spectators alike. They show as gaps in the range bar, and the round's guess list names them in an event row ("Leaf Fall: 12, 57 and 300 fell"); with the range hidden that row is the only place (DECISIONS T54).
 - **Individual mode:** there is one set of removed numbers for the whole round, chosen so that it contains no player's number. It is the same set for everyone.
-- **Equality, stated honestly:** every player loses the same numbers at the same moment, and none of them is anyone's secret. How much a fall helps differs: a number that falls where one player is still searching helps that player more than one that falls where their answers already rule it out. The rule is equal; the luck of where the leaves fall is spread evenly by the uniform choice.
+- **Equality, stated honestly:** every player loses the same numbers at the same moment, and none of them is anyone's secret. How much a fall helps differs: a number that falls where one player is still searching helps that player more than one that falls where their own answers already rule it out (with `full` visibility every answer is public, so this applies only to the other modes). The rule is equal; the luck of where the leaves fall is spread evenly by the uniform choice.
 
 ### 2.4 Winter — Frost
 

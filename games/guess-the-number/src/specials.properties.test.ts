@@ -96,7 +96,8 @@ describe('Leaf Fall (S3)', () => {
         let s = state;
         const size = r.width + 1;
         for (let k = 1; k <= 40; k += 1) {
-          const events = hooks?.leafFall?.(s, ctx, { index: k, count }) ?? [];
+          const events =
+            hooks?.leafFall?.(s, ctx, { index: k, count, releasedBefore: Infinity }) ?? [];
           if (events.length === 0) break;
           expect(events.map((e) => e.audience)).toEqual(['room']);
           const fell = events[0]?.event.type === 'NumbersRemoved' ? events[0].event.numbers : [];
@@ -122,8 +123,10 @@ describe('Leaf Fall (S3)', () => {
     };
     const one = setUp(r);
     const two = setUp(r);
-    expect(hooks?.leafFall?.(one.state, one.ctx, { index: 1, count: 10 })).toEqual(
-      hooks?.leafFall?.(two.state, two.ctx, { index: 1, count: 10 }),
+    expect(
+      hooks?.leafFall?.(one.state, one.ctx, { index: 1, count: 10, releasedBefore: Infinity }),
+    ).toEqual(
+      hooks?.leafFall?.(two.state, two.ctx, { index: 1, count: 10, releasedBefore: Infinity }),
     );
   });
 
@@ -136,7 +139,8 @@ describe('Leaf Fall (S3)', () => {
       hintType: 'parity' as const,
     };
     const { state, secrets, ctx } = setUp(r);
-    const events = hooks?.leafFall?.(state, ctx, { index: 1, count: 100 }) ?? [];
+    const events =
+      hooks?.leafFall?.(state, ctx, { index: 1, count: 100, releasedBefore: Infinity }) ?? [];
     const fell = events[0]?.event.type === 'NumbersRemoved' ? events[0].event.numbers : [];
     expect(fell).toHaveLength(100);
     for (const secret of allSecrets(secrets)) expect(fell).not.toContain(secret);

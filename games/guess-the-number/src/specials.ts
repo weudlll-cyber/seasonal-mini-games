@@ -6,25 +6,18 @@
  * Responsibility: Spring Herald gives one true hint (odd or even, or which half) about the
  *                 shared secret to everyone, or about each player's own number to that player
  *                 (03 §2.1). Leaf Fall removes `count` numbers chosen uniformly from the
- *                 numbers in the range that are not removed and are nobody's secret, and stops
- *                 when fewer than `minRemaining` would be left (03 §2.3). Halving replaces a
+ *                 numbers still possible, never a secret (./leafFall, O37). Halving replaces a
  *                 range by a window of half its size, rounded up, placed uniformly among the
  *                 positions that hold the secret, until the range has `minRangeSize` numbers
  *                 or fewer (03 §4). Every choice comes from the round randomness under the
  *                 labels `leafFall/<k>` and `halving/<k>/<playerId|shared>` (04 §5.4).
- * Depends on:     @smg/game-sdk (hooks, ranges), ./secrets, ./state
+ * Depends on:     @smg/game-sdk (hooks, ranges), ./leafFall, ./secrets, ./state
  * Used by:        ./module
  * Spec:           docs/spec/03-seasonal-specials.md §2.1, §2.3, §4
  */
-import {
-  inRange,
-  rangeSize,
-  type Drbg,
-  type Emitted,
-  type Range,
-  type SpecialHooks,
-} from '@smg/game-sdk';
+import { rangeSize, type Drbg, type Emitted, type Range, type SpecialHooks } from '@smg/game-sdk';
 
+import { fallingNumbers } from './leafFall.js';
 import { secretOf, type Secrets } from './secrets.js';
 import type { GtnEvent, GtnState, Hint } from './state.js';
 
@@ -34,49 +27,6 @@ function hintFor(state: GtnState, secret: number, range: Range): Hint {
   return secret <= mid
     ? { kind: 'half', low: range.low, high: mid }
     : { kind: 'half', low: mid + 1, high: range.high };
-}
-
-const allSecrets = (s: Secrets): number[] =>
-  s.mode === 'shared' ? [s.value] : Object.values(s.byPlayer);
-
-// `n` distinct values from `pool`, uniformly: a partial Fisher–Yates shuffle.
-function pickFrom(pool: number[], n: number, rng: Drbg): number[] {
-  for (let i = 0; i < n; i += 1) {
-    const j = i + rng.nextInt(pool.length - i);
-    [pool[i], pool[j]] = [pool[j] ?? 0, pool[i] ?? 0];
-  }
-  return pool.slice(0, n);
-}
-
-// `n` distinct values of `range` that `allowed` accepts, uniformly, by rejection (large ranges).
-function rejectFrom(range: Range, n: number, allowed: (v: number) => boolean, rng: Drbg): number[] {
-  const chosen = new Set<number>();
-  while (chosen.size < n) {
-    const v = rng.intBetween(range.low, range.high);
-    if (allowed(v)) chosen.add(v);
-  }
-  return [...chosen];
-}
-
-// Below this range size the candidates are listed; above it they are drawn by rejection,
-// which stays fast because a fall never takes the range below `minRemaining` (≥ 2).
-const LIST_LIMIT = 20_000;
-
-function leafFall(state: GtnState, secrets: Secrets, count: number, rng: Drbg): number[] {
-  const range = state.range;
-  const removed = new Set(state.removed);
-  const secret = new Set(allSecrets(secrets));
-  const left = rangeSize(range) - state.removed.filter((v) => inRange(range, v)).length;
-  const allowed = (v: number) => !removed.has(v) && !secret.has(v);
-  const candidates = left - [...secret].filter((v) => inRange(range, v) && !removed.has(v)).length;
-  const n = Math.min(count, left - state.specials.minRemaining, candidates);
-  if (n <= 0) return [];
-  if (rangeSize(range) <= LIST_LIMIT || candidates < 4 * n) {
-    const pool: number[] = [];
-    for (let v = range.low; v <= range.high; v += 1) if (allowed(v)) pool.push(v);
-    return pickFrom(pool, n, rng).sort((a, b) => a - b);
-  }
-  return rejectFrom(range, n, allowed, rng).sort((a, b) => a - b);
 }
 
 // A window of half the size, rounded up, holding `secret`, placed uniformly inside `range`.
@@ -105,10 +55,10 @@ export const gtnSpecials: SpecialHooks<GtnState, GtnEvent, Secrets> = {
     }));
   },
   leafFall: (state, ctx, fall) => {
-    const numbers = leafFall(
+    const numbers = fallingNumbers(
       state,
       ctx.secrets,
-      fall.count,
+      fall,
       ctx.rng.child('leafFall', String(fall.index)),
     );
     if (numbers.length === 0) return [];

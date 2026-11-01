@@ -3,7 +3,8 @@
  * @module server/test
  * @brief  The seasonal specials in real rounds (fast test profile), and the season feed.
  *
- * Responsibility: Leaf Fall strikes numbers for every watcher; Heatwave lowers the cooldown
+ * Responsibility: Leaf Fall strikes numbers for every watcher, and guessing a fallen one is
+ *                 refused without starting a cooldown; Heatwave lowers the cooldown
  *                 for everyone; under Frost an answer reaches the guesser only after the
  *                 delay, `GET …/state` shows nothing of it before (09 §6 "Frost early read")
  *                 and the log records its delivery; Spring Herald's hint is in every player's
@@ -142,6 +143,26 @@ describe('specials in the fast test profile', () => {
     expect((await state(winter.roundId)).game.guesses[0]?.feedback).toMatch(/higher|lower|correct/);
     const log = await kit.harness.built.runtime.store.log(winter.roundId);
     expect(log.some((e) => e.type === 'HeldDelivered')).toBe(true);
+  }, 30_000);
+});
+
+describe('a fallen number', () => {
+  it('refuses a fallen number without cost: the next guess goes through at once', async () => {
+    const autumn = await quick('autumn');
+    const opensAt = (await state(autumn.roundId)).opensAt;
+    await sleep(Math.max(0, opensAt - Date.now()) + 5_600);
+    const fell = await state(autumn.roundId);
+    const socket = kit.open(kit.clients['player-1'].cookie);
+    expect(await kit.connected(socket)).toBe('ok');
+    const fallen = fell.game.removed[0];
+    const { low } = fell.game.range;
+    const free = [low, low + 1, low + 2].find((v) => !fell.game.removed.includes(v)) ?? low;
+    const refused = await kit.send(socket, 'guess', { roundId: autumn.roundId, value: fallen });
+    expect(refused).toMatchObject({ ok: false, code: 'NUMBER_REMOVED' });
+    expect((await state(autumn.roundId)).game.guesses).toEqual([]);
+    expect((await kit.send(socket, 'guess', { roundId: autumn.roundId, value: free })).ok).toBe(
+      true,
+    );
   }, 30_000);
 });
 

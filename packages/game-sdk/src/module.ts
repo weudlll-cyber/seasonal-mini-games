@@ -111,13 +111,15 @@ export interface GameViews<S, Sec> {
 
 // The specials a game implements (04 §4.4). One call is one firing; every random choice
 // comes from `ctx.rng` under the special's label (04 §5.4). An empty list from `leafFall` or
-// `halving` means the special has run its course in this round.
+// `halving` means the special has run its course in this round. A fall gets `releasedBefore`
+// as views do: answers to guesses received at or after it are still held by Frost, so a fall
+// that narrows by public answers must not count them yet (O37).
 export interface SpecialHooks<S, E, Sec> {
   readonly springHerald: (state: S, ctx: GameCtx<Sec>) => readonly Emitted<E>[];
   readonly leafFall: (
     state: S,
     ctx: GameCtx<Sec>,
-    fall: { readonly index: number; readonly count: number },
+    fall: { readonly index: number; readonly count: number; readonly releasedBefore: number },
   ) => readonly Emitted<E>[];
   readonly halving: (state: S, ctx: GameCtx<Sec>, index: number) => readonly Emitted<E>[];
 }

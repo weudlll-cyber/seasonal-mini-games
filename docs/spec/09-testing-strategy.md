@@ -48,7 +48,7 @@
 
 - **S1 Spring Herald.** Every roster player gets exactly one hint, which is true and arrives before any guess is accepted.
 - **S2 Heatwave.** The cooldown never goes below 3 s, never rises, and drops by exactly the step at each due time until the floor.
-- **S3 Leaf Fall.** No fall removes any secret of the round. All players see the same removed set. Each fall removes `count` numbers, or fewer only at the `minRemaining` stop.
+- **S3 Leaf Fall.** No fall removes any secret of the round. All players see the same removed set. Each fall removes `count` numbers, or fewer only at the `minRemaining` stop, which counts candidates. Every fallen number is a candidate (owner decision 37): inside the intersection of the delivered public answers under `full`, never a guessed number; a Frost-held answer does not count yet; the same seed and guesses give the same drops (`leafFall.test.ts`).
 - **S4 Frost.** Each answer is delivered `delay` after its receive time. Metamorphic: the same inputs with and without Frost give the same order, winner and placings.
 - **S5 Halving.** Every range always contains its secret. Sizes halve (rounded up) at each due time until the minimum. All players have the same size at the same time.
 - **S6 Teams.** Teams never change during a round. The winner's team gets exactly 1 point per round, and no other team gets any. Team standings are a total order.

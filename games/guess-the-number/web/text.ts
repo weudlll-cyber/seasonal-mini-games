@@ -40,7 +40,7 @@ export const freeHint = (hint: HintView): string => `Free hint: ${hintBody(hint)
 
 const CODES: Readonly<Record<string, string>> = {
   OUT_OF_RANGE: 'That number is outside the range.',
-  NUMBER_REMOVED: 'That number fell in Leaf Fall. Try another one.',
+  NUMBER_REMOVED: 'Already fallen.',
   ALREADY_GUESSED: 'You guessed that number already. It costs nothing — try another one.',
   INVALID_ACTION: 'Please type a whole number between −1 000 000 000 and 1 000 000 000.',
 };

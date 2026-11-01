@@ -190,7 +190,10 @@ function specials<S, A, E, Cfg, Sec>(entry: GameEntry<S, A, E, Cfg, Sec>, mode: 
         const ctx = { now: 0, cooldownMs: 3_000, secrets, rng: roundRng(seed) };
         const hooks = module.specials ?? {};
         equalFor(hooks.springHerald?.(state, ctx) ?? [], mode);
-        equalFor(hooks.leafFall?.(state, ctx, { index: 1, count: 5 }) ?? [], mode);
+        equalFor(
+          hooks.leafFall?.(state, ctx, { index: 1, count: 5, releasedBefore: Infinity }) ?? [],
+          mode,
+        );
         equalFor(hooks.halving?.(state, ctx, 1) ?? [], mode);
       }),
       { numRuns: 100 },
