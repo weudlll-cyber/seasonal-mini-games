@@ -140,6 +140,9 @@ export interface GameModule<S, A, E, Cfg, Sec> {
   };
   // A season whose special the game does not implement runs without it (04 §4.4).
   readonly specials?: Partial<SpecialHooks<S, E, Sec>>;
+  // The secret in a few words for the chat's round-end line ("the number was 42", O32), from
+  // the result view and the winner's key; null, or no hook, names no value.
+  readonly reveal?: (result: unknown, winner: string | null) => string | null;
 }
 
 // What a game gives the platform's conformance suite (04 §4.5, 09 §2): a round input, secrets

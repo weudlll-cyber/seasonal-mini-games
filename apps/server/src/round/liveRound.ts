@@ -8,7 +8,8 @@
  *                 refused as INVALID_ACTION otherwise, never queued), lifecycle commands
  *                 stamped with the processing time, players staff kicked (their guesses are
  *                 refused as NOT_IN_ROUND, never queued), views per viewer, frames per audience,
- *                 the fairness check, and draining before shutdown.
+ *                 the game's words for the secret after the end (the chat line, O32), the
+ *                 fairness check, and draining before shutdown.
  * Depends on:     @smg/application (verify), @smg/domain (types), @smg/game-sdk (GameEntry),
  *                 ./actor, ./pgRoundStore (types), ./views
  * Used by:        ./gameRunner, ./rounds, ../realtime/*, ../http/routes/*, ../dev/*
@@ -48,6 +49,8 @@ export interface LiveRound {
   playerView(playerKey: string): unknown;
   cooldownEndsAt(playerKey: string): number | null;
   frames(events: readonly StoredEvent[], held: ReadonlySet<number>): Frames;
+  // After the end: the secret in the game's words ("the number was 42"), else null.
+  reveal(winner: string | null): string | null;
   verify(log: readonly StoredEvent[]): Verified<unknown>;
   drain(): Promise<void>;
   // Unanswered items in its queue (metrics).
@@ -96,6 +99,10 @@ export function liveRound<S, A, E, Cfg, Sec>(
     },
     cooldownEndsAt: (playerKey) => state().roster[playerKey]?.cooldownEndsAt ?? null,
     frames: (events, held) => framesOf(events, held, () => actor.current.result()),
+    reveal: (winner) => {
+      const result = actor.current.result();
+      return result === null ? null : (module.reveal?.(result, winner) ?? null);
+    },
     verify: (log) =>
       verifyRound(
         module,

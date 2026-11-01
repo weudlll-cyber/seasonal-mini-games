@@ -88,7 +88,9 @@ export const ChatSanctionBody = z
     reason: z.string().trim().min(3).max(500),
   })
   .strict()
-  .refine((s) => (s.kind === 'ban') === (s.minutes === null), 'a mute has minutes, a ban none');
+  .refine((s) => (s.kind === 'ban') === (s.minutes === null), 'a mute has minutes, a ban none')
+  // A mute covers the whole chat (O32); only a ban may be kept to one room.
+  .refine((s) => s.kind === 'ban' || s.scope === 'global', 'a mute covers the whole chat');
 export const ChatRoomPatchBody = z
   .object({ slowModeS: z.number().int().min(0).max(3600), locked: z.boolean() })
   .strict();

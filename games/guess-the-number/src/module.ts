@@ -18,7 +18,7 @@ import { deriveSecrets, type Secrets } from './secrets.js';
 import { gtnSettings, type GtnConfig } from './settings.js';
 import { gtnSpecials } from './specials.js';
 import { createState, evolve, type GtnEvent, type GtnState } from './state.js';
-import { views, viewSchemas } from './views.js';
+import { reveal, views, viewSchemas } from './views.js';
 
 export const guessTheNumber: GameModule<GtnState, GuessAction, GtnEvent, GtnConfig, Secrets> = {
   meta: {
@@ -40,4 +40,5 @@ export const guessTheNumber: GameModule<GtnState, GuessAction, GtnEvent, GtnConf
   views,
   viewSchemas,
   specials: gtnSpecials,
+  reveal,
 };

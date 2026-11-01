@@ -31,7 +31,8 @@ The chat UI sits behind a `ChatPanel` component boundary, as in Bingo 07 §6. Th
 | `hostEmbed` | One dedicated room of the host's chat, embedded by URL (`integrations.hostChatUrl`). On the Seasonal Entertainment website: room slug `mini-games` through the website's `/embed/chat?room=mini-games` | Website installs |
 
 - With `none` and `hostEmbed`, the platform posts nothing into any chat. Winners, solves and specials appear in the announcement strip only.
-- With `builtin`, the platform writes one system line per round end ("Round 4: Walter found 731 first").
+- With `builtin`, the platform writes one system line per round end that names the number (owner, decision 32): "Round 4: Walter found it first — the number was 731", in individual mode "— their number was 731" (the winner's), and "Round 4 ended: nobody found it — the number was 731" (without a number in individual mode). The game words the number through its optional `reveal` hook (04 §4; DECISIONS T90).
+- A chat mute applies to the whole chat (owner, decision 32): the moderator's inline mute and the admin API's mute both cover every room; only a ban may be kept to one room.
 - Teams have no chat of their own in v1. Whatever players share in the match chat is their choice. The rules give no team any information the others lack ([03](03-seasonal-specials.md) §5).
 - The `mini-games` room is created by a website admin. Nothing in this platform creates it.
 

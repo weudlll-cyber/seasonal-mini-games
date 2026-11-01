@@ -4,8 +4,9 @@
  * @brief  Mutes and bans of the builtin chat: the list, a new sanction, lifting one.
  *
  * Responsibility: every sanction (`GET /admin/chat/sanctions`) with whom, kind, scope, reason,
- *                 by whom and until when; a new mute (5 minutes, an hour or a day) or ban,
- *                 everywhere or in one room, with a reason (`POST /admin/chat/sanctions`); lift
+ *                 by whom and until when; a new mute (5 minutes, an hour or a day, always the
+ *                 whole chat, O32) or ban (everywhere or in one room), with a reason
+ *                 (`POST /admin/chat/sanctions`); lift
  *                 one (`POST …/:id/lift`). Both through the confirm dialog with the effect in
  *                 one sentence.
  * Depends on:     react, @smg/contracts (ChatSanctionView), ../ConfirmDialog, ../http, ../TextInput
@@ -55,7 +56,7 @@ function sanctionRequest({ name, kind, minutes, where }: Draft): ConfirmRequest 
     effect:
       kind === 'ban'
         ? `${name} can no longer write in ${where === 'global' ? 'any room' : 'this room'} until the ban is lifted.`
-        : `${name} cannot write in ${where === 'global' ? 'any room' : 'this room'} for ${String(minutes)} minutes.`,
+        : `${name} cannot write in any room for ${String(minutes)} minutes.`,
     confirmLabel: kind === 'ban' ? 'Ban' : 'Mute',
     danger: true,
     ask: REASON,
@@ -102,7 +103,8 @@ function NewSanction({ open }: { readonly open: (r: ConfirmRequest) => void }): 
   const [kind, setKind] = useState<'mute' | 'ban'>('mute');
   const [minutes, setMinutes] = useState(60);
   const [scope, setScope] = useState('');
-  const where = scope.trim() === '' ? 'global' : scope.trim();
+  // A mute covers the whole chat (O32); only a ban may be kept to one room.
+  const where = kind === 'mute' || scope.trim() === '' ? 'global' : scope.trim();
   return (
     <div className="smg-row">
       <TextInput label="Display name" visible value={name} onChange={setName} maxLength={24} />
@@ -119,14 +121,17 @@ function NewSanction({ open }: { readonly open: (r: ConfirmRequest) => void }): 
           <option value="ban">ban</option>
         </select>
       </label>
-      {kind === 'mute' ? <Duration minutes={minutes} set={setMinutes} /> : null}
-      <TextInput
-        label="Room id (empty: every room)"
-        visible
-        value={scope}
-        onChange={setScope}
-        maxLength={36}
-      />
+      {kind === 'mute' ? (
+        <Duration minutes={minutes} set={setMinutes} />
+      ) : (
+        <TextInput
+          label="Room id (empty: every room)"
+          visible
+          value={scope}
+          onChange={setScope}
+          maxLength={36}
+        />
+      )}
       <button
         type="button"
         className="smg-btn smg-btn--danger"

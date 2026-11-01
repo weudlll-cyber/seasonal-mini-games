@@ -79,7 +79,7 @@ With the special off, the round still carries its season for visuals and teams, 
 - **Shared mode:** one window, shown to everyone.
 - **Individual mode:** every player's own range halves around their own number, at the same moment and to the same size. The positions come from the seed per player. Spectators see "Halving: every range is now 125 numbers".
 - **With a season special:** a halving round still has its season, and its special applies too (owner: every round belongs to a season). Order at the same instant: §1 rule 6.
-- **With a hidden range** ([02](02-game-guess-the-number.md) §3): a window tells where the range is, so a normal season round of that season runs instead (*proposal*, DECISIONS T55, [OPEN](../OPEN.md)).
+- **With a hidden range** ([02](02-game-guess-the-number.md) §3): a window tells where the range is, so a normal season round of that season runs instead (owner, decision 29; DECISIONS T55).
 - **Equality:** the same moment and the same size for all. The halving tells every player the same amount: the size of the window is the same, and its position is random.
 
 ## 5. Season teams

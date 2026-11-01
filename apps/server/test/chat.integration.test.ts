@@ -6,10 +6,11 @@
  *
  * Responsibility: two players of a match chat over the socket; a guest reads and cannot send;
  *                 the block, mask and flag lists (a flagged message enters the queue); the
- *                 rate limit and duplicates; a report resolved by a moderator; a mute refuses
- *                 the next message and ends by expiry or lifting; a ban refuses; a deleted
+ *                 rate limit and duplicates; a report resolved by a moderator; a mute covers
+ *                 the whole chat (O32), refuses the next message and ends by expiry or
+ *                 lifting; a ban refuses; a deleted
  *                 message and a locked room reach the watchers; a round's end writes its
- *                 system line; with the provider `none` or `hostEmbed` the routes and intents
+ *                 system line with the number; with the provider `none` or `hostEmbed` the routes and intents
  *                 answer CHAT_DISABLED, /chat/config names the provider and the CSP frames the
  *                 host chat. Settings are restored, the match aborted and the chat rows removed.
  * Depends on:     vitest, ./chatKit, ./harness, ./session, ./socketKit
@@ -156,6 +157,19 @@ const sanction = (displayName: string, kind: 'mute' | 'ban', minutes: number | n
     reason: 'integration test',
   });
 
+describe('a mute', () => {
+  it('covers the whole chat: one kept to a room is refused (O32)', async () => {
+    const inOneRoom = await admin.post('/api/v1/admin/chat/sanctions', {
+      displayName: 'dev-player-1',
+      kind: 'mute',
+      scope: room.id,
+      minutes: 5,
+      reason: 'integration test',
+    });
+    expect(inOneRoom.statusCode).toBe(400);
+  });
+});
+
 describe('reports and sanctions', () => {
   it('takes a report into the queue and lets a moderator resolve it', async () => {
     const id = messages(p2).find((m) => m.text === 'Good luck all')?.id ?? '';
@@ -230,7 +244,7 @@ describe('deletion and lock', () => {
 });
 
 describe('the round-end line', () => {
-  it('writes one system line naming the winner when a round ends', async () => {
+  it('writes one system line naming the winner and the number when a round ends', async () => {
     const watchers = await Promise.all(
       (['host', 'player-1', 'player-2'] as const).map(async (who) => {
         const s = kit.open(kit.clients[who].cookie);
@@ -251,7 +265,8 @@ describe('the round-end line', () => {
     if (winner === undefined) throw new Error('no winner socket');
     await until(async () => (await kit.send(winner, 'guess', { roundId: id, value })).ok);
     const line = (m: { kind: string; text: string | null }) =>
-      m.kind === 'system' && m.text === 'Round 1: dev-player-1 found it first';
+      m.kind === 'system' &&
+      m.text === `Round 1: dev-player-1 found it first — the number was ${String(value)}`;
     await until(() => messages(p3).some(line));
     for (const s of watchers) s.disconnect();
   });

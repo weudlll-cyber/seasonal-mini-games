@@ -36,7 +36,7 @@
 | `comments.warmAbove` | 3 % | 1 | 20 | proposal: "warm" above this share | game admin | frozen |
 | `comments.hotAbove` | 1 % | 0.5 | 10 | proposal: "hot" above this share; at or under it "burning" (more than 2 away). The five thresholds must fall from way off to hot | game admin | frozen |
 | `comments.trendPercent` | 33 % | 0 | 100 | proposal: how often a guess in another tier than the player's last one gets a trend line ("getting warmer") instead of a tier line (DECISIONS T71) | game admin | frozen |
-| `round.marginWindowS` | 2 | 0.5 | 10 | proposal: how long after the winning guess a correct guess still counts for the winning margin (02 §9) | game admin | frozen |
+| `round.marginWindowS` | 2 | 0.5 | 10 | owner (O33): how long after the winning guess a correct guess still counts for the winning margin (02 §9) | game admin | frozen |
 | `round.seasonSource` | `inSeason` | — | — (`inSeason`, `manual`) | owner (default: O15) | host | frozen |
 | `round.specialOn` | true | — | — | owner (O15) | host | frozen |
 | `round.teamsOn` | true | — | — | owner (O15) | host (shared mode) | frozen |
@@ -71,7 +71,7 @@ The host form shows each host-chosen value with its default preselected and refu
 | `leaderboard.minPlayersForPoints` | 4 | 2 | 50 | owner (O11) | game admin | next: read at round end |
 | `leaderboard.periodLength` | quarter, named after the season | — | — | adopted (Bingo 01 §10); fixed to the calendar quarter in UTC, not a stored setting (DECISIONS T87) | — | — |
 | `leaderboard.firstQuarterSeason` | winter | spring, summer, autumn, winter | — | *proposal* (OPEN (t)): the season that names January to March; the other quarters follow in the order of the year | game admin | next: read at round end |
-| `leaderboard.abortedMatchesCount` | off | — | — | *proposal* (OPEN (u)): off, aborting a match takes back its league points | game admin | immediate |
+| `leaderboard.abortedMatchesCount` | off | — | — | owner (O31): off, aborting a match takes back its league points; a match ended normally keeps them | game admin | immediate |
 
 ## 5. Seasons (documents `seasons`, `integrations`)
 

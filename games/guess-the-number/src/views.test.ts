@@ -11,7 +11,8 @@
  *                 individual mode keeps their own rows and learns nothing more of the others
  *                 (O25); with a hidden range
  *                 no view holds the range, and the result reveals it with the secret (T52);
- *                 the result names the secret (shared) or every player's (individual); every
+ *                 the result names the secret (shared) or every player's (individual), and
+ *                 `reveal` words it for the chat (O32); every
  *                 view validates against its schema; the settings read and check the range,
  *                 negative ends included, and the comment thresholds; a hidden range rules
  *                 halving out (T55).
@@ -204,6 +205,16 @@ describe('result view', () => {
       closestMiss: null,
     });
     expect(viewSchemas.result.safeParse(r).success).toBe(true);
+  });
+
+  it('words the secret for the chat line: shared, the winner number, or nothing (O32)', () => {
+    const reveal = guessTheNumber.reveal;
+    const shared = played('full');
+    expect(reveal?.(views.result(shared.state, shared.secrets), null)).toBe('the number was 412');
+    const ind = played('full', 'individual');
+    const result = views.result(ind.state, ind.secrets);
+    expect(reveal?.(result, 'b')).toBe('their number was 77');
+    expect(reveal?.(result, null)).toBeNull();
   });
 });
 

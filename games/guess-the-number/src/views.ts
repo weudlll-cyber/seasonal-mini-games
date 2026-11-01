@@ -15,6 +15,7 @@
  *                 the secret (O19, T52). Answers and comments of guesses received at or after
  *                 `releasedBefore` are still held by Frost and appear in no view. Only
  *                 `result` takes the secrets; it alone carries the closest miss (O22).
+ *                 `reveal` words the secret for the chat's round-end line (O32).
  * Depends on:     zod, @smg/game-sdk (GameViews, Range), ./closeness, ./closestMiss, ./secrets,
  *                 ./state
  * Used by:        ./module
@@ -174,3 +175,11 @@ export const views: GameViews<GtnState, Secrets> = {
     closestMiss: secrets.mode === 'shared' ? closestMiss(state, secrets.value) : null,
   }),
 };
+
+// The chat's round-end clause (O32): the shared number, or in individual mode the winner's own.
+export function reveal(result: unknown, winner: string | null): string | null {
+  const r = result as Pick<ResultView, 'secret' | 'secrets'>;
+  if (r.secret !== null) return `the number was ${String(r.secret)}`;
+  const own = winner === null ? undefined : r.secrets?.[winner];
+  return own === undefined ? null : `their number was ${String(own)}`;
+}

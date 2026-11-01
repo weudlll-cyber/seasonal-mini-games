@@ -6,9 +6,12 @@
  * Responsibility: listens to the rounds' committed events (as the gateway does) and, when a
  *                 round's end reaches the room (under Frost only once it is released, so the
  *                 chat never tells a win before the round view does), writes "Round 4: Walter
- *                 found it first" or "Round 4 ended: nobody found it" into the match's room.
- *                 The line names the winner by display name (bots by their key) and no game
- *                 value: the platform does not know a game's result shape (04 §4). With the
+ *                 found it first — the number was 42" or "Round 4 ended: nobody found it — the
+ *                 number was 42" into the match's room. The line names the winner by display
+ *                 name (bots by their key) and the secret in the game's own words (its
+ *                 optional `reveal` hook, O32): the platform does not know a game's result
+ *                 shape (04 §4); a game without the hook, or a round no longer in memory,
+ *                 gets the line without it. With the
  *                 provider `none` or `hostEmbed` nothing is posted (07 §2). A failure is logged
  *                 and never touches the round.
  * Depends on:     @smg/domain (PlayerResult), ../db/pool, ../match/matches, ../round/rounds, ./chat
@@ -21,16 +24,19 @@ import { displayNames } from '../match/matches.js';
 import type { Rounds } from '../round/rounds.js';
 import type { Chat } from './chat.js';
 
-export function endLine(index: number, winner: string | null): string {
-  return winner === null
-    ? `Round ${String(index)} ended: nobody found it`
-    : `Round ${String(index)}: ${winner} found it first`;
+export function endLine(index: number, winner: string | null, secret: string | null): string {
+  const line =
+    winner === null
+      ? `Round ${String(index)} ended: nobody found it`
+      : `Round ${String(index)}: ${winner} found it first`;
+  return secret === null ? line : `${line} — ${secret}`;
 }
 
 async function post(
   chat: Chat,
   round: { id: string; matchId: string },
   results: readonly PlayerResult[],
+  rounds: Rounds,
 ) {
   if ((await chat.provider()) !== 'builtin') return;
   const r = await chat.pool.query<{ round_index: number }>(
@@ -40,8 +46,10 @@ async function post(
   const winner = results.find((p) => p.place === 1)?.playerId ?? null;
   const name =
     winner === null ? null : ((await displayNames(chat.pool, [winner]))[winner] ?? winner);
+  // The round is still in memory when its end commits; the result view names the secret.
+  const secret = rounds.peek(round.id)?.reveal(winner) ?? null;
   const room = await chat.ofMatch(round.matchId);
-  await chat.systemLine(room.id, endLine(r.rows[0]?.round_index ?? 0, name));
+  await chat.systemLine(room.id, endLine(r.rows[0]?.round_index ?? 0, name, secret));
 }
 
 export function postRoundLines(rounds: Rounds, chat: Chat): void {
@@ -50,7 +58,7 @@ export function postRoundLines(rounds: Rounds, chat: Chat): void {
       // A held end (Frost) comes again when it is released, without `held`.
       if (stored.type !== 'RoundEnded' || how.held.has(stored.seq)) continue;
       const results = (stored.event as { results: readonly PlayerResult[] }).results;
-      post(chat, round, results).catch((error: unknown) => {
+      post(chat, round, results, rounds).catch((error: unknown) => {
         console.error('[smg] chat round line failed:', error);
       });
     }

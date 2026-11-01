@@ -124,6 +124,7 @@ interface GameModule<S, A, E, Cfg, Sec> {
   };
   viewSchemas: { player: ZodType; spectator: ZodType; result: ZodType };
   specials?: Partial<SpecialHooks<S, E>>;      // §4.4, joins with the seasonal specials
+  reveal?(result: unknown, winner: string | null): string | null; // the secret in words for the chat's round-end line (07 §2, owner decision 32)
 }
 ```
 
