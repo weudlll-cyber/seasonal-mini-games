@@ -6,7 +6,8 @@
  * Responsibility: a person is a browser context signed in with the development sign-in (or a
  *                 guest session) and its page; `call` reaches the API as that person with the
  *                 CSRF header (`attempt` for an answer that may be a refusal); a host opens a
- *                 match the players join and watch (the host plays too, O16); the host menu's
+ *                 match the players join and watch (the host plays too, O16; `playerRow` is a
+ *                 player's row in the waiting area); the host menu's
  *                 form creates a round; `fitsScreen` checks the round view has no page
  *                 scrollbar; `ownRows` are the viewer's own rows of the round's guess list (O20);
  *                 `search` plays a player's round from the screen only — the middle of what the
@@ -84,6 +85,11 @@ export async function visit(p: Person, code: string): Promise<void> {
   await expect(p.page.getByTestId('match')).toBeVisible();
 }
 
+// One player's row in the waiting area's list: name, team and connection (O26).
+export function playerRow(p: Person, name: string): Locator {
+  return p.page.getByTestId('match-players').locator('li', { hasText: name });
+}
+
 // A host's match with the players joined, every page on the match.
 export async function openMatch(
   host: Person,
@@ -100,7 +106,7 @@ export async function openMatch(
   // Players count for the roster once their page watches the match (02 §4): wait for it.
   for (const p of players) {
     const name = p.who === 'admin' ? 'dev-admin' : `dev-${p.who}`;
-    await expect(host.page.getByTestId('match-players')).toContainText(`${name} here`);
+    await expect(playerRow(host, name)).toContainText('online');
   }
   return m.code;
 }

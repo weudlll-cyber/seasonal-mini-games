@@ -6,9 +6,10 @@
  * Responsibility: the store with the sealed-seed key, the rounds with the actor options of
  *                 08 §7 (`SMG_ENGINE_BATCH_MS`, `SMG_ENGINE_BATCH_MAX`) and the queue bound
  *                 setting, presence, the match use cases, the guess limits and the
- *                 scheduler; the game documents `game.<id>` for the settings service.
- *                 `start` recovers every running round and starts the timers; `stop` stops
- *                 them and waits until every open batch is written.
+ *                 scheduler and the idle close of matches (O28); the game documents `game.<id>`
+ *                 for the settings service. `start` recovers every running round, closes the
+ *                 matches that went idle meanwhile and starts the timers; `stop` stops them and
+ *                 waits until every open batch is written.
  * Depends on:     @smg/application, @smg-game/registry, ../config/*, ../db/pool, ../match/*, ./*
  * Used by:        ../http/app
  * Spec:           docs/spec/04-software-architecture.md §5; docs/spec/08-admin-settings.md §7
@@ -20,6 +21,7 @@ import type { SettingDef } from '@smg/game-sdk';
 import type { Env } from '../config/env.js';
 import { roundKeyFrom } from '../config/roundKey.js';
 import type { DbPool } from '../db/pool.js';
+import { IdleClose } from '../match/idleClose.js';
 import { Play } from '../match/play.js';
 import { Presence } from '../match/presence.js';
 import { GuessLimits } from './guessLimits.js';
@@ -62,6 +64,7 @@ export function createRoundRuntime(
   const seasons = new Seasons(pool, settings, devFeed);
   const play = new Play(pool, rounds, settings, { presence: new Presence(), seasons });
   const scheduler = new RoundScheduler(pool, rounds, env.SMG_SCHEDULER_POLL_MS);
+  const idle = new IdleClose(pool, play, settings);
   return {
     store,
     rounds,
@@ -73,9 +76,13 @@ export function createRoundRuntime(
       seasons.start();
       const recovered = await rounds.recoverRunning();
       scheduler.start();
+      // Matches that went idle while the server was down close now (O28).
+      await idle.sweep();
+      idle.start();
       return recovered;
     },
     stop: async () => {
+      idle.stop();
       limits.stop();
       seasons.stop();
       await scheduler.stop();

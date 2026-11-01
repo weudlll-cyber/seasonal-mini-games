@@ -18,8 +18,8 @@
 |---|---|
 | Unit and property | `domain` (lifecycle, cooldown, ordering, placings, teams, special scheduling), `game-sdk` (DRBG helpers, range arithmetic), `games/guess-the-number/src` (feedback, hints, Leaf Fall, halving, the closest miss: ties, none, a hidden range) |
 | Conformance | One shared suite run against every module in `games/registry` (invariants P1–P6). A new game is green only when it passes. |
-| Engine integration | The round actor with real Postgres: group commit, restart recovery, scheduler precision, Frost after restart |
-| Component | Range bar, cooldown ring, guess list, roster, team standing, result screen; the input row keeps typed text across the round opening and while an answer is on its way |
+| Engine integration | The round actor with real Postgres: group commit, restart recovery, scheduler precision, Frost after restart; the match flow (owner decisions 26–28): `TEAM_LOCKED` over socket and HTTP, the placement in the smallest team, End match with the summary, and the idle close with a fake clock and after a restart |
+| Component | Range bar, cooldown ring, guess list, roster, team standing, result screen; the input row keeps typed text across the round opening and while an answer is on its way; the waiting area's team buttons only before the player's first round and its player rows (team, connection); End match's confirm sentence and the match summary |
 | E2E | Journeys in §4 |
 | Load | §5, release gate |
 
@@ -61,14 +61,14 @@
 2. Individual round with three players: placings in solve order; a solved player keeps their own rows, with a notice and their place instead of the input row (owner decision 25); time-up ends the round with "not solved" rows.
 3. Each season special once (fast test profile): Spring hint shown, Heatwave value drops, Leaf Fall strikes numbers, Frost shows "answer arriving".
 4. Halving round on a test halving day: the range halves, and a guess outside it is refused without cost.
-5. Teams: four players pick teams in the waiting area, the team standing updates after the round, teams lock during the countdown, and the waiting area for the next round follows the result, with no player box on the result itself (owner decision 23).
+5. Teams: four players pick teams in the waiting area, the team standing updates after the round, a team change is refused with `TEAM_LOCKED` once the round started, and the waiting area for the next round follows the result with each player's team and no team buttons, with no player box on the result itself (owner decisions 23, 26).
 6. Reconnect mid-round: the cooldown is unchanged after reconnect, there are no duplicate guesses, and Frost answers arrive after reconnect.
 7. Spectator (guest): sees the feed at the round's visibility and never a number or feedback under `own`.
 8. Embedded: JWT handoff from a test host page signs the player in; an origin that is not on the allowlist is refused (Bingo journey 7).
 9. Accessibility: axe checks on lobby, round and result; keyboard-only guessing.
 10. Hidden range (owner decision 19), 1280 × 720: the round view says "Any whole number", no bound is on the page, a guess far outside the range is answered, and the result reveals the range.
 11. Negative bounds (owner decision 18), 390 × 844: the Quick Test form takes "-500" typed key by key into Lowest number and, with "Start from the lobby" off, starts a round from −500 to 500 at once (T69); the range is shown, the ± button makes a typed number negative, the guess is answered, and the round plays to its result.
-12. Quick Test through the lobby (owner decisions 22–24): the form with "Start from the lobby" on opens the waiting area; the bots appear one after another with their teams; the player picks a team, which shows pressed; the host menu's Start starts the round; the round runs with the bots playing; the result names the closest miss (or the margin, when a second correct guess came within its window); and the waiting area for the next round follows.
+12. Quick Test through the lobby (owner decisions 22–24, 26, 27): the form with "Start from the lobby" on opens the waiting area; the bots appear one after another, online, with their teams; the player ("no team yet") picks a team, which shows pressed; the host menu's Start starts the round; the round runs with the bots playing; the result names the closest miss (or the margin, when a second correct guess came within its window); the waiting area for the next round follows with the team kept and no team buttons; a second round from the host menu; then End match with its confirm sentence, and the match summary with two rounds, the four players and the link back to Play, also after a reload.
 
 Journeys 1, 10 and 11 also check that the round view fits the screen: `document.scrollingElement.scrollHeight` is at most `window.innerHeight` ([02](02-game-guess-the-number.md) §12).
 

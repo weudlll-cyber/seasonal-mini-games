@@ -172,3 +172,18 @@ describe('unknown players', () => {
     expect(guessTheNumber.evolve(t.state, { ...event, comment })).toBe(t.state);
   });
 });
+
+describe('answers stored before closeness comments (O21)', () => {
+  it('replay as answers without a comment (T86)', () => {
+    const t = new Table(shared(412), input('shared', ['a']));
+    // As stored in the log before O21: no `comment` field at all.
+    const old = JSON.parse(
+      '{"type":"FeedbackGiven","playerId":"a","receiveSeq":1,"receivedAt":0,"value":5,"feedback":"higher"}',
+    ) as Parameters<typeof guessTheNumber.evolve>[1];
+    const next = guessTheNumber.evolve(t.state, old);
+    expect(next.players['a']?.guesses).toEqual([
+      { receiveSeq: 1, receivedAt: 0, value: 5, feedback: 'higher', comment: null },
+    ]);
+    expect(next.comments).toEqual(t.state.comments);
+  });
+});

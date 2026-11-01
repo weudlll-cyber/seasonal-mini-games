@@ -45,10 +45,16 @@ function Placings({
         <caption className="smg-visually-hidden">Placings</caption>
         <thead>
           <tr>
-            <th scope="col">Place</th>
+            <th scope="col" className="round-col-place">
+              Place
+            </th>
             <th scope="col">Player</th>
-            <th scope="col">Guesses</th>
-            <th scope="col">Points</th>
+            <th scope="col" className="round-col-num">
+              Guesses
+            </th>
+            <th scope="col" className="round-col-num">
+              Points
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -56,9 +62,11 @@ function Placings({
             <tr key={r.playerId} className={r.playerId === viewerKey ? 'round-you' : undefined}>
               <td>{placeText(state, r.place)}</td>
               <td>
-                {r.team === null ? null : <SeasonIcon season={r.team} size="1rem" />}{' '}
-                <PlayerName name={state.names[r.playerId] ?? r.playerId} />
-                {r.playerId === viewerKey ? ' (you)' : ''}
+                <span className="round-player">
+                  {r.team === null ? null : <SeasonIcon season={r.team} size="1rem" />}{' '}
+                  <PlayerName name={state.names[r.playerId] ?? r.playerId} />
+                  {r.playerId === viewerKey ? <span> (you)</span> : null}
+                </span>
               </td>
               <td>{r.guesses}</td>
               <td>{r.points}</td>

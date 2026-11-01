@@ -10,9 +10,10 @@
  *                 area with the team picker and the players (./WaitingArea, O23), also while
  *                 the next round is only set up. A player who joins during a round watches it
  *                 and plays from the next one. The host's last round settings are kept here,
- *                 so the next round's form is prefilled whichever layout made them.
- * Depends on:     react, @smg/contracts, ../live/*, ../shell/*, ./HostMenu, ./WaitingArea,
- *                 ../round/RoundScreen, ../round/roundText, ./match.css
+ *                 so the next round's form is prefilled whichever layout made them. A closed
+ *                 or aborted match shows its summary (./MatchSummary, O27).
+ * Depends on:     react, @smg/contracts, ../live/*, ../shell/*, ./HostMenu, ./MatchSummary,
+ *                 ./WaitingArea, ../round/RoundScreen, ../round/roundText, ./match.css
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/02-game-guess-the-number.md §2, §4, §11; docs/spec/03-seasonal-specials.md §5
  */
@@ -26,6 +27,7 @@ import { RoundScreen } from '../round/RoundScreen.js';
 import { api, ApiError } from '../shell/http.js';
 import { useSession } from '../shell/session.js';
 import { HostMenu, type Values } from './HostMenu.js';
+import { MatchSummary } from './MatchSummary.js';
 import { WaitingArea } from './WaitingArea.js';
 import './match.css';
 
@@ -105,6 +107,8 @@ export function MatchPage({ code }: { readonly code: string }): ReactElement {
       </section>
     );
   if (match === null) return <p className="smg-muted">Loading the match…</p>;
+  // An ended match stays readable at its address as its summary (O27).
+  if (match.ended !== null) return <MatchSummary match={match} />;
   return <MatchView match={match} live={live} reload={reload} />;
 }
 

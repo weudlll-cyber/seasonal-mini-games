@@ -4,7 +4,8 @@
  * @brief  The shapes of the match, round and season answers the player client reads.
  *
  * Responsibility: one description of what the server sends and the client renders (06 §3.1):
- *                 games, match summaries and details, the round view per viewer (platform part
+ *                 games, match summaries and details with a closed match's end, the round view
+ *                 per viewer (platform part
  *                 plus the game's own view, unknown here), frames, Quick Test and seasons. The
  *                 server's routes return these types; the client never guesses a shape.
  * Depends on:     ./admin (settings document view)
@@ -34,9 +35,29 @@ export interface MatchSummaryView {
   readonly createdAt: number;
 }
 
+// The end of a closed or aborted match (O27): rounds played, the players' totals in
+// standings order, the teams' standing over the match, and how it ended.
+export interface MatchEndView {
+  readonly roundsPlayed: number;
+  readonly players: readonly {
+    readonly name: string;
+    readonly team: TeamName | null;
+    readonly points: number;
+    readonly wins: number;
+  }[];
+  readonly teams: readonly { readonly team: TeamName; readonly points: number }[];
+  readonly by: 'host' | 'system' | null;
+  // `idle` for the idle close (O28), the host's reason for an abort, else null.
+  readonly reason: string | null;
+  // Idle close only: the minutes without a round before it closed.
+  readonly idleMinutes: number | null;
+}
+
 export interface MatchDetailsView extends MatchSummaryView {
   readonly youHost: boolean;
   readonly youPlayer: boolean;
+  // The viewer's team is fixed: they played a round of this match (O26).
+  readonly teamLocked: boolean;
   readonly host: string | null;
   readonly players: readonly {
     readonly playerKey: string;
@@ -49,6 +70,8 @@ export interface MatchDetailsView extends MatchSummaryView {
   readonly teamStandings: readonly { readonly team: TeamName; readonly points: number }[];
   // The host's form defaults: the game's settings document (host-chosen keys and bounds).
   readonly nextRoundDefaults: SettingsDocumentView | null;
+  // Once the match is closed or aborted, its summary; null before.
+  readonly ended: MatchEndView | null;
 }
 
 export interface RosterRowView {

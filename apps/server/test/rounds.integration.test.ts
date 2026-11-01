@@ -10,7 +10,8 @@
  *                 fairness proof); frames carry no guessed value to the room and a player's
  *                 answers only to that player; the event log is gap-free and append-only; a
  *                 second server on the same database recovers a running round with its
- *                 cooldowns; one round at a time and team locks; matches are aborted at the end.
+ *                 cooldowns; one round at a time and a roster player's fixed team (O26);
+ *                 matches are aborted at the end.
  * Depends on:     vitest, ./socketKit, ./harness
  * Spec:           docs/spec/02-game-guess-the-number.md §4–§10; docs/spec/04-software-architecture.md §5;
  *                 docs/spec/06-data-model-api-realtime.md §2–§4; docs/spec/09-testing-strategy.md §2, §6
@@ -134,14 +135,14 @@ describe('a shared round', () => {
       roster: { playerKey: string }[];
       role: string;
     }>();
-    // The host joined first and plays along with a player's view (O16); teams lock while
-    // the round runs.
+    // The host joined first and plays along with a player's view (O16); a roster player's
+    // team is fixed from their first round on (O26).
     expect(state.roster.map((r) => r.playerKey)).toEqual([host, p1, p2]);
     expect(state.role).toBe('player');
     const team = await kit.clients['player-1'].post(`/api/v1/matches/${code}/team`, {
       team: 'winter',
     });
-    expect(team.json<unknown>()).toMatchObject({ code: 'TEAMS_LOCKED' });
+    expect(team.json<unknown>()).toMatchObject({ code: 'TEAM_LOCKED' });
     const secrets = await kit.secretsOf(id);
     const secret = secrets.mode === 'shared' ? secrets.value : 0;
     await playShared(s, id, secret);

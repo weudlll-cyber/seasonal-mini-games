@@ -7,8 +7,9 @@
  *                 open, `match.join` to join, the match's host for close and abort), every body
  *                 validated with zod. The host joins their own match as a player when opening
  *                 it, and plays along (O16). A summary tells the viewer whether they host or
- *                 play, names the players, gives the team standings, and gives the host the
- *                 next round's defaults (the host-chosen keys of the game's document).
+ *                 play and whether their team is fixed (O26), names the players, gives the
+ *                 team standings, gives the host the next round's defaults (the host-chosen
+ *                 keys of the game's document), and once the match ended its summary (O27).
  * Depends on:     fastify, zod, @smg/application, @smg/contracts (shapes), ../../match/*,
  *                 ./adminGuard
  * Used by:        ../app
@@ -31,6 +32,8 @@ import {
   type MatchRow,
 } from '../../match/matches.js';
 import { PlayError, type Play } from '../../match/play.js';
+import { matchEnd } from '../../match/summary.js';
+import { teamLocked } from '../../match/teams.js';
 import { permitted } from './adminGuard.js';
 
 const TEAMS = ['spring', 'summer', 'autumn', 'winter'] as const;
@@ -132,10 +135,12 @@ async function matchDetails(
   const roundId = await currentRoundId(deps.pool, match.id);
   const round = roundId === null ? null : await deps.play.rounds.get(roundId);
   const youHost = viewer !== null && viewer === match.hostId;
+  const youPlayer = players.some((p) => p.playerKey === viewer);
   return {
     ...summaryOf(match),
     youHost,
-    youPlayer: players.some((p) => p.playerKey === viewer),
+    youPlayer,
+    teamLocked: viewer !== null && youPlayer && (await teamLocked(deps.pool, match.id, viewer)),
     host: match.hostId === null ? null : (names[match.hostId] ?? null),
     players: players.map((p) => ({
       playerKey: p.playerKey,
@@ -146,6 +151,7 @@ async function matchDetails(
     round: round === null ? null : { id: round.id, status: round.status() },
     teamStandings: await teamStandings(deps.pool, match.id),
     nextRoundDefaults: youHost ? await deps.settings.view(`game.${match.gameId}`, []) : null,
+    ended: await matchEnd(deps.pool, match),
   };
 }
 
@@ -221,7 +227,7 @@ function registerHostRoutes(app: FastifyInstance, deps: MatchRouteDeps): void {
     if (!body.success) return reply.status(400).send({ code: 'VALIDATION_FAILED' });
     const match = await hostOnly(request, reply);
     if (match === null) return reply;
-    await deps.play.close(match, { reason: body.data.reason, by: 'host' });
+    await deps.play.close(match, { status: 'aborted', reason: body.data.reason, by: 'host' });
     return reply.status(204).send();
   });
 }

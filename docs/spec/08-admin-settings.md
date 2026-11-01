@@ -66,7 +66,7 @@ The host form shows each host-chosen value with its default preselected and refu
 |---|---|---|---|---|---|---|
 | `match.minPlayersPerRound` | 2 | 1 | 50 | owner (O15) | game admin | next: read when a countdown starts |
 | `match.maxPlayers` | 500 | 2 | 1 000 | owner (O15) | game admin (host picks up to it) | next: read on join |
-| `match.lobbyIdleCloseMin` | 60 | 10 | 1 440 | owner (O15): a match with no round for this long closes itself | game admin | immediate |
+| `match.lobbyIdleCloseMin` | 60 | 10 | 1 440 | owner (O15, O28): a match with no round for this long closes itself, counted from the later of its creation and its last round's creation or end; checked every minute and on server start ([02](02-game-guess-the-number.md) §2) | game admin | immediate |
 | `match.maxConcurrentRounds` | 20 | 1 | 100 | technical (per server) | game admin | next: read at round creation |
 | `leaderboard.minPlayersForPoints` | 4 | 2 | 50 | owner (O11) | game admin | next: read at round end |
 | `leaderboard.periodLength` | quarter, named after the season | — | — | adopted (Bingo 01 §10) | game admin | next period |

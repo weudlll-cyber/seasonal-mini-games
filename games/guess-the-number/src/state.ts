@@ -9,7 +9,8 @@
  *                 §2.3, §4); the comment lines the round has used (DECISIONS T72). Nothing is
  *                 narrowed from the answers (O17). No secret is ever part of the state
  *                 (05 §3). `GuessFed` is the room's line about a guess, shaped by the
- *                 visibility, and changes nothing.
+ *                 visibility, and changes nothing. An answer stored before O21 (no `comment`)
+ *                 replays as one without a comment.
  * Depends on:     @smg/game-sdk (Range, RoundInput), ./closeness, ./comments, ./feedback,
  *                 ./settings
  * Used by:        ./module, ./rules, ./views
@@ -165,7 +166,10 @@ function withPlayer(
 }
 
 function answered(state: GtnState, event: Extract<GtnEvent, { type: 'FeedbackGiven' }>): GtnState {
-  const { receiveSeq, receivedAt, value, feedback, comment } = event;
+  const { receiveSeq, receivedAt, value, feedback } = event;
+  // Answers stored before closeness comments (O21) have no `comment`; the log is never
+  // rewritten, so such a round still replays, with no comment (DECISIONS T86).
+  const comment = (event.comment as Comment | null | undefined) ?? null;
   const guess: Guess = { receiveSeq, receivedAt, value, feedback, comment };
   const next = withPlayer(state, event.playerId, (p) => ({ ...p, guesses: [...p.guesses, guess] }));
   // An unknown player's event changes nothing, its comment included.

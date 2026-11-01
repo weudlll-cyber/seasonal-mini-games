@@ -24,6 +24,7 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 Resolved by the decision rules (owner decisions first, then the more specific section) and listed here for the owner to confirm.
 
 1. **Check order of a guess.** 04 §4.1–§4.2 said the platform checks the cooldown before a game sees an action; 02 §5.1 puts the cooldown last, after range, removed numbers and repeats, and 06 §4.5 agrees. Built as 02 §5.1 (the more specific section): a game's own checks are a pure `validate` before the cooldown check (DECISIONS T29); 04 §4 now says so. Effect: a guess out of range during a cooldown is answered `OUT_OF_RANGE`, not `COOLDOWN_ACTIVE`.
+2. **Switching teams and the tie-break (2026-11-01).** 03 §5 let a player switch teams between rounds and broke ties between the smallest teams with the round seed; owner decision 26 fixes the team for the whole match. Built as O26 (owner decisions first): the team is chosen once and locked from the player's first round (`TEAM_LOCKED`), and a player without one is placed in the match's smallest team when their first round starts; the tie-break uses a hash of the round id and the player key, because the match layer does not hold the sealed seed (DECISIONS T82). 03 §5 now says so.
 
 ## Spec gaps
 

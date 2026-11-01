@@ -7,7 +7,8 @@
  *                 muted, winter and success text (Frost's line, "higher") keep 4.5:1 on the page, the opaque surfaces and the translucent
  *                 cards — composited over the base colour and over each of the four token
  *                 glows, as the website measures — and on the top bar's gradient stops; the
- *                 solid pill and text on the season colours keep 4.5:1; the board ink
+ *                 solid pill keeps 4.5:1, and so do text and the pressed team button's icon on
+ *                 the season colours in both themes (O26 asks 3:1 of the icon); the board ink
  *                 keeps 7:1 (the hero element); and the motion file turns every animation off under
  *                 prefers-reduced-motion.
  * Depends on:     vitest, @smg/ui/tokens.css, @smg/ui/motion.css (raw)
@@ -160,12 +161,22 @@ describe('token contrast (WCAG AA), light and dark', () => {
 });
 
 describe('token contrast (WCAG AA), board and seasons', () => {
-  it('keeps text on every season colour and the board ink readable', () => {
+  // Text on a season colour, and the pressed team button's icon drawn in that text colour
+  // (O26 checks: 3:1 for the icon; the 4.5:1 of text covers it), in both themes.
+  it.each(['light', 'dark'] as const)('%s: text and icons on every season colour', (theme) => {
+    const set = THEMES[theme].set;
+    const c = (name: string) => parse(resolved(set, name));
+    for (const season of ['spring', 'summer', 'autumn', 'winter']) {
+      expect(
+        contrast(c('color-on-season'), c(`color-${season}`)),
+        `${theme}: on ${season}`,
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it('keeps the board ink readable', () => {
     const set = THEMES.light.set;
     const c = (name: string) => parse(set[name] ?? '');
-    for (const season of ['spring', 'summer', 'autumn', 'winter']) {
-      expect(contrast(c('color-on-season'), c(`color-${season}`))).toBeGreaterThanOrEqual(4.5);
-    }
     expect(contrast(c('color-board-ink'), c('color-board'))).toBeGreaterThanOrEqual(7);
     expect(contrast(c('color-board-marked-ink'), c('color-board-marked'))).toBeGreaterThanOrEqual(
       7,

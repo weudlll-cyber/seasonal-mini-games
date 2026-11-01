@@ -12,11 +12,12 @@
  *                 last round's choices or the document's values and limited to the bounds in
  *                 force (08 §3; the server checks again), the season (In Season when it is
  *                 usable, or one by hand), the halving round only on a halving day; then
- *                 Start round, End round and Abort round with a reason (02 §4, §9, §11).
- *                 Refusals in plain words. The host plays the round like every player; the
- *                 menu holds no secret.
+ *                 Start round, End round and Abort round with a reason (02 §4, §9, §11). Last,
+ *                 always: End match with its confirm sentence (./EndMatch, O27). Refusals in
+ *                 plain words. The host plays the round like every player; the menu holds no
+ *                 secret.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (types), ../components/*, ../shell/http,
- *                 ../live/socket, ../round/roundText, ./roundFields
+ *                 ../live/socket, ../round/roundText, ./EndMatch, ./roundFields
  * Used by:        ./MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §3, §4, §9; docs/spec/08-admin-settings.md §3
  */
@@ -29,6 +30,7 @@ import { useDisclosure } from '../components/useDisclosure.js';
 import { intent } from '../live/socket.js';
 import { codeText } from '../round/roundText.js';
 import { api, ApiError } from '../shell/http.js';
+import { EndMatch } from './EndMatch.js';
 import { Field, SeasonControls, useSeasonChoice } from './roundFields.js';
 
 // Season and halving have their own controls below the generic fields.
@@ -186,9 +188,25 @@ function MenuBody({ p, close }: { readonly p: HostMenuProps; readonly close: () 
     if (ok) close();
     reload();
   };
+  // Last in the menu, whatever the round does: End match (O27).
+  const endMatch = (
+    <EndMatch
+      code={match.code}
+      done={() => {
+        after(true);
+      }}
+    />
+  );
   if (running) {
     return (
-      <RunningControls roundId={match.round?.id} created={roundStatus === 'created'} done={after} />
+      <>
+        <RunningControls
+          roundId={match.round?.id}
+          created={roundStatus === 'created'}
+          done={after}
+        />
+        {endMatch}
+      </>
     );
   }
   return (
@@ -207,6 +225,7 @@ function MenuBody({ p, close }: { readonly p: HostMenuProps; readonly close: () 
           after(true);
         }}
       />
+      {endMatch}
     </>
   );
 }

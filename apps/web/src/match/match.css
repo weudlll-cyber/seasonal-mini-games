@@ -6,7 +6,8 @@
  * Responsibility: the match title with its code and the host menu button; the waiting area
  *                 beside the last result on a wide screen, under it on a phone (T79), with the
  *                 team buttons (the chosen one in its season colour with a check) and the
- *                 player list; the host menu's panel over the page
+ *                 player rows (name, team, a filled or hollow connection dot); the match
+ *                 summary's tables; the host menu's panel over the page
  *                 (opaque, as menus are, scrolling inside itself); the grid of the host's round
  *                 form and the Quick Test. Colours only from @smg/ui tokens.
  * Spec:           docs/spec/02-game-guess-the-number.md §2, §11; docs/spec/03-seasonal-specials.md §5
@@ -74,12 +75,51 @@
   margin: 0;
 }
 
+/* One row per player: name, team, connection; the name gives way with an ellipsis. */
 .match-players {
   margin: 0;
   padding: 0;
   list-style: none;
   display: grid;
   gap: var(--space-1);
+}
+
+.match-players li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.match-player-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.match-player-team,
+.match-presence {
+  white-space: nowrap;
+}
+
+/* Online: a filled dot; away: a hollow one. The word says it too. */
+.match-dot {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  border: 2px solid var(--color-text-muted);
+}
+
+.match-presence[data-online='true'] .match-dot {
+  background: var(--color-success);
+  border-color: var(--color-success);
+}
+
+/* The match summary: the result page's grid sets the spacing, not the paragraphs' margins. */
+.match-summary p,
+.match-summary h2 {
+  margin: 0;
 }
 
 /* The host menu: one button, its panel over the page (opaque, as menus are). */

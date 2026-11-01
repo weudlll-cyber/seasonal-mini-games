@@ -29,6 +29,7 @@ const CODES: Readonly<Record<string, string>> = {
   IN_SEASON_UNAVAILABLE: 'In Season is not available right now. Pick a season.',
   NOT_ENOUGH_PLAYERS: 'Not enough connected players to start.',
   TEAMS_LOCKED: 'Teams are locked while a round runs.',
+  TEAM_LOCKED: 'You keep your team for the whole match.',
   MATCH_FULL: 'This match is full.',
   MATCH_CLOSED: 'This match has ended.',
   NOT_THE_HOST: 'Only the host can do that.',

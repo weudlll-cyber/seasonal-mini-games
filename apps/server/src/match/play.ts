@@ -7,12 +7,15 @@
  *                 game's document and the host's choices, ROUND_SETTINGS_INVALID; the host's
  *                 season or In Season while it is usable, IN_SEASON_UNAVAILABLE otherwise; a
  *                 halving round only on a halving day, NOT_A_HALVING_DAY) and starts it with
- *                 the players connected right now, the host among them (O16, 02 §4); host end and
- *                 abort; team choice, locked while a round counts down or runs (TEAMS_LOCKED);
- *                 joining and leaving (leaving ends a round whose roster all left, "no players
- *                 left"); every change of players, teams or status is told to listeners.
+ *                 the players connected right now, the host among them (O16, 02 §4), every one
+ *                 with their match team (placed in the smallest team when none, O26); host end
+ *                 and abort; team choice once per match (TEAM_LOCKED after the player's first
+ *                 round, TEAMS_LOCKED while a round counts down or runs); joining and leaving
+ *                 (leaving ends a round whose roster all left, "no players left"); closing or
+ *                 aborting the match (O27, O28); every change of players, teams or status is
+ *                 told to listeners.
  * Depends on:     node:crypto, @smg/application (settings), ../round/*, ../seasons/seasons,
- *                 ./matches, ./presence, ../db/pool
+ *                 ./matches, ./presence, ./teams, ../db/pool
  * Used by:        ../http/routes/*, ../realtime/intents, ../dev/quickTest
  * Spec:           docs/spec/02-game-guess-the-number.md §2–§4, §8.3; docs/spec/06-data-model-api-realtime.md §3.1
  */
@@ -32,13 +35,14 @@ import {
   joinMatch,
   leaveMatch,
   setMatchStatus,
-  setTeam,
   type JoinResult,
+  type MatchEnd,
   type MatchRow,
   type Team,
 } from './matches.js';
 import type { Seasons } from '../seasons/seasons.js';
 import type { Presence } from './presence.js';
+import { fixTeams, placeTeams, setTeam, teamLocked } from './teams.js';
 
 export type PlayCode =
   | 'ROUND_RUNNING'
@@ -46,7 +50,11 @@ export type PlayCode =
   | 'IN_SEASON_UNAVAILABLE'
   | 'NOT_A_HALVING_DAY'
   | 'TEAMS_LOCKED'
+  | 'TEAM_LOCKED'
   | 'MATCH_CLOSED';
+
+// The host's End match (O27).
+const HOST_CLOSE: MatchEnd = { status: 'closed', reason: null, by: 'host' };
 
 export class PlayError extends Error {
   constructor(
@@ -151,27 +159,37 @@ export class Play {
   }
 
   // The roster: active players connected now, in join order; the host plays along (O16, 02 §4).
+  // Every roster player has their match team; one without is placed now and keeps it (O26).
   async startRound(
     match: MatchRow,
     round: LiveRound,
     roster?: readonly RosterPlayer[],
   ): Promise<Reply> {
     const connected = this.presence.connected(match.id);
-    const players =
+    const players = await activePlayers(this.pool, match.id);
+    const chosen =
       roster ??
-      (await activePlayers(this.pool, match.id))
+      players
         .filter((p) => connected.has(p.playerKey))
         .map((p) => ({ playerId: p.playerKey, team: p.team }));
+    const teams = placeTeams(chosen, players, round.id);
     const values = await this.settings.values('matchmaking');
     const minPlayers = values['match.minPlayersPerRound'] as number;
-    return round.run({
+    const reply = await round.run({
       type: 'startCountdown',
-      roster: players,
+      roster: teams.roster,
       minPlayers: roster === undefined ? minPlayers : 1,
     });
+    if (reply.ok && teams.placed.length > 0) {
+      await fixTeams(this.pool, match.id, teams.placed);
+      this.changed(match.id);
+    }
+    return reply;
   }
 
+  // Once per match: refused after the player's first round (O26), and while a round runs.
   async chooseTeam(match: MatchRow, playerKey: string, team: Team): Promise<boolean> {
+    if (await teamLocked(this.pool, match.id, playerKey)) throw new PlayError('TEAM_LOCKED');
     const running = await this.runningRound(match);
     if (running !== null && running.status() !== 'created') throw new PlayError('TEAMS_LOCKED');
     const ok = await setTeam(this.pool, match.id, playerKey, team);
@@ -190,16 +208,19 @@ export class Play {
       await round.run({ type: 'end', reason: 'noPlayers' });
   }
 
-  async close(match: MatchRow, abort?: { reason: string; by: 'host' | 'system' }): Promise<void> {
+  // Ends the match; a round still set up or running is aborted. A close keeps the results
+  // and points of the ended rounds; only an abort is a failed match (O27, O28).
+  async close(match: MatchRow, end: MatchEnd = HOST_CLOSE): Promise<void> {
     const round = await this.runningRound(match);
     if (round !== null) {
       await round.run({
         type: 'abort',
-        reason: abort?.reason ?? 'match closed',
-        by: abort?.by ?? 'host',
+        // A host's close says "match closed"; the idle close and an abort give their reason.
+        reason: end.reason ?? 'match closed',
+        by: end.by,
       });
     }
-    await setMatchStatus(this.pool, match.id, abort === undefined ? 'closed' : 'aborted', abort);
+    await setMatchStatus(this.pool, match.id, end.status, end);
     this.changed(match.id);
   }
 }

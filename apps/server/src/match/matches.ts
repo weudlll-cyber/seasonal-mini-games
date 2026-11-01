@@ -5,7 +5,7 @@
  *
  * Responsibility: the match lobby of 02 §2: a host opens a match for a registered game with
  *                 a six-character code without look-alikes; players join up to its limit
- *                 and leave; a player picks a season team; the match is `open` once a round
+ *                 and leave (season teams: ./teams); the match is `open` once a round
  *                 was created, and ends `closed` or `aborted`. Display names for player keys
  *                 (bots keep their key); the match's team standings. Matches are never
  *                 deleted (06 §2.3).
@@ -189,32 +189,30 @@ export async function leaveMatch(pool: DbPool, matchId: string, playerKey: strin
   );
 }
 
-export async function setTeam(
-  pool: DbPool,
-  matchId: string,
-  playerKey: string,
-  team: Team,
-): Promise<boolean> {
-  const r = await pool.query(
-    `UPDATE smg.match_players SET team = $3, team_chosen_at = now()
-     WHERE match_id = $1 AND player_key = $2 AND state = 'active'`,
-    [matchId, playerKey, team],
-  );
-  return r.rowCount === 1;
+// How a match ended: closed (End match, or `idle` by the system, O27, O28) or aborted.
+// For a closed match the `aborted_reason`/`aborted_by` columns hold the close's reason and
+// who closed it (DECISIONS T83).
+export interface MatchEnd {
+  readonly status: 'closed' | 'aborted';
+  readonly reason: string | null;
+  readonly by: 'host' | 'system';
+  // When it ended, if not now (the idle close's clock, O28).
+  readonly at?: number;
 }
 
 export async function setMatchStatus(
   pool: DbPool,
   matchId: string,
   status: MatchStatus,
-  abort?: { reason: string; by: 'host' | 'system' },
+  end?: MatchEnd,
 ): Promise<void> {
   await pool.query(
     `UPDATE smg.matches SET status = $2, version = version + 1,
-       closed_at = CASE WHEN $2 IN ('closed', 'aborted') THEN now() ELSE closed_at END,
+       closed_at = CASE WHEN $2 IN ('closed', 'aborted')
+                        THEN coalesce(to_timestamp($5::double precision / 1000), now()) ELSE closed_at END,
        aborted_reason = $3, aborted_by = $4
      WHERE id = $1`,
-    [matchId, status, abort?.reason ?? null, abort?.by ?? null],
+    [matchId, status, end?.reason ?? null, end?.by ?? null, end?.at ?? null],
   );
 }
 

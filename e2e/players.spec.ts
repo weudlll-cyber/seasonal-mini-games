@@ -3,9 +3,10 @@
  * @module e2e
  * @brief  Journeys 5, 6 and 7: season teams, a reconnect mid-round, and a guest spectator.
  *
- * Responsibility: journey 5 — four players pick teams in the waiting area, teams are locked
- *                 once the countdown starts, the team result names the winner's team after the
- *                 round, and the waiting area for the next round follows it (O23). Journey 6
+ * Responsibility: journey 5 — four players pick teams in the waiting area, each team is fixed
+ *                 for the match once the player's first round starts (O26), the team result
+ *                 names the winner's team after the round, and the waiting area for the next
+ *                 round follows it with the players' teams and no team buttons (O23). Journey 6
  *                 — a reload during a Frost round keeps the cooldown, shows the guess once and
  *                 the held answer arrives after the reload. Journey 7 — a guest watching a round
  *                 under `own` sees that players guessed and never a number or an answer.
@@ -28,7 +29,7 @@ import {
   visit,
 } from './play.js';
 
-test('journey 5: season teams lock during the round and the winner team scores', async ({
+test('journey 5: season teams are fixed for the match and the winner team scores', async ({
   browser,
 }) => {
   test.setTimeout(150_000);
@@ -57,18 +58,18 @@ test('journey 5: season teams lock during the round and the winner team scores',
     });
     const one = players[0];
     if (one === undefined) throw new Error('players');
-    // The round view has no team picker; a change through the API is refused while it runs.
+    // The round view has no team picker; the team is fixed for the match from the first
+    // round on, so a change through the API is refused (O26).
     const locked = await attempt(one, 'POST', `/matches/${code}/team`, { team: 'winter' });
-    expect(locked.body).toMatchObject({ code: 'TEAMS_LOCKED' });
+    expect(locked.body).toMatchObject({ code: 'TEAM_LOCKED' });
     await Promise.all(players.map((p) => search(p)));
     await expect(host.page.getByTestId('team-result')).toContainText('1 point — the winner’s team');
-    // After the result: the waiting area for the next round, with the teams kept; the result
-    // has no player box of its own any more (O23).
+    // After the result: the waiting area for the next round lists the players with their
+    // teams and has no team buttons; the result has no player box of its own (O23, O26).
     const waiting = one.page.getByTestId('waiting-area');
     await expect(waiting).toContainText('Next round');
-    await expect(
-      waiting.getByRole('group', { name: 'Season team' }).getByRole('button', { name: 'Spring' }),
-    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(waiting.getByRole('group', { name: 'Season team' })).toHaveCount(0);
+    await expect(waiting.getByTestId('match-players')).toContainText('Spring');
     await expect(one.page.getByText('In this match')).toHaveCount(0);
   } finally {
     await abortMatch(host, code);
