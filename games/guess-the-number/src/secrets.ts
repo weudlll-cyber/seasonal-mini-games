@@ -1,40 +1,29 @@
 /**
  * @file   games/guess-the-number/src/secrets.ts
  * @module games/guess-the-number
- * @brief  The round's secret numbers, derived from the round randomness, never stored.
+ * @brief  The round's secret numbers: the guess engine's secrets with a uniform draw in the range.
  *
  * Responsibility: one uniform secret in the range for the shared mode (label
- *                 `secret/shared`) or one per roster player (`secret/<playerId>`), so anyone
- *                 with the revealed seed and the settings recomputes them (02 §10).
- * Depends on:     @smg/game-sdk (RoundInput, RoundRng), ./settings
- * Used by:        ./module, ./rules, ./views
- * Spec:           docs/spec/04-software-architecture.md §5.4, docs/spec/05-security-threat-model.md §3
+ *                 `secret/shared`) or one per roster player (`secret/<playerId>`), drawn by the
+ *                 guess engine, so anyone with the revealed seed and the settings recomputes
+ *                 them (02 §10). The secret's draw is the game's; the rest is the engine's.
+ * Depends on:     @smg/game-sdk (RoundInput, RoundRng, Drbg), @smg/guess-engine (secrets),
+ *                 ./settings
+ * Used by:        ./module, ./rules, ./specials, ./views
+ * Spec:           docs/spec/04-software-architecture.md §4.7, §5.4, docs/spec/05-security-threat-model.md §3
  */
-import type { RoundInput, RoundRng } from '@smg/game-sdk';
+import type { Drbg, RoundInput, RoundRng } from '@smg/game-sdk';
+import { deriveSecrets as derive, type Secrets as EngineSecrets } from '@smg/guess-engine';
 
 import type { GtnConfig } from './settings.js';
 
-export type Secrets =
-  | { readonly mode: 'shared'; readonly value: number }
-  | { readonly mode: 'individual'; readonly byPlayer: Readonly<Record<string, number>> };
+export { secretOf } from '@smg/guess-engine';
 
-export function deriveSecrets(input: RoundInput<GtnConfig>, rng: RoundRng): Secrets {
-  const { rangeLow, rangeHigh } = input.config;
-  if (input.secretMode === 'shared') {
-    return { mode: 'shared', value: rng.child('secret', 'shared').intBetween(rangeLow, rangeHigh) };
-  }
-  const byPlayer = Object.fromEntries(
-    input.roster.map((p) => [
-      p.playerId,
-      rng.child('secret', p.playerId).intBetween(rangeLow, rangeHigh),
-    ]),
-  );
-  return { mode: 'individual', byPlayer };
-}
+export type Secrets = EngineSecrets<number>;
 
-export function secretOf(secrets: Secrets, playerId: string): number {
-  if (secrets.mode === 'shared') return secrets.value;
-  const value = secrets.byPlayer[playerId];
-  if (value === undefined) throw new Error(`no secret for ${playerId}`);
-  return value;
-}
+// One secret: a uniform whole number in the range.
+export const drawSecret = (rng: Drbg, config: GtnConfig): number =>
+  rng.intBetween(config.rangeLow, config.rangeHigh);
+
+export const deriveSecrets = (input: RoundInput<GtnConfig>, rng: RoundRng): Secrets =>
+  derive(input, rng, (r) => drawSecret(r, input.config));

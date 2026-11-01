@@ -7,8 +7,9 @@
  *                 reload and follow the round's visibility and Frost, DECISIONS T74), the event
  *                 rows from the live frames; both in one box, newest at the top, that fills the
  *                 height it gets and scrolls only inside itself. A guess row: the player's
- *                 colour dot, the name ("You" for the viewer), the number, higher or lower in
- *                 colour, and the closeness comment in smaller text on the same line when it
+ *                 colour dot, the name ("You" for the viewer), the number (or a game's guess in
+ *                 words), higher or lower in colour (or a game's answer in words with its
+ *                 pegs, T119), and the closeness comment in smaller text on the same line when it
  *                 fits, else under it (O21, O35: more rows in view); the viewer's own rows
  *                 have the season colour behind them, and under Frost an own row says "answer
  *                 arriving…" with the seconds left in a small badge. Events (Spring Herald,
@@ -69,12 +70,34 @@ interface RowProps {
   readonly now: number;
 }
 
-// Higher or lower in colour, or under Frost the seconds until an own answer arrives.
+// Pegs before an answer's words (T119): filled for a hit, ringed for a near one, hollow for a
+// miss; the words beside them say the same, so the marks are never the only sign.
+function Pegs({ pegs }: { readonly pegs: readonly string[] }): ReactElement {
+  return (
+    <span className="round-pegs" aria-hidden="true">
+      {pegs.map((peg, i) => (
+        <span key={i} className="round-peg" data-peg={peg} />
+      ))}
+    </span>
+  );
+}
+
+// Higher or lower in colour, a game's own answer in words, or under Frost the seconds until an
+// own answer arrives.
 function Answer({ guess, state, now }: Omit<RowProps, 'viewerKey'>): ReactElement | null {
   if (guess.feedback !== null) {
     return (
       <span className="round-answer" data-feedback={guess.feedback}>
         {guess.feedback} {ARROW[guess.feedback]}
+      </span>
+    );
+  }
+  const answer = guess.answer ?? null;
+  if (answer !== null) {
+    return (
+      <span className="round-answer" data-feedback={answer.tone}>
+        {answer.pegs === undefined ? null : <Pegs pegs={answer.pegs} />}
+        {answer.text}
       </span>
     );
   }
@@ -87,6 +110,12 @@ function Answer({ guess, state, now }: Omit<RowProps, 'viewerKey'>): ReactElemen
   );
 }
 
+// The guess in words: a game's own text, the number, or "guessed" where it is hidden.
+function valueText(guess: GuessRow): string {
+  if (guess.text !== undefined && guess.text !== null) return guess.text;
+  return guess.value === null ? 'guessed' : formatNumber(guess.value);
+}
+
 function GuessLine({ guess, state, viewerKey, now }: RowProps): ReactElement {
   // The viewer's own rows come without a player: they are "You" (a solved player too, O25).
   const own = guess.playerId === null;
@@ -96,9 +125,7 @@ function GuessLine({ guess, state, viewerKey, now }: RowProps): ReactElement {
     <li className="round-row" data-own={own} data-tier={guess.tier ?? undefined}>
       <span className="round-dot" aria-hidden="true" style={dot(state, key)} />
       <span className="round-who">{name}</span>
-      <span className="round-value">
-        {guess.value === null ? 'guessed' : formatNumber(guess.value)}
-      </span>
+      <span className="round-value">{valueText(guess)}</span>
       <Answer guess={guess} state={state} now={now} />
       {guess.comment === null ? null : <span className="round-comment">{guess.comment}</span>}
     </li>

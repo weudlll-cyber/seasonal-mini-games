@@ -23,6 +23,7 @@ export default defineConfig({
       provider: 'v8',
       include: [
         'packages/game-sdk/src/**',
+        'packages/guess-engine/src/**',
         'packages/domain/src/**',
         'packages/application/src/**',
         'games/*/src/**',
@@ -31,6 +32,7 @@ export default defineConfig({
       reporter: ['text-summary'],
       thresholds: {
         'packages/game-sdk/src/**': { lines: 95, branches: 90 },
+        'packages/guess-engine/src/**': { lines: 95, branches: 90 },
         'packages/domain/src/**': { lines: 95, branches: 90 },
         'packages/application/src/**': { lines: 85, branches: 80 },
         'games/*/src/**': { lines: 95, branches: 90 },

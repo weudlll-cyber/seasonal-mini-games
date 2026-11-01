@@ -65,6 +65,7 @@ export type {
   ActReply,
   FeedLine,
   GameText,
+  GuessAnswer,
   GuessRow,
   PlayerPanelProps,
   ResultPanelProps,

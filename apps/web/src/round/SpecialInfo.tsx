@@ -6,12 +6,15 @@
  * Responsibility: a round button ("i", named "What Leaf Fall does") opens a small note under
  *                 the top bar with the special's one plain sentence, the same as on the intro
  *                 screen (O35, O36); the button or Escape closes it again and the focus goes
- *                 back to the button. With the special off there is no button.
- * Depends on:     react, @smg/contracts, @smg/ui (useDisclosure), ../season/season,
- *                 ./roundSpecials.css
- * Used by:        ./RoundScreen
+ *                 back to the button. With the special off there is no button. The sentence is
+ *                 the game's own where it words its special (`ruleOf`, T119), else the
+ *                 platform's.
+ * Depends on:     react, @smg/contracts, @smg/ui (useDisclosure), @smg-game/registry/web
+ *                 (types), ../season/season, ./roundSpecials.css
+ * Used by:        ./RoundScreen, ./RoundIntro
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §2
  */
+import type { GameWeb } from '@smg-game/registry/web';
 import type { SeasonName } from '@smg/contracts';
 import type { ReactElement } from 'react';
 import { useDisclosure } from '@smg/ui';
@@ -19,9 +22,16 @@ import { useDisclosure } from '@smg/ui';
 import { SPECIALS } from '../season/season.js';
 import './roundSpecials.css';
 
-export function SpecialInfo({ season }: { readonly season: SeasonName }): ReactElement {
+// The special's sentence: the game's own words, or the platform's.
+export const ruleOf = (game: GameWeb | null, season: SeasonName): string =>
+  game?.text.specialRule?.(season) ?? SPECIALS[season].rule;
+
+export function SpecialInfo(p: {
+  readonly season: SeasonName;
+  readonly rule: string;
+}): ReactElement {
   const note = useDisclosure();
-  const special = SPECIALS[season];
+  const special = SPECIALS[p.season];
   return (
     <span className="round-info" onKeyDown={note.onKeyDown}>
       <button
@@ -37,7 +47,7 @@ export function SpecialInfo({ season }: { readonly season: SeasonName }): ReactE
         <span aria-hidden="true">i</span>
       </button>
       <span id={note.panelId} className="round-info-note" role="note" hidden={!note.open}>
-        <strong>{special.name}:</strong> {special.rule}
+        <strong>{special.name}:</strong> {p.rule}
       </span>
     </span>
   );

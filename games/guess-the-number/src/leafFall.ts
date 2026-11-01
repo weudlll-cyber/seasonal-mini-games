@@ -12,26 +12,24 @@
  *                 uniformly, never a secret, and stops when the candidates would drop below
  *                 `minRemaining` (03 §2.3). Every choice comes from the DRBG it is given, so the
  *                 same seed and the same guesses remove the same numbers.
- * Depends on:     @smg/game-sdk (ranges, Drbg), ./secrets, ./state
+ * Depends on:     @smg/game-sdk (ranges, Drbg), @smg/guess-engine (public answers, guessed
+ *                 values, the distinct draw, the secrets), ./secrets, ./state
  * Used by:        ./specials
  * Spec:           docs/spec/03-seasonal-specials.md §2.3; docs/spec/05-security-threat-model.md §3
  */
 import { inRange, rangeSize, type Drbg, type Range } from '@smg/game-sdk';
+import { allSecrets, guessedValues, pickDistinct, publicGuesses } from '@smg/guess-engine';
 
 import type { Secrets } from './secrets.js';
 import type { GtnState } from './state.js';
 
-// The range cut by the answers every player can see; the whole range where none are public.
-export function publicBounds(state: GtnState, releasedBefore: number): Range {
-  if (state.mode !== 'shared' || state.visibility !== 'full') return state.range;
+// The range cut by the answers every player can see (the engine's Frost cut, T111); the whole
+// range where none are public.
+function publicBounds(state: GtnState, releasedBefore: number): Range {
   let { low, high } = state.range;
-  for (const p of Object.values(state.players)) {
-    for (const g of p.guesses) {
-      // A held answer counts once Frost delivers it, the same cut as the views' (T111).
-      if (g.receivedAt >= releasedBefore) continue;
-      if (g.feedback === 'higher') low = Math.max(low, g.value + 1);
-      if (g.feedback === 'lower') high = Math.min(high, g.value - 1);
-    }
+  for (const g of publicGuesses(state, releasedBefore)) {
+    if (g.feedback === 'higher') low = Math.max(low, g.value + 1);
+    if (g.feedback === 'lower') high = Math.min(high, g.value - 1);
   }
   return { low, high };
 }
@@ -47,21 +45,10 @@ export interface Candidates {
 // Every number still possible: inside the public bounds, not guessed, not fallen.
 export function candidatesOf(state: GtnState, releasedBefore: number): Candidates {
   const bounds = publicBounds(state, releasedBefore);
-  const guessed = Object.values(state.players).flatMap((p) => p.guesses.map((g) => g.value));
-  const out = new Set([...state.removed, ...guessed].filter((v) => inRange(bounds, v)));
+  const out = new Set(
+    [...state.removed, ...guessedValues(state)].filter((v) => inRange(bounds, v)),
+  );
   return { bounds, out, size: Math.max(0, rangeSize(bounds) - out.size) };
-}
-
-const allSecrets = (s: Secrets): number[] =>
-  s.mode === 'shared' ? [s.value] : Object.values(s.byPlayer);
-
-// `n` distinct values from `pool`, uniformly: a partial Fisher–Yates shuffle.
-function pickFrom(pool: number[], n: number, rng: Drbg): number[] {
-  for (let i = 0; i < n; i += 1) {
-    const j = i + rng.nextInt(pool.length - i);
-    [pool[i], pool[j]] = [pool[j] ?? 0, pool[i] ?? 0];
-  }
-  return pool.slice(0, n);
 }
 
 // `n` distinct values of `range` that `allowed` accepts, uniformly, by rejection (large ranges).
@@ -94,7 +81,7 @@ export function fallingNumbers(
   if (rangeSize(bounds) <= LIST_LIMIT || removable < 4 * n) {
     const pool: number[] = [];
     for (let v = bounds.low; v <= bounds.high; v += 1) if (allowed(v)) pool.push(v);
-    return pickFrom(pool, n, rng).sort((a, b) => a - b);
+    return pickDistinct(pool, n, rng).sort((a, b) => a - b);
   }
   return rejectFrom(bounds, n, allowed, rng).sort((a, b) => a - b);
 }

@@ -122,6 +122,8 @@ export class PickDriver {
     change: Partial<PlatformRoundConfig> = {},
     private readonly rng: RoundRng = fixedRng(7),
     season: Season = 'spring',
+    // A variant of the pick game for a test of one contract feature (extraCooldownMs, T120).
+    private readonly module: typeof pickGame = pickGame,
   ) {
     const created = createRound<PickState, Pick, PickEvent, null>({
       roundId: 'r1',
@@ -138,7 +140,7 @@ export class PickDriver {
 
   run(cmd: RoundCommand<Pick>): StepResult<PickState, Pick, PickEvent, null> {
     const deps: RoundDeps<PickState, Pick, PickEvent, null, PickSecrets> = {
-      module: pickGame,
+      module: this.module,
       secrets: this.deps.secrets,
       rng: this.rng,
       seed: '5eed',
@@ -148,7 +150,7 @@ export class PickDriver {
     this.log.push(...result.events);
     if (this.deps.secrets === null && this.state.game !== null) {
       const input = roundInput(this.state, rosterPlayers(this.state));
-      this.deps.secrets = pickGame.deriveSecrets(input, this.rng);
+      this.deps.secrets = this.module.deriveSecrets(input, this.rng);
     }
     return result;
   }

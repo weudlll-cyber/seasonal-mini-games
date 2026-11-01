@@ -364,11 +364,51 @@ importers:
         specifier: 8.3.4
         version: 8.3.4(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1)
 
+  games/bomb-defusal:
+    dependencies:
+      '@smg/game-sdk':
+        specifier: workspace:*
+        version: link:../../packages/game-sdk
+      '@smg/guess-engine':
+        specifier: workspace:*
+        version: link:../../packages/guess-engine
+      '@smg/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      react:
+        specifier: 19.3.1
+        version: 19.3.1
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@testing-library/dom':
+        specifier: 10.4.2
+        version: 10.4.2
+      '@testing-library/react':
+        specifier: 16.3.3
+        version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      fast-check:
+        specifier: 4.10.2
+        version: 4.10.2
+      jsdom:
+        specifier: 30.1.3
+        version: 30.1.3
+      vite:
+        specifier: 8.3.4
+        version: 8.3.4(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1)
+
   games/guess-the-number:
     dependencies:
       '@smg/game-sdk':
         specifier: workspace:*
         version: link:../../packages/game-sdk
+      '@smg/guess-engine':
+        specifier: workspace:*
+        version: link:../../packages/guess-engine
       '@smg/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -416,6 +456,80 @@ importers:
       fast-check:
         specifier: 4.10.2
         version: 4.10.2
+      vite:
+        specifier: 8.3.4
+        version: 8.3.4(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1)
+
+  games/safecracker:
+    dependencies:
+      '@smg/game-sdk':
+        specifier: workspace:*
+        version: link:../../packages/game-sdk
+      '@smg/guess-engine':
+        specifier: workspace:*
+        version: link:../../packages/guess-engine
+      '@smg/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      react:
+        specifier: 19.3.1
+        version: 19.3.1
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@testing-library/dom':
+        specifier: 10.4.2
+        version: 10.4.2
+      '@testing-library/react':
+        specifier: 16.3.3
+        version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      fast-check:
+        specifier: 4.10.2
+        version: 4.10.2
+      jsdom:
+        specifier: 30.1.3
+        version: 30.1.3
+      vite:
+        specifier: 8.3.4
+        version: 8.3.4(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1)
+
+  games/seasonal-target:
+    dependencies:
+      '@smg/game-sdk':
+        specifier: workspace:*
+        version: link:../../packages/game-sdk
+      '@smg/guess-engine':
+        specifier: workspace:*
+        version: link:../../packages/guess-engine
+      '@smg/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      react:
+        specifier: 19.3.1
+        version: 19.3.1
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      '@testing-library/dom':
+        specifier: 10.4.2
+        version: 10.4.2
+      '@testing-library/react':
+        specifier: 16.3.3
+        version: 16.3.3(@testing-library/dom@10.4.2)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@types/react':
+        specifier: 19.3.0
+        version: 19.3.0
+      fast-check:
+        specifier: 4.10.2
+        version: 4.10.2
+      jsdom:
+        specifier: 30.1.3
+        version: 30.1.3
       vite:
         specifier: 8.3.4
         version: 8.3.4(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1)
@@ -469,6 +583,19 @@ importers:
 
   packages/game-sdk:
     dependencies:
+      zod:
+        specifier: 4.6.7
+        version: 4.6.7
+    devDependencies:
+      fast-check:
+        specifier: 4.10.2
+        version: 4.10.2
+
+  packages/guess-engine:
+    dependencies:
+      '@smg/game-sdk':
+        specifier: workspace:*
+        version: link:../game-sdk
       zod:
         specifier: 4.6.7
         version: 4.6.7

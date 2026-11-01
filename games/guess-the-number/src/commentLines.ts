@@ -8,19 +8,16 @@
  *                 their season uses. Friendly and playful, teasing at the far end, never
  *                 insulting, never about a name, no profanity, no digits, and no word about the
  *                 range or its size (a hidden range must stay hidden; ./comments.test checks).
- * Depends on:     @smg/game-sdk (Season), ./closeness (Tier)
+ * Depends on:     @smg/guess-engine (CommentLines, Pool)
  * Used by:        ./comments, ./comments.test
  * Spec:           docs/spec/02-game-guess-the-number.md §6.3
  */
-import type { Season } from '@smg/game-sdk';
-
-import type { Tier } from './closeness.js';
+import type { CommentLines } from '@smg/guess-engine';
 
 // A tier's lines, or the trend lines for a guess closer or farther than the player's last.
-export type Pool = Tier | 'closer' | 'farther';
-type Line = string | { readonly text: string; readonly season: Season };
+export type { Pool } from '@smg/guess-engine';
 
-export const COMMENT_LINES: Readonly<Record<Pool, readonly Line[]>> = {
+export const COMMENT_LINES: CommentLines = {
   wayOff: [
     'Well, that wasn’t it.',
     'Not even in the same postcode.',

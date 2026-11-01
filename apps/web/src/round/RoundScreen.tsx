@@ -43,7 +43,7 @@ import { RoundIntro } from './RoundIntro.js';
 import { RoundLog } from './RoundLog.js';
 import { TeamTiles } from './RoundSide.js';
 import { SpecialBanner } from './SpecialBanner.js';
-import { SpecialInfo } from './SpecialInfo.js';
+import { ruleOf, SpecialInfo } from './SpecialInfo.js';
 import { codeText, seconds, solvedText } from './roundText.js';
 import './round.css';
 
@@ -72,6 +72,8 @@ function TopBar(p: {
   readonly state: RoundStateView;
   readonly now: number;
   readonly hostMenu: ReactNode;
+  // The special's sentence, in the game's words where it has its own (T119).
+  readonly rule: string;
 }): ReactElement {
   const { state } = p;
   return (
@@ -93,7 +95,7 @@ function TopBar(p: {
         </span>
         {state.halving ? <span className="round-badge">Halving round</span> : null}
       </span>
-      {state.specialOn ? <SpecialInfo season={state.season} /> : null}
+      {state.specialOn ? <SpecialInfo season={state.season} rule={p.rule} /> : null}
       <span className="round-fact round-mode">
         {state.secretMode === 'shared' ? 'Shared' : 'Individual'}
       </span>
@@ -228,7 +230,7 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
   const player = state.role === 'player' && game !== null;
   return (
     <div className="round-live" style={style} data-testid="round-view">
-      <TopBar state={state} now={now} hostMenu={props.hostMenu} />
+      <TopBar state={state} now={now} hostMenu={props.hostMenu} rule={ruleOf(game, state.season)} />
       <div className="smg-panel round-range">
         <GamePart state={state} game={game} />
       </div>

@@ -1,0 +1,17 @@
+/**
+ * @file   packages/guess-engine/tsconfig.json
+ * @module guess-engine
+ * @brief  TypeScript settings for @smg/guess-engine.
+ *
+ * Responsibility: extend the shared strict base and limit the program to src/. node types
+ *                 are included for the tests, which build round randomness with the SDK's
+ *                 crypto entry; the engine itself only receives a RoundRng.
+ * Spec:           docs/spec/10-repository-structure.md §2
+ */
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"]
+  },
+  "include": ["src"]
+}

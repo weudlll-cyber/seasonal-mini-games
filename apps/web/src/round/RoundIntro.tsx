@@ -5,8 +5,8 @@
  *
  * Responsibility: the countdown is a full intro screen (O36) in the round's season colour: the
  *                 season's token icon and its name in large type (with the halving badge on a
- *                 halving round), the special's name and its one plain sentence ("No special
- *                 this round." when it is off), the game's line on the secret and its range
+ *                 halving round), the special's name and its one plain sentence, in the game's
+ *                 words where it has its own (T119) ("No special this round." when it is off), the game's line on the secret and its range
  *                 ("Shared number between 1 and 100", "Hidden range"), the cooldown, and the
  *                 seconds until the round opens; the host menu stays in its corner. It fills
  *                 the round's space without a page scrollbar on desktop and phone
@@ -23,6 +23,7 @@ import type { ReactElement, ReactNode } from 'react';
 import { SeasonIcon } from '../season/SeasonIcon.js';
 import { NO_SPECIAL, SEASON_NAMES, SPECIALS } from '../season/season.js';
 import { seconds } from './roundText.js';
+import { ruleOf } from './SpecialInfo.js';
 import './roundIntro.css';
 
 // Whole seconds until the round opens, never below 0.
@@ -60,7 +61,7 @@ export function RoundIntro(p: {
         {state.specialOn ? (
           <>
             <h2>{special.name}</h2>
-            <p>{special.rule}</p>
+            <p>{ruleOf(p.game, state.season)}</p>
           </>
         ) : (
           <p>{NO_SPECIAL}</p>

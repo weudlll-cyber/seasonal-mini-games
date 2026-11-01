@@ -11,6 +11,8 @@
  *                 turns its view into the list's guess rows (`GuessRow`, O20) and words its
  *                 event rows (`FeedLine`); the client draws both, in one list. On the result
  *                 page the game words the line about the best of the rest (`runnerUp`, O22).
+ *                 A game whose guesses are not numbers gives them and their answers in words
+ *                 (`text`, `answer`), and words its own special (`specialRule`, T119).
  * Depends on:     ./module
  * Used by:        ./index, games/<game>/web, games/registry/web, apps/web
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/02-game-guess-the-number.md §12
@@ -62,6 +64,14 @@ export interface FeedLine {
   readonly special?: boolean;
 }
 
+// The answer of a game that is not about higher or lower (T119): "2 right place, 1 wrong
+// place" with its pegs, "The first 2 cuts were right", "12 away, NE".
+export interface GuessAnswer {
+  readonly text: string;
+  readonly tone: 'correct' | 'close' | 'far' | 'boom';
+  readonly pegs?: readonly ('hit' | 'near' | 'miss')[];
+}
+
 // One guess in the round's list, as far as this viewer's view shows it (O20, O21).
 export interface GuessRow {
   readonly key: string;
@@ -72,6 +82,12 @@ export interface GuessRow {
   // Null where the viewer may not see the number.
   readonly value: number | null;
   readonly feedback: 'higher' | 'lower' | 'correct' | null;
+  // A guess that is not a number, in words ("0427", "red, blue, green", "(12, 34)"); null or
+  // absent where the viewer may not see it (DECISIONS T119).
+  readonly text?: string | null;
+  // An answer other than higher/lower, used when `feedback` is null: its words, a tone the
+  // platform colours by, and optional pegs drawn before the words (never colour alone).
+  readonly answer?: GuessAnswer | null;
   // The closeness comment, exactly when the answer is shown; its tier for styling.
   readonly comment: string | null;
   readonly tier: string | null;
@@ -98,4 +114,8 @@ export interface GameText {
   // The round intro's line on the secret ("Shared number between 1 and 100", "Hidden range"),
   // from a player's or spectator's view during the countdown; null, or no hook, shows none.
   readonly intro?: (view: unknown, secretMode: 'shared' | 'individual') => string | null;
+  // The season special's one plain sentence in the game's terms ("Every so often, a digit
+  // that is not in the code falls out."), for the intro screen and the top bar's note; null,
+  // or no hook, keeps the platform's sentence (T119).
+  readonly specialRule?: (season: Season) => string | null;
 }

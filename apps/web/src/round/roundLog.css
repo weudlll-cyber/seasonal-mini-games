@@ -144,6 +144,40 @@
   color: var(--color-success-text);
 }
 
-.round-answer[data-feedback='lower'] {
+.round-answer[data-feedback='lower'],
+.round-answer[data-feedback='boom'] {
   color: var(--color-danger);
+}
+
+/* A game's own answers (T119): close and found in the success colour, far in plain text. */
+.round-answer[data-feedback='close'],
+.round-answer[data-feedback='correct'] {
+  color: var(--color-success-text);
+}
+
+/* Pegs before an answer's words: filled for a hit, ringed for a near one, hollow for a miss. */
+.round-pegs {
+  display: inline-flex;
+  gap: 0.15rem;
+  margin-inline-end: 0.35rem;
+  vertical-align: middle;
+}
+
+.round-peg {
+  width: 0.6rem;
+  height: 0.6rem;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+
+.round-peg[data-peg='hit'] {
+  background: currentColor;
+}
+
+.round-peg[data-peg='near'] {
+  background: radial-gradient(circle, currentColor 35%, transparent 40%);
+}
+
+.round-peg[data-peg='miss'] {
+  opacity: 0.45;
 }
