@@ -7,7 +7,7 @@
  *                 when it is longer than its room it ends in an ellipsis, and focus (Tab) or a
  *                 tap shows it in full; the full name is its accessible name and its title.
  * Depends on:     react
- * Used by:        ./ResultScreen
+ * Used by:        ./ResultScreen, ./RoundSide (the Players panel)
  * Spec:           docs/spec/02-game-guess-the-number.md §9, §12
  */
 import { useState, type ReactElement } from 'react';

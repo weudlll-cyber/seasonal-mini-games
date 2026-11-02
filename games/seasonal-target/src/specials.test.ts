@@ -51,7 +51,7 @@ describe('Spring Herald', () => {
 
   it('gives the shared quarter to the room', () => {
     const inp = input('shared', PLAYERS);
-    const t = new Table(targets(inp, [{ x: 40, y: 5 }]), inp);
+    const t = new Table(targets(inp, [{ x: 15, y: 5 }]), inp);
     const events = t.fold(hooks?.springHerald?.(t.state, t.ctx) ?? []);
     expect(events.map((e) => e.audience)).toEqual(['room']);
     expect(t.state.hint?.name).toBe('north-east');
@@ -61,8 +61,8 @@ describe('Spring Herald', () => {
     const inp = input('individual', PLAYERS);
     const cells = [
       { x: 1, y: 1 },
-      { x: 50, y: 50 },
-      { x: 1, y: 50 },
+      { x: 20, y: 20 },
+      { x: 1, y: 20 },
     ];
     const t = new Table(targets(inp, cells), inp);
     const events = t.fold(hooks?.springHerald?.(t.state, t.ctx) ?? []);
@@ -77,9 +77,9 @@ describe('Spring Herald', () => {
 const round = fc.record({
   mode: fc.constantFrom('shared' as const, 'individual' as const),
   seed: fc.uint8Array({ minLength: 32, maxLength: 32 }),
-  width: fc.integer({ min: 20, max: 100 }),
-  height: fc.integer({ min: 20, max: 100 }),
-  minCells: fc.integer({ min: 4, max: 400 }),
+  width: fc.integer({ min: 8, max: 30 }),
+  height: fc.integer({ min: 8, max: 30 }),
+  minCells: fc.integer({ min: 4, max: 32 }),
 });
 
 // Every halving until the special has run its course; the areas of each player per step.
@@ -161,7 +161,7 @@ describe('halving positions', () => {
     const events = t.fold(hooks?.halving?.(t.state, t.ctx, 1) ?? []);
     expect(events.at(-1)).toEqual({
       audience: 'room',
-      event: { type: 'AreaHalved', index: 1, playerId: null, area: null, width: 25, height: 50 },
+      event: { type: 'AreaHalved', index: 1, playerId: null, area: null, width: 10, height: 20 },
     });
     expect(events.slice(0, 3).map((e) => e.audience)).toEqual(['player:a', 'player:b', 'player:c']);
   });

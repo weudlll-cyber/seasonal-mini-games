@@ -11,8 +11,9 @@
  *                 500 at once ("Start from the lobby" off), the range is shown, the ± button turns a typed number negative, the
  *                 guess is answered, and the round plays to its result (O18). Both check that the round view fits
  *                 the screen without a page scrollbar (02 §12) and that every text on it keeps
- *                 4.5:1 in light and dark (./contrast); on the phone the app bar is one row of
- *                 at most 56 px (T67). The Quick Test player hosts and plays (O16).
+ *                 4.5:1 in light and dark (./contrast); on the phone the app header is hidden
+ *                 and the round's own bar is one row of at most 64 px (O46). The Quick Test
+ *                 player hosts and plays (O16).
  * Depends on:     @playwright/test, ./contrast, ./play, ./screens
  * Spec:           docs/spec/02-game-guess-the-number.md §3, §5.1, §12; docs/spec/09-testing-strategy.md §4
  */
@@ -118,9 +119,11 @@ test('journey 11: a range from -500 to 500 takes negative guesses on a phone', a
     );
     await expect(p.page.getByTestId('guess-button')).toBeEnabled({ timeout: 10_000 });
     await fitsScreen(p.page);
-    // During a round on a phone the app bar is one row of at most 56 px (DECISIONS T67).
-    const bar = await p.page.locator('.shell-bar').boundingBox();
-    expect(bar?.height ?? Infinity, 'the app bar during a round').toBeLessThanOrEqual(56);
+    // During a round the app header is hidden and the round's own bar is one row of at most
+    // 64 px on a phone (focus mode, O46).
+    await expect(p.page.locator('.shell-bar')).toBeHidden();
+    const bar = await p.page.getByTestId('round-banner').boundingBox();
+    expect(bar?.height ?? Infinity, 'the round bar on a phone').toBeLessThanOrEqual(64);
     await readable(p.page, 'round view on a phone');
     await p.page.getByTestId('guess-input').fill('250');
     await p.page.getByRole('button', { name: 'Change the sign', exact: true }).click();

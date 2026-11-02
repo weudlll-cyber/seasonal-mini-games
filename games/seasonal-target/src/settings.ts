@@ -3,12 +3,14 @@
  * @module games/seasonal-target
  * @brief  The game's own keys of document `game.seasonal-target` and its frozen config.
  *
- * Responsibility: the map's width and height, the answer mode (`direction`, `distance` — the
- *                 default — or `closeness`, owner O39 amended by O43) and where Leaf Fall and halving stop (08 §3.3), beside the guess
+ * Responsibility: the grid's size (one square side, 8–30 tiles, owner O45), the answer mode
+ *                 (`direction`, `distance` — the default — or `closeness`, owner O39 amended by
+ *                 O43) and where Leaf Fall and halving stop (08 §3.3), beside the guess
  *                 engine's shared keys (feedback visibility, comments, trend lines, the repeat
- *                 rule) worded for cells; reading frozen values into the config. No rule across
- *                 keys: every width, height and stop inside its bounds makes a playable round.
- *                 Halving is always allowed: the map is always shown (02d §3, §8.4). The
+ *                 rule) worded for tiles; reading frozen values into the config, whose width and
+ *                 height are both the size. No rule across keys: every size and stop inside its
+ *                 bounds makes a playable round, the stops' maxima fitting the smallest grid.
+ *                 Halving is always allowed: the grid is always shown (02d §3, §8.4). The
  *                 platform's round keys (`autumn.count`, `halving.intervalS` …) come first in
  *                 the document (game-sdk).
  * Depends on:     @smg/game-sdk (SettingDef, GameSettings), @smg/guess-engine (shared keys),
@@ -41,23 +43,23 @@ const host = { editPermission: GAME_ADMIN, hostChooses: true, running: 'frozen' 
 const admin = { editPermission: GAME_ADMIN, hostChooses: false, running: 'frozen' } as const;
 const proposal = { status: 'proposal', spec: '08 §3.3' } as const;
 
-// One side of the map, 20–100 cells (02d §3).
-const side = (key: string, label: string, help: string): SettingDef => ({
-  key,
-  kind: 'int',
-  label,
-  help,
-  default: 50,
-  min: 20,
-  max: 100,
-  unit: 'cells',
-  ...proposal,
-  ...host,
-});
-
 const defs: readonly SettingDef[] = [
-  side('map.width', 'Map width', 'Columns of the map, counted from the west edge.'),
-  side('map.height', 'Map height', 'Rows of the map; row 1 is the north edge.'),
+  // The square grid's side (O45, amending O38's 50 × 50 map): columns from the west edge,
+  // rows from the north edge.
+  {
+    key: 'target.size',
+    kind: 'int',
+    label: 'Grid size',
+    help: 'Tiles per side of the square grid; column 1 is the west edge, row 1 the north edge.',
+    default: 20,
+    min: 8,
+    max: 30,
+    unit: 'tiles',
+    status: 'owner',
+    decision: 'O45',
+    spec: '08 §3.3',
+    ...host,
+  },
   {
     key: 'target.feedback',
     kind: 'enum',
@@ -73,20 +75,21 @@ const defs: readonly SettingDef[] = [
     ...host,
   },
   visibilityDef(
-    'Shared mode. own: that someone guessed; numbers: also the cell; full: also the answer.',
+    'Shared mode. own: that someone guessed; numbers: also the tile; full: also the answer.',
   ),
   COMMENTS_DEF,
   TREND_DEF,
-  repeatDef('A cell the player already tried is refused without cost.'),
+  repeatDef('A tile the player already tried is refused without cost.'),
   {
     key: 'autumn.minCellsLeft',
     kind: 'int',
     label: 'Leaf Fall stops at',
-    help: 'Falls stop when fewer cells than this would be left where the target can be.',
+    help: 'Falls stop when fewer tiles than this would be left where the target can be.',
     default: 10,
     min: 2,
-    max: 1_000,
-    unit: 'cells',
+    // The smallest grid has 64 tiles: a higher stop would never let a tile fall there.
+    max: 50,
+    unit: 'tiles',
     ...proposal,
     ...admin,
   },
@@ -94,11 +97,12 @@ const defs: readonly SettingDef[] = [
     key: 'halving.minCells',
     kind: 'int',
     label: 'Halving stops at',
-    help: 'The target area is not halved any more once it has this many cells or fewer.',
+    help: 'The target area is not halved any more once it has this many tiles or fewer.',
     default: 16,
     min: 4,
-    max: 400,
-    unit: 'cells',
+    // Below the smallest grid's 64 tiles, so halving always runs at least once.
+    max: 32,
+    unit: 'tiles',
     ...proposal,
     ...admin,
   },
@@ -107,14 +111,15 @@ const defs: readonly SettingDef[] = [
 export const stSettings: GameSettings<StConfig> = {
   defs,
   read: (values) => ({
-    width: values['map.width'] as number,
-    height: values['map.height'] as number,
+    // Square: the geometry keeps a width and a height.
+    width: values['target.size'] as number,
+    height: values['target.size'] as number,
     feedback: values['target.feedback'] as FeedbackMode,
     ...readGuessConfig(values),
     autumnMinCellsLeft: values['autumn.minCellsLeft'] as number,
     halvingMinCells: values['halving.minCells'] as number,
   }),
   problem: () => null,
-  // The map is always shown, so a target area tells nothing a hidden setting would keep.
+  // The grid is always shown, so a target area tells nothing a hidden setting would keep.
   halvingAllowed: () => true,
 };

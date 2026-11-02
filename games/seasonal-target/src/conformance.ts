@@ -3,10 +3,10 @@
  * @module games/seasonal-target
  * @brief  The game's kit for the platform's conformance suite: sentinel targets and guesses.
  *
- * Responsibility: a 100 × 100 map with the shared target at (97, 95) or player k's at
- *                 (91 + k mod 9, 91 + ⌊k / 9⌋ mod 9), and guesses over columns 1–80 and every
- *                 row, so no guess hits or touches a target; a leaked target is then the only
- *                 way its pair `"x":97,"y":95` can appear in a view or event. `solve` guesses a
+ * Responsibility: the largest grid, 30 × 30, with the shared target at (28, 26) or player k's
+ *                 at (22 + k mod 9, 22 + ⌊k / 9⌋ mod 9), and guesses over columns 1–20 and
+ *                 every row, so no guess hits or touches a target; a leaked target is then the
+ *                 only way its pair `"x":28,"y":26` can appear in a view or event. `solve` guesses a
  *                 player's own target, for the check that a solved player sees no other (O25).
  * Depends on:     @smg/game-sdk (ConformanceKit), ./rules, ./secrets, ./settings
  * Used by:        ./index, games/registry
@@ -20,8 +20,8 @@ import { cellOf, ruleOf, type Secrets, type Target } from './secrets.js';
 import type { StConfig } from './settings.js';
 
 const CONFIG: StConfig = {
-  width: 100,
-  height: 100,
+  width: 30,
+  height: 30,
   feedback: 'direction',
   feedbackVisibility: 'full',
   comments: true,
@@ -47,12 +47,12 @@ export const stConformance: ConformanceKit<GuessAction, StConfig, Secrets> = {
   }),
   sentinels: (input) => {
     if (input.secretMode === 'shared') {
-      const cell = { x: 97, y: 95 };
+      const cell = { x: 28, y: 26 };
       return { secrets: { mode: 'shared', value: target(cell) }, marks: [mark(cell)] };
     }
     const cells = input.roster.map((p, k) => ({
       id: p.playerId,
-      cell: { x: 91 + (k % 9), y: 91 + (Math.floor(k / 9) % 9) },
+      cell: { x: 22 + (k % 9), y: 22 + (Math.floor(k / 9) % 9) },
     }));
     return {
       secrets: {
@@ -64,7 +64,7 @@ export const stConformance: ConformanceKit<GuessAction, StConfig, Secrets> = {
   },
   action: (n) => {
     const k = Math.abs(Math.trunc(n));
-    return { value: { x: 1 + (k % 80), y: 1 + (Math.floor(k / 80) % 100) } };
+    return { value: { x: 1 + (k % 20), y: 1 + (Math.floor(k / 20) % 30) } };
   },
   solve: (secrets, playerId) => {
     const own = secrets.mode === 'shared' ? secrets.value : secrets.byPlayer[playerId];

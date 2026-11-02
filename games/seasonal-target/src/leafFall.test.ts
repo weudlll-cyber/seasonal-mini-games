@@ -108,18 +108,27 @@ describe('Leaf Fall with a shared target and full', () => {
     // Delivered: only cells 13 away to the south-east of the guess are left.
     expect(candidatesOf(t.state, t.secrets, 5_001).length).toBeLessThan(40);
   });
+});
 
-  it('keeps every cell at the same rounded distance in distance mode, whatever its direction', () => {
+describe('Leaf Fall in distance mode', () => {
+  it('keeps every cell at the same rounded distance and tier, in any direction', () => {
     const rule = { mode: 'distance', map: { width: 20, height: 20 } } as const;
     const inp = input('shared', PLAYERS, { width: 20, height: 20, feedback: 'distance' });
-    const t = new Table({ mode: 'shared', value: { x: 10, y: 10, rule } }, inp);
-    t.play('a', { x: 1, y: 1 });
-    const pool = candidatesOf(t.state, t.secrets, Infinity);
-    // Rounded √162 = 13: the target's own answer, and every candidate's.
-    expect(pool.every((c) => roundedDistance(squared({ x: 1, y: 1 }, c)) === 13)).toBe(true);
+    const pool = (target: Cell) => {
+      const t = new Table({ mode: 'shared', value: { ...target, rule } }, inp);
+      t.play('a', { x: 1, y: 1 });
+      return candidatesOf(t.state, t.secrets, Infinity);
+    };
+    // Rounded √100 = 10, all of it cold: the target's own answer, and every candidate's.
+    const ten = pool({ x: 7, y: 9 });
+    expect(ten.every((c) => roundedDistance(squared({ x: 1, y: 1 }, c)) === 10)).toBe(true);
     // Due east and due south of the guess stay: the answer names no direction.
-    expect(pool).toContainEqual({ x: 14, y: 1 });
-    expect(pool).toContainEqual({ x: 1, y: 14 });
+    expect(ten).toContainEqual({ x: 11, y: 1 });
+    expect(ten).toContainEqual({ x: 1, y: 11 });
+    // Rounded 13 spans cold (n = 162) and way off (n = 169): the tile's colour tells them apart.
+    const thirteen = pool({ x: 10, y: 10 });
+    expect(thirteen.every((c) => squared({ x: 1, y: 1 }, c) < 165)).toBe(true);
+    expect(thirteen).not.toContainEqual({ x: 14, y: 1 });
   });
 });
 

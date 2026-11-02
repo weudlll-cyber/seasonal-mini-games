@@ -22,8 +22,8 @@ import type { StConfig } from './settings.js';
 import type { StEvent, StState } from './state.js';
 
 export const defaultConfig: StConfig = {
-  width: 50,
-  height: 50,
+  width: 20,
+  height: 20,
   feedback: 'distance',
   feedbackVisibility: 'full',
   comments: true,

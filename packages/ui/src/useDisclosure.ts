@@ -8,11 +8,13 @@
  *                 before opening). `onKeyDown` goes on the element around button and panel,
  *                 so Escape closes from anywhere inside (only the innermost open menu when
  *                 menus are nested). One behaviour for the host menu, the account menu of
- *                 the compact top bar, the development sign-in menu, the round's chat on a phone
- *                 and a game's sheets (Guess The Number's fallen numbers).
+ *                 the compact top bar, the development sign-in menu, the waiting area's chat on
+ *                 a phone, the season pill's note and a game's sheets (Guess The Number's
+ *                 fallen numbers). The round's focus mode keeps several panels, one open at a
+ *                 time, with the same focus rules (apps/web round/usePanels).
  * Depends on:     react
- * Used by:        ./index; apps/web (match/HostMenu, round/RoundChat, round/SpecialInfo,
- *                 shell/AppShell, shell/DevTools); games/guess-the-number/web/FallenNumbers
+ * Used by:        ./index; apps/web (match/HostMenu, round/RoundChat, round/SeasonPill,
+ *                 shell/AppShell, shell/DevTools); the games' web sheets
  * Spec:           docs/spec/02-game-guess-the-number.md §12 (keyboard play); Bingo 01 §13
  */
 import { useId, useRef, useState, type KeyboardEvent, type RefObject } from 'react';

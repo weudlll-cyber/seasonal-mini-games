@@ -2,88 +2,102 @@
 
 > Part of the Seasonal Mini Games specification. Index: [README](README.md).
 > Seasonal Target (id `seasonal-target`) runs on the guess engine ([04](04-software-architecture.md) §4.7) and inherits every rule of Guess The Number ([02](02-game-guess-the-number.md)) that this section does not replace. Its game rules were proposed by the architect on 2026-11-01 and are built as written; each is marked *(proposal)* until the owner has played it ([OPEN](../OPEN.md)). Every number is a setting with a default, a minimum and a maximum ([08](08-admin-settings.md) §3); the value shown is the default.
+> **O45 (2026-11-02) amends the map rules of O38:** the fine 50 × 50 map is replaced by a square grid of large heat-coloured tiles, 20 × 20 by default, 8–30 per side chosen by the host. Sections 1, 3, 5–9 and 11 say what was built for it.
 
 ## 1. The game in one paragraph
 
-The server hides a target in one cell of a map of 50 × 50 cells. Players pick a cell on the map and press **Guess**. Depending on the host's choice, the server answers with how far away the target is and in which compass direction ("9 cells away, to the north-east", easier), only with how far away it is ("9 cells away", the default), or only with how warm or cold the guess was ("Warm", harder) (owner, decisions 39 and 43). Every guess stays on the map as a dot. Cooldown, shared or individual secret, the first correct guess received winning and placings by solve order are Guess The Number's (owner, decisions 3–5; [02](02-game-guess-the-number.md) §1, §7, §8).
+The server hides a target in one tile of a square grid of 20 × 20 tiles (owner, decision 45). Players pick a tile and press **Guess**. Depending on the host's choice, the server answers with how far away the target is and in which compass direction ("9 cells away, to the north-east", easier), only with how far away it is ("9 cells away", the default), or only with how warm or cold the guess was ("Warm", harder) (owner, decisions 39 and 43). Every guessed tile is filled with a colour by closeness, from blue (cold) to red (hot), and shows the distance as a number where the mode gives one (O45). Cooldown, shared or individual secret, the first correct guess received winning and placings by solve order are Guess The Number's (owner, decisions 3–5; [02](02-game-guess-the-number.md) §1, §7, §8).
 
 ## 2. Matches and rounds
 
 - A match is always one game, chosen by the host when creating the match (owner, decision 41). A Seasonal Target match runs only Seasonal Target rounds.
-- Everything else is [02](02-game-guess-the-number.md) §2 (lobby, waiting area, teams, Quick Test, end of a match, match summary), §4 (round lifecycle), §7 (cooldown), §10 (fairness proof: the secret cells, the quarter hint, the fallen cells and the halving windows are recomputed from the seed) and §8 (winning and round end; the host plays along, owner decision 16).
-- **Intro line** (owner, decision 36; DECISIONS T109): "Shared target on a 50 × 50 map" / "Everyone has their own target on a 50 × 50 map" *(proposal)*.
+- Everything else is [02](02-game-guess-the-number.md) §2 (lobby, waiting area, teams, Quick Test, end of a match, match summary), §4 (round lifecycle), §7 (cooldown), §10 (fairness proof: the secret tiles, the quarter hint, the fallen tiles and the halving windows are recomputed from the seed) and §8 (winning and round end; the host plays along, owner decision 16).
+- **Intro line** (owner, decision 36; DECISIONS T109): "Shared target on a 20 × 20 grid" / "Everyone has their own target on a 20 × 20 grid".
 
 ## 3. Round settings
 
-Guess The Number's round settings ([02](02-game-guess-the-number.md) §3) apply, except that **Range** and **Show range** are replaced by the map size; the map is always shown. Added:
+Guess The Number's round settings ([02](02-game-guess-the-number.md) §3) apply, except that **Range** and **Show range** are replaced by the grid size; the grid is always shown. Added:
 
 | Setting | Values | Default | Source |
 |---|---|---|---|
-| Map width, map height | 20–100 cells each, whole numbers | 50 × 50 | *(proposal)* |
+| Grid size (`target.size`) | 8–30 tiles per side, whole numbers; the grid is square | 20 | Owner, decision 45 (amends O38's 50 × 50 map); the host's round setting, frozen while the round runs. The game's config keeps a width and a height, both the size, so the geometry below is written for `W × H` |
 | Answers (`target.feedback`) | `direction` "distance and direction" (easier), `distance` "distance only", `closeness` "warm/cold only" (harder) | `distance` | Owner, decision 43 (2026-11-02, amends decision 39); built as the host's round setting, chosen in the round form and frozen per round: the next round's form keeps the last choice unless the host changes it ([OPEN](../OPEN.md), spec conflicts) |
+
+The stops of Leaf Fall (`autumn.minCellsLeft`, default 10, 2–50) and halving (`halving.minCells`, default 16, 4–32) keep their defaults; their maxima lie below the smallest grid's 64 tiles, so on every grid size a fall can remove tiles and halving runs at least once *(proposal)*.
 
 ## 4. Guessing
 
-A guess is one cell, action `{ value: { x, y } }`: whole numbers, 1-based, `x` the column from the west edge, `y` the row from the top; row 1 is the north edge. Coordinates are shown as "column 12, row 34", short "(12, 34)". Anything that is not two whole numbers fails the action schema like any malformed intent ([06](06-data-model-api-realtime.md) §4.3). Checks in [02](02-game-guess-the-number.md) §5.1 order, the game's own replacing check 4 and 5 *(proposal)*:
+A guess is one tile, action `{ value: { x, y } }`: whole numbers 1–30, 1-based, `x` the column from the west edge, `y` the row from the top; row 1 is the north edge. Coordinates are shown as "column 12, row 7", short "(12, 7)". Anything that is not two whole numbers fails the action schema like any malformed intent ([06](06-data-model-api-realtime.md) §4.3). Checks in [02](02-game-guess-the-number.md) §5.1 order, the game's own replacing check 4 and 5 *(proposal)*:
 
 1. `ROUND_NOT_OPEN` / `ROUND_OVER`, 2. `NOT_IN_ROUND`, 3. `ALREADY_SOLVED` — as 02 §5.1.
-4. `OUT_OF_MAP`: the cell lies outside the map — "That cell is not on the map." — or outside the round's current halving window (§8.4) — "That cell is outside the target area."
-5. `CELL_REMOVED`: the cell has fallen in Leaf Fall (§8.3) — "That cell has fallen."
+4. `OUT_OF_MAP`: the tile lies outside the grid — "That cell is not on the map." — or outside the round's current halving window (§8.4) — "That cell is outside the target area."
+5. `CELL_REMOVED`: the tile has fallen in Leaf Fall (§8.3) — "That cell has fallen."
 6. `ALREADY_GUESSED` (`round.repeatGuessRejected`): "You already tried that cell."
 7. `COOLDOWN_ACTIVE`, as 02 §5.1.
 
-Rejections are free and private (02 §5.1). The input row says 4–6 at once without sending (as DECISIONS T113): the Guess button stays enabled and pressing it shows the sentence. Receive order: 02 §5.2.
+Rejections are free and private (02 §5.1). The input says 4–6 at once without sending (as DECISIONS T113): the Guess button stays enabled and pressing it shows the sentence. Receive order: 02 §5.2.
 
-## 5. Feedback (owner, decisions 39 and 43; rule *proposal*)
+## 5. Feedback (owner, decisions 39, 43 and 45; rule *proposal*)
 
-For a guess `g = (gx, gy)` and the guesser's secret `s = (sx, sy)` let `dx = sx − gx` (east positive) and `dy = gy − sy` (north positive, because row 1 is north), `n = dx² + dy²`. `g = s` is `correct` in every mode. Otherwise:
+For a guess `g = (gx, gy)` and the guesser's secret `s = (sx, sy)` let `dx = sx − gx` (east positive) and `dy = gy − sy` (north positive, because row 1 is north), `n = dx² + dy²`. `g = s` is `correct` in every mode. Otherwise every answer carries the **tier** of §7, because the tier is the guessed tile's colour (O45) and the client never computes feedback:
 
-- **`direction`:** `{ distance, direction }`.
+- **`direction`:** `{ distance, direction, tier }`.
   - **Distance** = √n rounded to the nearest whole number, computed exactly in integers: `k = isqrt(n)`, distance `k + 1` if `n − k² > k`, else `k`. √n is never exactly half-way (k² + k + ¼ is no integer), so there is no tie. The smallest wrong-guess distance is 1.
-  - **Direction** from the guess toward the secret, one of 8 sectors of 45° centred on N, NE, E, SE, S, SW, W, NW. Exactly, with `a = |dx|`, `b = |dy|`: if `(a + b)² < 2b²` the direction is N (`dy > 0`) or S; else if `(a + b)² < 2a²` it is E (`dx > 0`) or W; else the diagonal given by the signs (NE, SE, SW, NW). These are the boundaries at 22.5° off each axis (tan 22.5° = √2 − 1); a cell can never lie exactly on one, so no boundary rule is needed, and the integer test decides every case.
-  - **Shown:** "9 cells away, to the north-east" with an arrow glyph ↗; short in the list "9 away, NE ↗".
-- **`distance`** (the default, owner decision 43): `{ distance }` only: the rounded distance exactly as in `direction`, with no direction. Shown "9 cells away" ("1 cell away"), short in the list "9 away"; a dot carries no arrow.
-- **`closeness`:** `{ tier }` only: the tier of §7 as a word ("Cold", "Warm", "Burning", "Just missed — right next to it"). The tier word is the answer, so it is shown even with `round.comments` off; the comment line comes on top when they are on.
+  - **Direction** from the guess toward the secret, one of 8 sectors of 45° centred on N, NE, E, SE, S, SW, W, NW. Exactly, with `a = |dx|`, `b = |dy|`: if `(a + b)² < 2b²` the direction is N (`dy > 0`) or S; else if `(a + b)² < 2a²` it is E (`dx > 0`) or W; else the diagonal given by the signs (NE, SE, SW, NW). These are the boundaries at 22.5° off each axis (tan 22.5° = √2 − 1); a tile can never lie exactly on one, so no boundary rule is needed, and the integer test decides every case.
+  - **Shown:** "9 cells away, to the north-east"; short in the list "9 away, NE ↗"; on the tile the number with a small arrow, "9↗".
+- **`distance`** (the default, owner decision 43): `{ distance, tier }`: the rounded distance exactly as in `direction`, with no direction. Shown "9 cells away" ("1 cell away"), short in the list "9 away"; on the tile the number alone.
+- **`closeness`:** `{ tier }` only: the tier of §7 as a word ("Cold", "Warm", "Burning", "Just missed — right next to it"). The tier word is the answer, so it is shown even with `round.comments` off; the comment line comes on top when they are on. On the tile: the colour alone, no number.
 
-Worked examples on a 50 × 50 map (diagonal 69.30, §7):
+Worked examples on a 20 × 20 grid (diagonal 26.87, §7):
 
-| Guess | Secret | dx, dy | n | `direction` (`distance`: the number alone) | `closeness` |
+| Guess | Secret | dx, dy | n | `direction` (`distance`: the number alone) | tier |
 |---|---|---|---|---|---|
-| (12, 34) | (20, 30) | 8, 4 | 80 | 9 cells, NE (√80 = 8.94; `144 < 32` no, `144 < 128` no → diagonal) | 8.94 / 69.30 = 12.9 % → cool |
-| (12, 34) | (25, 31) | 13, 3 | 178 | 13 cells, E (√178 = 13.34; `256 < 18` no, `256 < 338` yes) | 19.3 % → cool |
-| (20, 31) | (20, 30) | 0, 1 | 1 | 1 cell, N | just missed |
-| (49, 2) | (3, 47) | −46, −45 | 4 141 | 64 cells, SW | 92.9 % → way off |
+| (4, 14) | (12, 10) | 8, 4 | 80 | 9 cells, NE (√80 = 8.94; `144 < 32` no, `144 < 128` no → diagonal) | 33.3 %, n > 40 → cold |
+| (4, 14) | (17, 11) | 13, 3 | 178 | 13 cells, E (√178 = 13.34; `256 < 18` no, `256 < 338` yes) | 49.7 %, n > 61 → way off |
+| (10, 10) | (12, 12) | 2, −2 | 8 | 3 cells, SE | n = 8, not > 8 → burning |
+| (12, 11) | (12, 10) | 0, 1 | 1 | 1 cell, N | just missed |
+| (19, 2) | (2, 18) | −17, −16 | 545 | 23 cells, SW | 86.9 % → way off |
 
-Feedback travels as in [02](02-game-guess-the-number.md) §6.1 (to the guesser, held by Frost). No candidate area is computed or drawn: no distance rings, no shaded sectors (owner, decision 17); the arrow on a dot (§6) only restates its answer *(proposal)*.
+Feedback travels as in [02](02-game-guess-the-number.md) §6.1 (to the guesser, held by Frost). No candidate area is computed or drawn: no distance rings, no shaded sectors (owner, decision 17); the colour, number and arrow on a tile (§6) only restate its answer *(proposal)*.
 
-## 6. What others learn, and the map's dots
+## 6. What others learn, and the guessed tiles
 
-Visibility (`round.feedbackVisibility`, owner decision 8) works as [02](02-game-guess-the-number.md) §6.2 through the engine's room line (04 §4.7). Each guess is also a **dot** on its cell *(proposal)*:
+Visibility (`round.feedbackVisibility`, owner decision 8) works as [02](02-game-guess-the-number.md) §6.2 through the engine's room line (04 §4.7). Each guess also marks its **tile** *(proposal)*:
 
-| Mode / visibility | Others see in the list | Dots of others on the viewer's map |
+| Mode / visibility | Others see in the list | Others' guessed tiles on the viewer's grid |
 |---|---|---|
 | Shared, `own` | "Anna guessed" | none |
-| Shared, `numbers` | "Anna (12, 34)" | yes, plain |
-| Shared, `full` | "Anna (12, 34) — 9 away, NE ↗" or "— Warm", and the comment | yes, with the answer's arrow (`direction`) |
-| Individual | "Anna guessed" | none (her cells mean nothing on the viewer's map) |
+| Shared, `numbers` | "Anna (12, 7)" | the tile with Anna's corner mark, no fill |
+| Shared, `full` | "Anna (12, 7) — 9 away, NE ↗" or "— Warm", and the comment | the tile filled by its answer, with Anna's corner mark |
+| Individual | "Anna guessed" | none (her tiles mean nothing on the viewer's grid) |
 
-- Every player's dots take the one colour the platform's list gives that player (the colour of their list row, `colors` of the panel props). The viewer's own dots carry a ring and a bolder fill, in the season colour own list rows are highlighted in (the viewer's list colour on the result), and are always all shown; others' dots are those the engine's view carries (the newest 60, 04 §4.7) *(proposal)*. Colour is never alone: every dot is focusable, and focusing or hovering it names the player (by display name, "You" for the viewer), the cell and the answer; a small legend under the map lists each player with dots, own first (desktop; left out on a phone for space); every dot's guess is also a list row in words.
-- Under Frost an own dot shows at once, hollow with "…" until its answer arrives; others see it when the view's `releasedBefore` lets them (04 §4.1).
+- **Fill:** a 5-step scale from the server's tier (O45): 1 cold (way off, cold), 2 cool, 3 warm, 4 hot, 5 burning (burning, just missed); `correct` its own dark fill with a target glyph ◎. A small legend "Cold ▮▮▮▮▮ Hot" stands under the grid. The colours are custom properties with a light and a dark value; every fill is at 3:1 or more against the empty tile and the number on it at 4.5:1 or more against the fill, in both themes *(proposal)*.
+- **Own tiles:** a 3 px frame inside the tile in the season colour own list rows are highlighted in, set off from the fill by a thin line; always all shown. Under Frost an own tile shows the frame with "…" and no fill until its answer arrives.
+- **Others' tiles:** a small corner dot in the one colour the platform's list gives that player (`colors` of the panel props); others' guesses are those the engine's view carries (the newest 60, 04 §4.7); others see them when the view's `releasedBefore` lets them (04 §4.1).
+- **Several guesses on one tile:** the tile shows the closest answer (found, then the nearer tier, then the smaller distance), and its tooltip and label list every guess on it: "column 5, row 5: You — 9 cells away, to the north-east; Anna — 4 cells away, to the south". The guess list lists every guess too. Colour is never alone: every tile names its cell and its guesses in words.
 
 ## 7. Closeness tiers and comments (owner, decision 21; table *proposal*)
 
-The tier uses the unrounded distance √n as a share of the map's diagonal `D = √((W − 1)² + (H − 1)²)` (the farthest two cells can be). `D` is the full map's, also in a halving window, so a tier means the same all round. The table is fixed in the game module, not a setting, because Leaf Fall's candidates in `closeness` mode depend on it (§8.3) *(proposal)*:
+The tier uses the unrounded distance √n against two thresholds per tier: a share of the grid's diagonal `D = √((W − 1)² + (H − 1)²)` (the farthest two tiles can be) and a minimum in tiles. A guess is in a tier when its distance is more than **both**. The share sets the far tiers on large grids, the minimum the near ones on small grids, where a share alone would ask for less than one tile, so all five colour steps occur on every grid size 8–30 (O45). `D` is the full grid's, also in a halving window, so a tier means the same all round. Both columns grow from row to row, so the thresholds stay in order. The table is fixed in the game module, not a setting, because Leaf Fall's candidates depend on it (§8.3) *(proposal)*:
 
-| Tier | Rule (first match wins) |
+| Tier | Rule (first match wins), decided in integers as 10 000 · n > p² · D² and n > m |
 |---|---|
-| correct | on the cell |
-| justMissed | the cells touch: `max(a, b) = 1` with `a`, `b` of §5 |
-| wayOff | share > 40 % |
-| cold | share > 25 % |
-| cool | share > 12 % |
-| warm | share > 6 % |
-| hot | share > 3 % |
-| burning | otherwise |
+| correct | on the tile |
+| justMissed | the tiles touch: `max(a, b) = 1` with `a`, `b` of §5 |
+| wayOff | share > 48 % and n > 61 (distance > 7.81) |
+| cold | share > 32 % and n > 40 (> 6.32) |
+| cool | share > 20 % and n > 20 (> 4.47) |
+| warm | share > 12 % and n > 13 (> 3.61) |
+| hot | share > 6 % and n > 8 (> 2.83) |
+| burning | otherwise (two tiles away) |
+
+What that gives, as distances √n (pinned by `geometry.test`):
+
+| Grid | D | burning | hot | warm | cool | cold | way off |
+|---|---|---|---|---|---|---|---|
+| 8 × 8 | 9.90 | 2–2.83 | 3–3.61 | 4–4.47 | 5–6.32 | 6.40–7.81 | 8.06–9.90 |
+| 20 × 20 | 26.87 | 2–2.83 | 3–3.61 | 4–5.10 | 5.39–8.54 | 8.60–12.81 | 13–26.87 |
+| 30 × 30 | 41.01 | 2–2.83 | 3–4.47 | 5–8.06 | 8.25–13.04 | 13.15–19.65 | 19.70–41.01 |
 
 Comments, trend and line picking are [02](02-game-guess-the-number.md) §6.3 through the engine: in the voice of a map and a treasure hunt ("Wrong continent.", "You can almost smell the campfire.", "Next door — knock again!", "Bullseye!"), at least 15 lines per tier and per trend pool (closer/farther), a few season lines per pool ("Snowed in right beside it!"), friendly, no digits, never about a name.
 
@@ -91,57 +105,58 @@ Comments, trend and line picking are [02](02-game-guess-the-number.md) §6.3 thr
 
 ### 8.1 Spring — Spring Herald: the quarter *(proposal)*
 
-At `opensAt` the hint names the map quarter of the secret: the west half is columns 1 … ⌈W/2⌉, the north half rows 1 … ⌈H/2⌉ (as 03 §2.1's lower half). "Free hint: the target is in the north-west quarter (columns 1–25, rows 1–25)." Shared: one hint for everyone and spectators; individual: each player their own quarter, spectators "Spring Herald: everyone received a hint" (03 §2.1). The map outlines the quarter with a dashed border and its name in a corner label; the hint line stays above the map all round. `spring.hintType` does not apply. Intro and info sentence (`GameText.specialRule`): "Everyone learns which quarter of the map hides the target."
+At `opensAt` the hint names the grid quarter of the secret: the west half is columns 1 … ⌈W/2⌉, the north half rows 1 … ⌈H/2⌉ (as 03 §2.1's lower half). "Free hint: the target is in the north-west quarter (columns 1–10, rows 1–10)." Shared: one hint for everyone and spectators; individual: each player their own quarter, spectators "Spring Herald: everyone received a hint" (03 §2.1). The quarter's empty tiles are tinted with the season colour (filled tiles keep their fill); the hint line stays beside the grid all round. `spring.hintType` does not apply. Intro and info sentence (`GameText.specialRule`): "Everyone learns which quarter of the grid hides the target."
 
 ### 8.2 Summer — Heatwave; Winter — Frost
 
-Platform features, unchanged ([03](03-seasonal-specials.md) §2.2, §2.4). Under Frost the held own dot (§6) and the list row say "answer arriving in 2 s".
+Platform features, unchanged ([03](03-seasonal-specials.md) §2.2, §2.4). Under Frost the held own tile (§6) and the list row say the answer is arriving.
 
 ### 8.3 Autumn — Leaf Fall *(proposal)*
 
-Every `autumn.intervalS`, `autumn.count` cells fall (default 10), drawn uniformly with the DRBG under `leafFall/<k>` from the **candidates** (owner, decision 37; engine rule 04 §4.7). A cell `c` is a candidate when all hold:
+Every `autumn.intervalS`, `autumn.count` tiles fall (default 10), drawn uniformly with the DRBG under `leafFall/<k>` from the **candidates** (owner, decision 37; engine rule 04 §4.7). A tile `c` is a candidate when all hold:
 
-1. `c` lies in the current window (shared mode; the whole map without halving), or in individual mode in at least one player's current window;
+1. `c` lies in the current window (shared mode; the whole grid without halving), or in individual mode in at least one player's current window;
 2. `c` has not fallen, is no player's secret, and no player has guessed it in this round (any visibility, as DECISIONS T111);
-3. only with a shared secret and visibility `full`: for every answer delivered before the Frost cut `releasedBefore` to a guess `g`, `c` gets the same answer from `g` as the secret did — in `direction` mode the same rounded distance **and** the same direction by the §5 rule with `c` in place of `s`; in `distance` mode the same rounded distance, whatever the direction (owner decision 43); in `closeness` mode the same tier by the §7 table with `c` in place of `s`. With `own`, `numbers` or in individual mode no answer is public and rule 3 does not apply.
+3. only with a shared secret and visibility `full`: for every answer delivered before the Frost cut `releasedBefore` to a guess `g`, `c` gets the same answer from `g` as the secret did — in `direction` mode the same rounded distance, the same direction by the §5 rule and the same tier; in `distance` mode the same rounded distance and tier, whatever the direction (owner decision 43); in `closeness` mode the same tier by the §7 table with `c` in place of `s`. The tier counts in every mode because it is shown as the tile's colour and one rounded distance can span two tiers. With `own`, `numbers` or in individual mode no answer is public and rule 3 does not apply.
 
-Falls stop when fewer than `autumn.minCellsLeft` candidates (default 10) would remain; the last fall removes only as many as that allows. Fallen cells are greyed and hatched on every map (shape, not colour alone), listed in the Fallen cells panel and named in the special's list row ("Leaf Fall: 10 cells fell."); a fallen cell is refused at no cost (§4, check 5). With `full`, falls lie where the target can still be: accepted by owner decision 37 ([03](03-seasonal-specials.md) §2.3).
+Falls stop when fewer than `autumn.minCellsLeft` candidates (default 10) would remain; the last fall removes only as many as that allows. Fallen tiles are hatched on every grid (a pattern, not colour alone), listed in the Fallen cells panel and named in the special's list row ("Leaf Fall: 10 cells fell."); a fallen tile is refused at no cost (§4, check 5). With `full`, falls lie where the target can still be: accepted by owner decision 37 ([03](03-seasonal-specials.md) §2.3). Intro and info sentence: "Every so often, some tiles without a target fall off the grid."
 
 ### 8.4 Halving *(proposal)*
 
-Offered on a real halving day as [03](03-seasonal-specials.md) §4. Every `halving.intervalS` the current window `w × h` (at first the whole map) is replaced by one of about half the area: the longer side is halved, rounded up (width on a tie). Its position is drawn uniformly with the DRBG under `halving/<k>/<shared|playerId>` among all positions of that size that lie inside the current window and contain the secret, so the secret is always inside and not predictably central. Halving runs only while the current area is larger than `halving.minCells` (default 16). Shared: one window for everyone, spectators included; individual: each player's own window around their own secret, the same size for all, and the room line says only the size ("Halving: every target area is now 25 × 50 cells").
+Offered on a real halving day as [03](03-seasonal-specials.md) §4. Every `halving.intervalS` the current window `w × h` (at first the whole grid) is replaced by one of about half the area: the longer side is halved, rounded up (width on a tie). Its position is drawn uniformly with the DRBG under `halving/<k>/<shared|playerId>` among all positions of that size that lie inside the current window and contain the secret, so the secret is always inside and not predictably central. Halving runs only while the current area is larger than `halving.minCells` (default 16; on 20 × 20: 10 × 20, 10 × 10, 5 × 10, 5 × 5, 3 × 5). Shared: one window for everyone, spectators included; individual: each player's own window around their own secret, the same size for all, and the room line says only the size ("Halving: every target area is now 10 × 20 tiles").
 
-- **Shown window:** the map draws only the current window, scaled up to the same space (cells grow), coordinates staying absolute; a line above it names it ("Target area: columns 13–37, rows 1–50"). Dots and fallen cells outside it drop out of view; the result shows the whole map again.
+- **Shown window:** the whole grid stays shown (no zoom, O45); the tiles outside the window are dimmed, and a line beside the grid names the window ("Target area: columns 6–15, rows 1–20"). Guesses and fallen tiles outside it stay visible but dimmed.
 - **Guesses** outside the window: `OUT_OF_MAP` (§4); the selection is clamped to the window.
-- **With Leaf Fall:** halving runs first at the same instant (03 §1 rule 6); candidates count only inside the window(s), so a halving can end the falls by the `autumn.minCellsLeft` stop; fallen cells inside the window stay fallen.
+- **With Leaf Fall:** halving runs first at the same instant (03 §1 rule 6); candidates count only inside the window(s), so a halving can end the falls by the `autumn.minCellsLeft` stop; fallen tiles inside the window stay fallen.
 
 ## 9. Winning, closest miss and the result
 
-Winning, placings, margin and points are [02](02-game-guess-the-number.md) §8–§9. End line: "Walter hit the target first — after 9 guesses." The **closest miss** (shared, with a winner and no second hit in the margin window, owner decision 22) is the wrong guess of another player with the smallest `n`, the earlier on a tie *(proposal)*: "Anna just missed — the next cell (21, 31)." when it touches, else "Closest miss: Anna, 3 cells away (17, 30)."
+Winning, placings, margin and points are [02](02-game-guess-the-number.md) §8–§9. End line: "Walter hit the target first — after 9 guesses." The **closest miss** (shared, with a winner and no second hit in the margin window, owner decision 22) is the wrong guess of another player with the smallest `n`, the earlier on a tie *(proposal)*: "Anna just missed — the next cell (13, 11)." when it touches, else "Closest miss: Anna, 3 cells away (9, 10)."
 
-The **result map** marks the secret cell with a target icon, a ring in the season colour and its coordinates in text ("Target: column 20, row 30"), over the whole map with every guess of the round as dots (nothing is secret any more) and the fallen cells. Individual mode: the viewer's map shows their own target and dots; every player's target is listed in text, as 02 §9.
+The **result grid** is the same tile grid: the secret tile ringed in the season colour, its coordinates in text ("Target: column 12, row 10"), and every guess of the round on its tile (filled, framed or marked as in §6; nothing is secret any more), the legend and the fallen tiles hatched. Individual mode: the viewer's grid shows their own target and their own guesses (another player's answers are about their own target); every player's target and guesses are listed in text, as 02 §9.
 
 ## 10. What a spectator sees
 
-As [02](02-game-guess-the-number.md) §11, with the map: dots at shared `numbers`/`full` (with arrows under `full` and `direction`), none under `own` or in individual mode; fallen cells; the shared quarter hint and window (individual: only the count or size lines); never a secret cell, an individual quarter or an individual window.
+As [02](02-game-guess-the-number.md) §11, with the grid: others' tiles at shared `numbers` (corner marks) and `full` (filled by their answers), none under `own` or in individual mode; fallen tiles hatched; the shared quarter tinted and the shared window (tiles outside dimmed); individual: only the count or size lines; never a secret tile, an individual quarter or an individual window. The spectator's grid fills the stage like the player's input.
 
 ## 11. Player screen
 
-Layout, top bar, banner, list, intro and accessibility follow [02](02-game-guess-the-number.md) §12; the map takes the range block's place as the main area *(proposal)*:
+Layout, top bar, banner, list, intro and accessibility follow [02](02-game-guess-the-number.md) §12 and the round's focus mode (O46); the grid is the input and takes the round's stage *(proposal)*:
 
-- **One screen** without a page scrollbar at 1280 × 720 and 390 × 844, light and dark; only the list scrolls inside its box (only inside one list on a phone).
-- **Map:** a square-celled grid scaled to the largest size the space allows (at 1280 × 720 about 520 px, 10 px cells on 50 × 50; on a phone the width minus 16 px gutters, about 358 px), edge ticks every 10 cells with their numbers, grid lines and dots at 3:1 or more against the map, text at 4.5:1. The drawing keeps a margin on every edge, so the last tick numbers ("50") are never cut off; on a phone the tick numbers are at least 11 px. No zoom in v1; fine aiming is done with the arrows.
-- **Selection:** a tap or click selects the nearest cell; the marker is a thick square outline with crosshair ticks on the edges (a different shape from every dot). The selection is local only: nothing is sent until Guess.
-- **Arrows:** four buttons N, W, S, E (≥ 44 px, a compact cross, labelled "Move north" … for screen readers) move it by one cell; with the map focused the keyboard arrows do the same, Enter guesses.
-- **Coordinates as text:** "Selected: column 12, row 34" beside the Guess button, read out live (`aria-live="polite"`). Two compact number fields **Column** and **Row** also set the selection and follow it, on a desktop and on a phone. The arrow buttons are 44 × 44 px. During the cooldown the Guess button reads "Wait 6 s" (`buttonText`, T125).
-- **Desktop:** the map on the left with the hint or window line above it and the input row (cooldown ring, selected cell, fields, arrow cross, Guess) under it; a right column about 380 px wide holds the banner and the one list on top, then the team tiles, then the chat. **Phone:** top bar, hint line, the map at full width, the list filling the rest, team tiles with the Chat button, and the input row pinned at the bottom (ring, selected cell, fields, arrow cross, Guess). The Fallen cells panel is a "Fallen (N)" button that opens a sheet, as DECISIONS T115.
-- Never colour alone: own dots by ring, fallen cells by hatch, the quarter by dashed outline and label, answers always in words.
+- **One screen** without a page scrollbar at 1280 × 720 and 390 × 844, light and dark; only the list scrolls inside its box.
+- **Grid:** one CSS grid of square tiles, as large as the stage allows: the input is a flex column whose grid box takes the free height (a size container; the grid is the smaller of its width and height, square) with the legend and the controls under it at their natural height; no viewport arithmetic. The whole grid is always shown (no zoom). Numbers are left out on tiles too small to read (under 24 px, e.g. 30 × 30 on a phone; measured with a ResizeObserver); the tooltip, the label and the loupe still give them.
+- **Selection:** a click or tap selects the tile; the marker is a thick outline outside the tile in the text colour (unlike the own frame inside it). The selection is local only: nothing is sent until Guess. The grid is focusable as one stop (`aria-activedescendant` names the selected tile): the keyboard arrows move the selection, Enter guesses.
+- **Coordinates as text:** "Selected: column 12, row 7" beside the Guess button, read out live (`aria-live="polite"`). On a desktop the compact **Column** and **Row** fields and four arrow buttons N, W, E, S (44 × 44 px, "Move north" … for screen readers) are a second way to aim. During the cooldown the Guess button reads "Wait 6 s" (`buttonText`, T125).
+- **Phone and loupe:** on a narrow viewport (under 900 px) or with a coarse pointer, and tiles smaller than 44 px, the whole grid stays visible and the first tap opens a **loupe** over it: about 5 × 5 tiles around the tap (clamped at the edges), each at least 44 px, with the same fills, numbers and marks. A tap in the loupe selects that tile; the loupe holds the Column and Row fields, the arrow buttons and a Close button (Escape closes it too); its window stays put while the selection is inside it and follows once the selection leaves. Guess, always visible outside the loupe, sends and closes it. With tiles of 44 px or more a tap selects directly. Outside the loupe a phone shows no fields or arrows, for space.
+- **Desktop:** the stage on the left with the grid, the legend and the input row (cooldown ring, selected tile, fields, arrow cross, Guess) under it; the 320 px right column holds the game's panel (hint or window line, Fallen cells) and the guess list. **Phone:** the slim bar, the compact game panel, the list's newest rows, and the stage with the grid and the input row under it. The Fallen cells panel is a "Fallen (N)" button that opens a sheet, as DECISIONS T115.
+- Never colour alone: own tiles by frame, others' by corner mark and name, fallen tiles by hatch, answers always in words on the tile's label and in the list.
 
-## Decided while building (night 4, proposals)
+## Decided while building (proposals)
 
-- On maps up to about 30 × 30, two cells apart is already over 6 % of the diagonal, so `hot` and `burning` cannot occur there; tiers are decided in whole numbers (10 000 · d² against p² · D²), so no cell is placed by float rounding.
-- The input takes 1–100 per coordinate; a server `OUT_OF_MAP` for a cell inside the map reads "outside the target area"; the input row checks fallen and repeated cells locally and keeps the selection inside the target area.
-- In individual mode Spring Herald also sends the room a line "everyone received a hint" (`HintGiven` with `quarter: null`).
-- The secret is stored with the round's answer rule (feedback mode and map size) beside its cell, because the engine's `answer(value, secret)` gets no state; only the cell ever reaches a view, after the end.
-- Until the platform has a board layout for map games, the map sits in the input row under the list, at most `min(52dvh, 520px)` high (OPEN).
-- (night 5) Dots take each player's list colour and name from the panel props (`names`, `colors`); "Another player" is gone. The player panel does not know the viewer's own key, so the viewer's own dots there use the season colour of own list rows rather than the viewer's list colour; the result panel (which has `viewerKey`) uses the viewer's list colour.
+- (night 4) Tiers are decided in whole numbers (10 000 · n against p² · D², and n against the minimum), so no tile is placed by float rounding.
+- (night 4) A server `OUT_OF_MAP` for a tile inside the grid reads "outside the target area"; the input checks fallen and repeated tiles locally and keeps the selection inside the target area.
+- (night 4) In individual mode Spring Herald also sends the room a line "everyone received a hint" (`HintGiven` with `quarter: null`).
+- (night 4) The secret is stored with the round's answer rule (feedback mode and grid size) beside its tile, because the engine's `answer(value, secret)` gets no state; only the tile ever reaches a view, after the end.
+- (night 5) Tiles take each player's list colour and name from the panel props (`names`, `colors`); "Another player" is gone.
+- (O45) The tier table gained a minimum in tiles per tier (§7): with shares alone, `hot` and `burning` could not occur below about 30 × 30 and an 8 × 8 grid had no `warm`. The action schema takes 1–30 per coordinate. The conformance kit plays on the largest grid, 30 × 30.
+- (O45) The refusal sentences, the answers ("9 cells away") and the Fallen cells panel still say "cell"; the intro, the size lines and the special sentences say grid and tiles ([OPEN](../OPEN.md)).

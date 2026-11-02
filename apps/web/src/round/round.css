@@ -1,31 +1,28 @@
 /**
  * @file   apps/web/src/round/round.css
  * @module web/round
- * @brief  Layout of the round view: top bar, main area with the guess list, team tiles, input.
+ * @brief  Layout of the round view in focus mode: bar, stage, game panel, guess list; the pill.
  *
- * Responsibility: the round view fills the space under the app's top bar exactly and never
- *                 scrolls the page (only the lists scroll, inside themselves): on a desktop a
- *                 one-line top bar (the season chip naming the special, the special's info
- *                 button), the guess list with the special's banner above it taking the whole
- *                 left column above the input row, and a 380 px right column with the game's
- *                 range block at its top, the team tiles under it and the match chat in the
- *                 rest (./roundChat.css, T101), so the list shows as many rows as the screen
- *                 allows (O35, DECISIONS T110); on a phone the top bar (the chip names the
- *                 season, the special behind its info button, the time without "left"), the range block, the list taking the
- *                 remaining height, the team tiles and the "Chat" button in one row (its panel
- *                 lies over the round above the input row), and the input row pinned at the
- *                 bottom (O20). The list's rows are in ./roundLog.css, the banner and the info
- *                 note in ./roundSpecials.css, the intro screen in ./roundIntro.css, the
- *                 cooldown ring in ./cooldownRing.css. The platform's refusal line; a solved
- *                 player's notice in
- *                 place of the input row (O25). Colours only from @smg/ui tokens, so light and
- *                 dark both work (Bingo 01 §13). The result is ./result.css, the match head and
- *                 the host menu ../match/match.css.
+ * Responsibility: the round view fills the screen the hidden app header leaves (O46) exactly
+ *                 and never scrolls the page (only the lists scroll, inside themselves): on a
+ *                 desktop the slim bar on top (./focus.css), the stage on the left, the space
+ *                 the game gets (its input row, or a spectator's panel), and a right column of
+ *                 320 px with a roster player's game panel (range, fallen numbers or digits) on
+ *                 top and the special's banner over the guess list under it; on a phone the
+ *                 bar, the compact game panel, the list's newest rows and the stage with the
+ *                 input at the bottom, a board game's stage taking the height that is left.
+ *                 The season pill in its token colour (./SeasonPill); the team tiles of the
+ *                 Players panel and its rows; a solved player's notice in place of the input
+ *                 row (O25); the platform's refusal line. The list's rows are in ./roundLog.css,
+ *                 the banner and the special's note in ./roundSpecials.css, the intro screen in
+ *                 ./roundIntro.css, the cooldown ring in ./cooldownRing.css. Colours only from
+ *                 @smg/ui tokens, so light and dark both work (Bingo 01 §13). The result is
+ *                 ./result.css, the match head and the host menu ../match/match.css.
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6;
  *                 docs/spec/07-integration.md §2
  */
 
-/* The match page while a round runs: as tall as the space left under the app bar. */
+/* The match page while a round runs: the whole screen under the hidden app header. */
 .match-live {
   flex: 1;
   min-height: 0;
@@ -33,99 +30,123 @@
   flex-direction: column;
 }
 
+/* A phone: bar, the compact game panel, the list's newest rows, the stage at the bottom. The
+   panels on demand lie inside this box (./focus.css), so it is their containing block. */
 .round-live {
+  position: relative;
   flex: 1;
   min-height: 0;
   display: grid;
-  gap: var(--space-2);
+  /* Tight gaps and paddings: the 320 px column keeps room for 12 guess rows at 1280 × 720. */
+  gap: var(--space-1);
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
-  grid-template-areas: 'top' 'range' 'main' 'side' 'input';
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  grid-template-areas: 'bar' 'range' 'main' 'stage';
 }
 
-/* A desktop: the guess list takes the whole left column above the input row; the range block
-   sits at the top of the right column, over the team tiles and the chat (O35). */
+/* A desktop: the stage left at full height, the 320 px column with the game panel and the
+   list right (O46). */
 @media (min-width: 900px) {
   .round-live {
-    grid-template-columns: minmax(0, 1fr) 380px;
-    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    grid-template-rows: auto auto minmax(0, 1fr);
     grid-template-areas:
-      'top top'
-      'main range'
-      'main side'
-      'input side';
-  }
-
-  /* A board game (Seasonal Target, T123): the board is its input, so it takes the whole left
-     column at full height; the right column holds the game's block, the guess list and the
-     team tiles with the chat, the list taking what is left (02d §11). */
-  .round-live[data-layout='board'] {
-    grid-template-columns: minmax(0, 1fr) 420px;
-    grid-template-rows: auto auto minmax(0, 1fr) auto;
-    grid-template-areas:
-      'top top'
-      'input range'
-      'input main'
-      'input side';
-  }
-
-  /* Its chat stays a card, at most this tall (its list scrolls inside), so the list keeps the
-     column's free height. */
-  .round-live[data-layout='board'] .round-chat {
-    flex: none;
-    max-height: 9rem;
+      'bar bar'
+      'stage range'
+      'stage main';
   }
 }
 
 .round-range {
   grid-area: range;
   min-width: 0;
-  padding: var(--space-2);
+  padding: 0.6rem 0.75rem;
 }
 
-/* The top bar: one line, the season chip first, the host menu last. */
-.round-top {
-  grid-area: top;
+.round-main {
+  grid-area: main;
+  display: grid;
+  /* The special's banner (empty when nothing fires) and the guess list. */
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--space-1);
+  min-height: 0;
+  overflow: hidden;
+  /* Tighter than a panel's padding: the guess list gets the room (O35). */
+  padding: 0.6rem 0.75rem;
+}
+
+/* The empty banner takes no row gap either. */
+.round-special-banner:empty {
+  display: none;
+}
+
+/* The stage: the game's own space. A list game's input sits in its middle at a width it reads
+   well at (at the bottom on a phone, within the thumb's reach); a board game's input takes all
+   of it (T123). */
+.round-stage {
+  grid-area: stage;
+  min-width: 0;
+  min-height: 0;
   display: flex;
-  align-items: center;
-  gap: var(--space-1) var(--space-2);
-  min-width: 0;
-  white-space: nowrap;
+  flex-direction: column;
+  justify-content: center;
 }
 
-.round-season {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-  min-height: var(--hit-target);
-  padding: 0 0.9rem 0 0.35rem;
-  border-radius: var(--radius-pill);
-  background: var(--season);
-  color: var(--color-on-season);
-  overflow: hidden;
+.round-stage > * {
+  width: min(100%, 46rem);
+  align-self: center;
 }
 
-/* The chip's words give way with an ellipsis rather than push the bar off the screen. */
-.round-season-text {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.round-live[data-layout='board'] .round-stage {
+  justify-content: stretch;
 }
 
-/* "Autumn · Leaf Fall": the special's name in the chip (O35). */
-.round-special::before {
-  content: '· ';
+.round-live[data-layout='board'] .round-stage > * {
+  flex: 1;
+  width: 100%;
 }
 
-/* The pill's words in the strong weight: thin text on a season colour read pale (review). */
-.round-season-text {
+.round-input {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* Solved (individual mode): a short notice where the input row was, in the season's frame. */
+.round-solved {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: 2px solid var(--season);
+  border-radius: var(--radius);
+  background: var(--color-surface);
   font-weight: var(--font-weight-strong);
 }
 
-/* "Wait" is the phone's short word for the cooldown. */
-.round-fact-short {
-  display: none;
+/* The season pill: icon, season, special; with the special on it is the note's button. */
+.round-season {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--hit-target);
+  padding: 0 0.9rem 0 0.35rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--season);
+  color: var(--color-on-season);
+  font: inherit;
+  /* Thin text on a season colour read pale (night-5 review). */
+  font-weight: var(--font-weight-strong);
+}
+
+.round-season--button {
+  cursor: pointer;
+}
+
+/* "Autumn · Leaf Fall": the special's name in the pill (O35). */
+.round-special::before {
+  content: '· ';
 }
 
 .round-season-icon {
@@ -145,64 +166,8 @@
   font-size: var(--font-size-small);
 }
 
-.round-fact {
-  flex: none;
-  font-weight: var(--font-weight-strong);
-}
-
-.round-top .host-menu {
-  margin-left: auto;
-}
-
-.round-main {
-  grid-area: main;
-  display: grid;
-  /* The special's banner (empty when nothing fires) and the guess list. */
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: var(--space-1);
-  min-height: 0;
-  overflow: hidden;
-  /* Tighter than a panel's padding: the guess list gets the room (O35). */
-  padding: var(--space-2);
-}
-
-/* The empty banner takes no row gap either. */
-.round-special-banner:empty {
-  display: none;
-}
-
-.round-side {
-  grid-area: side;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  min-height: 0;
-}
-
-/* No teams: the column holds nothing, and on a phone it takes no row. */
-.round-side:empty {
-  display: none;
-}
-
-.round-input {
-  grid-area: input;
-  display: grid;
-  gap: var(--space-1);
-}
-
-/* Solved (individual mode): a short notice where the input row was, in the season's frame. */
-.round-solved {
-  margin: 0;
-  padding: var(--space-2) var(--space-3);
-  border: 2px solid var(--season);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  font-weight: var(--font-weight-strong);
-}
-
-/* The team tiles: four in one row. */
+/* The team tiles of the Players panel: four in one row. */
 .round-teams {
-  flex: none;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: var(--space-1);
@@ -223,18 +188,44 @@
   font-size: var(--font-size-lead);
 }
 
-/* A phone: the facts that do not fit go (their words stay for screen readers) and the team
-   tiles shrink to icon and points; the main area with the list takes the height that is left. */
-@media (max-width: 899px) {
-  .round-mode {
-    display: none;
-  }
+/* The Players panel's rows: dot, name, team, guesses; the viewer's on the season's tint. */
+.round-players {
+  display: grid;
+  gap: var(--space-2);
+}
 
-  /* The chip names the season; the special's name goes to screen readers, and the info
-     button beside the chip says what it is and does. The bar's parts sit closer, so the
-     chip fits beside the time and the Host button. */
-  .round-top {
-    column-gap: 0.15rem;
+.round-player-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.round-player-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius);
+}
+
+.round-player-list li[data-own='true'] {
+  background: color-mix(in srgb, var(--season) 22%, var(--color-card));
+}
+
+.round-player-team,
+.round-player-guesses {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+/* A phone: the stage's input at the bottom, the pill smaller with the special's name read out
+   (the note names it), the panels tighter. */
+@media (max-width: 899px) {
+  .round-stage {
+    justify-content: flex-end;
   }
 
   .round-season {
@@ -248,32 +239,13 @@
     height: 1.75rem;
   }
 
-  .round-fact-short {
-    display: inline;
+  /* The pill is still the special's button (its name says so); the small "i" gives its width
+     to the bar's buttons, so the bar keeps one row at 390 px. */
+  .round-info-mark {
+    display: none;
   }
 
-  .round-fact {
-    font-size: var(--font-size-small);
-  }
-
-  /* "Wait 15 s · 9:50 left": the two facts read as one phrase. */
-  .round-fact-time::before {
-    content: '· ';
-  }
-
-  /* Room for the phrase without cutting the season's name: a narrower Host button (still
-     44 px high) and a pill that never shrinks. */
-  .round-top .host-menu-button {
-    padding-inline: 0.6rem;
-  }
-
-  .round-season {
-    flex: none;
-  }
-
-  .round-special,
-  .round-fact-label,
-  .round-team-name {
+  .round-special {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -282,36 +254,9 @@
     white-space: nowrap;
   }
 
-  .round-team {
-    grid-auto-flow: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    padding: 0.25rem;
-  }
-
   .round-main,
   .round-range {
     padding: var(--space-1) var(--space-2);
-  }
-
-  /* The team tiles and the Chat button share one row; the list gets the height (O35). */
-  .round-side {
-    flex-direction: row;
-    align-items: stretch;
-  }
-
-  .round-side .round-teams {
-    flex: 1;
-  }
-
-  .round-side .round-chat {
-    flex: none;
-  }
-
-  .round-side .round-chat-toggle {
-    height: 100%;
-    padding-inline: var(--space-2);
   }
 }
 

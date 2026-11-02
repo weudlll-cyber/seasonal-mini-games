@@ -89,11 +89,10 @@ Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.co
 
 | Key | Default | Min | Max | Status | Who | Running rounds |
 |---|---|---|---|---|---|---|
-| `map.width` | 50 | 20 | 100 | proposal: the map's width in cells (02d §3) | host | frozen |
-| `map.height` | 50 | 20 | 100 | proposal: the map's height in cells; row 1 is north (02d §3) | host | frozen |
+| `target.size` | 20 | 8 | 30 | owner (O45, amends the map of O38 and O43): the square tile grid's side in tiles; row 1 is north (02d §3). Replaced `map.width` and `map.height` (50, 20–100); migration 0013 wrote a version without their stored overrides | host | frozen |
 | `target.feedback` | `distance` | — | — (`direction`, `distance`, `closeness`) | owner (O43, amends O39): distance and direction, distance only (default), warm/cold only; the host's round setting, chosen in the round form; the next round's form keeps the last choice (02d §3, §5) | host | frozen |
-| `autumn.minCellsLeft` | 10 | 2 | 1 000 | proposal: Leaf Fall stops when fewer candidate cells would remain (02d §8.3) | game admin | frozen |
-| `halving.minCells` | 16 | 4 | 400 | proposal: halving stops once the target area has this many cells or fewer (02d §8.4) | game admin | frozen |
+| `autumn.minCellsLeft` | 10 | 2 | 50 | proposal: Leaf Fall stops when fewer candidate tiles would remain (02d §8.3); at most 50, so tiles can fall on an 8 × 8 grid (O45) | game admin | frozen |
+| `halving.minCells` | 16 | 4 | 32 | proposal: halving stops once the target area has this many tiles or fewer (02d §8.4); at most 32, so an 8 × 8 grid is halved at least once (O45) | game admin | frozen |
 | Closeness tier table (40 / 25 / 12 / 6 / 3 % of the diagonal, touching = just missed) | — | — | — | proposal, not a setting: Leaf Fall's `closeness` candidates depend on it (02d §7) | — | — |
 
 ## 4. Match settings (document `matchmaking`)

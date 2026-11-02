@@ -1,21 +1,25 @@
 /**
  * @file   games/seasonal-target/web/TargetInput.tsx
  * @module games/seasonal-target/web
- * @brief  The input row of Seasonal Target: the map with its selection, arrows, fields and Guess.
+ * @brief  The input of Seasonal Target: the tile grid with its selection, the loupe, and Guess.
  *
- * Responsibility: the map of the player's target area (./MapBoard) with every dot the view
- *                 carries, the fallen cells and Spring's quarter; a local selection, set by a
- *                 click or tap, moved by the N/W/S/E buttons and the keyboard arrows with the
- *                 map focused, and by the compact Column and Row fields that follow it,
- *                 always clamped to the target area; "Selected: column 12, row 34" read out
- *                 live; the platform's cooldown ring at the row's start and a large Guess that
- *                 reads "Wait 6 s" during the cooldown (`buttonText`, T125; Enter on the map
- *                 guesses too). Dots in each player's list colour, named, with a legend. Nothing is sent before Guess (05 §3.1). A cell
- *                 outside the area, a fallen one or one already tried is refused at once with
- *                 its sentence, Guess staying enabled (02d §4, T113). Guess waits while a guess
- *                 is on its way (T76). The latest own answer stands in words under the row.
+ * Responsibility: the whole grid (./TileGrid) as large as the input's box allows, with every
+ *                 guess the view carries, the fallen tiles, Spring's quarter and the target
+ *                 area; a local selection, set by a click or tap, moved by the keyboard arrows
+ *                 with the grid focused (Enter guesses) and by the Column and Row fields and the
+ *                 arrow buttons (./Steer), always clamped to the target area. On a phone whose
+ *                 tiles are under 44 px the first tap opens the loupe (./Loupe) and the fields
+ *                 and arrows live only there; with larger tiles a tap selects directly.
+ *                 "Selected: column 12, row 7" stands beside a large Guess, read out live, the
+ *                 platform's cooldown ring at the row's start; Guess reads "Wait 6 s" during
+ *                 the cooldown (`buttonText`, T125), waits while a guess is on its way (T76) and
+ *                 closes the loupe. Nothing is sent before Guess (05 §3.1). A tile outside the
+ *                 area, a fallen one or one already tried is refused at once with its sentence,
+ *                 Guess staying enabled (02d §4, T113). The latest own answer stands in words
+ *                 under the row, the heat legend above it.
  * Depends on:     react, @smg/game-sdk (props, buttonText), @smg-game/seasonal-target (types,
- *                 helpers), ./dots, ./Legend, ./MapBoard, ./text, ./words
+ *                 helpers), ./heat, ./HeatLegend, ./Loupe, ./measure, ./Steer, ./text,
+ *                 ./TileGrid, ./words
  * Used by:        ./index
  * Spec:           docs/spec/02d-game-seasonal-target.md §4, §11; docs/spec/05-security-threat-model.md §3.1
  */
@@ -23,10 +27,13 @@ import { inArea, sameCell, type Area, type Cell, type PlayerView } from '@smg-ga
 import { buttonText, type PlayerPanelProps } from '@smg/game-sdk';
 import { useState, type KeyboardEvent, type ReactElement, type ReactNode } from 'react';
 
-import { playerDots } from './dots.js';
-import { Legend } from './Legend.js';
-import { MapBoard } from './MapBoard.js';
+import { shotsOf, tilesOf } from './heat.js';
+import { HeatLegend } from './HeatLegend.js';
+import { Loupe, useLoupe } from './Loupe.js';
+import { readable, TOUCH_PX, useCompact, useTileSize } from './measure.js';
+import { Steer } from './Steer.js';
 import { CODES } from './text.js';
+import { TileGrid } from './TileGrid.js';
 import { cellWords, longAnswer } from './words.js';
 
 export type StInputProps = PlayerPanelProps & { readonly ring?: ReactNode };
@@ -48,7 +55,7 @@ const STEPS: Readonly<Record<string, readonly [number, number]>> = {
   ArrowRight: [1, 0],
 };
 
-// The sentence for a cell the view already refuses (02d §4 checks 5–6), or null; the
+// The sentence for a tile the view already refuses (02d §4 checks 5–6), or null; the
 // selection is always inside the target area, so check 4 needs no local test.
 function localRefusal(v: PlayerView, c: Cell): string | null {
   if (v.fallen.some((f) => sameCell(f, c))) return CODES['CELL_REMOVED'] ?? null;
@@ -58,7 +65,7 @@ function localRefusal(v: PlayerView, c: Cell): string | null {
   return null;
 }
 
-// The server's refusal in words: a cell on the map refused as `OUT_OF_MAP` lay outside the
+// The server's refusal in words: a tile on the grid refused as `OUT_OF_MAP` lay outside the
 // target area, which a halving had just shrunk before the view showed it (02d §4).
 function refusalText(code: string | undefined, c: Cell, v: PlayerView): string | null {
   if (
@@ -76,12 +83,12 @@ function useTarget(view: PlayerView, act: PlayerPanelProps['act']) {
   const [sending, setSending] = useState(false);
   // Clamped at every render, so a halving pulls the selection into the new area.
   const selected = within(view.area, raw ?? middle(view.area));
-  const select = (c: Cell): void => {
-    setRaw(within(view.area, c));
+  // Selects the tile nearest to `c` inside the area, and says which one that is.
+  const select = (c: Cell): Cell => {
+    const next = within(view.area, c);
+    setRaw(next);
     setMessage(null);
-  };
-  const move = (dx: number, dy: number): void => {
-    select({ x: selected.x + dx, y: selected.y + dy });
+    return next;
   };
   const guess = (): void => {
     const refused = localRefusal(view, selected);
@@ -98,119 +105,102 @@ function useTarget(view: PlayerView, act: PlayerPanelProps['act']) {
         setSending(false);
       });
   };
-  return { selected, select, move, guess, message, sending };
+  return { selected, select, guess, message, sending };
 }
 
-// One coordinate field: it shows the selection and sets it.
-function Field(p: { label: string; value: number; set: (v: number) => void }): ReactElement {
-  return (
-    <label className="st-field">
-      {p.label}
-      <input
-        className="smg-input"
-        type="number"
-        inputMode="numeric"
-        value={p.value}
-        onChange={(e) => {
-          const v = Number(e.target.value);
-          if (Number.isInteger(v) && e.target.value !== '') p.set(v);
-        }}
-      />
-    </label>
-  );
-}
-
-const ARROW_BUTTONS = [
-  ['north', '↑', 0, -1],
-  ['west', '←', -1, 0],
-  ['east', '→', 1, 0],
-  ['south', '↓', 0, 1],
-] as const;
-
-// The Column and Row fields and the arrow cross: both move the local selection.
-function Steer(t: {
+// The row under the grid: ring, the selected tile in words, the fields and arrows, Guess.
+function GuessRow(p: {
+  readonly props: StInputProps;
   readonly selected: Cell;
   readonly select: (c: Cell) => void;
-  readonly move: (dx: number, dy: number) => void;
+  readonly steer: boolean;
+  readonly sending: boolean;
+  readonly guess: () => void;
 }): ReactElement {
   return (
-    <>
-      <div className="st-fields">
-        <Field
-          label="Column"
-          value={t.selected.x}
-          set={(x) => {
-            t.select({ ...t.selected, x });
-          }}
-        />
-        <Field
-          label="Row"
-          value={t.selected.y}
-          set={(y) => {
-            t.select({ ...t.selected, y });
-          }}
-        />
-      </div>
-      <div className="st-cross" role="group" aria-label="Move the selection">
-        {ARROW_BUTTONS.map(([dir, glyph, dx, dy]) => (
-          <button
-            key={dir}
-            type="button"
-            className={`smg-btn st-move st-move--${dir}`}
-            aria-label={`Move ${dir}`}
-            onClick={() => {
-              t.move(dx, dy);
-            }}
-          >
-            {glyph}
-          </button>
-        ))}
-      </div>
-    </>
+    <div className="st-row">
+      {p.props.ring}
+      <p className="st-selected" aria-live="polite" data-testid="selected">
+        Selected: {cellWords(p.selected)}
+      </p>
+      {p.steer ? <Steer selected={p.selected} select={p.select} /> : null}
+      <button
+        type="button"
+        className="smg-btn smg-btn--primary st-go"
+        disabled={!p.props.canAct || p.sending}
+        onClick={p.guess}
+        data-testid="guess-button"
+      >
+        {buttonText('Guess', p.props.waitS)}
+      </button>
+    </div>
   );
+}
+
+// The selection with every way to move it: the grid's clicks and keys, the loupe, Guess.
+function useAim(view: PlayerView, props: StInputProps) {
+  const t = useTarget(view, props.act);
+  const size = useTileSize(view.map.width);
+  const compact = useCompact();
+  const loupe = useLoupe(view.map);
+  // A phone whose tiles are smaller than a finger aims through the loupe.
+  const viaLoupe = compact && size.px !== null && size.px < TOUCH_PX;
+  const guess = (): void => {
+    t.guess();
+    if (loupe.sheet.open) loupe.sheet.close();
+  };
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
+    const step = STEPS[e.key];
+    if (step !== undefined) t.select({ x: t.selected.x + step[0], y: t.selected.y + step[1] });
+    else if (e.key === 'Enter' && props.canAct && !t.sending) guess();
+    else return;
+    e.preventDefault();
+  };
+  const onTile = (c: Cell): void => {
+    const next = t.select(c);
+    if (viaLoupe) loupe.show(next);
+  };
+  const pick = (c: Cell): void => {
+    loupe.follow(t.select(c));
+  };
+  return { t, size, compact, loupe, guess, onKeyDown, onTile, pick };
 }
 
 export function TargetInput(props: StInputProps): ReactElement {
   const view = props.view as PlayerView;
-  const t = useTarget(view, props.act);
-  const onKeyDown = (e: KeyboardEvent<SVGSVGElement>): void => {
-    const step = STEPS[e.key];
-    if (step !== undefined) t.move(step[0], step[1]);
-    else if (e.key === 'Enter' && props.canAct && !t.sending) t.guess();
-    else return;
-    e.preventDefault();
+  const { t, size, compact, loupe, guess, onKeyDown, onTile, pick } = useAim(view, props);
+  const grid = {
+    map: view.map,
+    area: view.area,
+    quarter: view.hint,
+    fallen: view.fallen,
+    tiles: tilesOf(shotsOf(view.guesses, view.log), props),
   };
   const last = view.guesses.at(-1)?.feedback ?? null;
-  const dots = playerDots(view, props);
   return (
     <div className="st-input" data-testid="st-input">
-      <MapBoard
-        shown={view.area}
-        dots={dots}
-        fallen={view.fallen}
-        quarter={view.hint}
-        selection={t.selected}
-        label="The map. Arrow keys move the selection, Enter guesses."
-        onSelect={t.select}
-        onKeyDown={onKeyDown}
-      />
-      <Legend dots={dots} />
-      <div className="st-row">
-        {props.ring}
-        <p className="st-selected" aria-live="polite" data-testid="selected">
-          Selected: {cellWords(t.selected)}
-        </p>
-        <Steer selected={t.selected} select={t.select} move={t.move} />
-        <button
-          type="button"
-          className="smg-btn smg-btn--primary st-go"
-          disabled={!props.canAct || t.sending}
-          onClick={t.guess}
-          data-testid="guess-button"
-        >
-          {buttonText('Guess', props.waitS)}
-        </button>
+      <div className="st-board">
+        <TileGrid
+          {...grid}
+          variant="board"
+          numbers={readable(size.px)}
+          selected={t.selected}
+          gridRef={size.ref}
+          label="The grid. Arrow keys move the selection, Enter guesses."
+          onTile={onTile}
+          onKeyDown={onKeyDown}
+        />
+        <Loupe loupe={loupe} grid={grid} selected={t.selected} pick={pick} />
       </div>
+      <HeatLegend />
+      <GuessRow
+        props={props}
+        selected={t.selected}
+        select={t.select}
+        steer={!compact}
+        sending={t.sending}
+        guess={guess}
+      />
       {t.message === null ? null : (
         <p className="st-message" role="status">
           {t.message}

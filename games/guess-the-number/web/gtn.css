@@ -8,10 +8,10 @@
  *                 round screen, and fallen numbers are dark gaps in it, at least 4 px wide,
  *                 close ones merged into hatched gaps; the heading keeps its two numbers
  *                 together; Spring Herald's hint is a highlighted line (O35); the Fallen
- *                 numbers panel of a Leaf Fall round as wrapping chips under the bar, on a
- *                 phone a sheet behind its "Fallen (N)" button (T115); the range block stays
- *                 compact, so the platform's guess list under it keeps the room (O20);
- *                 layouts work down to 390 px wide.
+ *                 numbers panel of a Leaf Fall round as a sheet of wrapping chips behind its
+ *                 "Fallen (N)" button (T115); the range block stays compact, so the
+ *                 platform's guess list under it keeps the room (O20, O46); layouts work down
+ *                 to 390 px wide.
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §2.3, §6
  */
 /* The range block and the hint at the top of the main area; the platform's list is below. */
@@ -19,16 +19,16 @@
 .gtn-spectator {
   display: grid;
   gap: var(--space-1);
+  container-type: inline-size;
 }
 
 .gtn-range {
   display: grid;
   gap: var(--space-1);
-  container-type: inline-size;
 }
 
-/* Sized by the box the platform gives the range block (a side column on a desktop, the
-   width of a phone), so it stays large and short there (O35). */
+/* Sized by the box the platform gives the range block (the round's right column on a
+   desktop, the width of a phone), so it stays large and short there (O35). */
 .gtn-range-title {
   margin: 0;
   font-size: clamp(1.05rem, 6.2cqi, 1.9rem);
@@ -73,11 +73,66 @@
   background: repeating-linear-gradient(135deg, var(--color-on-season) 0 2px, transparent 2px 5px);
 }
 
-/* The Fallen numbers panel (./FallenNumbers): on a desktop under the bar in the range block,
-   a short box of chips that scrolls inside itself, so the right column keeps its room. */
-.gtn-fallen-toggle,
+/* The Fallen numbers panel (./FallenNumbers): a "Fallen (N)" button beside the range's bar,
+   so the guess list keeps its rows in the round's narrow right column (O46); open, a sheet
+   over the round, opaque as menus are, closed by Close or Escape. The heading keeps the
+   block's whole width: the range's parts join the block's grid, the button beside the bar. */
+.gtn-player:has(.gtn-fallen),
+.gtn-spectator:has(.gtn-fallen) {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.gtn-player:has(.gtn-fallen) > .gtn-range,
+.gtn-spectator:has(.gtn-fallen) > .gtn-range {
+  display: contents;
+}
+
+.gtn-player:has(.gtn-fallen) .gtn-range-title,
+.gtn-spectator:has(.gtn-fallen) .gtn-range-title,
+.gtn-player > .gtn-hint,
+.gtn-spectator > .gtn-hint {
+  grid-column: 1 / -1;
+}
+
+/* The button beside the bar, though the panel comes after the hint in the page. */
+.gtn-player > .gtn-fallen,
+.gtn-spectator > .gtn-fallen {
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.gtn-fallen-toggle {
+  display: inline-flex;
+  min-height: var(--hit-target);
+  padding-inline: var(--space-2);
+  white-space: nowrap;
+}
+
 .gtn-fallen-close {
+  display: inline-flex;
+  min-height: var(--hit-target);
+}
+
+.gtn-fallen-body {
   display: none;
+}
+
+/* Open: at the right edge over the list's column on a desktop, across the bottom on a phone. */
+.gtn-fallen[data-open='true'] .gtn-fallen-body {
+  display: grid;
+  gap: 0.25rem;
+  position: fixed;
+  right: var(--gutter);
+  bottom: var(--gutter);
+  z-index: 30;
+  width: min(22rem, calc(100vw - 2 * var(--gutter)));
+  max-height: 60dvh;
+  padding: var(--space-2);
+  border: 2px solid var(--season, var(--color-border));
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-raised);
 }
 
 .gtn-fallen-head {
@@ -89,12 +144,7 @@
 
 .gtn-fallen-head h3 {
   margin: 0;
-  font-size: var(--font-size-small);
-}
-
-.gtn-fallen-body {
-  display: grid;
-  gap: 0.25rem;
+  font-size: var(--font-size-lead);
 }
 
 .gtn-fallen-list {
@@ -104,7 +154,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.2rem;
-  max-height: 5.4rem;
   overflow-y: auto;
 }
 
@@ -115,69 +164,6 @@
   background: color-mix(in srgb, var(--season, var(--color-accent)) 14%, var(--color-card));
   font-size: var(--font-size-small);
   font-variant-numeric: tabular-nums;
-}
-
-/* A phone: the range block keeps one column for the range and the hint, and the "Fallen (N)"
-   button beside the range; open, the panel is a sheet over the round at the bottom, opaque as
-   menus are, closed by its Close button or Escape. */
-@media (max-width: 899px) {
-  .gtn-player:has(.gtn-fallen),
-  .gtn-spectator:has(.gtn-fallen) {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: start;
-  }
-
-  .gtn-player > .gtn-hint,
-  .gtn-spectator > .gtn-hint {
-    grid-column: 1 / -1;
-  }
-
-  /* The button beside the range, though the panel comes after the hint in the page. */
-  .gtn-player > .gtn-fallen,
-  .gtn-spectator > .gtn-fallen {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .gtn-fallen-toggle {
-    display: inline-flex;
-    min-height: var(--hit-target);
-    padding-inline: var(--space-2);
-    white-space: nowrap;
-  }
-
-  .gtn-fallen-close {
-    display: inline-flex;
-    min-height: var(--hit-target);
-  }
-
-  .gtn-fallen-body {
-    display: none;
-  }
-
-  .gtn-fallen[data-open='true'] .gtn-fallen-body {
-    display: grid;
-    position: fixed;
-    left: var(--gutter);
-    right: var(--gutter);
-    bottom: var(--gutter);
-    z-index: 30;
-    max-height: 60dvh;
-    padding: var(--space-2);
-    border: 2px solid var(--season, var(--color-border));
-    border-radius: var(--radius-card);
-    background: var(--color-surface);
-    box-shadow: var(--shadow-raised);
-  }
-
-  .gtn-fallen[data-open='true'] .gtn-fallen-list {
-    max-height: none;
-    overflow-y: auto;
-  }
-
-  .gtn-fallen-head h3 {
-    font-size: var(--font-size-lead);
-  }
 }
 
 /* Spring Herald's hint for the whole round: a highlighted line in the range block (O35). */

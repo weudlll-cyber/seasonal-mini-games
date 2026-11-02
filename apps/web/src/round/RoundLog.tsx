@@ -15,7 +15,9 @@
  *                 arriving…" with the seconds left in a small badge. Events (Spring Herald,
  *                 Heatwave, halving, solves, the round opening and ending) are quieter one-line
  *                 rows; a special's own row (Leaf Fall naming the fallen numbers) stands out on
- *                 the season's tint with the season icon in bold (T115).
+ *                 the season's tint with the season icon in bold (T115). Compact (a phone in
+ *                 focus mode, O46): only the newest three rows, and "All (N)" opening the whole
+ *                 list as a sheet (../round/RoundScreen).
  * Depends on:     react, @smg/contracts, @smg/game-sdk (rows, formatNumber), @smg-game/registry/web (types),
  *                 ../live/useRound, ../season/SeasonIcon, ./RoundSide (colours), ./roundText,
  *                 ./roundLog.css
@@ -153,16 +155,45 @@ function EventLine(p: { readonly line: FeedLine; readonly state: RoundStateView 
   );
 }
 
+// How many of the newest rows a phone's compact list shows (O46).
+const LATEST = 3;
+
+// The compact list's way to the whole list: its sheet's state and opening button.
+interface MoreRows {
+  readonly open: boolean;
+  readonly toggle: () => void;
+  readonly button: (el: HTMLButtonElement | null) => void;
+}
+
 export function RoundLog(p: {
   readonly feed: readonly FeedItem[];
   readonly game: GameWeb | null;
   readonly state: RoundStateView;
   readonly viewerKey: string | null;
   readonly now: number;
+  // Given: only the newest rows, and "All (N)" for the whole list.
+  readonly more?: MoreRows;
 }): ReactElement {
-  const rows = rowsOf(p.feed, p.game, p.state);
+  const all = rowsOf(p.feed, p.game, p.state);
+  const rows = p.more === undefined ? all : all.slice(0, LATEST);
   return (
-    <section className="round-log" aria-label="Guesses and events">
+    <section
+      className="round-log"
+      aria-label="Guesses and events"
+      data-compact={p.more !== undefined}
+    >
+      {p.more === undefined || all.length <= LATEST ? null : (
+        <button
+          ref={p.more.button}
+          type="button"
+          className="smg-btn round-log-all"
+          aria-expanded={p.more.open}
+          data-testid="list-all"
+          onClick={p.more.toggle}
+        >
+          All ({all.length})
+        </button>
+      )}
       {rows.length === 0 ? (
         <p className="smg-muted">No guesses yet.</p>
       ) : (

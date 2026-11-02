@@ -27,7 +27,7 @@ const { views, viewSchemas } = seasonalTarget;
 
 function sharedTable(config = {}) {
   const inp = input('shared', ['a', 'b', 'c'], config);
-  return new Table(targets(inp, [{ x: 20, y: 30 }]), inp);
+  return new Table(targets(inp, [{ x: 12, y: 10 }]), inp);
 }
 
 const playerView = (t: Table, id: string, ctx = ALL) =>
@@ -41,13 +41,17 @@ describe('visibility', () => {
       ['full', true, true],
     ] as const) {
       const t = sharedTable({ feedbackVisibility: visibility });
-      t.play('a', { x: 12, y: 34 });
+      t.play('a', { x: 4, y: 14 });
       const seen = playerView(t, 'b').log[0];
       expect(seen?.value !== null).toBe(value);
       expect(seen?.feedback !== null).toBe(answer);
       expect(seen?.comment !== null).toBe(answer);
-      // The default answer mode (O43): the rounded distance only.
-      expect(playerView(t, 'a').guesses[0]?.feedback).toEqual({ kind: 'distance', distance: 9 });
+      // The default answer mode (O43): the rounded distance only, with the tile's tier (O45).
+      expect(playerView(t, 'a').guesses[0]?.feedback).toEqual({
+        kind: 'distance',
+        distance: 9,
+        tier: 'cold',
+      });
       expect(viewSchemas.player.safeParse(playerView(t, 'b')).success).toBe(true);
     }
   });
@@ -57,11 +61,11 @@ describe('visibility', () => {
     const t = new Table(
       targets(inp, [
         { x: 3, y: 3 },
-        { x: 40, y: 40 },
+        { x: 18, y: 18 },
       ]),
       inp,
     );
-    t.play('a', { x: 12, y: 34 });
+    t.play('a', { x: 4, y: 14 });
     expect(playerView(t, 'b').log[0]).toMatchObject({ value: null, feedback: null });
     const spec = views.spectator(t.state, ALL) as SpectatorView;
     expect(spec.log[0]).toMatchObject({ value: null, feedback: null });
@@ -69,11 +73,11 @@ describe('visibility', () => {
 
   it('holds answers and comments under Frost', () => {
     const t = sharedTable();
-    t.play('a', { x: 12, y: 34 }, 5_000);
+    t.play('a', { x: 4, y: 14 }, 5_000);
     const held = { releasedBefore: 5_000 };
     expect(playerView(t, 'a', held).guesses[0]).toMatchObject({ feedback: null, comment: null });
     expect(playerView(t, 'b', held).log[0]).toMatchObject({
-      value: { x: 12, y: 34 },
+      value: { x: 4, y: 14 },
       feedback: null,
       comment: null,
     });
@@ -86,14 +90,14 @@ describe('areas, quarters and fallen cells', () => {
     const t = new Table(
       targets(inp, [
         { x: 3, y: 3 },
-        { x: 40, y: 40 },
+        { x: 18, y: 18 },
       ]),
       inp,
     );
     t.fold(seasonalTarget.specials?.springHerald?.(t.state, t.ctx) ?? []);
     t.fold(seasonalTarget.specials?.halving?.(t.state, t.ctx, 1) ?? []);
     const spec = views.spectator(t.state, ALL) as SpectatorView;
-    expect(spec).toMatchObject({ area: null, hint: null, areaSize: { width: 25, height: 50 } });
+    expect(spec).toMatchObject({ area: null, hint: null, areaSize: { width: 10, height: 20 } });
     expect(playerView(t, 'a').hint?.name).toBe('north-west');
     expect(playerView(t, 'b').hint?.name).toBe('south-east');
     expect(viewSchemas.spectator.safeParse(spec).success).toBe(true);
@@ -103,7 +107,7 @@ describe('areas, quarters and fallen cells', () => {
 
   it('drops fallen cells outside the area out of view', () => {
     const t = sharedTable();
-    const area = { left: 13, right: 37, top: 1, bottom: 50 };
+    const area = { left: 6, right: 15, top: 1, bottom: 20 };
     t.fold([
       {
         audience: 'room',
@@ -112,16 +116,16 @@ describe('areas, quarters and fallen cells', () => {
           index: 1,
           cells: [
             { x: 2, y: 2 },
-            { x: 20, y: 2 },
+            { x: 12, y: 2 },
           ],
         },
       },
       {
         audience: 'room',
-        event: { type: 'AreaHalved', index: 1, playerId: null, area, width: 25, height: 50 },
+        event: { type: 'AreaHalved', index: 1, playerId: null, area, width: 10, height: 20 },
       },
     ]);
-    expect(playerView(t, 'a').fallen).toEqual([{ x: 20, y: 2 }]);
+    expect(playerView(t, 'a').fallen).toEqual([{ x: 12, y: 2 }]);
     expect((views.spectator(t.state, ALL) as SpectatorView).area).toEqual(area);
     expect(t.state.fallen).toHaveLength(2);
   });
@@ -159,12 +163,12 @@ describe('no target reaches a running round', () => {
 describe('closest miss', () => {
   it('is the nearest wrong guess of another player, the earlier on a tie', () => {
     const t = sharedTable();
-    t.play('a', { x: 17, y: 30 });
-    t.play('b', { x: 23, y: 30 });
-    t.play('c', { x: 20, y: 30 });
-    expect(closestMiss(t.state, { x: 20, y: 30 })).toEqual({
+    t.play('a', { x: 9, y: 10 });
+    t.play('b', { x: 15, y: 10 });
+    t.play('c', { x: 12, y: 10 });
+    expect(closestMiss(t.state, { x: 12, y: 10 })).toEqual({
       playerId: 'a',
-      value: { x: 17, y: 30 },
+      value: { x: 9, y: 10 },
       distance: 3,
       touching: false,
     });
@@ -172,14 +176,14 @@ describe('closest miss', () => {
 
   it('says touching for a neighbour, and is none without a winner or another guess', () => {
     const t = sharedTable();
-    t.play('a', { x: 21, y: 31 });
-    expect(closestMiss(t.state, { x: 20, y: 30 })).toBeNull();
-    t.play('b', { x: 20, y: 30 });
-    expect(closestMiss(t.state, { x: 20, y: 30 })).toMatchObject({ touching: true, distance: 1 });
+    t.play('a', { x: 13, y: 11 });
+    expect(closestMiss(t.state, { x: 12, y: 10 })).toBeNull();
+    t.play('b', { x: 12, y: 10 });
+    expect(closestMiss(t.state, { x: 12, y: 10 })).toMatchObject({ touching: true, distance: 1 });
     const alone = sharedTable();
     alone.play('a', { x: 1, y: 1 });
-    alone.play('a', { x: 20, y: 30 });
-    expect(closestMiss(alone.state, { x: 20, y: 30 })).toBeNull();
+    alone.play('a', { x: 12, y: 10 });
+    expect(closestMiss(alone.state, { x: 12, y: 10 })).toBeNull();
   });
 
   it('is in the shared result only', () => {
@@ -187,14 +191,14 @@ describe('closest miss', () => {
     const t = new Table(
       targets(inp, [
         { x: 3, y: 3 },
-        { x: 40, y: 40 },
+        { x: 18, y: 18 },
       ]),
       inp,
     );
     t.play('a', { x: 3, y: 3 });
     expect(views.result(t.state, t.secrets)).toMatchObject({
       target: null,
-      targets: { a: { x: 3, y: 3 }, b: { x: 40, y: 40 } },
+      targets: { a: { x: 3, y: 3 }, b: { x: 18, y: 18 } },
       closestMiss: null,
     });
   });

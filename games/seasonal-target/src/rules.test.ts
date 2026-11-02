@@ -7,9 +7,10 @@
  *                 (map and halving window) before `CELL_REMOVED` before `ALREADY_GUESSED`, a
  *                 repeat allowed with the rule off; the answer to the guesser and the room line
  *                 per visibility and mode; `Solved` on the cell; distance answers (the default,
- *                 O43) carry no direction, closeness answers only the tier; the settings
- *                 document with its three answer modes, its config and halving allowed; secrets drawn
- *                 the same from the same seed; the chat's reveal clause.
+ *                 O43) carry no direction, closeness answers only the tier, and every wrong
+ *                 answer its tier (O45); the settings document with the grid size (default 20,
+ *                 8–30, width = height), its three answer modes, its config and halving
+ *                 allowed; secrets drawn the same from the same seed; the chat's reveal clause.
  * Depends on:     vitest, @smg/game-sdk, ./fakes, ./module, ./settings, ./views
  * Spec:           docs/spec/02d-game-seasonal-target.md §3, §4, §5; docs/spec/08-admin-settings.md §3.3
  */
@@ -25,17 +26,17 @@ import { reveal } from './views.js';
 
 const shared = (config = {}) => {
   const inp = input('shared', ['a', 'b'], config);
-  return new Table(targets(inp, [{ x: 20, y: 30 }]), inp);
+  return new Table(targets(inp, [{ x: 12, y: 10 }]), inp);
 };
 
 describe('validation', () => {
-  it('takes only two whole coordinates up to 100', () => {
+  it('takes only two whole coordinates up to 30', () => {
     const schema = seasonalTarget.actionSchema;
-    expect(schema.safeParse({ value: { x: 1, y: 100 } }).success).toBe(true);
+    expect(schema.safeParse({ value: { x: 1, y: 30 } }).success).toBe(true);
     for (const value of [
       { x: 1.5, y: 2 },
       { x: 0, y: 2 },
-      { x: 101, y: 2 },
+      { x: 31, y: 2 },
       { x: '3', y: 2 },
       { x: 3 },
       { x: 3, y: 3, z: 1 },
@@ -46,9 +47,9 @@ describe('validation', () => {
   });
 
   it('refuses in the order of 02d §4: map, fallen, repeat', () => {
-    const t = shared({ width: 30, height: 40 });
-    expect(t.play('a', { x: 31, y: 1 })).toEqual({ ok: false, code: 'OUT_OF_MAP' });
-    expect(t.play('a', { x: 1, y: 41 })).toEqual({ ok: false, code: 'OUT_OF_MAP' });
+    const t = shared({ width: 15, height: 18 });
+    expect(t.play('a', { x: 16, y: 1 })).toEqual({ ok: false, code: 'OUT_OF_MAP' });
+    expect(t.play('a', { x: 1, y: 19 })).toEqual({ ok: false, code: 'OUT_OF_MAP' });
     expect(t.play('a', { x: 5, y: 5 }).ok).toBe(true);
     t.fold([{ audience: 'room', event: { type: 'CellsFell', index: 1, cells: [{ x: 5, y: 5 }] } }]);
     // Fallen and already tried: the fall is check 5, before the repeat (6).
@@ -61,17 +62,17 @@ describe('validation', () => {
 
   it('refuses a cell outside the halving window before a fallen one', () => {
     const t = shared();
-    const area = { left: 13, right: 37, top: 1, bottom: 50 };
+    const area = { left: 6, right: 15, top: 1, bottom: 20 };
     t.fold([
       { audience: 'room', event: { type: 'CellsFell', index: 1, cells: [{ x: 2, y: 2 }] } },
       {
         audience: 'room',
-        event: { type: 'AreaHalved', index: 1, playerId: null, area, width: 25, height: 50 },
+        event: { type: 'AreaHalved', index: 1, playerId: null, area, width: 10, height: 20 },
       },
     ]);
     expect(t.play('a', { x: 2, y: 2 })).toEqual({ ok: false, code: 'OUT_OF_MAP' });
-    expect(t.play('a', { x: 12, y: 9 })).toEqual({ ok: false, code: 'OUT_OF_MAP' });
-    expect(t.play('a', { x: 13, y: 9 }).ok).toBe(true);
+    expect(t.play('a', { x: 5, y: 9 })).toEqual({ ok: false, code: 'OUT_OF_MAP' });
+    expect(t.play('a', { x: 6, y: 9 }).ok).toBe(true);
   });
 
   it('allows a repeat when the rule is off, and refuses a stranger', () => {
@@ -88,34 +89,34 @@ describe('validation', () => {
 describe('answers', () => {
   it('answers the guesser with distance and direction, and the room under full', () => {
     const t = shared({ feedback: 'direction' });
-    const d = t.play('a', { x: 12, y: 34 });
+    const d = t.play('a', { x: 4, y: 14 });
     if (!d.ok) throw new Error('refused');
     const [own, room] = d.events;
     expect(own?.audience).toBe('player:a');
     expect(own?.feedback).toBe(true);
     expect(own?.event).toMatchObject({
       type: 'FeedbackGiven',
-      feedback: { kind: 'direction', distance: 9, direction: 'NE' },
+      feedback: { kind: 'direction', distance: 9, direction: 'NE', tier: 'cold' },
     });
-    expect(room?.event).toMatchObject({ type: 'GuessFed', value: { x: 12, y: 34 } });
+    expect(room?.event).toMatchObject({ type: 'GuessFed', value: { x: 4, y: 14 } });
     expect(d.signals).toEqual([]);
-    const win = t.play('b', { x: 20, y: 30 });
+    const win = t.play('b', { x: 12, y: 10 });
     expect(win.ok && win.signals).toEqual([{ type: 'Solved', playerId: 'b' }]);
   });
 
-  it('answers only the rounded distance by default, with no direction', () => {
-    const d = shared().play('a', { x: 12, y: 34 });
+  it('answers only the rounded distance and its tier by default, with no direction', () => {
+    const d = shared().play('a', { x: 4, y: 14 });
     expect(d.ok && d.events[0]?.event).toMatchObject({
-      feedback: { kind: 'distance', distance: 9 },
+      feedback: { kind: 'distance', distance: 9, tier: 'cold' },
     });
     expect(d.ok && d.events[0]?.event).not.toHaveProperty('feedback.direction');
   });
 
   it('answers only the tier in closeness mode, also without comments', () => {
     const t = shared({ feedback: 'closeness', comments: false });
-    const d = t.play('a', { x: 12, y: 34 });
+    const d = t.play('a', { x: 4, y: 14 });
     expect(d.ok && d.events[0]?.event).toMatchObject({
-      feedback: { kind: 'closeness', tier: 'cool' },
+      feedback: { kind: 'closeness', tier: 'cold' },
       comment: null,
     });
   });
@@ -127,7 +128,7 @@ describe('answers', () => {
     const t = new Table(
       targets(inp, [
         { x: 3, y: 3 },
-        { x: 40, y: 40 },
+        { x: 18, y: 18 },
       ]),
       inp,
     );
@@ -135,12 +136,12 @@ describe('answers', () => {
     expect(ind.ok && ind.events[1]?.event).toEqual({ type: 'GuessFed', playerId: 'b', guesses: 1 });
     // Each player is answered about their own target.
     expect(ind.ok && ind.events[0]?.event).toMatchObject({
-      feedback: { kind: 'direction', direction: 'SE', distance: 55 },
+      feedback: { kind: 'direction', direction: 'SE', distance: 24, tier: 'wayOff' },
     });
   });
 });
 
-describe('settings and secrets', () => {
+describe('settings', () => {
   it('reads the defaults of 08 §3.3 into the config, with no cross-key problem', () => {
     const cfg = stSettings.read(resolveSettings(stSettings.defs, {}));
     expect(cfg).toEqual(defaultConfig);
@@ -151,11 +152,45 @@ describe('settings and secrets', () => {
     expect(stSettings.problem(cfg)).toBeNull();
     expect(stSettings.halvingAllowed?.(cfg)).toBe(true);
     const keys = stSettings.defs.map((d) => d.key);
-    expect(keys).toContain('map.width');
     expect(keys).toContain('target.feedback');
+    expect(keys).not.toContain('map.width');
     expect(keys).not.toContain('round.rangeLow');
   });
+});
 
+describe('grid size and stops', () => {
+  it('has one square grid size: default 20, the host choosing 8–30, width = height', () => {
+    const size = stSettings.defs.find((d) => d.key === 'target.size');
+    expect(size).toMatchObject({
+      kind: 'int',
+      label: 'Grid size',
+      unit: 'tiles',
+      default: 20,
+      min: 8,
+      max: 30,
+      status: 'owner',
+      decision: 'O45',
+      hostChooses: true,
+      running: 'frozen',
+    });
+    const read = (value: number) =>
+      stSettings.read(resolveSettings(stSettings.defs, { 'target.size': { value } }));
+    expect(read(8)).toMatchObject({ width: 8, height: 8 });
+    expect(read(30)).toMatchObject({ width: 30, height: 30 });
+    // Out of bounds: the default.
+    expect(read(31)).toMatchObject({ width: 20, height: 20 });
+    expect(read(7)).toMatchObject({ width: 20, height: 20 });
+  });
+
+  it('keeps the stops of Leaf Fall and halving below the smallest grid of 64 tiles', () => {
+    const max = (key: string) =>
+      (stSettings.defs.find((d) => d.key === key) as { max: number }).max;
+    expect(max('autumn.minCellsLeft')).toBeLessThan(64);
+    expect(max('halving.minCells')).toBeLessThan(64);
+  });
+});
+
+describe('secrets and reveal', () => {
   it('draws the same targets on the map from the same seed', () => {
     const inp = input('individual', ['a', 'b', 'c'], { width: 20, height: 30 });
     const one = seasonalTarget.deriveSecrets(inp, roundRng(new Uint8Array(32).fill(4)));
@@ -168,8 +203,8 @@ describe('settings and secrets', () => {
   });
 
   it('words the target for the chat', () => {
-    expect(reveal({ target: { x: 20, y: 30 }, targets: null }, 'a')).toBe(
-      'the target was (20, 30)',
+    expect(reveal({ target: { x: 12, y: 10 }, targets: null }, 'a')).toBe(
+      'the target was (12, 10)',
     );
     const ind = { target: null, targets: { a: { x: 1, y: 2 } } };
     expect(reveal(ind, 'a')).toBe('their target was (1, 2)');

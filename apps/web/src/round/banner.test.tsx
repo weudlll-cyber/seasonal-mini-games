@@ -2,14 +2,14 @@
 /**
  * @file   apps/web/src/round/banner.test.tsx
  * @module web/round
- * @brief  The specials made visible while a round runs (O35): banner, info button, chip.
+ * @brief  The specials made visible while a round runs (O35): banner, the season pill's note.
  *
  * Responsibility: the banner says what a special just did — Leaf Fall and halving in the
  *                 game's words, Heatwave's waiting time and Spring Herald in the platform's —
  *                 for 3 s after the event and then goes; the newest event wins; under Frost
  *                 the viewer's just-sent guess gets "Frost: your answer arrives in N s."; the
- *                 top bar's chip names the special and its info button opens the special's
- *                 sentence and closes with Escape.
+ *                 round bar's season pill names the special and opens the special's sentence,
+ *                 which closes with Escape.
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./fakes, ./RoundScreen,
  *                 ./SpecialBanner
  * Spec:           docs/spec/03-seasonal-specials.md §2, §6; docs/spec/09-testing-strategy.md §2
@@ -96,24 +96,24 @@ describe('the special banner', () => {
   });
 });
 
-describe('the top bar', () => {
+describe('the season pill', () => {
   const show = (state: RoundStateView) =>
     render(
       <RoundScreen
         live={{ state, feed: [], reload: () => Promise.resolve() }}
         gameId="none"
         viewerKey="w"
-        hostMenu={null}
+        host={null}
         teamPoints={[]}
         standings={[]}
         chat={null}
       />,
     );
 
-  it('names the special in the chip, and its info button tells what it does', () => {
+  it('names the special in the pill, and the pill tells what it does', () => {
     show(open);
     expect(screen.getByTestId('round-special').textContent).toBe('Leaf Fall');
-    const button = screen.getByRole('button', { name: 'What Leaf Fall does' });
+    const button = screen.getByRole('button', { name: 'Autumn · Leaf Fall: what it does' });
     const note = screen.getByRole('note', { hidden: true });
     expect(note.hidden).toBe(true);
     fireEvent.click(button);
@@ -125,7 +125,7 @@ describe('the top bar', () => {
     expect(note.hidden).toBe(true);
   });
 
-  it('has no info button with the special off', () => {
+  it('is a plain pill with the special off', () => {
     show({ ...open, specialOn: false });
     expect(screen.getByTestId('round-special').textContent).toBe('no special');
     expect(screen.queryByTestId('special-info')).toBeNull();

@@ -2,205 +2,163 @@
 /**
  * @file   games/seasonal-target/web/panels.test.tsx
  * @module games/seasonal-target/web
- * @brief  The input row's behaviour and the panels: map, selection, arrows, fields, Guess.
+ * @brief  What the tiles show, and the player, spectator and result panels.
  *
- * Responsibility: the selection starts in the middle of the target area, moves with the arrow
- *                 buttons and the keyboard arrows, follows a click and the Column and Row fields,
- *                 and stays inside the area; "Selected: column …, row …" says where; Guess sends
- *                 `{ value: { x, y } }` and nothing else is sent; a fallen or tried cell is
- *                 refused at once without sending; a server `OUT_OF_MAP` on the map says
- *                 "outside the target area"; Guess is disabled and reads "Wait 6 s" during the
- *                 cooldown; Enter on the map guesses; own dots are ringed and a held one
- *                 pending; others' dots take their list colour, name the player on hover and
- *                 focus and appear in the legend; the map leaves room for its last ticks; the
- *                 player panel
- *                 shows the hint and area lines and the Fallen cells in autumn; the spectator
- *                 and result panels draw what their views hold.
- * Depends on:     vitest, @testing-library/react, ./PlayerPanel, ./TargetInput,
- *                 ./SpectatorPanel, ./ResultPanel
- * Spec:           docs/spec/02d-game-seasonal-target.md §4, §6, §8, §9, §11
+ * Responsibility: a guessed tile's colour step from the server's tier and its face by answer
+ *                 mode (distance and arrow, distance, nothing; the found glyph); the viewer's
+ *                 own tiles framed, others' with a corner mark in their list colour; a shared
+ *                 tile showing the closest answer and naming every guess in its title and
+ *                 label; a pending own answer "…" without a fill; fallen tiles hatched, tiles
+ *                 outside the target area dimmed, Spring's quarter tinted; numbers left out on
+ *                 tiles too small to read; the heat legend. The player panel's hint, area and
+ *                 size lines and the Fallen cells in autumn; the spectator's grid and size line;
+ *                 the result's target tile, every guess and every player in text.
+ * Depends on:     vitest, @testing-library/react, ./fixtures, ./PlayerPanel, ./SpectatorPanel,
+ *                 ./ResultPanel
+ * Spec:           docs/spec/02d-game-seasonal-target.md §6, §8, §9, §10, §11
  */
-import type { PlayerView } from '@smg-game/seasonal-target';
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import {
+  ne,
+  other,
+  own,
+  plainScreen,
+  playerView,
+  renderInput,
+  roster,
+  screenOf,
+} from './fixtures.js';
 import { PlayerPanel } from './PlayerPanel.js';
 import { ResultPanel } from './ResultPanel.js';
 import { SpectatorPanel } from './SpectatorPanel.js';
-import { TargetInput } from './TargetInput.js';
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  plainScreen();
+});
 
-const ne = { kind: 'direction', distance: 9, direction: 'NE' } as const;
-const seen = { tier: null, comment: null };
-// The platform's list: each player's name and one colour (T125).
-const roster = {
-  names: { a: 'Walter', b: 'Anna' },
-  colors: { a: 'var(--color-summer)', b: 'var(--color-winter)' },
-};
+const tile = (x: number, y: number) =>
+  screen
+    .getAllByTestId('tile')
+    .find((t) => t.dataset['x'] === String(x) && t.dataset['y'] === String(y)) as HTMLElement;
 
-function playerView(over: Partial<PlayerView> = {}): PlayerView {
-  return {
-    map: { width: 50, height: 50 },
-    feedbackMode: 'direction',
-    repeatRejected: true,
-    area: { left: 1, right: 50, top: 1, bottom: 50 },
-    hint: null,
-    fallen: [],
-    guesses: [],
-    log: [],
-    ...over,
-  };
-}
-
-function renderInput(view: PlayerView, canAct = true, waitS: number | null = null) {
-  const send = vi.fn(() => Promise.resolve({ ok: true }));
-  const props = {
-    view,
-    act: send,
-    canAct,
-    waitS,
-    ...roster,
-    frostDelayMs: null,
-    now: () => 0,
-    season: 'spring' as const,
-    specialOn: true,
-  };
-  render(<TargetInput {...props} ring={<span data-testid="ring" />} />);
-  return send;
-}
-
-const selected = () => screen.getByTestId('selected').textContent;
-
-describe('input row', () => {
-  it('moves the selection with the arrow buttons and the keyboard, inside the area', () => {
-    renderInput(playerView({ area: { left: 13, right: 37, top: 1, bottom: 50 } }));
-    expect(selected()).toBe('Selected: column 25, row 25');
-    fireEvent.click(screen.getByRole('button', { name: 'Move north' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Move east' }));
-    expect(selected()).toBe('Selected: column 26, row 24');
-    const map = screen.getByTestId('map');
-    fireEvent.keyDown(map, { key: 'ArrowDown' });
-    fireEvent.keyDown(map, { key: 'ArrowLeft' });
-    fireEvent.keyDown(map, { key: 'a' });
-    expect(selected()).toBe('Selected: column 25, row 25');
-    fireEvent.change(screen.getByLabelText('Column'), { target: { value: '5' } });
-    // Clamped to the area's west edge.
-    expect(selected()).toBe('Selected: column 13, row 25');
-    fireEvent.change(screen.getByLabelText('Row'), { target: { value: '' } });
-    fireEvent.change(screen.getByLabelText('Row'), { target: { value: '3' } });
-    expect(selected()).toBe('Selected: column 13, row 3');
-    expect(screen.getByTestId('ring')).toBeTruthy();
-  });
-
-  it('selects the clicked cell', () => {
+describe('tiles by answer mode', () => {
+  it('fills a tile from the tier and shows distance and arrow, distance, or nothing', () => {
     renderInput(
       playerView({
-        map: { width: 20, height: 20 },
-        area: { left: 1, right: 20, top: 1, bottom: 20 },
+        guesses: [
+          own(1, 2, 2, ne),
+          own(2, 3, 3, { kind: 'distance', distance: 4, tier: 'warm' }),
+          own(3, 4, 4, { kind: 'closeness', tier: 'hot' }),
+          own(4, 5, 5, { kind: 'closeness', tier: 'justMissed' }),
+          own(5, 6, 6, { kind: 'correct' }),
+        ],
       }),
     );
-    const map = screen.getByTestId('map');
-    // The view box is 23.04 × 22.4 units (20 cells, margins 2.24 left, 1.6 top, 0.8 right and
-    // bottom) drawn at 10 px a unit.
-    map.getBoundingClientRect = () => ({ left: 0, top: 0, width: 230.4, height: 224 }) as DOMRect;
-    fireEvent.click(map, { clientX: 22.4 + 25, clientY: 16 + 95 });
-    expect(selected()).toBe('Selected: column 3, row 10');
+    expect(screen.getAllByTestId('tile')).toHaveLength(400);
+    expect([2, 3, 4, 5, 6].map((k) => tile(k, k).dataset['step'])).toEqual([
+      '1',
+      '3',
+      '4',
+      '5',
+      'correct',
+    ]);
+    expect(tile(2, 2).textContent).toBe('9↗');
+    expect(tile(3, 3).textContent).toBe('4');
+    expect(tile(4, 4).textContent).toBe('');
+    expect(tile(6, 6).textContent).toBe('◎');
+    expect(tile(7, 7).dataset['step']).toBeUndefined();
+    expect(tile(4, 4).title).toBe('column 4, row 4: You — Hot');
+    expect(screen.getByTestId('heat-legend').textContent).toBe('ColdHot');
+  });
+
+  it('leaves the numbers out when the tiles are too small to read', () => {
+    // 20 tiles across 300 px on a desktop: 15 px a tile.
+    screenOf(300, false);
+    renderInput(playerView({ guesses: [own(1, 2, 2, ne)] }));
+    expect(tile(2, 2).textContent).toBe('');
+    expect(tile(2, 2).dataset['step']).toBe('1');
+    expect(tile(2, 2).title).toBe('column 2, row 2: You — 9 cells away, to the north-east');
   });
 });
 
-describe('guessing', () => {
-  it('sends only the selected cell on Guess, and Enter guesses too', async () => {
-    const send = renderInput(playerView());
-    fireEvent.click(screen.getByTestId('guess-button'));
-    await act(() => Promise.resolve());
-    expect(send).toHaveBeenCalledWith({ value: { x: 25, y: 25 } });
-    fireEvent.keyDown(screen.getByTestId('map'), { key: 'Enter' });
-    await act(() => Promise.resolve());
-    expect(send).toHaveBeenCalledTimes(2);
+describe('own, others and shared tiles', () => {
+  it('frames own tiles, marks others in their colour, and shows "…" while an answer is held', () => {
+    renderInput(
+      playerView({
+        guesses: [own(1, 1, 1, ne), own(3, 2, 2, null)],
+        log: [
+          other('b', own(2, 9, 9, ne)),
+          other('c', own(4, 3, 3, null)),
+          other('b', own(5, 4, 4, null)),
+        ],
+      }),
+    );
+    expect(tile(1, 1).dataset['own']).toBe('true');
+    expect(tile(9, 9).dataset['own']).toBe('false');
+    expect(tile(2, 2).dataset['pending']).toBe('true');
+    expect(tile(2, 2).dataset['step']).toBeUndefined();
+    expect(tile(2, 2).textContent).toBe('…');
+    expect(tile(2, 2).title).toBe('column 2, row 2: You — answer arriving');
+    const mark = tile(9, 9).querySelector<HTMLElement>('.st-mark');
+    expect(mark?.style.background).toBe('var(--color-winter)');
+    expect(tile(9, 9).getAttribute('aria-label')).toBe(
+      'column 9, row 9: Anna — 9 cells away, to the north-east',
+    );
+    // A guess under `numbers`: the tile and the player, no answer, no fill.
+    expect(tile(4, 4).title).toBe('column 4, row 4: Anna guessed');
+    expect(tile(4, 4).dataset['step']).toBeUndefined();
+    // A player the list has no colour for still gets a mark, named by key.
+    expect(tile(3, 3).title).toBe('column 3, row 3: c guessed');
+    expect(tile(1, 1).querySelector('.st-mark')).toBeNull();
   });
 
-  it('refuses a fallen or tried cell at once without sending', () => {
-    const tried = { receiveSeq: 1, receivedAt: 0, value: { x: 25, y: 24 }, feedback: ne, ...seen };
-    const send = renderInput(playerView({ fallen: [{ x: 25, y: 25 }], guesses: [tried] }));
-    fireEvent.click(screen.getByTestId('guess-button'));
-    expect(screen.getByRole('status').textContent).toBe('That cell has fallen.');
-    fireEvent.click(screen.getByRole('button', { name: 'Move north' }));
-    fireEvent.click(screen.getByTestId('guess-button'));
-    expect(screen.getByRole('status').textContent).toBe('You already tried that cell.');
-    expect(send).not.toHaveBeenCalled();
-    expect(screen.getByTestId('last-answer').textContent).toBe(
-      'Last guess: 9 cells away, to the north-east',
+  it('shows the closest answer on a tile several players guessed, and names them all', () => {
+    const warm = { kind: 'direction', distance: 4, direction: 'S', tier: 'warm' } as const;
+    renderInput(
+      playerView({
+        guesses: [own(1, 5, 5, ne)],
+        log: [other('b', own(2, 5, 5, warm)), other('a', own(3, 5, 5, ne))],
+      }),
     );
-  });
-
-  it('says "outside the target area" for a server OUT_OF_MAP on the map', async () => {
-    const send = vi.fn(() => Promise.resolve({ ok: false, code: 'OUT_OF_MAP' }));
-    const view = playerView();
-    render(
-      <TargetInput
-        view={view}
-        act={send}
-        canAct
-        frostDelayMs={null}
-        now={() => 0}
-        season="winter"
-        specialOn
-        waitS={null}
-        {...roster}
-      />,
+    const t = tile(5, 5);
+    expect(t.dataset['step']).toBe('3');
+    expect(t.textContent).toBe('4↓');
+    expect(t.dataset['own']).toBe('true');
+    expect(t.title).toBe(
+      'column 5, row 5: You — 9 cells away, to the north-east; ' +
+        'Anna — 4 cells away, to the south; Walter — 9 cells away, to the north-east',
     );
-    fireEvent.click(screen.getByTestId('guess-button'));
-    await act(() => Promise.resolve());
-    expect(screen.getByRole('status').textContent).toBe('That cell is outside the target area.');
+    // The first other player's mark.
+    expect(t.querySelector<HTMLElement>('.st-mark')?.style.background).toBe('var(--color-winter)');
   });
 });
 
-describe('cooldown and dots', () => {
-  it('keeps Guess disabled and counting during the cooldown, and Enter does nothing', () => {
-    const send = renderInput(playerView(), false, 6);
-    const button = screen.getByTestId<HTMLButtonElement>('guess-button');
-    expect(button.disabled).toBe(true);
-    expect(button.textContent).toBe('Wait 6 s');
-    fireEvent.keyDown(screen.getByTestId('map'), { key: 'Enter' });
-    expect(send).not.toHaveBeenCalled();
-  });
-
-  it('rings own dots and draws a held one hollow', () => {
-    const own = [
-      { receiveSeq: 1, receivedAt: 0, value: { x: 1, y: 1 }, feedback: ne, ...seen },
-      { receiveSeq: 3, receivedAt: 0, value: { x: 2, y: 2 }, feedback: null, ...seen },
-    ];
-    const log = [
-      { receiveSeq: 2, receivedAt: 0, playerId: 'b', value: { x: 9, y: 9 }, feedback: ne, ...seen },
-      { receiveSeq: 4, receivedAt: 0, playerId: 'c', value: null, feedback: null, ...seen },
-    ];
-    renderInput(playerView({ guesses: own, log }));
-    const dots = screen.getAllByTestId('map-dot');
-    expect(dots).toHaveLength(3);
-    expect(dots.map((d) => d.getAttribute('data-own'))).toEqual(['false', 'true', 'true']);
-    expect(dots[2]?.getAttribute('data-pending')).toBe('true');
-    expect(dots[2]?.textContent).toContain('You (2, 2) — answer arriving');
-    expect(dots[0]?.textContent).toBe('Anna (9, 9) — 9 cells away, to the north-east');
-    expect(dots[0]?.getAttribute('aria-label')).toBe(dots[0]?.textContent);
-    expect(dots[0]?.getAttribute('tabindex')).toBe('0');
-    // Anna's dot has her list colour; own dots the season colour own rows are lit in.
-    expect(dots[0]?.querySelector('circle')?.style.fill).toBe('var(--color-winter)');
-    expect(dots[1]?.querySelector('circle')?.style.fill).toBe('var(--season, var(--color-accent))');
-    expect(screen.getByTestId('map-legend').textContent).toBe('YouAnna');
-    expect(screen.queryByText(/Another player/)).toBeNull();
-  });
-
-  it('leaves room on every edge for the tick numbers', () => {
-    renderInput(playerView());
-    // 50 cells, a margin of 4: 5.6 on the left, 4 on top, 2 on the right and bottom.
-    const box = screen.getByTestId('map').getAttribute('viewBox')?.split(' ').map(Number);
-    expect(box).toEqual([-5.6, -4, 57.6, 56]);
+describe('fallen, area and quarter', () => {
+  it('hatches fallen tiles, dims tiles outside the area and tints the quarter', () => {
+    const quarter = { name: 'north-west', left: 1, right: 10, top: 1, bottom: 10 } as const;
+    renderInput(
+      playerView({
+        area: { left: 1, right: 10, top: 1, bottom: 20 },
+        hint: quarter,
+        fallen: [{ x: 3, y: 12 }],
+      }),
+    );
+    expect(tile(3, 12).dataset['fallen']).toBe('true');
+    expect(tile(3, 12).title).toBe('column 3, row 12: fallen');
+    expect(tile(4, 12).dataset['fallen']).toBe('false');
+    expect(tile(11, 1).dataset['out']).toBe('true');
+    expect(tile(11, 1).title).toBe('column 11, row 1: outside the target area');
+    expect(tile(10, 1).dataset['out']).toBe('false');
+    expect(tile(10, 10).dataset['quarter']).toBe('true');
+    expect(tile(10, 11).dataset['quarter']).toBe('false');
   });
 });
 
 describe('panels', () => {
-  const quarter = { name: 'north-west', left: 1, right: 25, top: 1, bottom: 25 } as const;
+  const quarter = { name: 'north-west', left: 1, right: 10, top: 1, bottom: 10 } as const;
   const base = {
     act: vi.fn(),
     canAct: false,
@@ -210,91 +168,103 @@ describe('panels', () => {
     ...roster,
   };
 
-  it('shows the hint, the area line and the Fallen cells in autumn', () => {
+  it('shows the hint, the area or size line and the Fallen cells in autumn', () => {
     const view = playerView({
       hint: quarter,
-      area: { left: 13, right: 37, top: 1, bottom: 50 },
-      fallen: [{ x: 14, y: 2 }],
+      area: { left: 6, right: 15, top: 1, bottom: 20 },
+      fallen: [{ x: 7, y: 2 }],
     });
     render(<PlayerPanel {...base} view={view} season="autumn" specialOn />);
     expect(screen.getByTestId('hint').textContent).toBe(
-      'Free hint: the target is in the north-west quarter (columns 1–25, rows 1–25).',
+      'Free hint: the target is in the north-west quarter (columns 1–10, rows 1–10).',
     );
     expect(screen.getByTestId('area-line').textContent).toBe(
-      'Target area: columns 13–37, rows 1–50',
+      'Target area: columns 6–15, rows 1–20',
     );
     expect(screen.getByTestId('fallen').textContent).toBe('Fallen cells (1)');
     fireEvent.click(screen.getByTestId('fallen-toggle'));
-    expect(screen.getByTestId('fallen-list').textContent).toBe('(14, 2)');
+    expect(screen.getByTestId('fallen-list').textContent).toBe('(7, 2)');
     cleanup();
     render(<PlayerPanel {...base} view={playerView()} season="spring" specialOn />);
-    expect(screen.getByTestId('area-line').textContent).toBe('Map: 50 × 50 cells');
+    expect(screen.getByTestId('area-line').textContent).toBe('Grid: 20 × 20 tiles');
     expect(screen.queryByTestId('fallen-panel')).toBeNull();
   });
-});
 
-describe('spectator panel', () => {
-  it('gives the spectator the map with named dots, and only the size in individual mode', () => {
-    const log = [
-      {
-        receiveSeq: 1,
-        receivedAt: 0,
-        playerId: 'b',
-        value: { x: 9, y: 9 },
-        feedback: null,
-        ...seen,
-      },
-    ];
+  it('gives the spectator the grid with named guesses, and only the size in individual mode', () => {
     const view = {
-      map: { width: 50, height: 50 },
+      map: { width: 20, height: 20 },
       feedbackMode: 'direction',
       area: null,
-      areaSize: { width: 25, height: 50 },
+      areaSize: { width: 10, height: 20 },
       hint: null,
       fallen: [],
-      log,
+      log: [other('b', own(1, 9, 9, null))],
     };
     render(<SpectatorPanel view={view} {...roster} season="autumn" specialOn />);
-    expect(screen.getByTestId('area-line').textContent).toBe('Every target area: 25 × 50 cells');
-    expect(screen.getByTestId('map-dot').textContent).toBe('Anna (9, 9)');
-    expect(screen.getByTestId('map-legend').textContent).toBe('Anna');
+    expect(screen.getByTestId('area-line').textContent).toBe('Every target area: 10 × 20 tiles');
+    expect(tile(9, 9).title).toBe('column 9, row 9: Anna guessed');
+    expect(tile(9, 9).dataset['own']).toBe('false');
+    expect(tile(9, 9).tabIndex).toBe(0);
+    expect(screen.getByTestId('tile-grid').getAttribute('aria-readonly')).toBe('true');
     expect(screen.getByTestId('fallen').textContent).toBe('Fallen cells (0)');
   });
 });
 
 describe('result panel', () => {
-  it('shows the target, every dot and every player on the result', () => {
+  const guesses = {
+    a: [{ value: { x: 12, y: 10 }, feedback: { kind: 'correct' } }],
+    b: [{ value: { x: 4, y: 14 }, feedback: ne }],
+  };
+
+  it('marks the shared target and shows every guess', () => {
+    const view = { map: { width: 20, height: 20 }, target: { x: 12, y: 10 }, targets: null };
+    render(
+      <ResultPanel
+        view={{ ...view, guesses, fallen: [{ x: 1, y: 1 }], closestMiss: null }}
+        {...roster}
+        viewerKey="b"
+      />,
+    );
+    expect(screen.getByTestId('secret').textContent).toBe('Target: column 12, row 10');
+    const target = screen.getByTestId('target-tile').closest<HTMLElement>('[data-x]');
+    expect([target?.dataset['x'], target?.dataset['y'], target?.dataset['step']]).toEqual([
+      '12',
+      '10',
+      'correct',
+    ]);
+    expect(target?.title).toBe('column 12, row 10: the target; Walter — Target found!');
+    expect(tile(4, 14).dataset['own']).toBe('true');
+    expect(tile(12, 10).querySelector<HTMLElement>('.st-mark')?.style.background).toBe(
+      'var(--color-summer)',
+    );
+    expect(tile(1, 1).dataset['fallen']).toBe('true');
+  });
+
+  it('shows the viewer only their own target and guesses in individual mode, all in text', () => {
     const view = {
-      map: { width: 50, height: 50 },
+      map: { width: 20, height: 20 },
       target: null,
-      targets: { a: { x: 20, y: 30 }, b: { x: 5, y: 5 } },
-      guesses: {
-        a: [{ value: { x: 20, y: 30 }, feedback: { kind: 'correct' } }],
-        b: [{ value: { x: 12, y: 34 }, feedback: ne }],
-      },
-      fallen: [{ x: 1, y: 1 }],
+      targets: { a: { x: 12, y: 10 }, b: { x: 5, y: 5 } },
+      guesses,
+      fallen: [],
       closestMiss: null,
     };
     render(
       <ResultPanel view={view} names={{ a: 'Walter' }} colors={roster.colors} viewerKey="b" />,
     );
     expect(screen.getByTestId('secret').textContent).toBe('Target: column 5, row 5');
-    const dots = screen.getAllByTestId('map-dot');
-    expect(dots).toHaveLength(2);
-    // Each player's own colour; the viewer's dot ringed in theirs.
-    expect(dots.map((d) => d.querySelector('circle')?.style.fill)).toEqual([
-      'var(--color-summer)',
-      'var(--color-winter)',
-    ]);
-    expect(screen.getByTestId('map-legend').textContent).toBe('YouWalter');
-    expect(screen.getByTestId('map-target')).toBeTruthy();
-    expect(screen.getAllByTestId('map-fallen')).toHaveLength(1);
+    expect(screen.getByTestId('target-tile').closest<HTMLElement>('[data-x]')?.dataset['x']).toBe(
+      '5',
+    );
+    expect(tile(4, 14).dataset['step']).toBe('1');
+    // Walter's guess was about his own target: not on the viewer's grid.
+    expect(tile(12, 10).dataset['step']).toBeUndefined();
     const items = within(screen.getByRole('list', { name: 'Every guess' }))
       .getAllByRole('listitem')
       .map((li) => li.textContent);
     expect(items).toEqual([
-      'b — target (5, 5): (12, 34) 9 away, NE ↗',
-      'Walter — target (20, 30): (20, 30) Target found!',
+      'b — target (5, 5): (4, 14) 9 away, NE ↗',
+      'Walter — target (12, 10): (12, 10) Target found!',
     ]);
   });
 });

@@ -65,11 +65,11 @@ describe('comment picking', () => {
   it('comments a guess from its tier, the same for the same seed', () => {
     const run = () => {
       const inp = input('shared', ['a']);
-      const t = new Table(targets(inp, [{ x: 20, y: 30 }]), inp, 3);
+      const t = new Table(targets(inp, [{ x: 12, y: 10 }]), inp, 3);
       return [
-        { x: 12, y: 34 },
-        { x: 21, y: 31 },
-        { x: 20, y: 30 },
+        { x: 4, y: 14 },
+        { x: 13, y: 11 },
+        { x: 12, y: 10 },
       ].map((g) => {
         const d = t.play('a', g);
         return d.ok
@@ -78,7 +78,7 @@ describe('comment picking', () => {
       });
     };
     const comments = run();
-    expect(comments.map((c) => c?.tier)).toEqual(['cool', 'justMissed', 'correct']);
+    expect(comments.map((c) => c?.tier)).toEqual(['cold', 'justMissed', 'correct']);
     expect(comments[2]?.pool).toBe('correct');
     expect(run()).toEqual(comments);
   });

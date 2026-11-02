@@ -5,7 +5,7 @@
  *
  * Responsibility: every guess it makes is accepted (inside its area, not fallen, not tried),
  *                 it solves a round in both answer modes within a handful of guesses on a
- *                 50 × 50 map, waits on answers Frost still holds, and stops once solved.
+ *                 20 × 20 grid, waits on answers Frost still holds, and stops once solved.
  * Depends on:     vitest, fast-check, @smg/game-sdk, ./devBot, ./fakes, ./module, ./views
  * Spec:           docs/spec/09-testing-strategy.md §5
  */

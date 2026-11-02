@@ -99,14 +99,14 @@ function intro(view: unknown, secretMode: 'shared' | 'individual'): string | nul
   if (map === undefined) return null;
   const size = `${formatNumber(map.width)} × ${formatNumber(map.height)}`;
   return secretMode === 'shared'
-    ? `Shared target on a ${size} map`
-    : `Everyone has their own target on a ${size} map`;
+    ? `Shared target on a ${size} grid`
+    : `Everyone has their own target on a ${size} grid`;
 }
 
 // The specials that work differently here than the platform's sentence says (T119).
 function specialRule(season: string): string | null {
-  if (season === 'spring') return 'Everyone learns which quarter of the map hides the target.';
-  if (season === 'autumn') return 'Every so often, some cells without a target fall off the map.';
+  if (season === 'spring') return 'Everyone learns which quarter of the grid hides the target.';
+  if (season === 'autumn') return 'Every so often, some tiles without a target fall off the grid.';
   return null;
 }
 

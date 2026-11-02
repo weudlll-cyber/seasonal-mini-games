@@ -8,22 +8,22 @@
  *                 halving round), the special's name and its one plain sentence, in the game's
  *                 words where it has its own (T119) ("No special this round." when it is off), the game's line on the secret and its range
  *                 ("Shared number between 1 and 100", "Hidden range"), the cooldown, and the
- *                 seconds until the round opens; the host menu stays in its corner. It fills
- *                 the round's space without a page scrollbar on desktop and phone
- *                 (./roundIntro.css).
+ *                 seconds until the round opens. The round bar above it keeps the host's
+ *                 controls, the chat and the players (./FocusShell, O46). It fills the space
+ *                 under the bar without a page scrollbar on desktop and phone (./roundIntro.css).
  * Depends on:     react, @smg/contracts, @smg-game/registry/web (types), ../season/*,
- *                 ./roundText, ./roundIntro.css
+ *                 ./roundText, ./SeasonPill (ruleOf), ./roundIntro.css
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §2, §6
  */
 import type { GameWeb } from '@smg-game/registry/web';
 import type { RoundStateView } from '@smg/contracts';
-import type { ReactElement, ReactNode } from 'react';
+import type { ReactElement } from 'react';
 
 import { SeasonIcon } from '../season/SeasonIcon.js';
 import { NO_SPECIAL, SEASON_NAMES, SPECIALS } from '../season/season.js';
 import { seconds } from './roundText.js';
-import { ruleOf } from './SpecialInfo.js';
+import { ruleOf } from './SeasonPill.js';
 import './roundIntro.css';
 
 // Whole seconds until the round opens, never below 0.
@@ -35,7 +35,6 @@ export function RoundIntro(p: {
   readonly state: RoundStateView;
   readonly game: GameWeb | null;
   readonly now: number;
-  readonly hostMenu: ReactNode;
 }): ReactElement {
   const { state } = p;
   const special = SPECIALS[state.season];
@@ -49,7 +48,6 @@ export function RoundIntro(p: {
       aria-labelledby="round-intro-season"
       data-testid="round-intro"
     >
-      {p.hostMenu === null ? null : <div className="round-intro-host">{p.hostMenu}</div>}
       <header className="round-intro-head">
         <span className="round-intro-icon" aria-hidden="true">
           <SeasonIcon season={state.season} size="100%" />

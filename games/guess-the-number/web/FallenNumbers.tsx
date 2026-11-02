@@ -5,10 +5,10 @@
  *
  * Responsibility: in a round whose special is Leaf Fall, every number fallen so far as compact
  *                 chips that wrap, ascending as the view holds them, updated with every view;
- *                 its heading names the count. On a desktop it stands in the range block under
- *                 the bar (the right column) and scrolls inside its own short box; on a phone a
- *                 "Fallen (N)" button in the range block opens it as a sheet over the round,
- *                 closed by its Close button, the same button again or Escape (03 §2.3, O37).
+ *                 its heading names the count. A "Fallen (N)" button beside the range opens it
+ *                 as a sheet over the round (on a desktop at the right edge, over the guess
+ *                 list's column, which keeps its rows that way, O46), closed by its Close
+ *                 button, the same button again or Escape (03 §2.3, O37).
  *                 With the range hidden it is, with the list's rows, where the fallen numbers
  *                 are named (T54).
  * Depends on:     react, @smg/game-sdk (formatNumber, Season), @smg/ui (useDisclosure)

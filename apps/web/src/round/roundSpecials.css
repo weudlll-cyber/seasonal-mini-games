@@ -6,9 +6,9 @@
  * Responsibility: the banner (./SpecialBanner) is one line in the season colour with the
  *                 text colour made for it, directly above the guess list; empty it takes no
  *                 room, so the list keeps its height when nothing fires; it eases in unless
- *                 the person asked for reduced motion. The info button (./SpecialInfo) is a
- *                 round "i" beside the season chip, at least 44 px to tap, and its note an
- *                 opaque card under the top bar (O35). Colours only from @smg/ui tokens.
+ *                 the person asked for reduced motion. The season pill (./SeasonPill) is the
+ *                 special's button with a small round "i", and its note an opaque card under
+ *                 the round bar (O35). Colours only from @smg/ui tokens.
  * Spec:           docs/spec/03-seasonal-specials.md §6; docs/spec/02-game-guess-the-number.md §12
  */
 .round-special-banner p {
@@ -39,28 +39,17 @@
   flex: none;
 }
 
-/* The tap target is 44 px; the visible circle inside it stays small. */
-.round-info-button {
+/* The pill's small "i": it says the pill tells more; the whole pill is the 44 px target. */
+.round-info-mark {
   display: grid;
   place-items: center;
-  width: var(--hit-target);
-  height: var(--hit-target);
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--color-text);
-  cursor: pointer;
-}
-
-.round-info-button span {
-  display: grid;
-  place-items: center;
-  width: 1.6rem;
-  height: 1.6rem;
+  width: 1.15rem;
+  height: 1.15rem;
   border-radius: 50%;
-  border: 2px solid var(--season);
   background: var(--color-surface);
+  color: var(--color-text);
   font-family: Georgia, serif;
+  font-size: 0.8rem;
   font-style: italic;
   font-weight: var(--font-weight-heading);
 }

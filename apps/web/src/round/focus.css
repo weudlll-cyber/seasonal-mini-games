@@ -1,0 +1,186 @@
+/**
+ * @file   apps/web/src/round/focus.css
+ * @module web/round
+ * @brief  The focus mode's slim bar and its panels on demand: drawers and sheets (O46).
+ *
+ * Responsibility: the bar in one row, at most 56 px high on a desktop and 64 px on a phone
+ *                 (44 px controls): the season pill, the facts "Wait 15 s · 9:50 left", the
+ *                 panel buttons with their icons (and their words on a desktop) and the
+ *                 unread badge; a panel (./FocusPanel) is a drawer of about 360 px from the right
+ *                 edge over the round on a desktop and a sheet over the lower 60 % on a phone,
+ *                 opaque as menus are, with no backdrop, so the round stays usable beside it;
+ *                 its body scrolls inside itself. In full screen the round view keeps the
+ *                 page's background. The grid of the round view is ./round.css. Colours only
+ *                 from @smg/ui tokens, so light and dark both work.
+ * Spec:           docs/spec/02-game-guess-the-number.md §12
+ */
+.focus-bar {
+  grid-area: bar;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  min-width: 0;
+  max-height: 56px;
+  white-space: nowrap;
+}
+
+.focus-facts {
+  flex: none;
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.focus-fact {
+  flex: none;
+  font-weight: var(--font-weight-strong);
+}
+
+/* "Wait 15 s · 9:50 left": the two facts read as one phrase. */
+.focus-fact-time::before {
+  content: '· ';
+}
+
+.focus-actions {
+  flex: none;
+  display: flex;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+
+.focus-button {
+  position: relative;
+  gap: 0.4rem;
+  min-width: var(--hit-target);
+  min-height: var(--hit-target);
+  padding-inline: 0.75rem;
+}
+
+.focus-icon {
+  flex: none;
+}
+
+/* The unread count on the Chat button's corner: a dark pill, never the only sign (it is read
+   out as "3 unread"). */
+.focus-badge {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.35rem;
+  display: grid;
+  place-items: center;
+  min-width: 1.3rem;
+  height: 1.3rem;
+  padding-inline: 0.3rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-solid);
+  color: var(--color-on-solid);
+  font-size: var(--font-size-small);
+  line-height: 1;
+}
+
+/* A panel on demand: a drawer from the right on a desktop, over the round under the bar. */
+.focus-panel {
+  position: absolute;
+  z-index: 40;
+  top: calc(var(--hit-target) + var(--space-1));
+  right: 0;
+  bottom: 0;
+  width: min(360px, 100%);
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-raised);
+  white-space: normal;
+}
+
+.focus-panel[hidden] {
+  display: none;
+}
+
+.focus-panel-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.focus-panel-head h2 {
+  margin: 0;
+  font-size: var(--font-size-lead);
+}
+
+.focus-panel-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  overflow-y: auto;
+}
+
+/* The chat fills its drawer: its list scrolls, the text field stays at the bottom. */
+.focus-panel-body > .chat-panel {
+  flex: 1;
+  min-height: 0;
+}
+
+/* The round view in full screen keeps the page's colours and a margin. */
+.round-live:fullscreen {
+  padding: var(--space-2);
+  background: var(--page-background);
+}
+
+/* A phone: the bar's buttons show their icons only (their words are read out), the facts sit
+   closer, and a panel is a sheet over the lower 60 % of the round view. */
+@media (max-width: 899px) {
+  .focus-bar {
+    gap: 0.25rem;
+    max-height: 64px;
+  }
+
+  .focus-mode-fact,
+  .focus-button-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* "Wait 15 s" over "9:50 left": two short lines take less width than one long one. */
+  .focus-facts {
+    flex-direction: column;
+    gap: 0;
+    font-size: var(--font-size-small);
+    line-height: 1.2;
+  }
+
+  .focus-fact-time::before {
+    content: none;
+  }
+
+  .focus-actions {
+    gap: 0.25rem;
+  }
+
+  .focus-button {
+    width: var(--hit-target);
+    padding: 0;
+    justify-content: center;
+  }
+
+  .focus-panel {
+    top: auto;
+    left: 0;
+    width: auto;
+    height: 60%;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+}

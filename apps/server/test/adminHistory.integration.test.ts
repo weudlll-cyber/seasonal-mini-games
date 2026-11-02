@@ -7,13 +7,16 @@
  *                 one before; a rollback writes a new version with the overrides of the chosen
  *                 one (history stays), is audited as `settings.rollback`, and a stale version
  *                 is 409 CONFIG_VERSION_CONFLICT; the document is back at its defaults at the
- *                 end. With SMG_WEB_DIR and SMG_ADMIN_DIR the server sends /admin on to
+ *                 end. Migration 0013 (O45) gives a Seasonal Target document holding the old
+ *                 map size a new version without it, keeping its other overrides, so the tile
+ *                 grid starts at its default of 20; run again it changes nothing.
+ *                 With SMG_WEB_DIR and SMG_ADMIN_DIR the server sends /admin on to
  *                 /admin/ and serves the admin build there with the security headers.
  * Depends on:     vitest, node:fs, ./harness, ./session
  * Spec:           docs/spec/08-admin-settings.md §1; docs/spec/06-data-model-api-realtime.md §3.2;
  *                 Bingo 11 §1; Bingo 08 §4
  */
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -91,6 +94,50 @@ describe('settings history', () => {
     const player = await signIn(h.built.fastify, 'player-1');
     expect((await player.get(`${DOC}/versions`)).statusCode).toBe(403);
     expect((await admin.get('/api/v1/admin/settings/nope/versions')).statusCode).toBe(404);
+  });
+});
+
+describe('migration 0013: the tile grid of Seasonal Target (O45)', () => {
+  const TARGET = '/api/v1/admin/settings/game.seasonal-target';
+  const run = async () => {
+    const file = new URL('../src/db/migrations/0013_target_tiles.sql', import.meta.url);
+    await h.pool.query(readFileSync(file, 'utf8'));
+  };
+
+  it('writes a new version without the old map size and keeps the other overrides', async () => {
+    // A version saved before O45, as the server stored it then (the API now refuses the keys).
+    await h.pool.query(
+      `INSERT INTO smg.settings_documents (id, current_version) VALUES ('game.seasonal-target', 2)`,
+    );
+    const old = {
+      'map.width': { value: 40 },
+      'map.height': { value: 30, max: 60 },
+      'target.feedback': { value: 'direction' },
+    };
+    await h.pool.query(
+      `INSERT INTO smg.settings_versions (document_id, version, document) VALUES ('game.seasonal-target', 2, $1)`,
+      [JSON.stringify(old)],
+    );
+    await run();
+    // A second run finds nothing left to migrate.
+    await run();
+    const doc = await admin.get(TARGET);
+    expect(doc.json()).toMatchObject({
+      version: 3,
+      overrides: { 'target.feedback': { value: 'direction' } },
+      values: { 'target.size': 20, 'target.feedback': 'direction' },
+    });
+    expect(Object.keys(doc.json<{ overrides: object }>().overrides)).toEqual(['target.feedback']);
+    const items = (await admin.get(`${TARGET}/versions`)).json<{ items: VersionRow[] }>().items;
+    expect(items.map((v) => v.version)).toEqual([3, 2]);
+    expect(items[0]?.comment).toMatch(/^Migration 0013/);
+    // Back to the defaults, as a new version.
+    const reset = await admin.post(`${TARGET}/rollback`, {
+      version: 3,
+      toVersion: 1,
+      comment: 'reset',
+    });
+    expect(reset.json()).toMatchObject({ version: 4, overrides: {} });
   });
 });
 

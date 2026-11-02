@@ -3,9 +3,11 @@
  * @module web/match
  * @brief  One match: its players and teams, joining and leaving, the host's console and the round.
  *
- * Responsibility: from the countdown to the end, the round view alone, filling the screen
- *                 (O16: the host gets the same view and plays along; the host menu sits in its
- *                 top bar; the match chat in its right column, ../round/RoundScreen). Otherwise
+ * Responsibility: from the countdown to the end, the round view alone in focus mode, filling
+ *                 the screen without the app header (O46; O16: the host gets the same view and
+ *                 plays along; the host's controls and the match chat are panels from its bar,
+ *                 ../round/FocusShell). The result returns to the page with the header, beside
+ *                 the waiting area (T128). Otherwise
  *                 the match lobby of 02 §2: title, the match's game (O41), code and status with
  *                 the host menu; join or
  *                 leave; the last round's result, if any; and the waiting area with the team
@@ -34,7 +36,7 @@ import { codeText } from '../round/roundText.js';
 import { RoundScreen } from '../round/RoundScreen.js';
 import { api, ApiError } from '../shell/http.js';
 import { useSession } from '../shell/session.js';
-import { HostMenu, type Values } from './HostMenu.js';
+import { HostConsole, HostMenu, hosts, type Values } from './HostMenu.js';
 import { MatchSummary } from './MatchSummary.js';
 import { WaitingArea } from './WaitingArea.js';
 import './match.css';
@@ -145,9 +147,8 @@ function MatchView(p: {
   };
   const status = live.state?.status ?? null;
   const chat = useMatchChat(match.code);
-  const hostMenu = (
-    <HostMenu match={match} roundStatus={status} reload={refresh} last={last} setLast={setLast} />
-  );
+  const menu = { match, roundStatus: status, reload: refresh, last, setLast };
+  const hostMenu = <HostMenu {...menu} />;
   const phase = phaseOf(match, status);
   const round =
     phase !== 'live' && phase !== 'after' ? null : (
@@ -155,7 +156,7 @@ function MatchView(p: {
         live={live}
         gameId={match.gameId}
         viewerKey={viewer}
-        hostMenu={hostMenu}
+        host={hosts(match) ? (close) => <HostConsole {...menu} close={close} /> : null}
         teamPoints={match.teamStandings}
         standings={match.standings}
         // The chat is in the round view only while the round runs; after it, the waiting
@@ -163,9 +164,10 @@ function MatchView(p: {
         chat={phase === 'live' ? chat : null}
       />
     );
+  // A running round in focus mode: one screen, no app header (O46, T128).
   if (phase === 'live') {
     return (
-      <div className="match-live one-screen" data-testid="match">
+      <div className="match-live one-screen focus-mode" data-testid="match">
         {round}
       </div>
     );

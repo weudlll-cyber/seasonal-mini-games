@@ -9,9 +9,11 @@
  *                 "Sign in" and "Register". Below the bar, the screen of the current route.
  *                 In development also the "Dev sign-in" menu (./DevTools), loaded on demand so
  *                 a production build (Vite's DEV false) leaves it out; `dev` decides whether
- *                 it shows. While a round runs on a phone the bar is one compact row and the
- *                 account and development controls sit behind one "Menu" button (./shell.css).
- *                 The navigation has Play and Leaderboard; the compact bar keeps Play only.
+ *                 it shows. On a one-screen view on a phone (a match's summary) the bar is one
+ *                 compact row and the account and development controls sit behind one "Menu"
+ *                 button (./shell.css); a running round hides the bar altogether, its focus
+ *                 mode has a bar of its own (O46). The navigation has Play and Leaderboard;
+ *                 the compact bar keeps Play only.
  *                 Bingo's shell, without its game screens.
  * Depends on:     react, ./router, ./session, ./ThemeToggle, ./DevTools (lazy, development
  *                 only), @smg/ui (useDisclosure), ../lobby/Lobby, ../account/*,

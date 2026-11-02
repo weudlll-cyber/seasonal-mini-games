@@ -6,11 +6,13 @@
  * Responsibility: a cell `(x, y)` (1-based, row 1 north), a rectangular area of cells, and
  *                 the answer to a guess: correct, or in `direction` mode the rounded distance
  *                 and one of eight compass sectors, in `distance` mode only the rounded
- *                 distance, in `closeness` mode only the tier (02d §5, O43).
- *                 The rounding (`isqrt`), the sector test and the tier table's thresholds are
- *                 integer comparisons, so no cell is ever decided by a floating-point accident
- *                 (02d §5, §7). Shared by the rules, Leaf Fall's candidates (a cell gets the
- *                 same answer as the secret did, O37) and the development bot.
+ *                 distance, in `closeness` mode only the tier (02d §5, O43). The first two also
+ *                 carry the tier, which colours the guessed tile (O45), so the client never
+ *                 computes it. The rounding (`isqrt`), the sector test and the tier table's
+ *                 thresholds are integer comparisons, so no cell is ever decided by a
+ *                 floating-point accident (02d §5, §7). Shared by the rules, Leaf Fall's
+ *                 candidates (a cell gets the same answer as the secret did, O37) and the
+ *                 development bot.
  * Depends on:     @smg/guess-engine (Tier)
  * Used by:        ./rules, ./leafFall, ./specials, ./views, ./devBot, ./state
  * Spec:           docs/spec/02d-game-seasonal-target.md §4, §5, §7
@@ -46,8 +48,13 @@ export type MissTier = Exclude<Tier, 'correct'>;
 
 export type Feedback =
   | { readonly kind: 'correct' }
-  | { readonly kind: 'direction'; readonly distance: number; readonly direction: Compass }
-  | { readonly kind: 'distance'; readonly distance: number }
+  | {
+      readonly kind: 'direction';
+      readonly distance: number;
+      readonly direction: Compass;
+      readonly tier: MissTier;
+    }
+  | { readonly kind: 'distance'; readonly distance: number; readonly tier: MissTier }
   | { readonly kind: 'closeness'; readonly tier: MissTier };
 
 // What the answer rule needs besides the two cells: the round's mode and map (frozen settings).
@@ -116,51 +123,49 @@ export function directionOf(g: Cell, s: Cell): Compass {
   return dx > 0 ? 'SE' : 'SW';
 }
 
-// The tier table of 02d §7 in percent of the map's diagonal, from far to near; above `hot` %
-// a guess is hot, at or under it burning.
-const SHARES: readonly (readonly [MissTier, number])[] = [
-  ['wayOff', 40],
-  ['cold', 25],
-  ['cool', 12],
-  ['warm', 6],
-  ['hot', 3],
+// The tier table of 02d §7 from far to near: a guess is in a tier when its distance is more
+// than `p` % of the grid's diagonal AND more than √m tiles; nearer than every row it is
+// burning. The share sets the far tiers on large grids, the minimum the near ones on small
+// grids, where a share would ask for less than one tile (O45: 8–30 tiles a side). Both columns
+// grow from row to row, so the thresholds stay in order at every size.
+const TIER_TABLE: readonly (readonly [MissTier, number, number])[] = [
+  ['wayOff', 48, 61],
+  ['cold', 32, 40],
+  ['cool', 20, 20],
+  ['warm', 12, 13],
+  ['hot', 6, 8],
 ];
 
 // The squared diagonal D² = (W − 1)² + (H − 1)²: the farthest two cells can be.
 export const diagonal2 = (map: MapSize): number => (map.width - 1) ** 2 + (map.height - 1) ** 2;
 
 // The tier of a guess with squared distance `n` (n > 0) and touching or not. √n / D > p % is
-// decided as 10 000 · n > p² · D², in integers.
+// decided as 10 000 · n > p² · D², √n > √m as n > m, in integers.
 export function tierOf(g: Cell, s: Cell, map: MapSize): Tier {
   if (sameCell(g, s)) return 'correct';
   if (Math.max(Math.abs(s.x - g.x), Math.abs(s.y - g.y)) === 1) return 'justMissed';
   const n = squared(g, s);
   const d2 = diagonal2(map);
-  for (const [tier, p] of SHARES) if (10_000 * n > p * p * d2) return tier;
+  for (const [tier, p, m] of TIER_TABLE) if (10_000 * n > p * p * d2 && n > m) return tier;
   return 'burning';
 }
 
 // The answer to guess `g` when the target is `s` (02d §5).
 export function answerOf(g: Cell, s: Cell, rule: AnswerRule): Feedback {
   if (sameCell(g, s)) return { kind: 'correct' };
-  if (rule.mode === 'closeness') {
-    return { kind: 'closeness', tier: tierOf(g, s, rule.map) as MissTier };
-  }
-  if (rule.mode === 'distance')
-    return { kind: 'distance', distance: roundedDistance(squared(g, s)) };
-  return {
-    kind: 'direction',
-    distance: roundedDistance(squared(g, s)),
-    direction: directionOf(g, s),
-  };
+  const tier = tierOf(g, s, rule.map) as MissTier;
+  if (rule.mode === 'closeness') return { kind: 'closeness', tier };
+  const distance = roundedDistance(squared(g, s));
+  if (rule.mode === 'distance') return { kind: 'distance', distance, tier };
+  return { kind: 'direction', distance, direction: directionOf(g, s), tier };
 }
 
-// Whether two answers say the same thing (Leaf Fall's candidate test, O37).
+// Whether two answers say the same thing (Leaf Fall's candidate test, O37). The tier counts in
+// every mode: it is shown as the tile's colour, and one rounded distance can span two tiers.
 export function sameAnswer(a: Feedback, b: Feedback): boolean {
-  if (a.kind === 'direction' && b.kind === 'direction') {
-    return a.distance === b.distance && a.direction === b.direction;
-  }
-  if (a.kind === 'distance' && b.kind === 'distance') return a.distance === b.distance;
-  if (a.kind === 'closeness' && b.kind === 'closeness') return a.tier === b.tier;
-  return a.kind === b.kind;
+  if (a.kind === 'correct' || b.kind === 'correct') return a.kind === b.kind;
+  if (a.kind !== b.kind || a.tier !== b.tier) return false;
+  if (a.kind === 'closeness' || b.kind === 'closeness') return true;
+  if (a.distance !== b.distance) return false;
+  return a.kind !== 'direction' || b.kind !== 'direction' || a.direction === b.direction;
 }

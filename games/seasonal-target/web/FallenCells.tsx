@@ -7,7 +7,7 @@
  *                 compact chips "(12, 34)", row by row as the state keeps them, with the count
  *                 in its heading; on a desktop a short box that scrolls inside itself, on a
  *                 phone a "Fallen (N)" button that opens it as a sheet, closed by Close, the
- *                 button or Escape (T115). The map shows the same cells hatched.
+ *                 button or Escape (T115). The grid shows the same tiles hatched.
  * Depends on:     react, @smg/game-sdk (Season), @smg/ui (useDisclosure),
  *                 @smg-game/seasonal-target (types), ./words, ./fallen.css
  * Used by:        ./PlayerPanel, ./SpectatorPanel

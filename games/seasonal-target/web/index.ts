@@ -3,11 +3,11 @@
  * @module games/seasonal-target/web
  * @brief  The screens of Seasonal Target for the player client.
  *
- * Responsibility: the game's main-area panel and input row (the map with its selection), the
+ * Responsibility: the game's main-area panel and input (the tile grid with its selection), the
  *                 spectator and result panels, its text and its setting definitions, as one
  *                 object shaped like the registry's `GameWeb` (04 §4.6).
  * Depends on:     @smg-game/seasonal-target (settings), ./PlayerPanel, ./TargetInput,
- *                 ./SpectatorPanel, ./ResultPanel, ./text, ./st.css
+ *                 ./SpectatorPanel, ./ResultPanel, ./text, ./st.css, ./tiles.css
  * Used by:        games/registry/web
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/02d-game-seasonal-target.md §11
  */
@@ -19,6 +19,7 @@ import { SpectatorPanel } from './SpectatorPanel.js';
 import { TargetInput } from './TargetInput.js';
 import { stText } from './text.js';
 import './st.css';
+import './tiles.css';
 
 export const seasonalTargetWeb = {
   Player: PlayerPanel,
@@ -27,6 +28,6 @@ export const seasonalTargetWeb = {
   Result: ResultPanel,
   text: stText,
   settings: stSettings.defs,
-  // The map is the input: the platform's board layout puts it left at full height (T123).
+  // The grid is the input: the platform's board layout gives it the stage's full height (T123).
   layout: 'board' as const,
 };

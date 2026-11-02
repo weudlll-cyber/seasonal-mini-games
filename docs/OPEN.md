@@ -56,19 +56,27 @@ The architect's rules of 2026-11-01 for the three new games (owner decision 38),
 
 To confirm after the owner has played:
 
-- 02d §6: others' dots on the map are only their newest 60 guesses (engine view limit, T74).
-- 02d §3: map size 50 × 50 (each 20–100) as host settings.
-- 02d §4: rejection sentences "That cell is not on the map.", "That cell is outside the target area.", "That cell has fallen.", "You already tried that cell."
-- 02d §5: distance rounded to the nearest whole cell, 8 compass sectors of 45°, shown as "9 cells away, to the north-east ↗".
+- 02d §6: others' tiles come from their newest 60 guesses only (engine view limit, T74).
+- 02d §4: rejection sentences "That cell is not on the map.", "That cell is outside the target area.", "That cell has fallen.", "You already tried that cell." The answers ("9 cells away") and the Fallen cells panel still say "cell"; only the intro, the size line and the specials' sentences say grid and tiles (O45). Whether "cell" should become "tile" everywhere is the owner's wording.
+- 02d §5: distance rounded to the nearest whole cell, 8 compass sectors of 45°, shown as "9 cells away, to the north-east ↗"; on the tile the distance and a small arrow.
 - 02d §5: in `closeness` mode the tier word is shown even with comments off.
-- 02d §6: dots per player colour, own dots ringed and all shown, others' only the engine's newest 60, with an arrow restating a `direction` answer.
-- 02d §7: closeness tiers by share of the map diagonal (40 / 25 / 12 / 6 / 3 %, touching = just missed) as a fixed table, not admin settings.
-- 02d §8.1: Spring Herald names the map quarter (west/north halves rounded up).
-- 02d §8.3: Leaf Fall candidates for both feedback modes; `autumn.minCellsLeft` default 10; individual-mode candidates within any player's window.
-- 02d §8.4: halving halves the longer side (width on a tie); `halving.minCells` default 16; the map zooms to the target area.
-- 02d §9: closest miss by smallest distance, wording "just missed — the next cell" when touching.
-- 02d §11: map layout (map left, list right on desktop; map full width on a phone), no zoom, arrow cross, typed coordinates on desktop only.
-- To look at (night-5 screenshot review): on a 390 × 844 phone the list above the map has room for two rows, because the full-width map and its controls take the rest of the one screen. A smaller map would show more rows but makes the cells harder to tap; left as built until the owner has played.
+- 02d §6 (O45): the 5-step heat scale (way off and cold share step 1, burning and just missed step 5, the found tile its own mark); a tile several players guessed shows the closest answer and one corner mark for the first other player, its title and label every guess; numbers left out on tiles under 24 px (the loupe and the title still give them); tiles outside the target area dimmed to 30 % opacity, below the 3:1 of the scale on purpose.
+- 02d §7 (O45): closeness tiers by share of the grid's diagonal **and** a minimum distance, so every tier occurs on every grid from 8 to 30: way off over 48 % and over 7.81 cells, cold over 32 % and 6.32, cool over 20 % and 4.47, warm over 12 % and 3.61, hot over 6 % and 2.83, burning two tiles away, just missed touching; a fixed table, not admin settings. Reachable distances: 8 × 8 burning 2–2.83, hot 3–3.61, warm 4–4.47, cool 5–6.32, cold 6.40–7.81, way off 8.06–9.90; 20 × 20 burning 2–2.83, hot 3–3.61, warm 4–5.10, cool 5.39–8.54, cold 8.60–12.81, way off 13–26.87; 30 × 30 burning 2–2.83, hot 3–4.47, warm 5–8.06, cool 8.25–13.04, cold 13.15–19.65, way off 19.70–41.01. The tier travels with every answer now (the tile's colour), so Leaf Fall's candidates keep the same tier as well as the same distance.
+- 02d §8.1: Spring Herald names the grid's quarter (west/north halves rounded up) and tints its tiles.
+- 02d §8.3: Leaf Fall candidates for every feedback mode; `autumn.minCellsLeft` default 10, at most 50 (an 8 × 8 grid has 64 tiles); individual-mode candidates within any player's window.
+- 02d §8.4: halving halves the longer side (width on a tie); `halving.minCells` default 16, at most 32 (an 8 × 8 grid is halved at least once); the whole grid stays shown, the tiles outside the target area dimmed.
+- 02d §9: closest miss by smallest distance, wording "just missed — the next cell" when touching; in individual mode the result's grid shows only the viewer's own guesses (the others' answers are about their own targets), every player in text.
+- 02d §11 (O45): the grid takes the stage at full height on a desktop with the Column and Row fields and the arrows under it; on a phone (narrow or a coarse pointer, tiles under 44 px) the first tap opens a loupe of 5 × 5 tiles of at least 44 px over the grid, with the fields, the arrows and Close; Guess sends and closes it; with tiles of 44 px or more a tap selects at once. The loupe does not take the focus when it opens (it is made for touch).
+
+**All games: focus mode (owner decision 46)**
+
+Built as described in 02 §12 and DECISIONS T128–T132; to confirm after the owner has played:
+
+- The result page reached at the end of a round comes with the normal header at once, because it shows beside the next round's waiting area (T128).
+- The round bar: the season pill is the special's button (a small "i" on a desktop); "Wait 15 s · 9:50 left" on two short lines on a phone; Chat, Players, Host and Full screen as icons with their words on a desktop, icons only on a phone.
+- A phone shows the newest 3 rows of the list with "All (N)" (the owner's number); for a list game (Guess The Number, Safecracker, Bomb Defusal) the stage under them is then partly empty, while Seasonal Target's grid takes it.
+- To look at: on a desktop a list game's stage holds only its input row in the middle (the range and fallen panels are in the right column, as O46 asks), so the left half of the screen is mostly empty for Guess The Number; a larger input or the range bar on the stage would use it.
+- Guess The Number's Fallen numbers open from their "Fallen (N)" button as a sheet on a desktop too (formerly chips under the bar there), so the 320 px column keeps room for 12 guess rows (T132).
 
 **All games (game choice, owner decision 41)**
 

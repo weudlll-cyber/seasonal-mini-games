@@ -1,28 +1,26 @@
 /**
  * @file   apps/web/src/round/RoundScreen.tsx
  * @module web/round
- * @brief  A running round on one screen: top bar, range and the one guess list, teams, input.
+ * @brief  A running round in focus mode: the game's stage, its panel and the one guess list.
  *
- * Responsibility: the round view everyone gets alike, the host included (O16): during the
- *                 countdown the intro screen (./RoundIntro, O36); once open a one-line top
- *                 bar (season chip in its token colour with icon and the special's name, an
- *                 info button with what the special does (./SpecialInfo, O35), the halving
- *                 badge, shared or individual, the cooldown, the time left, and the host menu
- *                 for the host); the game's range block (the player panel for a roster
- *                 player, else the spectator panel), at the top of the side column on a
- *                 desktop and above the list on a phone; the main area with the special's
- *                 banner when it fires (./SpecialBanner, O35) and the round's one list of
- *                 guesses and events (./RoundLog, O20), as tall as the screen allows (O35);
- *                 the side column with, under the range, the team tiles and the match chat
- *                 (./RoundChat; a panel over the round on a phone); and for a roster player the game's input row with
- *                 the cooldown ring, whose platform refusals appear under it in plain words, or
- *                 once they solved their number a short notice with their place, their own
- *                 rows staying in the list (O25). The layout (round.css) fits the viewport
- *                 without a page scrollbar; only the lists scroll inside themselves. After the
- *                 end the result screen takes over.
+ * Responsibility: the round view everyone gets alike, the host included (O16), inside the
+ *                 focus mode (./FocusShell, O46: the slim bar, the panels on demand, full
+ *                 screen): during the countdown the intro screen (./RoundIntro, O36); once
+ *                 open the stage, the space the game gets, with a roster player's input row
+ *                 (the game's input with the cooldown ring, the platform's refusals under it in
+ *                 plain words, or once they solved a short notice with their place, O25) or a
+ *                 spectator's panel; and the right column of about 320 px on a desktop with
+ *                 a roster player's game panel (range, fallen numbers or digits) on top and
+ *                 the special's banner (./SpecialBanner, O35) over the round's one list of
+ *                 guesses and events (./RoundLog, O20) under it; on a phone the game panel is
+ *                 compact and the list shows its newest rows with "All (N)" for the whole list
+ *                 as a sheet. The layout (round.css) fits the viewport without a page
+ *                 scrollbar; only the lists scroll inside themselves. After the end the result
+ *                 screen takes over, outside focus mode (T128).
  * Depends on:     react, @smg/contracts, @smg-game/registry/web, ../live/*, ../season/*,
- *                 ./CooldownRing, ./RoundChat, ./RoundIntro, ./RoundLog, ./RoundSide,
- *                 ./ResultScreen, ./SpecialBanner, ./SpecialInfo, ./roundText, ./round.css
+ *                 ../useMediaQuery, ./CooldownRing, ./FocusPanel, ./FocusShell, ./RoundIntro,
+ *                 ./RoundLog, ./RoundSide, ./ResultScreen, ./SeasonPill, ./SpecialBanner,
+ *                 ./roundText, ./usePanels, ./round.css
  * Used by:        ../match/MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §4, §7, §11, §12; docs/spec/03-seasonal-specials.md §2, §6
  */
@@ -34,83 +32,32 @@ import { useState, type CSSProperties, type ReactElement, type ReactNode } from 
 import { intent, serverNow } from '../live/socket.js';
 import type { RoundLive } from '../live/useRound.js';
 import { useTicker } from '../live/useTicker.js';
-import { SeasonIcon } from '../season/SeasonIcon.js';
-import { SEASON_NAMES, seasonColor, SPECIALS } from '../season/season.js';
+import { seasonColor } from '../season/season.js';
+import { useNarrow } from '../useMediaQuery.js';
 import { CooldownRing } from './CooldownRing.js';
+import { FocusPanel } from './FocusPanel.js';
+import { FocusShell } from './FocusShell.js';
 import { ResultScreen } from './ResultScreen.js';
-import { RoundChat } from './RoundChat.js';
 import { RoundIntro } from './RoundIntro.js';
 import { RoundLog } from './RoundLog.js';
-import { colorsOf, TeamTiles } from './RoundSide.js';
+import { colorsOf } from './RoundSide.js';
+import { ruleOf } from './SeasonPill.js';
 import { SpecialBanner } from './SpecialBanner.js';
-import { ruleOf, SpecialInfo } from './SpecialInfo.js';
-import { codeText, seconds, solvedText } from './roundText.js';
+import { codeText, solvedText } from './roundText.js';
+import type { Panels } from './usePanels.js';
 import './round.css';
 
 interface RoundScreenProps {
   readonly live: RoundLive;
   readonly gameId: string;
   readonly viewerKey: string | null;
-  // The host menu for the host, else null.
-  readonly hostMenu: ReactNode;
+  // The host's controls in the focus mode's Host panel, given its close; null for others.
+  readonly host: ((close: () => void) => ReactNode) | null;
   readonly teamPoints: readonly { readonly team: TeamName; readonly points: number }[];
   // The match's player standings, for the result screen.
   readonly standings: readonly MatchStandingView[];
-  // The match's chat panel, under the team tiles (./RoundChat), or null without a chat.
+  // The match's chat, a panel from the round bar (./FocusShell), or null without a chat.
   readonly chat: ReactNode;
-}
-
-// The time left of an open round, "9:30" (the countdown is the intro screen's).
-function timeText(state: RoundStateView, now: number): string {
-  if (state.status !== 'open' || state.endsAt === null) return '';
-  const left = Math.max(0, state.endsAt - now);
-  const secs = Math.floor((left % 60_000) / 1_000);
-  return `${String(Math.floor(left / 60_000))}:${String(secs).padStart(2, '0')}`;
-}
-
-function TopBar(p: {
-  readonly state: RoundStateView;
-  readonly now: number;
-  readonly hostMenu: ReactNode;
-  // The special's sentence, in the game's words where it has its own (T119).
-  readonly rule: string;
-}): ReactElement {
-  const { state } = p;
-  return (
-    <header className="round-top" data-testid="round-banner">
-      <span className="round-season" data-season={state.season}>
-        {/* On a light disc: the token icon would vanish on its own season colour. */}
-        <span className="round-season-icon">
-          <SeasonIcon season={state.season} size="1.25rem" />
-        </span>
-        {/* On a phone the season's name stays and the special's goes to screen readers: the
-            info button beside the chip names it and says what it does. */}
-        <span className="round-season-text">
-          <strong className="round-season-name" data-testid="round-season">
-            {SEASON_NAMES[state.season]}{' '}
-          </strong>
-          <span className="round-special" data-testid="round-special">
-            {state.specialOn ? SPECIALS[state.season].name : 'no special'}
-          </span>
-        </span>
-        {state.halving ? <span className="round-badge">Halving round</span> : null}
-      </span>
-      {state.specialOn ? <SpecialInfo season={state.season} rule={p.rule} /> : null}
-      <span className="round-fact round-mode">
-        {state.secretMode === 'shared' ? 'Shared' : 'Individual'}
-      </span>
-      <span className="round-fact" data-testid="round-cooldown">
-        {/* A phone says "Wait 15 s", a desktop "Cooldown 15 s" (night-5 review). */}
-        <span className="round-fact-label">Cooldown </span>
-        <span className="round-fact-short">Wait </span>
-        {seconds(state.cooldownMs)}
-      </span>
-      <span className="round-fact round-fact-time" data-testid="countdown">
-        {timeText(state, p.now)} left
-      </span>
-      {p.hostMenu}
-    </header>
-  );
 }
 
 interface PlayProps {
@@ -213,8 +160,91 @@ function GamePart(p: { readonly state: RoundStateView; readonly game: GameWeb | 
   );
 }
 
+// The round's one list: on a desktop the whole list in the right column; on a phone its
+// newest rows with an "All (N)" button that opens the whole list as a sheet (O46).
+function ListPart(p: {
+  readonly live: RoundLive;
+  readonly state: RoundStateView;
+  readonly game: GameWeb | null;
+  readonly viewerKey: string | null;
+  readonly now: number;
+  readonly panels: Panels;
+}): ReactElement {
+  const narrow = useNarrow();
+  const { panels } = p;
+  const log = {
+    feed: p.live.feed,
+    game: p.game,
+    state: p.state,
+    viewerKey: p.viewerKey,
+    now: p.now,
+  };
+  if (!narrow) return <RoundLog {...log} />;
+  const more = {
+    open: panels.open === 'list',
+    toggle: () => {
+      panels.toggle('list');
+    },
+    button: panels.button('list'),
+  };
+  return (
+    <>
+      <RoundLog {...log} more={more} />
+      <FocusPanel
+        title="Guesses and events"
+        open={more.open}
+        onClose={panels.close}
+        testId="list-sheet"
+      >
+        <RoundLog {...log} />
+      </FocusPanel>
+    </>
+  );
+}
+
+// An open round in focus mode: a roster player's game panel at the top of the right column
+// with the list under it, and their input row on the stage, the space the game gets; a
+// spectator's panel takes the stage itself (O46).
+function PlayView(p: {
+  readonly live: RoundLive;
+  readonly state: RoundStateView;
+  readonly game: GameWeb | null;
+  readonly viewerKey: string | null;
+  readonly now: number;
+  readonly panels: Panels;
+}): ReactElement {
+  const { state, game, now } = p;
+  const playing = state.role === 'player' && game !== null ? game : null;
+  return (
+    <>
+      {playing === null ? null : (
+        <div className="smg-panel round-range">
+          <GamePart state={state} game={playing} />
+        </div>
+      )}
+      <section className="smg-panel round-main" aria-label="The round">
+        <SpecialBanner feed={p.live.feed} state={state} game={game} now={now} />
+        <ListPart {...p} />
+      </section>
+      <div className="round-stage">
+        {playing === null ? (
+          <GamePart state={state} game={game} />
+        ) : (
+          <InputRow
+            state={state}
+            game={playing}
+            viewerKey={p.viewerKey}
+            now={now}
+            reload={p.live.reload}
+          />
+        )}
+      </div>
+    </>
+  );
+}
+
 export function RoundScreen(props: RoundScreenProps): ReactElement {
-  const { state, feed } = props.live;
+  const { state } = props.live;
   useTicker(state !== null && state.status !== 'ended' && state.status !== 'aborted');
   const game = GAME_SCREENS[props.gameId] ?? null;
   if (state === null) return <p className="smg-muted">Loading the round…</p>;
@@ -232,43 +262,32 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
     return <p className="smg-panel">The round was aborted: {state.abortReason}</p>;
   }
   const now = serverNow();
-  const style = { '--season': seasonColor(state.season) } as CSSProperties;
-  if (state.status === 'countdown') {
-    return (
-      <div className="round-live round-live--intro" style={style} data-testid="round-view">
-        <RoundIntro state={state} game={game} now={now} hostMenu={props.hostMenu} />
-      </div>
-    );
-  }
-  const player = state.role === 'player' && game !== null;
   return (
-    <div
-      className="round-live"
-      style={style}
-      data-testid="round-view"
-      data-layout={game?.layout ?? 'list'}
+    <FocusShell
+      state={state}
+      now={now}
+      rule={ruleOf(game, state.season)}
+      style={{ '--season': seasonColor(state.season) } as CSSProperties}
+      layout={game?.layout ?? 'list'}
+      viewerKey={props.viewerKey}
+      teamPoints={props.teamPoints}
+      chat={props.chat}
+      host={props.host}
     >
-      <TopBar state={state} now={now} hostMenu={props.hostMenu} rule={ruleOf(game, state.season)} />
-      <div className="smg-panel round-range">
-        <GamePart state={state} game={game} />
-      </div>
-      <section className="smg-panel round-main" aria-label="The round">
-        <SpecialBanner feed={feed} state={state} game={game} now={now} />
-        <RoundLog feed={feed} game={game} state={state} viewerKey={props.viewerKey} now={now} />
-      </section>
-      <aside className="round-side">
-        <TeamTiles state={state} points={props.teamPoints} />
-        <RoundChat chat={props.chat} />
-      </aside>
-      {player ? (
-        <InputRow
-          state={state}
-          game={game}
-          viewerKey={props.viewerKey}
-          now={now}
-          reload={props.live.reload}
-        />
-      ) : null}
-    </div>
+      {(panels) =>
+        state.status === 'countdown' ? (
+          <RoundIntro state={state} game={game} now={now} />
+        ) : (
+          <PlayView
+            state={state}
+            game={game}
+            viewerKey={props.viewerKey}
+            now={now}
+            live={props.live}
+            panels={panels}
+          />
+        )
+      }
+    </FocusShell>
   );
 }

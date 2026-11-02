@@ -3,12 +3,13 @@
  * @module games/seasonal-target/web
  * @brief  The player's main-area part: the hint and target-area lines, and the Fallen cells.
  *
- * Responsibility: the map's companion lines for the whole round: Spring Herald's quarter as a
- *                 highlighted "Free hint: …" line (02d §8.1, O35), the current target area
- *                 when a halving has shrunk it ("Target area: columns 13–37, rows 1–50",
- *                 02d §8.4), otherwise the map's size; in a Leaf Fall round the Fallen cells
- *                 panel (./FallenCells, T115). The map itself, with the selection, lives in the
- *                 input row (./TargetInput), because only the input row can act.
+ * Responsibility: the grid's companion lines for the whole round: Spring Herald's quarter as
+ *                 a highlighted "Free hint: …" line (02d §8.1, O35), the current target area
+ *                 when a halving has shrunk it ("Target area: columns 6–15, rows 1–20",
+ *                 02d §8.4), otherwise the grid's size ("Grid: 20 × 20 tiles"); in a Leaf
+ *                 Fall round the Fallen cells panel (./FallenCells, T115). The grid itself, with
+ *                 the selection, lives in the input (./TargetInput), because only the input can
+ *                 act.
  * Depends on:     react, @smg/game-sdk (props), @smg-game/seasonal-target (types),
  *                 ./FallenCells, ./words
  * Used by:        ./index
@@ -24,8 +25,8 @@ import { areaLine, freeHint, sizeText } from './words.js';
 const whole = (a: Area, map: MapSize): boolean =>
   a.left === 1 && a.top === 1 && a.right === map.width && a.bottom === map.height;
 
-// The lines above the map: the area (or the map's size) and the hint.
-export function MapLines(p: {
+// The grid's lines: the area (or the grid's size) and the hint.
+export function GridLines(p: {
   readonly map: MapSize;
   readonly area: Area | null;
   readonly sizeLine: string | null;
@@ -34,7 +35,7 @@ export function MapLines(p: {
   const areaText =
     p.area !== null && !whole(p.area, p.map)
       ? areaLine(p.area)
-      : (p.sizeLine ?? `Map: ${sizeText(p.map.width, p.map.height)}`);
+      : (p.sizeLine ?? `Grid: ${sizeText(p.map.width, p.map.height)}`);
   return (
     <>
       <p className="st-area" data-testid="area-line">
@@ -53,7 +54,7 @@ export function PlayerPanel(props: PlayerPanelProps): ReactElement {
   const v = props.view as PlayerView;
   return (
     <div className="st-player" data-testid="st-player">
-      <MapLines map={v.map} area={v.area} sizeLine={null} hint={v.hint} />
+      <GridLines map={v.map} area={v.area} sizeLine={null} hint={v.hint} />
       {leafFallOn(props) ? <FallenCells fallen={v.fallen} /> : null}
     </div>
   );

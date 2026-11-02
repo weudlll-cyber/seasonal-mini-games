@@ -1,28 +1,40 @@
 /*
  * @file   games/seasonal-target/web/st.css
  * @module games/seasonal-target/web
- * @brief  Styles of the Seasonal Target panels: the map, its lines, the input row, the result.
+ * @brief  Styles of the Seasonal Target panels: their lines, the input's layout, the result.
  *
- * Responsibility: colours only from the design tokens (light and dark); the map scaled to the
- *                 largest size the space allows without a page scrollbar (`--st-ratio` is its
- *                 width over height, set by ./MapBoard), grid lines and ticks in the strong
- *                 border and muted text tokens, fallen cells hatched (shape, not colour alone),
- *                 the quarter dashed, dots in their player's colour with an ink outline, own
- *                 dots ringed, a focused dot outlined, the selection a thick square in the text
- *                 colour; tick numbers at least 11 px on a phone (`--st-m` is the map's tick
- *                 margin in cells, set by ./MapBoard); the small legend on a desktop; the
- *                 arrow cross 44 × 44 px and Guess at least 44 px; compact Column and Row fields
- *                 everywhere. The Fallen cells panel's styles are in ./fallen.css. Classes are
- *                 prefixed `st-`.
- * Spec:           docs/spec/02d-game-seasonal-target.md §6, §8, §11
+ * Responsibility: colours only from the design tokens (light and dark); the input and the
+ *                 spectator's panel as flex columns that give the grid's box (./tiles.css) the
+ *                 free height and the rest its natural height, never by viewport arithmetic (the
+ *                 platform's stage is a flex column of definite height); the hint line, the
+ *                 row with the selected tile, the compact Column and Row fields, the arrow cross
+ *                 44 × 44 px and a Guess at least 44 px; the result's lines. The grid, its tiles
+ *                 and the loupe are styled in ./tiles.css, the Fallen cells panel in
+ *                 ./fallen.css. Classes are prefixed `st-`.
+ * Spec:           docs/spec/02d-game-seasonal-target.md §8, §11
  */
 .st-player,
-.st-spectator,
-.st-input,
 .st-result {
   display: grid;
   gap: var(--space-1);
   min-width: 0;
+}
+
+/* The input and the spectator's panel fill the stage: the grid's box grows, the rest keeps its
+   height. */
+.st-input,
+.st-spectator {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.st-input > :not(.st-board),
+.st-spectator > :not(.st-board) {
+  flex: none;
 }
 
 .st-area,
@@ -42,152 +54,7 @@
   font-weight: var(--font-weight-strong);
 }
 
-/* The map: as large as the height allows, never wider than its box. */
-.st-map {
-  /* A desktop's board column: the screen less the app bar, the round's top bar and the input
-     controls under the map (T123). */
-  --st-height: min(calc(100dvh - 21.5rem), 820px);
-  display: block;
-  justify-self: center;
-  width: min(100%, calc(var(--st-height) * var(--st-ratio, 1)));
-  aspect-ratio: var(--st-ratio, 1);
-  height: auto;
-  touch-action: manipulation;
-  cursor: crosshair;
-}
-
-/* The result page's map: small enough that the headline, the map and the standings share one
-   screen (owner's screen rule). */
-.st-result .st-map {
-  --st-height: min(34dvh, 300px);
-}
-
-.st-map:focus-visible {
-  outline: 3px solid var(--color-text);
-  outline-offset: 2px;
-}
-
-.st-ground {
-  fill: var(--color-board);
-}
-
-.st-line {
-  stroke: var(--color-board-line);
-  stroke-width: 0.04;
-}
-
-.st-line--ten {
-  stroke: var(--color-border-strong);
-  stroke-width: 0.12;
-}
-
-.st-ticks text {
-  fill: var(--color-text-muted);
-}
-
-.st-fallen {
-  fill: url(#st-hatch);
-  stroke: var(--color-border-strong);
-  stroke-width: 0.05;
-}
-
-.st-hatch-line {
-  stroke: var(--color-border-strong);
-  stroke-width: 0.2;
-}
-
-.st-quarter rect {
-  fill: none;
-  stroke: var(--color-board-ink);
-  stroke-width: 0.15;
-  stroke-dasharray: 0.6 0.4;
-}
-
-.st-quarter text {
-  fill: var(--color-board-ink);
-  font-weight: var(--font-weight-strong);
-}
-
-.st-dot circle {
-  stroke: var(--color-board-ink);
-  stroke-width: 0.06;
-}
-
-/* The viewer's own dots: a ring and a bolder fill. */
-.st-dot[data-own='true'] circle {
-  stroke-width: 0.16;
-}
-
-/* A focused dot (it names its player): a thick ink ring. */
-.st-dot:focus {
-  outline: none;
-}
-
-.st-dot:focus-visible circle {
-  stroke-width: 0.3;
-}
-
-/* The legend under the map: a swatch and the name of each player with dots, own first. */
-.st-legend {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.2rem 0.75rem;
-  font-size: var(--font-size-small);
-}
-
-.st-legend li {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-}
-
-.st-legend li[data-own='true'] {
-  font-weight: var(--font-weight-strong);
-}
-
-.st-swatch {
-  width: 0.8rem;
-  height: 0.8rem;
-  border-radius: 50%;
-  border: 1px solid var(--color-board-ink);
-}
-
-.st-legend li[data-own='true'] .st-swatch {
-  border-width: 3px;
-}
-
-.st-dot text {
-  fill: var(--color-board-ink);
-}
-
-.st-arrow {
-  stroke: var(--color-board-ink);
-  stroke-width: 0.12;
-  stroke-linecap: round;
-}
-
-.st-selection rect,
-.st-selection line {
-  fill: none;
-  stroke: var(--color-board-ink);
-  stroke-width: 0.18;
-}
-
-.st-target circle {
-  fill: none;
-  stroke: var(--season, var(--color-accent));
-  stroke-width: 0.25;
-}
-
-.st-target circle + circle {
-  fill: var(--color-board-ink);
-  stroke: none;
-}
-
-/* The row under the map: ring, selected cell, fields, arrow cross, Guess. */
+/* The row under the grid: ring, selected tile, fields, arrow cross, Guess. */
 .st-row {
   display: flex;
   flex-wrap: wrap;
@@ -199,6 +66,13 @@
   margin: 0;
   flex: 1 1 9rem;
   font-weight: var(--font-weight-strong);
+}
+
+.st-steer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-1);
 }
 
 .st-fields {
@@ -266,25 +140,11 @@
   font-weight: var(--font-weight-strong);
 }
 
-/* A phone: the map at full width, larger tick numbers, compact fields, no legend. */
+/* A phone (the loupe's fields): narrow padding, so "30" fits (night-5 review). */
 @media (max-width: 899px) {
-  .st-map {
-    --st-height: min(32dvh, 300px);
-  }
-
-  /* Larger tick numbers: at 0.75 of the margin they stay at 11 px or more on a phone map. */
-  .st-ticks {
-    font-size: calc(var(--st-m, 4) * 0.75px);
-  }
-
-  /* Narrow padding: the shared input's would leave no room for "100" (night-5 review). */
   .st-field input {
     width: 3.5rem;
     padding-inline: 0.3rem;
     text-align: center;
-  }
-
-  .st-legend {
-    display: none;
   }
 }

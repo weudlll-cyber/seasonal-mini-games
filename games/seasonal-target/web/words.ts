@@ -5,10 +5,13 @@
  *
  * Responsibility: "(12, 34)" and "column 12, row 34", "columns 13–37, rows 1–50", the quarter
  *                 hint, and an answer long ("9 cells away, to the north-east", "9 cells away")
- *                 and short ("9 away, NE ↗", "9 away"), the tier words of `closeness` mode, and the tone the
- *                 platform colours a row by. Every number through `formatNumber` (T114).
+ *                 and short ("9 away, NE ↗", "9 away"), the tier words of `closeness` mode, the
+ *                 grid's size in tiles, and the tone the platform colours a row by, from the
+ *                 server's tier like the tile's colour. Every number through `formatNumber`
+ *                 (T114).
  * Depends on:     @smg/game-sdk (formatNumber, GuessAnswer), @smg-game/seasonal-target (types)
- * Used by:        ./text, ./MapBoard, ./TargetInput, ./PlayerPanel, ./SpectatorPanel, ./ResultPanel
+ * Used by:        ./text, ./heat, ./TileGrid, ./TargetInput, ./PlayerPanel, ./SpectatorPanel,
+ *                 ./ResultPanel, ./FallenCells
  * Spec:           docs/spec/02d-game-seasonal-target.md §4, §5, §7, §8.1, §8.4
  */
 import type { Area, Cell, Compass, Feedback, Quarter } from '@smg-game/seasonal-target';
@@ -26,7 +29,7 @@ export const areaText = (a: Area): string =>
   `columns ${span(a.left, a.right)}, rows ${span(a.top, a.bottom)}`;
 
 export const sizeText = (width: number, height: number): string =>
-  `${n(width)} × ${n(height)} cells`;
+  `${n(width)} × ${n(height)} tiles`;
 
 // The highlighted line for the whole round (02d §8.1).
 export const freeHint = (q: Quarter): string =>
@@ -86,11 +89,10 @@ export function shortAnswer(f: Feedback): string {
 
 const NEAR = new Set(['justMissed', 'burning', 'hot']);
 
-// The row's colour: found, near (hot, burning, touching, or within 3 cells), or far.
+// The row's colour: found, near (hot, burning or touching, the tile's two hottest steps), or far.
 export function toneOf(f: Feedback): GuessAnswer['tone'] {
   if (f.kind === 'correct') return 'correct';
-  const near = f.kind === 'closeness' ? NEAR.has(f.tier) : f.distance <= 3;
-  return near ? 'close' : 'far';
+  return NEAR.has(f.tier) ? 'close' : 'far';
 }
 
 export const answerOf = (f: Feedback): GuessAnswer => ({ text: shortAnswer(f), tone: toneOf(f) });

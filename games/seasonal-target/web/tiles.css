@@ -1,0 +1,264 @@
+/*
+ * @file   games/seasonal-target/web/tiles.css
+ * @module games/seasonal-target/web
+ * @brief  Styles of the tile grid (O45): the heat palette, the tiles and their marks, the loupe.
+ *
+ * Responsibility: the five heat steps (cold blue … burning red) and the found target's fill as
+ *                 custom properties, light on :root and dark under [data-theme='dark'] (as
+ *                 packages/ui/src/tokens.css): every fill at 3:1 or more against the empty tile,
+ *                 its number at 4.5:1 or more against the fill, in both themes (02d §11). One
+ *                 CSS grid of square tiles: in the input and the spectator panel as large as
+ *                 its box allows (`.st-board` is a size container that takes the free height;
+ *                 the grid is the smaller of its width and height), on the result page in the
+ *                 page's flow, in the loupe at least 44 px a tile. Tiles outside the target area dimmed, Spring's quarter tinted in the
+ *                 season colour, fallen tiles hatched (a pattern, not colour alone), the viewer's
+ *                 own tiles framed inside in the season colour own rows are lit in, others' with
+ *                 a corner mark, the selection outlined outside the tile in the text colour,
+ *                 the result's target ringed. Numbers scale with their tile (container units).
+ *                 Classes are prefixed `st-`.
+ * Spec:           docs/spec/02d-game-seasonal-target.md §6, §8, §9, §11
+ */
+:root {
+  --st-empty: #f6f3ea;
+  --st-gap: #d9d3c2;
+  --st-ink: #14171c;
+  --st-hatch: #4f5663;
+  --st-step-1: #2d5fa8;
+  --st-step-2: #1c7680;
+  --st-step-3: #8a6400;
+  --st-step-4: #c2410c;
+  --st-step-5: #a3122a;
+  --st-on-step: #ffffff;
+  --st-correct: #14171c;
+  --st-on-correct: #ffffff;
+}
+
+:root[data-theme='dark'] {
+  --st-empty: #17224f;
+  --st-gap: #0a1233;
+  --st-ink: #f1f4fa;
+  --st-hatch: #b3bcd0;
+  --st-step-1: #7fb0ff;
+  --st-step-2: #5fd4c8;
+  --st-step-3: #f2c94c;
+  --st-step-4: #ff9a52;
+  --st-step-5: #ff6b7a;
+  --st-on-step: #0a1233;
+  --st-correct: #f1f4fa;
+  --st-on-correct: #0a1233;
+}
+
+/* The grid's box in the input and the spectator panel: the free height of the stage (a flex
+   column of definite height) above the controls; the grid is square inside it. */
+.st-board {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 10rem;
+  container-type: size;
+  display: grid;
+  place-items: center;
+}
+
+/* The spectator's box: a larger floor, should it stand where no height is given. */
+.st-board--panel {
+  min-height: min(20rem, 50dvh);
+}
+
+.st-grid {
+  /* Set here, not on :root: the season colour is the round view's. */
+  --st-own: var(--season, var(--color-accent));
+  --st-quarter: color-mix(in srgb, var(--season, var(--color-accent)) 25%, var(--st-empty));
+  display: grid;
+  grid-template-columns: repeat(var(--st-cols), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--st-rows), minmax(0, 1fr));
+  aspect-ratio: var(--st-cols) / var(--st-rows);
+  gap: 2px;
+  padding: 2px;
+  border-radius: 6px;
+  background: var(--st-gap);
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.st-grid--board {
+  width: min(100cqw, 100cqh);
+}
+
+.st-grid:not([aria-readonly]) {
+  cursor: pointer;
+}
+
+/* The result page's grid: small enough that the headline, the grid and the standings share one
+   screen (owner's screen rule). */
+.st-grid--flow {
+  width: min(100%, 34dvh, 300px);
+  justify-self: center;
+}
+
+.st-grid--loupe {
+  grid-template-columns: repeat(var(--st-cols), minmax(var(--hit-target), 1fr));
+  grid-template-rows: repeat(var(--st-rows), minmax(var(--hit-target), 1fr));
+  width: 100%;
+}
+
+.st-grid:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 3px;
+}
+
+.st-gridrow {
+  display: contents;
+}
+
+.st-tile {
+  position: relative;
+  container-type: size;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  border-radius: 2px;
+  background: var(--st-empty);
+  color: var(--st-ink);
+}
+
+/* The number, the found glyph and "…": scaled with the tile. */
+.st-face {
+  font-size: 42cqmin;
+  font-weight: var(--font-weight-strong);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.st-dir {
+  font-size: 0.8em;
+}
+
+.st-tile[data-quarter='true'] {
+  background: var(--st-quarter);
+}
+
+.st-tile[data-fallen='true'] {
+  background: repeating-linear-gradient(45deg, var(--st-hatch) 0 2px, var(--st-empty) 2px 7px);
+}
+
+.st-tile[data-step='1'],
+.st-swatch[data-step='1'] {
+  background: var(--st-step-1);
+}
+
+.st-tile[data-step='2'],
+.st-swatch[data-step='2'] {
+  background: var(--st-step-2);
+}
+
+.st-tile[data-step='3'],
+.st-swatch[data-step='3'] {
+  background: var(--st-step-3);
+}
+
+.st-tile[data-step='4'],
+.st-swatch[data-step='4'] {
+  background: var(--st-step-4);
+}
+
+.st-tile[data-step='5'],
+.st-swatch[data-step='5'] {
+  background: var(--st-step-5);
+}
+
+.st-tile[data-step] {
+  color: var(--st-on-step);
+}
+
+.st-tile[data-step='correct'] {
+  background: var(--st-correct);
+  color: var(--st-on-correct);
+}
+
+/* Outside the target area after a halving: still shown, dimmed. */
+.st-tile[data-out='true'] {
+  opacity: 0.3;
+}
+
+/* The viewer's own tiles: a frame inside the tile in the own rows' colour, set off from the
+   fill by a thin line of the empty tile's colour. */
+.st-tile[data-own='true'] {
+  box-shadow:
+    inset 0 0 0 3px var(--st-own),
+    inset 0 0 0 4px var(--st-empty);
+}
+
+/* Another player's guess: a dot in their list colour in the top right corner. */
+.st-mark {
+  position: absolute;
+  top: 10%;
+  right: 10%;
+  width: 28%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid var(--st-ink);
+}
+
+/* The selection: a thick outline outside the tile, unlike the own frame inside it. */
+.st-tile[data-selected='true'] {
+  z-index: 1;
+  outline: 3px solid var(--color-text);
+  outline-offset: 1px;
+}
+
+/* The result's target: a ring in the season colour with an ink edge. */
+.st-target {
+  position: absolute;
+  inset: 8%;
+  border-radius: 50%;
+  border: 3px solid var(--season, var(--color-accent));
+  box-shadow: 0 0 0 1px var(--st-ink);
+}
+
+/* The legend: "Cold", the five steps, "Hot". */
+.st-heat {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+.st-heat .st-swatch {
+  width: 1.1rem;
+  height: 0.8rem;
+  border-radius: 3px;
+}
+
+/* The phone's loupe: over the grid, its tiles at least 44 px. */
+.st-loupe {
+  position: absolute;
+  z-index: 20;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(100%, 20rem);
+  max-height: 100%;
+  overflow-y: auto;
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  border: 2px solid var(--season, var(--color-border));
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-raised);
+}
+
+.st-loupe-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-1);
+}
+
+.st-loupe-close {
+  min-height: var(--hit-target);
+}

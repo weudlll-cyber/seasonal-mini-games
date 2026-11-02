@@ -3,7 +3,7 @@
  * @module games/seasonal-target
  * @brief  What a player, a spectator and the result page see of a round, with their schemas.
  *
- * Responsibility: the player view (the map, the answer mode, the player's own target area
+ * Responsibility: the player view (the grid, the answer mode, the player's own target area
  *                 and quarter, the fallen cells inside that area, the own guesses and the
  *                 others' newest ones), the spectator view (the shared area and quarter only;
  *                 in individual mode just the size every area has) and the result (the target
@@ -47,11 +47,15 @@ const size = z.object({ width: coord, height: coord }).strict();
 const quarter = area
   .extend({ name: z.enum(['north-west', 'north-east', 'south-west', 'south-east']) })
   .strict();
+// Every wrong answer carries its tier: the colour of the guessed tile (O45).
+const tier = z.enum(TIERS).exclude(['correct']);
 const feedback = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('correct') }).strict(),
-  z.object({ kind: z.literal('direction'), distance: coord, direction: z.enum(COMPASS) }).strict(),
-  z.object({ kind: z.literal('distance'), distance: coord }).strict(),
-  z.object({ kind: z.literal('closeness'), tier: z.enum(TIERS).exclude(['correct']) }).strict(),
+  z
+    .object({ kind: z.literal('direction'), distance: coord, direction: z.enum(COMPASS), tier })
+    .strict(),
+  z.object({ kind: z.literal('distance'), distance: coord, tier }).strict(),
+  z.object({ kind: z.literal('closeness'), tier }).strict(),
 ]);
 const guesses = guessSchemas(cell, feedback);
 const mode = z.enum(FEEDBACK_MODES);
@@ -62,7 +66,7 @@ export const viewSchemas = {
       map: size,
       feedbackMode: mode,
       repeatRejected: z.boolean(),
-      // The player's own target area: the whole map until a halving.
+      // The player's own target area: the whole grid until a halving.
       area,
       hint: quarter.nullable(),
       fallen: z.array(cell),

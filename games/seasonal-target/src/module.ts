@@ -24,7 +24,7 @@ import { stSpecials } from './specials.js';
 import { createState, evolveGame, type StEvent, type StState } from './state.js';
 import { reveal, views, viewSchemas } from './views.js';
 
-// One side's coordinate: a whole number the largest map can have; check 4 tests this round's.
+// One side's coordinate: a whole number the largest grid can have; check 4 tests this round's.
 const coordinate = z.number().int().min(1).max(MAP_LIMIT);
 
 export const seasonalTarget: GameModule<StState, GuessAction, StEvent, StConfig, Secrets> =

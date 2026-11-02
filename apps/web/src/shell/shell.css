@@ -9,9 +9,10 @@
  *                 it; on phones the bar wraps into two rows, scrolls away with the page and
  *                 the navigation scrolls sideways. While a round runs, and on a match's
  *                 summary, the page is one screen high (`.one-screen`) and the view fills what
- *                 the bar leaves; on a phone the bar is then one row of at most 56 px with the account behind "Menu" and Play as the
- *                 only navigation pill. Colours come
- *                 from @smg/ui.
+ *                 the bar leaves; on a phone the bar is then one row of at most 56 px with the
+ *                 account behind "Menu" and Play as the only navigation pill. A running round
+ *                 in focus mode (`.focus-mode`, O46) hides the bar altogether and takes the
+ *                 whole width. Colours come from @smg/ui.
  * Spec:           Bingo 01 §13; docs/spec/02-game-guess-the-number.md §12
  */
 
@@ -168,6 +169,23 @@ html:has(.one-screen) {
   display: flex;
   flex-direction: column;
   padding: var(--space-2) var(--gutter);
+}
+
+/* A running round in focus mode (O46): no app header at all, the round's own slim bar
+   instead (../round/FocusBar), and the round view as wide as the screen. */
+#root:has(.focus-mode) .shell-bar {
+  display: none;
+}
+
+.shell-main:has(.focus-mode) {
+  max-width: none;
+  padding-block: var(--space-1);
+}
+
+@media (max-width: 640px) {
+  .shell-main:has(.focus-mode) {
+    padding: var(--space-1) 0.5rem;
+  }
 }
 
 @media (max-width: 640px) {

@@ -22,6 +22,7 @@ export {
   type Compass,
   type Feedback,
   type MapSize,
+  type MissTier,
 } from './geometry.js';
 export { seasonalTarget } from './module.js';
 export type { GuessAction, StCode } from './rules.js';

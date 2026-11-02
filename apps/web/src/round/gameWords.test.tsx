@@ -6,11 +6,11 @@
  *
  * Responsibility: a guess row with the game's own words (`text`) and answer (`answer` with its
  *                 tone and pegs, the words always beside the pegs), a hidden guess still
- *                 "guessed"; the intro and the top bar's info note with the game's own
+ *                 "guessed"; the intro and the season pill's note with the game's own
  *                 sentence for its special (`specialRule`), and the platform's sentence when
  *                 the game has none.
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./fakes, ./RoundIntro,
- *                 ./RoundLog, ./SpecialInfo
+ *                 ./RoundLog, ./SeasonPill
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/09-testing-strategy.md §2
  */
 import type { RoundStateView } from '@smg/contracts';
@@ -20,7 +20,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { ended } from './fakes.js';
 import { RoundIntro } from './RoundIntro.js';
 import { RoundLog } from './RoundLog.js';
-import { ruleOf, SpecialInfo } from './SpecialInfo.js';
+import { ruleOf, SeasonPill } from './SeasonPill.js';
 
 afterEach(() => {
   cleanup();
@@ -75,10 +75,10 @@ describe('a game’s own sentence for its special', () => {
       opensAt: 9_000,
       game: {},
     };
-    render(<RoundIntro state={counting} game={game} now={1_000} hostMenu={null} />);
+    render(<RoundIntro state={counting} game={game} now={1_000} />);
     expect(screen.getByTestId('intro-special').textContent).toContain('A digit falls out.');
     cleanup();
-    render(<SpecialInfo season="autumn" rule={ruleOf(game, 'autumn')} />);
+    render(<SeasonPill state={counting} rule={ruleOf(game, 'autumn')} />);
     fireEvent.click(screen.getByTestId('special-info'));
     expect(screen.getByRole('note').textContent).toBe('Leaf Fall: A digit falls out.');
     expect(ruleOf(game, 'winter')).toBe('Answers arrive a few seconds late.');

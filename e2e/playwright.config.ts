@@ -37,6 +37,8 @@ const TIMING = [
   'safecracker.spec.ts',
   'bombDefusal.spec.ts',
   'target.spec.ts',
+  // Journeys 24–27: each game in focus mode, a guess at each size after a cooldown.
+  'focus.spec.ts',
   'players.spec.ts',
   'access.spec.ts',
   'range.spec.ts',
