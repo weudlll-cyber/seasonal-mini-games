@@ -3,40 +3,46 @@
  * @module games/seasonal-target/web
  * @brief  The input of Seasonal Target: the tile grid with its selection, the loupe, and Guess.
  *
- * Responsibility: the whole grid (./TileGrid) as large as the input's box allows, with every
- *                 guess the view carries, the fallen tiles, Spring's quarter and the target
- *                 area; a local selection, set by a click or tap, moved by the keyboard arrows
- *                 with the grid focused (Enter guesses) and by the Column and Row fields and the
- *                 arrow buttons (./Steer), always clamped to the target area. On a phone whose
- *                 tiles are under 44 px the first tap opens the loupe (./Loupe) and the fields
- *                 and arrows live only there; with larger tiles a tap selects directly.
- *                 "Selected: column 12, row 7" stands beside a large Guess, read out live, the
- *                 platform's cooldown ring at the row's start; Guess reads "Wait 6 s" during
- *                 the cooldown (`buttonText`, T125), waits while a guess is on its way (T76) and
- *                 closes the loupe. Nothing is sent before Guess (05 §3.1). A tile outside the
- *                 area, a fallen one or one already tried is refused at once with its sentence,
- *                 Guess staying enabled (02d §4, T113). The latest own answer stands in words
- *                 under the row, the heat legend above it.
- * Depends on:     react, @smg/game-sdk (props, buttonText), @smg-game/seasonal-target (types,
- *                 helpers), ./heat, ./HeatLegend, ./Loupe, ./measure, ./Steer, ./text,
- *                 ./TileGrid, ./words
+ * Responsibility: the whole grid (./TileGrid) drawn through a portal into the round's stage
+ *                 (`stage`, the left column at full height, O51; inline before the controls
+ *                 without one), as large as the stage allows, with every guess the view
+ *                 carries, the fallen tiles, Spring's quarter and the target area; a local
+ *                 selection, set by a click or tap, moved by the keyboard arrows with the grid
+ *                 focused (Enter guesses) and by the Column and Row fields and the arrow
+ *                 buttons behind "Type coordinates" (./Steer), always clamped to the target
+ *                 area. On a phone whose tiles are under 44 px the first tap opens the loupe
+ *                 (./Loupe) and the fields and arrows live only there; with larger tiles a tap
+ *                 selects directly. The controls stay in the input row of the right column, top
+ *                 to bottom: "Selected: column 12, row 7", read out live; the platform's
+ *                 cooldown ring and a large Guess, which reads "Wait 6 s" during the cooldown
+ *                 (`buttonText`, T125), waits while a guess is on its way (T76) and closes the
+ *                 loupe; a refusal; the coordinate toggle. Nothing is sent before Guess
+ *                 (05 §3.1). A tile outside the area, a fallen one or one already tried is
+ *                 refused at once with its sentence, Guess staying enabled (02d §4, T113).
+ * Depends on:     react, react-dom (createPortal), @smg/game-sdk (props, buttonText),
+ *                 @smg-game/seasonal-target (types, helpers), ./heat, ./Loupe, ./measure,
+ *                 ./Steer, ./text, ./TileGrid, ./words
  * Used by:        ./index
  * Spec:           docs/spec/02d-game-seasonal-target.md §4, §11; docs/spec/05-security-threat-model.md §3.1
  */
 import { inArea, sameCell, type Area, type Cell, type PlayerView } from '@smg-game/seasonal-target';
 import { buttonText, type PlayerPanelProps } from '@smg/game-sdk';
 import { useState, type KeyboardEvent, type ReactElement, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 import { shotsOf, tilesOf } from './heat.js';
-import { HeatLegend } from './HeatLegend.js';
 import { Loupe, useLoupe } from './Loupe.js';
 import { readable, TOUCH_PX, useCompact, useTileSize } from './measure.js';
-import { Steer } from './Steer.js';
+import { TypedSteer } from './Steer.js';
 import { CODES } from './text.js';
 import { TileGrid } from './TileGrid.js';
-import { cellWords, longAnswer } from './words.js';
+import { cellWords } from './words.js';
 
-export type StInputProps = PlayerPanelProps & { readonly ring?: ReactNode };
+// The platform's cooldown ring for the row, and the round's stage the board is drawn into (O51).
+export type StInputProps = PlayerPanelProps & {
+  readonly ring?: ReactNode;
+  readonly stage?: HTMLElement | null;
+};
 
 const clamp = (v: number, low: number, high: number) => Math.min(high, Math.max(low, v));
 const within = (a: Area, c: Cell): Cell => ({
@@ -108,35 +114,6 @@ function useTarget(view: PlayerView, act: PlayerPanelProps['act']) {
   return { selected, select, guess, message, sending };
 }
 
-// The row under the grid: ring, the selected tile in words, the fields and arrows, Guess.
-function GuessRow(p: {
-  readonly props: StInputProps;
-  readonly selected: Cell;
-  readonly select: (c: Cell) => void;
-  readonly steer: boolean;
-  readonly sending: boolean;
-  readonly guess: () => void;
-}): ReactElement {
-  return (
-    <div className="st-row">
-      {p.props.ring}
-      <p className="st-selected" aria-live="polite" data-testid="selected">
-        Selected: {cellWords(p.selected)}
-      </p>
-      {p.steer ? <Steer selected={p.selected} select={p.select} /> : null}
-      <button
-        type="button"
-        className="smg-btn smg-btn--primary st-go"
-        disabled={!p.props.canAct || p.sending}
-        onClick={p.guess}
-        data-testid="guess-button"
-      >
-        {buttonText('Guess', p.props.waitS)}
-      </button>
-    </div>
-  );
-}
-
 // The selection with every way to move it: the grid's clicks and keys, the loupe, Guess.
 function useAim(view: PlayerView, props: StInputProps) {
   const t = useTarget(view, props.act);
@@ -166,6 +143,15 @@ function useAim(view: PlayerView, props: StInputProps) {
   return { t, size, compact, loupe, guess, onKeyDown, onTile, pick };
 }
 
+// The grid with the loupe over it: drawn into the round's stage, or here without one.
+function Board(p: {
+  readonly stage: HTMLElement | null | undefined;
+  readonly children: ReactNode;
+}): ReactElement {
+  const board = <div className="st-board">{p.children}</div>;
+  return p.stage == null ? board : createPortal(board, p.stage);
+}
+
 export function TargetInput(props: StInputProps): ReactElement {
   const view = props.view as PlayerView;
   const { t, size, compact, loupe, guess, onKeyDown, onTile, pick } = useAim(view, props);
@@ -176,10 +162,9 @@ export function TargetInput(props: StInputProps): ReactElement {
     fallen: view.fallen,
     tiles: tilesOf(shotsOf(view.guesses, view.log), props),
   };
-  const last = view.guesses.at(-1)?.feedback ?? null;
   return (
-    <div className="st-input" data-testid="st-input">
-      <div className="st-board">
+    <>
+      <Board stage={props.stage}>
         <TileGrid
           {...grid}
           variant="board"
@@ -191,26 +176,31 @@ export function TargetInput(props: StInputProps): ReactElement {
           onKeyDown={onKeyDown}
         />
         <Loupe loupe={loupe} grid={grid} selected={t.selected} pick={pick} />
+      </Board>
+      <div className="st-input" data-testid="st-input">
+        <p className="st-selected" aria-live="polite" data-testid="selected">
+          Selected: {cellWords(t.selected)}
+        </p>
+        <div className="st-row">
+          {props.ring}
+          <button
+            type="button"
+            className="smg-btn smg-btn--primary st-go"
+            disabled={!props.canAct || t.sending}
+            onClick={guess}
+            data-testid="guess-button"
+          >
+            {buttonText('Guess', props.waitS)}
+          </button>
+        </div>
+        {t.message === null ? null : (
+          <p className="st-message" role="status">
+            {t.message}
+          </p>
+        )}
+        {/* A phone aims through the loupe, which holds its own fields. */}
+        {compact ? null : <TypedSteer selected={t.selected} select={t.select} />}
       </div>
-      <HeatLegend />
-      <GuessRow
-        props={props}
-        selected={t.selected}
-        select={t.select}
-        steer={!compact}
-        sending={t.sending}
-        guess={guess}
-      />
-      {t.message === null ? null : (
-        <p className="st-message" role="status">
-          {t.message}
-        </p>
-      )}
-      {last === null ? null : (
-        <p className="st-last" data-testid="last-answer">
-          Last guess: {longAnswer(last)}
-        </p>
-      )}
-    </div>
+    </>
   );
 }

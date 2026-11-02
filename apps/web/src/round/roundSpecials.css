@@ -18,6 +18,8 @@
   background: var(--season);
   color: var(--color-on-season);
   font-weight: var(--font-weight-strong);
+  /* Lines of even length: never one word alone on the last line. */
+  text-wrap: balance;
   animation: round-banner-in var(--duration-fast) ease-out;
 }
 

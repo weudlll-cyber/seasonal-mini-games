@@ -4,11 +4,12 @@
  * @brief  Every sentence Seasonal Target puts in the platform's list, banner, intro and info note.
  *
  * Responsibility: the game's refusals (02d §4); one line per room event for the round's list:
- *                 Leaf Fall's count as the special's row, the shared quarter or "everyone
- *                 received a hint", halving's area or (individual) its size; the banner when Leaf
+ *                 Leaf Fall's count as the special's row (the hint shows once, as the grid's
+ *                 hint quarter), halving's area or (individual) its size; the banner when Leaf
  *                 Fall or halving strikes; the list's guess rows from the player or spectator
- *                 view, the cell as `text` and the answer as `answer` (T119), pending while Frost
- *                 holds an own answer; the closest miss on the shared result (02d §9); the intro
+ *                 view, the tile as `text`, the answer as `answer` (T119) and its tier as `tier`
+ *                 (the answer's colour, O51), pending while Frost holds an own answer; the
+ *                 closest miss besides the winner on the shared result (02d §9); the intro
  *                 line (02d §2) and the special's sentence for Spring and Autumn (T119).
  * Depends on:     @smg/game-sdk (GameText, GuessRow, FeedLine, formatNumber),
  *                 @smg-game/seasonal-target (types), ./words
@@ -18,31 +19,26 @@
 import type { PlayerView, ResultView, SpectatorView, StEvent } from '@smg-game/seasonal-target';
 import { formatNumber, type FeedLine, type GameText, type GuessRow } from '@smg/game-sdk';
 
-import { answerOf, areaText, cellText, sizeText } from './words.js';
+import { answerOf, areaText, cellText, rowTier, sizeText, tiles } from './words.js';
 
 // The refusals; "outside the target area" is the input row's own, from the view (02d §4).
 export const CODES: Readonly<Record<string, string>> = {
-  OUT_OF_MAP: 'That cell is not on the map.',
-  OUT_OF_AREA: 'That cell is outside the target area.',
-  CELL_REMOVED: 'That cell has fallen.',
-  ALREADY_GUESSED: 'You already tried that cell.',
-  INVALID_ACTION: 'Pick a cell on the map.',
+  OUT_OF_MAP: 'That tile is not on the grid.',
+  OUT_OF_AREA: 'That tile is outside the target area.',
+  CELL_REMOVED: 'That tile has fallen.',
+  ALREADY_GUESSED: 'You already tried that tile.',
+  INVALID_ACTION: 'Pick a tile on the grid.',
 };
 
 const roundLine = (text: string): FeedLine => ({ text, playerId: null });
-const cells = (k: number): string => `${formatNumber(k)} ${k === 1 ? 'cell' : 'cells'}`;
 
 function eventText(e: StEvent): FeedLine | null {
   switch (e.type) {
     case 'CellsFell':
-      return { ...roundLine(`Leaf Fall: ${cells(e.cells.length)} fell.`), special: true };
+      return { ...roundLine(`Leaf Fall: ${tiles(e.cells.length)} fell.`), special: true };
+    // The hint shows once, as the grid's hint quarter; the platform's row says that it came.
     case 'HintGiven':
-      if (e.playerId !== null) return null;
-      return roundLine(
-        e.quarter === null
-          ? 'Spring Herald: everyone received a hint.'
-          : `Spring Herald: the target is in the ${e.quarter.name} quarter (${areaText(e.quarter)}).`,
-      );
+      return null;
     case 'AreaHalved':
       if (e.area === null) {
         return roundLine(`Halving: every target area is now ${sizeText(e.width, e.height)}.`);
@@ -59,7 +55,7 @@ function eventText(e: StEvent): FeedLine | null {
 
 function banner(event: unknown): string | null {
   const e = event as StEvent;
-  if (e.type === 'CellsFell') return `Leaf Fall: ${cells(e.cells.length)} fell.`;
+  if (e.type === 'CellsFell') return `Leaf Fall: ${tiles(e.cells.length)} fell.`;
   if (e.type !== 'AreaHalved') return null;
   if (e.area === null) return `Target areas halved: now ${sizeText(e.width, e.height)} each.`;
   return `Target area halved: ${areaText(e.area)}.`;
@@ -79,19 +75,22 @@ function guessRows(view: unknown): readonly GuessRow[] {
     text: g.value === null ? null : cellText(g.value),
     answer: g.feedback === null ? null : answerOf(g.feedback),
     comment: g.comment,
-    tier: g.tier,
+    // The answer's own tier, not the comment's (null with comments off): the game's styles
+    // colour the answer by it like the tile (./st.css).
+    tier: g.feedback === null ? null : rowTier(g.feedback),
     pending: playerId === null && g.feedback === null,
   });
   return [...(v.guesses ?? []).map((g) => row(g, null)), ...v.log.map((g) => row(g, g.playerId))];
 }
 
-// "Anna just missed — the next cell (21, 31)." or "Closest miss: Anna, 3 cells away (17, 30)."
+// The best guess of anyone but the winner: "Closest miss besides the winner: Anna, 3 tiles
+// away (17, 30)." or, touching, "…: Anna, right next to the target (21, 31)."
 function runnerUp(view: unknown, names: Readonly<Record<string, string>>): string | null {
   const miss = (view as Partial<ResultView>).closestMiss ?? null;
   if (miss === null) return null;
   const name = names[miss.playerId] ?? miss.playerId;
-  if (miss.touching) return `${name} just missed — the next cell ${cellText(miss.value)}.`;
-  return `Closest miss: ${name}, ${cells(miss.distance)} away ${cellText(miss.value)}.`;
+  const how = miss.touching ? 'right next to the target' : `${tiles(miss.distance)} away`;
+  return `Closest miss besides the winner: ${name}, ${how} ${cellText(miss.value)}.`;
 }
 
 function intro(view: unknown, secretMode: 'shared' | 'individual'): string | null {

@@ -122,7 +122,7 @@ export function tilesOf(shots: readonly Shot[], players: Players): ReadonlyMap<s
   return tiles;
 }
 
-// The tooltip and label of one tile: "column 12, row 7: You — 9 cells away; Anna — Warm",
+// The tooltip and label of one tile: "column 12, row 7: You — 9 tiles away; Anna — Warm",
 // after the notes about the tile itself (fallen, outside the target area).
 export function tileLabel(c: Cell, tile: Tile, notes: readonly string[]): string {
   const parts = [...notes, ...tile.words];

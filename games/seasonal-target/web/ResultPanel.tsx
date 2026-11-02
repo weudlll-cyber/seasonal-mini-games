@@ -3,7 +3,9 @@
  * @module games/seasonal-target/web
  * @brief  The game's part of the result page: the target on the whole grid, and every guess.
  *
- * Responsibility: the whole grid again (./TileGrid) with the target tile marked by a ring and
+ * Responsibility: a flex column in the result screen's box: the whole grid again (./TileGrid),
+ *                 square and as tall as the box leaves free like the round's (O51, the same
+ *                 `.st-board` and `useTileSize`), with the target tile marked by a ring and
  *                 "Target: column 12, row 10" in text, every guess of the round on its tile
  *                 (coloured by its answer, the viewer's framed, the others' with their corner
  *                 mark), the heat legend and the fallen tiles (02d §9); in individual mode the
@@ -48,18 +50,20 @@ export function ResultPanel(props: ResultPanelProps): ReactElement {
           Target: {cellWords(target)}
         </p>
       )}
-      <TileGrid
-        map={v.map}
-        area={null}
-        quarter={null}
-        fallen={v.fallen}
-        tiles={tilesOf(resultShots(v, viewerKey), props)}
-        variant="flow"
-        numbers={readable(size.px)}
-        gridRef={size.ref}
-        target={target}
-        label="The grid with the target and every guess."
-      />
+      <div className="st-board">
+        <TileGrid
+          map={v.map}
+          area={null}
+          quarter={null}
+          fallen={v.fallen}
+          tiles={tilesOf(resultShots(v, viewerKey), props)}
+          variant="board"
+          numbers={readable(size.px)}
+          gridRef={size.ref}
+          target={target}
+          label="The grid with the target and every guess."
+        />
+      </div>
       <HeatLegend />
       <ul className="st-players" aria-label="Every guess">
         {players.map((id) => (

@@ -5,13 +5,16 @@
  *
  * Responsibility: two compact number fields that show the selection and set it, and the
  *                 N/W/E/S buttons (44 × 44 px, "Move north" … for screen readers) that move it
- *                 by one tile; the caller clamps to the target area. Under the grid on a
- *                 desktop, inside the loupe on a phone (02d §11).
- * Depends on:     react, @smg-game/seasonal-target (types)
+ *                 by one tile; the caller clamps to the target area. On a desktop behind the
+ *                 input row's "Type coordinates" toggle, closed at first (`TypedSteer`,
+ *                 `useDisclosure` of @smg/ui as the loupe; Escape closes it, O51); inside the
+ *                 loupe on a phone (02d §11).
+ * Depends on:     react, @smg/ui (useDisclosure), @smg-game/seasonal-target (types)
  * Used by:        ./TargetInput, ./Loupe
  * Spec:           docs/spec/02d-game-seasonal-target.md §11
  */
 import type { Cell } from '@smg-game/seasonal-target';
+import { useDisclosure } from '@smg/ui';
 import type { ReactElement } from 'react';
 
 interface SteerProps {
@@ -78,6 +81,29 @@ export function Steer({ selected, select }: SteerProps): ReactElement {
             {glyph}
           </button>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// The fields and arrows behind a toggle: the grid is the first way to aim.
+export function TypedSteer(p: SteerProps): ReactElement {
+  const typed = useDisclosure();
+  return (
+    <div className="st-typed" onKeyDown={typed.onKeyDown}>
+      <button
+        ref={typed.button}
+        type="button"
+        className="smg-btn st-typed-toggle"
+        aria-expanded={typed.open}
+        aria-controls={typed.panelId}
+        onClick={typed.toggle}
+        data-testid="coordinates-toggle"
+      >
+        Type coordinates
+      </button>
+      <div id={typed.panelId} hidden={!typed.open}>
+        <Steer {...p} />
       </div>
     </div>
   );

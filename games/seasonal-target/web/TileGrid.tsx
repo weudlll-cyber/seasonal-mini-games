@@ -4,16 +4,18 @@
  * @brief  The grid of large heat-coloured tiles (O45), shared by the input, the loupe, the
  *         spectator and the result.
  *
- * Responsibility: one CSS grid of square tiles for the shown cells (the whole grid, or the
+ * Responsibility: one CSS grid of square tiles for the shown tiles (the whole grid, or the
  *                 loupe's 5 × 5 window), always the whole grid: tiles outside the target area
- *                 dimmed, Spring's quarter tinted, fallen tiles hatched (a pattern, not colour
- *                 alone). A guessed tile is filled by its closest answer's step (./heat, from
- *                 the server's tier) and shows the distance with a small arrow (`direction`),
- *                 the distance (`distance`) or nothing (`closeness`), a target glyph when found;
- *                 the viewer's own tiles carry a frame, others' a corner mark in their list
- *                 colour, a pending own answer the frame with "…". Numbers are left out when
- *                 the tiles are too small to read (`numbers`). The selection is an outline
- *                 outside the tile, unlike the own frame inside it; the result's target a ring.
+ *                 dimmed, Spring's quarter tinted green with a "Hint" tag in its outer corner
+ *                 tile (O51), fallen tiles hatched (a pattern, not colour alone). A guessed
+ *                 tile is filled by its closest answer's step (./heat, from the server's tier)
+ *                 and shows the distance with a small arrow (`direction`), the distance
+ *                 (`distance`) or nothing (`closeness`), a target glyph when found; the
+ *                 viewer's own tiles carry a frame, others' a corner dot in their list colour
+ *                 (`data-marked` moves the number clear of it), a pending own answer the frame
+ *                 with "…". Numbers are left out when the tiles are too small to read
+ *                 (`numbers`). The selection is an outline outside the tile, unlike the own
+ *                 frame inside it; the result's target a ring.
  *                 Each tile names its cell and every guess on it as title and label; the
  *                 interactive grid is one focus stop pointing at the selected tile
  *                 (`aria-activedescendant`), and a click or tap reports the tile; nothing here
@@ -38,7 +40,7 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   type ReactElement,
-  type RefObject,
+  type Ref,
 } from 'react';
 
 import { NO_TILE, stepOf, tileKey, tileLabel, type Tile } from './heat.js';
@@ -55,12 +57,12 @@ export interface TileGridProps {
   readonly tiles: ReadonlyMap<string, Tile>;
   readonly numbers: boolean;
   readonly label: string;
-  // How the grid is sized (./tiles.css): filling its box (input, spectator), in the result
-  // page's flow, or the loupe's large tiles.
-  readonly variant: 'board' | 'flow' | 'loupe';
+  // How the grid is sized (./tiles.css): filling its box (the stage, the spectator's and the
+  // result's box), or the loupe's large tiles.
+  readonly variant: 'board' | 'loupe';
   readonly selected?: Cell | null;
   readonly target?: Cell | null;
-  readonly gridRef?: RefObject<HTMLDivElement | null>;
+  readonly gridRef?: Ref<HTMLDivElement>;
   readonly onTile?: (cell: Cell) => void;
   readonly onKeyDown?: (e: KeyboardEvent<HTMLDivElement>) => void;
 }
@@ -104,6 +106,10 @@ interface TileProps {
 const covers = (a: Area | null | undefined, c: Cell): boolean => a != null && inArea(a, c);
 const isAt = (at: Cell | null | undefined, c: Cell): boolean => at != null && sameCell(at, c);
 
+// The quarter's tile in the grid's corner: its "Hint" tag hangs there, inward from the edges.
+const cornerOf = (q: Quarter | null): Cell | null =>
+  q === null ? null : { x: q.left === 1 ? q.left : q.right, y: q.top === 1 ? q.top : q.bottom };
+
 // What one tile is: its guesses, fallen, outside the area, the target, and its words.
 function factsOf({ c, p, fallen }: TileProps) {
   const tile = p.tiles.get(tileKey(c));
@@ -116,12 +122,22 @@ function factsOf({ c, p, fallen }: TileProps) {
     out && 'outside the target area',
   ].filter((n): n is string => n !== false);
   const t = tile ?? NO_TILE;
-  return { t, guessed: tile !== undefined, isFallen, out, target, label: tileLabel(c, t, notes) };
+  // The tag gives way to a fill, a hatch or a ring; the other tiles keep the tint.
+  const tag = isAt(cornerOf(p.quarter), c) && tile === undefined && !isFallen && !target;
+  return {
+    t,
+    guessed: tile !== undefined,
+    isFallen,
+    out,
+    target,
+    tag,
+    label: tileLabel(c, t, notes),
+  };
 }
 
 function TileCell(props: TileProps): ReactElement {
   const { c, id, p } = props;
-  const { t, guessed, isFallen, out, target, label } = factsOf(props);
+  const { t, guessed, isFallen, out, target, tag, label } = factsOf(props);
   return (
     <div
       id={id}
@@ -142,8 +158,19 @@ function TileCell(props: TileProps): ReactElement {
       data-pending={t.best === null && t.pending}
       data-out={out}
       data-quarter={covers(p.quarter, c)}
+      data-marked={t.mark !== null}
     >
       <Face tile={t} numbers={p.numbers} />
+      {tag ? (
+        <span
+          className="st-hint-tag"
+          aria-hidden="true"
+          data-corner={p.quarter?.name}
+          data-testid="hint-tag"
+        >
+          Hint
+        </span>
+      ) : null}
       {t.mark === null ? null : (
         <span className="st-mark" aria-hidden="true" style={{ background: t.mark }} />
       )}

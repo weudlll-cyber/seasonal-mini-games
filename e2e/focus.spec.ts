@@ -5,12 +5,16 @@
  *
  * Responsibility: for Guess The Number (24), Safecracker (25), Bomb Defusal (26) and Seasonal
  *                 Target (27), a shared summer round started at once: at each size the app
- *                 header is hidden and the round's bar is one slim row (56 px on a desktop,
- *                 64 px on a phone); Chat and Players open as panels and close with Escape
- *                 (the focus back on their button) and with Close; the page has no scrollbar;
- *                 one guess is played and comes back as the viewer's own row. Guess The Number
- *                 keeps room for at least 12 guess rows at 1280 × 720; Seasonal Target is
- *                 played on the phone through the loupe. The matches are aborted.
+ *                 header is hidden and the round's bar is one slim row without a waiting time
+ *                 (44 px on a desktop, 52 px on a phone, O47); Chat and Players open as panels
+ *                 and close with Escape (the focus back on their button) and with Close; while
+ *                 each is open the game's action button (Guess, Cut, Try) is visible and
+ *                 enabled or waiting, the panel covers nothing of the game on a desktop and
+ *                 ends above the input row on a phone (O48), and the page has no scrollbar;
+ *                 one guess is played and comes back as the viewer's own row. Guess The
+ *                 Number shows at least 14 guess rows in the main area at 1280 × 720 (O50);
+ *                 Seasonal Target is played on the phone through the loupe. The matches are
+ *                 aborted.
  * Depends on:     @playwright/test, ./guessGames, ./play, ./screens
  * Spec:           docs/spec/09-testing-strategy.md §4 (journeys 24–27); docs/spec/02-game-guess-the-number.md §12
  */
@@ -24,12 +28,41 @@ type Size = typeof WIDE;
 // One guess of the game, different at each size (`n` is 0 on the desktop, 1 on the phone).
 type Play = (page: Page, n: number) => Promise<void>;
 
-// A panel from the bar: open, Escape (focus back on its button), open, Close.
-async function panel(page: Page, button: string, name: string): Promise<void> {
+type Box = { x: number; y: number; width: number; height: number };
+const overlap = (a: Box, b: Box): boolean =>
+  a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+
+// While a panel is open the game stays playable (O48): the action button visible and enabled
+// or waiting ("Wait 6 s"); on a desktop the panel overlaps no part of the game, on a phone it
+// ends above the input row.
+async function stillPlayable(page: Page, dialog: Box, size: Size): Promise<void> {
+  const action = page.getByTestId('guess-button').or(page.getByTestId('cut-button'));
+  await expect(action).toBeVisible();
+  // Disabled only while waiting, or (Safecracker) until a whole code is typed.
+  if (!(await action.isEnabled())) await expect(action).toHaveText(/^(Wait \d+ s|Try code)$/);
+  const parts = ['.round-main', '.round-range', '.round-stage', '.round-input'];
+  for (const part of parts) {
+    const box = await page.locator(part).boundingBox();
+    if (box === null) continue;
+    if (size === WIDE) expect(overlap(dialog, box), `the panel over ${part}`).toBe(false);
+    else if (part === '.round-input') {
+      expect(dialog.y + dialog.height, 'the sheet ends above the input row').toBeLessThanOrEqual(
+        box.y + 1,
+      );
+    }
+  }
+  await fitsScreen(page);
+}
+
+// A panel from the bar: open (the game still playable), Escape (focus back on its button),
+// open, Close.
+async function panel(page: Page, button: string, name: string, size: Size): Promise<void> {
   const opener = page.getByTestId(button);
   const dialog = page.getByRole('dialog', { name });
   await opener.click();
   await expect(dialog).toBeVisible();
+  const box = await dialog.boundingBox();
+  if (box !== null) await stillPlayable(page, box, size);
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
   await expect(opener).toBeFocused();
@@ -40,8 +73,11 @@ async function panel(page: Page, button: string, name: string): Promise<void> {
 
 async function slimBar(page: Page, size: Size): Promise<void> {
   await expect(page.locator('.shell-bar')).toBeHidden();
-  const bar = await page.getByTestId('round-banner').boundingBox();
-  expect(bar?.height ?? Infinity, 'the round bar').toBeLessThanOrEqual(size === WIDE ? 56 : 64);
+  const bar = page.getByTestId('round-banner');
+  const box = await bar.boundingBox();
+  expect(box?.height ?? Infinity, 'the round bar').toBeLessThanOrEqual(size === WIDE ? 44 : 52);
+  // No waiting time in the bar: the ring and the button at the input show it (O47).
+  await expect(bar).not.toContainText(/Wait/);
 }
 
 async function focusJourney(
@@ -60,8 +96,8 @@ async function focusJourney(
       await p.page.reload();
       await roundOpen(p.page);
       await slimBar(p.page, size);
-      await panel(p.page, 'focus-chat', 'Chat');
-      await panel(p.page, 'focus-players', 'Players');
+      await panel(p.page, 'focus-chat', 'Chat', size);
+      await panel(p.page, 'focus-players', 'Players', size);
       await fitsScreen(p.page);
       // The cooldown of the guess before has run out.
       await expect(p.page.getByTestId('cooldown')).toHaveAttribute('aria-label', 'Ready to guess', {
@@ -81,8 +117,8 @@ test('journey 24: Guess The Number in focus mode', async ({ browser }) => {
   test.setTimeout(120_000);
   await focusJourney(browser, 'guess-the-number', async (page, n) => {
     if (n === 0) {
-      // Room for 12 guess rows (a row with its comment on a second line) at 1280 × 720: the
-      // list's box, which a special's banner shares for 3 s at a time.
+      // Room for 14 guess rows in the main area at 1280 × 720 (O50): the list's box, which a
+      // special's banner shares for 3 s at a time.
       const room = await page.locator('.round-main').evaluate((main) => {
         const s = getComputedStyle(main);
         return main.clientHeight - parseFloat(s.paddingTop) - parseFloat(s.paddingBottom);
@@ -90,8 +126,8 @@ test('journey 24: Guess The Number in focus mode', async ({ browser }) => {
       await page.getByTestId('guess-input').fill('40');
       await page.getByTestId('guess-button').click();
       const row = await ownRows(page).first().boundingBox();
-      expect(room / Math.max(row?.height ?? 40, 40), 'guess rows in view').toBeGreaterThanOrEqual(
-        12,
+      expect(room / Math.max(row?.height ?? 30, 30), 'guess rows in view').toBeGreaterThanOrEqual(
+        14,
       );
       return;
     }

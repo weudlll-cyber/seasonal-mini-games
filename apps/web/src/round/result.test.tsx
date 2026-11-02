@@ -65,14 +65,16 @@ describe('the result without a margin', () => {
     const state = { ...ended, margin: null, game: view };
     render(<ResultScreen state={state} game={game} viewerKey="a" standings={[]} />);
     expect(screen.queryByTestId('margin')).toBeNull();
-    expect(screen.getByTestId('closest-miss').textContent).toBe('Anna missed by just 1 (93).');
+    expect(screen.getByTestId('closest-miss').textContent).toBe(
+      'Closest miss besides the winner: Anna, missed by just 1 (93).',
+    );
     cleanup();
     const far = { ...view, closestMiss: { playerId: 'a', value: 60, distance: 32 } };
     render(
       <ResultScreen state={{ ...state, game: far }} game={game} viewerKey="a" standings={[]} />,
     );
     expect(screen.getByTestId('closest-miss').textContent).toBe(
-      'Closest miss: Anna, 32 away (60).',
+      'Closest miss besides the winner: Anna, 32 away (60).',
     );
     cleanup();
     // With a margin, the margin stays and the closest miss is not shown (O13).

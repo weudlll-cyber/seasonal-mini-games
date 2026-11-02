@@ -35,6 +35,8 @@ export function CooldownRing({ endsAt, cooldownMs, now }: CooldownRingProps): Re
       role="timer"
       aria-label={ready ? 'Ready to guess' : `Cooldown, ${label} left`}
       data-testid="cooldown"
+      // The cooldown in force (Heatwave lowers it), for the tests: the bar no longer shows it.
+      data-cooldown-ms={cooldownMs}
     >
       <svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
         <circle cx="32" cy="32" r={R} className="round-ring-track" />

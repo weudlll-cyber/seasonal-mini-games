@@ -9,7 +9,7 @@
  *                 anyone's own area or quarter (02d §10); the grid (./TileGrid) with the tiles of shared
  *                 `numbers`/`full` (coloured by their answers under `full`, each with its
  *                 player's corner mark in their list colour and named on its label), the heat
- *                 legend, the fallen tiles hatched, and in a Leaf Fall round the Fallen cells
+ *                 legend, the fallen tiles hatched, and in a Leaf Fall round the Fallen tiles
  *                 panel. Nothing about a target, and nothing narrowed from the answers.
  * Depends on:     react, @smg/game-sdk (props), @smg-game/seasonal-target (types), ./FallenCells,
  *                 ./heat, ./HeatLegend, ./measure, ./PlayerPanel (GridLines), ./TileGrid, ./words

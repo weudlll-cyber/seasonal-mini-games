@@ -26,7 +26,7 @@ import type { ReactElement } from 'react';
 import { gameName, useGames } from '../lobby/games.js';
 import { MatchStandings } from '../round/MatchStandings.js';
 import { SeasonIcon } from '../season/SeasonIcon.js';
-import { SEASON_NAMES } from '../season/season.js';
+import { teamName } from '../season/season.js';
 import { hrefOf } from '../shell/router.js';
 // The result page's table, names and team list (one look for both summaries).
 import '../round/result.css';
@@ -53,8 +53,8 @@ function Teams({ match }: { readonly match: MatchDetailsView }): ReactElement | 
       <ol className="round-teams-result match-summary-teams" data-testid="match-teams">
         {match.teamStandings.map((t) => (
           <li key={t.team}>
-            <SeasonIcon season={t.team} size="1rem" /> {SEASON_NAMES[t.team]}:{' '}
-            {formatNumber(t.points)} {t.points === 1 ? 'point' : 'points'}
+            <SeasonIcon season={t.team} size="1rem" /> {teamName(t.team)}: {formatNumber(t.points)}{' '}
+            {t.points === 1 ? 'point' : 'points'}
           </li>
         ))}
       </ol>

@@ -1,9 +1,9 @@
 /**
  * @file   games/seasonal-target/web/FallenCells.tsx
  * @module games/seasonal-target/web
- * @brief  The "Fallen cells" panel of a Leaf Fall round: every fallen cell in words.
+ * @brief  The "Fallen tiles" panel of a Leaf Fall round: every fallen tile in words.
  *
- * Responsibility: in a round whose special is Leaf Fall, every fallen cell the view carries as
+ * Responsibility: in a round whose special is Leaf Fall, every fallen tile the view carries as
  *                 compact chips "(12, 34)", row by row as the state keeps them, with the count
  *                 in its heading; on a desktop a short box that scrolls inside itself, on a
  *                 phone a "Fallen (N)" button that opens it as a sheet, closed by Close, the
@@ -50,7 +50,7 @@ export function FallenCells({ fallen }: { readonly fallen: readonly Cell[] }): R
       <div id={sheet.panelId} className="st-fallen-body">
         <div className="st-fallen-head">
           <h3 id={`${sheet.panelId}-title`} data-testid="fallen">
-            Fallen cells ({n})
+            Fallen tiles ({n})
           </h3>
           <button type="button" className="smg-btn st-fallen-close" onClick={sheet.close}>
             Close

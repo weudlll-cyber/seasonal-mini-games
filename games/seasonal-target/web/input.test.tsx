@@ -4,13 +4,15 @@
  * @module games/seasonal-target/web
  * @brief  The input's behaviour: selecting on the tile grid, the loupe, Guess and its refusals.
  *
- * Responsibility: the selection starts in the middle of the target area, moves with the
- *                 keyboard arrows on the focused grid, the arrow buttons and the Column and Row
- *                 fields, follows a click on a tile, and stays inside the area; "Selected:
- *                 column …, row …" says where; Guess (and Enter) sends `{ value: { x, y } }`
- *                 and nothing else; a fallen or tried tile is refused at once without sending;
- *                 a server `OUT_OF_MAP` on the grid says "outside the target area"; Guess reads
- *                 "Wait 6 s" during the cooldown. On a phone with small tiles the first tap
+ * Responsibility: the grid is drawn into the round's stage, the controls stay in the row,
+ *                 the fields behind "Type coordinates", closed at first (O51); the selection
+ *                 starts in the middle of the target area, moves with the keyboard arrows on the
+ *                 focused grid, the arrow buttons and the Column and Row fields, follows a click
+ *                 on a tile, and stays inside the area; "Selected: column …, row …" says where;
+ *                 Guess (and Enter) sends `{ value: { x, y } }` and nothing else; a fallen or
+ *                 tried tile is refused at once without sending, and no "Last guess" line
+ *                 repeats the list; a server `OUT_OF_MAP` on the grid says "outside the target
+ *                 area"; Guess reads "Wait 6 s" during the cooldown. On a phone with small tiles the first tap
  *                 opens the loupe around it (clamped at the edges), a tap in it selects, Close
  *                 and Guess close it, and the fields live only there; with large tiles a tap
  *                 selects directly.
@@ -20,7 +22,7 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ne, own, plainScreen, playerView, renderInput, roster, screenOf } from './fixtures.js';
+import { ne, own, plainScreen, playerView, props, renderInput, screenOf } from './fixtures.js';
 import { TargetInput } from './TargetInput.js';
 
 afterEach(() => {
@@ -29,10 +31,37 @@ afterEach(() => {
 });
 
 const selected = () => screen.getByTestId('selected').textContent;
+const typeCoordinates = () => {
+  fireEvent.click(screen.getByRole('button', { name: 'Type coordinates' }));
+};
 const tile = (x: number, y: number, id = 'tile') =>
   screen
     .getAllByTestId(id)
     .find((t) => t.dataset['x'] === String(x) && t.dataset['y'] === String(y));
+
+describe('layout', () => {
+  it('draws the grid into the stage and keeps the controls in the row', () => {
+    const stage = document.createElement('div');
+    document.body.append(stage);
+    const { container } = render(<TargetInput {...props(playerView())} stage={stage} />);
+    expect(stage.querySelector('[data-testid="tile-grid"]')).not.toBeNull();
+    expect(container.querySelector('[data-testid="tile-grid"]')).toBeNull();
+    expect(container.querySelector('[data-testid="guess-button"]')).not.toBeNull();
+    stage.remove();
+  });
+
+  it('keeps the fields and arrows behind "Type coordinates", closed at first', () => {
+    renderInput(playerView());
+    const toggle = screen.getByRole('button', { name: 'Type coordinates' });
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByRole('button', { name: 'Move north' })).toBeNull();
+    typeCoordinates();
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Move north' })).toBeTruthy();
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Move north' }), { key: 'Escape' });
+    expect(screen.queryByRole('button', { name: 'Move north' })).toBeNull();
+  });
+});
 
 describe('selecting', () => {
   it('moves the selection with the keyboard, the arrow buttons and the fields, inside the area', () => {
@@ -45,6 +74,7 @@ describe('selecting', () => {
     expect(selected()).toBe('Selected: column 11, row 9');
     expect(tile(11, 9)?.dataset['selected']).toBe('true');
     expect(grid.getAttribute('aria-activedescendant')).toBe(tile(11, 9)?.id);
+    typeCoordinates();
     fireEvent.click(screen.getByRole('button', { name: 'Move south' }));
     fireEvent.click(screen.getByRole('button', { name: 'Move west' }));
     expect(selected()).toBe('Selected: column 10, row 10');
@@ -83,34 +113,22 @@ describe('guessing', () => {
       playerView({ fallen: [{ x: 10, y: 10 }], guesses: [own(1, 10, 9, ne)] }),
     );
     fireEvent.click(screen.getByTestId('guess-button'));
-    expect(screen.getByRole('status').textContent).toBe('That cell has fallen.');
+    expect(screen.getByRole('status').textContent).toBe('That tile has fallen.');
+    typeCoordinates();
     fireEvent.click(screen.getByRole('button', { name: 'Move north' }));
     fireEvent.click(screen.getByTestId('guess-button'));
-    expect(screen.getByRole('status').textContent).toBe('You already tried that cell.');
+    expect(screen.getByRole('status').textContent).toBe('You already tried that tile.');
     expect(send).not.toHaveBeenCalled();
-    expect(screen.getByTestId('last-answer').textContent).toBe(
-      'Last guess: 9 cells away, to the north-east',
-    );
+    // The list carries the answers; the row does not repeat the last one.
+    expect(screen.queryByText(/Last guess/)).toBeNull();
   });
 
   it('says "outside the target area" for a server OUT_OF_MAP on the grid', async () => {
     const send = vi.fn(() => Promise.resolve({ ok: false, code: 'OUT_OF_MAP' }));
-    render(
-      <TargetInput
-        view={playerView()}
-        act={send}
-        canAct
-        frostDelayMs={null}
-        now={() => 0}
-        season="winter"
-        specialOn
-        waitS={null}
-        {...roster}
-      />,
-    );
+    render(<TargetInput {...props(playerView())} act={send} />);
     fireEvent.click(screen.getByTestId('guess-button'));
     await act(() => Promise.resolve());
-    expect(screen.getByRole('status').textContent).toBe('That cell is outside the target area.');
+    expect(screen.getByRole('status').textContent).toBe('That tile is outside the target area.');
   });
 
   it('keeps Guess disabled and counting during the cooldown, and Enter does nothing', () => {
@@ -130,6 +148,7 @@ describe('the loupe on a phone', () => {
     const send = renderInput(playerView({ guesses: [own(1, 9, 9, ne)] }));
     // On a phone the fields and arrows live in the loupe only.
     expect(screen.queryByLabelText('Column')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Type coordinates' })).toBeNull();
     fireEvent.click(tile(8, 8) as HTMLElement);
     const loupe = screen.getByTestId('loupe');
     const tiles = within(loupe).getAllByTestId('loupe-tile');

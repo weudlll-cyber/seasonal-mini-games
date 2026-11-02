@@ -204,9 +204,18 @@ describe('the words', () => {
     expect(endHeadline({ ...ended, endReason: 'timeUp' })).toBe('Time is up.');
     expect(marginText({ ...ended, margin: null })).toBeNull();
     expect(marginText({ ...ended, secretMode: 'individual' })).toBeNull();
-    expect(platformLine({ type: 'CooldownChanged', cooldownMs: 7_000 }, {})?.text).toBe(
-      'Heatwave: waiting time is now 7 s.',
+    // Heatwave is one row per round, at its first step (O47).
+    const heat = (index: number) => ({
+      type: 'SpecialFired',
+      special: 'heatwave',
+      index,
+      summary: { cooldownMs: 7_000 },
+    });
+    expect(platformLine(heat(1), {})?.text).toBe(
+      'Heatwave: waiting time is now 7 s and keeps getting shorter.',
     );
+    expect(platformLine(heat(2), {})).toBeNull();
+    expect(platformLine({ type: 'CooldownChanged', cooldownMs: 7_000 }, {})).toBeNull();
     expect(platformLine({ type: 'PlayerSolved', playerId: 'a', place: 2 }, ended.names)).toEqual({
       text: 'Anna found their number — place 2.',
       playerId: 'a',

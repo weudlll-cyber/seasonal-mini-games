@@ -64,6 +64,69 @@
   .match-after {
     grid-template-columns: minmax(0, 1fr) 22rem;
   }
+
+  /* With a result, the page is one screen high: the header, the match head and the result
+     with the waiting area in the rest, each scrolling inside itself only if it must. A
+     phone scrolls the page instead: the result first, the next round's box after it. */
+  #root:has(.match-result-screen) {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+  }
+
+  html:has(.match-result-screen) {
+    scrollbar-gutter: auto;
+  }
+
+  /* As wide as the screen, as the round view is: the tables keep whole words and names. */
+  .shell-main:has(.match-result-screen) {
+    max-width: none;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding-block: var(--space-2);
+  }
+
+  .match-result-screen {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* The match's title smaller here: the result gets the height. */
+  .match-result-screen .match-head h1 {
+    font-size: var(--font-size-lead);
+  }
+
+  .match-result-screen .match-after {
+    flex: 1;
+    min-height: 0;
+    align-items: stretch;
+  }
+
+  .match-result-screen .match-after > * {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .match-result-screen .round-result {
+    overflow: hidden;
+  }
+
+  /* The chat beside the result fills what the waiting area leaves, its list scrolling. */
+  .match-result-screen .match-side {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .match-result-screen .match-side .round-chat {
+    flex: 1;
+    min-height: 10rem;
+    height: auto;
+  }
 }
 
 .match-waiting {

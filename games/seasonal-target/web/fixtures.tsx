@@ -3,10 +3,11 @@
  * @module games/seasonal-target/web
  * @brief  Builders for the screens' tests: views, guesses, the input, and a measured screen.
  *
- * Responsibility: a 20 × 20 player view, own and others' guesses, the input rendered with the
- *                 platform's props (the list's names and colours, T125), and `screenOf`, which
- *                 stands in for the browser's ResizeObserver (the grid drawn `px` wide) and the
- *                 phone media query, since jsdom has neither.
+ * Responsibility: a 20 × 20 player view, own and others' guesses, the platform's props for the
+ *                 input (the list's names and colours, T125) and the input rendered with them
+ *                 and a ring, and `screenOf`, which stands in for the browser's ResizeObserver
+ *                 (the grid's content box drawn `px` wide) and the phone media query, since
+ *                 jsdom has neither.
  * Depends on:     vitest, @testing-library/react, @smg-game/seasonal-target (types), ./TargetInput
  * Used by:        ./input.test, ./panels.test
  * Spec:           docs/spec/09-testing-strategy.md §2
@@ -52,11 +53,11 @@ export function playerView(over: Partial<PlayerView> = {}): PlayerView {
   };
 }
 
-export function renderInput(view: PlayerView, canAct = true, waitS: number | null = null) {
-  const send = vi.fn(() => Promise.resolve({ ok: true }));
-  const props = {
+// The platform's props for the input: Guess answered `ok`, no Frost, a spring round.
+export function props(view: PlayerView, canAct = true, waitS: number | null = null) {
+  return {
     view,
-    act: send,
+    act: vi.fn(() => Promise.resolve({ ok: true })),
     canAct,
     waitS,
     ...roster,
@@ -65,8 +66,12 @@ export function renderInput(view: PlayerView, canAct = true, waitS: number | nul
     season: 'spring' as const,
     specialOn: true,
   };
-  render(<TargetInput {...props} ring={<span data-testid="ring" />} />);
-  return send;
+}
+
+export function renderInput(view: PlayerView, canAct = true, waitS: number | null = null) {
+  const p = props(view, canAct, waitS);
+  render(<TargetInput {...p} ring={<span data-testid="ring" />} />);
+  return p.act;
 }
 
 // A browser whose grids are drawn `px` wide, a phone's or not.

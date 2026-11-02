@@ -108,7 +108,7 @@ describe('the match summary', () => {
       ['2', 'bot-01', '0', '0'],
     ]);
     expect(screen.getByTestId('match-teams').textContent).toBe(
-      ' Summer: 2 points Winter: 0 points',
+      ' Team Summer: 2 points Team Winter: 0 points',
     );
     expect(screen.getByRole('link', { name: 'Back to Play' }).getAttribute('href')).toBe('#/');
     // One screen: the standings in their own column, the rest beside them (./summary.css).

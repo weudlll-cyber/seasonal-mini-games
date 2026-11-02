@@ -1,14 +1,14 @@
 /*
  * @file   games/seasonal-target/web/fallen.css
  * @module games/seasonal-target/web
- * @brief  Styles of the Fallen cells panel of a Leaf Fall round.
+ * @brief  Styles of the Fallen tiles panel of a Leaf Fall round.
  *
  * Responsibility: on a desktop a short box of chips that scrolls inside itself; on a phone a
  *                 "Fallen (N)" button that opens the chips as a sheet at the bottom (T115).
  *                 Colours only from the design tokens (light and dark).
  * Spec:           docs/spec/02d-game-seasonal-target.md §8.3, §11
  */
-/* The Fallen cells panel: a short box of chips on a desktop. */
+/* The Fallen tiles panel: a short box of chips on a desktop. */
 .st-fallen-toggle,
 .st-fallen-close {
   display: none;

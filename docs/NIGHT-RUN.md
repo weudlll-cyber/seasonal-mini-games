@@ -2,6 +2,146 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Night 6 (2026-11-02/03)
+
+Branch `feat/guess-games`. Owner decisions O47–O53 (2026-11-02); technical decisions T134–T138. Nothing goes to `master`.
+
+### Status
+
+| Piece                                      | State   | Commit    |
+| ------------------------------------------ | ------- | --------- |
+| 1. Shared focus shell (O47, O48, O49, O52) | done    | see below |
+| 2. Seasonal Target (O51, O53)              | done    | see below |
+| 3. List games layout (O50)                 | done    | see below |
+| 4. Result screens                          | done    | see below |
+| 5. Small items                             | running |           |
+| 6. Re-shoot, measure, self-review          | open    |           |
+
+Pieces 1–4 are one commit: they share the round view's grid (`round.css`, `RoundScreen.tsx`), the games' `text.ts` (hint lines and closest miss) and the decision and spec pages, and the subagent of piece 2 worked in parallel with pieces 1 and 3. `pnpm verify` green on that tree (116 files, 707 tests); e2e follows in piece 6.
+
+### Needs the owner
+
+Nothing so far.
+
+### Piece 1 — the shared focus shell
+
+- **Bar (O47):** "Wait N s" removed (`FocusBar`, its CSS and the `round-cooldown` test id); "9:50 left" stays. 14 px text, 36 px flat controls, 44 px high on a desktop; 52 px on a phone with 44 px touch targets. The pill's size in the bar comes from `focus.css`.
+- **Heatwave once (T134):** the domain keeps emitting `CooldownChanged` (it lowers the cooldown in the round's state, which the ring and button follow) and `SpecialFired`; the client words only the first firing ("Heatwave: waiting time is now 7 s and keeps getting shorter."), banner and one row. The ring carries `data-cooldown-ms` for journey 3, since the bar no longer shows the cooldown.
+- **No message twice (T135):** `bannerOf` returns the feed key it shows; the list leaves that row out while the banner stands. The four games no longer word a shared `HintGiven` as a list line (the hint stands in the game's panel or as Target's hint quarter); Spring Herald's one row and its banner say the same.
+- **Panels (O48, T136):** on a desktop an open panel is the round view's third grid column (360 px), so the game narrows instead of being covered; on a phone the sheet spans the grid rows from under the bar to the one above the input row (`grid-row: 2 / -2`). The focus moves to the panel element, its ring only under `:focus-visible` (the title's box is gone).
+- **Phone list (O49):** guesses only, filling the free height; "All (N)" counts guesses and shows from the first guess; the sheet has guesses and events. The sheet is a child of the round view's grid (it was inside the main area at first, which put it in the wrong box — caught in the first look).
+- **Teams (O52):** `teamName()` ("Team Spring") in `season.ts`, used by the Players panel, the team tiles, the result's team list, the match summary, the waiting area's picker and player rows, and the team leaderboard.
+- **Contrast:** the disabled button is 6.6:1 (T68) and the muted system text #4f5663 on the card; measured in piece 6. The banner balances its lines (`text-wrap: balance`).
+- **Frost:** the pending own row ("answer arriving… 3 s") already existed in every game (`pending` in each `guessRows`); kept, captured in piece 6.
+
+### Piece 2 — Seasonal Target (subagent in `games/seasonal-target/` only)
+
+- The input draws the grid into the platform's stage (`createPortal`; the new `stage` prop of a board game's input, `games/registry/web`); `react-dom` 19.3.1 and `@types/react-dom` 19.3.0 added to the game package (the versions apps/web uses), lockfile +6 lines.
+- Right column: legend, hint, fallen tiles; the list; selection, ring and Guess; "Type coordinates" (`useDisclosure`, closed by default) for the fields and arrows; the loupe keeps its own.
+- Removed: the "Grid: N × N tiles" line, the "Last guess" line, the input's legend, the `flow` grid variant and their CSS.
+- Numbers on tiles of at least 20 px (`NUMBER_MIN_PX`, T137); the hint quarter in a fixed green #7cc46a with a "Hint" tag in both themes; the corner dot with a 2 px ring and the number moved clear of it; the list's answer in the tile's tier colour (`data-tier="st-…"`, text shades at 4.5:1 or more).
+- Default answer mode `closeness` (O53), with a test that a stored `distance` stays `distance`; there is no platform-side Quick Test default.
+- "cell" → "tile" in every player-visible text.
+
+### Piece 3 — list games layout (O50)
+
+- Guess The Number, Safecracker and Bomb Defusal: the banner and the list in the main area with the input row at its bottom (up to 46 rem wide), the game's panel alone in the 320 px column. One list component (`RoundLog`), no per-game copy. Larger list text from 1600 × 950.
+- `InputRow.tsx` extracted from `RoundScreen.tsx` (293 → 230 lines).
+
+### Piece 4 — result screens
+
+- Headline 1.25–1.5 rem (was the page title's 1.8–2.75 rem), balanced, one line at 1280 px.
+- "Closest miss besides the winner: …" in all four games (Target: "… 3 tiles away (9, 10)."); the closest miss exists only with a winner (`closestMissBy`).
+- Desktop one screen (T138): head across with the proof's disclosure, the game's result left, the tables right, the chat filling the side column; Target's grid fills the part's height (the list of every guess capped at about three lines). A phone scrolls the page, the result first.
+
+### Lines before → after
+
+| File                                           | Lines before → after |
+| ---------------------------------------------- | -------------------- |
+| `apps/web/src/boards/TeamBoard.tsx`            | 65 → 65              |
+| `apps/web/src/boards/boards.test.tsx`          | 324 → 324            |
+| `apps/web/src/match/MatchPage.tsx`             | 244 → 248            |
+| `apps/web/src/match/MatchSummary.tsx`          | 106 → 106            |
+| `apps/web/src/match/WaitingArea.tsx`           | 148 → 148            |
+| `apps/web/src/match/match.css`                 | 172 → 235            |
+| `apps/web/src/match/summary.test.tsx`          | 140 → 140            |
+| `apps/web/src/match/waiting.test.tsx`          | 152 → 152            |
+| `apps/web/src/round/CooldownRing.tsx`          | 53 → 55              |
+| `apps/web/src/round/FocusBar.tsx`              | 137 → 131            |
+| `apps/web/src/round/FocusPanel.tsx`            | 71 → 71              |
+| `apps/web/src/round/FocusShell.tsx`            | 136 → 138            |
+| `apps/web/src/round/ResultScreen.tsx`          | 158 → 174            |
+| `apps/web/src/round/RoundLog.tsx`              | 218 → 225            |
+| `apps/web/src/round/RoundScreen.tsx`           | 293 → 230            |
+| `apps/web/src/round/RoundSide.tsx`             | 104 → 107            |
+| `apps/web/src/round/SpecialBanner.tsx`         | 87 → 90              |
+| `apps/web/src/round/banner.test.tsx`           | 133 → 154            |
+| `apps/web/src/round/focus.css`                 | 204 → 209            |
+| `apps/web/src/round/focus.test.tsx`            | 180 → 224            |
+| `apps/web/src/round/result.css`                | 138 → 251            |
+| `apps/web/src/round/result.test.tsx`           | 89 → 91              |
+| `apps/web/src/round/round.css`                 | 266 → 255            |
+| `apps/web/src/round/round.test.tsx`            | 216 → 225            |
+| `apps/web/src/round/roundLog.css`              | 194 → 210            |
+| `apps/web/src/round/roundSpecials.css`         | 73 → 75              |
+| `apps/web/src/round/roundText.ts`              | 140 → 144            |
+| `apps/web/src/season/season.ts`                | 55 → 58              |
+| `e2e/focus.spec.ts`                            | 161 → 197            |
+| `e2e/lobby.spec.ts`                            | 181 → 181            |
+| `e2e/seasons.spec.ts`                          | 183 → 183            |
+| `e2e/specials.spec.ts`                         | 134 → 135            |
+| `e2e/target.spec.ts`                           | 83 → 87              |
+| `games/bomb-defusal/web/panels.test.tsx`       | 212 → 211            |
+| `games/bomb-defusal/web/text.ts`               | 158 → 158            |
+| `games/guess-the-number/web/panels.test.tsx`   | 326 → 327            |
+| `games/guess-the-number/web/text.ts`           | 146 → 142            |
+| `games/registry/web/index.ts`                  | 63 → 68              |
+| `games/safecracker/web/panels.test.tsx`        | 201 → 200            |
+| `games/safecracker/web/text.ts`                | 151 → 145            |
+| `games/seasonal-target/package.json`           | 29 → 31              |
+| `games/seasonal-target/src/fakes.ts`           | 96 → 96              |
+| `games/seasonal-target/src/rules.test.ts`      | 214 → 223            |
+| `games/seasonal-target/src/settings.ts`        | 125 → 126            |
+| `games/seasonal-target/src/views.test.ts`      | 205 → 201            |
+| `games/seasonal-target/web/FallenCells.tsx`    | 71 → 71              |
+| `games/seasonal-target/web/Loupe.tsx`          | 98 → 99              |
+| `games/seasonal-target/web/PlayerPanel.tsx`    | 61 → 62              |
+| `games/seasonal-target/web/ResultPanel.tsx`    | 77 → 81              |
+| `games/seasonal-target/web/SpectatorPanel.tsx` | 60 → 60              |
+| `games/seasonal-target/web/Steer.tsx`          | 84 → 110             |
+| `games/seasonal-target/web/TargetInput.tsx`    | 216 → 206            |
+| `games/seasonal-target/web/TileGrid.tsx`       | 196 → 223            |
+| `games/seasonal-target/web/fallen.css`         | 84 → 84              |
+| `games/seasonal-target/web/fixtures.tsx`       | 100 → 105            |
+| `games/seasonal-target/web/heat.ts`            | 151 → 151            |
+| `games/seasonal-target/web/index.ts`           | 33 → 35              |
+| `games/seasonal-target/web/input.test.tsx`     | 180 → 199            |
+| `games/seasonal-target/web/measure.ts`         | 70 → 78              |
+| `games/seasonal-target/web/panels.test.tsx`    | 270 → 294            |
+| `games/seasonal-target/web/st.css`             | 150 → 199            |
+| `games/seasonal-target/web/text.test.ts`       | 155 → 154            |
+| `games/seasonal-target/web/text.ts`            | 121 → 120            |
+| `games/seasonal-target/web/tiles.css`          | 272 → 284            |
+| `games/seasonal-target/web/words.ts`           | 98 → 103             |
+| `pnpm-lock.yaml`                               | 5741 → 5747          |
+| `apps/web/src/round/InputRow.tsx`              | 0 → 103              |
+| `apps/web/src/round/players.css`               | 0 → 66               |
+| `games/seasonal-target/web/loupe.css`          | 0 → 47               |
+
+Removed: the bar's waiting figure and its CSS (`.focus-facts`, `.focus-fact-time`), `round-cooldown`, the per-step Heatwave row and banner, the games' shared hint lines (and Guess The Number's `hintText`), the compact list's `LATEST` slice, the absolute drawer and 60 % sheet, the heading's focus target, Target's size line, "Last guess" line, input legend, `flow` variant and `.st-last`. Extracted: `InputRow.tsx` (from `RoundScreen.tsx`), `players.css` (from `round.css`), `loupe.css` (from `tiles.css`), `partsOf` and `ListPart` in `RoundScreen.tsx`, `TypedSteer` in Target's `Steer.tsx`. Reused: `useDisclosure` (Type coordinates), `RoundLog` for both list views, `TileGrid` and `useTileSize` for the round and the result, `bannerOf`, `formatNumber`, `buttonText`; new shared helper `teamName()`.
+
+### Measurements
+
+Piece 6.
+
+### Screenshot review
+
+Piece 6.
+
+### Checks
+
+- `pnpm verify` green on pieces 1–4 (116 test files, 707 tests). Two earlier runs stopped on formatting (a doc saved during the run) and on a 61-line test function; both fixed.
+
 ## Tiles and focus mode (2026-11-02, day task)
 
 Branch `feat/guess-games`. Owner decisions O45 (Seasonal Target on large heat-coloured tiles) and O46 (focus mode for every game); technical decisions T128–T133. Nothing goes to `master`.

@@ -167,16 +167,15 @@ describe('the sentences', () => {
     );
     expect(text.banner?.({ type: 'GuessFed' })).toBeNull();
     const hint = { position: 0, digit: 5 };
-    expect(text.event({ type: 'HintGiven', playerId: null, hint }, names)?.text).toBe(
-      'Spring Herald: the 1st digit is 5.',
-    );
-    expect(text.event({ type: 'HintGiven', playerId: null, hint: null }, names)?.text).toBe(
-      'Spring Herald: everyone got a free hint.',
-    );
+    // The hint shows once, in the code block (O47).
+    expect(text.event({ type: 'HintGiven', playerId: null, hint }, names)).toBeNull();
+    expect(text.event({ type: 'HintGiven', playerId: null, hint: null }, names)).toBeNull();
     expect(text.event({ type: 'HintGiven', playerId: 'p1', hint }, names)).toBeNull();
     expect(text.event({ type: 'GuessFed' }, names)).toBeNull();
     const miss = { closestMiss: { playerId: 'p1', value: '0427', exact: 3, near: 1 } };
-    expect(text.runnerUp(miss, names)).toBe('Closest: Anna, 3 right places, 1 wrong place (0427).');
+    expect(text.runnerUp(miss, names)).toBe(
+      'Closest miss besides the winner: Anna, 3 right places, 1 wrong place (0427).',
+    );
     expect(text.runnerUp({ closestMiss: null }, names)).toBeNull();
     expect(text.intro?.(view, 'shared')).toBe('Shared 4-digit code, digits 0–9');
     expect(text.intro?.(view, 'individual')).toBe(

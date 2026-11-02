@@ -219,7 +219,11 @@ function LobbyView(p: {
     </div>
   );
   return (
-    <div className="smg-stack" data-testid="match">
+    // With a result shown, a desktop keeps the page to one screen (./match.css).
+    <div
+      className={p.round === null ? 'smg-stack' : 'smg-stack match-result-screen'}
+      data-testid="match"
+    >
       <header className="match-head">
         <h1>{match.title}</h1>
         <span className="smg-chip" data-testid="match-game">

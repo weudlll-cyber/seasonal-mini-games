@@ -36,15 +36,20 @@ import type { ComponentType, ReactNode } from 'react';
 
 export interface GameWeb {
   readonly Player: ComponentType<PlayerPanelProps>;
-  // The input row; `ring` is the platform's cooldown ring, drawn at its start.
-  readonly Input: ComponentType<PlayerPanelProps & { readonly ring?: ReactNode }>;
+  // The input row; `ring` is the platform's cooldown ring, drawn at its start. A board game
+  // gets `stage`, the box at full height on the left (on a phone above the input row), and
+  // draws its board there through a portal; the row itself stays in the right column (O51).
+  readonly Input: ComponentType<
+    PlayerPanelProps & { readonly ring?: ReactNode; readonly stage?: HTMLElement | null }
+  >;
   readonly Spectator: ComponentType<SpectatorPanelProps>;
   readonly Result: ComponentType<ResultPanelProps>;
   readonly text: GameText;
   // The game's own setting definitions: one wording for every form that shows them.
   readonly settings: readonly SettingDef[];
-  // 'board': the input row is the game's board (a map), drawn as the left column at full
-  // height on a desktop, with the list on the right (T123); by default the list leads.
+  // 'board': the game's board takes the stage, the left column at full height on a desktop,
+  // with its panel, the list and the input row on the right (T123, O51); by default the list
+  // takes the main area and the input row sits under it (O50).
   readonly layout?: 'board';
 }
 

@@ -16,7 +16,7 @@ import type { ReactElement } from 'react';
 
 import { Problem } from '../components/fields.js';
 import { SeasonIcon } from '../season/SeasonIcon.js';
-import { SEASON_NAMES } from '../season/season.js';
+import { teamName } from '../season/season.js';
 import { refusalText } from './boardsText.js';
 import { useApi, withGame } from './useApi.js';
 
@@ -52,7 +52,7 @@ export function TeamBoard({
               <td>
                 {/* The icon's name is the team's: it is read out once, the text is for the eye. */}
                 <SeasonIcon season={r.team} size="1rem" />{' '}
-                <span aria-hidden="true">{SEASON_NAMES[r.team]}</span>
+                <span aria-hidden="true">{teamName(r.team)}</span>
               </td>
               <td>{r.points}</td>
               <td>{r.wins}</td>

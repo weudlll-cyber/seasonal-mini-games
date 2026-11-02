@@ -156,9 +156,8 @@ describe('the game text: events and results', () => {
     expect(bdText.event({ type: 'HarmlessOver', index: 3 }, names)?.text).toBe(
       'Leaf Fall: every harmless wire is marked.',
     );
-    expect(bdText.event({ type: 'HintGiven', playerId: null, wire: 'red' }, names)?.text).toBe(
-      'Spring Herald: cut red first.',
-    );
+    // The hint shows once, in the wire panel (O47).
+    expect(bdText.event({ type: 'HintGiven', playerId: null, wire: 'red' }, names)).toBeNull();
     expect(bdText.event({ type: 'HintGiven', playerId: 'a', wire: 'red' }, names)).toBeNull();
     expect(bdText.event({ type: 'GuessFed', playerId: 'a', guesses: 1 }, names)).toBeNull();
     expect(bdText.event({ type: 'FeedbackGiven' }, names)).toBeNull();
@@ -182,10 +181,10 @@ describe('the game text: results, intro and entry', () => {
       closestMiss: { playerId: 'a', value: ['red', 'blue', 'yellow', 'black'], correct },
     });
     expect(bdText.runnerUp(miss(3), { a: 'Anna' })).toBe(
-      'Closest: Anna, the first 3 cuts right (red → blue → yellow → black).',
+      'Closest miss besides the winner: Anna, the first 3 cuts right (red → blue → yellow → black).',
     );
     expect(bdText.runnerUp(miss(1), {})).toBe(
-      'Closest: a, the first cut right (red → blue → yellow → black).',
+      'Closest miss besides the winner: a, the first cut right (red → blue → yellow → black).',
     );
     expect(bdText.runnerUp({ closestMiss: null }, {})).toBeNull();
     expect(bdText.intro?.(view, 'shared')).toBe('Shared bomb: 6 wires, 4 cuts');

@@ -66,7 +66,7 @@ describe('the waiting area before the player’s first round', () => {
     expect(area.textContent).toContain('You keep it for the whole match');
     expect(area.textContent).toContain('you join the smallest team when your first round starts');
     const pressed = teamButtons().filter((b) => b.ariaPressed === 'true');
-    expect(pressed.map((b) => b.textContent)).toEqual([' Summer✓']);
+    expect(pressed.map((b) => b.textContent)).toEqual([' Team Summer✓']);
     expect(teamButtons()).toHaveLength(4);
     // The pressed team's icon is drawn in the button's text colour (a mask), not as a picture.
     const icon = pressed[0]?.querySelector<HTMLElement>('[role="img"]');
@@ -112,8 +112,8 @@ describe('the player rows', () => {
     );
     expect(cells).toEqual([
       ['Hanna', 'no team yet', 'online'],
-      ['Anna', 'Summer', 'away'],
-      ['bot-01', 'Winter', 'online'],
+      ['Anna', 'Team Summer', 'away'],
+      ['bot-01', 'Team Winter', 'online'],
     ]);
     expect(rows[0]?.children[1]?.className).toBe('smg-muted');
     const presence = rows.map((li) => li.querySelector('.match-presence'));

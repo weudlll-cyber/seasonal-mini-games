@@ -55,7 +55,7 @@ const SEASONS: readonly Season[] = [
     name: 'Summer',
     special: 'Heatwave',
     rule: 'The waiting time between guesses gets shorter as the round goes on.',
-    banner: /^Heatwave: waiting time is now \d+(\.\d)? s\.$/,
+    banner: /^Heatwave: waiting time is now \d+(\.\d)? s and keeps getting shorter\.$/,
   },
   {
     season: 'autumn',

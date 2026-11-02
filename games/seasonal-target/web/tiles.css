@@ -1,20 +1,24 @@
 /*
  * @file   games/seasonal-target/web/tiles.css
  * @module games/seasonal-target/web
- * @brief  Styles of the tile grid (O45): the heat palette, the tiles and their marks, the loupe.
+ * @brief  Styles of the tile grid (O45): the heat palette, the tiles and their marks, the legend.
  *
  * Responsibility: the five heat steps (cold blue … burning red) and the found target's fill as
  *                 custom properties, light on :root and dark under [data-theme='dark'] (as
  *                 packages/ui/src/tokens.css): every fill at 3:1 or more against the empty tile,
- *                 its number at 4.5:1 or more against the fill, in both themes (02d §11). One
- *                 CSS grid of square tiles: in the input and the spectator panel as large as
- *                 its box allows (`.st-board` is a size container that takes the free height;
- *                 the grid is the smaller of its width and height), on the result page in the
- *                 page's flow, in the loupe at least 44 px a tile. Tiles outside the target area dimmed, Spring's quarter tinted in the
- *                 season colour, fallen tiles hatched (a pattern, not colour alone), the viewer's
- *                 own tiles framed inside in the season colour own rows are lit in, others' with
- *                 a corner mark, the selection outlined outside the tile in the text colour,
- *                 the result's target ringed. Numbers scale with their tile (container units).
+ *                 its number at 4.5:1 or more against the fill, in both themes (02d §11); the
+ *                 same steps as text colours for the guess list (./st.css), a shade darker in
+ *                 light and lighter in dark. One CSS grid of square tiles: in the round's
+ *                 stage, the spectator's and the result's box as large as the box allows
+ *                 (`.st-board` is a size container that takes the free height; the grid is the
+ *                 smaller of its width and height), in the loupe at least 44 px a tile (the
+ *                 loupe's box in ./loupe.css). Tiles outside the target area dimmed, Spring's
+ *                 quarter a fixed green with a "Hint" tag (O51), fallen tiles hatched (a
+ *                 pattern, not colour alone), the viewer's
+ *                 own tiles framed inside in the season colour own rows are lit in, others'
+ *                 with a corner dot ringed in the empty tile's colour, the number moved clear
+ *                 of it, the selection outlined outside the tile in the text colour, the
+ *                 result's target ringed. Numbers scale with their tile (container units).
  *                 Classes are prefixed `st-`.
  * Spec:           docs/spec/02d-game-seasonal-target.md §6, §8, §9, §11
  */
@@ -31,6 +35,18 @@
   --st-on-step: #ffffff;
   --st-correct: #14171c;
   --st-on-correct: #ffffff;
+  /* The steps as text on the list's rows: 5.4:1 or more on the card and on every season's
+     own-row tint. */
+  --st-text-1: #28559a;
+  --st-text-2: #155e66;
+  --st-text-3: #6b4e00;
+  --st-text-4: #9c3409;
+  --st-text-5: #a3122a;
+  /* Spring's quarter, the same in both themes: ink 8.5:1 on the green, so "…" and the tag
+     read on it; 1.9:1 against the light empty tile and 7.2:1 against the dark one, apart from
+     the hatch (a pattern) and the dimmed area (faded). */
+  --st-quarter: #7cc46a;
+  --st-on-quarter: #14171c;
 }
 
 :root[data-theme='dark'] {
@@ -46,10 +62,16 @@
   --st-on-step: #0a1233;
   --st-correct: #f1f4fa;
   --st-on-correct: #0a1233;
+  /* 5.1:1 or more on the dark card and every season's own-row tint. */
+  --st-text-1: #8cbaff;
+  --st-text-2: #5fd4c8;
+  --st-text-3: #f2c94c;
+  --st-text-4: #ff9a52;
+  --st-text-5: #ff8e99;
 }
 
-/* The grid's box in the input and the spectator panel: the free height of the stage (a flex
-   column of definite height) above the controls; the grid is square inside it. */
+/* The grid's box in the round's stage, the spectator's panel and the result: the free height of
+   a flex column of definite height; the grid is square inside it. */
 .st-board {
   position: relative;
   flex: 1 1 0;
@@ -67,7 +89,6 @@
 .st-grid {
   /* Set here, not on :root: the season colour is the round view's. */
   --st-own: var(--season, var(--color-accent));
-  --st-quarter: color-mix(in srgb, var(--season, var(--color-accent)) 25%, var(--st-empty));
   display: grid;
   grid-template-columns: repeat(var(--st-cols), minmax(0, 1fr));
   grid-template-rows: repeat(var(--st-rows), minmax(0, 1fr));
@@ -86,13 +107,6 @@
 
 .st-grid:not([aria-readonly]) {
   cursor: pointer;
-}
-
-/* The result page's grid: small enough that the headline, the grid and the standings share one
-   screen (owner's screen rule). */
-.st-grid--flow {
-  width: min(100%, 34dvh, 300px);
-  justify-self: center;
 }
 
 .st-grid--loupe {
@@ -123,7 +137,7 @@
 }
 
 /* The number, the found glyph and "…": scaled with the tile, as large as "13↘" still fits
-   inside the own tile's frame (12.5 px digits on the 20 × 20 grid at 1280 × 720). */
+   inside the own tile's frame (about 14 px digits on the 20 × 20 grid at 1280 × 720). */
 .st-face {
   font-size: 48cqmin;
   font-weight: var(--font-weight-strong);
@@ -138,6 +152,39 @@
 
 .st-tile[data-quarter='true'] {
   background: var(--st-quarter);
+  color: var(--st-on-quarter);
+}
+
+/* A corner dot: the number moves down, clear of it. */
+.st-tile[data-marked='true'] .st-face {
+  translate: 0 12cqh;
+}
+
+/* "Hint" in the quarter's corner tile, hanging inward from the grid's corner onto its tint. */
+.st-hint-tag {
+  position: absolute;
+  z-index: 1;
+  top: 1px;
+  left: 1px;
+  padding: 0 0.15rem;
+  border-radius: 2px;
+  background: var(--st-quarter);
+  color: var(--st-on-quarter);
+  font-size: max(0.625rem, 30cqmin);
+  font-weight: var(--font-weight-strong);
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.st-hint-tag[data-corner$='east'] {
+  left: auto;
+  right: 1px;
+}
+
+.st-hint-tag[data-corner^='south'] {
+  top: auto;
+  bottom: 1px;
 }
 
 .st-tile[data-fallen='true'] {
@@ -191,15 +238,16 @@
     inset 0 0 0 4px var(--st-empty);
 }
 
-/* Another player's guess: a dot in their list colour in the top right corner. */
+/* Another player's guess: a small dot in their list colour in the top right corner, ringed
+   2 px in the empty tile's colour so it shows on every fill. */
 .st-mark {
   position: absolute;
-  top: 10%;
-  right: 10%;
-  width: 28%;
+  top: 8%;
+  right: 8%;
+  width: 22%;
   aspect-ratio: 1;
   border-radius: 50%;
-  border: 1px solid var(--st-ink);
+  box-shadow: 0 0 0 2px var(--st-empty);
 }
 
 /* The selection: a thick outline outside the tile, unlike the own frame inside it. */
@@ -218,7 +266,8 @@
   box-shadow: 0 0 0 1px var(--st-ink);
 }
 
-/* The legend: "Cold", the five steps, "Hot". */
+/* The legend: "Cold", the five steps, "Hot" (in the player's panel, the spectator's and the
+   result). */
 .st-heat {
   margin: 0;
   display: flex;
@@ -232,41 +281,4 @@
   width: 1.1rem;
   height: 0.8rem;
   border-radius: 3px;
-}
-
-/* The phone's loupe: over the grid, its tiles at least 44 px. It stands on the grid's lower
-   edge and may reach up over the list above it, so its Close button is never scrolled out of
-   sight in a box no taller than the grid (screenshot review). */
-.st-loupe {
-  position: absolute;
-  z-index: 20;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(100%, 17rem);
-  display: grid;
-  gap: var(--space-1);
-  padding: var(--space-1);
-  border: 2px solid var(--season, var(--color-border));
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-raised);
-}
-
-.st-loupe-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: end;
-  gap: var(--space-1);
-}
-
-/* Column, Row and Close on the first row, the arrows on the second. */
-.st-loupe-close {
-  order: 1;
-  min-height: var(--hit-target);
-  margin-left: auto;
-}
-
-.st-loupe-row .st-cross {
-  order: 2;
 }

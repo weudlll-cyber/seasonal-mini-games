@@ -3,7 +3,9 @@
  * @module web/round
  * @brief  The result page: headline, placings table, player names, the proof's hex values.
  *
- * Responsibility: placings (and the match summary's standings) as a table with fixed number
+ * Responsibility: the result in three parts (headline with the margin or closest miss, the
+ *                 game's result, the tables), on a desktop on one screen side by side; the
+ *                 placings (and the match summary's standings) as a table with fixed number
  *                 columns that fits a 390 px phone without scrolling, words wrapping whole and
  *                 tighter cells below 480 px; a player's name on one line, shrinking with an
  *                 ellipsis until focus or a tap shows it whole (./PlayerName); the
@@ -13,12 +15,123 @@
  */
 .round-result {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'head' 'game' 'tables';
 }
 
+.round-result-head {
+  grid-area: head;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.round-result-head p {
+  margin: 0;
+}
+
+/* The headline at about half the page title's size, one line where it fits (balanced where
+   it wraps). */
 .round-result h1 {
   margin: 0;
-  font-size: var(--font-size-title);
+  font-size: clamp(1.25rem, 1rem + 0.6vw, 1.5rem);
+  text-wrap: balance;
+}
+
+.round-result-game {
+  grid-area: game;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.round-result-game > * {
+  flex: 1;
+  min-height: 0;
+}
+
+/* A flex column of parts at their own height: as grid rows, the table's scrolling wrapper
+   (`overflow-x`) shrank to its header in a part of fixed height. */
+.round-result-tables {
+  grid-area: tables;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.round-result-tables > * {
+  flex: none;
+}
+
+.round-result-tables h2 {
+  margin: 0;
+  font-size: var(--font-size-lead);
+}
+
+/* A desktop: one screen (../match/match.css), the headline across, under it the game's result
+   on the left (a board game's grid as tall as the part allows) and the tables on the right;
+   a part scrolls inside itself only when it must. */
+@media (min-width: 960px) {
+  .round-result {
+    min-height: 0;
+    /* The tables get the wider part: four columns with whole names. */
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      'head head'
+      'game tables';
+  }
+
+  /* Close table rows: placings, team result and standings fit 1280 × 720 for a few players. */
+  .round-result .round-table {
+    line-height: 1.25;
+  }
+
+  .round-result .round-table th,
+  .round-result .round-table td {
+    padding-block: 0.15rem;
+  }
+
+  /* A board game's result: the grid gets an even share. */
+  .round-result[data-layout='board'] {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  /* The proof's disclosure beside the headline, not on a line of its own. */
+  .round-result-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .round-result-head > :not(.round-proof) {
+    grid-column: 1;
+  }
+
+  .round-result-head > .round-proof {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    max-width: 24rem;
+  }
+
+  /* "took part" on one line. */
+  .round-result .round-col-place {
+    width: 6.5rem;
+  }
+
+  /* The team result as one wrapping line of items instead of a list of four lines. */
+  .round-result .round-teams-result {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 var(--space-3);
+    padding-left: 0;
+    list-style: none;
+  }
+
+  .round-result-game,
+  .round-result-tables {
+    min-height: 0;
+    overflow-y: auto;
+  }
 }
 
 /* A table never widens the page; with the fixed columns below it fits a 390 px phone. */

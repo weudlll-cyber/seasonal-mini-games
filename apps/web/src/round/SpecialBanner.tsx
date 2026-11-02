@@ -10,8 +10,10 @@
  *                 3 s of the round that answers arrive late, and while the
  *                 viewer's newest guess has just been sent and its answer is held, when it
  *                 will arrive. Derived from the live feed and the view on every tick, so no
- *                 timer of its own; the newest event wins. The same events keep their rows
- *                 in the guess list. A live region announces each new line.
+ *                 timer of its own; the newest event wins. While the banner shows an event,
+ *                 the list leaves that event's row out (`key`), so one view never says it
+ *                 twice (O47); the row comes back once the banner is gone. A live region
+ *                 announces each new line.
  * Depends on:     react, @smg/contracts, @smg-game/registry/web (types), ../live/useRound
  *                 (FeedItem), ./roundText, ./roundSpecials.css
  * Used by:        ./RoundScreen
@@ -54,6 +56,12 @@ function frostOpening(state: RoundStateView, now: number): string | null {
   return `Frost: answers arrive ${String(Math.round(state.frostDelayMs / 1_000))} s late.`;
 }
 
+// The banner's line, and the feed item it stands for (null for Frost's own lines).
+export interface Banner {
+  readonly text: string;
+  readonly key: string | null;
+}
+
 // The banner to show now, or null: the newest special event of the last 3 s, else Frost's at
 // the opening, else Frost's for the viewer's held answer.
 export function bannerOf(
@@ -61,27 +69,22 @@ export function bannerOf(
   state: RoundStateView,
   game: GameWeb | null,
   now: number,
-): string | null {
+): Banner | null {
   // The feed is newest first.
   for (const item of feed) {
     if (now - item.at >= BANNER_MS) continue;
     const text = textOf(item.event, game);
-    if (text !== null) return text;
+    if (text !== null) return { text, key: item.key };
   }
-  return frostOpening(state, now) ?? frostText(state, game, now);
+  const frost = frostOpening(state, now) ?? frostText(state, game, now);
+  return frost === null ? null : { text: frost, key: null };
 }
 
-export function SpecialBanner(p: {
-  readonly feed: readonly FeedItem[];
-  readonly state: RoundStateView;
-  readonly game: GameWeb | null;
-  readonly now: number;
-}): ReactElement {
-  const text = bannerOf(p.feed, p.state, p.game, p.now);
+export function SpecialBanner({ banner }: { readonly banner: Banner | null }): ReactElement {
   // The live region stays in the page, so each new line is announced; empty, it takes no room.
   return (
     <div className="round-special-banner" role="status" data-testid="special-banner">
-      {text === null ? null : <p>{text}</p>}
+      {banner === null ? null : <p>{banner.text}</p>}
     </div>
   );
 }

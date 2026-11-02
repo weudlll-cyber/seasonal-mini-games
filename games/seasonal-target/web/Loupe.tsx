@@ -12,7 +12,7 @@
  *                 stays put while the selection is inside it, so a tile never jumps under the
  *                 finger.
  * Depends on:     react, @smg/ui (useDisclosure), @smg-game/seasonal-target (types, helpers),
- *                 ./Steer, ./TileGrid
+ *                 ./Steer, ./TileGrid, ./loupe.css
  * Used by:        ./TargetInput
  * Spec:           docs/spec/02d-game-seasonal-target.md §11
  */
@@ -22,6 +22,7 @@ import { useState, type ReactElement } from 'react';
 
 import { Steer } from './Steer.js';
 import { TileGrid, type TileGridProps } from './TileGrid.js';
+import './loupe.css';
 
 // Tiles per side of the loupe's window (the smallest grid has 8).
 const SIDE = 5;

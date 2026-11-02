@@ -7,9 +7,11 @@
  *                 team's when teams play, else one of the four season colours by roster
  *                 order, so it comes from the existing tokens. The team tiles: one small tile
  *                 per season team with its match points and its players in this round, shown
- *                 only when teams play (03 §5). The focus mode's Players panel (O46) holds the
- *                 tiles and the round's players with colour, team and number of guesses.
- * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), ../season/*, ./PlayerName
+ *                 only when teams play (03 §5), each named "Team Spring" (O52). The focus
+ *                 mode's Players panel (O46) holds the tiles and the round's players with
+ *                 colour, team and number of guesses.
+ * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), ../season/* (teamName),
+ *                 ./PlayerName, ./players.css
  * Used by:        ./RoundScreen, ./RoundLog
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §5
  */
@@ -18,8 +20,9 @@ import { formatNumber } from '@smg/game-sdk';
 import type { CSSProperties, ReactElement } from 'react';
 
 import { SeasonIcon } from '../season/SeasonIcon.js';
-import { SEASON_NAMES, SEASONS, seasonColor } from '../season/season.js';
+import { SEASONS, seasonColor, teamName } from '../season/season.js';
 import { PlayerName } from './PlayerName.js';
+import './players.css';
 
 // A player's colour: their team's when teams play, else a season colour by roster order.
 export function playerColor(state: RoundStateView, key: string): string {
@@ -59,7 +62,7 @@ export function PlayersPanelBody(p: {
               name={r.playerKey === p.viewerKey ? 'You' : (state.names[r.playerKey] ?? r.playerKey)}
             />
             {state.teamsOn && r.team !== null ? (
-              <span className="round-player-team">{SEASON_NAMES[r.team]}</span>
+              <span className="round-player-team">{teamName(r.team)}</span>
             ) : null}
             <span className="round-player-guesses">
               {r.guesses} {r.guesses === 1 ? 'guess' : 'guesses'}
@@ -91,7 +94,7 @@ export function TeamTiles({
             style={{ '--season': seasonColor(team) } as CSSProperties}
           >
             <SeasonIcon season={team} size="1.1rem" />
-            <span className="round-team-name">{SEASON_NAMES[team]}</span>
+            <span className="round-team-name">{teamName(team)}</span>
             <strong className="round-team-points">{formatNumber(score)}</strong>
             <span className="smg-visually-hidden">
               {score === 1 ? 'point' : 'points'}, {players} {players === 1 ? 'player' : 'players'}

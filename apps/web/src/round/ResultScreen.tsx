@@ -5,12 +5,16 @@
  *
  * Responsibility: the end in plain words ("Walter found it first — after 9 guesses"), the
  *                 winning margin in shared mode ("found it 0.4 s before Anna") or, without one,
- *                 the game's closest miss ("bot-01 missed by just 1 (92).", O22), placings with
+ *                 the game's closest miss ("Closest miss besides the winner: bot-01, missed by
+ *                 just 1 (92).", O22), placings with
  *                 points (the viewer's line highlighted; "took part" in shared mode, "not
  *                 solved" in individual mode), the team result when teams played, the match
  *                 standings, the game's result panel with the secret(s), and the fairness
  *                 proof: the commitment published at creation, the seed revealed now, and the
- *                 link to the round's verification page (02 §9, §10; 03 §5).
+ *                 link to the round's verification page (02 §9, §10; 03 §5). On a desktop the
+ *                 result fits one screen (./result.css): the headline, the margin or closest
+ *                 miss and the proof's disclosure across the top, the game's result on the left
+ *                 and the tables on the right, a part scrolling inside itself only if it must.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber),
  *                 @smg-game/registry/web (types), ../season/SeasonIcon,
  *                 ../shell/router, ./MatchStandings, ./PlayerName, ./roundText, ./result.css
@@ -23,7 +27,7 @@ import { formatNumber } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
 import { SeasonIcon } from '../season/SeasonIcon.js';
-import { SEASON_NAMES } from '../season/season.js';
+import { teamName } from '../season/season.js';
 import { hrefOf } from '../shell/router.js';
 import { MatchStandings } from './MatchStandings.js';
 import { PlayerName } from './PlayerName.js';
@@ -91,8 +95,8 @@ function Teams({ state }: { readonly state: RoundStateView }): ReactElement | nu
       <ul className="round-teams-result" data-testid="team-result">
         {teams.map((t) => (
           <li key={t.team}>
-            <SeasonIcon season={t.team} size="1rem" /> {SEASON_NAMES[t.team]}:{' '}
-            {formatNumber(t.points)} {t.points === 1 ? 'point' : 'points'}
+            <SeasonIcon season={t.team} size="1rem" /> {teamName(t.team)}: {formatNumber(t.points)}{' '}
+            {t.points === 1 ? 'point' : 'points'}
             {t.won ? ' — the winner’s team' : ''} ({formatNumber(t.members)}{' '}
             {t.members === 1 ? 'player' : 'players'})
           </li>
@@ -137,22 +141,34 @@ export function ResultScreen({
   // Without a margin, the game's line about the closest miss stands in its place (O22).
   const miss = margin === null ? (game?.text.runnerUp(state.game, state.names) ?? null) : null;
   return (
-    <section className="smg-panel round-result" data-testid="result">
-      <h1>{endHeadline(state)}</h1>
-      {margin === null ? null : <p data-testid="margin">{margin}</p>}
-      {miss === null ? null : <p data-testid="closest-miss">{miss}</p>}
-      {game === null ? null : (
-        <game.Result
-          view={state.game}
-          names={state.names}
-          colors={colorsOf(state)}
-          viewerKey={viewerKey}
-        />
-      )}
-      <Placings state={state} viewerKey={viewerKey} />
-      <Teams state={state} />
-      <MatchStandings standings={standings} viewerKey={viewerKey} />
-      <Proof state={state} />
+    <section
+      className="smg-panel round-result"
+      data-testid="result"
+      // A board game's grid gets an even share of a desktop's width (./result.css).
+      data-layout={game?.layout ?? 'list'}
+    >
+      <header className="round-result-head">
+        <h1>{endHeadline(state)}</h1>
+        {margin === null ? null : <p data-testid="margin">{margin}</p>}
+        {miss === null ? null : <p data-testid="closest-miss">{miss}</p>}
+        <Proof state={state} />
+      </header>
+      {/* The game's own result (the secret, a board game's grid): the part that grows. */}
+      <div className="round-result-game">
+        {game === null ? null : (
+          <game.Result
+            view={state.game}
+            names={state.names}
+            colors={colorsOf(state)}
+            viewerKey={viewerKey}
+          />
+        )}
+      </div>
+      <div className="round-result-tables">
+        <Placings state={state} viewerKey={viewerKey} />
+        <Teams state={state} />
+        <MatchStandings standings={standings} viewerKey={viewerKey} />
+      </div>
     </section>
   );
 }

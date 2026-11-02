@@ -43,10 +43,9 @@ async function quickRound(p: Person, body: Record<string, unknown>): Promise<str
   return started.matchCode;
 }
 
-// The cooldown in force, from the round view's top bar ("Cooldown 7.0 s").
+// The cooldown in force, from the ring at the input (the bar no longer shows it, O47).
 async function cooldownSeconds(page: Page): Promise<number> {
-  const text = (await page.getByTestId('round-cooldown').textContent()) ?? '';
-  return Number(/(\d+(?:\.\d)?) s/.exec(text)?.[1] ?? 'NaN');
+  return Number(await page.getByTestId('cooldown').getAttribute('data-cooldown-ms')) / 1_000;
 }
 
 test('journey 3: each season special shows itself', async ({ browser }) => {
@@ -64,7 +63,9 @@ test('journey 3: each season special shows itself', async ({ browser }) => {
 
     codes.push(await quickRound(p, { season: 'summer', cooldownS: 8 }));
     await expect.poll(() => cooldownSeconds(p.page), { timeout: 15_000 }).toBeLessThan(8);
+    // Announced once (O47): one row however many steps follow.
     await expect(p.page.getByTestId('guess-list')).toContainText('Heatwave: waiting time is now');
+    await expect(p.page.getByTestId('guess-list').getByText(/^Heatwave:/)).toHaveCount(1);
 
     codes.push(await quickRound(p, { season: 'autumn' }));
     await expect(p.page.getByTestId('fallen')).toHaveText(/^Fallen numbers \([1-9]\d*\)$/, {

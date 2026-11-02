@@ -5,7 +5,7 @@
  *
  * Responsibility: the code block's line ("4-digit code, digits 0–9"), Spring Herald's hint
  *                 ("Free hint: the 2nd digit is 7."), the game's refusals (02b §4), one line per
- *                 room event (the shared hint, everyone's hint, Leaf Fall's fallen digits) and
+ *                 room event (Leaf Fall's fallen digits; the hint shows once, in the code block) and
  *                 Leaf Fall's banner (O35); the list's guess rows from a player or spectator
  *                 view: the code as text, the answer in words with its pegs (one filled per
  *                 right place, one ring per wrong place, T119), "tried a code" where the code
@@ -80,16 +80,9 @@ function eventText(e: ScEvent): FeedLine | null {
   switch (e.type) {
     case 'DigitsFallen':
       return { text: fallLine(e.digits), playerId: null, special: true };
+    // The hint shows once, in the code block; the platform's row says that it came (O47).
     case 'HintGiven':
-      // A player's own hint stays in their code block; the room hears only of the others.
-      if (e.playerId !== null) return null;
-      return {
-        text:
-          e.hint === null
-            ? 'Spring Herald: everyone got a free hint.'
-            : `Spring Herald: ${freeHint(e.hint).slice('Free hint: '.length)}`,
-        playerId: null,
-      };
+      return null;
     // Guesses are rows of their own, from the view, so they survive a reload.
     case 'GuessFed':
     case 'FeedbackGiven':
@@ -121,7 +114,8 @@ function guessRows(view: unknown): readonly GuessRow[] {
 function runnerUp(view: unknown, names: Readonly<Record<string, string>>): string | null {
   const miss = (view as Partial<ResultView>).closestMiss ?? null;
   if (miss === null) return null;
-  return `Closest: ${names[miss.playerId] ?? miss.playerId}, ${counts(miss)} (${miss.value}).`;
+  const name = names[miss.playerId] ?? miss.playerId;
+  return `Closest miss besides the winner: ${name}, ${counts(miss)} (${miss.value}).`;
 }
 
 // The intro's line (O36): "Shared 4-digit code, digits 0–9".

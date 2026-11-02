@@ -6,11 +6,12 @@
  * Responsibility: the action schema refuses anything but two whole coordinates; `OUT_OF_MAP`
  *                 (map and halving window) before `CELL_REMOVED` before `ALREADY_GUESSED`, a
  *                 repeat allowed with the rule off; the answer to the guesser and the room line
- *                 per visibility and mode; `Solved` on the cell; distance answers (the default,
- *                 O43) carry no direction, closeness answers only the tier, and every wrong
+ *                 per visibility and mode; `Solved` on the cell; distance answers carry no
+ *                 direction, closeness answers (the default, O53) only the tier, and every wrong
  *                 answer its tier (O45); the settings document with the grid size (default 20,
- *                 8–30, width = height), its three answer modes, its config and halving
- *                 allowed; secrets drawn the same from the same seed; the chat's reveal clause.
+ *                 8–30, width = height), its three answer modes, a stored host choice kept over
+ *                 the new default, its config and halving allowed; secrets drawn the same from
+ *                 the same seed; the chat's reveal clause.
  * Depends on:     vitest, @smg/game-sdk, ./fakes, ./module, ./settings, ./views
  * Spec:           docs/spec/02d-game-seasonal-target.md §3, §4, §5; docs/spec/08-admin-settings.md §3.3
  */
@@ -104,16 +105,16 @@ describe('answers', () => {
     expect(win.ok && win.signals).toEqual([{ type: 'Solved', playerId: 'b' }]);
   });
 
-  it('answers only the rounded distance and its tier by default, with no direction', () => {
-    const d = shared().play('a', { x: 4, y: 14 });
+  it('answers only the rounded distance and its tier in distance mode, with no direction', () => {
+    const d = shared({ feedback: 'distance' }).play('a', { x: 4, y: 14 });
     expect(d.ok && d.events[0]?.event).toMatchObject({
       feedback: { kind: 'distance', distance: 9, tier: 'cold' },
     });
     expect(d.ok && d.events[0]?.event).not.toHaveProperty('feedback.direction');
   });
 
-  it('answers only the tier in closeness mode, also without comments', () => {
-    const t = shared({ feedback: 'closeness', comments: false });
+  it('answers only the tier in closeness mode (the default, O53), also without comments', () => {
+    const t = shared({ comments: false });
     const d = t.play('a', { x: 4, y: 14 });
     expect(d.ok && d.events[0]?.event).toMatchObject({
       feedback: { kind: 'closeness', tier: 'cold' },
@@ -145,8 +146,8 @@ describe('settings', () => {
   it('reads the defaults of 08 §3.3 into the config, with no cross-key problem', () => {
     const cfg = stSettings.read(resolveSettings(stSettings.defs, {}));
     expect(cfg).toEqual(defaultConfig);
-    // O43: the host picks one of three answer modes; distance only is the default.
-    expect(cfg.feedback).toBe('distance');
+    // O43: the host picks one of three answer modes; warm/cold only is the default (O53).
+    expect(cfg.feedback).toBe('closeness');
     const answers = stSettings.defs.find((d) => d.key === 'target.feedback');
     expect(answers).toMatchObject({ options: ['direction', 'distance', 'closeness'] });
     expect(stSettings.problem(cfg)).toBeNull();
@@ -155,6 +156,14 @@ describe('settings', () => {
     expect(keys).toContain('target.feedback');
     expect(keys).not.toContain('map.width');
     expect(keys).not.toContain('round.rangeLow');
+  });
+});
+
+describe('answer mode default (O53)', () => {
+  it('keeps a stored explicit host value and gives a missing one the new default', () => {
+    const read = (overrides = {}) => stSettings.read(resolveSettings(stSettings.defs, overrides));
+    expect(read({ 'target.feedback': { value: 'distance' } }).feedback).toBe('distance');
+    expect(read().feedback).toBe('closeness');
   });
 });
 

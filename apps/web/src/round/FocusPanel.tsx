@@ -3,12 +3,12 @@
  * @module web/round
  * @brief  One panel on demand of the focus mode: a drawer from the right, a sheet on a phone.
  *
- * Responsibility: a titled panel over the round (O46): on a desktop a drawer of about 360 px
- *                 from the right edge, on a phone a sheet over the lower 60 % (./focus.css);
- *                 a visible Close button; Escape closes it from anywhere inside; on opening the
- *                 focus moves to its heading, and closing hands it back to the opening button
- *                 (./usePanels). It covers only its own part of the round, without a backdrop,
- *                 so the game stays usable beside it. `keep` keeps a closed panel's content
+ * Responsibility: a titled panel (O46): on a desktop a column of 360 px beside the game that
+ *                 pushes it aside, on a phone a sheet that ends above the input row (O48,
+ *                 ./focus.css); a visible Close button; Escape closes it from anywhere inside;
+ *                 on opening the focus moves to the panel itself, its ring drawn only for the
+ *                 keyboard, and closing hands it back to the opening button (./usePanels). No
+ *                 backdrop, so the game stays usable beside it. `keep` keeps a closed panel's content
  *                 mounted but hidden (the chat keeps its room and what was typed, 07 §2);
  *                 otherwise the content mounts only while the panel is open.
  * Depends on:     react, ./focus.css
@@ -37,9 +37,9 @@ export interface FocusPanelProps {
 
 export function FocusPanel(p: FocusPanelProps): ReactElement | null {
   const id = useId();
-  const heading = useRef<HTMLHeadingElement>(null);
+  const box = useRef<HTMLElement>(null);
   useEffect(() => {
-    if (p.open) heading.current?.focus();
+    if (p.open) box.current?.focus();
   }, [p.open]);
   if (!p.open && p.keep !== true) return null;
   const onKeyDown = (e: KeyboardEvent): void => {
@@ -50,6 +50,8 @@ export function FocusPanel(p: FocusPanelProps): ReactElement | null {
   };
   return (
     <section
+      ref={box}
+      tabIndex={-1}
       className="focus-panel"
       role="dialog"
       aria-labelledby={`${id}-title`}
@@ -58,9 +60,7 @@ export function FocusPanel(p: FocusPanelProps): ReactElement | null {
       data-testid={p.testId}
     >
       <header className="focus-panel-head">
-        <h2 id={`${id}-title`} ref={heading} tabIndex={-1}>
-          {p.title}
-        </h2>
+        <h2 id={`${id}-title`}>{p.title}</h2>
         <button type="button" className="smg-btn" onClick={p.onClose}>
           Close
         </button>

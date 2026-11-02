@@ -53,7 +53,7 @@ async function resultShown(page: Page): Promise<void> {
   await expect(result).toBeVisible({ timeout: 60_000 });
   if ((await result.getByTestId('margin').count()) === 0) {
     await expect(result.getByTestId('closest-miss')).toHaveText(
-      /^(.+ missed by just [12] \(\d+\)\.|Closest miss: .+, \d+ away \(\d+\)\.)$/,
+      /^Closest miss besides the winner: .+, (missed by just [12]|\d+ away) \(\d+\)\.$/,
     );
   }
 }

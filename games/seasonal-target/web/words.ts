@@ -1,14 +1,15 @@
 /**
  * @file   games/seasonal-target/web/words.ts
  * @module games/seasonal-target/web
- * @brief  How Seasonal Target words a cell, an area, a quarter and an answer.
+ * @brief  How Seasonal Target words a tile, an area, a quarter and an answer.
  *
  * Responsibility: "(12, 34)" and "column 12, row 34", "columns 13–37, rows 1–50", the quarter
- *                 hint, and an answer long ("9 cells away, to the north-east", "9 cells away")
- *                 and short ("9 away, NE ↗", "9 away"), the tier words of `closeness` mode, the
- *                 grid's size in tiles, and the tone the platform colours a row by, from the
- *                 server's tier like the tile's colour. Every number through `formatNumber`
- *                 (T114).
+ *                 hint, a count of tiles, and an answer long ("9 tiles away, to the north-east",
+ *                 "9 tiles away") and short ("9 away, NE ↗", "9 away"), the tier words of
+ *                 `closeness` mode, the grid's size in tiles; the answer's tone and tier for the
+ *                 list: only a found target takes the platform's colour, a miss is coloured by
+ *                 its server tier like its tile (./st.css, O51). Every number through
+ *                 `formatNumber` (T114).
  * Depends on:     @smg/game-sdk (formatNumber, GuessAnswer), @smg-game/seasonal-target (types)
  * Used by:        ./text, ./heat, ./TileGrid, ./TargetInput, ./PlayerPanel, ./SpectatorPanel,
  *                 ./ResultPanel, ./FallenCells
@@ -27,6 +28,9 @@ const span = (low: number, high: number): string =>
 
 export const areaText = (a: Area): string =>
   `columns ${span(a.left, a.right)}, rows ${span(a.top, a.bottom)}`;
+
+// "1 tile", "9 tiles".
+export const tiles = (k: number): string => `${n(k)} ${k === 1 ? 'tile' : 'tiles'}`;
 
 export const sizeText = (width: number, height: number): string =>
   `${n(width)} × ${n(height)} tiles`;
@@ -72,11 +76,11 @@ export const TIER_WORDS: Readonly<Record<string, string>> = {
 
 const FOUND = 'Target found!';
 
-// "9 cells away, to the north-east", "9 cells away", "Warm".
+// "9 tiles away, to the north-east", "9 tiles away", "Warm".
 export function longAnswer(f: Feedback): string {
   if (f.kind === 'correct') return FOUND;
   if (f.kind === 'closeness') return TIER_WORDS[f.tier] ?? f.tier;
-  const away = `${n(f.distance)} ${f.distance === 1 ? 'cell' : 'cells'} away`;
+  const away = `${tiles(f.distance)} away`;
   return f.kind === 'direction' ? `${away}, to the ${WORDS[f.direction]}` : away;
 }
 
@@ -87,12 +91,13 @@ export function shortAnswer(f: Feedback): string {
   return longAnswer(f);
 }
 
-const NEAR = new Set(['justMissed', 'burning', 'hot']);
+// The row's tone: found in the platform's colour; every miss `far`, which the platform leaves
+// plain, so the game's styles colour it by the row's tier like the tile, never a green "hot".
+export const toneOf = (f: Feedback): GuessAnswer['tone'] =>
+  f.kind === 'correct' ? 'correct' : 'far';
 
-// The row's colour: found, near (hot, burning or touching, the tile's two hottest steps), or far.
-export function toneOf(f: Feedback): GuessAnswer['tone'] {
-  if (f.kind === 'correct') return 'correct';
-  return NEAR.has(f.tier) ? 'close' : 'far';
-}
+// The row's tier for the list's styles: the server's (`correct` for a found target), prefixed,
+// because the game's styles apply to the platform's list and other games' tiers share names.
+export const rowTier = (f: Feedback): string => `st-${f.kind === 'correct' ? 'correct' : f.tier}`;
 
 export const answerOf = (f: Feedback): GuessAnswer => ({ text: shortAnswer(f), tone: toneOf(f) });

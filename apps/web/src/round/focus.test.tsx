@@ -4,13 +4,15 @@
  * @module web/round
  * @brief  The focus mode of a running round (O46): the bar's panels, the unread badge, full screen.
  *
- * Responsibility: Chat, Players and Host open as panels from the bar and close with their
- *                 Close button or Escape, the focus moving into the panel and back to its
- *                 button; only one panel is open at a time; the chat panel stays mounted; the
- *                 unread badge counts others' messages while the chat is closed and clears on
- *                 opening it; the full-screen toggle shows only where the Fullscreen API is
- *                 offered (mocked) and follows the browser leaving full screen; the phone's
- *                 compact list shows the newest three rows and "All (N)".
+ * Responsibility: the bar shows the time left but no waiting time (O47); Chat, Players and
+ *                 Host open as panels from the bar and close with their Close button or
+ *                 Escape, the focus moving into the panel itself and back to its button; the
+ *                 open panel is named on the round view (its desktop column, O48); only one
+ *                 panel is open at a time; the chat panel stays mounted; the unread badge
+ *                 counts others' messages while the chat is closed and clears on opening it;
+ *                 the full-screen toggle shows only where the Fullscreen API is offered
+ *                 (mocked) and follows the browser leaving full screen; the phone's compact
+ *                 list holds guesses only and "All (N)" counts guesses (O49).
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ../chat/chatArrivals, ./fakes,
  *                 ./RoundLog, ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/09-testing-strategy.md §2
@@ -62,15 +64,29 @@ function show(host: boolean): void {
 
 const dialog = (name: string) => screen.queryByRole('dialog', { name });
 
+describe('the game bar', () => {
+  it('shows the time left but no waiting time (O47)', () => {
+    show(false);
+    const bar = screen.getByTestId('round-banner').textContent;
+    expect(bar).not.toMatch(/Wait/);
+    expect(bar).not.toMatch(/\d+ s/);
+  });
+});
+
 describe('the focus mode panels', () => {
   it('open from the bar and close with Close or Escape, the focus going back', () => {
     show(true);
     const players = screen.getByTestId('focus-players');
+    const view = screen.getByTestId('round-view');
+    expect(view.dataset['panel']).toBeUndefined();
     fireEvent.click(players);
     expect(dialog('Players')).not.toBeNull();
-    expect(document.activeElement?.textContent).toBe('Players');
+    // The focus is on the panel itself (its ring only for the keyboard), not its title.
+    expect(document.activeElement).toBe(dialog('Players'));
+    // The round view names the open panel: on a desktop that is its own column (O48).
+    expect(view.dataset['panel']).toBe('players');
     expect(screen.getByTestId('players-panel').textContent).toContain('You');
-    expect(screen.getByTestId('team-tiles').textContent).toContain('Autumn3');
+    expect(screen.getByTestId('team-tiles').textContent).toContain('Team Autumn3');
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(dialog('Players')).toBeNull();
     expect(document.activeElement).toBe(players);
@@ -163,18 +179,46 @@ describe("the phone's compact list", () => {
     },
   } as never;
 
-  it('shows the newest three rows and "All (N)" for the whole list', () => {
+  // A round event newer than every guess: the phone's list leaves it to the banner and the
+  // sheet (O49).
+  const feed = [{ key: '9r', s: 9, at: 9, event: { type: 'RoundOpened' } }];
+
+  it('holds guesses only, and "All (N)" counts the guesses', () => {
     const toggle = vi.fn();
     const more = { open: false, toggle, button: () => undefined };
-    render(<RoundLog feed={[]} game={game} state={open} viewerKey="a" now={0} more={more} />);
+    render(<RoundLog feed={feed} game={game} state={open} viewerKey="a" now={0} more={more} />);
     const rows = [...screen.getByTestId('guess-list').querySelectorAll('li')];
     expect(rows.map((li) => li.querySelector('.round-value')?.textContent)).toEqual([
       '5',
       '4',
       '3',
+      '2',
+      '1',
     ]);
+    expect(screen.getByTestId('guess-list').textContent).not.toContain('The round is open');
     fireEvent.click(screen.getByTestId('list-all'));
     expect(screen.getByTestId('list-all').textContent).toBe('All (5)');
     expect(toggle).toHaveBeenCalledTimes(1);
+  });
+
+  it('shows "All (N)" from the first guess on', () => {
+    const one = {
+      text: {
+        code: () => null,
+        event: () => null,
+        guesses: () => [{ ...row, key: '1', at: 1, value: 1 }],
+      },
+    } as never;
+    const more = { open: false, toggle: vi.fn(), button: () => undefined };
+    render(<RoundLog feed={feed} game={one} state={open} viewerKey="a" now={0} more={more} />);
+    expect(screen.getByTestId('list-all').textContent).toBe('All (1)');
+  });
+
+  it('the whole list has the events, but not the one the banner shows', () => {
+    render(<RoundLog feed={feed} game={game} state={open} viewerKey="a" now={0} />);
+    expect(screen.getByTestId('guess-list').textContent).toContain('The round is open');
+    cleanup();
+    render(<RoundLog feed={feed} game={game} state={open} viewerKey="a" now={0} hide="9r" />);
+    expect(screen.getByTestId('guess-list').textContent).not.toContain('The round is open');
   });
 });

@@ -25,7 +25,7 @@ import { useState, type CSSProperties, type ReactElement } from 'react';
 import { intent } from '../live/socket.js';
 import { codeText } from '../round/roundText.js';
 import { SeasonIcon } from '../season/SeasonIcon.js';
-import { SEASON_NAMES, SEASONS, seasonColor } from '../season/season.js';
+import { SEASONS, seasonColor, teamName } from '../season/season.js';
 
 interface Props {
   readonly match: MatchDetailsView;
@@ -56,7 +56,7 @@ function Teams({ match, viewerKey, reload }: Props): ReactElement {
             style={{ '--season': seasonColor(t) } as CSSProperties}
             onClick={() => void choose(t)}
           >
-            <SeasonIcon season={t} size="1rem" mono={mine === t} /> {SEASON_NAMES[t]}
+            <SeasonIcon season={t} size="1rem" mono={mine === t} /> {teamName(t)}
             {mine === t ? (
               <span className="match-team-check" aria-hidden="true">
                 ✓
@@ -86,7 +86,7 @@ function Players({ match }: { readonly match: MatchDetailsView }): ReactElement 
         <span aria-hidden="true">
           <SeasonIcon season={t} size="1rem" />
         </span>{' '}
-        {SEASON_NAMES[t]}
+        {teamName(t)}
       </span>
     );
   return (

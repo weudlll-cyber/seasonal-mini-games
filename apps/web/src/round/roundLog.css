@@ -3,8 +3,9 @@
  * @module web/round
  * @brief  The round's one guess list: guess rows, event rows, dots, answers and comments.
  *
- * Responsibility: the list takes the height left under the range block and scrolls inside
- *                 itself, newest at the top (O20); a guess row is compact (O35: more rows in
+ * Responsibility: the list fills the main area (a list game's, O50) or its box in the right
+ *                 column (a board game's, O51) and scrolls inside itself, newest at the top
+ *                 (O20), in larger text on a large screen; a guess row is compact (O35: more rows in
  *                 view): dot, name, number, answer and the comment in small text on one line
  *                 when it fits, the comment wrapping under them otherwise; the viewer's own
  *                 rows on a tint of the season colour (T75); Frost's held answer with its
@@ -184,6 +185,14 @@
   opacity: 0.45;
 }
 
+/* A large screen (1920 × 1080): the list in the main area reads larger, so the wide area is
+   not mostly empty (O50); 14 rows and more still fit. */
+@media (min-width: 1600px) and (min-height: 950px) {
+  .round-main .round-log {
+    font-size: 1.125rem;
+  }
+}
+
 /* A phone: the comment on a line of its own under the name, not under the dot (night-5
    review): indented by the dot's width and the row's gap. */
 @media (max-width: 899px) {
@@ -191,4 +200,11 @@
     flex-basis: 100%;
     padding-left: calc(0.7rem + 0.5rem);
   }
+}
+
+/* "All (N)" over the phone's list of guesses, at its right edge. */
+.round-log-all {
+  flex: none;
+  align-self: flex-end;
+  margin-bottom: 0.25rem;
 }

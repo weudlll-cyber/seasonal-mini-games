@@ -276,7 +276,8 @@ describe('the words', () => {
     });
     expect(lines).toEqual([
       ['Leaf Fall: 1, 2 and 3 fell.', null],
-      ['Spring Herald: The number is between 1 and 500.', null],
+      // The hint shows once, in the range block (O47).
+      null,
       null,
       ['Halving: the range is now 1–500.', null],
       ['Halving: every range is now 250 numbers.', null],

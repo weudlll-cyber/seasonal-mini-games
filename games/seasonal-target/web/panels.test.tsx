@@ -9,10 +9,11 @@
  *                 own tiles framed, others' with a corner mark in their list colour; a shared
  *                 tile showing the closest answer and naming every guess in its title and
  *                 label; a pending own answer "…" without a fill; fallen tiles hatched, tiles
- *                 outside the target area dimmed, Spring's quarter tinted; numbers left out on
- *                 tiles too small to read; the heat legend. The player panel's hint, area and
- *                 size lines and the Fallen cells in autumn; the spectator's grid and size line;
- *                 the result's target tile, every guess and every player in text.
+ *                 outside the target area dimmed, Spring's quarter tinted with its "Hint" tag in
+ *                 the outer corner; numbers drawn from `NUMBER_MIN_PX` (20 px) up only; a corner
+ *                 dot moving the number. The player panel's legend, hint and area line (no
+ *                 grid-size line) and the Fallen tiles in autumn; the spectator's grid and size
+ *                 line; the result's target tile, every guess and every player in text.
  * Depends on:     vitest, @testing-library/react, ./fixtures, ./PlayerPanel, ./SpectatorPanel,
  *                 ./ResultPanel
  * Spec:           docs/spec/02d-game-seasonal-target.md §6, §8, §9, §10, §11
@@ -30,6 +31,7 @@ import {
   roster,
   screenOf,
 } from './fixtures.js';
+import { NUMBER_MIN_PX } from './measure.js';
 import { PlayerPanel } from './PlayerPanel.js';
 import { ResultPanel } from './ResultPanel.js';
 import { SpectatorPanel } from './SpectatorPanel.js';
@@ -71,16 +73,21 @@ describe('tiles by answer mode', () => {
     expect(tile(6, 6).textContent).toBe('◎');
     expect(tile(7, 7).dataset['step']).toBeUndefined();
     expect(tile(4, 4).title).toBe('column 4, row 4: You — Hot');
-    expect(screen.getByTestId('heat-legend').textContent).toBe('ColdHot');
   });
 
-  it('leaves the numbers out when the tiles are too small to read', () => {
-    // 20 tiles across 300 px on a desktop: 15 px a tile.
-    screenOf(300, false);
+  it('draws numbers from 20 px tiles up, and leaves them out below', () => {
+    expect(NUMBER_MIN_PX).toBe(20);
+    // 20 tiles of 20 px and 19 gaps of 2 px: 438 px of content.
+    screenOf(438, false);
+    renderInput(playerView({ guesses: [own(1, 2, 2, ne)] }));
+    expect(tile(2, 2).textContent).toBe('9↗');
+    cleanup();
+    // One pixel less: just under 20 px a tile, colour and marks only.
+    screenOf(437, false);
     renderInput(playerView({ guesses: [own(1, 2, 2, ne)] }));
     expect(tile(2, 2).textContent).toBe('');
     expect(tile(2, 2).dataset['step']).toBe('1');
-    expect(tile(2, 2).title).toBe('column 2, row 2: You — 9 cells away, to the north-east');
+    expect(tile(2, 2).title).toBe('column 2, row 2: You — 9 tiles away, to the north-east');
   });
 });
 
@@ -104,8 +111,11 @@ describe('own, others and shared tiles', () => {
     expect(tile(2, 2).title).toBe('column 2, row 2: You — answer arriving');
     const mark = tile(9, 9).querySelector<HTMLElement>('.st-mark');
     expect(mark?.style.background).toBe('var(--color-winter)');
+    // The dot's tile moves its number clear of it.
+    expect(tile(9, 9).dataset['marked']).toBe('true');
+    expect(tile(1, 1).dataset['marked']).toBe('false');
     expect(tile(9, 9).getAttribute('aria-label')).toBe(
-      'column 9, row 9: Anna — 9 cells away, to the north-east',
+      'column 9, row 9: Anna — 9 tiles away, to the north-east',
     );
     // A guess under `numbers`: the tile and the player, no answer, no fill.
     expect(tile(4, 4).title).toBe('column 4, row 4: Anna guessed');
@@ -128,8 +138,8 @@ describe('own, others and shared tiles', () => {
     expect(t.textContent).toBe('4↓');
     expect(t.dataset['own']).toBe('true');
     expect(t.title).toBe(
-      'column 5, row 5: You — 9 cells away, to the north-east; ' +
-        'Anna — 4 cells away, to the south; Walter — 9 cells away, to the north-east',
+      'column 5, row 5: You — 9 tiles away, to the north-east; ' +
+        'Anna — 4 tiles away, to the south; Walter — 9 tiles away, to the north-east',
     );
     // The first other player's mark.
     expect(t.querySelector<HTMLElement>('.st-mark')?.style.background).toBe('var(--color-winter)');
@@ -138,22 +148,29 @@ describe('own, others and shared tiles', () => {
 
 describe('fallen, area and quarter', () => {
   it('hatches fallen tiles, dims tiles outside the area and tints the quarter', () => {
-    const quarter = { name: 'north-west', left: 1, right: 10, top: 1, bottom: 10 } as const;
+    const quarter = { name: 'north-east', left: 11, right: 20, top: 1, bottom: 10 } as const;
     renderInput(
       playerView({
-        area: { left: 1, right: 10, top: 1, bottom: 20 },
+        area: { left: 1, right: 15, top: 1, bottom: 20 },
         hint: quarter,
         fallen: [{ x: 3, y: 12 }],
       }),
     );
+    // "Hint" once, in the quarter's tile at the grid's corner.
+    const tag = screen.getByTestId('hint-tag');
+    expect(tag.textContent).toBe('Hint');
+    expect(tag.dataset['corner']).toBe('north-east');
+    expect(tag.closest<HTMLElement>('[data-x]')?.dataset['x']).toBe('20');
+    expect(tag.closest<HTMLElement>('[data-x]')?.dataset['y']).toBe('1');
     expect(tile(3, 12).dataset['fallen']).toBe('true');
     expect(tile(3, 12).title).toBe('column 3, row 12: fallen');
     expect(tile(4, 12).dataset['fallen']).toBe('false');
-    expect(tile(11, 1).dataset['out']).toBe('true');
-    expect(tile(11, 1).title).toBe('column 11, row 1: outside the target area');
-    expect(tile(10, 1).dataset['out']).toBe('false');
-    expect(tile(10, 10).dataset['quarter']).toBe('true');
-    expect(tile(10, 11).dataset['quarter']).toBe('false');
+    expect(tile(16, 1).dataset['out']).toBe('true');
+    expect(tile(16, 1).title).toBe('column 16, row 1: outside the target area');
+    expect(tile(15, 1).dataset['out']).toBe('false');
+    expect(tile(11, 10).dataset['quarter']).toBe('true');
+    expect(tile(10, 10).dataset['quarter']).toBe('false');
+    expect(tile(11, 11).dataset['quarter']).toBe('false');
   });
 });
 
@@ -168,25 +185,30 @@ describe('panels', () => {
     ...roster,
   };
 
-  it('shows the hint, the area or size line and the Fallen cells in autumn', () => {
+  it('shows the legend, the hint, the area line and the Fallen tiles in autumn', () => {
     const view = playerView({
       hint: quarter,
       area: { left: 6, right: 15, top: 1, bottom: 20 },
       fallen: [{ x: 7, y: 2 }],
     });
     render(<PlayerPanel {...base} view={view} season="autumn" specialOn />);
+    const panel = screen.getByTestId('st-player');
+    // The legend first, above the hint and the Fallen tiles.
+    expect(panel.firstElementChild?.getAttribute('data-testid')).toBe('heat-legend');
+    expect(screen.getByTestId('heat-legend').textContent).toBe('ColdHot');
     expect(screen.getByTestId('hint').textContent).toBe(
       'Free hint: the target is in the north-west quarter (columns 1–10, rows 1–10).',
     );
     expect(screen.getByTestId('area-line').textContent).toBe(
       'Target area: columns 6–15, rows 1–20',
     );
-    expect(screen.getByTestId('fallen').textContent).toBe('Fallen cells (1)');
+    expect(screen.getByTestId('fallen').textContent).toBe('Fallen tiles (1)');
     fireEvent.click(screen.getByTestId('fallen-toggle'));
     expect(screen.getByTestId('fallen-list').textContent).toBe('(7, 2)');
     cleanup();
     render(<PlayerPanel {...base} view={playerView()} season="spring" specialOn />);
-    expect(screen.getByTestId('area-line').textContent).toBe('Grid: 20 × 20 tiles');
+    // The whole grid: no size line, the grid shows it.
+    expect(screen.queryByTestId('area-line')).toBeNull();
     expect(screen.queryByTestId('fallen-panel')).toBeNull();
   });
 
@@ -206,7 +228,7 @@ describe('panels', () => {
     expect(tile(9, 9).dataset['own']).toBe('false');
     expect(tile(9, 9).tabIndex).toBe(0);
     expect(screen.getByTestId('tile-grid').getAttribute('aria-readonly')).toBe('true');
-    expect(screen.getByTestId('fallen').textContent).toBe('Fallen cells (0)');
+    expect(screen.getByTestId('fallen').textContent).toBe('Fallen tiles (0)');
   });
 });
 
@@ -226,6 +248,8 @@ describe('result panel', () => {
       />,
     );
     expect(screen.getByTestId('secret').textContent).toBe('Target: column 12, row 10');
+    // The same square board box as the round's, filling the result's height.
+    expect(screen.getByTestId('tile-grid').parentElement?.className).toBe('st-board');
     const target = screen.getByTestId('target-tile').closest<HTMLElement>('[data-x]');
     expect([target?.dataset['x'], target?.dataset['y'], target?.dataset['step']]).toEqual([
       '12',

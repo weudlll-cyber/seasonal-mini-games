@@ -3,16 +3,16 @@
  * @module web/round
  * @brief  The focus mode's one slim game bar over a running round (O46).
  *
- * Responsibility: one row, at most 56 px on a desktop and 64 px on a phone (./focus.css): the
+ * Responsibility: one row, at most 44 px on a desktop and 52 px on a phone (./focus.css): the
  *                 season pill with the special's note (./SeasonPill), shared or individual (a
- *                 desktop only), "Wait 15 s · 9:50 left" (the round's cooldown and, once open,
- *                 the time left; the countdown's seconds are the intro's), then the buttons of
- *                 the panels on demand (./usePanels): Chat with the unread count (only with a
- *                 chat, the provider not `none`), Players with the teams, Host (the host only),
- *                 and the full-screen toggle where the browser offers it (./useFullscreen).
- *                 Each button names itself; a phone shows the icons and reads the words out.
- * Depends on:     react, @smg/contracts, ./FocusIcons, ./SeasonPill, ./roundText, ./useFullscreen,
- *                 ./usePanels
+ *                 desktop only), "9:50 left" once the round is open (the countdown's seconds
+ *                 are the intro's), then the buttons of the panels on demand (./usePanels):
+ *                 Chat with the unread count (only with a chat, the provider not `none`),
+ *                 Players with the teams, Host (the host only), and the full-screen toggle
+ *                 where the browser offers it (./useFullscreen). The waiting time is not here:
+ *                 the cooldown ring and the disabled button at the input show it (O47). Each
+ *                 button names itself; a phone shows the icons and reads the words out.
+ * Depends on:     react, @smg/contracts, ./FocusIcons, ./SeasonPill, ./useFullscreen, ./usePanels
  * Used by:        ./FocusShell
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6
  */
@@ -21,7 +21,6 @@ import type { ReactElement } from 'react';
 
 import { FocusIcon, type IconName } from './FocusIcons.js';
 import { SeasonPill } from './SeasonPill.js';
-import { seconds } from './roundText.js';
 import type { Fullscreen } from './useFullscreen.js';
 import type { PanelId, Panels } from './usePanels.js';
 
@@ -86,16 +85,11 @@ export function FocusBar(p: FocusBarProps): ReactElement {
       <span className="focus-fact focus-mode-fact">
         {state.secretMode === 'shared' ? 'Shared' : 'Individual'}
       </span>
-      <span className="focus-facts">
-        <span className="focus-fact" data-testid="round-cooldown">
-          Wait {seconds(state.cooldownMs)}
+      {time === null ? null : (
+        <span className="focus-fact" data-testid="countdown">
+          {time} left
         </span>
-        {time === null ? null : (
-          <span className="focus-fact focus-fact-time" data-testid="countdown">
-            {time} left
-          </span>
-        )}
-      </span>
+      )}
       <span className="focus-actions">
         {p.chat ? (
           <PanelButton

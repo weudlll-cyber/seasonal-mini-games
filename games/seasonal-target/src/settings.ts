@@ -4,8 +4,8 @@
  * @brief  The game's own keys of document `game.seasonal-target` and its frozen config.
  *
  * Responsibility: the grid's size (one square side, 8–30 tiles, owner O45), the answer mode
- *                 (`direction`, `distance` — the default — or `closeness`, owner O39 amended by
- *                 O43) and where Leaf Fall and halving stop (08 §3.3), beside the guess
+ *                 (`direction`, `distance` or `closeness` — the default since O53; owner O39
+ *                 amended by O43) and where Leaf Fall and halving stop (08 §3.3), beside the guess
  *                 engine's shared keys (feedback visibility, comments, trend lines, the repeat
  *                 rule) worded for tiles; reading frozen values into the config, whose width and
  *                 height are both the size. No rule across keys: every size and stop inside its
@@ -65,12 +65,13 @@ const defs: readonly SettingDef[] = [
     kind: 'enum',
     label: 'Answers',
     help:
-      'direction: cells away and the compass direction (easier); distance: only how many cells ' +
+      'direction: tiles away and the compass direction (easier); distance: only how many tiles ' +
       'away; closeness: only warm or cold (harder).',
-    default: 'distance',
+    // O53: warm/cold only by default; a host's stored choice keeps its value.
+    default: 'closeness',
     options: FEEDBACK_MODES,
     status: 'owner',
-    decision: 'O43',
+    decision: 'O53',
     spec: '08 §3.3',
     ...host,
   },

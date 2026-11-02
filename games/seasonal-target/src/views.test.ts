@@ -46,12 +46,8 @@ describe('visibility', () => {
       expect(seen?.value !== null).toBe(value);
       expect(seen?.feedback !== null).toBe(answer);
       expect(seen?.comment !== null).toBe(answer);
-      // The default answer mode (O43): the rounded distance only, with the tile's tier (O45).
-      expect(playerView(t, 'a').guesses[0]?.feedback).toEqual({
-        kind: 'distance',
-        distance: 9,
-        tier: 'cold',
-      });
+      // The default answer mode (O53): the tile's tier only (O45).
+      expect(playerView(t, 'a').guesses[0]?.feedback).toEqual({ kind: 'closeness', tier: 'cold' });
       expect(viewSchemas.player.safeParse(playerView(t, 'b')).success).toBe(true);
     }
   });

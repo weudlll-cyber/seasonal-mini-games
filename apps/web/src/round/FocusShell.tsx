@@ -113,6 +113,8 @@ export function FocusShell(p: FocusShellProps): ReactElement {
         data-testid="round-view"
         data-layout={p.layout}
         data-status={p.state.status}
+        // The open panel: on a desktop its column pushes the game aside (./round.css, O48).
+        data-panel={panels.open ?? undefined}
         onKeyDown={(e) => {
           // Escape from the bar closes the open panel too, not only from inside it.
           if (e.key === 'Escape' && panels.open !== null) panels.close();

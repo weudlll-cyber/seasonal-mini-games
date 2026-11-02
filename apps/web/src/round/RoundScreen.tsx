@@ -6,19 +6,21 @@
  * Responsibility: the round view everyone gets alike, the host included (O16), inside the
  *                 focus mode (./FocusShell, O46: the slim bar, the panels on demand, full
  *                 screen): during the countdown the intro screen (./RoundIntro, O36); once
- *                 open the stage, the space the game gets, with a roster player's input row
- *                 (the game's input with the cooldown ring, the platform's refusals under it in
- *                 plain words, or once they solved a short notice with their place, O25) or a
- *                 spectator's panel; and the right column of about 320 px on a desktop with
- *                 a roster player's game panel (range, fallen numbers or digits) on top and
- *                 the special's banner (./SpecialBanner, O35) over the round's one list of
- *                 guesses and events (./RoundLog, O20) under it; on a phone the game panel is
- *                 compact and the list shows its newest rows with "All (N)" for the whole list
- *                 as a sheet. The layout (round.css) fits the viewport without a page
- *                 scrollbar; only the lists scroll inside themselves. After the end the result
- *                 screen takes over, outside focus mode (T128).
+ *                 open the game's own panel (range, hint, fallen numbers or digits; a
+ *                 spectator's panel) in the right column, the special's banner
+ *                 (./SpecialBanner, O35) over the round's one list of guesses and events
+ *                 (./RoundLog, O20) in the main area, and a roster player's input row (the
+ *                 game's input with the cooldown ring, the platform's refusals under it in
+ *                 plain words, or once they solved a short notice with their place, O25) at
+ *                 its bottom (O50). A board game (Seasonal Target) gets the stage, the left
+ *                 column at full height, for its board (the input's `stage` box), with panel,
+ *                 list and input row in the right column (O51). On a phone the list holds the
+ *                 guesses only, with "All (N)" for the whole list as a sheet (O49). The layout
+ *                 (round.css) fits the viewport without a page scrollbar; only the lists
+ *                 scroll inside themselves. After the end the result screen takes over,
+ *                 outside focus mode (T128).
  * Depends on:     react, @smg/contracts, @smg-game/registry/web, ../live/*, ../season/*,
- *                 ../useMediaQuery, ./CooldownRing, ./FocusPanel, ./FocusShell, ./RoundIntro,
+ *                 ../useMediaQuery, ./FocusPanel, ./FocusShell, ./InputRow, ./RoundIntro,
  *                 ./RoundLog, ./RoundSide, ./ResultScreen, ./SeasonPill, ./SpecialBanner,
  *                 ./roundText, ./usePanels, ./round.css
  * Used by:        ../match/MatchPage
@@ -26,24 +28,22 @@
  */
 import { GAME_SCREENS, type GameWeb } from '@smg-game/registry/web';
 import type { MatchStandingView, RoundStateView, TeamName } from '@smg/contracts';
-import type { ActReply } from '@smg/game-sdk';
 import { useState, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 
-import { intent, serverNow } from '../live/socket.js';
+import { serverNow } from '../live/socket.js';
 import type { RoundLive } from '../live/useRound.js';
 import { useTicker } from '../live/useTicker.js';
 import { seasonColor } from '../season/season.js';
 import { useNarrow } from '../useMediaQuery.js';
-import { CooldownRing } from './CooldownRing.js';
 import { FocusPanel } from './FocusPanel.js';
 import { FocusShell } from './FocusShell.js';
+import { InputRow } from './InputRow.js';
 import { ResultScreen } from './ResultScreen.js';
 import { RoundIntro } from './RoundIntro.js';
 import { RoundLog } from './RoundLog.js';
 import { colorsOf } from './RoundSide.js';
 import { ruleOf } from './SeasonPill.js';
-import { SpecialBanner } from './SpecialBanner.js';
-import { codeText, solvedText } from './roundText.js';
+import { bannerOf, SpecialBanner } from './SpecialBanner.js';
 import type { Panels } from './usePanels.js';
 import './round.css';
 
@@ -58,72 +58,6 @@ interface RoundScreenProps {
   readonly standings: readonly MatchStandingView[];
   // The match's chat, a panel from the round bar (./FocusShell), or null without a chat.
   readonly chat: ReactNode;
-}
-
-interface PlayProps {
-  readonly state: RoundStateView;
-  readonly game: GameWeb;
-  readonly viewerKey: string | null;
-  readonly now: number;
-  readonly reload: () => Promise<void>;
-}
-
-// Whole seconds left of the viewer's cooldown in an open round, else null (T125).
-function waitOf(state: RoundStateView, endsAt: number, now: number): number | null {
-  if (state.status !== 'open' || endsAt <= now) return null;
-  return Math.ceil((endsAt - now) / 1_000);
-}
-
-// A roster player's input row with the ring, and the platform's refusals under it; once the
-// player solved (individual mode), a short notice with their place instead (O25).
-function InputRow({ state, game, viewerKey, now, reload }: PlayProps): ReactElement | null {
-  const [refusal, setRefusal] = useState<string | null>(null);
-  const me = state.roster.find((r) => r.playerKey === viewerKey) ?? null;
-  if (me === null || state.game === null) return null;
-  if (me.solved) {
-    return (
-      <p className="round-input round-solved" role="status" data-testid="solved-notice">
-        {solvedText(me.place)}
-      </p>
-    );
-  }
-  const act = async (action: unknown): Promise<ActReply> => {
-    const reply = await intent('guess', { roundId: state.roundId, ...(action as object) });
-    // The game words its own refusals; the platform's are worded here.
-    const own = reply.code === undefined ? null : game.text.code(reply.code);
-    setRefusal(reply.ok || own !== null ? null : codeText(reply.code, reply.until, serverNow()));
-    // The answer counts as arrived once the view holds the new cooldown: until then the old
-    // one would show Guess enabled for a send the server refuses (T76).
-    await reload().catch(() => undefined);
-    return reply;
-  };
-  // The cooldown exists only while the round is open.
-  const ring =
-    state.status === 'open' ? (
-      <CooldownRing endsAt={me.cooldownEndsAt} cooldownMs={state.cooldownMs} now={now} />
-    ) : null;
-  return (
-    <div className="round-input">
-      <game.Input
-        view={state.game}
-        act={act}
-        canAct={state.status === 'open' && me.cooldownEndsAt <= now}
-        frostDelayMs={state.frostDelayMs}
-        now={serverNow}
-        season={state.season}
-        specialOn={state.specialOn}
-        waitS={waitOf(state, me.cooldownEndsAt, now)}
-        names={state.names}
-        colors={colorsOf(state)}
-        ring={ring}
-      />
-      {refusal === null ? null : (
-        <p role="status" className="round-refusal">
-          {refusal}
-        </p>
-      )}
-    </div>
-  );
 }
 
 // The game's part of the main area: a roster player's range block, or the spectator's.
@@ -160,26 +94,23 @@ function GamePart(p: { readonly state: RoundStateView; readonly game: GameWeb | 
   );
 }
 
-// The round's one list: on a desktop the whole list in the right column; on a phone its
-// newest rows with an "All (N)" button that opens the whole list as a sheet (O46).
-function ListPart(p: {
+interface ViewProps {
   readonly live: RoundLive;
   readonly state: RoundStateView;
   readonly game: GameWeb | null;
   readonly viewerKey: string | null;
   readonly now: number;
   readonly panels: Panels;
-}): ReactElement {
+}
+
+// The banner and the round's one list in the main area; on a phone the list holds the guesses
+// and "All (N)" opens the whole list as a sheet (O49), a child of the round view's grid so it
+// spans its rows down to the input row.
+function ListPart(p: ViewProps): ReactElement {
+  const { state, game, now, panels } = p;
   const narrow = useNarrow();
-  const { panels } = p;
-  const log = {
-    feed: p.live.feed,
-    game: p.game,
-    state: p.state,
-    viewerKey: p.viewerKey,
-    now: p.now,
-  };
-  if (!narrow) return <RoundLog {...log} />;
+  const banner = bannerOf(p.live.feed, state, game, now);
+  const log = { feed: p.live.feed, game, state, viewerKey: p.viewerKey, now };
   const more = {
     open: panels.open === 'list',
     toggle: () => {
@@ -189,56 +120,62 @@ function ListPart(p: {
   };
   return (
     <>
-      <RoundLog {...log} more={more} />
-      <FocusPanel
-        title="Guesses and events"
-        open={more.open}
-        onClose={panels.close}
-        testId="list-sheet"
-      >
-        <RoundLog {...log} />
-      </FocusPanel>
+      <section className="smg-panel round-main" aria-label="The round">
+        <SpecialBanner banner={banner} />
+        <RoundLog {...log} hide={banner?.key ?? null} {...(narrow ? { more } : {})} />
+      </section>
+      {narrow ? (
+        <FocusPanel
+          title="Guesses and events"
+          open={more.open}
+          onClose={panels.close}
+          testId="list-sheet"
+        >
+          <RoundLog {...log} />
+        </FocusPanel>
+      ) : null}
     </>
   );
 }
 
-// An open round in focus mode: a roster player's game panel at the top of the right column
-// with the list under it, and their input row on the stage, the space the game gets; a
-// spectator's panel takes the stage itself (O46).
-function PlayView(p: {
-  readonly live: RoundLive;
-  readonly state: RoundStateView;
-  readonly game: GameWeb | null;
-  readonly viewerKey: string | null;
-  readonly now: number;
-  readonly panels: Panels;
-}): ReactElement {
-  const { state, game, now } = p;
+// Where the game's parts go: a roster player's game (or null for a spectator), whether it is
+// a board game, and what the right column's panel shows (null: a board game's spectator,
+// who watches on the stage).
+function partsOf(state: RoundStateView, game: GameWeb | null) {
   const playing = state.role === 'player' && game !== null ? game : null;
+  const board = game?.layout === 'board';
+  const watching = playing === null ? <GamePart state={state} game={game} /> : null;
+  const panel =
+    playing !== null ? <GamePart state={state} game={playing} /> : board ? null : watching;
+  return { playing, board, watching, panel };
+}
+
+// An open round in focus mode: the game's panel in the right column (a spectator's there too,
+// or on a board game's stage), the banner and the list in the main area, a roster player's
+// input row under it; a board game's board on the stage (O50, O51).
+function PlayView(p: ViewProps): ReactElement {
+  const [stage, setStage] = useState<HTMLElement | null>(null);
+  const { playing, board, watching, panel } = partsOf(p.state, p.game);
   return (
     <>
-      {playing === null ? null : (
-        <div className="smg-panel round-range">
-          <GamePart state={state} game={playing} />
+      {panel === null ? null : <div className="smg-panel round-range">{panel}</div>}
+      <ListPart {...p} />
+      {board ? (
+        <div className="round-stage" ref={setStage}>
+          {watching}
         </div>
+      ) : null}
+      {/* The board game's input waits for its stage, so the board never draws in the column. */}
+      {playing === null || (board && stage === null) ? null : (
+        <InputRow
+          state={p.state}
+          game={playing}
+          viewerKey={p.viewerKey}
+          now={p.now}
+          reload={p.live.reload}
+          stage={board ? stage : null}
+        />
       )}
-      <section className="smg-panel round-main" aria-label="The round">
-        <SpecialBanner feed={p.live.feed} state={state} game={game} now={now} />
-        <ListPart {...p} />
-      </section>
-      <div className="round-stage">
-        {playing === null ? (
-          <GamePart state={state} game={game} />
-        ) : (
-          <InputRow
-            state={state}
-            game={playing}
-            viewerKey={p.viewerKey}
-            now={now}
-            reload={p.live.reload}
-          />
-        )}
-      </div>
     </>
   );
 }

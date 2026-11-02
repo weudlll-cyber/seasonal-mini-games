@@ -110,7 +110,7 @@ describe('the leaderboard', () => {
     expect(screen.getByTestId('board-around').querySelector('.round-you')?.textContent).toBe(
       '60Anna (you)2123',
     );
-    expect(rowsOf('team-board')).toEqual(['1 Winter44']);
+    expect(rowsOf('team-board')).toEqual(['1 Team Winter44']);
     expect(screen.getByAltText('Winter')).toBeTruthy();
   });
 

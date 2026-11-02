@@ -4,8 +4,8 @@
  * @brief  Every sentence Seasonal Bomb Defusal puts on a screen, in plain English.
  *
  * Responsibility: the game's refusals (02c §4); one line per room event for the round's list
- *                 (the shared Spring Herald hint, the wires Leaf Fall marks harmless and the
- *                 last fall, O42) and the banner when a fall strikes (02c §8, O35); the
+ *                 (the wires Leaf Fall marks harmless and the last fall, O42; the hint shows
+ *                 once, in the wire panel) and the banner when a fall strikes (02c §8, O35); the
  *                 list's guess rows from the player or spectator view: the sequence as
  *                 "red → blue → …" where the view shows it, else "cut a sequence", and the
  *                 answer in words ("The first 2 cuts were right.", "Boom!" with the icon,
@@ -63,9 +63,9 @@ function eventText(e: BdEvent): FeedLine | null {
       return { ...roundLine(harmlessText(e.wires)), special: true };
     case 'HarmlessOver':
       return { ...roundLine('Leaf Fall: every harmless wire is marked.'), special: true };
-    // An individual hint is the player's own; the platform's row says everyone got one.
+    // The hint shows once, in the wire panel; the platform's row says that it came (O47).
     case 'HintGiven':
-      return e.playerId === null ? roundLine(`Spring Herald: cut ${e.wire} first.`) : null;
+      return null;
     // Sequences are rows of their own, from the view (`guessRows`).
     case 'GuessFed':
     case 'FeedbackGiven':
@@ -126,7 +126,7 @@ function runnerUp(view: unknown, names: Readonly<Record<string, string>>): strin
   const name = names[miss.playerId] ?? miss.playerId;
   const right =
     miss.correct === 1 ? 'the first cut right' : `the first ${String(miss.correct)} cuts right`;
-  return `Closest: ${name}, ${right} (${sequenceText(miss.value)}).`;
+  return `Closest miss besides the winner: ${name}, ${right} (${sequenceText(miss.value)}).`;
 }
 
 // The intro's line (02c §3): "Shared bomb: 6 wires, 4 cuts".

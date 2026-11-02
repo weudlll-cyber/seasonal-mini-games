@@ -5,8 +5,8 @@
  *
  * Responsibility: the game's refusals, the Spring Herald hint (and its highlighted "Free
  *                 hint: the number is even." in the range block, O35), one line per room event for
- *                 the round's list (02 §12; 03 §2): Leaf Fall with the fallen numbers named,
- *                 the shared hint and halving, and the shorter banner when Leaf Fall or
+ *                 the round's list (02 §12; 03 §2): Leaf Fall with the fallen numbers named and
+ *                 halving (the hint shows once, in the range block, O47), and the shorter banner when Leaf Fall or
  *                 halving strikes ("Leaf Fall: 10 numbers fell.", O35); the list's guess rows from the player or
  *                 spectator view, own guesses and the others' at the round's visibility, with
  *                 answers and comments as far as the view carries them (O20, O21); and the
@@ -36,11 +36,6 @@ function hintBody(hint: HintView): string {
   return `the number is between ${formatNumber(hint.low)} and ${formatNumber(hint.high)}.`;
 }
 
-function hintText(hint: HintView): string {
-  const body = hintBody(hint);
-  return `${body.charAt(0).toUpperCase()}${body.slice(1)}`;
-}
-
 // The range block's highlighted line for the whole round (O35).
 export const freeHint = (hint: HintView): string => `Free hint: ${hintBody(hint)}`;
 
@@ -67,8 +62,9 @@ function eventText(e: GtnEvent): FeedLine | null {
     // and the Fallen numbers panel are where they are named (T54).
     case 'NumbersRemoved':
       return { ...roundLine(`Leaf Fall: ${listOf(e.numbers)} fell.`), special: true };
+    // The hint shows once, in the range block; the platform's row says that it came (O47).
     case 'HintGiven':
-      return e.playerId === null ? roundLine(`Spring Herald: ${hintText(e.hint)}`) : null;
+      return null;
     case 'RangeHalved':
       if (e.range === null)
         return roundLine(`Halving: every range is now ${formatNumber(e.size)} numbers.`);
@@ -113,16 +109,16 @@ function guessRows(view: unknown): readonly GuessRow[] {
   return [...(v.guesses ?? []).map((g) => row(g, null)), ...v.log.map((g) => row(g, g.playerId))];
 }
 
-// The closest miss on the shared result (O22): "bot-01 missed by just 1 (92)." up to 2 away.
+// The closest miss on the shared result (O22), naming that the winner is not counted:
+// "Closest miss besides the winner: bot-01, missed by just 1 (92)." up to 2 away.
 function runnerUp(view: unknown, names: Readonly<Record<string, string>>): string | null {
   const miss = (view as Partial<ResultView>).closestMiss ?? null;
   if (miss === null) return null;
   const name = names[miss.playerId] ?? miss.playerId;
   const n = formatNumber(miss.distance);
   const guess = formatNumber(miss.value);
-  return miss.distance <= 2
-    ? `${name} missed by just ${n} (${guess}).`
-    : `Closest miss: ${name}, ${n} away (${guess}).`;
+  const how = miss.distance <= 2 ? `missed by just ${n}` : `${n} away`;
+  return `Closest miss besides the winner: ${name}, ${how} (${guess}).`;
 }
 
 // The intro's line (O36): the mode and the range, or that the range is hidden (O19).
