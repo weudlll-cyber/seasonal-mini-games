@@ -11,7 +11,8 @@
  *                 disagree (T124: measured, they did for 250–310 ms after each event). A frame with
  *                 `late` brings Frost's held events; in a Frost round one more load follows
  *                 each frame or reconnect after the delay, so an answer released while the
- *                 page was away still shows. An answer for a round the page no longer shows is
+ *                 page was away still shows; a round counting down loads again just after it
+ *                 opens, frame or not (T127). An answer for a round the page no longer shows is
  *                 dropped (T81). The client renders; the server decides.
  * Depends on:     react, @smg/contracts (shapes), ../shell/http, ./socket
  * Used by:        ../match/MatchPage, ../round/RoundScreen
@@ -69,6 +70,17 @@ function useShownState(roundId: string | null) {
 const heldBy = (feed: readonly FeedItem[], state: RoundStateView | null): readonly FeedItem[] =>
   state === null ? [] : feed.filter((item) => item.s <= state.seq);
 
+// A frame's events for the feed; a room frame and the player's own are told apart in the key.
+const itemsOf = (frame: RoundFrameView): FeedItem[] =>
+  frame.events
+    .filter((e) => e.event !== null)
+    .map((e) => ({
+      key: `${String(e.s)}${frame.s === undefined ? 'p' : 'r'}`,
+      s: e.s,
+      at: e.at,
+      event: e.event,
+    }));
+
 export function useRound(roundId: string | null): RoundLive {
   const { state, take, clear } = useShownState(roundId);
   const [feed, setFeed] = useState<readonly FeedItem[]>([]);
@@ -99,14 +111,7 @@ export function useRound(roundId: string | null): RoundLive {
     const socket = gameSocket();
     const onFrame = (frame: RoundFrameView): void => {
       if (frame.roundId !== roundId) return;
-      const items = frame.events
-        .filter((e) => e.event !== null)
-        .map((e) => ({
-          key: `${String(e.s)}${frame.s === undefined ? 'p' : 'r'}`,
-          s: e.s,
-          at: e.at,
-          event: e.event,
-        }));
+      const items = itemsOf(frame);
       setFeed((f) => [...items.reverse(), ...f].slice(0, FEED_LIMIT));
       pending.current ??= window.setTimeout(() => {
         pending.current = null;
@@ -127,5 +132,27 @@ export function useRound(roundId: string | null): RoundLive {
       }
     };
   }, [roundId, reloadAndFollow, clear]);
+  useOpening(state, reload);
   return { state, feed: heldBy(feed, state), reload };
+}
+
+// A round counting down loads its state again just after it opens, so the intro never stays
+// at "Opens in 0 s" when the frame of the opening was missed (seen in CI in night 4 and once
+// locally in night 5, the server having opened the round on time; T127).
+function useOpening(state: RoundStateView | null, reload: () => Promise<void>): void {
+  const opensAt = state?.status === 'countdown' ? (state.opensAt ?? null) : null;
+  useEffect(() => {
+    if (opensAt === null) return;
+    const timer = window.setTimeout(
+      () => {
+        void reload();
+      },
+      Math.max(0, opensAt - Date.now()) + 750,
+    );
+    return () => {
+      window.clearTimeout(timer);
+    };
+    // Each new state re-arms it: a load that still found the countdown (clocks apart) tries
+    // again 0.75 s later, until the round is open.
+  }, [opensAt, state, reload]);
 }

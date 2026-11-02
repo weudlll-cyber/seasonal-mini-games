@@ -72,7 +72,7 @@ To confirm after the owner has played:
 **All games (game choice, owner decision 41)**
 
 - Owner decision 40 says the host chooses the explosion's waiting time "per match"; like Seasonal Target's feedback mode (O39) it is built as the host's round setting, which the round form keeps from round to round (spec conflict, as for O39).
-- To look at (found in CI, night 4): a player who goes from one match with a running round straight to another match in the same tab, by its address, may see the new round's intro stop at "Opens in 0 s" until the page is reloaded. Not reproduced locally; the e2e journeys reload, as before.
+- To look at (found in CI, night 4; once locally in night 5): a round's intro could stay at "Opens in 0 s" because the client missed the frame of the opening, while the server opened the round on time (night-5 probe). Since T127 the client loads the state again after the opening time, so a player is no longer stuck; why the frame was missed is not found yet (it happened right after a second Quick Test of the same player).
 
 ## Spec conflicts
 

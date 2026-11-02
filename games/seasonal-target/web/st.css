@@ -46,7 +46,7 @@
 .st-map {
   /* A desktop's board column: the screen less the app bar, the round's top bar and the input
      controls under the map (T123). */
-  --st-height: min(calc(100dvh - 20rem), 820px);
+  --st-height: min(calc(100dvh - 21.5rem), 820px);
   display: block;
   justify-self: center;
   width: min(100%, calc(var(--st-height) * var(--st-ratio, 1)));

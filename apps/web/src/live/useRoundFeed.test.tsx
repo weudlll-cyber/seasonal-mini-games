@@ -72,7 +72,31 @@ describe('the round hook keeps the list and the panels together', () => {
     });
     expect(result.current.state?.seq).toBe(5);
   });
+});
 
+describe('the round hook leaves the countdown by itself', () => {
+  it('loads the state again after the opening time, with no frame of it (T127)', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const { result } = renderHook(() => useRound('r1'));
+    const opensAt = Date.now() + 2_000;
+    await act(async () => {
+      waiting.shift()?.({ ...state(2), status: 'countdown', opensAt });
+      await Promise.resolve();
+    });
+    expect(waiting).toHaveLength(0);
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(2_800);
+    });
+    expect(waiting.length).toBeGreaterThan(0);
+    await act(async () => {
+      answerNext(6);
+      await Promise.resolve();
+    });
+    expect(result.current.state?.status).toBe('open');
+  });
+});
+
+describe('the round hook keeps the newest state', () => {
   it('drops a state answer older than the one shown', async () => {
     const { result } = renderHook(() => useRound('r1'));
     void result.current.reload();

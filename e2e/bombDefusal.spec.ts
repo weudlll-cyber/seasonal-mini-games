@@ -63,6 +63,9 @@ test('journey 21: Seasonal Bomb Defusal, shared through the lobby and individual
       gameId: 'bomb-defusal',
       mode: 'individual',
       season: 'autumn',
+      // Eight wires and three cuts: two sequences leave at least two wires outside both, so
+      // Leaf Fall has wires to mark (O42 counts only wires outside every sequence).
+      settings: { 'bomb.wires': 8, 'bomb.cuts': 3 },
     });
     codes.push(started.matchCode);
     await expect(p.page.getByTestId('special-row').first()).toHaveText(
