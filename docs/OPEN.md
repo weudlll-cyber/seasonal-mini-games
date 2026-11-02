@@ -68,6 +68,7 @@ To confirm after the owner has played:
 - 02d §8.4: halving halves the longer side (width on a tie); `halving.minCells` default 16; the map zooms to the target area.
 - 02d §9: closest miss by smallest distance, wording "just missed — the next cell" when touching.
 - 02d §11: map layout (map left, list right on desktop; map full width on a phone), no zoom, arrow cross, typed coordinates on desktop only.
+- To look at (night-5 screenshot review): on a 390 × 844 phone the list above the map has room for two rows, because the full-width map and its controls take the rest of the one screen. A smaller map would show more rows but makes the cells harder to tap; left as built until the owner has played.
 
 **All games (game choice, owner decision 41)**
 

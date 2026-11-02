@@ -11,7 +11,7 @@ Branch `feat/guess-games` (same thread, from `a02e9cc`). Nothing goes to `master
 | N1 owner decisions O42–O44       | done  | O42 Bomb Leaf Fall, O43 three Target modes, O44 game boards; docs, OPEN closed, BACKLOG; verify green                           | the commit that adds this row |
 | N2 stale displays                | done  | Cause measured and fixed once in the shared round hook (T124)                                                                   | `4ef175f`                     |
 | N3 display and layout defects    | done  | Shared fixes by the lead (Frost banner, Wait buttons, header, event rows, gutter, phone rows), per-game fixes by four subagents | the commit that adds this row |
-| N4 checks and fresh play-through | open  | —                                                                                                                               | —                             |
+| N4 checks and fresh play-through | done  | verify, e2e 1–23 and CI green; 108 light/dark pairs in `reports/guess-games-2/`; review list below                              | `77c73ba`, this commit        |
 | N5 handover                      | open  | —                                                                                                                               | —                             |
 
 **Needs the owner:** nothing yet.
@@ -49,6 +49,26 @@ Per game (four subagents in parallel, one folder each):
 - Fix (shared, once for all four games, T124): a feed event is shown only once the loaded state holds it (`s ≤ state.seq`, the field the state view already had), and an older state answer is dropped. After the fix the probe found 0 disagreements in 660 samples.
 - Tests: `apps/web/src/live/useRoundFeed.test.tsx` new (an event waits for its state; a crossing older answer is dropped); feed fixtures of `round.test.tsx` and `banner.test.tsx` carry the event's place.
 - Lines: useRound.ts +29/−2; useRoundFeed.test.tsx new, 93 lines; round.test.tsx ±2; banner.test.tsx ±1.
+
+### N4 — checks and fresh play-through
+
+- `pnpm verify` green (after moving the new board test into its own block: one function had grown past 60 lines). Authorization matrix: no new intent or route; the board routes' new `game` query is read-only and validated (400 on a malformed id); the matrix rows for the three board routes stand.
+- E2E in Chromium, the whole suite (journeys 1–23): first run 28/30 — journey 21's individual autumn round had no wire outside both sequences (6 wires, 4 cuts, two players), which O42 rightly leaves unmarked, so the journey now plays it with 8 wires and 3 cuts; journey 22's first round was 731 px high at 1280 × 720 with Seasonal Target's new legend, so the map gives 1.5 rem back. Then the intro of journey 22's second round stayed at "Opens in 0 s" once: the server had opened the round on time (probe), the client had missed the opening's frame — the night-4 CI symptom — so the client now loads the state again after `opensAt` (T127, test). Second run: 30/30.
+- CI: `974d280` failed on journeys 21 and 22 (fixed in `9dcaa58`); `9dcaa58` failed on journeys 20 and 21 because of the bots' luck: a bot defused a 6-wire, 4-cut bomb with its first cut, and with a 3 s cooldown the bot had guessed every digit before the first Leaf Fall (O37 leaves those standing). Journey 21 now plays 8 wires and 6 cuts, journey 20's individual round a 30 s cooldown (`77c73ba`). CI green with `77c73ba` (verify, e2e in Chromium, Firefox and WebKit, security, docs).
+- Play-through `reports/guess-games-2/` (nothing in `reports/guess-games/` replaced): the four games, every season, shared and individual, at 1280 × 720, 1920 × 1080 and 390 × 844; light and dark of each pair from the same moment (the page's text compared before and after the theme switch, retaken if it differed — none did); screenshots with animations disabled, so no shot catches a colour mid-transition; Seasonal Target once per answer mode; Bomb Defusal in autumn after both harmless wires were marked. 108 pairs, 216 shots; no page scrollbar; the season pill's computed text contrast 5.49–9.11 : 1 (`play-through.txt`).
+
+**Review list** (every shot looked at in groups, a sample one by one):
+
+| Found                                                                             | Where                      | State                                                                                                                 |
+| --------------------------------------------------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Phone header without the "·" of "Wait 15 s · 9:50 left"                           | all games, 390 × 844       | fixed (`round.css`)                                                                                                   |
+| With the "·" the season pill was cut to "Autu…"                                   | all games, 390 × 844       | fixed: narrower Host button, tighter gaps, a pill that never shrinks; checked in every season (no cut, no overflow)   |
+| The banner said "the red wire is harmless" while the newest row said every one is | Bomb Defusal, autumn       | fixed: the banner names the final event                                                                               |
+| Column and Row fields cut their value ("2!" for 25)                               | Seasonal Target, 390 × 844 | fixed: narrow padding, centred                                                                                        |
+| A disabled send button looked grey-blue in one shot                               | Seasonal Target, 390 × 844 | not a defect: the live colours are #4f5663 on #f1f3f6; the shot had caught a transition; shots now disable animations |
+| A comment speaks of a map in Guess The Number ("Wrong corner of the map.")        | Guess The Number           | left: seasonal enough; listed for the owner's reading of the catalogues                                               |
+| On a phone in Seasonal Target the list shows two rows above the map               | Seasonal Target, 390 × 844 | needs the owner: the map takes the height the screen rule asks for; a smaller map is a trade-off (OPEN)               |
+| At 1920 × 1080 the round view keeps its column width, wide margins left and right | all games                  | left: nothing is cramped there; the width is the platform's reading width                                             |
 
 ## Night 4 (2026-11-01)
 
