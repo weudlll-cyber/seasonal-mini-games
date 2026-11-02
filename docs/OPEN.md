@@ -74,6 +74,7 @@ Built as described in 02 §12 and DECISIONS T128–T132; to confirm after the ow
 
 - The result page reached at the end of a round comes with the normal header at once, because it shows beside the next round's waiting area (T128).
 - The round bar: the season pill is the special's button (a small "i" on a desktop); "Wait 15 s · 9:50 left" on two short lines on a phone; Chat, Players, Host and Full screen as icons with their words on a desktop, icons only on a phone.
+- The light/dark toggle lives in the app header, which focus mode hides; the theme chosen before the round stays, and O46's bar lists no toggle, so none was added. A sixth button would not fit the phone's bar beside Host and Full screen; inside the Players panel it could.
 - A phone shows the newest 3 rows of the list with "All (N)" (the owner's number); for a list game (Guess The Number, Safecracker, Bomb Defusal) the stage under them is then partly empty, while Seasonal Target's grid takes it.
 - To look at: on a desktop a list game's stage holds only its input row in the middle (the range and fallen panels are in the right column, as O46 asks), so the left half of the screen is mostly empty for Guess The Number; a larger input or the range bar on the stage would use it.
 - Guess The Number's Fallen numbers open from their "Fallen (N)" button as a sheet on a desktop too (formerly chips under the bar there), so the 320 px column keeps room for 12 guess rows (T132).

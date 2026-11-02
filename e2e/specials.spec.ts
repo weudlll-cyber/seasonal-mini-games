@@ -21,6 +21,7 @@ import {
   NUMBER,
   ownRows,
   person,
+  roundOpen,
   shownNumber,
   type Person,
 } from './play.js';
@@ -38,7 +39,7 @@ async function quickRound(p: Person, body: Record<string, unknown>): Promise<str
     ...body,
   });
   await p.page.goto(`./#/match/${started.matchCode}`);
-  await expect(p.page.getByTestId('round-banner')).toBeVisible();
+  await roundOpen(p.page);
   return started.matchCode;
 }
 

@@ -145,14 +145,17 @@ export async function hostRound(
   await roundStarted(host.page);
 }
 
-// The round started: the intro counts down (O36), or the round is already open.
+// The round started: its view in focus mode, counting down (the intro, O36) or already open.
 export async function roundStarted(page: Page): Promise<void> {
-  await expect(page.getByTestId('round-intro').or(page.getByTestId('round-banner'))).toBeVisible();
+  await expect(page.getByTestId('round-banner')).toBeVisible();
 }
 
-// The round is open: the intro (10 s by default, OPEN (ab)) has given way to the top bar.
+// The round is open: the intro (10 s by default, OPEN (ab)) has given way to the round itself;
+// the round bar stays from the countdown on (O46).
 export async function roundOpen(page: Page): Promise<void> {
-  await expect(page.getByTestId('round-banner')).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('[data-testid="round-view"][data-status="open"]')).toBeVisible({
+    timeout: 20_000,
+  });
 }
 
 // The viewer's own rows of the round's one guess list, newest first (O20).
