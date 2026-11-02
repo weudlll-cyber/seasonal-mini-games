@@ -72,7 +72,7 @@ export const COMMENT_LINES: CommentLines = {
     'A long walk from here.',
     'Nope, nothing warm about that.',
     'Some distance to cover yet.',
-    'Wrong corner of the map.',
+    'Wrong end of the number line.',
     'The number is not impressed. Yet.',
     'Out in the cold, but the door’s still open.',
     'Keep your gloves on.',
