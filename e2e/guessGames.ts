@@ -22,10 +22,19 @@ type Season = 'spring' | 'summer' | 'autumn' | 'winter';
 
 // The form: the game, the seed `acorn`, a season, fast specials (on by default), from the
 // lobby (on by default); then the host's Start. The match code.
-export async function fromLobby(p: Person, game: string, season: Season): Promise<string> {
+export async function fromLobby(
+  p: Person,
+  game: string,
+  season: Season,
+  // The game's own fields to fill, by label (e.g. a longer search, so a bot cannot hit the
+  // secret with its first guess).
+  fields: Readonly<Record<string, string>> = {},
+): Promise<string> {
   await p.page.goto('./#/quick-test');
   const form = p.page.getByTestId('quick-test');
   await form.getByTestId('quick-game').selectOption(game);
+  for (const [label, value] of Object.entries(fields))
+    await form.getByLabel(label, { exact: true }).and(form.locator('input')).fill(value);
   await expect(form.getByTestId('quick-lobby')).toBeChecked();
   await form.getByTestId('seed').fill('acorn');
   // One bot: three could solve a short search with their first guesses, before the player.

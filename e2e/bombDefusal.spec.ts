@@ -19,7 +19,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { direct, fitsBoth, fromLobby, WIDE } from './guessGames.js';
 import { abortMatch, closeAll, ownRows, person, roundOpen } from './play.js';
 
-const WIRES = ['red', 'blue', 'yellow', 'green', 'white', 'black'];
+const WIRES = ['red', 'blue', 'yellow', 'green', 'white', 'black', 'orange', 'purple'];
 
 const tap = (page: Page, wire: string) => page.getByTestId(`wire-${wire}`).click();
 
@@ -30,8 +30,10 @@ test('journey 21: Seasonal Bomb Defusal, shared through the lobby and individual
   const p = await person(browser, 'player-1', WIDE);
   const codes: string[] = [];
   try {
-    codes.push(await fromLobby(p, 'bomb-defusal', 'spring'));
-    await expect(p.page.getByTestId('intro-secret')).toHaveText('Shared bomb: 6 wires, 4 cuts');
+    // Eight wires, six cuts: after Spring's hint 2,520 orders are left, so the bot does not
+    // defuse the bomb with its first cut (it did with 6 wires and 4 cuts, 60 orders, in CI).
+    codes.push(await fromLobby(p, 'bomb-defusal', 'spring', { Wires: '8', Cuts: '6' }));
+    await expect(p.page.getByTestId('intro-secret')).toHaveText('Shared bomb: 8 wires, 6 cuts');
     await roundOpen(p.page);
     const hint = await p.page.getByTestId('hint').textContent();
     const first = WIRES.find((w) => hint?.includes(w)) ?? '';
@@ -44,8 +46,8 @@ test('journey 21: Seasonal Bomb Defusal, shared through the lobby and individual
     await expect(slots).not.toContainText('blue');
     await p.page.getByRole('button', { name: 'Clear' }).click();
     await expect(slots).not.toContainText('red');
-    // A wrong first cut: four wires, none of them the hinted first one first.
-    const order = WIRES.filter((w) => w !== first).slice(0, 4);
+    // A wrong first cut: six wires, the hinted first one not first.
+    const order = WIRES.filter((w) => w !== first).slice(0, 6);
     for (const w of order) await tap(p.page, w);
     await p.page.getByTestId('cut-button').click();
     await expect(ownRows(p.page).first().locator('.round-answer')).toContainText('Boom!', {

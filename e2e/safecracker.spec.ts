@@ -51,6 +51,9 @@ test('journey 20: Seasonal Safecracker, shared through the lobby and individual'
       gameId: 'safecracker',
       mode: 'individual',
       season: 'autumn',
+      // Outside shared `full` only digits nobody has guessed can fall (O37): with the bot
+      // guessing every 3 s they ran out before the first fall in CI; every 30 s they do not.
+      cooldownS: 30,
     });
     codes.push(started.matchCode);
     const fell = p.page.getByTestId('special-row').first();
