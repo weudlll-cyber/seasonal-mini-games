@@ -3,7 +3,8 @@
  * @module web/round
  * @brief  The focus mode's slim bar and its panels on demand: drawers and sheets (O46).
  *
- * Responsibility: the bar in one row, at most 56 px high on a desktop and 64 px on a phone
+ * Responsibility: the app header hidden and the page's column as wide as the screen while
+ *                 the focus mode lasts; the bar in one row, at most 56 px high on a desktop and 64 px on a phone
  *                 (44 px controls): the season pill, the facts "Wait 15 s · 9:50 left", the
  *                 panel buttons with their icons (and their words on a desktop) and the
  *                 unread badge; a panel (./FocusPanel) is a drawer of about 360 px from the right
@@ -14,6 +15,23 @@
  *                 from @smg/ui tokens, so light and dark both work.
  * Spec:           docs/spec/02-game-guess-the-number.md §12
  */
+/* A running round in focus mode (`.focus-mode` on the match page): no app header at all, the
+   round's own bar instead, and the round view as wide as the screen (../shell/shell.css). */
+#root:has(.focus-mode) .shell-bar {
+  display: none;
+}
+
+.shell-main:has(.focus-mode) {
+  max-width: none;
+  padding-block: var(--space-1);
+}
+
+@media (max-width: 640px) {
+  .shell-main:has(.focus-mode) {
+    padding: var(--space-1) 0.5rem;
+  }
+}
+
 .focus-bar {
   grid-area: bar;
   display: flex;
