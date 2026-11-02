@@ -153,7 +153,9 @@ test('journey 27: Seasonal Target in focus mode, the loupe on a phone', async ({
       await expect(page.getByTestId('selected')).toHaveText('Selected: column 16, row 14');
       await page.getByTestId('guess-button').click();
       await expect(loupe).toBeHidden();
-    }, // The bot finds a 20 × 20 target within a few guesses: a long cooldown keeps the round open.
-    { cooldownS: 20 },
+    },
+    // The bot found a 20 × 20 target by its distances within two cooldowns of 20 s (CI): on a
+    // 30 × 30 grid with warm/cold only it needs many more guesses, so the round stays open.
+    { cooldownS: 10, settings: { 'target.size': 30, 'target.feedback': 'closeness' } },
   );
 });
