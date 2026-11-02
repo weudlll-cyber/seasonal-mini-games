@@ -105,7 +105,7 @@ function TopBar(p: {
         <span className="round-fact-short">Wait </span>
         {seconds(state.cooldownMs)}
       </span>
-      <span className="round-fact" data-testid="countdown">
+      <span className="round-fact round-fact-time" data-testid="countdown">
         {timeText(state, p.now)} left
       </span>
       {p.hostMenu}

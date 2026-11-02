@@ -277,8 +277,11 @@
     font-size: calc(var(--st-m, 4) * 0.75px);
   }
 
+  /* Narrow padding: the shared input's would leave no room for "100" (night-5 review). */
   .st-field input {
     width: 3.5rem;
+    padding-inline: 0.3rem;
+    text-align: center;
   }
 
   .st-legend {

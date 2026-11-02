@@ -73,9 +73,12 @@ function eventText(e: BdEvent): FeedLine | null {
   }
 }
 
+// The banner says what the newest row says: a marked wire, or that every one is marked (the
+// banner fell back to the older wire's line before; night-5 review).
 function banner(event: unknown): string | null {
   const e = event as BdEvent;
-  return e.type === 'WiresHarmless' ? harmlessText(e.wires) : null;
+  if (e.type === 'WiresHarmless') return harmlessText(e.wires);
+  return e.type === 'HarmlessOver' ? 'Leaf Fall: every harmless wire is marked.' : null;
 }
 
 // "The first cut was right.", "The first 2 cuts were right." (02c §5.1).

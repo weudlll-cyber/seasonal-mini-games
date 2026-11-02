@@ -234,7 +234,7 @@
      button beside the chip says what it is and does. The bar's parts sit closer, so the
      chip fits beside the time and the Host button. */
   .round-top {
-    column-gap: 0.3rem;
+    column-gap: 0.15rem;
   }
 
   .round-season {
@@ -254,6 +254,21 @@
 
   .round-fact {
     font-size: var(--font-size-small);
+  }
+
+  /* "Wait 15 s · 9:50 left": the two facts read as one phrase. */
+  .round-fact-time::before {
+    content: '· ';
+  }
+
+  /* Room for the phrase without cutting the season's name: a narrower Host button (still
+     44 px high) and a pill that never shrinks. */
+  .round-top .host-menu-button {
+    padding-inline: 0.6rem;
+  }
+
+  .round-season {
+    flex: none;
   }
 
   .round-special,

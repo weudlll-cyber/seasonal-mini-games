@@ -165,7 +165,9 @@ describe('the game text: events and results', () => {
     expect(bdText.banner?.({ type: 'WiresHarmless', index: 1, wires: ['orange'] })).toBe(
       'Leaf Fall: the orange wire is harmless.',
     );
-    expect(bdText.banner?.({ type: 'HarmlessOver', index: 2 })).toBeNull();
+    expect(bdText.banner?.({ type: 'HarmlessOver', index: 2 })).toBe(
+      'Leaf Fall: every harmless wire is marked.',
+    );
     expect(bdText.code('WIRE_HARMLESS')).toBe(
       'That wire is harmless — it is not part of the sequence.',
     );
