@@ -12,9 +12,24 @@ Branch `feat/guess-games` (same thread, from `a02e9cc`). Nothing goes to `master
 | N2 stale displays                | done  | Cause measured and fixed once in the shared round hook (T124)                                                                   | `4ef175f`                     |
 | N3 display and layout defects    | done  | Shared fixes by the lead (Frost banner, Wait buttons, header, event rows, gutter, phone rows), per-game fixes by four subagents | the commit that adds this row |
 | N4 checks and fresh play-through | done  | verify, e2e 1–23 and CI green; 108 light/dark pairs in `reports/guess-games-2/`; review list below                              | `77c73ba`, this commit        |
-| N5 handover                      | open  | —                                                                                                                               | —                             |
+| N5 handover                      | done  | dev servers restarted on the final code; how to try each game below                                                             | this commit                   |
 
-**Needs the owner:** nothing yet.
+**Needs the owner:** play the four games (below), then confirm or change the proposals in OPEN "To confirm after the owner has played" and the phone-map item; nothing blocks.
+
+### N5 — handover
+
+- Branch `feat/guess-games`; the code is at `f82f3fd` (CI green with the same code at `77c73ba`); the commit that adds this section changes only this sheet. Dev servers restarted on it: API 3910, web 5410, admin 5411, all answering 200.
+- Quick Test: <http://127.0.0.1:5410/#/quick-test>. For every game: Game as named below, Seed `acorn`, a Season of your choice, **Fast specials** on, **Start from the lobby** on; in the lobby, Start round from the Host menu.
+
+| Game                  | What to try                                                                                                                                                                                              |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Guess The Number      | Autumn: the range bar's merged hatched gaps on a phone; Winter: the Frost banner at the start and "answer arriving… N s" on your rows                                                                    |
+| Seasonal Safecracker  | Spring: the free digit; Autumn: fallen digits in the strip and "That digit has fallen."; the counts in words ("1 wrong place", "2 wrong places")                                                         |
+| Seasonal Bomb Defusal | Autumn: one wire marked per fall until "Leaf Fall: every harmless wire is marked."; a wrong first cut: "Boom!" and the longer wait                                                                       |
+| Seasonal Target       | **Answers** in the round settings, all three: `direction` (cells away and the compass), `distance` (the default, cells away only), `closeness` (warm/cold only); dots in each player's colour with names |
+
+- Leaderboards: the Game picker ("All games" first) at <http://127.0.0.1:5410/#/leaderboard>.
+- Proposals still to confirm: OPEN "To confirm after the owner has played" — the rules of Safecracker, Bomb Defusal and Seasonal Target as built from the architect's rules (owner decision 38), the explosion's waiting time as a round setting (O40), the closeness comment thresholds (z), and the new phone-map item from the N4 review.
 
 ### N1 — owner decisions O42–O44
 
