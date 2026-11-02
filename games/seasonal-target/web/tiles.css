@@ -122,9 +122,10 @@
   color: var(--st-ink);
 }
 
-/* The number, the found glyph and "…": scaled with the tile. */
+/* The number, the found glyph and "…": scaled with the tile, as large as "13↘" still fits
+   inside the own tile's frame (12.5 px digits on the 20 × 20 grid at 1280 × 720). */
 .st-face {
-  font-size: 42cqmin;
+  font-size: 48cqmin;
   font-weight: var(--font-weight-strong);
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -132,7 +133,7 @@
 }
 
 .st-dir {
-  font-size: 0.8em;
+  font-size: 0.7em;
 }
 
 .st-tile[data-quarter='true'] {
@@ -233,16 +234,16 @@
   border-radius: 3px;
 }
 
-/* The phone's loupe: over the grid, its tiles at least 44 px. */
+/* The phone's loupe: over the grid, its tiles at least 44 px. It stands on the grid's lower
+   edge and may reach up over the list above it, so its Close button is never scrolled out of
+   sight in a box no taller than the grid (screenshot review). */
 .st-loupe {
   position: absolute;
   z-index: 20;
-  top: 50%;
+  bottom: 0;
   left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(100%, 20rem);
-  max-height: 100%;
-  overflow-y: auto;
+  transform: translateX(-50%);
+  width: min(100%, 17rem);
   display: grid;
   gap: var(--space-1);
   padding: var(--space-1);
@@ -259,6 +260,13 @@
   gap: var(--space-1);
 }
 
+/* Column, Row and Close on the first row, the arrows on the second. */
 .st-loupe-close {
+  order: 1;
   min-height: var(--hit-target);
+  margin-left: auto;
+}
+
+.st-loupe-row .st-cross {
+  order: 2;
 }

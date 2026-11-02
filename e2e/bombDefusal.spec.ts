@@ -9,7 +9,9 @@
  *                 that does not start with the hinted wire is cut: the explosion shows, the row
  *                 says "Boom!", and the cooldown ring counts the round's cooldown plus the
  *                 explosion's 5 s (O40); then an individual autumn round started at once: a wire
- *                 is marked harmless. Each round view fits 1280 × 720 and 390 × 844. The
+ *                 is marked harmless (its button "red, harmless", from the round's state: a fall
+ *                 before the page loaded has no live row). Each round view fits 1280 × 720 and
+ *                 390 × 844. The
  *                 matches are aborted.
  * Depends on:     @playwright/test, ./guessGames, ./play
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 21); docs/spec/02c-game-bomb-defusal.md
@@ -70,10 +72,11 @@ test('journey 21: Seasonal Bomb Defusal, shared through the lobby and individual
       settings: { 'bomb.wires': 8, 'bomb.cuts': 3 },
     });
     codes.push(started.matchCode);
-    await expect(p.page.getByTestId('special-row').first()).toHaveText(
-      /^Leaf Fall: the \w+ wire is harmless\.$|^Leaf Fall: every harmless wire is marked\.$/,
-      { timeout: 20_000 },
-    );
+    // From the round's state, not the live row: a fall before the page had loaded would never
+    // show its row (CI, night 6).
+    await expect(p.page.getByRole('button', { name: /^\w+, harmless$/ }).first()).toBeVisible({
+      timeout: 30_000,
+    });
     await fitsBoth(p.page);
   } finally {
     for (const code of codes) await abortMatch(p, code);

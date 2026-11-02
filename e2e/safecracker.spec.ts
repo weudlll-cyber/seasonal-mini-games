@@ -7,7 +7,8 @@
  *                 names the code, Spring's revealed digit stays highlighted, the digit boxes
  *                 take a code key by key with the focus moving on, and the own row shows the
  *                 code with its pegs and the counts in words; then an individual autumn round
- *                 started at once: a digit falls ("… is not in the code."), the strip marks it,
+ *                 started at once: a digit falls and the strip marks it (from the round's
+ *                 state: a fall before the page loaded has no live row),
  *                 and a code with it is refused at once with "That digit has fallen.". Each
  *                 round view fits 1280 × 720 and 390 × 844. The matches are aborted.
  * Depends on:     @playwright/test, ./guessGames, ./play
@@ -56,11 +57,11 @@ test('journey 20: Seasonal Safecracker, shared through the lobby and individual'
       cooldownS: 30,
     });
     codes.push(started.matchCode);
-    const fell = p.page.getByTestId('special-row').first();
-    await expect(fell).toHaveText(/^Leaf Fall: \d is not in the code\.$/, { timeout: 20_000 });
-    const digit = /(\d)/.exec((await fell.textContent()) ?? '')?.[1] ?? '';
-    // The strip marks it once the round's state has caught up with the live row.
-    await expect(p.page.getByRole('listitem', { name: `${digit}, fallen` })).toBeVisible();
+    // From the round's state, not the live row: a fall before the page had loaded would never
+    // show its row (CI, night 6). The strip marks the fallen digit.
+    const fell = p.page.getByRole('listitem', { name: /^\d, fallen$/ }).first();
+    await expect(fell).toBeVisible({ timeout: 30_000 });
+    const digit = /^(\d)/.exec((await fell.getAttribute('aria-label')) ?? '')?.[1] ?? '';
     await typeCode(p.page, `${digit}${digit}${digit}${digit}`);
     await expect(p.page.locator('.sc-message')).toHaveText('That digit has fallen.');
     await fitsBoth(p.page);
