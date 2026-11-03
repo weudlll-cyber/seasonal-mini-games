@@ -30,6 +30,11 @@ describe('the comment catalogue', () => {
     }
   });
 
+  it('never says "Boom" beside the explosion answer, which says it already', () => {
+    const lines = COMMENT_LINES.wayOff.map((l) => (typeof l === 'string' ? l : l.text));
+    expect(lines.filter((l) => /boom/i.test(l))).toEqual([]);
+  });
+
   it('has distinct lines without digits or wire colours', () => {
     const all = POOLS.flatMap((p) => COMMENT_LINES[p].map(text));
     expect(new Set(all).size).toBe(all.length);

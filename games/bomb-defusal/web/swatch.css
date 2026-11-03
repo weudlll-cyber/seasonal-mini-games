@@ -1,0 +1,63 @@
+/*
+ * @file   games/bomb-defusal/web/swatch.css
+ * @module games/bomb-defusal/web
+ * @brief  A wire's colour swatch: its fill, one ring for every wire, the harmless wire's cross.
+ *
+ * Responsibility: each wire's fill; one fixed grey ring (#7a808c: at least 3:1 against the
+ *                 light and the dark card and against the white and the black fill), so every
+ *                 swatch looks the same in light and dark (night 6, DECISIONS T139); a harmless
+ *                 wire's swatch dimmed towards the card and crossed in the text colour. Moved
+ *                 out of ./bd.css to keep each file under the size limit.
+ * Spec:           docs/spec/02c-game-bomb-defusal.md §11
+ */
+/* A wire's colour: a fill only, its name always beside it. */
+.bd-swatch {
+  position: relative;
+  flex: none;
+  inline-size: 0.9rem;
+  block-size: 0.9rem;
+  border-radius: 50%;
+  /* Not the text colour: that ring made white look hollow in light and solid in dark. */
+  border: 2px solid #7a808c;
+}
+
+.bd-swatch[data-wire='red'] {
+  background: #d32f2f;
+}
+.bd-swatch[data-wire='blue'] {
+  background: #1e5bd6;
+}
+.bd-swatch[data-wire='yellow'] {
+  background: #f5c518;
+}
+.bd-swatch[data-wire='green'] {
+  background: #2e9e48;
+}
+.bd-swatch[data-wire='white'] {
+  background: #ffffff;
+}
+.bd-swatch[data-wire='black'] {
+  background: #111111;
+}
+.bd-swatch[data-wire='orange'] {
+  background: #f57c00;
+}
+.bd-swatch[data-wire='purple'] {
+  background: #7b3fbf;
+}
+
+/* A harmless wire's swatch: its colour dimmed towards the card, crossed out in the text
+   colour (a mark of at least 3:1 on the dimmed fill, light and dark). */
+.bd-swatch[data-crossed='true'] {
+  box-shadow: inset 0 0 0 1rem color-mix(in srgb, var(--color-card) 65%, transparent);
+}
+
+.bd-cross {
+  position: absolute;
+  inset: -3px;
+  inline-size: calc(100% + 6px);
+  block-size: calc(100% + 6px);
+  stroke: var(--color-text);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}

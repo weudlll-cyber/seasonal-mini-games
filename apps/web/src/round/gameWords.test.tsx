@@ -34,7 +34,11 @@ const rows = [
     at: 2_000,
     playerId: null,
     text: '0427',
-    answer: { text: '2 right place, 1 wrong place', tone: 'close', pegs: ['hit', 'hit', 'near'] },
+    answer: {
+      text: '2 right place, 1 right digit, wrong place',
+      tone: 'close',
+      pegs: ['hit', 'hit', 'near'],
+    },
   },
   { ...row, key: '2', at: 1_000, playerId: 'w', text: null },
 ];
@@ -53,7 +57,7 @@ describe('a game’s own words in the list', () => {
     render(<RoundLog feed={[]} game={game} state={live} viewerKey="a" now={3_000} />);
     const items = [...screen.getByTestId('guess-list').querySelectorAll('li')];
     expect(items.map((li) => li.textContent)).toEqual([
-      'You04272 right place, 1 wrong place',
+      'You04272 right place, 1 right digit, wrong place',
       'Walterguessed',
     ]);
     const answer = items[0]?.querySelector('.round-answer');
@@ -80,7 +84,10 @@ describe('a game’s own sentence for its special', () => {
     cleanup();
     render(<SeasonPill state={counting} rule={ruleOf(game, 'autumn')} />);
     fireEvent.click(screen.getByTestId('special-info'));
-    expect(screen.getByRole('note').textContent).toBe('Leaf Fall: A digit falls out.');
+    // The mode first: a phone's bar leaves it out (night 6).
+    expect(screen.getByRole('note').textContent).toMatch(
+      /^(Shared|Individual) round\. Leaf Fall: A digit falls out\.$/,
+    );
     expect(ruleOf(game, 'winter')).toBe('Answers arrive a few seconds late.');
     expect(ruleOf(null, 'spring')).toBe('Everyone gets one free hint when the round opens.');
   });

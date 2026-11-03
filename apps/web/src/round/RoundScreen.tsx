@@ -41,7 +41,7 @@ import { InputRow } from './InputRow.js';
 import { ResultScreen } from './ResultScreen.js';
 import { RoundIntro } from './RoundIntro.js';
 import { RoundLog } from './RoundLog.js';
-import { colorsOf } from './RoundSide.js';
+import { colorsOf, playerColor } from './RoundSide.js';
 import { ruleOf } from './SeasonPill.js';
 import { bannerOf, SpecialBanner } from './SpecialBanner.js';
 import type { Panels } from './usePanels.js';
@@ -204,7 +204,14 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
       state={state}
       now={now}
       rule={ruleOf(game, state.season)}
-      style={{ '--season': seasonColor(state.season) } as CSSProperties}
+      // The viewer's own colour is their dot's (their team's, or their roster colour): own rows
+      // and a board game's own tiles take it, so the list and the board agree (night 6).
+      style={
+        {
+          '--season': seasonColor(state.season),
+          '--own': props.viewerKey === null ? undefined : playerColor(state, props.viewerKey),
+        } as CSSProperties
+      }
       layout={game?.layout ?? 'list'}
       viewerKey={props.viewerKey}
       teamPoints={props.teamPoints}

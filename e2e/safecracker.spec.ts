@@ -42,7 +42,7 @@ test('journey 20: Seasonal Safecracker, shared through the lobby and individual'
     const own = ownRows(p.page).first();
     await expect(own.locator('.round-value')).toHaveText('0123');
     await expect(own.locator('.round-answer')).toHaveText(
-      /\d right place, \d wrong place|correct — the safe is open/,
+      /\d right places?, \d right digits?, wrong place|correct — the safe is open/,
       { timeout: 10_000 },
     );
     await fitsBoth(p.page);

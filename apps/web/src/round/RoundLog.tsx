@@ -11,7 +11,7 @@
  *                 words), higher or lower in colour (or a game's answer in words with its
  *                 pegs, T119), and the closeness comment in smaller text on the same line when it
  *                 fits, else under it (O21, O35: more rows in view); the viewer's own rows
- *                 have the season colour behind them, and under Frost an own row says "answer
+ *                 have their own colour behind them (their dot's, `--own`), and under Frost an own row says "answer
  *                 arriving…" with the seconds left in a small badge. Events (Spring Herald,
  *                 Heatwave, halving, solves, the round opening and ending) are quieter one-line
  *                 rows; a special's own row (Leaf Fall naming the fallen numbers) stands out on

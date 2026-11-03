@@ -5,7 +5,8 @@
  *
  * Responsibility: data only, easy to extend: at least 15 lines per tier and per trend pool,
  *                 plus a few lines that only a round of their season uses. Way off is the
- *                 explosion (a wrong first cut). Friendly and playful, never insulting, no
+ *                 explosion (a wrong first cut), whose answer already says "Boom!", so no
+ *                 explosion line says it again (night 6). Friendly and playful, never insulting, no
  *                 digits, and nothing about which wire or place is right, so no line tells more
  *                 than the answer beside it (./commentLines.test checks).
  * Depends on:     @smg/guess-engine (CommentLines)
@@ -16,26 +17,26 @@ import type { CommentLines } from '@smg/guess-engine';
 
 export const COMMENT_LINES: CommentLines = {
   wayOff: [
-    'Boom. That was the loud one.',
-    'Kaboom! Eyebrows may grow back.',
+    'That was the loud one.',
+    'Eyebrows may grow back.',
     'Well, that went off with a bang.',
     'The bomb disagreed. Loudly.',
-    'Boom! The confetti was not part of the plan.',
+    'The confetti was not part of the plan.',
     'That first snip was a spicy one.',
     'Smoke, sparks and a lesson learned.',
     'The bomb says hello. With fireworks.',
-    'Bang! Shake off the soot and try again.',
+    'Shake off the soot and try again.',
     'That one rattled the windows.',
-    'Boom — but what a dramatic entrance.',
+    'What a dramatic entrance, though.',
     'Ears ringing? Totally normal. Go again.',
     'The wire had other ideas.',
-    'Kaboom! At least the lights still work.',
+    'At least the lights still work.',
     'That cut lit up the whole room.',
     'A fiery start. Cooler heads next time.',
-    { text: 'Boom! Even the snowmen ducked.', season: 'winter' },
+    { text: 'Even the snowmen ducked.', season: 'winter' },
     { text: 'That went off like a summer firework.', season: 'summer' },
-    { text: 'Boom — the leaves are flying everywhere.', season: 'autumn' },
-    { text: 'Boom! The blossoms shook loose from every branch.', season: 'spring' },
+    { text: 'The leaves are flying everywhere.', season: 'autumn' },
+    { text: 'The blossoms shook loose from every branch.', season: 'spring' },
   ],
   cold: [
     'A careful start, a long way to go.',

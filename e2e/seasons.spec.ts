@@ -128,7 +128,9 @@ for (const s of SEASONS) {
       await expect(banner).toHaveText(s.banner, { timeout: 15_000 });
       await expect(p.page.getByTestId('round-special')).toHaveText(s.special);
       await p.page.getByTestId('special-info').click();
-      await expect(p.page.getByRole('note')).toHaveText(`${s.special}: ${s.rule}`);
+      // The round's mode, then the special's name and sentence (the mode for the phone).
+      await expect(p.page.getByRole('note')).toContainText(/^(Shared|Individual) round\. /);
+      await expect(p.page.getByRole('note')).toContainText(`${s.special}: ${s.rule}`);
       await p.page.keyboard.press('Escape');
       if (s.season === 'spring') {
         await expect(p.page.getByTestId('hint')).toHaveText(

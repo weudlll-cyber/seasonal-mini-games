@@ -7,12 +7,14 @@
  *                 rests on colour alone (02c §11); a harmless wire has a crossed, dimmed swatch
  *                 and a struck name, and says "harmless" to screen readers, so no word widens
  *                 a chip or button. The numbered list is the reveal of a sequence (02c §9).
- * Depends on:     react, @smg-game/bomb-defusal (types)
+ * Depends on:     react, @smg-game/bomb-defusal (types), ./swatch.css
  * Used by:        ./panels, ./WireInput, ./ResultPanel
  * Spec:           docs/spec/02c-game-bomb-defusal.md §9, §11
  */
 import type { Sequence, Wire } from '@smg-game/bomb-defusal';
 import type { ReactElement } from 'react';
+
+import './swatch.css';
 
 // A wire's colour; a harmless wire's swatch is dimmed and crossed out (02c §11).
 export function Swatch(p: { readonly wire: Wire; readonly crossed?: boolean }): ReactElement {

@@ -43,8 +43,10 @@ export function EndMatch({
   if (!asking) {
     return (
       <div className="smg-row host-end">
+        {/* Destructive from the first click: it ends the match for everyone (night 6). */}
         <ActionButton
           label="End match"
+          kind="danger"
           testId="end-match"
           onClick={() => {
             setAsking(true);

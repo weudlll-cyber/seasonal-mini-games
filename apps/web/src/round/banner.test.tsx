@@ -140,7 +140,7 @@ describe('the season pill', () => {
     fireEvent.click(button);
     expect(note.hidden).toBe(false);
     expect(note.textContent).toBe(
-      'Leaf Fall: Every so often, some wrong numbers fall out of the game.',
+      'Shared round. Leaf Fall: Every so often, some wrong numbers fall out of the game.',
     );
     fireEvent.keyDown(note, { key: 'Escape' });
     expect(note.hidden).toBe(true);

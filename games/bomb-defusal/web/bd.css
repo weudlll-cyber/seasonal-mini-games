@@ -4,13 +4,12 @@
  * @brief  Styles of the Seasonal Bomb Defusal panels: bomb block, slots, wire buttons, result.
  *
  * Responsibility: text colours only from the design tokens (light and dark); wire colours are
- *                 swatch fills with the wire's name in text beside them, each swatch with a
- *                 border in the text colour (3:1 against the background, white and black
- *                 included); wire buttons, Undo, Clear and Cut at least 44 px (`--hit-target`);
- *                 wires in one row on a desktop (two rows of four with 8), two even rows of
- *                 up to four on a phone; slots at least 44 px, the hint in slot 1 wrapping
- *                 rather than cut off; a harmless wire's swatch dimmed and crossed; the
- *                 explosion's own styles are ./explosion.css. Every class starts with `bd-`. Layouts work down to 390 px wide.
+ *                 swatch fills with the wire's name in text beside them (the swatches are
+ *                 ./swatch.css); wire buttons, Undo, Clear and Cut at least 44 px
+ *                 (`--hit-target`); wires in one row on a desktop (two rows of four with 8),
+ *                 two even rows of up to four on a phone; slots at least 44 px, the hint in
+ *                 slot 1 wrapping rather than cut off; the explosion's own styles are
+ *                 ./explosion.css. Every class starts with `bd-`. Layouts work down to 390 px.
  * Spec:           docs/spec/02c-game-bomb-defusal.md §5.2, §11
  */
 .bd-bomb {
@@ -81,57 +80,6 @@
 .bd-wire-note {
   color: var(--color-text-muted);
   font-size: var(--font-size-small);
-}
-
-/* A wire's colour: a fill only, its name always beside it. */
-.bd-swatch {
-  position: relative;
-  flex: none;
-  inline-size: 0.9rem;
-  block-size: 0.9rem;
-  border-radius: 50%;
-  border: 2px solid var(--color-text);
-}
-
-.bd-swatch[data-wire='red'] {
-  background: #d32f2f;
-}
-.bd-swatch[data-wire='blue'] {
-  background: #1e5bd6;
-}
-.bd-swatch[data-wire='yellow'] {
-  background: #f5c518;
-}
-.bd-swatch[data-wire='green'] {
-  background: #2e9e48;
-}
-.bd-swatch[data-wire='white'] {
-  background: #ffffff;
-}
-.bd-swatch[data-wire='black'] {
-  background: #111111;
-}
-.bd-swatch[data-wire='orange'] {
-  background: #f57c00;
-}
-.bd-swatch[data-wire='purple'] {
-  background: #7b3fbf;
-}
-
-/* A harmless wire's swatch: its colour dimmed towards the card, crossed out in the text
-   colour (a mark of at least 3:1 on the dimmed fill, light and dark). */
-.bd-swatch[data-crossed='true'] {
-  box-shadow: inset 0 0 0 1rem color-mix(in srgb, var(--color-card) 65%, transparent);
-}
-
-.bd-cross {
-  position: absolute;
-  inset: -3px;
-  inline-size: calc(100% + 6px);
-  block-size: calc(100% + 6px);
-  stroke: var(--color-text);
-  stroke-width: 1.6;
-  stroke-linecap: round;
 }
 
 /* The input row: slots, wire buttons, then the ring with Undo, Clear and Cut. */

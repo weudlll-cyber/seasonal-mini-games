@@ -54,6 +54,15 @@ Nothing so far.
 - "Closest miss besides the winner: …" in all four games (Target: "… 3 tiles away (9, 10)."); the closest miss exists only with a winner (`closestMissBy`).
 - Desktop one screen (T138): head across with the proof's disclosure, the game's result left, the tables right, the chat filling the side column; Target's grid fills the part's height (the list of every guess capped at about three lines). A phone scrolls the page, the result first.
 
+### Piece 5 — small items (T139)
+
+- **Bomb Defusal:** "Boom!" once per row: the explosion comments no longer start with "Boom"/"Kaboom"/"Bang" (a test checks); one fixed grey ring (#7a808c) on every swatch, so white and black look alike in both themes. Rows are laid out alike for the viewer and others (dot, name, sequence, answer, comment; checked in the look shots); the harmless chips' crossed swatch and struck name and the struck wire buttons are measured in piece 6.
+- **Safecracker:** green once at least half the digits are in the right place, the same rule for every row; "1 right place, 2 right digits, wrong place"; no stray indent seen in individual mode on the desktop (the phone in piece 6); the fallen chips' × sits inside the chip's corner (unchanged, captured in piece 6).
+- **Own colour:** own rows, the Players panel's own row and Seasonal Target's own-tile frame use the viewer's dot colour (`--own`).
+- **Phone bar:** the season pill's note starts with "Shared round." or "Individual round." before the special's name and sentence.
+- **Host menu:** End match is a danger button from the first click.
+- Lines: Bomb Defusal `commentLines.ts` 204 → 205, `commentLines.test.ts` 60 → 65, `bd.css` 309 → 257 (it was over the limit before; the swatches moved to the new `swatch.css`, 63), `WireChip.tsx` +2; Safecracker `text.ts` 145 → 143, `panels.test.tsx` 200 → 207; `RoundScreen.tsx` 230 → 237, `SeasonPill.tsx` 91 → 94, `EndMatch.tsx` 71 → 73, `roundLog.css` 210 → 211, Target `tiles.css` 284 → 285.
+
 ### Lines before → after
 
 | File                                           | Lines before → after |

@@ -78,6 +78,11 @@ Built as described in 02 §12 and DECISIONS T128–T132 and T134–T136 (O47–O
 - The light/dark toggle lives in the app header, which focus mode hides; the theme chosen before the round stays, and O46's bar lists no toggle, so none was added. A sixth button would not fit the phone's bar beside Host and Full screen; inside the Players panel it could.
 - Guess The Number's Fallen numbers open from their "Fallen (N)" button as a sheet on a desktop too (T132); since O50 the list is in the main area, so they could stand open in the right column again.
 
+**Night-6 small items (T139), to confirm:**
+
+- Safecracker: a row turns green once at least half the digits are in the right place, for every row; the counts read "1 right place, 2 right digits, wrong place".
+- Own rows and Seasonal Target's own tiles use the viewer's dot colour (their team's when teams play), no longer the round's season colour.
+
 **All games (game choice, owner decision 41)**
 
 - Owner decision 40 says the host chooses the explosion's waiting time "per match"; like Seasonal Target's feedback mode (O39) it is built as the host's round setting, which the round form keeps from round to round (spec conflict, as for O39).

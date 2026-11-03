@@ -56,7 +56,7 @@
 }
 
 .round-player-list li[data-own='true'] {
-  background: color-mix(in srgb, var(--season) 22%, var(--color-card));
+  background: color-mix(in srgb, var(--own, var(--season)) 22%, var(--color-card));
 }
 
 .round-player-team,

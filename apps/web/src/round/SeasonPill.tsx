@@ -6,8 +6,9 @@
  * Responsibility: the pill in the season's token colour with its icon, the season's name and
  *                 the special's ("Autumn · Leaf Fall", "Summer · no special", O35) and the
  *                 halving badge. With the special on the pill is a button with a small "i":
- *                 it opens a note under the bar with the special's one plain sentence, the same
- *                 as on the intro screen (O36); the pill or Escape closes it and the focus goes
+ *                 it opens a note under the bar with the round's mode (shared or individual,
+ *                 which a phone's bar leaves out), the special's name and its one plain
+ *                 sentence, the same as on the intro screen (O36); the pill or Escape closes it and the focus goes
  *                 back to the pill. One control instead of a pill and an info button keeps the
  *                 phone's bar to one row (O46). The sentence is the game's own where it words
  *                 its special (`ruleOf`, T119), else the platform's.
@@ -84,6 +85,8 @@ export function SeasonPill(p: {
         </span>
       </button>
       <span id={note.panelId} className="round-info-note" role="note" hidden={!note.open}>
+        {/* The mode too: a phone's bar has no room for it (night 6). */}
+        {state.secretMode === 'shared' ? 'Shared' : 'Individual'} round.{' '}
         <strong>{special.name}:</strong> {p.rule}
       </span>
     </span>

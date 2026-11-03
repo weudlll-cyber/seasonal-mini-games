@@ -8,7 +8,7 @@
  *                 room event (Leaf Fall's fallen digits; the hint shows once, in the code block) and
  *                 Leaf Fall's banner (O35); the list's guess rows from a player or spectator
  *                 view: the code as text, the answer in words with its pegs (one filled per
- *                 right place, one ring per wrong place, T119), "tried a code" where the code
+ *                 right place, one ring per right digit in a wrong place, T119), "tried a code" where the code
  *                 is hidden, own rows pending while Frost holds them; the closest miss on the
  *                 result (02b §8); the intro's secret line (O36) and the special's sentence.
  * Depends on:     @smg/game-sdk (GameText, GuessRow, GuessAnswer, FeedLine),
@@ -47,23 +47,20 @@ const CODES: Readonly<Record<string, string>> = {
   ALREADY_GUESSED: 'You already tried that code.',
 };
 
-// "1 right place", "2 right places", "0 right places".
-const places = (n: number, kind: string): string =>
-  `${String(n)} ${kind} place${n === 1 ? '' : 's'}`;
-
-// "1 right place, 2 wrong places": the rows, the result and the closest miss (02b §5.2, §8).
+// "1 right place, 2 right digits, wrong place": the rows, the result and the closest miss
+// (02b §5.2, §8); a near digit is named as what it is, a right digit in a wrong place.
 export const counts = (f: { readonly exact: number; readonly near: number }): string =>
-  `${places(f.exact, 'right')}, ${places(f.near, 'wrong')}`;
+  `${String(f.exact)} right place${f.exact === 1 ? '' : 's'}, ${String(f.near)} right digit${f.near === 1 ? '' : 's'}, wrong place`;
 
-// The answer in words with its pegs; "close" from a score of 0.6 on (the warm/hot line, 02b §6).
+// The answer in words with its pegs. One rule for every row, own and others' alike (night 6,
+// DECISIONS T139): green ("close") once at least half the digits are in the right place.
 export function answerOf(f: Feedback, length: number): GuessAnswer {
   const pegs = [
     ...Array.from({ length: f.exact }, () => 'hit' as const),
     ...Array.from({ length: f.near }, () => 'near' as const),
   ];
   if (f.solved) return { text: 'correct — the safe is open', tone: 'correct', pegs };
-  const close = (2 * f.exact + f.near) * 10 >= 6 * 2 * length;
-  return { text: counts(f), tone: close ? 'close' : 'far', pegs };
+  return { text: counts(f), tone: 2 * f.exact >= length ? 'close' : 'far', pegs };
 }
 
 // "7", "3 and 7", "1, 3 and 7".
@@ -110,7 +107,8 @@ function guessRows(view: unknown): readonly GuessRow[] {
   return [...(v.guesses ?? []).map((g) => row(g, null)), ...v.log.map((g) => row(g, g.playerId))];
 }
 
-// "Closest: Anna, 3 right places, 1 wrong place (0427)." (02b §8)
+// "Closest miss besides the winner: Anna, 3 right places, 1 right digit, wrong place (0427)."
+// (02b §8)
 function runnerUp(view: unknown, names: Readonly<Record<string, string>>): string | null {
   const miss = (view as Partial<ResultView>).closestMiss ?? null;
   if (miss === null) return null;

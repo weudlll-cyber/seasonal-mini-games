@@ -15,7 +15,7 @@
  *                 loupe's box in ./loupe.css). Tiles outside the target area dimmed, Spring's
  *                 quarter a fixed green with a "Hint" tag (O51), fallen tiles hatched (a
  *                 pattern, not colour alone), the viewer's
- *                 own tiles framed inside in the season colour own rows are lit in, others'
+ *                 own tiles framed inside in the viewer's own colour (their dot's, as their rows), others'
  *                 with a corner dot ringed in the empty tile's colour, the number moved clear
  *                 of it, the selection outlined outside the tile in the text colour, the
  *                 result's target ringed. Numbers scale with their tile (container units).
@@ -88,7 +88,8 @@
 
 .st-grid {
   /* Set here, not on :root: the season colour is the round view's. */
-  --st-own: var(--season, var(--color-accent));
+  /* The viewer's own colour from the platform (their dot's), as on their list rows. */
+  --st-own: var(--own, var(--season, var(--color-accent)));
   display: grid;
   grid-template-columns: repeat(var(--st-cols), minmax(0, 1fr));
   grid-template-rows: repeat(var(--st-rows), minmax(0, 1fr));

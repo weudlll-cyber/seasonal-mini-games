@@ -8,7 +8,7 @@
  *                 (O20), in larger text on a large screen; a guess row is compact (O35: more rows in
  *                 view): dot, name, number, answer and the comment in small text on one line
  *                 when it fits, the comment wrapping under them otherwise; the viewer's own
- *                 rows on a tint of the season colour (T75); Frost's held answer with its
+ *                 rows on a tint of their own dot's colour (`--own`, night 6; T75); Frost's held answer with its
  *                 seconds in a small badge; an event is one quieter line, a special's own row
  *                 (Leaf Fall) one on the season's tint with its icon in bold (T115). Moved out of
  *                 ./round.css to keep each file under the size limit. Colours only from @smg/ui
@@ -49,8 +49,9 @@
 }
 
 .round-row[data-own='true'] {
-  background: color-mix(in srgb, var(--season) 22%, var(--color-card));
-  box-shadow: inset 4px 0 0 var(--season);
+  /* The viewer's own colour, their dot's (`--own`, ./RoundScreen). */
+  background: color-mix(in srgb, var(--own, var(--season)) 22%, var(--color-card));
+  box-shadow: inset 4px 0 0 var(--own, var(--season));
 }
 
 .round-who {
