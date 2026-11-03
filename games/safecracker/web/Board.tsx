@@ -18,7 +18,7 @@ import type { Hint, SpectatorView } from '@smg-game/safecracker';
 import type { PlayerPanelProps, SpectatorPanelProps } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
-import { codeLine, freeHint } from './text.js';
+import { codeLine, freeHint, shortHint } from './text.js';
 
 interface BoardProps {
   readonly length: number;
@@ -98,7 +98,7 @@ export function InfoLine(props: SpectatorPanelProps): ReactElement {
   return (
     <span className="sc-line" data-testid="sc-line">
       <DigitStrip digits={v.digits} fallen={v.fallen} compact />
-      {v.hint === null ? null : <span className="sc-line-hint">{freeHint(v.hint)}</span>}
+      {v.hint === null ? null : <span className="sc-line-hint">{shortHint(v.hint)}</span>}
     </span>
   );
 }

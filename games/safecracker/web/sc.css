@@ -54,6 +54,18 @@
   font-weight: var(--font-weight-strong);
 }
 
+/* The phone's info line: small chips, so the hint keeps room beside them (T141). */
+.sc-strip[data-compact='true'] {
+  gap: 0.1rem;
+}
+
+.sc-strip[data-compact='true'] .sc-chip {
+  flex: 0 0 1.35rem;
+  min-width: 1.35rem;
+  min-height: 1.5rem;
+  font-size: var(--font-size-small);
+}
+
 /* A fallen digit: struck through, a dashed border and a × badge — three signs, none of them
    colour; the digit keeps the full text colour so it stays readable. */
 .sc-chip[data-fallen='true'] {
@@ -96,9 +108,10 @@
   gap: var(--space-1);
 }
 
+/* One row on a desktop, also beside a panel on demand (night-7 review): the boxes give way. */
 .sc-form {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: var(--space-1);
 }
@@ -109,6 +122,8 @@
 }
 
 .sc-box {
+  flex: 0 1 auto;
+  min-width: 2rem;
   width: max(var(--hit-target, 44px), 2.75rem);
   height: max(var(--hit-target, 44px), 3.25rem);
   padding: 0;
@@ -198,6 +213,10 @@
     flex-basis: 1.75rem;
     min-width: 1.75rem;
     min-height: 1.75rem;
+  }
+
+  .sc-form {
+    flex-wrap: wrap;
   }
 
   .sc-boxes {

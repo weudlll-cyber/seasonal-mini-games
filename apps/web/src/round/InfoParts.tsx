@@ -9,7 +9,8 @@
  *                 one plain sentence cut to one line, the whole sentence on a click (T141); on
  *                 a phone the info line under the bar, one line of at most 48 px from the game
  *                 (`game.Line`), a button that opens the game's panel as a sheet over the rows
- *                 between the bar and the action dock, which it never covers (O48).
+ *                 between the bar and the action dock, which it never covers (O48), the special's
+ *                 sentence at its top (the desktop's special line).
  * Depends on:     react, @smg/contracts, @smg-game/registry/web (types), ../live/socket,
  *                 ../season/season, ./FocusPanel, ./RoundSide (colours), ./usePanels
  * Used by:        ./RoundBody
@@ -82,6 +83,7 @@ export function PhoneLine(p: {
   readonly state: RoundStateView;
   readonly game: GameWeb | null;
   readonly panels: Panels;
+  readonly rule: string;
 }): ReactElement {
   const { state, game, panels } = p;
   const line =
@@ -118,6 +120,11 @@ export function PhoneLine(p: {
         onClose={panels.close}
         testId="game-sheet"
       >
+        {state.specialOn ? (
+          <p className="round-sheet-special">
+            <strong>{SPECIALS[state.season].name}:</strong> {p.rule}
+          </p>
+        ) : null}
         <GamePart state={state} game={game} />
       </FocusPanel>
     </>

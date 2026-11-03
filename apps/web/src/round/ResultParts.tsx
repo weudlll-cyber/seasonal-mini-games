@@ -4,7 +4,7 @@
  * @brief  The result's placings (the top three, "All placings"), its team line and team result.
  *
  * Responsibility: the placings table in place order as the server gave the places, every
- *                 player without a place after them (the viewer by place like everyone else,
+ *                 player without a place after them, more guesses first (the viewer by place like everyone else,
  *                 never first for being the viewer, T145), the top three until "All placings
  *                 (N)" shows every one; a name cut with an ellipsis at its end only, "(you)"
  *                 beside it never cut; one team line in the first part ("Team Spring wins the
@@ -33,9 +33,12 @@ function placeText(state: RoundStateView, place: number | null): string {
   return state.secretMode === 'shared' ? 'took part' : 'not solved';
 }
 
-// By the server's place; the rest after them in the server's order (a stable sort).
+// By the server's place; the players without one after them, more guesses first (a stable
+// sort: equal ones keep the server's order).
 export const byPlace = (results: readonly Result[]): Result[] =>
-  [...results].sort((a, b) => (a.place ?? Infinity) - (b.place ?? Infinity));
+  [...results].sort(
+    (a, b) => (a.place ?? Infinity) - (b.place ?? Infinity) || b.guesses - a.guesses,
+  );
 
 const points = (n: number, what: string): string =>
   `${formatNumber(n)} ${what}${n === 1 ? '' : 's'}`;

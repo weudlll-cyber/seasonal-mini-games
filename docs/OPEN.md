@@ -96,6 +96,8 @@ Built as described in 02 §12 and DECISIONS T128–T132 and T134–T136 (O47–O
 
 **Night-6 screenshot review, for the owner** (the list with its places is in NIGHT-RUN.md, Night 6; night 7 solved every other item, BACKLOG part two):
 
+- In dark mode an own row's tint of a muted dot (olive, Team Spring) reads greyish; a stronger tint cost the colour dots and answers their contrast (T147), so it stays at 22 %.
+
 - Seasonal Target on a desktop: the square grid is as tall as the stage and centred in it, so at 1280 × 720 and 1920 × 1080 strips stay beside it. Left as is: whether the free width should sit on one side (the grid at the stage's left edge, the strip next to the info column) or the grid stay centred is a choice of look for the owner.
 
 **All games (game choice, owner decision 41)**

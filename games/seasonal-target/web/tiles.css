@@ -231,6 +231,12 @@
   opacity: 0.3;
 }
 
+/* Dark: the empty tile is close to the grid's own colour, so 30 % hid the area's edge
+   (night-7 review); fainter outside, the target area stands out. */
+:root[data-theme='dark'] .st-tile[data-out='true'] {
+  opacity: 0.12;
+}
+
 /* The viewer's own tiles: a frame inside the tile in the own rows' colour, set off from the
    fill by a thin line of the empty tile's colour. */
 .st-tile[data-own='true'] {

@@ -10,8 +10,7 @@
  *                 both layouts: dot, name (cut with an ellipsis), the guess, the answer and on
  *                 a desktop the comment in small text, cut with an ellipsis; on a phone the
  *                 row is a button and an open comment a second line under the name. The
- *                 viewer's own rows on a tint of their own dot's colour (`--own`, T75; a
- *                 stronger one in dark, T147); Frost's held answer with its seconds in a small
+ *                 viewer's own rows on a tint of their own dot's colour (`--own`, T75); Frost's held answer with its seconds in a small
  *                 badge; an event is one quieter line, a special's own row (Leaf Fall) on the
  *                 season's outline with its icon in bold (T115). The pegs and colour dots are
  *                 ./roundMarks.css. Colours only from @smg/ui tokens.
@@ -110,12 +109,6 @@ button.round-row-line {
   box-shadow: inset 4px 0 0 var(--own, var(--season));
 }
 
-/* Dark: a stronger tint, or a muted dot (olive Team Spring) reads grey on the dark card
-   (night-6 review, T147); the light text stays at 4.5:1 or more. */
-:root[data-theme='dark'] .round-row[data-own='true'] {
-  background: color-mix(in srgb, var(--own, var(--season)) 34%, var(--color-card));
-}
-
 /* The name keeps its room (up to 9 rem, then an ellipsis); the answer gives way first. */
 .round-who {
   flex: none;
@@ -160,9 +153,25 @@ button.round-row-line {
   white-space: normal;
 }
 
+/* A held answer: the words are cut in a narrow column, the seconds badge stays whole. */
 .round-arriving {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
   color: var(--color-winter-text);
   font-weight: var(--font-weight-strong);
+}
+
+.round-arriving-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.round-arriving-left {
+  flex: none;
 }
 
 /* The seconds until a held answer arrives: a small badge in Frost's colour. */
@@ -241,8 +250,18 @@ button.round-row-line {
   color: var(--color-success-text);
 }
 
-/* A phone: closer parts, so a long answer keeps more of its words. */
+/* The info column's lists: the answer whole, the comment takes what is left. */
+.round-column .round-answer {
+  flex: none;
+}
+
+/* A phone: closer parts, so a long answer keeps more of its words; "All (N)" a full touch
+   target (night-7 review). */
 @media (max-width: 899px) {
+  .round-log-all {
+    min-height: var(--hit-target);
+  }
+
   .round-row-line {
     gap: 0.35rem;
   }

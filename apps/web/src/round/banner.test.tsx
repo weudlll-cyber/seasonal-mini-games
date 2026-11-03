@@ -21,7 +21,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { ended, viewport } from './fakes.js';
 import { RoundScreen } from './RoundScreen.js';
-import { bannerOf, SpecialBanner } from './SpecialBanner.js';
+import { bannerOf, eventBanner, SpecialBanner } from './SpecialBanner.js';
 
 afterEach(() => {
   cleanup();
@@ -96,6 +96,8 @@ describe('the special banner under Frost', () => {
     const frost = { ...open, season: 'winter', frostDelayMs: 3_000, opensAt: 20_000 } as const;
     expect(bannerOf([], frost, gameWith(), 20_500)).toBe('Frost: answers arrive 3 s late.');
     expect(bannerOf([], frost, gameWith(), 25_100)).toBeNull();
+    // A desktop's special line says it already: no banner there (night-7 review).
+    expect(eventBanner([], gameWith(), 20_500)).toBeNull();
     expect(bannerOf([], { ...frost, frostDelayMs: null }, gameWith(), 20_500)).toBeNull();
   });
 

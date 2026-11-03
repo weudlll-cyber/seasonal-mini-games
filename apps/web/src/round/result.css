@@ -37,6 +37,18 @@
   padding: var(--space-2) var(--space-3);
 }
 
+/* A list game's first part is as tall as its content, at most the screen: its result (each
+   player's guesses) scrolls inside itself, so no empty card and no gap before the placings
+   (night-7 review). A board game's grid keeps the part's full height. */
+.round-result:not([data-layout='board']) .round-result-first {
+  height: auto;
+  grid-template-rows: auto auto auto;
+}
+
+.round-result:not([data-layout='board']) .round-result-game {
+  max-height: calc(100dvh - var(--result-top, 4.5rem) - var(--result-rest, 32rem));
+}
+
 /* Every placing shown: the part grows and the page scrolls. */
 .round-result-first:has([data-testid='all-placings'][aria-expanded='true']) {
   height: auto;
@@ -117,6 +129,14 @@
 /* A desktop: the visual on the left at the part's full height, the top three and the team
    line in a column on its right; the proof's disclosure beside the headline. */
 @media (min-width: 900px) {
+  .round-result:not([data-layout='board']) .round-result-first {
+    grid-template-rows: auto auto;
+  }
+
+  .round-result {
+    --result-rest: 9rem;
+  }
+
   .round-result-first {
     grid-template-columns: minmax(0, 1fr) minmax(20rem, 28rem);
     grid-template-rows: auto minmax(0, 1fr);
@@ -139,13 +159,17 @@
     max-width: 24rem;
   }
 
-  /* "took part" on one line; the number columns narrow, so names keep their room. */
+  /* "took part" on one line; "Guesses" and "Points" apart. */
   .round-result .round-col-place {
-    width: 6rem;
+    width: 6.5rem;
   }
 
   .round-result .round-col-num {
-    width: 4.5rem;
+    width: 5.25rem;
+  }
+
+  .round-result .round-table td:first-child {
+    white-space: nowrap;
   }
 }
 

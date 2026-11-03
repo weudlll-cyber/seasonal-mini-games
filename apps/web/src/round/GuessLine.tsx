@@ -98,7 +98,8 @@ function Answer({ guess, state, now }: Pick<RowProps, 'guess' | 'state' | 'now'>
   const left = Math.max(0, Math.ceil((guess.at + (state.frostDelayMs ?? 0) - now) / 1_000));
   return (
     <span className="round-arriving">
-      answer arriving… <span className="round-arriving-left">{left} s</span>
+      <span className="round-arriving-text">answer arriving…</span>{' '}
+      <span className="round-arriving-left">{left} s</span>
     </span>
   );
 }

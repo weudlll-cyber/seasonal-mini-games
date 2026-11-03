@@ -76,6 +76,21 @@
   .match-after {
     grid-template-columns: minmax(0, 1fr) 340px;
   }
+
+  /* Beside the result: the next round's box, then the chat in what is left of the screen,
+     so its field stays in view (night-7 review). */
+  .match-after > .match-side {
+    max-height: calc(100dvh - var(--result-top));
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .match-after > .match-side .round-chat {
+    flex: 1 1 auto;
+    min-height: 12rem;
+    height: auto;
+  }
 }
 
 @media (max-width: 899px) {
@@ -110,10 +125,12 @@
   }
 
   .result-bar .smg-chip {
+    display: inline-block;
     flex: 0 1 auto;
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .result-bar-link {

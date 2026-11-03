@@ -6,8 +6,8 @@
  * Responsibility: for 5 s after a special fires, one line in the season colour says what
  *                 happened: Leaf Fall's numbers falling and the range halved in the game's words
  *                 (its `banner` hook), Heatwave's new waiting time and Spring Herald's hint in
- *                 the platform's (./roundText); under Frost, for the first 5 s of the round,
- *                 that answers arrive late (a held own answer is said by its row, "answer
+ *                 the platform's (./roundText); under Frost, for the first 5 s of the round and
+ *                 on a phone only (a desktop's special line says it), that answers arrive late (a held own answer is said by its row, "answer
  *                 arriving… 3 s", O47). It takes the place of the list head's title, so it never
  *                 pushes the list down, and is cut with an ellipsis rather than wrapping (T142);
  *                 the event's own line stays in the All list (./RoundLog). Derived from the live
@@ -43,11 +43,10 @@ function frostOpening(state: RoundStateView, now: number): string | null {
   return `Frost: answers arrive ${String(Math.round(state.frostDelayMs / 1_000))} s late.`;
 }
 
-// The banner to show now, or null: the newest special event of the last 5 s, else Frost's at
-// the opening.
-export function bannerOf(
+// The newest special event of the last 5 s in a line, or null. A desktop's banner is this
+// alone: its special line says Frost's sentence already (night-7 review).
+export function eventBanner(
   feed: readonly FeedItem[],
-  state: RoundStateView,
   game: GameWeb | null,
   now: number,
 ): string | null {
@@ -57,7 +56,18 @@ export function bannerOf(
     const text = textOf(item.event, game);
     if (text !== null) return text;
   }
-  return frostOpening(state, now);
+  return null;
+}
+
+// The phone's banner now, or null: the newest special event of the last 5 s, else Frost's at
+// the opening.
+export function bannerOf(
+  feed: readonly FeedItem[],
+  state: RoundStateView,
+  game: GameWeb | null,
+  now: number,
+): string | null {
+  return eventBanner(feed, game, now) ?? frostOpening(state, now);
 }
 
 export function SpecialBanner({ text }: { readonly text: string | null }): ReactElement {

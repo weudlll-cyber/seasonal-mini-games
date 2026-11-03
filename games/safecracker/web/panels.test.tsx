@@ -216,6 +216,6 @@ describe("the phone's info line", () => {
     const line = screen.getByTestId('sc-line');
     expect(line.querySelector('[data-compact="true"]')).not.toBeNull();
     expect(screen.getByLabelText('7, fallen')).toBeTruthy();
-    expect(line.textContent).toContain('Free hint: the 2nd digit is 4.');
+    expect(line.textContent).toContain('Hint: 2nd is 4');
   });
 });

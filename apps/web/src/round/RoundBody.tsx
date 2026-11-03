@@ -30,7 +30,7 @@ import { FocusPanel } from './FocusPanel.js';
 import { GamePart, PhoneLine, SpecialLine } from './InfoParts.js';
 import { InputRow } from './InputRow.js';
 import { RoundLog } from './RoundLog.js';
-import { bannerOf } from './SpecialBanner.js';
+import { bannerOf, eventBanner } from './SpecialBanner.js';
 import type { Panels } from './usePanels.js';
 
 export interface BodyProps {
@@ -70,7 +70,9 @@ function useParts(p: BodyProps) {
     },
     button: panels.button('list'),
   };
-  const banner = bannerOf(p.live.feed, state, p.game, p.now);
+  const banner = p.phone
+    ? bannerOf(p.live.feed, state, p.game, p.now)
+    : eventBanner(p.live.feed, p.game, p.now);
   const stageBox = board ? (
     <div className="round-stage" ref={setStage}>
       {watching}
@@ -119,7 +121,7 @@ export function RoundBody(p: BodyProps): ReactElement {
   if (p.phone) {
     return (
       <>
-        <PhoneLine state={p.state} game={p.game} panels={p.panels} />
+        <PhoneLine state={p.state} game={p.game} panels={p.panels} rule={p.rule} />
         {stageBox}
         {mainBox}
         {dock}

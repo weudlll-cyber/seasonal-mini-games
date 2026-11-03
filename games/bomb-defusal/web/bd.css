@@ -84,6 +84,8 @@
 
 /* The input row: slots, wire buttons, then the ring with Undo, Clear and Cut. */
 .bd-input {
+  /* The wire rows follow the dock's own width (a panel on demand narrows the stage). */
+  container-type: inline-size;
   display: grid;
   gap: var(--space-1);
 }
@@ -161,6 +163,13 @@
 }
 .bd-wires[data-count='8'] {
   --bd-cols: 8;
+}
+
+/* A narrow dock (a desktop with a panel on demand open): eight wires in two rows of four. */
+@container (max-width: 760px) {
+  .bd-wires[data-count='8'] {
+    --bd-cols: 4;
+  }
 }
 
 .bd-wire {

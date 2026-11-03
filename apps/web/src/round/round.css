@@ -159,6 +159,14 @@
   white-space: normal;
 }
 
+/* The same sentence at the top of the phone's game sheet. */
+.round-sheet-special {
+  margin: 0;
+  padding: 0.35rem 0.75rem;
+  border-left: 4px solid var(--season);
+  font-size: var(--font-size-small);
+}
+
 /* The phone's info line: the game's line in one row, at most 48 px, cut at its end; the
    game's parts sit side by side and its last part takes the ellipsis (games/registry/web). */
 .round-line {
@@ -195,10 +203,12 @@
 }
 
 .round-line-body > * > :last-child {
+  display: block;
   flex: 0 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .round-line-more {

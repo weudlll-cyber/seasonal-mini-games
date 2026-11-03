@@ -40,6 +40,10 @@ const ORDINALS = ['1st', '2nd', '3rd', '4th', '5th', '6th'];
 export const codeLine = (length: number, digits: number): string =>
   `${String(length)}-digit code, digits 0–${String(digits - 1)}`;
 
+// The hint in a few words for the phone's info line: "Hint: 2nd is 4".
+export const shortHint = (hint: Hint): string =>
+  `Hint: ${ORDINALS[hint.position] ?? ''} is ${String(hint.digit)}`;
+
 // The code block's highlighted line for the whole round (O35).
 export const freeHint = (hint: Hint): string =>
   `Free hint: the ${ORDINALS[hint.position] ?? ''} digit is ${String(hint.digit)}.`;
