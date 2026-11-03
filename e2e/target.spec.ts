@@ -21,8 +21,8 @@ import { expect, test, type Page } from '@playwright/test';
 import { direct, fitsBoth, fromLobby, WIDE } from './guessGames.js';
 import { abortMatch, closeAll, ownRows, person, roundOpen } from './play.js';
 
-// Distance only (O43): the tiles away and no compass direction.
-const DISTANCE = /^\d+ tiles? away$|correct/;
+// Distance only (O43): the tiles away ("9 away" in the list) and no compass direction.
+const DISTANCE = /^\d+ away$|correct/;
 
 // Select by click, move by an arrow button (behind "Type coordinates", O51) and by an arrow
 // key; the coordinates as text.

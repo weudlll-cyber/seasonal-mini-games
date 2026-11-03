@@ -38,11 +38,17 @@ const overlap = (a: Box, b: Box): boolean =>
 async function stillPlayable(page: Page, dialog: Box, size: Size): Promise<void> {
   const action = page.getByTestId('guess-button').or(page.getByTestId('cut-button'));
   await expect(action).toBeVisible();
-  // Disabled only while waiting, or (Safecracker) until a whole code is typed.
-  if (!(await action.isEnabled())) await expect(action).toHaveText(/^(Wait \d+ s|Try code)$/);
+  // Disabled only while waiting, or until the input is complete (Safecracker's whole code,
+  // Bomb Defusal's chosen wires): then it still reads its own word.
+  if (!(await action.isEnabled())) {
+    await expect(action).toHaveText(/^(Wait \d+ s|Try code|Cut)$/);
+  }
   const parts = ['.round-main', '.round-range', '.round-stage', '.round-input'];
   for (const part of parts) {
-    const box = await page.locator(part).boundingBox();
+    // A list game has no stage: count first, a bounding box would wait for it.
+    const found = page.locator(part);
+    if ((await found.count()) === 0) continue;
+    const box = await found.boundingBox();
     if (box === null) continue;
     if (size === WIDE) expect(overlap(dialog, box), `the panel over ${part}`).toBe(false);
     else if (part === '.round-input') {
