@@ -87,7 +87,9 @@ export function FocusBar(p: FocusBarProps): ReactElement {
       </span>
       {time === null ? null : (
         <span className="focus-fact" data-testid="countdown">
-          {time} left
+          {time}
+          {/* A phone shows "9:40" and reads the word out: the bar keeps one row. */}
+          <span className="round-phone-hidden"> left</span>
         </span>
       )}
       <span className="focus-actions">

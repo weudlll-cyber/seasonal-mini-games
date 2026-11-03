@@ -93,6 +93,8 @@ describe('event lines and banners', () => {
       playerId: null,
       special: true,
     });
+    // A later fall says which one it is, so the rows differ.
+    expect(stText.event({ ...fell, index: 3 }, {})?.text).toBe('Leaf Fall: 2 tiles fell (fall 3).');
     // The hint shows as the grid's quarter and the panel's line, never as a list line.
     expect(stText.event({ type: 'HintGiven', playerId: null, quarter }, {})).toBeNull();
     expect(stText.event({ type: 'HintGiven', playerId: null, quarter: null }, {})).toBeNull();

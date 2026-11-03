@@ -210,6 +210,8 @@ export function TileGrid(p: TileGridProps): ReactElement {
         if (c !== null) p.onTile?.(c);
       }}
       data-testid={p.variant === 'loupe' ? undefined : 'tile-grid'}
+      // Tiles too small for numbers get a thinner own frame (./tiles.css).
+      data-numbers={p.numbers}
     >
       {range(shown.top, shown.bottom).map((y) => (
         <div key={y} role="row" className="st-gridrow">

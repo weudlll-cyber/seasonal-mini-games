@@ -148,6 +148,11 @@
   letter-spacing: 0.15em;
 }
 
+/* "(4 digits, 0–9)" stays on one line: the range never breaks at its dash. */
+.sc-space {
+  white-space: nowrap;
+}
+
 .sc-players {
   margin: 0;
   padding-left: 1.25rem;

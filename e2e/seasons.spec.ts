@@ -69,7 +69,8 @@ const SEASONS: readonly Season[] = [
     name: 'Winter',
     special: 'Frost',
     rule: 'Answers arrive a few seconds late.',
-    banner: /^Frost: your answer arrives in \d s\.$/,
+    // At the opening only: a held answer is shown by its own row, not again by the banner.
+    banner: /^Frost: answers arrive \d s late\.$/,
   },
 ];
 
@@ -121,11 +122,12 @@ for (const s of SEASONS) {
       await p.page.goto(`./#/match/${code}`);
       await introFits(p.page, s);
       await roundOpen(p.page);
-      await provoke(p.page, s);
       // The banner above the list, in the season colour (fast profile: within seconds;
-      // Spring Herald's at the opening).
+      // Spring Herald's and Frost's at the opening, so Frost's is read before the guess).
       const banner = p.page.getByTestId('special-banner').locator('p');
-      await expect(banner).toHaveText(s.banner, { timeout: 15_000 });
+      if (s.season === 'winter') await expect(banner).toHaveText(s.banner);
+      await provoke(p.page, s);
+      if (s.season !== 'winter') await expect(banner).toHaveText(s.banner, { timeout: 15_000 });
       await expect(p.page.getByTestId('round-special')).toHaveText(s.special);
       await p.page.getByTestId('special-info').click();
       // The round's mode, then the special's name and sentence (the mode for the phone).

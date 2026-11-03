@@ -14,14 +14,14 @@ Branch `feat/guess-games`. Owner decisions O47–O53 (2026-11-02); technical dec
 | 2. Seasonal Target (O51, O53)              | done    | see below |
 | 3. List games layout (O50)                 | done    | see below |
 | 4. Result screens                          | done    | see below |
-| 5. Small items                             | running |           |
-| 6. Re-shoot, measure, self-review          | open    |           |
+| 5. Small items                             | done    | `6c4491e` |
+| 6. Re-shoot, measure, self-review          | running |           |
 
 Pieces 1–4 are one commit: they share the round view's grid (`round.css`, `RoundScreen.tsx`), the games' `text.ts` (hint lines and closest miss) and the decision and spec pages, and the subagent of piece 2 worked in parallel with pieces 1 and 3. `pnpm verify` green on that tree (116 files, 707 tests); e2e follows in piece 6.
 
 ### Needs the owner
 
-Nothing so far.
+Nothing blocks. To look at and decide: OPEN.md, "Night-6 small items (T139), to confirm" and "Night-6 screenshot review, for the owner" (the list below, state "owner").
 
 ### Piece 1 — the shared focus shell
 
@@ -139,13 +139,56 @@ Nothing so far.
 
 Removed: the bar's waiting figure and its CSS (`.focus-facts`, `.focus-fact-time`), `round-cooldown`, the per-step Heatwave row and banner, the games' shared hint lines (and Guess The Number's `hintText`), the compact list's `LATEST` slice, the absolute drawer and 60 % sheet, the heading's focus target, Target's size line, "Last guess" line, input legend, `flow` variant and `.st-last`. Extracted: `InputRow.tsx` (from `RoundScreen.tsx`), `players.css` (from `round.css`), `loupe.css` (from `tiles.css`), `partsOf` and `ListPart` in `RoundScreen.tsx`, `TypedSteer` in Target's `Steer.tsx`. Reused: `useDisclosure` (Type coordinates), `RoundLog` for both list views, `TileGrid` and `useTileSize` for the round and the result, `bannerOf`, `formatNumber`, `buttonText`; new shared helper `teamName()`.
 
+### Piece 6 — re-shoot, measure, self-review
+
+- `reports/focus-mode-2/`: 226 light/dark pairs (452 shots), each pair of one moment: every game, season, shared and individual at 1280 × 720, 1920 × 1080 and 390 × 844; results (solved, time up) and the match summary; 15 guesses and more; Frost pending; Target halving, fallen tiles, the hint quarter, 8/20/30 per side in all three modes; every panel at every size; the desktop ready state; the loupe with the hint and with fallen tiles. `play-through.txt` holds per shot the page's scroll height against the viewport, Target's grid and tile size, the list rows wholly in view and whether a panel leaves the input clear.
+- Review: four subagents (one per game) on the first full shoot, then the lead on the retakes of every fixed state; the fixes are T140. The last full shoot ran after the subagents' fixes, with retakes of the states fixed after it.
+
+- Lines (the review fixes): `FocusBar.tsx` 131 → 133, `SeasonPill.tsx` 94 → 100, `SpecialBanner.tsx` 90 → 78 (Frost's held-answer text removed), `banner.test.tsx` 154 → 149, `cooldownRing.css` 53 → 61, `focus.css` 209 → 210, `players.css` 66 → 67, `round.css` 255 → 265, `roundLog.css` 211 → 218, `e2e/seasons.spec.ts` 185 → 187; Bomb Defusal `ResultPanel.tsx` 55 → 55; Safecracker `ResultPanel.tsx` 61 → 61, `sc.css` 201 → 206; Seasonal Target `TileGrid.tsx` 223 → 225, `text.ts` 120 → 126, `text.test.ts` 154 → 156, `tiles.css` 285 → 291. Removed: `frostText` (the banner's held-answer sentence). Reused: `.round-phone-hidden` (visually hidden on a phone) for the bar's "left" and "round", the pill's `data-halving` for the phone cap.
+
 ### Measurements
 
-Piece 6.
+| What                                             | 1280 × 720              | 1920 × 1080           | 390 × 844                    |
+| ------------------------------------------------ | ----------------------- | --------------------- | ---------------------------- |
+| Page scroll in a round (every round shot)        | none (720/720)          | none (1080/1080)      | none (844/844)               |
+| Page scroll on a result                          | none (one screen, T138) | none                  | 1420–2316 px (by design)     |
+| Panel over the input                             | never (pushes aside)    | never                 | never (the sheet ends above) |
+| Target grid, 8 × 8                               | 644 px, tile 78.3 px    | —                     | 358 px, tile 42.5 px         |
+| Target grid, 20 × 20                             | 644 px, tile 30.1 px    | about 48 px (by size) | 358 px, tile 15.8 px         |
+| Target grid, 30 × 30                             | 644 px, tile 19.4 px    | 1004 px, tile 31.4 px | 358 px, tile 9.9 px          |
+| Target grid, 30 × 30, a panel open               | 520 px, tile 15.3 px    | 1004 px, tile 31.4 px | 358 px                       |
+| List rows in view, 15+ guesses: Guess The Number | 22                      | —                     | 15                           |
+| Safecracker                                      | 22                      | —                     | 5–6 (answers wrap)           |
+| Bomb Defusal                                     | 16                      | —                     | 9                            |
+| Seasonal Target                                  | 10                      | —                     | 4; 3 in a halving round      |
+
+Tile numbers show on tiles of 20 px or more (T137): on 30 × 30 at 1280 × 720 and on every phone grid above 8 × 8 the tiles carry their colour and frame only; the loupe gives 44 px tiles there.
 
 ### Screenshot review
 
-Piece 6.
+| Found                                                                                  | Where                               | State                                                        |
+| -------------------------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------ |
+| A long answer widened the phone list past its card                                     | Safecracker, 390 × 844              | fixed: one column no wider than the box, answers wrap        |
+| The halving badge and the time pushed the phone bar to two rows                        | all games, halving, 390 × 844       | fixed: "Halving" in place of the season's name, "9:40"       |
+| The ring's track vanished on the second surface; "Ready" crowded it                    | all games                           | fixed: track at half the text colour, smaller label          |
+| Frost said a held answer twice (banner and row)                                        | all games, winter                   | fixed: the banner only at the opening, the row says the rest |
+| An own 10 px phone tile lost its heat colour under its frame                           | Seasonal Target, 390 × 844          | fixed: a 1.5 px frame under 20 px                            |
+| Every later Leaf Fall row read alike                                                   | Seasonal Target, autumn             | fixed: "(fall 3)"                                            |
+| Team names off-centre in their tiles; narrow phone buttons; a short "All (N)"          | Players panel, bar, list            | fixed: centred, 44 px                                        |
+| A player's sequences ran together on the result                                        | Bomb Defusal result                 | fixed: " · " between them                                    |
+| The phone list kept one row in a halving round                                         | Seasonal Target, 390 × 844          | fixed: the panel above capped and scrolling there (3 rows)   |
+| "(4 digits, 0–9)" broke at its dash                                                    | Safecracker result                  | fixed: one line                                              |
+| The hint's text cut in that capped panel; 1½ rows while the halving banner stands      | Seasonal Target, 390 × 844, halving | owner (OPEN)                                                 |
+| An empty right column under a list game's panel                                        | list games, desktop                 | owner (OPEN, O50)                                            |
+| The result's game part scrolls inside itself with many guesses                         | results, desktop                    | owner (OPEN, T138)                                           |
+| The full header on a phone result; the summary's wrapped team list                     | results, 390 × 844                  | owner (OPEN, T128)                                           |
+| Team points beside player points; the viewer listed first with 0 guesses               | results                             | owner (OPEN)                                                 |
+| No closest miss on a time-up result                                                    | results                             | owner (OPEN, O22)                                            |
+| Zero parts in Safecracker's counts                                                     | Safecracker                         | owner (OPEN, T139)                                           |
+| "Hint" tag dimmed by a halving; strips beside the desktop grid; olive own tint in dark | Seasonal Target                     | owner (OPEN)                                                 |
+| The input row's controls not under the list's start                                    | Safecracker, Bomb Defusal, desktop  | owner (OPEN)                                                 |
+
+Not defects: the range bar does not narrow with the halving (decision 17); a closest-miss tie goes to the earlier guess; another player's held Frost answer shows no word until it arrives (the server sends none before).
 
 ### Checks
 

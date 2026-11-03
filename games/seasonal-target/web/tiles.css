@@ -239,6 +239,12 @@
     inset 0 0 0 4px var(--st-empty);
 }
 
+/* Tiles under 20 px (no numbers): a 1.5 px frame, or it covers the heat colour of a 10 px
+   tile on a phone (night-6 review). */
+.st-grid[data-numbers='false'] .st-tile[data-own='true'] {
+  box-shadow: inset 0 0 0 1.5px var(--st-own);
+}
+
 /* Another player's guess: a small dot in their list colour in the top right corner, ringed
    2 px in the empty tile's colour so it shows on every fill. */
 .st-mark {

@@ -83,6 +83,18 @@ Built as described in 02 §12 and DECISIONS T128–T132 and T134–T136 (O47–O
 - Safecracker: a row turns green once at least half the digits are in the right place, for every row; the counts read "1 right place, 2 right digits, wrong place".
 - Own rows and Seasonal Target's own tiles use the viewer's dot colour (their team's when teams play), no longer the round's season colour.
 
+**Night-6 screenshot review, for the owner** (the list with its places is in NIGHT-RUN.md, Night 6):
+
+- A list game's right column holds only its panel (O50), so below it the column stays empty; with a panel on demand open on a desktop that empty column sits in the middle.
+- A result with many guesses: on a desktop the game's part (each player's guesses) scrolls inside itself rather than growing the page; with four players or more the tables part can too.
+- The result page reached at a round's end keeps the full app header on a phone (T128), the match summary has the compact one; the summary's team list on a phone is numbered and wraps ("Team Autumn: 1 / point").
+- Team points (one per round won) beside player points (10 for a win) read as a contradiction on the result ("Team Spring: 1 point — the winner's team" beside its player's 10 points); the placings list the viewer first, also with 0 guesses.
+- A time-up result has no closest-miss line: O22's closest miss excludes the winner, so it is defined only when someone won.
+- Safecracker's counts keep their zero parts ("0 right places, 3 right digits, wrong place").
+- Seasonal Target: the "Hint" tag sits in the quarter's corner tile and is dimmed with it when a halving leaves that tile outside the area; on a desktop the grid is centred in the stage, leaving strips beside it at 1280 and 1920; in dark mode the own-row tint of an olive (Team Spring) dot reads greyish.
+- Seasonal Target on a phone in a halving round: the panel above the list is capped and scrolls, so the hint's text is cut at the fold (the quarter stays tinted with its "Hint" tag on the grid); while the halving's banner stands, the list shows about one and a half rows.
+- Safecracker's and Bomb Defusal's input row is a centred box of up to 46 rem whose controls sit at its left, so they do not line up under the list's start.
+
 **All games (game choice, owner decision 41)**
 
 - Owner decision 40 says the host chooses the explosion's waiting time "per match"; like Seasonal Target's feedback mode (O39) it is built as the host's round setting, which the round form keeps from round to round (spec conflict, as for O39).

@@ -34,8 +34,14 @@ const roundLine = (text: string): FeedLine => ({ text, playerId: null });
 
 function eventText(e: StEvent): FeedLine | null {
   switch (e.type) {
-    case 'CellsFell':
-      return { ...roundLine(`Leaf Fall: ${tiles(e.cells.length)} fell.`), special: true };
+    // Each fall's row names which fall it is, so a round's rows are not all alike (night 6).
+    case 'CellsFell': {
+      const text =
+        e.index <= 1
+          ? `Leaf Fall: ${tiles(e.cells.length)} fell.`
+          : `Leaf Fall: ${tiles(e.cells.length)} fell (fall ${String(e.index)}).`;
+      return { ...roundLine(text), special: true };
+    }
     // The hint shows once, as the grid's hint quarter; the platform's row says that it came.
     case 'HintGiven':
       return null;

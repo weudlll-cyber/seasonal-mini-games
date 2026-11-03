@@ -45,7 +45,7 @@ export function ResultPanel({ view, names, viewerKey }: ResultPanelProps): React
               {own === undefined ? null : (
                 <SequenceChips sequence={own} label={`${names[id] ?? id}'s sequence`} />
               )}
-              <span>{cut.join('; ') || 'no sequences'}</span>
+              <span>{cut.join(' · ') || 'no sequences'}</span>
             </li>
           );
         })}

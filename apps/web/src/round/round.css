@@ -47,7 +47,8 @@
 }
 
 /* A board game on a phone: the board a square as wide as the screen, the list of guesses the
-   height that is left, at least three rows (O49, O51). */
+   height that is left, at least three rows (O49, O51): in a halving round, where the halved
+   area, the hint and the banner all take height, the game's panel is capped and scrolls (T140). */
 .round-live[data-layout='board'] {
   grid-template-rows: auto auto minmax(4.5rem, 1fr) auto auto;
   grid-template-areas: 'bar' 'range' 'main' 'stage' 'input';
@@ -56,6 +57,10 @@
 @media (max-width: 899px) {
   .round-live[data-layout='board'] .round-stage {
     aspect-ratio: 1 / 1;
+  }
+
+  .round-live[data-layout='board']:has(.round-season[data-halving='true']) .round-range {
+    max-height: 5.5rem;
   }
 }
 
@@ -234,6 +239,11 @@
     display: none;
   }
 
+  /* A halving round: the badge takes the season name's place (the icon still shows the
+     season, the name is read out), or the bar's buttons are pushed off a 390 px screen; the
+     words after "Halving" and the time are read out only. */
+  .round-season[data-halving='true'] .round-season-name,
+  .round-phone-hidden,
   .round-special {
     position: absolute;
     width: 1px;

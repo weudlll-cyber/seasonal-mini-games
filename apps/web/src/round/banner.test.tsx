@@ -7,7 +7,8 @@
  * Responsibility: the banner says what a special just did — Leaf Fall and halving in the
  *                 game's words, Heatwave's waiting time and Spring Herald in the platform's —
  *                 for 3 s after the event and then goes; the newest event wins; under Frost
- *                 the viewer's just-sent guess gets "Frost: your answer arrives in N s."; the
+ *                 the round's opening says answers arrive late, a held own answer no banner;
+ *                 Heatwave is announced once; the
  *                 round bar's season pill names the special and opens the special's sentence,
  *                 which closes with Escape.
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./fakes, ./RoundScreen,
@@ -87,16 +88,10 @@ describe('the special banner', () => {
 });
 
 describe('the special banner under Frost', () => {
-  it('tells under Frost when the viewer’s held answer arrives', () => {
+  it('leaves a held own answer to its row: no banner repeats it (O47)', () => {
     const rows = [{ key: '1', at: 10_000, playerId: null, pending: true, feedback: null }];
     const frost = { ...open, season: 'winter', frostDelayMs: 3_000 } as const;
-    expect(text(bannerOf([], frost, gameWith(rows), 10_200))).toBe(
-      'Frost: your answer arrives in 3 s.',
-    );
-    expect(bannerOf([], frost, gameWith(rows), 13_100)).toBeNull();
-    // Another player's held guess is not the viewer's to wait for.
-    const theirs = [{ ...rows[0], playerId: 'w' }];
-    expect(bannerOf([], frost, gameWith(theirs), 10_200)).toBeNull();
+    expect(bannerOf([], frost, gameWith(rows), 10_200)).toBeNull();
   });
 
   it('says for 3 s after a Frost round opens that answers arrive late', () => {

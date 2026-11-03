@@ -194,6 +194,7 @@
 
   .focus-button {
     width: var(--hit-target);
+    min-width: var(--hit-target);
     padding: 0;
     justify-content: center;
   }

@@ -20,6 +20,7 @@
 .round-team {
   display: grid;
   justify-items: center;
+  text-align: center;
   gap: 0.15rem;
   padding: 0.4rem 0.25rem;
   border-radius: var(--radius);

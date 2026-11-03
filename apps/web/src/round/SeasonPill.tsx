@@ -47,7 +47,12 @@ function PillFace({ state }: { readonly state: RoundStateView }): ReactElement {
           {state.specialOn ? SPECIALS[state.season].name : 'no special'}
         </span>
       </span>
-      {state.halving ? <span className="round-badge">Halving round</span> : null}
+      {/* "Halving" on a phone: " round" is read out there, so the bar keeps one row. */}
+      {state.halving ? (
+        <span className="round-badge">
+          Halving<span className="round-phone-hidden"> round</span>
+        </span>
+      ) : null}
     </>
   );
 }
@@ -60,7 +65,7 @@ export function SeasonPill(p: {
   const { state } = p;
   if (!state.specialOn) {
     return (
-      <span className="round-season" data-season={state.season}>
+      <span className="round-season" data-season={state.season} data-halving={state.halving}>
         <PillFace state={state} />
       </span>
     );
@@ -73,6 +78,7 @@ export function SeasonPill(p: {
         type="button"
         className="round-season round-season--button"
         data-season={state.season}
+        data-halving={state.halving}
         aria-expanded={note.open}
         aria-controls={note.panelId}
         aria-label={`${SEASON_NAMES[state.season]} · ${special.name}: what it does`}

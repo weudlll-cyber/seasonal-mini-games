@@ -25,7 +25,10 @@
 
 .round-log ol {
   flex: 1;
+  min-width: 0;
   min-height: 0;
+  /* One column no wider than the box: a long answer wraps instead of widening the list. */
+  grid-template-columns: minmax(0, 1fr);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -140,8 +143,11 @@
 }
 
 .round-answer {
+  min-width: 0;
   font-weight: var(--font-weight-strong);
-  white-space: nowrap;
+  /* Whole on one line where it fits; a long one ("1 right place, 2 right digits, wrong
+     place") wraps on a phone rather than cutting the row off. */
+  overflow-wrap: anywhere;
 }
 
 .round-answer[data-feedback='higher'] {
@@ -207,5 +213,6 @@
 .round-log-all {
   flex: none;
   align-self: flex-end;
+  min-height: var(--hit-target);
   margin-bottom: 0.25rem;
 }

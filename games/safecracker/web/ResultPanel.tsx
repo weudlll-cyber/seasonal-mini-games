@@ -34,7 +34,7 @@ export function ResultPanel({ view, names, viewerKey }: ResultPanelProps): React
           <strong className="sc-code" data-testid="secret">
             {v.secret}
           </strong>{' '}
-          ({space}).
+          <span className="sc-space">({space})</span>.
         </p>
       )}
       <ul className="sc-players" aria-label="Every code tried">

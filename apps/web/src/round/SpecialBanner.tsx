@@ -7,9 +7,8 @@
  *                 what happened: Leaf Fall's numbers falling and the range halved in the
  *                 game's words (its `banner` hook), Heatwave's new waiting time and Spring
  *                 Herald's hint in the platform's (./roundText); under Frost, for the first
- *                 3 s of the round that answers arrive late, and while the
- *                 viewer's newest guess has just been sent and its answer is held, when it
- *                 will arrive. Derived from the live feed and the view on every tick, so no
+ *                 3 s of the round, that answers arrive late (a held own answer is said by its
+ *                 row in the list, "answer arriving… 3 s", not again here, O47). Derived from the live feed and the view on every tick, so no
  *                 timer of its own; the newest event wins. While the banner shows an event,
  *                 the list leaves that event's row out (`key`), so one view never says it
  *                 twice (O47); the row comes back once the banner is gone. A live region
@@ -36,18 +35,6 @@ function textOf(event: unknown, game: GameWeb | null): string | null {
   return platformBanner(event);
 }
 
-// Frost: the viewer's guess sent in the last 3 s whose answer is still held.
-function frostText(state: RoundStateView, game: GameWeb | null, now: number): string | null {
-  if (state.frostDelayMs === null || game === null || state.game === null) return null;
-  const held = game.text
-    .guesses(state.game)
-    .filter((g) => g.playerId === null && g.pending && now - g.at < BANNER_MS);
-  const newest = Math.max(...held.map((g) => g.at));
-  if (!Number.isFinite(newest)) return null;
-  const left = Math.max(1, Math.ceil((newest + state.frostDelayMs - now) / 1_000));
-  return `Frost: your answer arrives in ${String(left)} s.`;
-}
-
 // Frost in its first 3 s: the round opened with answers held (night-5 review: Frost had no
 // sign of itself until the first guess).
 function frostOpening(state: RoundStateView, now: number): string | null {
@@ -63,7 +50,7 @@ export interface Banner {
 }
 
 // The banner to show now, or null: the newest special event of the last 3 s, else Frost's at
-// the opening, else Frost's for the viewer's held answer.
+// the opening.
 export function bannerOf(
   feed: readonly FeedItem[],
   state: RoundStateView,
@@ -76,7 +63,8 @@ export function bannerOf(
     const text = textOf(item.event, game);
     if (text !== null) return { text, key: item.key };
   }
-  const frost = frostOpening(state, now) ?? frostText(state, game, now);
+  // A held own answer is said by its row ("answer arriving… 3 s"), not again here (O47).
+  const frost = frostOpening(state, now);
   return frost === null ? null : { text: frost, key: null };
 }
 

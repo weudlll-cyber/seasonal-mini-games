@@ -1,0 +1,226 @@
+reports/focus-mode-2/guess-the-number/spring-shared-1280x720: open, scroll 720/720, list rows in view 4
+reports/focus-mode-2/guess-the-number/spring-shared-1920x1080: open, scroll 1080/1080, list rows in view 4
+reports/focus-mode-2/guess-the-number/spring-shared-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/guess-the-number/spring-individual-1280x720: open, scroll 720/720, list rows in view 4
+reports/focus-mode-2/guess-the-number/spring-individual-1920x1080: open, scroll 1080/1080, list rows in view 4
+reports/focus-mode-2/guess-the-number/spring-individual-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/guess-the-number/summer-shared-1280x720: open, scroll 720/720, list rows in view 4
+reports/focus-mode-2/guess-the-number/summer-shared-1920x1080: open, scroll 1080/1080, list rows in view 4
+reports/focus-mode-2/guess-the-number/summer-shared-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/guess-the-number/summer-shared-open-focus-chat-1280x720: open, scroll 720/720, list rows in view 4, panel clear of the input
+reports/focus-mode-2/guess-the-number/summer-shared-open-focus-chat-1920x1080: open, scroll 1080/1080, list rows in view 4, panel clear of the input
+reports/focus-mode-2/guess-the-number/summer-shared-open-focus-chat-390x844: open, scroll 844/844, list rows in view 3, panel clear of the input
+reports/focus-mode-2/guess-the-number/summer-shared-open-focus-players-1280x720: open, scroll 720/720, list rows in view 5, panel clear of the input
+reports/focus-mode-2/guess-the-number/summer-shared-open-focus-players-1920x1080: open, scroll 1080/1080, list rows in view 5, panel clear of the input
+reports/focus-mode-2/guess-the-number/summer-shared-open-focus-players-390x844: open, scroll 844/844, list rows in view 3, panel clear of the input
+reports/focus-mode-2/guess-the-number/summer-shared-open-host-menu-1280x720: open, scroll 720/720, list rows in view 5, panel clear of the input
+reports/focus-mode-2/guess-the-number/summer-shared-open-host-menu-1920x1080: open, scroll 1080/1080, list rows in view 5, panel clear of the input
+reports/focus-mode-2/guess-the-number/summer-shared-open-host-menu-390x844: open, scroll 844/844, list rows in view 4, panel clear of the input
+reports/focus-mode-2/guess-the-number/summer-shared-open-list-all-390x844: open, scroll 844/844, list rows in view 4, panel clear of the input
+reports/focus-mode-2/guess-the-number/summer-individual-1280x720: open, scroll 720/720, list rows in view 3
+reports/focus-mode-2/guess-the-number/summer-individual-1920x1080: open, scroll 1080/1080, list rows in view 4
+reports/focus-mode-2/guess-the-number/summer-individual-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/guess-the-number/autumn-shared-1280x720: open, scroll 720/720, list rows in view 3
+reports/focus-mode-2/guess-the-number/autumn-shared-1920x1080: open, scroll 1080/1080, list rows in view 4
+reports/focus-mode-2/guess-the-number/autumn-shared-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/guess-the-number/autumn-individual-1280x720: open, scroll 720/720, list rows in view 3
+reports/focus-mode-2/guess-the-number/autumn-individual-1920x1080: open, scroll 1080/1080, list rows in view 4
+reports/focus-mode-2/guess-the-number/autumn-individual-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/guess-the-number/winter-shared-1280x720: open, scroll 720/720, list rows in view 3
+reports/focus-mode-2/guess-the-number/winter-shared-1920x1080: open, scroll 1080/1080, list rows in view 3
+reports/focus-mode-2/guess-the-number/winter-shared-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/guess-the-number/winter-individual-1280x720: open, scroll 720/720, list rows in view 3
+reports/focus-mode-2/guess-the-number/winter-individual-1920x1080: open, scroll 1080/1080, list rows in view 3
+reports/focus-mode-2/guess-the-number/winter-individual-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/guess-the-number/busy-15-guesses-1280x720: open, scroll 720/720, list rows in view 22
+reports/focus-mode-2/guess-the-number/busy-15-guesses-390x844: open, scroll 844/844, list rows in view 15
+reports/focus-mode-2/guess-the-number/frost-pending-1280x720: open, scroll 720/720, list rows in view 3
+reports/focus-mode-2/guess-the-number/frost-pending-1920x1080: open, scroll 1080/1080, list rows in view 5
+reports/focus-mode-2/guess-the-number/frost-pending-390x844: open, scroll 844/844, list rows in view 7
+reports/focus-mode-2/guess-the-number/ready-desktop-1280x720: open, scroll 720/720, list rows in view 2
+reports/focus-mode-2/guess-the-number/ready-desktop-1920x1080: open, scroll 1080/1080, list rows in view 2
+reports/focus-mode-2/guess-the-number/result-solved-1280x720: page, scroll 720/720
+reports/focus-mode-2/guess-the-number/result-solved-1920x1080: page, scroll 1080/1080
+reports/focus-mode-2/guess-the-number/result-solved-390x844: page, scroll 2052/844 (SCROLLS)
+reports/focus-mode-2/guess-the-number/result-solved-summary-1280x720: page, scroll 720/720
+reports/focus-mode-2/guess-the-number/result-solved-summary-1920x1080: page, scroll 1080/1080
+reports/focus-mode-2/guess-the-number/result-solved-summary-390x844: page, scroll 844/844
+reports/focus-mode-2/guess-the-number/result-time-up-1280x720: page, scroll 720/720
+reports/focus-mode-2/guess-the-number/result-time-up-1920x1080: page, scroll 1080/1080
+reports/focus-mode-2/guess-the-number/result-time-up-390x844: page, scroll 1420/844 (SCROLLS)
+reports/focus-mode-2/safecracker/spring-shared-1280x720: open, scroll 720/720, list rows in view 4
+reports/focus-mode-2/safecracker/spring-shared-1920x1080: open, scroll 1080/1080, list rows in view 4
+reports/focus-mode-2/safecracker/spring-shared-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/safecracker/spring-individual-1280x720: open, scroll 720/720, list rows in view 4
+reports/focus-mode-2/safecracker/spring-individual-1920x1080: open, scroll 1080/1080, list rows in view 4
+reports/focus-mode-2/safecracker/spring-individual-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/safecracker/summer-shared-1280x720: open, scroll 720/720, list rows in view 3
+reports/focus-mode-2/safecracker/summer-shared-1920x1080: open, scroll 1080/1080, list rows in view 4
+reports/focus-mode-2/safecracker/summer-shared-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/safecracker/summer-shared-open-focus-chat-1280x720: open, scroll 720/720, list rows in view 4, panel clear of the input
+reports/focus-mode-2/safecracker/summer-shared-open-focus-chat-1920x1080: open, scroll 1080/1080, list rows in view 4, panel clear of the input
+reports/focus-mode-2/safecracker/summer-shared-open-focus-chat-390x844: open, scroll 844/844, list rows in view 3, panel clear of the input
+reports/focus-mode-2/safecracker/summer-shared-open-focus-players-1280x720: open, scroll 720/720, list rows in view 5, panel clear of the input
+reports/focus-mode-2/safecracker/summer-shared-open-focus-players-1920x1080: open, scroll 1080/1080, list rows in view 5, panel clear of the input
+reports/focus-mode-2/safecracker/summer-shared-open-focus-players-390x844: open, scroll 844/844, list rows in view 3, panel clear of the input
+reports/focus-mode-2/safecracker/summer-shared-open-host-menu-1280x720: open, scroll 720/720, list rows in view 5, panel clear of the input
+reports/focus-mode-2/safecracker/summer-shared-open-host-menu-1920x1080: open, scroll 1080/1080, list rows in view 5, panel clear of the input
+reports/focus-mode-2/safecracker/summer-shared-open-host-menu-390x844: open, scroll 844/844, list rows in view 4, panel clear of the input
+reports/focus-mode-2/safecracker/summer-shared-open-list-all-390x844: open, scroll 844/844, list rows in view 4, panel clear of the input
+reports/focus-mode-2/safecracker/summer-individual-1280x720: open, scroll 720/720, list rows in view 3
+reports/focus-mode-2/safecracker/summer-individual-1920x1080: open, scroll 1080/1080, list rows in view 4
+reports/focus-mode-2/safecracker/summer-individual-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/safecracker/autumn-shared-1280x720: open, scroll 720/720, list rows in view 3
+reports/focus-mode-2/safecracker/autumn-shared-1920x1080: open, scroll 1080/1080, list rows in view 4
+reports/focus-mode-2/safecracker/autumn-shared-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/safecracker/autumn-individual-1280x720: open, scroll 720/720, list rows in view 3
+reports/focus-mode-2/safecracker/autumn-individual-1920x1080: open, scroll 1080/1080, list rows in view 3
+reports/focus-mode-2/safecracker/autumn-individual-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/safecracker/winter-shared-1280x720: open, scroll 720/720, list rows in view 3
+reports/focus-mode-2/safecracker/winter-shared-1920x1080: open, scroll 1080/1080, list rows in view 3
+reports/focus-mode-2/safecracker/winter-shared-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/safecracker/winter-individual-1280x720: open, scroll 720/720, list rows in view 3
+reports/focus-mode-2/safecracker/winter-individual-1920x1080: open, scroll 1080/1080, list rows in view 3
+reports/focus-mode-2/safecracker/winter-individual-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/safecracker/busy-15-guesses-1280x720: open, scroll 720/720, list rows in view 22
+reports/focus-mode-2/safecracker/busy-15-guesses-390x844: open, scroll 844/844, list rows in view 5
+reports/focus-mode-2/safecracker/frost-pending-1280x720: open, scroll 720/720, list rows in view 3
+reports/focus-mode-2/safecracker/frost-pending-1920x1080: open, scroll 1080/1080, list rows in view 5
+reports/focus-mode-2/safecracker/frost-pending-390x844: open, scroll 844/844, list rows in view 6
+reports/focus-mode-2/safecracker/ready-desktop-1280x720: open, scroll 720/720, list rows in view 2
+reports/focus-mode-2/safecracker/ready-desktop-1920x1080: open, scroll 1080/1080, list rows in view 2
+reports/focus-mode-2/safecracker/result-solved-1280x720: page, scroll 720/720
+reports/focus-mode-2/safecracker/result-solved-1920x1080: page, scroll 1080/1080
+reports/focus-mode-2/safecracker/result-solved-390x844: page, scroll 2219/844 (SCROLLS)
+reports/focus-mode-2/safecracker/result-solved-summary-1280x720: page, scroll 720/720
+reports/focus-mode-2/safecracker/result-solved-summary-1920x1080: page, scroll 1080/1080
+reports/focus-mode-2/safecracker/result-solved-summary-390x844: page, scroll 844/844
+reports/focus-mode-2/safecracker/result-time-up-1280x720: page, scroll 720/720
+reports/focus-mode-2/safecracker/result-time-up-1920x1080: page, scroll 1080/1080
+reports/focus-mode-2/safecracker/result-time-up-390x844: page, scroll 1444/844 (SCROLLS)
+reports/focus-mode-2/bomb-defusal/spring-shared-1280x720: open, scroll 720/720, list rows in view 4
+reports/focus-mode-2/bomb-defusal/spring-shared-1920x1080: open, scroll 1080/1080, list rows in view 4
+reports/focus-mode-2/bomb-defusal/spring-shared-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/bomb-defusal/spring-individual-1280x720: open, scroll 720/720, list rows in view 4
+reports/focus-mode-2/bomb-defusal/spring-individual-1920x1080: open, scroll 1080/1080, list rows in view 4
+reports/focus-mode-2/bomb-defusal/spring-individual-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/bomb-defusal/summer-shared-1280x720: open, scroll 720/720, list rows in view 4
+reports/focus-mode-2/bomb-defusal/summer-shared-1920x1080: open, scroll 1080/1080, list rows in view 4
+reports/focus-mode-2/bomb-defusal/summer-shared-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/bomb-defusal/summer-shared-open-focus-chat-1280x720: open, scroll 720/720, list rows in view 4, panel clear of the input
+reports/focus-mode-2/bomb-defusal/summer-shared-open-focus-chat-1920x1080: open, scroll 1080/1080, list rows in view 4, panel clear of the input
+reports/focus-mode-2/bomb-defusal/summer-shared-open-focus-chat-390x844: open, scroll 844/844, list rows in view 2, panel clear of the input
+reports/focus-mode-2/bomb-defusal/summer-shared-open-focus-players-1280x720: open, scroll 720/720, list rows in view 4, panel clear of the input
+reports/focus-mode-2/bomb-defusal/summer-shared-open-focus-players-1920x1080: open, scroll 1080/1080, list rows in view 5, panel clear of the input
+reports/focus-mode-2/bomb-defusal/summer-shared-open-focus-players-390x844: open, scroll 844/844, list rows in view 3, panel clear of the input
+reports/focus-mode-2/bomb-defusal/summer-shared-open-host-menu-1280x720: open, scroll 720/720, list rows in view 5, panel clear of the input
+reports/focus-mode-2/bomb-defusal/summer-shared-open-host-menu-1920x1080: open, scroll 1080/1080, list rows in view 5, panel clear of the input
+reports/focus-mode-2/bomb-defusal/summer-shared-open-host-menu-390x844: open, scroll 844/844, list rows in view 3, panel clear of the input
+reports/focus-mode-2/bomb-defusal/summer-shared-open-list-all-390x844: open, scroll 844/844, list rows in view 3, panel clear of the input
+reports/focus-mode-2/bomb-defusal/summer-individual-1280x720: open, scroll 720/720, list rows in view 3
+reports/focus-mode-2/bomb-defusal/summer-individual-1920x1080: open, scroll 1080/1080, list rows in view 4
+reports/focus-mode-2/bomb-defusal/summer-individual-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/bomb-defusal/autumn-shared-1280x720: open, scroll 720/720, list rows in view 4
+reports/focus-mode-2/bomb-defusal/autumn-shared-1920x1080: open, scroll 1080/1080, list rows in view 4
+reports/focus-mode-2/bomb-defusal/autumn-shared-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/bomb-defusal/autumn-individual-1280x720: open, scroll 720/720, list rows in view 3
+reports/focus-mode-2/bomb-defusal/autumn-individual-1920x1080: open, scroll 1080/1080, list rows in view 3
+reports/focus-mode-2/bomb-defusal/autumn-individual-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/bomb-defusal/winter-shared-1280x720: open, scroll 720/720, list rows in view 3
+reports/focus-mode-2/bomb-defusal/winter-shared-1920x1080: open, scroll 1080/1080, list rows in view 3
+reports/focus-mode-2/bomb-defusal/winter-shared-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/bomb-defusal/winter-individual-1280x720: open, scroll 720/720, list rows in view 3
+reports/focus-mode-2/bomb-defusal/winter-individual-1920x1080: open, scroll 1080/1080, list rows in view 3
+reports/focus-mode-2/bomb-defusal/winter-individual-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/bomb-defusal/busy-15-guesses-1280x720: open, scroll 720/720, list rows in view 16
+reports/focus-mode-2/bomb-defusal/busy-15-guesses-390x844: open, scroll 844/844, list rows in view 9
+reports/focus-mode-2/bomb-defusal/frost-pending-1280x720: open, scroll 720/720, list rows in view 3
+reports/focus-mode-2/bomb-defusal/frost-pending-1920x1080: open, scroll 1080/1080, list rows in view 3
+reports/focus-mode-2/bomb-defusal/frost-pending-390x844: open, scroll 844/844, list rows in view 4
+reports/focus-mode-2/bomb-defusal/ready-desktop-1280x720: open, scroll 720/720, list rows in view 2
+reports/focus-mode-2/bomb-defusal/ready-desktop-1920x1080: open, scroll 1080/1080, list rows in view 2
+reports/focus-mode-2/bomb-defusal/result-solved-1280x720: page, scroll 720/720
+reports/focus-mode-2/bomb-defusal/result-solved-1920x1080: page, scroll 1080/1080
+reports/focus-mode-2/bomb-defusal/result-solved-390x844: page, scroll 2316/844 (SCROLLS)
+reports/focus-mode-2/bomb-defusal/result-solved-summary-1280x720: page, scroll 720/720
+reports/focus-mode-2/bomb-defusal/result-solved-summary-1920x1080: page, scroll 1080/1080
+reports/focus-mode-2/bomb-defusal/result-solved-summary-390x844: page, scroll 844/844
+reports/focus-mode-2/bomb-defusal/result-time-up-1280x720: page, scroll 720/720
+reports/focus-mode-2/bomb-defusal/result-time-up-1920x1080: page, scroll 1080/1080
+reports/focus-mode-2/bomb-defusal/result-time-up-390x844: page, scroll 1537/844 (SCROLLS)
+reports/focus-mode-2/bomb-defusal/autumn-all-harmless-1280x720: open, scroll 720/720, list rows in view 5
+reports/focus-mode-2/bomb-defusal/autumn-all-harmless-1920x1080: open, scroll 1080/1080, list rows in view 5
+reports/focus-mode-2/bomb-defusal/autumn-all-harmless-390x844: open, scroll 844/844, list rows in view 2
+reports/focus-mode-2/seasonal-target/spring-shared-1280x720: open, scroll 720/720, grid 644×644 px, tile 19.4 px, list rows in view 4
+reports/focus-mode-2/seasonal-target/spring-shared-1920x1080: open, scroll 1080/1080, grid 1004×1004 px, tile 31.4 px, list rows in view 4
+reports/focus-mode-2/seasonal-target/spring-shared-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/spring-shared-loupe-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/spring-individual-1280x720: open, scroll 720/720, grid 644×644 px, tile 19.4 px, list rows in view 4
+reports/focus-mode-2/seasonal-target/spring-individual-1920x1080: open, scroll 1080/1080, grid 1004×1004 px, tile 31.4 px, list rows in view 4
+reports/focus-mode-2/seasonal-target/spring-individual-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/summer-shared-1280x720: open, scroll 720/720, grid 644×644 px, tile 19.4 px, list rows in view 4
+reports/focus-mode-2/seasonal-target/summer-shared-1920x1080: open, scroll 1080/1080, grid 1004×1004 px, tile 31.4 px, list rows in view 4
+reports/focus-mode-2/seasonal-target/summer-shared-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/summer-shared-open-focus-chat-1280x720: open, scroll 720/720, grid 520×520 px, tile 15.3 px, list rows in view 4, panel clear of the input
+reports/focus-mode-2/seasonal-target/summer-shared-open-focus-chat-1920x1080: open, scroll 1080/1080, grid 1004×1004 px, tile 31.4 px, list rows in view 5, panel clear of the input
+reports/focus-mode-2/seasonal-target/summer-shared-open-focus-chat-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 3, panel clear of the input
+reports/focus-mode-2/seasonal-target/summer-shared-open-focus-players-1280x720: open, scroll 720/720, grid 520×520 px, tile 15.3 px, list rows in view 5, panel clear of the input
+reports/focus-mode-2/seasonal-target/summer-shared-open-focus-players-1920x1080: open, scroll 1080/1080, grid 1004×1004 px, tile 31.4 px, list rows in view 5, panel clear of the input
+reports/focus-mode-2/seasonal-target/summer-shared-open-focus-players-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 3, panel clear of the input
+reports/focus-mode-2/seasonal-target/summer-shared-open-host-menu-1280x720: open, scroll 720/720, grid 520×520 px, tile 15.3 px, list rows in view 5, panel clear of the input
+reports/focus-mode-2/seasonal-target/summer-shared-open-host-menu-1920x1080: open, scroll 1080/1080, grid 1004×1004 px, tile 31.4 px, list rows in view 6, panel clear of the input
+reports/focus-mode-2/seasonal-target/summer-shared-open-host-menu-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 4, panel clear of the input
+reports/focus-mode-2/seasonal-target/summer-shared-open-list-all-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 4, panel clear of the input
+reports/focus-mode-2/seasonal-target/summer-individual-1280x720: open, scroll 720/720, grid 644×644 px, tile 19.4 px, list rows in view 4
+reports/focus-mode-2/seasonal-target/summer-individual-1920x1080: open, scroll 1080/1080, grid 1004×1004 px, tile 31.4 px, list rows in view 4
+reports/focus-mode-2/seasonal-target/summer-individual-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/autumn-shared-1280x720: open, scroll 720/720, grid 644×644 px, tile 19.4 px, list rows in view 7
+reports/focus-mode-2/seasonal-target/autumn-shared-1920x1080: open, scroll 1080/1080, grid 1004×1004 px, tile 31.4 px, list rows in view 7
+reports/focus-mode-2/seasonal-target/autumn-shared-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 3
+reports/focus-mode-2/seasonal-target/autumn-shared-loupe-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 3
+reports/focus-mode-2/seasonal-target/autumn-individual-1280x720: open, scroll 720/720, grid 644×644 px, tile 19.4 px, list rows in view 4
+reports/focus-mode-2/seasonal-target/autumn-individual-1920x1080: open, scroll 1080/1080, grid 1004×1004 px, tile 31.4 px, list rows in view 4
+reports/focus-mode-2/seasonal-target/autumn-individual-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/winter-shared-1280x720: open, scroll 720/720, grid 644×644 px, tile 19.4 px, list rows in view 3
+reports/focus-mode-2/seasonal-target/winter-shared-1920x1080: open, scroll 1080/1080, grid 1004×1004 px, tile 31.4 px, list rows in view 3
+reports/focus-mode-2/seasonal-target/winter-shared-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/winter-individual-1280x720: open, scroll 720/720, grid 644×644 px, tile 19.4 px, list rows in view 3
+reports/focus-mode-2/seasonal-target/winter-individual-1920x1080: open, scroll 1080/1080, grid 1004×1004 px, tile 31.4 px, list rows in view 3
+reports/focus-mode-2/seasonal-target/winter-individual-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/busy-15-guesses-1280x720: open, scroll 720/720, grid 644×644 px, tile 19.4 px, list rows in view 10
+reports/focus-mode-2/seasonal-target/busy-15-guesses-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 4
+reports/focus-mode-2/seasonal-target/frost-pending-1280x720: open, scroll 720/720, grid 644×644 px, tile 19.4 px, list rows in view 3
+reports/focus-mode-2/seasonal-target/frost-pending-1920x1080: open, scroll 1080/1080, grid 1004×1004 px, tile 31.4 px, list rows in view 5
+reports/focus-mode-2/seasonal-target/frost-pending-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 4
+reports/focus-mode-2/seasonal-target/ready-desktop-1280x720: open, scroll 720/720, grid 644×644 px, tile 19.4 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/ready-desktop-1920x1080: open, scroll 1080/1080, grid 1004×1004 px, tile 31.4 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/result-solved-1280x720: page, scroll 720/720, grid 276×276 px, tile 32.2 px
+reports/focus-mode-2/seasonal-target/result-solved-1920x1080: page, scroll 1080/1080, grid 635×635 px, tile 77.1 px
+reports/focus-mode-2/seasonal-target/result-solved-390x844: page, scroll 2102/844 (SCROLLS), grid 293×293 px, tile 34.4 px
+reports/focus-mode-2/seasonal-target/result-solved-summary-1280x720: page, scroll 720/720
+reports/focus-mode-2/seasonal-target/result-solved-summary-1920x1080: page, scroll 1080/1080
+reports/focus-mode-2/seasonal-target/result-solved-summary-390x844: page, scroll 844/844
+reports/focus-mode-2/seasonal-target/result-time-up-1280x720: page, scroll 720/720, grid 332×332 px, tile 9 px
+reports/focus-mode-2/seasonal-target/result-time-up-1920x1080: page, scroll 1080/1080, grid 691×691 px, tile 21 px
+reports/focus-mode-2/seasonal-target/result-time-up-390x844: page, scroll 1670/844 (SCROLLS), grid 293×293 px, tile 7.7 px
+reports/focus-mode-2/seasonal-target/answers-direction-8x8-1280x720: open, scroll 720/720, grid 644×644 px, tile 78.3 px, list rows in view 3
+reports/focus-mode-2/seasonal-target/answers-direction-8x8-390x844: open, scroll 844/844, grid 358×358 px, tile 42.5 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/answers-direction-20x20-1280x720: open, scroll 720/720, grid 644×644 px, tile 30.1 px, list rows in view 3
+reports/focus-mode-2/seasonal-target/answers-direction-20x20-390x844: open, scroll 844/844, grid 358×358 px, tile 15.8 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/answers-direction-30x30-1280x720: open, scroll 720/720, grid 644×644 px, tile 19.4 px, list rows in view 4
+reports/focus-mode-2/seasonal-target/answers-direction-30x30-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/answers-distance-8x8-1280x720: open, scroll 720/720, grid 644×644 px, tile 78.3 px, list rows in view 3
+reports/focus-mode-2/seasonal-target/answers-distance-8x8-390x844: open, scroll 844/844, grid 358×358 px, tile 42.5 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/answers-distance-20x20-1280x720: open, scroll 720/720, grid 644×644 px, tile 30.1 px, list rows in view 3
+reports/focus-mode-2/seasonal-target/answers-distance-20x20-390x844: open, scroll 844/844, grid 358×358 px, tile 15.8 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/answers-distance-30x30-1280x720: open, scroll 720/720, grid 644×644 px, tile 19.4 px, list rows in view 4
+reports/focus-mode-2/seasonal-target/answers-distance-30x30-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/answers-closeness-8x8-1280x720: open, scroll 720/720, grid 644×644 px, tile 78.3 px, list rows in view 4
+reports/focus-mode-2/seasonal-target/answers-closeness-8x8-390x844: open, scroll 844/844, grid 358×358 px, tile 42.5 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/answers-closeness-20x20-1280x720: open, scroll 720/720, grid 644×644 px, tile 30.1 px, list rows in view 4
+reports/focus-mode-2/seasonal-target/answers-closeness-20x20-390x844: open, scroll 844/844, grid 358×358 px, tile 15.8 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/answers-closeness-30x30-1280x720: open, scroll 720/720, grid 644×644 px, tile 19.4 px, list rows in view 4
+reports/focus-mode-2/seasonal-target/answers-closeness-30x30-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 2
+reports/focus-mode-2/seasonal-target/halving-1280x720: open, scroll 720/720, grid 644×644 px, tile 19.4 px, list rows in view 6
+reports/focus-mode-2/seasonal-target/halving-1920x1080: open, scroll 1080/1080, grid 1004×1004 px, tile 31.4 px, list rows in view 7
+reports/focus-mode-2/seasonal-target/halving-390x844: open, scroll 844/844, grid 358×358 px, tile 9.9 px, list rows in view 1
