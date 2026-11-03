@@ -126,14 +126,14 @@ describe('event lines and banners', () => {
 describe('result, intro and rules', () => {
   it('words the closest miss besides the winner, touching or not', () => {
     const miss = { playerId: 'a', value: { x: 21, y: 31 }, distance: 1, touching: true };
-    expect(stText.runnerUp({ closestMiss: miss }, { a: 'Anna' })).toBe(
+    expect(stText.runnerUp({ closestMiss: miss }, { a: 'Anna' }, true)).toBe(
       'Closest miss besides the winner: Anna, right next to the target (21, 31).',
     );
     const far = { ...miss, value: { x: 17, y: 30 }, distance: 3, touching: false };
-    expect(stText.runnerUp({ closestMiss: far }, {})).toBe(
+    expect(stText.runnerUp({ closestMiss: far }, {}, true)).toBe(
       'Closest miss besides the winner: a, 3 tiles away (17, 30).',
     );
-    expect(stText.runnerUp({ closestMiss: null }, {})).toBeNull();
+    expect(stText.runnerUp({ closestMiss: null }, {}, true)).toBeNull();
   });
 
   it('names the grid in the intro, and words Spring and Autumn', () => {

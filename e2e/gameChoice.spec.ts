@@ -49,8 +49,11 @@ test('journey 23: the game is chosen when the match is opened, and named everywh
     // Ended at once (End match's request): the summary names it.
     await call(p, 'POST', `/matches/${code}/close`, {});
     await p.page.goto(`./#/match/${code}`);
-    const summary = p.page.getByTestId('match-summary');
-    await expect(summary.getByTestId('match-game')).toHaveText('Seasonal Safecracker');
+    // The summary's slim bar names the game (T145).
+    await expect(p.page.getByTestId('match-summary')).toBeVisible();
+    await expect(p.page.getByTestId('result-bar').getByTestId('match-game')).toHaveText(
+      'Seasonal Safecracker',
+    );
 
     // The Quick Test form: only the chosen game's own settings.
     await p.page.goto('./#/quick-test');

@@ -13,7 +13,7 @@ Branch `feat/guess-games`. Owner decision O54 (2026-11-03); technical decisions 
 | 1. Layout system (O54)            | done    | see below              |
 | 2. Seasonal Target on this layout | done    | see below              |
 | 3. List games on this layout      | done    | see below              |
-| 4. Result screens                 | running |                        |
+| 4. Result screens                 | done    |                        |
 | 5. Known defects and clean-up     | running | `749c005` (test split) |
 | 6. Re-shoot, measure, self-review | open    |                        |
 
@@ -44,6 +44,15 @@ Nothing blocks. To look at after play: OPEN.md, "Night-7 layout, to confirm".
 - Bomb Defusal on a desktop: eight wires in one row (`bd.css`, was two rows of four), so the stage's list has room for 18 rows at 1280 × 720 (16 before).
 - Checks: `pnpm verify` green (128 files, 737 tests); journeys 20–22 and 24–27 pass in Chromium (journey 21 failed once, waiting for a harmless wire, and passed on the re-run).
 - Rows in view (probe, measured room of the list): see piece 6's measurements; journeys 24–26 assert the room for 22/20/18 rows at 1280 × 720 and 10/10/6 on the phone.
+
+### Piece 4 — result screens (T145)
+
+- New: `ResultBar.tsx` (the slim bar of the result and the summary), `ResultParts.tsx` (placings with the top three and "All placings", the team line, the team result; moved out of `ResultScreen.tsx`, 174 → 109 lines), `placings.test.tsx`, `e2e/results.spec.ts` (journey 28, a first-part fit check per game).
+- `MatchPage.tsx` (248 → 251): `AfterView` and the shared `Side` (joining, the waiting area, the chat); `LobbyView` no longer carries the result. `match.css` (235 → 227) loses T138's one-screen rules; `result.css` (251 → 265) gets the first part; `summary.css` (105 → 121): the page under the bar, the team list one line per team; Seasonal Target's `st.css` drops the phone result's forced square board (the first part has a height now).
+- The closest guess on a time-up result: `closestMissBy` (guess-engine) takes every player's guesses without a winner; `GameText.runnerUp` gets `won`; `closestLabel` (game-sdk) words it for the four games.
+- The golden run of Guess The Number (T118) re-recorded for this one change: its three time-up rounds now carry the closest guess (`closestMiss` was `null`); nothing else in the recording moved. The four games' closest-miss tests say so.
+- Checks: `pnpm verify` green (129 files, 741 tests); e2e Chromium 38/38 (journeys 1–27 and the four of journey 28).
+- Measured (probe): the first part ends at 712 px of 720 at 1280 × 720, 1072 of 1080 at 1920 × 1080, 828 of 844 at 390 × 844; Seasonal Target's 8 × 8 result grid 331 px at 1280 × 720.
 
 ## Night 6 (2026-11-02/03)
 

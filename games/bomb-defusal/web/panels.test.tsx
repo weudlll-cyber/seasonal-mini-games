@@ -189,13 +189,13 @@ describe('the game text: results, intro and entry', () => {
     const miss = (correct: number) => ({
       closestMiss: { playerId: 'a', value: ['red', 'blue', 'yellow', 'black'], correct },
     });
-    expect(bdText.runnerUp(miss(3), { a: 'Anna' })).toBe(
+    expect(bdText.runnerUp(miss(3), { a: 'Anna' }, true)).toBe(
       'Closest miss besides the winner: Anna, the first 3 cuts right (red → blue → yellow → black).',
     );
-    expect(bdText.runnerUp(miss(1), {})).toBe(
+    expect(bdText.runnerUp(miss(1), {}, true)).toBe(
       'Closest miss besides the winner: a, the first cut right (red → blue → yellow → black).',
     );
-    expect(bdText.runnerUp({ closestMiss: null }, {})).toBeNull();
+    expect(bdText.runnerUp({ closestMiss: null }, {}, true)).toBeNull();
     expect(bdText.intro?.(view, 'shared')).toBe('Shared bomb: 6 wires, 4 cuts');
     expect(bdText.intro?.(view, 'individual')).toBe(
       'Everyone defuses their own bomb: 6 wires, 4 cuts',

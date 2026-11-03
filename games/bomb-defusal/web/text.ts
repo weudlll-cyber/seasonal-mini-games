@@ -28,7 +28,14 @@ import {
   type SpectatorView,
   type Wire,
 } from '@smg-game/bomb-defusal';
-import type { FeedLine, GameText, GuessAnswer, GuessRow, Season } from '@smg/game-sdk';
+import {
+  closestLabel,
+  type FeedLine,
+  type GameText,
+  type GuessAnswer,
+  type GuessRow,
+  type Season,
+} from '@smg/game-sdk';
 
 // The explosion icon: meaning by icon and words, never by colour alone (02c §5.2).
 export const BOOM_ICON = '💥';
@@ -137,13 +144,17 @@ function guessRows(view: unknown): readonly GuessRow[] {
 }
 
 // 02c §9: "Closest: Anna, the first 3 cuts right (red → blue → yellow → black)."
-function runnerUp(view: unknown, names: Readonly<Record<string, string>>): string | null {
+function runnerUp(
+  view: unknown,
+  names: Readonly<Record<string, string>>,
+  won: boolean,
+): string | null {
   const miss = (view as Partial<ResultView>).closestMiss ?? null;
   if (miss === null) return null;
   const name = names[miss.playerId] ?? miss.playerId;
   const right =
     miss.correct === 1 ? 'the first cut right' : `the first ${String(miss.correct)} cuts right`;
-  return `Closest miss besides the winner: ${name}, ${right} (${sequenceText(miss.value)}).`;
+  return `${closestLabel(won)}: ${name}, ${right} (${sequenceText(miss.value)}).`;
 }
 
 // The intro's line (02c §3): "Shared bomb: 6 wires, 4 cuts".

@@ -113,7 +113,7 @@ describe('the match summary', () => {
     expect(screen.getByRole('link', { name: 'Back to Play' }).getAttribute('href')).toBe('#/');
     // One screen: the standings in their own column, the rest beside them (./summary.css).
     const summary = screen.getByTestId('match-summary');
-    expect(summary.className).toContain('one-screen');
+    expect(summary.closest('.one-screen')).not.toBeNull();
     const standings = summary.querySelector('.match-summary-standings');
     const side = summary.querySelector('.match-summary-side');
     expect(standings?.contains(screen.getByTestId('match-standings'))).toBe(true);

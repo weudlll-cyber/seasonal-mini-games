@@ -139,10 +139,10 @@ describe('the closest miss and the result', () => {
     expect(closestMiss(r.state, '1123')).toMatchObject({ playerId: 'b', exact: 1, near: 0 });
   });
 
-  it('has none without a winner or another player’s wrong code', () => {
+  it('is the closest code without a winner (T145), none without another player’s wrong code', () => {
     const t = new Table(shared('1123'), input('shared', ['a', 'b']));
     t.play('a', '4567');
-    expect(closestMiss(t.state, '1123')).toBeNull();
+    expect(closestMiss(t.state, '1123')).toMatchObject({ playerId: 'a', value: '4567' });
     t.play('a', '1123');
     expect(closestMiss(t.state, '1123')).toBeNull();
   });

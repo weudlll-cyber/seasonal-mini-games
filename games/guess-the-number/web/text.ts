@@ -24,7 +24,13 @@ import {
   type ResultView,
   type SpectatorView,
 } from '@smg-game/guess-the-number';
-import { formatNumber, type FeedLine, type GameText, type GuessRow } from '@smg/game-sdk';
+import {
+  closestLabel,
+  type FeedLine,
+  formatNumber,
+  type GameText,
+  type GuessRow,
+} from '@smg/game-sdk';
 
 export type HintView =
   | { readonly kind: 'parity'; readonly odd: boolean }
@@ -111,14 +117,18 @@ function guessRows(view: unknown): readonly GuessRow[] {
 
 // The closest miss on the shared result (O22), naming that the winner is not counted:
 // "Closest miss besides the winner: bot-01, missed by just 1 (92)." up to 2 away.
-function runnerUp(view: unknown, names: Readonly<Record<string, string>>): string | null {
+function runnerUp(
+  view: unknown,
+  names: Readonly<Record<string, string>>,
+  won: boolean,
+): string | null {
   const miss = (view as Partial<ResultView>).closestMiss ?? null;
   if (miss === null) return null;
   const name = names[miss.playerId] ?? miss.playerId;
   const n = formatNumber(miss.distance);
   const guess = formatNumber(miss.value);
   const how = miss.distance <= 2 ? `missed by just ${n}` : `${n} away`;
-  return `Closest miss besides the winner: ${name}, ${how} (${guess}).`;
+  return `${closestLabel(won)}: ${name}, ${how} (${guess}).`;
 }
 
 // The intro's line (O36): the mode and the range, or that the range is hidden (O19).

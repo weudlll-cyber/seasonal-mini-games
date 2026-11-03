@@ -1137,7 +1137,11 @@
        }
       ]
      },
-     "closestMiss": null
+     "closestMiss": {
+      "playerId": "p2",
+      "value": 880,
+      "distance": 11
+     }
     }
    }
   ]
@@ -2135,7 +2139,11 @@
        }
       ]
      },
-     "closestMiss": null
+     "closestMiss": {
+      "playerId": "p2",
+      "value": 880,
+      "distance": 11
+     }
     }
    }
   ]
@@ -5616,7 +5624,11 @@
        }
       ]
      },
-     "closestMiss": null
+     "closestMiss": {
+      "playerId": "p2",
+      "value": 990,
+      "distance": 4
+     }
     }
    }
   ]
@@ -6614,7 +6626,11 @@
        }
       ]
      },
-     "closestMiss": null
+     "closestMiss": {
+      "playerId": "p2",
+      "value": 990,
+      "distance": 4
+     }
     }
    }
   ]
@@ -10077,7 +10093,11 @@
        }
       ]
      },
-     "closestMiss": null
+     "closestMiss": {
+      "playerId": "p3",
+      "value": 940,
+      "distance": 7
+     }
     }
    }
   ]
@@ -11073,7 +11093,11 @@
        }
       ]
      },
-     "closestMiss": null
+     "closestMiss": {
+      "playerId": "p3",
+      "value": 940,
+      "distance": 7
+     }
     }
    }
   ]

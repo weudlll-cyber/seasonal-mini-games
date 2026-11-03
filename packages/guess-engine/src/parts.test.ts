@@ -171,10 +171,11 @@ describe('the closest miss', () => {
     expect(miss).toEqual({ playerId: 'b', value: 12, distance: 2 });
   });
 
-  it('is none without a winner or without another wrong guess', () => {
+  it('is the closest guess without a winner (time up), none without another wrong guess', () => {
     const t = new ToyTable(toyInput('shared'), { mode: 'shared', value: 10 });
     t.play('a', 7);
-    expect(closestMissBy(t.state, hit, () => 0)).toBeNull();
+    // No winner: the round's closest guess, over every player (T145).
+    expect(closestMissBy(t.state, hit, () => 0)).toEqual({ playerId: 'a', value: 7, distance: 0 });
     t.play('a', 10);
     expect(closestMissBy(t.state, hit, () => 0)).toBeNull();
   });

@@ -24,6 +24,7 @@ import {
   ownRows,
   person,
   search,
+  type Person,
 } from './play.js';
 import { PHONE } from './screens.js';
 
@@ -76,6 +77,23 @@ test('journey 1: a shared round from start to result, also on a phone', async ({
   }
 });
 
+// Journey 2's result: the placings follow the solve order, the time is up. Four players: the
+// first part shows the top three, "All placings" every one (T145).
+async function solveOrder(host: Person): Promise<void> {
+  await host.page.getByTestId('all-placings').click();
+  const rows = await host.page.getByTestId('placings').locator('tbody tr').allTextContents();
+  expect(rows[0]).toMatch(/^1\s*dev-player-1/);
+  expect(rows[1]).toMatch(/^2\s*dev-player-2/);
+  // The host plays too (O16) and, like player 3, did not guess.
+  expect(rows.slice(2).sort()).toEqual([
+    expect.stringMatching(/^not solved\s*dev-host/),
+    expect.stringMatching(/^not solved\s*dev-player-3/),
+  ]);
+  await expect(host.page.getByTestId('result').getByRole('heading', { level: 1 })).toHaveText(
+    'Time is up.',
+  );
+}
+
 test('journey 2: an individual round places solvers in order and ends with time up', async ({
   browser,
 }) => {
@@ -119,17 +137,7 @@ test('journey 2: an individual round places solvers in order and ends with time 
     await expect(ownRows(one.page).first()).toBeVisible();
     for (const p of [one, two, idle, host])
       await expect(p.page.getByTestId('result')).toBeVisible({ timeout: 90_000 });
-    const rows = await host.page.getByTestId('placings').locator('tbody tr').allTextContents();
-    expect(rows[0]).toMatch(/^1\s*dev-player-1/);
-    expect(rows[1]).toMatch(/^2\s*dev-player-2/);
-    // The host plays too (O16) and, like player 3, did not guess.
-    expect(rows.slice(2).sort()).toEqual([
-      expect.stringMatching(/^not solved\s*dev-host/),
-      expect.stringMatching(/^not solved\s*dev-player-3/),
-    ]);
-    await expect(host.page.getByTestId('result').getByRole('heading', { level: 1 })).toHaveText(
-      'Time is up.',
-    );
+    await solveOrder(host);
   } finally {
     await abortMatch(host, code);
     await closeAll([host, ...players]);

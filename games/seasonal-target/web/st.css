@@ -7,7 +7,7 @@
  *                 ./tiles.css; the spectator's panel and the result as flex columns that give
  *                 the grid's box (./tiles.css) the free height and the rest its natural height,
  *                 never by viewport arithmetic (the platform's boxes are of definite height);
- *                 the hint line; the input row in the right column (O51): the selected tile,
+ *                 the hint line; the input row in the info column (O51, T141): the selected tile,
  *                 the ring with a Guess at least 44 px, the "Type coordinates" toggle with the
  *                 compact Column and Row fields and the arrow cross 44 × 44 px; the result's
  *                 lines; a miss's answer in the guess list in its tile's heat step (O51). The
@@ -187,13 +187,4 @@
 .round-row[data-tier='st-burning'] .round-answer,
 .round-row[data-tier='st-justMissed'] .round-answer {
   color: var(--st-text-5);
-}
-
-/* A phone's result scrolls the page, so its grid has no height to fill: a square as wide as
-   the result instead of the board's 10 rem minimum. */
-@media (max-width: 959px) {
-  .st-result > .st-board {
-    flex: none;
-    aspect-ratio: 1 / 1;
-  }
 }

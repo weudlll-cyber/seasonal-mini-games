@@ -183,10 +183,10 @@ describe('the sentences', () => {
     expect(text.event({ type: 'HintGiven', playerId: 'p1', hint }, names)).toBeNull();
     expect(text.event({ type: 'GuessFed' }, names)).toBeNull();
     const miss = { closestMiss: { playerId: 'p1', value: '0427', exact: 3, near: 1 } };
-    expect(text.runnerUp(miss, names)).toBe(
+    expect(text.runnerUp(miss, names, true)).toBe(
       'Closest miss besides the winner: Anna, 3 right · 1 wrong place (0427).',
     );
-    expect(text.runnerUp({ closestMiss: null }, names)).toBeNull();
+    expect(text.runnerUp({ closestMiss: null }, names, true)).toBeNull();
     expect(text.intro?.(view, 'shared')).toBe('Shared 4-digit code, digits 0–9');
     expect(text.intro?.(view, 'individual')).toBe(
       'Everyone has their own 4-digit code, digits 0–9',

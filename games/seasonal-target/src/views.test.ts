@@ -170,10 +170,10 @@ describe('closest miss', () => {
     });
   });
 
-  it('says touching for a neighbour, and is none without a winner or another guess', () => {
+  it('says touching for a neighbour; the closest guess without a winner (T145)', () => {
     const t = sharedTable();
     t.play('a', { x: 13, y: 11 });
-    expect(closestMiss(t.state, { x: 12, y: 10 })).toBeNull();
+    expect(closestMiss(t.state, { x: 12, y: 10 })).toMatchObject({ playerId: 'a', touching: true });
     t.play('b', { x: 12, y: 10 });
     expect(closestMiss(t.state, { x: 12, y: 10 })).toMatchObject({ touching: true, distance: 1 });
     const alone = sharedTable();

@@ -17,7 +17,13 @@
  * Spec:           docs/spec/02d-game-seasonal-target.md §2, §4, §6, §8, §9
  */
 import type { PlayerView, ResultView, SpectatorView, StEvent } from '@smg-game/seasonal-target';
-import { formatNumber, type FeedLine, type GameText, type GuessRow } from '@smg/game-sdk';
+import {
+  closestLabel,
+  type FeedLine,
+  formatNumber,
+  type GameText,
+  type GuessRow,
+} from '@smg/game-sdk';
 
 import { answerOf, areaText, cellText, rowTier, sizeText, tiles } from './words.js';
 
@@ -91,12 +97,16 @@ function guessRows(view: unknown): readonly GuessRow[] {
 
 // The best guess of anyone but the winner: "Closest miss besides the winner: Anna, 3 tiles
 // away (17, 30)." or, touching, "…: Anna, right next to the target (21, 31)."
-function runnerUp(view: unknown, names: Readonly<Record<string, string>>): string | null {
+function runnerUp(
+  view: unknown,
+  names: Readonly<Record<string, string>>,
+  won: boolean,
+): string | null {
   const miss = (view as Partial<ResultView>).closestMiss ?? null;
   if (miss === null) return null;
   const name = names[miss.playerId] ?? miss.playerId;
   const how = miss.touching ? 'right next to the target' : `${tiles(miss.distance)} away`;
-  return `Closest miss besides the winner: ${name}, ${how} ${cellText(miss.value)}.`;
+  return `${closestLabel(won)}: ${name}, ${how} ${cellText(miss.value)}.`;
 }
 
 function intro(view: unknown, secretMode: 'shared' | 'individual'): string | null {

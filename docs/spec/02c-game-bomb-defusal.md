@@ -103,7 +103,7 @@ Platform feature, unchanged (03 §2.4): answers, comments and explosions arrive 
 
 None. On a halving day this game runs a normal season round of that season, as owner decision 29 does for a hidden range; the host form does not offer the option *(proposal)*.
 
-## 9. Winning, closest miss and the result page
+## 9. Winning, closest miss and the result page A time-up result without a winner shows the round's closest guess instead, "Closest guess: …" (DECISIONS T145).
 
 - Winning, placings, end conditions, winning margin, points, leaderboard and fairness proof are 02 §8–§10. The seed reproduces every secret, the Spring hints and the Leaf Fall marks.
 - **Reveal:** the secret sequence as numbered wire chips (swatch and name); in individual mode every player's sequence in the result.

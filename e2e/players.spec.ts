@@ -63,7 +63,9 @@ test('journey 5: season teams are fixed for the match and the winner team scores
     const locked = await attempt(one, 'POST', `/matches/${code}/team`, { team: 'winter' });
     expect(locked.body).toMatchObject({ code: 'TEAM_LOCKED' });
     await Promise.all(players.map((p) => search(p)));
-    await expect(host.page.getByTestId('team-result')).toContainText('1 point — the winner’s team');
+    await expect(host.page.getByTestId('team-result')).toContainText(
+      '1 team point — the winner’s team',
+    );
     // After the result: the waiting area for the next round lists the players with their
     // teams and has no team buttons; the result has no player box of its own (O23, O26).
     const waiting = one.page.getByTestId('waiting-area');

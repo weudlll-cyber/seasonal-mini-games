@@ -107,7 +107,7 @@ If fewer candidates remain than `digitsPerFall`, the fall takes all of them; wit
 
 None *(proposal)*. Safecracker implements no `halving` hook and sets `halvingAllowed` off, so on a halving day the option is not offered and a normal season round runs, as owner decision 29 does for a hidden range (DECISIONS T55; [04](04-software-architecture.md) §4.4).
 
-## 8. Winning, closest miss and the result page
+## 8. Winning, closest miss and the result page A time-up result without a winner shows the round's closest guess instead, "Closest guess: …" (DECISIONS T145).
 
 Winning, placings, end conditions, points and the winning margin are [02](02-game-guess-the-number.md) §8 and §9. The reveal shows the code (shared) or every player's code (individual), and the result's secret line reads "The code was 1123 (4 digits, 0–9)."
 

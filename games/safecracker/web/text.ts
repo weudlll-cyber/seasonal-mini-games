@@ -25,7 +25,14 @@ import type {
   ScEvent,
   SpectatorView,
 } from '@smg-game/safecracker';
-import type { FeedLine, GameText, GuessAnswer, GuessRow, Season } from '@smg/game-sdk';
+import {
+  closestLabel,
+  type FeedLine,
+  type GameText,
+  type GuessAnswer,
+  type GuessRow,
+  type Season,
+} from '@smg/game-sdk';
 
 const ORDINALS = ['1st', '2nd', '3rd', '4th', '5th', '6th'];
 
@@ -116,11 +123,15 @@ function guessRows(view: unknown): readonly GuessRow[] {
 
 // "Closest miss besides the winner: Anna, 3 right · 1 wrong place (0427)."
 // (02b §8)
-function runnerUp(view: unknown, names: Readonly<Record<string, string>>): string | null {
+function runnerUp(
+  view: unknown,
+  names: Readonly<Record<string, string>>,
+  won: boolean,
+): string | null {
   const miss = (view as Partial<ResultView>).closestMiss ?? null;
   if (miss === null) return null;
   const name = names[miss.playerId] ?? miss.playerId;
-  return `Closest miss besides the winner: ${name}, ${counts(miss)} (${miss.value}).`;
+  return `${closestLabel(won)}: ${name}, ${counts(miss)} (${miss.value}).`;
 }
 
 // The intro's line (O36): "Shared 4-digit code, digits 0–9".

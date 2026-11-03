@@ -121,10 +121,16 @@ export interface GuessRow {
   readonly pending: boolean;
 }
 
+// The closest-miss line's start (O22, T145): with a winner the best of the rest, on a time-up
+// result the closest guess of the round.
+export const closestLabel = (won: boolean): string =>
+  won ? 'Closest miss besides the winner' : 'Closest guess';
+
 // Plain English for the game's own rejection codes and room events (02 §12); null when the
 // text is not the game's. `guesses` turns the game's player or spectator view into rows.
-// `runnerUp` words the best of the rest from the result view, shown where the winning margin
-// goes when the round has none (O22), or null.
+// `runnerUp` words the best of the rest from the result view (`won`: the round has a winner;
+// without one, the closest guess, T145), shown where the winning margin goes when the round
+// has none (O22), or null.
 export interface GameText {
   readonly code: (code: string) => string | null;
   readonly event: (event: unknown, names: Readonly<Record<string, string>>) => FeedLine | null;
@@ -132,6 +138,7 @@ export interface GameText {
   readonly runnerUp: (
     resultView: unknown,
     names: Readonly<Record<string, string>>,
+    won: boolean,
   ) => string | null;
   // The banner above the round's list when one of the game's special events happens, short
   // and in the season colour ("Leaf Fall: 10 numbers fell.", O35); null, or no hook, shows

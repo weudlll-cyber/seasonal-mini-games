@@ -39,7 +39,7 @@ describe('the result screen', () => {
     );
     expect(rows).toEqual(['1 Walter910', 'took part Anna (you)40']);
     expect(screen.getByTestId('team-result').textContent).toContain(
-      'Autumn: 1 point — the winner’s team',
+      'Autumn: 1 team point — the winner’s team',
     );
     expect(screen.getByTestId('proof').textContent).toContain('cd'.repeat(32));
     expect(screen.getByRole('link', { name: 'Verify this round' }).getAttribute('href')).toBe(
