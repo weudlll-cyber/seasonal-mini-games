@@ -17,7 +17,7 @@
  *                 special's own row (Leaf Fall) stands out on the season's tint with its icon
  *                 (T115). Moved out of ./RoundLog to keep each file under the size limit.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (rows, formatNumber), ../season/SeasonIcon,
- *                 ./RoundSide (colours)
+ *                 ./RoundSide (colours), ./roundMarks.css
  * Used by:        ./RoundLog
  * Spec:           docs/spec/02-game-guess-the-number.md §6.2, §6.3, §12; docs/spec/03-seasonal-specials.md §2.4
  */
@@ -27,6 +27,7 @@ import type { CSSProperties, ReactElement, ReactNode } from 'react';
 
 import { SeasonIcon } from '../season/SeasonIcon.js';
 import { playerColor } from './RoundSide.js';
+import './roundMarks.css';
 
 const ARROW = { higher: '↑', lower: '↓', correct: '✓' } as const;
 

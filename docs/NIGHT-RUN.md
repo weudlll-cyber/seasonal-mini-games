@@ -14,8 +14,8 @@ Branch `feat/guess-games`. Owner decision O54 (2026-11-03); technical decisions 
 | 2. Seasonal Target on this layout | done    | see below              |
 | 3. List games on this layout      | done    | see below              |
 | 4. Result screens                 | done    |                        |
-| 5. Known defects and clean-up     | running | `749c005` (test split) |
-| 6. Re-shoot, measure, self-review | open    |                        |
+| 5. Known defects and clean-up     | done    | `749c005` (test split) |
+| 6. Re-shoot, measure, self-review | running |                        |
 
 ### Needs the owner
 
@@ -54,6 +54,15 @@ Nothing blocks. To look at after play: OPEN.md, "Night-7 layout, to confirm".
 - Checks: `pnpm verify` green (129 files, 741 tests); e2e Chromium 38/38 (journeys 1–27 and the four of journey 28).
 - Measured (probe): the first part ends at 712 px of 720 at 1280 × 720, 1072 of 1080 at 1920 × 1080, 828 of 844 at 390 × 844; Seasonal Target's 8 × 8 result grid 331 px at 1280 × 720.
 
+### Piece 5 — known defects and clean-up
+
+- The night-6 review list (OPEN.md): solved by the layout and pieces 2–4 — the empty column under a list game's panel ("Your guesses" fills it, T141), the result's phone header, the viewer listed first, team points beside player points, no closest line on a time-up result, the summary's wrapping team list (T145), Safecracker's zero parts (T143), the "Hint" tag dimmed by a halving and Target's capped phone panel in a halving round (T144, T141), the centred 46 rem input row (the dock starts with the list, T141); fixed here: the dark own-row tint of a muted dot (T147). Kept for the owner, with its reason: Target's strips beside the centred grid on a desktop.
+- The test files over 300 lines split by subject (`749c005`): `boards.test.tsx` (324 lines, 9 tests) into `leaderboard.test.tsx` (4), `profile.test.tsx` (2), `verify.test.tsx` (3) with `fakes.tsx`; Guess The Number's `panels.test.tsx` (327 lines, 14 tests) into `panels.test.tsx` (9, 200 lines) and `input.test.tsx` (5) with `fixtures.ts`. No test lost.
+- Screenshots out of the tree (T146): 1,310 image files under `reports/` removed in one commit, `.gitignore` keeps them out, CLAUDE.md's rule; the night's shots go to `shots/night-7` only.
+- "Opens in 0 s": no cause found while working on the shell; left as is (OPEN.md).
+- `roundLog.css` reached 305 lines with T147: the pegs and colour dots moved to `roundMarks.css` (54 lines), `roundLog.css` 262.
+- Checks: `pnpm verify` green (129 files, 741 tests).
+
 ## Night 6 (2026-11-02/03)
 
 Branch `feat/guess-games`. Owner decisions O47–O53 (2026-11-02); technical decisions T134–T138. Nothing goes to `master`.
@@ -89,7 +98,7 @@ Nothing blocks. To look at and decide: OPEN.md, "Night-6 small items (T139), to 
 
 - Results: the headline at half size, "Closest miss besides the winner: …", one screen at 1280 × 720.
 - Teams: "Team Spring" and the others everywhere (O52).
-- Screenshots: `reports/focus-mode-2/` with `play-through.txt`.
+- Screenshots: `reports/focus-mode-2/` with `play-through.txt` (the images left the tree in night 7, T146; they are in the history at `b4eebd0`).
 
 ### Piece 1 — the shared focus shell
 

@@ -10,11 +10,11 @@
  *                 both layouts: dot, name (cut with an ellipsis), the guess, the answer and on
  *                 a desktop the comment in small text, cut with an ellipsis; on a phone the
  *                 row is a button and an open comment a second line under the name. The
- *                 viewer's own rows on a tint of their own dot's colour (`--own`, T75); a
- *                 guess's colour dots (T143); Frost's held answer with its seconds in a small
+ *                 viewer's own rows on a tint of their own dot's colour (`--own`, T75; a
+ *                 stronger one in dark, T147); Frost's held answer with its seconds in a small
  *                 badge; an event is one quieter line, a special's own row (Leaf Fall) on the
- *                 season's outline with its icon in bold (T115). Colours only from @smg/ui
- *                 tokens.
+ *                 season's outline with its icon in bold (T115). The pegs and colour dots are
+ *                 ./roundMarks.css. Colours only from @smg/ui tokens.
  * Spec:           docs/spec/02-game-guess-the-number.md §6.3, §12
  */
 .round-log {
@@ -110,6 +110,12 @@ button.round-row-line {
   box-shadow: inset 4px 0 0 var(--own, var(--season));
 }
 
+/* Dark: a stronger tint, or a muted dot (olive Team Spring) reads grey on the dark card
+   (night-6 review, T147); the light text stays at 4.5:1 or more. */
+:root[data-theme='dark'] .round-row[data-own='true'] {
+  background: color-mix(in srgb, var(--own, var(--season)) 34%, var(--color-card));
+}
+
 /* The name keeps its room (up to 9 rem, then an ellipsis); the answer gives way first. */
 .round-who {
   flex: none;
@@ -152,22 +158,6 @@ button.round-row-line {
   display: block;
   padding-left: calc(0.7rem + 0.5rem);
   white-space: normal;
-}
-
-/* A guess as colour dots in order (T143): each named, with one ring for every colour. */
-.round-swatches {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  align-self: center;
-}
-
-.round-swatch {
-  width: 0.85rem;
-  height: 0.85rem;
-  border-radius: 50%;
-  border: 2px solid #7a808c;
-  background: var(--swatch);
 }
 
 .round-arriving {
@@ -249,33 +239,6 @@ button.round-row-line {
 .round-answer[data-feedback='close'],
 .round-answer[data-feedback='correct'] {
   color: var(--color-success-text);
-}
-
-/* Pegs before an answer's words: filled for a hit, ringed for a near one, hollow for a miss. */
-.round-pegs {
-  display: inline-flex;
-  gap: 0.15rem;
-  margin-inline-end: 0.35rem;
-  vertical-align: middle;
-}
-
-.round-peg {
-  width: 0.6rem;
-  height: 0.6rem;
-  border: 2px solid currentColor;
-  border-radius: 50%;
-}
-
-.round-peg[data-peg='hit'] {
-  background: currentColor;
-}
-
-.round-peg[data-peg='near'] {
-  background: radial-gradient(circle, currentColor 35%, transparent 40%);
-}
-
-.round-peg[data-peg='miss'] {
-  opacity: 0.45;
 }
 
 /* A phone: closer parts, so a long answer keeps more of its words. */

@@ -35,6 +35,7 @@ Everything in this repository is English: code, comments, commit messages, docs,
 - Never force-push or reset. After a branch is merged and the CI run on `master` for the merge commit is green, delete the branch on origin and locally.
 - Accounts created for a test are removed by that test; matches it created are aborted, never deleted (the round event log is append-only, docs/spec/06-data-model-api-realtime.md §2.3).
 - Never disable a trigger, constraint or other protection. If a task needs that, list it under the owner's questions in the report and continue without it.
+- Screenshots never go into a working branch: images under `reports/` are git-ignored; push a run's screenshots, with their `play-through.txt`, only to an orphan branch of their own (`shots/<night>`, nothing else in it), which the owner deletes after the review (DECISIONS T146).
 - Run commands one at a time. Do not chain them with `&&`, `;` or `|` unless a single tool needs a pipe; chained commands do not match the permission rules and make the owner approve them by hand.
 
 ## Before reporting
