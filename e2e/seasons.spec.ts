@@ -129,7 +129,16 @@ for (const s of SEASONS) {
       const banner = p.page.getByTestId('special-banner');
       if (s.season === 'winter') await expect(banner).toBeEmpty();
       await provoke(p.page, s);
-      if (s.season !== 'winter') await expect(banner).toHaveText(s.banner, { timeout: 15_000 });
+      // Spring Herald's banner stands only for the 5 s after the opening, which a slow runner
+      // can miss (CI, night 7): its lasting line in the All list instead; the banner's own
+      // timing is banner.test's.
+      if (s.season === 'spring') {
+        await p.page.getByTestId('list-all').click();
+        await expect(p.page.getByTestId('all-list').getByText(s.banner)).toHaveCount(1);
+        await p.page.keyboard.press('Escape');
+      } else if (s.season !== 'winter') {
+        await expect(banner).toHaveText(s.banner, { timeout: 15_000 });
+      }
       await expect(p.page.getByTestId('round-special')).toHaveText(s.special);
       // A desktop's info column says the special's sentence on its line (T141).
       await expect(p.page.getByTestId('special-line')).toHaveText(`${s.special}: ${s.rule}`);

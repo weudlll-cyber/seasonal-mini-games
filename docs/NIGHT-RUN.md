@@ -38,7 +38,7 @@ Nothing blocks. To look at after play: OPEN.md, "Night-7 layout, to confirm" (T1
 
 ### Addendum — CI on feature branches (T149)
 
-- `.github/workflows/ci.yml`: no CI for `shots/**`; the Playwright job in all three browsers on `master` and on pull requests to `master`, in Chromium only elsewhere (its specs, then its timing specs). Recorded as T149, docs/spec/09 §1 updated.
+- `.github/workflows/ci.yml`: no CI for `shots/**`; the Playwright job in all three browsers on `master` and on pull requests to `master`, in Chromium only elsewhere (its specs, then its timing specs). Recorded as T149, docs/spec/09 §1 updated. Its first run (`5493a05`): verify, security and docs green; e2e Chromium 29 of 30 timing tests and every other spec passed, journey 16 (spring) missed Spring Herald's 5 s banner on the slow runner; the journey now checks the line in the All list (the banner's timing is `banner.test`'s).
 
 ### Piece 1 — one layout system (O54, T141–T143)
 
