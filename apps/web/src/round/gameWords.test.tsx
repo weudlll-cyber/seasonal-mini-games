@@ -54,7 +54,17 @@ const live = { ...ended, status: 'open', game: {} } as const;
 
 describe('a game’s own words in the list', () => {
   it('shows the guess and the answer in words, with the pegs beside them', () => {
-    render(<RoundLog feed={[]} game={game} state={live} viewerKey="a" now={3_000} />);
+    render(
+      <RoundLog
+        feed={[]}
+        game={game}
+        state={live}
+        viewerKey="a"
+        now={3_000}
+        kind="main"
+        phone={false}
+      />,
+    );
     const items = [...screen.getByTestId('guess-list').querySelectorAll('li')];
     expect(items.map((li) => li.textContent)).toEqual([
       'You04272 right place, 1 right digit, wrong place',
@@ -82,7 +92,7 @@ describe('a game’s own sentence for its special', () => {
     render(<RoundIntro state={counting} game={game} now={1_000} />);
     expect(screen.getByTestId('intro-special').textContent).toContain('A digit falls out.');
     cleanup();
-    render(<SeasonPill state={counting} rule={ruleOf(game, 'autumn')} />);
+    render(<SeasonPill state={counting} rule={ruleOf(game, 'autumn')} note />);
     fireEvent.click(screen.getByTestId('special-info'));
     // The mode first: a phone's bar leaves it out (night 6).
     expect(screen.getByRole('note').textContent).toMatch(

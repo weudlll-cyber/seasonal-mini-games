@@ -3,8 +3,8 @@
  * @module games/safecracker/web
  * @brief  The screens of Seasonal Safecracker for the player client.
  *
- * Responsibility: the game's player panel (the code block) and input row (the digit boxes),
- *                 spectator and result panels, its text and its setting definitions (for the
+ * Responsibility: the game's player panel (the code block), input row (the digit boxes) and
+ *                 phone info line, spectator and result panels, its text and its setting definitions (for the
  *                 forms' labels and help), as one `GameWeb` line for the registry's web half
  *                 (04 §4.6), and the game's styles.
  * Depends on:     @smg-game/safecracker (settings), ./Board, ./CodeInput, ./ResultPanel,
@@ -14,7 +14,7 @@
  */
 import { scSettings } from '@smg-game/safecracker';
 
-import { PlayerPanel, SpectatorPanel } from './Board.js';
+import { InfoLine, PlayerPanel, SpectatorPanel } from './Board.js';
 import { CodeInput } from './CodeInput.js';
 import { ResultPanel } from './ResultPanel.js';
 import { safecrackerText } from './text.js';
@@ -25,6 +25,7 @@ export const safecrackerWeb = {
   Player: PlayerPanel,
   Input: CodeInput,
   Spectator: SpectatorPanel,
+  Line: InfoLine,
   Result: ResultPanel,
   text: safecrackerText,
   settings: scSettings.defs,

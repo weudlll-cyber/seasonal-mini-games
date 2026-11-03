@@ -72,11 +72,19 @@ To confirm after the owner has played:
 Built as described in 02 §12 and DECISIONS T128–T132 and T134–T136 (O47–O52); to confirm after the owner has played:
 
 - The result page reached at the end of a round comes with the normal header at once, because it shows beside the next round's waiting area (T128).
-- The round bar (O47): the season pill is the special's button (a small "i" on a desktop); "9:50 left"; Chat, Players, Host and Full screen as icons with their words on a desktop, icons only on a phone; 14 px text, 44 px high on a desktop, 52 px on a phone.
+- The round bar (O47): on a phone the season pill is the special's button (a desktop has the special's line in its info column since T141); "9:50 left"; Chat, Players, Host and Full screen as icons with their words on a desktop, icons only on a phone; 14 px text, 44 px high on a desktop, 52 px on a phone.
 - A panel on a desktop is a 360 px column that pushes the game aside (O48): at 1280 × 720 that narrows Seasonal Target's stage to about 520 px while it is open (tiles about 25 px at 20 × 20).
 - The result page on a desktop is one screen (night 6): the headline across, the game's result left and the tables right; with many players the tables scroll inside their part. A phone scrolls the page, the result first.
 - The light/dark toggle lives in the app header, which focus mode hides; the theme chosen before the round stays, and O46's bar lists no toggle, so none was added. A sixth button would not fit the phone's bar beside Host and Full screen; inside the Players panel it could.
 - Guess The Number's Fallen numbers open from their "Fallen (N)" button as a sheet on a desktop too (T132); since O50 the list is in the main area, so they could stand open in the right column again.
+
+**Night-7 layout, to confirm** (proposals T141–T142, owner decision 54; built on `feat/guess-games`):
+
+- One layout for every game: a desktop (landscape, 900 px wide or more) has the stage on the left and a 340 px info column on the right; anything narrower or in portrait, a tablet held upright included, gets the phone layout (T141).
+- The desktop's info column: the special's line (one line, all of it on a click; the desktop's pill no longer opens a note), the game's panel, then "Your guesses" for the three list games in shared mode; in individual mode it is left out, because the stage then holds exactly the viewer's guesses (T141).
+- The phone's info line: one line per game, its tap opening the game's panel as a sheet; Guess The Number's Fallen numbers are a button inside that sheet (T141).
+- The list's head: the number of guesses or, in individual mode, the others' counts instead of their rows; the banner takes the head's place for 5 s; events (Leaf Fall, Heatwave, solves) are only in "All (N)", which counts guesses and events (T142).
+- One-line rows: a desktop cuts the comment with an ellipsis (the tooltip has it all); a phone shows the newest row's comment and a tap shows or hides any other's (T142).
 
 **Night-6 small items (T139), to confirm:**
 

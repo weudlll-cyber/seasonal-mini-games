@@ -19,7 +19,7 @@ import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { bombDefusalWeb } from './index.js';
-import { PlayerPanel, SpectatorPanel } from './panels.js';
+import { InfoLine, PlayerPanel, SpectatorPanel } from './panels.js';
 import { ResultPanel } from './ResultPanel.js';
 import { bdText } from './text.js';
 
@@ -200,6 +200,7 @@ describe('the game text: results, intro and entry', () => {
   it('gives the registry every part of a game', () => {
     expect(Object.keys(bombDefusalWeb).sort()).toEqual([
       'Input',
+      'Line',
       'Player',
       'Result',
       'Spectator',
@@ -207,5 +208,15 @@ describe('the game text: results, intro and entry', () => {
       'text',
     ]);
     expect(bombDefusalWeb.settings.map((d) => d.key)).toContain('bomb.explosionPenaltyS');
+  });
+});
+
+describe("the phone's info line", () => {
+  it('names wires, cuts and the penalty, the harmless count and the hint (T141)', () => {
+    const at = { names: {}, colors: {}, season: 'spring' as const, specialOn: true };
+    render(<InfoLine view={view} {...at} />);
+    expect(screen.getByTestId('bd-line').textContent).toBe(
+      '6 wires · cut 4 · wrong first cut +5 sHarmless 1Free hint: cut red first.',
+    );
   });
 });

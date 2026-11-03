@@ -1,14 +1,15 @@
 /**
  * @file   games/bomb-defusal/web/panels.tsx
  * @module games/bomb-defusal/web
- * @brief  The bomb block at the top of the main area, for players and for spectators.
+ * @brief  The bomb block of the game's panel, for players and spectators; the phone's line.
  *
  * Responsibility: "6 wires, cut 4 in the right order", the explosion penalty ("Wrong first
  *                 cut: +5 s"), the free hint highlighted for the whole round, and in a Leaf Fall
  *                 round the harmless wires as struck chips with their names (02c §11). A
  *                 spectator also sees the bomb's wires, since no input row shows them (02c §10),
  *                 and only the shared hint. Nothing about a secret; the platform draws the
- *                 round's one list beneath it.
+ *                 round's list beside it. The phone's info line names the same facts in one
+ *                 line (`InfoLine`, T141).
  * Depends on:     react, @smg/game-sdk (props), @smg-game/bomb-defusal (types), ./text,
  *                 ./WireChip
  * Used by:        ./index
@@ -69,4 +70,22 @@ export function PlayerPanel(props: PlayerPanelProps): ReactElement {
 
 export function SpectatorPanel(props: SpectatorPanelProps): ReactElement {
   return <BombBlock bomb={props.view as SpectatorView} showWires />;
+}
+
+// The phone's info line (T141): "6 wires · cut 4 · wrong first cut +5 s", the harmless
+// wires marked so far, the hint.
+export function InfoLine(props: SpectatorPanelProps): ReactElement {
+  const bomb = props.view as Bomb;
+  const penalty = bomb.penaltyS === 0 ? 'boom, no wait' : `+${String(bomb.penaltyS)} s`;
+  return (
+    <span className="bd-line" data-testid="bd-line">
+      <strong>
+        {bomb.wires.length} wires · cut {bomb.cuts} · wrong first cut {penalty}
+      </strong>
+      {bomb.harmless.length === 0 ? null : (
+        <span className="smg-chip bd-line-chip">Harmless {bomb.harmless.length}</span>
+      )}
+      {bomb.hint === null ? null : <span className="bd-line-hint">{hintText(bomb.hint)}</span>}
+    </span>
+  );
 }

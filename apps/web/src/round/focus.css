@@ -9,12 +9,12 @@
  *                 targets, O47): the season pill, "9:50 left", the panel buttons with their
  *                 icons (and their words on a desktop) and the unread badge. A panel
  *                 (./FocusPanel) on a desktop is a third column of 360 px of the round view's
- *                 grid (./round.css), so it pushes the game aside and covers nothing (O48); on
- *                 a phone it is a sheet over the rows between the bar and the input row, whose
- *                 bottom edge ends above the input, so the player can still guess. Opaque as
- *                 menus are, no backdrop; its body scrolls inside itself; the focus moved into
- *                 it is drawn only for the keyboard (:focus-visible). In full screen the round
- *                 view keeps the page's background. Colours only from @smg/ui tokens.
+ *                 grid (./round.css), so it pushes the game aside and covers nothing (O48); in
+ *                 the phone layout it is a sheet over the rows between the bar and the action
+ *                 dock, whose bottom edge ends above the dock, so the player can still guess.
+ *                 Opaque as menus are, no backdrop; its body scrolls inside itself; the focus
+ *                 moved into it is drawn only for the keyboard (:focus-visible). In full screen
+ *                 the round view keeps the page's background. Colours only from @smg/ui tokens.
  * Spec:           docs/spec/02-game-guess-the-number.md §12
  */
 /* A running round in focus mode (`.focus-mode` on the match page): no app header at all, the
@@ -165,8 +165,7 @@
 }
 
 /* A phone: the bar's buttons show their icons only (their words are read out) and keep 44 px
-   touch targets; a panel is a sheet over every row between the bar and the input row, so the
-   input and its button stay in view and usable (O48). */
+   touch targets. */
 @media (max-width: 899px) {
   .focus-bar {
     gap: 0.25rem;
@@ -198,13 +197,14 @@
     padding: 0;
     justify-content: center;
   }
+}
 
-  /* From the row under the bar to the one above the input row (the grid's last). */
-  .focus-panel {
-    z-index: 40;
-    grid-area: auto;
-    grid-column: 1 / -1;
-    grid-row: 2 / -2;
-    box-shadow: var(--shadow-raised);
-  }
+/* The phone layout (./useRoundView): a panel is a sheet from the row under the bar to the one
+   above the action dock (the grid's last), so the dock stays in view and usable (O48). */
+.round-live[data-view='phone'] > .focus-panel {
+  z-index: 40;
+  grid-area: auto;
+  grid-column: 1 / -1;
+  grid-row: 2 / -2;
+  box-shadow: var(--shadow-raised);
 }

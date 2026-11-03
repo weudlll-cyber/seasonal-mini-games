@@ -6,9 +6,10 @@
  * Responsibility: journey 16, once per season with the range shown and the fast test
  *                 profile — the countdown is the intro screen with the season, its special
  *                 and its sentence, the secret line and the cooldown (O36), one screen at
- *                 1280 × 720 and at 390 × 844; once open, the top bar's chip names the special
- *                 and its info button tells what it does; the special's banner appears above
- *                 the guess list in the season colour (O35); Spring Herald's hint stays as a
+ *                 1280 × 720 and at 390 × 844; once open, the top bar's pill names the special,
+ *                 the desktop's special line says what it does and on a phone the pill's note
+ *                 (T141); the special's banner appears in the list's head in the season colour
+ *                 (O35, T142); Spring Herald's hint stays as a
  *                 highlighted line, Frost holds the player's answer with "answer arriving…";
  *                 the round view fits both sizes. Journey 17 — a Quick Test without teams
  *                 (O34): the waiting area has no team text, buttons or column, the round no
@@ -122,18 +123,15 @@ for (const s of SEASONS) {
       await p.page.goto(`./#/match/${code}`);
       await introFits(p.page, s);
       await roundOpen(p.page);
-      // The banner above the list, in the season colour (fast profile: within seconds;
+      // The banner in the list's head, in the season colour (fast profile: within seconds;
       // Spring Herald's and Frost's at the opening, so Frost's is read before the guess).
-      const banner = p.page.getByTestId('special-banner').locator('p');
+      const banner = p.page.getByTestId('special-banner');
       if (s.season === 'winter') await expect(banner).toHaveText(s.banner);
       await provoke(p.page, s);
       if (s.season !== 'winter') await expect(banner).toHaveText(s.banner, { timeout: 15_000 });
       await expect(p.page.getByTestId('round-special')).toHaveText(s.special);
-      await p.page.getByTestId('special-info').click();
-      // The round's mode, then the special's name and sentence (the mode for the phone).
-      await expect(p.page.getByRole('note')).toContainText(/^(Shared|Individual) round\. /);
-      await expect(p.page.getByRole('note')).toContainText(`${s.special}: ${s.rule}`);
-      await p.page.keyboard.press('Escape');
+      // A desktop's info column says the special's sentence on its line (T141).
+      await expect(p.page.getByTestId('special-line')).toHaveText(`${s.special}: ${s.rule}`);
       if (s.season === 'spring') {
         await expect(p.page.getByTestId('hint')).toHaveText(
           /^Free hint: the number is (odd|even)\.$/,
@@ -141,9 +139,14 @@ for (const s of SEASONS) {
       }
       await fitsScreen(p.page);
       await p.page.setViewportSize(PHONE);
-      // A phone's chip names the season; the special is behind the info button.
+      // A phone's pill names the season; the special is behind its note.
       await expect(p.page.getByTestId('round-season')).toBeVisible();
       await expect(p.page.getByTestId('round-season')).toHaveText(s.name);
+      await p.page.getByTestId('special-info').click();
+      // The round's mode, then the special's name and sentence (the mode for the phone).
+      await expect(p.page.getByRole('note')).toContainText(/^(Shared|Individual) round\. /);
+      await expect(p.page.getByRole('note')).toContainText(`${s.special}: ${s.rule}`);
+      await p.page.keyboard.press('Escape');
       await fitsScreen(p.page);
     } finally {
       if (code !== '') await abortMatch(p, code);

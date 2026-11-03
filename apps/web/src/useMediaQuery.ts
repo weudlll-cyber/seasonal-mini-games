@@ -1,15 +1,13 @@
 /**
  * @file   apps/web/src/useMediaQuery.ts
  * @module web
- * @brief  React hooks: does a media query match, followed as it changes; is the screen narrow?
+ * @brief  React hook: does a media query match, followed as it changes?
  *
  * Responsibility: read a media query once and follow its `change` events; without matchMedia
  *                 (a non-browser environment such as jsdom) the query counts as not matching.
- *                 `useNarrow` is the round view's phone layout, the same 899 px break as the
- *                 stylesheets (../round/round.css), for parts that render differently there
- *                 rather than only look different (the guess list's latest rows, O46).
+ *                 The round view's layout is ./round/useRoundView.
  * Depends on:     react
- * Used by:        ./useReducedMotion, ./round/RoundScreen
+ * Used by:        ./useReducedMotion
  * Spec:           docs/spec/02-game-guess-the-number.md §12; Bingo 01 §13
  */
 import { useEffect, useState } from 'react';
@@ -34,7 +32,3 @@ export function useMediaQuery(query: string): boolean {
   }, [query]);
   return on;
 }
-
-export const NARROW = '(max-width: 899px)';
-
-export const useNarrow = (): boolean => useMediaQuery(NARROW);

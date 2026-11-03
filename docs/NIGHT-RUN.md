@@ -2,6 +2,33 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Night 7 (2026-11-03)
+
+Branch `feat/guess-games`. Owner decision O54 (2026-11-03); technical decisions T141 onward, the layout ones proposals the owner confirms after play (OPEN.md, "Night-7 layout, to confirm"). Nothing goes to `master`.
+
+### Status
+
+| Piece                             | State   | Commit    |
+| --------------------------------- | ------- | --------- |
+| 1. Layout system (O54)            | done    | see below |
+| 2. Seasonal Target on this layout | running |           |
+| 3. List games on this layout      | open    |           |
+| 4. Result screens                 | open    |           |
+| 5. Known defects and clean-up     | open    |           |
+| 6. Re-shoot, measure, self-review | open    |           |
+
+### Needs the owner
+
+Nothing blocks. To look at after play: OPEN.md, "Night-7 layout, to confirm".
+
+### Piece 1 — one layout system (O54, T141–T143)
+
+- New: `RoundBody.tsx` (the parts and the two layouts), `InfoParts.tsx` (the game's panel, the desktop's special line, the phone's info line and its sheet), `GuessLine.tsx` (one row, moved out of `RoundLog.tsx`), `useRoundView.ts` (the layout by viewport), each game's `InfoLine` (Guess The Number's own file; Safecracker in `Board.tsx`, Bomb Defusal in `panels.tsx`, Seasonal Target in `PlayerPanel.tsx`); tests `log.test.tsx`, `layout.test.tsx`, a `line.test.tsx` for Guess The Number and Seasonal Target (Safecracker's and Bomb Defusal's in their `panels.test.tsx`), and a `sentinel.test.tsx` in each game's web folder over `sentinelViews` of `@smg/game-sdk` (a round with the kit's sentinel secrets: the info line and both panels show no mark; the web app may not import the server registry, so the test lives with each game).
+- Removed: the old banner stack above the list and its `hide` rule (an event now always stays in All), `useNarrow`/`NARROW`, the phone-only "All" sheet path, the phone halving cap of T140 (the panel is no longer above the list), the centred 46 rem input box, `.round-range`.
+- Extracted: Safecracker's `DigitStrip` (the panel's strip and the info line's compact one); the season pill's styles moved from `round.css` to `roundSpecials.css`.
+- Reused: `FocusPanel` and `usePanels` for the All panel and the game sheet, `colorsOf`, `playerColor`, `formatNumber`, `freeHint` and `hintText` of the games, `HeatLegend`, `leafFallOn`.
+- Checks: `pnpm verify` green (127 files, 734 tests, with the split test files of piece 5). E2E Chromium 34/34: 31 on the first run; journeys 24 (it measured a box the list games no longer have), 18 (Leaf Fall's row is now in the All list) and 11 (a phone reads the range on the info line) fixed in the journeys and passing on the re-run.
+
 ## Night 6 (2026-11-02/03)
 
 Branch `feat/guess-games`. Owner decisions O47–O53 (2026-11-02); technical decisions T134–T138. Nothing goes to `master`.

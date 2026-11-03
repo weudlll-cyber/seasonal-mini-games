@@ -1,21 +1,22 @@
 /**
  * @file   games/seasonal-target/web/PlayerPanel.tsx
  * @module games/seasonal-target/web
- * @brief  The player's panel at the top of the right column: legend, area and hint, Fallen tiles.
+ * @brief  The player's panel in the info column: legend, area and hint, Fallen tiles; the line.
  *
  * Responsibility: the grid's companions for the whole round, top to bottom (O51): the heat
  *                 legend (./HeatLegend); the current target area once a halving has shrunk it
  *                 ("Target area: columns 6–15, rows 1–20", 02d §8.4); Spring Herald's quarter
  *                 as a highlighted "Free hint: …" line (02d §8.1, O35); in a Leaf Fall round the
  *                 Fallen tiles panel (./FallenCells, T115). The grid itself, with the selection,
- *                 belongs to the input (./TargetInput), because only the input can act.
+ *                 belongs to the input (./TargetInput), because only the input can act. The
+ *                 phone's info line says the halved area or the hint (`InfoLine`, T141).
  * Depends on:     react, @smg/game-sdk (props), @smg-game/seasonal-target (types),
  *                 ./FallenCells, ./HeatLegend, ./words
  * Used by:        ./index
  * Spec:           docs/spec/02d-game-seasonal-target.md §8, §11
  */
 import type { Area, MapSize, PlayerView, Quarter } from '@smg-game/seasonal-target';
-import type { PlayerPanelProps } from '@smg/game-sdk';
+import type { PlayerPanelProps, SpectatorPanelProps } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
 import { FallenCells, leafFallOn } from './FallenCells.js';
@@ -47,6 +48,20 @@ export function GridLines(p: {
         </p>
       )}
     </>
+  );
+}
+
+// The phone's info line (T141): the target area once a halving shrank it, else Spring's
+// quarter ("Hint: south-east quarter"), else the heat legend; a spectator's view in
+// individual mode has no area of its own.
+export function InfoLine(props: SpectatorPanelProps): ReactElement {
+  const v = props.view as Pick<PlayerView, 'map' | 'hint'> & { readonly area: Area | null };
+  const shrunk = v.area !== null && !whole(v.area, v.map) ? areaLine(v.area) : null;
+  const text = shrunk ?? (v.hint === null ? null : `Hint: ${v.hint.name} quarter`);
+  return (
+    <span className="st-line" data-testid="st-line">
+      {text === null ? <HeatLegend /> : <strong>{text}</strong>}
+    </span>
   );
 }
 

@@ -1,37 +1,47 @@
 /**
  * @file   apps/web/src/round/roundSpecials.css
  * @module web/round
- * @brief  The season special in the running round: the banner above the list, the info note.
+ * @brief  The season special in the running round: the banner, the season pill and its note.
  *
  * Responsibility: the banner (./SpecialBanner) is one line in the season colour with the
- *                 text colour made for it, directly above the guess list; empty it takes no
- *                 room, so the list keeps its height when nothing fires; it eases in unless
- *                 the person asked for reduced motion. The season pill (./SeasonPill) is the
- *                 special's button with a small round "i", and its note an opaque card under
- *                 the round bar (O35). Colours only from @smg/ui tokens.
+ *                 text colour made for it, in the list head's place (T142); empty it takes no
+ *                 room; it fades in unless the person asked for reduced motion. The season
+ *                 pill (./SeasonPill) in its token colour with icon, season, special and the
+ *                 halving badge, on a phone smaller and the special's button with a small round
+ *                 "i", its note an opaque card under the round bar (O35). Moved here from
+ *                 ./round.css to keep each file under the size limit. Colours only from
+ *                 @smg/ui tokens.
  * Spec:           docs/spec/03-seasonal-specials.md §6; docs/spec/02-game-guess-the-number.md §12
  */
-.round-special-banner p {
+/* The banner: one line in the season colour in the list head's place (T142), cut with an
+   ellipsis, never wrapping and never pushing the list down; empty it takes no room. */
+.round-banner {
+  flex: 1;
+  min-width: 0;
   margin: 0;
-  padding: 0.4rem 0.75rem;
+  padding: 0.2rem 0.6rem;
   border-radius: var(--radius);
   background: var(--season);
   color: var(--color-on-season);
   font-weight: var(--font-weight-strong);
-  /* Lines of even length: never one word alone on the last line. */
-  text-wrap: balance;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   animation: round-banner-in var(--duration-fast) ease-out;
+}
+
+.round-banner:empty {
+  display: none;
 }
 
 @keyframes round-banner-in {
   from {
     opacity: 0;
-    transform: translateY(-0.25rem);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .round-special-banner p {
+  .round-banner {
     animation: none;
   }
 }
@@ -72,4 +82,81 @@
 
 .round-info-note[hidden] {
   display: none;
+}
+
+/* The season pill: icon, season, special; with the special on it is the note's button. */
+.round-season {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--hit-target);
+  padding: 0 0.9rem 0 0.35rem;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--season);
+  color: var(--color-on-season);
+  font: inherit;
+  /* Thin text on a season colour read pale (night-5 review). */
+  font-weight: var(--font-weight-strong);
+}
+
+.round-season--button {
+  cursor: pointer;
+}
+
+/* "Autumn · Leaf Fall": the special's name in the pill (O35). */
+.round-special::before {
+  content: '· ';
+}
+
+.round-season-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--color-surface);
+}
+
+.round-badge {
+  padding: 0 0.6rem;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--color-on-season);
+  font-size: var(--font-size-small);
+}
+
+/* A phone: the pill smaller with the special's name read out (the note names it). */
+@media (max-width: 899px) {
+  .round-season {
+    gap: 0.35rem;
+    padding: 0 0.5rem 0 0.25rem;
+    font-size: var(--font-size-small);
+  }
+
+  .round-season-icon {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  /* The pill is still the special's button (its name says so); the small "i" gives its width
+     to the bar's buttons, so the bar keeps one row at 390 px. */
+  .round-info-mark {
+    display: none;
+  }
+
+  /* A halving round: the badge takes the season name's place (the icon still shows the
+     season, the name is read out), or the bar's buttons are pushed off a 390 px screen; the
+     words after "Halving" and the time are read out only. */
+  .round-season[data-halving='true'] .round-season-name,
+  .round-phone-hidden,
+  .round-special {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }

@@ -15,7 +15,7 @@
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { PlayerPanel, SpectatorPanel } from './Board.js';
+import { InfoLine, PlayerPanel, SpectatorPanel } from './Board.js';
 import { safecrackerWeb } from './index.js';
 import { ResultPanel } from './ResultPanel.js';
 import { answerOf, counts, safecrackerText as text } from './text.js';
@@ -196,6 +196,7 @@ describe('the sentences', () => {
   it('is one GameWeb line with the game’s settings', () => {
     expect(Object.keys(safecrackerWeb).sort()).toEqual([
       'Input',
+      'Line',
       'Player',
       'Result',
       'Spectator',
@@ -203,5 +204,15 @@ describe('the sentences', () => {
       'text',
     ]);
     expect(safecrackerWeb.settings.map((d) => d.key)).toContain('code.length');
+  });
+});
+
+describe("the phone's info line", () => {
+  it('is the compact digit strip with the fallen digit struck, then the hint (T141)', () => {
+    render(<InfoLine view={view} names={names} colors={colors} season="autumn" specialOn />);
+    const line = screen.getByTestId('sc-line');
+    expect(line.querySelector('[data-compact="true"]')).not.toBeNull();
+    expect(screen.getByLabelText('7, fallen')).toBeTruthy();
+    expect(line.textContent).toContain('Free hint: the 2nd digit is 4.');
   });
 });

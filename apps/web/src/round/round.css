@@ -1,24 +1,24 @@
 /**
  * @file   apps/web/src/round/round.css
  * @module web/round
- * @brief  Layout of the round view in focus mode: bar, stage, game panel, guess list; the pill.
+ * @brief  Layout of the round view in focus mode, desktop and phone (T141); the season pill.
  *
  * Responsibility: the round view fills the screen the hidden app header leaves (O46) exactly
- *                 and never scrolls the page (only the lists scroll, inside themselves): the
- *                 slim bar on top (./focus.css); on a desktop a list game's guess list in the
- *                 large main area with the input row at its bottom and the game's own panel
- *                 (range, hint, fallen numbers or digits) alone in a right column of 320 px
- *                 (O50), a board game's board at full height on the left with panel, list and
- *                 input row in the right column (O51); an open panel on demand is a third
- *                 column that pushes the game aside (O48). On a phone the bar, the compact game
- *                 panel, the list of guesses filling the free height (O49), a board game's
- *                 board, and the input row at the bottom.
- *                 The season pill in its token colour (./SeasonPill); a solved player's notice
- *                 in place of the input row (O25); the platform's refusal line. The Players
- *                 panel is ./players.css. The list's rows are in ./roundLog.css,
- *                 the banner and the special's note in ./roundSpecials.css, the intro screen in
- *                 ./roundIntro.css, the cooldown ring in ./cooldownRing.css. Colours only from
- *                 @smg/ui tokens, so light and dark both work (Bingo 01 §13). The result is
+ *                 and never scrolls the page (only the lists scroll, inside themselves), in one
+ *                 of two layouts set on the container (`data-view`, ./useRoundView). A desktop:
+ *                 the slim bar (./focus.css) over the stage on the left (a list game's guesses
+ *                 with the action dock at its bottom, a board game's board) and the 340 px info
+ *                 column on the right (the special line, the game's compact panel, then "Your
+ *                 guesses" or a board game's list with the dock); an open panel on demand is a
+ *                 third column that pushes the game aside (O48). A phone: the bar, the info line
+ *                 (at most 48 px, the game's panel behind it as a sheet), a board game's board
+ *                 as wide as the screen, the round's guesses filling the height that is left,
+ *                 at least four rows under a board, and the dock at the bottom, which no sheet
+ *                 covers. The season pill in its token colour (./SeasonPill); a solved player's
+ *                 notice in the dock (O25); the platform's refusal line. The Players panel is
+ *                 ./players.css, the list's rows ./roundLog.css, the banner ./roundSpecials.css,
+ *                 the intro ./roundIntro.css, the cooldown ring ./cooldownRing.css. Colours only
+ *                 from @smg/ui tokens, so light and dark both work (Bingo 01 §13). The result is
  *                 ./result.css, the match head and the host menu ../match/match.css.
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6;
  *                 docs/spec/07-integration.md §2
@@ -32,9 +32,6 @@
   flex-direction: column;
 }
 
-/* A phone: bar, the compact game panel, the list of guesses filling the height that is left,
-   a board game's board, and the input row at the bottom (O49). A sheet on demand lies over
-   every row between the bar and the input row (./focus.css), so this box is its grid. */
 .round-live {
   position: relative;
   flex: 1;
@@ -42,102 +39,50 @@
   display: grid;
   gap: var(--space-1);
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto minmax(0, 1fr) auto;
-  grid-template-areas: 'bar' 'range' 'main' 'input';
 }
 
-/* A board game on a phone: the board a square as wide as the screen, the list of guesses the
-   height that is left, at least three rows (O49, O51): in a halving round, where the halved
-   area, the hint and the banner all take height, the game's panel is capped and scrolls (T140). */
-.round-live[data-layout='board'] {
-  grid-template-rows: auto auto minmax(4.5rem, 1fr) auto auto;
-  grid-template-areas: 'bar' 'range' 'main' 'stage' 'input';
-}
-
-@media (max-width: 899px) {
-  .round-live[data-layout='board'] .round-stage {
-    aspect-ratio: 1 / 1;
-  }
-
-  .round-live[data-layout='board']:has(.round-season[data-halving='true']) .round-range {
-    max-height: 5.5rem;
-  }
-}
-
-/* A desktop, list games (O50): the guess list in the large main area with the input row at
-   its bottom, the game's own panel alone in the 320 px column on the right. An open panel
-   on demand is a third column, so it pushes the game aside instead of covering it (O48). */
-@media (min-width: 900px) {
-  .round-live {
-    grid-template-columns: minmax(0, 1fr) 320px;
-    grid-template-rows: auto minmax(0, 1fr) auto;
-    grid-template-areas:
-      'bar bar'
-      'main range'
-      'input range';
-  }
-
-  .round-live[data-panel] {
-    grid-template-columns: minmax(0, 1fr) 320px 360px;
-    grid-template-areas:
-      'bar bar bar'
-      'main range panel'
-      'input range panel';
-  }
-
-  /* A board game (O51): the board at full height on the left; the column holds the game's
-     panel, the list and, at its bottom, the input row (selection, ring, Guess). */
-  .round-live[data-layout='board'] {
-    grid-template-rows: auto auto minmax(0, 1fr) auto;
-    grid-template-areas:
-      'bar bar'
-      'stage range'
-      'stage main'
-      'stage input';
-  }
-
-  .round-live[data-layout='board'][data-panel] {
-    grid-template-areas:
-      'bar bar bar'
-      'stage range panel'
-      'stage main panel'
-      'stage input panel';
-  }
-}
-
-.round-range {
-  grid-area: range;
-  min-width: 0;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 0.6rem 0.75rem;
-}
-
-/* A list game's right column holds its panel only: the panel keeps its own height. */
-.round-live:not([data-layout='board']) .round-range {
-  align-self: start;
-  max-height: 100%;
-}
-
-.round-main {
-  grid-area: main;
-  display: grid;
-  /* The special's banner (empty when nothing fires) and the guess list. */
+/* A desktop: the stage on the left, the info column of 340 px on the right; a panel on demand
+   is a third column, so it pushes the game aside instead of covering it (O48). */
+.round-live[data-view='desktop'] {
+  grid-template-columns: minmax(0, 1fr) 340px;
   grid-template-rows: auto minmax(0, 1fr);
-  gap: var(--space-1);
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  /* Tighter than a panel's padding: the guess list gets the room (O35). */
-  padding: 0.6rem 0.75rem;
+  grid-template-areas:
+    'bar bar'
+    'stage info';
 }
 
-/* The empty banner takes no row gap either. */
-.round-special-banner:empty {
-  display: none;
+.round-live[data-view='desktop'][data-panel] {
+  grid-template-columns: minmax(0, 1fr) 340px 360px;
+  grid-template-areas:
+    'bar bar bar'
+    'stage info panel';
 }
 
-/* A board game's board (T123): the game draws into this box (the input's `stage`). */
+/* A phone: bar, info line, the round's guesses filling the height, the dock at the bottom. A
+   sheet lies over every row between the bar and the dock (./focus.css), so this box is its
+   grid. */
+.round-live[data-view='phone'] {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-areas: 'bar' 'line' 'main' 'dock';
+}
+
+/* A board game on a phone: the board under the info line, as wide as the screen; the list
+   under it keeps at least four rows. */
+.round-live[data-view='phone'][data-layout='board'] {
+  grid-template-rows: auto auto auto minmax(7rem, 1fr) auto;
+  grid-template-areas: 'bar' 'line' 'stage' 'main' 'dock';
+}
+
+.round-live[data-view='phone'][data-layout='board'] .round-stage {
+  aspect-ratio: 1 / 1;
+}
+
+.round-live[data-view='phone'] > .round-input {
+  grid-area: dock;
+}
+
+/* The stage: a board game draws its board into it (the input's `stage`, T123); a list game's
+   holds the round's guesses with the dock at its bottom, both from the same left edge. */
 .round-stage {
   grid-area: stage;
   min-width: 0;
@@ -146,24 +91,128 @@
   flex-direction: column;
 }
 
-.round-stage > * {
+.round-stage:not(.round-stage--list) > * {
   flex: 1;
   min-height: 0;
 }
 
-/* The input row: a list game's at the bottom of the main area at a width it reads well at,
-   a board game's at the bottom of the right column. */
-.round-input {
-  grid-area: input;
+.round-stage--list {
+  gap: var(--space-2);
+  padding: 0.6rem 0.75rem;
+}
+
+.round-stage--list > .round-log {
+  flex: 1;
+}
+
+/* The info column: the special line and the game's panel keep their height (the panel at
+   most 45 % of it, scrolling inside), the list under them takes the rest. */
+.round-column {
+  grid-area: info;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
 }
 
-.round-live:not([data-layout='board']) .round-input {
-  width: min(100%, 46rem);
-  justify-self: center;
+.round-panel {
+  flex: none;
+  min-width: 0;
+  max-height: 45%;
+  overflow-y: auto;
+  padding: 0.6rem 0.75rem;
+}
+
+.round-main,
+.round-own {
+  grid-area: main;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Tighter than a panel's padding: the list gets the room (O35). */
+  padding: 0.5rem 0.75rem;
+}
+
+/* The special line: one line in the season's frame, the whole sentence on a click. */
+.round-special-line {
+  flex: none;
+  min-height: 36px;
+  padding: 0.35rem 0.75rem;
+  border: 2px solid var(--season);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-small);
+  text-align: start;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.round-special-line[aria-expanded='true'] {
+  white-space: normal;
+}
+
+/* The phone's info line: the game's line in one row, at most 48 px, cut at its end; the
+   game's parts sit side by side and its last part takes the ellipsis (games/registry/web). */
+.round-line {
+  grid-area: line;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: var(--hit-target);
+  max-height: 48px;
+  padding: 0.2rem 0.75rem;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-small);
+  text-align: start;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.round-line-body {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.round-line-body > * {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.round-line-body > * > * {
+  flex: none;
+}
+
+.round-line-body > * > :last-child {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.round-line-more {
+  flex: none;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+/* The action dock: the game's input with the ring, at the start of the list above it. */
+.round-input {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 /* Solved (individual mode): a short notice where the input row was, in the season's frame. */
@@ -176,85 +225,10 @@
   font-weight: var(--font-weight-strong);
 }
 
-/* The season pill: icon, season, special; with the special on it is the note's button. */
-.round-season {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: var(--hit-target);
-  padding: 0 0.9rem 0 0.35rem;
-  border: 0;
-  border-radius: var(--radius-pill);
-  background: var(--season);
-  color: var(--color-on-season);
-  font: inherit;
-  /* Thin text on a season colour read pale (night-5 review). */
-  font-weight: var(--font-weight-strong);
-}
-
-.round-season--button {
-  cursor: pointer;
-}
-
-/* "Autumn · Leaf Fall": the special's name in the pill (O35). */
-.round-special::before {
-  content: '· ';
-}
-
-.round-season-icon {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  background: var(--color-surface);
-}
-
-.round-badge {
-  padding: 0 0.6rem;
-  border-radius: var(--radius-pill);
-  border: 2px solid var(--color-on-season);
-  font-size: var(--font-size-small);
-}
-
-/* A phone: the pill smaller with the special's name read out (the note names it), the panels
-   tighter. */
+/* A phone: the panels tighter. */
 @media (max-width: 899px) {
-  .round-season {
-    gap: 0.35rem;
-    padding: 0 0.5rem 0 0.25rem;
-    font-size: var(--font-size-small);
-  }
-
-  .round-season-icon {
-    width: 1.75rem;
-    height: 1.75rem;
-  }
-
-  /* The pill is still the special's button (its name says so); the small "i" gives its width
-     to the bar's buttons, so the bar keeps one row at 390 px. */
-  .round-info-mark {
-    display: none;
-  }
-
-  /* A halving round: the badge takes the season name's place (the icon still shows the
-     season, the name is read out), or the bar's buttons are pushed off a 390 px screen; the
-     words after "Halving" and the time are read out only. */
-  .round-season[data-halving='true'] .round-season-name,
-  .round-phone-hidden,
-  .round-special {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-
   .round-main,
-  .round-range {
+  .round-panel {
     padding: var(--space-1) var(--space-2);
   }
 }

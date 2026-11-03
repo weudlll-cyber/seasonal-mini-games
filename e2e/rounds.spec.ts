@@ -110,10 +110,12 @@ test('journey 2: an individual round places solvers in order and ends with time 
     });
     await expect(solvedRow.locator('.round-comment')).not.toBeEmpty();
     await search(two);
-    // Player 2's rows reach player 1 without number or answer (individual mode).
-    await expect(
-      one.page.locator('[data-testid="guess-list"] li[data-own="false"]').first(),
-    ).toContainText('guessed');
+    // Individual mode: player 2's guesses get no rows on player 1's list, only their count in
+    // the list's head (T142).
+    await expect(one.page.getByTestId('list-title')).toContainText(/dev-player-2: [1-9]/);
+    await expect(one.page.locator('[data-testid="guess-list"] li[data-own="false"]')).toHaveCount(
+      0,
+    );
     await expect(ownRows(one.page).first()).toBeVisible();
     for (const p of [one, two, idle, host])
       await expect(p.page.getByTestId('result')).toBeVisible({ timeout: 90_000 });

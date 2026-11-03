@@ -1,13 +1,13 @@
 /**
  * @file   apps/web/src/round/fakes.ts
  * @module web/round
- * @brief  A finished round's view for the round components' tests.
+ * @brief  A finished round's view for the round components' tests; the window's size.
  *
  * Responsibility: one shared round won by Walter with Anna 0.4 s behind, both teams, the
  *                 placings, the proof's seed and the names; tests derive open and individual
- *                 rounds from it.
+ *                 rounds from it. `viewport` sets the window's size for the round's layout.
  * Depends on:     @smg/contracts (RoundStateView)
- * Used by:        ./round.test, ./result.test
+ * Used by:        the round components' tests
  * Spec:           docs/spec/09-testing-strategy.md §2
  */
 import type { RoundStateView } from '@smg/contracts';
@@ -71,3 +71,10 @@ export const ended: RoundStateView = {
   seed: 'cd'.repeat(32),
   names: { w: 'Walter', a: 'Anna' },
 };
+
+// The window's size for the round's layout (./useRoundView): jsdom starts at 1024 × 768, a
+// desktop; a test that sets a phone puts the desktop back afterwards.
+export function viewport(width: number, height: number): void {
+  Object.assign(window, { innerWidth: width, innerHeight: height });
+  window.dispatchEvent(new Event('resize'));
+}

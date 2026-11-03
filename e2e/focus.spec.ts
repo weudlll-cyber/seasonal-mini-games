@@ -6,13 +6,16 @@
  * Responsibility: for Guess The Number (24), Safecracker (25), Bomb Defusal (26) and Seasonal
  *                 Target (27), a shared summer round started at once: at each size the app
  *                 header is hidden and the round's bar is one slim row without a waiting time
- *                 (44 px on a desktop, 52 px on a phone, O47); Chat and Players open as panels
- *                 and close with Escape (the focus back on their button) and with Close; while
- *                 each is open the game's action button (Guess, Cut, Try) is visible and
- *                 enabled or waiting, the panel covers nothing of the game on a desktop and
- *                 ends above the input row on a phone (O48), and the page has no scrollbar;
- *                 one guess is played and comes back as the viewer's own row. Guess The
- *                 Number shows at least 14 guess rows in the main area at 1280 × 720 (O50);
+ *                 (44 px on a desktop, 52 px on a phone, O47); Chat, Players, the whole list
+ *                 ("All") and on a phone the game's panel behind the info line (T141) open as
+ *                 panels and close with Escape (the focus back on their button) and with
+ *                 Close; while each is open the game's action button (Guess, Cut, Try) is
+ *                 visible and enabled or waiting, the panel covers nothing of the game on a
+ *                 desktop and ends above the action dock on a phone (O48), and the page has no
+ *                 scrollbar;
+ *                 one guess is played and comes back as the viewer's own row; the guess list
+ *                 has room for its game's rows at each size (T142: Guess The Number 22 and 10,
+ *                 Safecracker 20 and 10, Bomb Defusal 18 and 6);
  *                 Seasonal Target is played on the phone through the loupe. The matches are
  *                 aborted.
  * Depends on:     @playwright/test, ./guessGames, ./play, ./screens
@@ -21,10 +24,15 @@
 import { expect, test, type Browser, type Page } from '@playwright/test';
 
 import { direct, WIDE } from './guessGames.js';
-import { abortMatch, closeAll, fitsScreen, ownRows, person, roundOpen } from './play.js';
+import { abortMatch, closeAll, fitsScreen, listRoom, ownRows, person, roundOpen } from './play.js';
 import { PHONE } from './screens.js';
 
 type Size = typeof WIDE;
+// What each size must reach (T141–T144): rows the guess list has room for, a tile's size.
+interface Targets {
+  readonly rows?: readonly [number, number];
+  readonly tile?: readonly [number, number];
+}
 // One guess of the game, different at each size (`n` is 0 on the desktop, 1 on the phone).
 type Play = (page: Page, n: number) => Promise<void>;
 
@@ -43,16 +51,17 @@ async function stillPlayable(page: Page, dialog: Box, size: Size): Promise<void>
   if (!(await action.isEnabled())) {
     await expect(action).toHaveText(/^(Wait \d+ s|Try code|Cut)$/);
   }
-  const parts = ['.round-main', '.round-range', '.round-stage', '.round-input'];
+  // The parts of the round (T141): which ones there are depends on the game and the layout.
+  const parts = ['.round-stage', '.round-column', '.round-main', '.round-line', '.round-input'];
   for (const part of parts) {
-    // A list game has no stage: count first, a bounding box would wait for it.
+    // Count first: a bounding box would wait for a part this layout does not have.
     const found = page.locator(part);
     if ((await found.count()) === 0) continue;
-    const box = await found.boundingBox();
+    const box = await found.first().boundingBox();
     if (box === null) continue;
     if (size === WIDE) expect(overlap(dialog, box), `the panel over ${part}`).toBe(false);
     else if (part === '.round-input') {
-      expect(dialog.y + dialog.height, 'the sheet ends above the input row').toBeLessThanOrEqual(
+      expect(dialog.y + dialog.height, 'the sheet ends above the dock').toBeLessThanOrEqual(
         box.y + 1,
       );
     }
@@ -86,13 +95,30 @@ async function slimBar(page: Page, size: Size): Promise<void> {
   await expect(bar).not.toContainText(/Wait/);
 }
 
+// The measured sizes at one screen size against the game's targets.
+async function reaches(page: Page, targets: Targets, n: number): Promise<void> {
+  const rows = targets.rows?.[n];
+  if (rows !== undefined)
+    expect(await listRoom(page), 'guess rows in view').toBeGreaterThanOrEqual(rows);
+  const tile = targets.tile?.[n];
+  if (tile !== undefined) {
+    const box = await page
+      .locator('[data-testid="tile-grid"] [data-testid="tile"]')
+      .first()
+      .boundingBox();
+    expect(box?.width ?? 0, 'a tile').toBeGreaterThanOrEqual(tile);
+  }
+}
+
 async function focusJourney(
   browser: Browser,
   gameId: string,
   play: Play,
-  // The round's own settings: slow enough that the bot does not end it before the player.
-  round: Readonly<Record<string, unknown>> = {},
+  // The sizes to reach, and the round's own settings: slow enough that the bot does not end
+  // the round before the player.
+  opts: { readonly targets: Targets; readonly round?: Readonly<Record<string, unknown>> },
 ): Promise<void> {
+  const { targets, round = {} } = opts;
   const p = await person(browser, 'player-1', WIDE);
   const codes: string[] = [];
   try {
@@ -104,6 +130,9 @@ async function focusJourney(
       await slimBar(p.page, size);
       await panel(p.page, 'focus-chat', 'Chat', size);
       await panel(p.page, 'focus-players', 'Players', size);
+      await panel(p.page, 'list-all', 'Guesses and events', size);
+      // A phone's game panel lies behind its info line (T141).
+      if (size === PHONE) await panel(p.page, 'info-line', 'This round', size);
       await fitsScreen(p.page);
       // The cooldown of the guess before has run out.
       await expect(p.page.getByTestId('cooldown')).toHaveAttribute('aria-label', 'Ready to guess', {
@@ -111,6 +140,7 @@ async function focusJourney(
       });
       await play(p.page, n);
       await expect(ownRows(p.page).first()).toBeVisible({ timeout: 10_000 });
+      await reaches(p.page, targets, n);
       await fitsScreen(p.page);
     }
   } finally {
@@ -121,34 +151,30 @@ async function focusJourney(
 
 test('journey 24: Guess The Number in focus mode', async ({ browser }) => {
   test.setTimeout(120_000);
-  await focusJourney(browser, 'guess-the-number', async (page, n) => {
-    if (n === 0) {
-      // Room for 14 guess rows in the main area at 1280 × 720 (O50): the list's box, which a
-      // special's banner shares for 3 s at a time.
-      const room = await page.locator('.round-main').evaluate((main) => {
-        const s = getComputedStyle(main);
-        return main.clientHeight - parseFloat(s.paddingTop) - parseFloat(s.paddingBottom);
-      });
-      await page.getByTestId('guess-input').fill('40');
+  // Room for 22 guess rows on the stage at 1280 × 720, 10 on a phone (T142).
+  await focusJourney(
+    browser,
+    'guess-the-number',
+    async (page, n) => {
+      await page.getByTestId('guess-input').fill(n === 0 ? '40' : '60');
       await page.getByTestId('guess-button').click();
-      const row = await ownRows(page).first().boundingBox();
-      expect(room / Math.max(row?.height ?? 30, 30), 'guess rows in view').toBeGreaterThanOrEqual(
-        14,
-      );
-      return;
-    }
-    await page.getByTestId('guess-input').fill('60');
-    await page.getByTestId('guess-button').click();
-  });
+    },
+    { targets: { rows: [22, 10] } },
+  );
 });
 
 test('journey 25: Safecracker in focus mode', async ({ browser }) => {
   test.setTimeout(120_000);
-  await focusJourney(browser, 'safecracker', async (page, n) => {
-    await page.getByTestId('code-box-0').click();
-    await page.keyboard.type(n === 0 ? '0123' : '4567');
-    await page.getByTestId('guess-button').click();
-  });
+  await focusJourney(
+    browser,
+    'safecracker',
+    async (page, n) => {
+      await page.getByTestId('code-box-0').click();
+      await page.keyboard.type(n === 0 ? '0123' : '4567');
+      await page.getByTestId('guess-button').click();
+    },
+    { targets: { rows: [20, 10] } },
+  );
 });
 
 test('journey 26: Bomb Defusal in focus mode', async ({ browser }) => {
@@ -164,7 +190,8 @@ test('journey 26: Bomb Defusal in focus mode', async ({ browser }) => {
       for (const wire of order) await page.getByTestId(`wire-${wire}`).click();
       await page.getByTestId('cut-button').click();
     },
-    { settings: { 'bomb.wires': 8, 'bomb.cuts': 6 } },
+    // Its wire picker is larger: 6 rows on a phone.
+    { targets: { rows: [18, 6] }, round: { settings: { 'bomb.wires': 8, 'bomb.cuts': 6 } } },
   );
 });
 
@@ -198,6 +225,9 @@ test('journey 27: Seasonal Target in focus mode, the loupe on a phone', async ({
     },
     // The bot found a 20 × 20 target by its distances within two cooldowns of 20 s (CI): on a
     // 30 × 30 grid with warm/cold only it needs many more guesses, so the round stays open.
-    { cooldownS: 10, settings: { 'target.size': 30, 'target.feedback': 'closeness' } },
+    {
+      targets: {},
+      round: { cooldownS: 10, settings: { 'target.size': 30, 'target.feedback': 'closeness' } },
+    },
   );
 });

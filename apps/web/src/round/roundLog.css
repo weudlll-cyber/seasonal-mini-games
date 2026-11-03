@@ -1,54 +1,107 @@
 /**
  * @file   apps/web/src/round/roundLog.css
  * @module web/round
- * @brief  The round's one guess list: guess rows, event rows, dots, answers and comments.
+ * @brief  The round's lists: the head, one-line guess rows, event rows, dots, answers, comments.
  *
- * Responsibility: the list fills the main area (a list game's, O50) or its box in the right
- *                 column (a board game's, O51) and scrolls inside itself, newest at the top
- *                 (O20), in larger text on a large screen; a guess row is compact (O35: more rows in
- *                 view): dot, name, number, answer and the comment in small text on one line
- *                 when it fits, the comment wrapping under them otherwise; the viewer's own
- *                 rows on a tint of their own dot's colour (`--own`, night 6; T75); Frost's held answer with its
- *                 seconds in a small badge; an event is one quieter line, a special's own row
- *                 (Leaf Fall) one on the season's tint with its icon in bold (T115). Moved out of
- *                 ./round.css to keep each file under the size limit. Colours only from @smg/ui
+ * Responsibility: a list fills the box it gets (the stage, the info column, the phone's main
+ *                 row) and scrolls inside itself, newest at the top (O20), in larger text on a
+ *                 large screen. Its head is one line: the count or the others' counts, the
+ *                 banner in its place, "All (N)" at its end (T142). A guess row is one line on
+ *                 both layouts: dot, name (cut with an ellipsis), the guess, the answer and on
+ *                 a desktop the comment in small text, cut with an ellipsis; on a phone the
+ *                 row is a button and an open comment a second line under the name. The
+ *                 viewer's own rows on a tint of their own dot's colour (`--own`, T75); a
+ *                 guess's colour dots (T143); Frost's held answer with its seconds in a small
+ *                 badge; an event is one quieter line, a special's own row (Leaf Fall) on the
+ *                 season's outline with its icon in bold (T115). Colours only from @smg/ui
  *                 tokens.
  * Spec:           docs/spec/02-game-guess-the-number.md §6.3, §12
  */
-/* The guess list: the height left under the range block, newest at the top, scrolling only
-   inside its box. */
 .round-log {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 0.3rem;
   min-height: 0;
+}
+
+/* The head: one line that never grows; the banner takes the title's place. */
+.round-log-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  min-height: 2rem;
+  font-size: var(--font-size-small);
+}
+
+.round-log-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-strong);
+}
+
+.round-log-all {
+  flex: none;
+  min-height: 2rem;
+  margin-left: auto;
+  padding-inline: 0.7rem;
+  font-size: inherit;
+  box-shadow: none;
+}
+
+.round-log-empty {
+  margin: 0;
 }
 
 .round-log ol {
   flex: 1;
   min-width: 0;
   min-height: 0;
-  /* One column no wider than the box: a long answer wraps instead of widening the list. */
+  /* One column no wider than the box: a long row is cut, never widening the list. */
   grid-template-columns: minmax(0, 1fr);
   margin: 0;
   padding: 0;
   list-style: none;
   display: grid;
   align-content: start;
-  gap: 0.1rem;
+  gap: 0.08rem;
   overflow-y: auto;
 }
 
-/* A guess on one line: dot, name, number, answer, and the comment while it fits; a comment
-   that does not fit wraps under the others, still in small text. */
 .round-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 0 0.5rem;
-  padding: 0.1rem 0.5rem;
+  min-width: 0;
+  /* Close lines: 22 rows fit a list game's stage at 1280 × 720 (T142). */
+  padding: 0.05rem 0.5rem;
   border-radius: var(--radius);
-  /* Close lines: 12 two-line rows fit the 320 px column at 1280 × 720 (O35, O46). */
   line-height: 1.25;
+}
+
+/* A guess on one line: dot, name, guess, answer and, on a desktop, the comment. */
+.round-row-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* On a phone the line is the button that shows or hides the row's comment. */
+button.round-row-line {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
 }
 
 .round-row[data-own='true'] {
@@ -59,23 +112,61 @@
 
 .round-who {
   flex: 0 1 auto;
-  min-width: 0;
-  max-width: 12rem;
+  min-width: 2.5rem;
+  max-width: 9rem;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
   font-weight: var(--font-weight-strong);
+}
+
+.round-value,
+.round-answer {
+  flex: none;
+  font-weight: var(--font-weight-strong);
+}
+
+/* An answer longer than a phone's row is cut at its end, after the comment has given way. */
+.round-answer {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .round-value {
   font-variant-numeric: tabular-nums;
-  font-weight: var(--font-weight-strong);
 }
 
+/* A desktop's comment: the rest of the line, cut with an ellipsis (the tooltip has it all). */
 .round-comment {
-  flex: 1 1 10rem;
+  flex: 1 1 0;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: var(--font-size-small);
+}
+
+/* A phone's open comment: a second line under the name, past the dot. */
+.round-row > .round-comment {
+  display: block;
+  padding-left: calc(0.7rem + 0.5rem);
+  white-space: normal;
+}
+
+/* A guess as colour dots in order (T143): each named, with one ring for every colour. */
+.round-swatches {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  align-self: center;
+}
+
+.round-swatch {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  border: 2px solid #7a808c;
+  background: var(--swatch);
 }
 
 .round-arriving {
@@ -97,7 +188,9 @@
 
 /* An event: one quieter line. */
 .round-row--event {
-  flex-wrap: nowrap;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
   padding-block: 0.05rem;
   font-size: var(--font-size-small);
   color: var(--color-text-muted);
@@ -142,14 +235,6 @@
   border: 1px solid var(--color-border);
 }
 
-.round-answer {
-  min-width: 0;
-  font-weight: var(--font-weight-strong);
-  /* Whole on one line where it fits; a long one ("1 right place, 2 right digits, wrong
-     place") wraps on a phone rather than cutting the row off. */
-  overflow-wrap: anywhere;
-}
-
 .round-answer[data-feedback='higher'] {
   color: var(--color-success-text);
 }
@@ -192,27 +277,10 @@
   opacity: 0.45;
 }
 
-/* A large screen (1920 × 1080): the list in the main area reads larger, so the wide area is
-   not mostly empty (O50); 14 rows and more still fit. */
+/* A large screen (1920 × 1080): the stage's list reads larger, so the wide stage is not
+   mostly empty (O50); 22 rows and more still fit. */
 @media (min-width: 1600px) and (min-height: 950px) {
-  .round-main .round-log {
+  .round-stage--list .round-log {
     font-size: 1.125rem;
   }
-}
-
-/* A phone: the comment on a line of its own under the name, not under the dot (night-5
-   review): indented by the dot's width and the row's gap. */
-@media (max-width: 899px) {
-  .round-comment {
-    flex-basis: 100%;
-    padding-left: calc(0.7rem + 0.5rem);
-  }
-}
-
-/* "All (N)" over the phone's list of guesses, at its right edge. */
-.round-log-all {
-  flex: none;
-  align-self: flex-end;
-  min-height: var(--hit-target);
-  margin-bottom: 0.25rem;
 }

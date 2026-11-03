@@ -4,7 +4,8 @@
  * @brief  The focus mode's one slim game bar over a running round (O46).
  *
  * Responsibility: one row, at most 44 px on a desktop and 52 px on a phone (./focus.css): the
- *                 season pill with the special's note (./SeasonPill), shared or individual (a
+ *                 season pill (./SeasonPill, on a phone with the special's note; a desktop has
+ *                 the special's line in the info column, T141), shared or individual (a
  *                 desktop only), "9:50 left" once the round is open (the countdown's seconds
  *                 are the intro's), then the buttons of the panels on demand (./usePanels):
  *                 Chat with the unread count (only with a chat, the provider not `none`),
@@ -69,6 +70,9 @@ export interface FocusBarProps {
   readonly now: number;
   // The special's sentence, in the game's words where it has its own (T119).
   readonly rule: string;
+  // A phone: the pill is the special's button with its note; a desktop's info column has the
+  // special's line instead (T141).
+  readonly phone: boolean;
   readonly panels: Panels;
   readonly chat: boolean;
   readonly unread: number;
@@ -81,7 +85,7 @@ export function FocusBar(p: FocusBarProps): ReactElement {
   const time = timeText(state, p.now);
   return (
     <header className="focus-bar" data-testid="round-banner">
-      <SeasonPill state={state} rule={p.rule} />
+      <SeasonPill state={state} rule={p.rule} note={p.phone} />
       <span className="focus-fact focus-mode-fact">
         {state.secretMode === 'shared' ? 'Shared' : 'Individual'}
       </span>

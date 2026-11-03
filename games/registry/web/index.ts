@@ -4,9 +4,9 @@
  * @brief  The registered games' screens, for the player client.
  *
  * Responsibility: one line per game (04 §4.6), its panels bound to React components with
- *                 the props of `@smg/game-sdk`: the player's main area and input row apart, so
- *                 the client can lay them out (the input row pinned at the bottom of a phone)
- *                 and put its cooldown ring into the row. The player client finds a game's
+ *                 the props of `@smg/game-sdk`: the player's panel, input row and phone info line
+ *                 apart, so the client can lay them out (the input row pinned at the bottom of
+ *                 a phone, T141) and put its cooldown ring into the row. The player client finds a game's
  *                 screens only here, by the round's game id.
  * Depends on:     react (types), @smg/game-sdk, @smg-game/guess-the-number/web,
  *                 @smg-game/safecracker/web, @smg-game/bomb-defusal/web,
@@ -18,6 +18,7 @@ import {
   GuessInput,
   gtnSettingDefs,
   gtnText,
+  InfoLine,
   PlayerPanel,
   ResultPanel,
   SpectatorPanel,
@@ -43,13 +44,17 @@ export interface GameWeb {
     PlayerPanelProps & { readonly ring?: ReactNode; readonly stage?: HTMLElement | null }
   >;
   readonly Spectator: ComponentType<SpectatorPanelProps>;
+  // The phone's info line over the stage (T141): one line of what matters for the next guess
+  // (the range and the fallen numbers, the digit strip, the hint or the halved area), from a
+  // player's or a spectator's view; a tap opens the game's panel as a sheet.
+  readonly Line: ComponentType<SpectatorPanelProps>;
   readonly Result: ComponentType<ResultPanelProps>;
   readonly text: GameText;
   // The game's own setting definitions: one wording for every form that shows them.
   readonly settings: readonly SettingDef[];
   // 'board': the game's board takes the stage, the left column at full height on a desktop,
-  // with its panel, the list and the input row on the right (T123, O51); by default the list
-  // takes the main area and the input row sits under it (O50).
+  // with its panel, the list and the action dock in the info column on the right (T123, O51,
+  // T141); by default the stage holds the round's guesses with the dock at its bottom.
   readonly layout?: 'board';
 }
 
@@ -58,6 +63,7 @@ export const GAME_SCREENS: Readonly<Record<string, GameWeb>> = {
     Player: PlayerPanel,
     Input: GuessInput,
     Spectator: SpectatorPanel,
+    Line: InfoLine,
     Result: ResultPanel,
     text: gtnText,
     settings: gtnSettingDefs,

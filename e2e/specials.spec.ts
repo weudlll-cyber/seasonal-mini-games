@@ -4,9 +4,10 @@
  * @brief  Journeys 3 and 4: each season special once, and a halving round on a halving day.
  *
  * Responsibility: journey 3 — in Quick Test rounds of the fast test profile, Spring Herald's
- *                 free hint appears, Heatwave's cooldown drops, Leaf Fall strikes numbers and
- *                 Frost shows "answer arriving", readable on the light page. Journey 4 — with today entered as a halving
- *                 day, a halving round's range halves, and a guess outside the new range is
+ *                 free hint appears, Heatwave's cooldown drops (its row in the All list, T142),
+ *                 Leaf Fall strikes numbers and Frost shows "answer arriving", readable on the
+ *                 light page. Journey 4 — with today entered as a halving day, a halving
+ *                 round's range halves, and a guess outside the new range is
  *                 refused without cost. The halving day and the matches are removed or aborted.
  * Depends on:     @playwright/test, ./contrast, ./play
  * Spec:           docs/spec/09-testing-strategy.md §4 (journeys 3, 4); docs/spec/03-seasonal-specials.md §2, §4
@@ -63,15 +64,20 @@ test('journey 3: each season special shows itself', async ({ browser }) => {
 
     codes.push(await quickRound(p, { season: 'summer', cooldownS: 8 }));
     await expect.poll(() => cooldownSeconds(p.page), { timeout: 15_000 }).toBeLessThan(8);
-    // Announced once (O47): one row however many steps follow.
-    await expect(p.page.getByTestId('guess-list')).toContainText('Heatwave: waiting time is now');
-    await expect(p.page.getByTestId('guess-list').getByText(/^Heatwave:/)).toHaveCount(1);
+    // Announced once (O47): one row however many steps follow, in the All list (T142).
+    await p.page.getByTestId('list-all').click();
+    const all = p.page.getByTestId('all-list');
+    await expect(all).toContainText('Heatwave: waiting time is now');
+    await expect(all.getByText(/^Heatwave:/)).toHaveCount(1);
+    await p.page.keyboard.press('Escape');
 
     codes.push(await quickRound(p, { season: 'autumn' }));
     await expect(p.page.getByTestId('fallen')).toHaveText(/^Fallen numbers \([1-9]\d*\)$/, {
       timeout: 15_000,
     });
-    await expect(p.page.getByTestId('guess-list')).toContainText('Leaf Fall:');
+    await p.page.getByTestId('list-all').click();
+    await expect(p.page.getByTestId('all-list')).toContainText('Leaf Fall:');
+    await p.page.keyboard.press('Escape');
 
     codes.push(await quickRound(p, { season: 'winter' }));
     await expect(p.page.getByTestId('guess-button')).toBeEnabled({ timeout: 10_000 });

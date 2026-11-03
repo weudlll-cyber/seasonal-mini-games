@@ -3,18 +3,19 @@
  * @module web/round
  * @brief  React hook: the focus mode's panels on demand, one open at a time (O46).
  *
- * Responsibility: which panel is open (chat, players, host, the full guess list), or none;
- *                 each panel's opening button by id, so closing a panel hands the focus back
- *                 to the button it was opened from (as @smg/ui `useDisclosure` does for a single
- *                 panel); opening another panel closes the open one, since only one is open at
- *                 a time. Escape and the panels' Close buttons call `close` (./FocusPanel).
+ * Responsibility: which panel is open (chat, players, host, the whole list, a phone's game
+ *                 panel), or none; each panel's opening button by id, so closing a panel hands
+ *                 the focus back to the button it was opened from (as @smg/ui `useDisclosure`
+ *                 does for a single panel); opening another panel closes the open one, since
+ *                 only one is open at a time. Escape and the panels' Close buttons call `close`
+ *                 (./FocusPanel).
  * Depends on:     react
- * Used by:        ./FocusShell, ./RoundScreen
+ * Used by:        ./FocusShell, ./RoundBody, ./InfoParts
  * Spec:           docs/spec/02-game-guess-the-number.md §12
  */
 import { useCallback, useRef, useState } from 'react';
 
-export type PanelId = 'chat' | 'players' | 'host' | 'list';
+export type PanelId = 'chat' | 'players' | 'host' | 'list' | 'game';
 
 export interface Panels {
   readonly open: PanelId | null;

@@ -7,9 +7,10 @@
  *                 player guesses once, then for two falls every newly fallen number lies inside
  *                 the candidate set the public answers left before the fall and is no guessed
  *                 number (O37); the Fallen numbers panel lists exactly the fallen numbers,
- *                 ascending with thousands separators, and the list's Leaf Fall row stands out
+ *                 ascending with thousands separators, and the All list's Leaf Fall row stands out
  *                 (T115); a fallen number typed in gets "Already fallen." at once; the round
- *                 view fits 1280 × 720 and 390 × 844, where the panel opens as a sheet from its
+ *                 view fits 1280 × 720 and 390 × 844, where the panel opens, from the info
+ *                 line's sheet (T141), as a sheet from its
  *                 "Fallen (N)" button (after a reload at that size) and closes with its Close
  *                 button. The match is aborted at the end.
  * Depends on:     @playwright/test, ./play, ./screens
@@ -81,13 +82,16 @@ async function nextFallInCandidates(p: Person, roundId: string): Promise<void> {
   for (const v of fresh) expect(possible(v), `${String(v)} was still possible`).toBe(true);
 }
 
-// A phone: the panel lies behind its button and opens as a sheet over the round.
+// A phone: the panel lies behind its button in the game's sheet and opens as a sheet of its own.
 async function phoneSheet(p: Person): Promise<void> {
   // Loaded again at the phone size: WebKit's mobile emulation keeps the wide layout after a
   // resize until the page is laid out afresh.
   await p.page.setViewportSize(PHONE);
   await p.page.reload();
   await roundOpen(p.page);
+  // The info line names the count; the game's panel with the button is its sheet (T141).
+  await expect(p.page.getByTestId('info-line')).toContainText(/Fallen [1-9]/);
+  await p.page.getByTestId('info-line').click();
   await expect(p.page.getByTestId('fallen-toggle')).toBeVisible();
   await expect(p.page.getByTestId('fallen-list')).toBeHidden();
   await p.page.getByTestId('fallen-toggle').click();
@@ -139,7 +143,12 @@ test('journey 18: Leaf Fall drops only still-possible numbers, in the Fallen pan
     const removed = (await read(p, started.roundId)).game.removed;
     const first = await p.page.getByTestId('fallen-list').locator('li').first().textContent();
     expect(first).toMatch(/^\d{1,3}(,\d{3})*$/);
-    await expect(p.page.getByTestId('special-row').first()).toContainText(/^Leaf Fall: .+ fell\.$/);
+    // Leaf Fall's own row is in the All list (T142).
+    await p.page.getByTestId('list-all').click();
+    await expect(p.page.getByTestId('all-list').getByTestId('special-row').first()).toContainText(
+      /^Leaf Fall: .+ fell\.$/,
+    );
+    await p.page.keyboard.press('Escape');
     // A fallen number is refused at once, in the server's words.
     await p.page.getByTestId('guess-input').fill(String(removed[0]));
     await p.page.getByTestId('guess-button').click();

@@ -12,9 +12,10 @@
  *                 others that arrive while the chat panel is closed (../chat/chatArrivals) and
  *                 clears when it opens. Full screen applies to this container, so the bar and
  *                 the panels stay inside it (./useFullscreen). The content gets the panels too,
- *                 for the phone's full guess list.
+ *                 for the whole list and the phone's game panel. The container carries the
+ *                 layout, desktop or phone (`data-view`, T141).
  * Depends on:     react, @smg/contracts, ../chat/chatArrivals, ./FocusBar, ./FocusPanel,
- *                 ./RoundSide, ./useFullscreen, ./usePanels, ./focus.css
+ *                 ./RoundSide, ./useFullscreen, ./usePanels, ./useRoundView (type), ./focus.css
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/07-integration.md §2
  */
@@ -34,12 +35,14 @@ import { FocusPanel } from './FocusPanel.js';
 import { PlayersPanelBody } from './RoundSide.js';
 import { useFullscreen } from './useFullscreen.js';
 import { usePanels, type PanelId, type Panels } from './usePanels.js';
+import type { RoundView } from './useRoundView.js';
 import './focus.css';
 
 export interface FocusShellProps {
   readonly state: RoundStateView;
   readonly now: number;
   readonly rule: string;
+  readonly view: RoundView;
   readonly style: CSSProperties;
   readonly layout: string;
   readonly viewerKey: string | null;
@@ -112,6 +115,8 @@ export function FocusShell(p: FocusShellProps): ReactElement {
         style={p.style}
         data-testid="round-view"
         data-layout={p.layout}
+        // Desktop or phone (./useRoundView, T141): ./round.css lays the round out by it.
+        data-view={p.view}
         data-status={p.state.status}
         // The open panel: on a desktop its column pushes the game aside (./round.css, O48).
         data-panel={panels.open ?? undefined}
@@ -124,6 +129,7 @@ export function FocusShell(p: FocusShellProps): ReactElement {
           state={p.state}
           now={p.now}
           rule={p.rule}
+          phone={p.view === 'phone'}
           panels={panels}
           chat={p.chat !== null}
           unread={unread}

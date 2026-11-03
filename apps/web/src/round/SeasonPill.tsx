@@ -5,13 +5,14 @@
  *
  * Responsibility: the pill in the season's token colour with its icon, the season's name and
  *                 the special's ("Autumn · Leaf Fall", "Summer · no special", O35) and the
- *                 halving badge. With the special on the pill is a button with a small "i":
- *                 it opens a note under the bar with the round's mode (shared or individual,
- *                 which a phone's bar leaves out), the special's name and its one plain
- *                 sentence, the same as on the intro screen (O36); the pill or Escape closes it and the focus goes
- *                 back to the pill. One control instead of a pill and an info button keeps the
- *                 phone's bar to one row (O46). The sentence is the game's own where it words
- *                 its special (`ruleOf`, T119), else the platform's.
+ *                 halving badge. With the special on, on a phone, the pill is a button with a
+ *                 small "i": it opens a note under the bar with the round's mode (shared or
+ *                 individual, which a phone's bar leaves out), the special's name and its one
+ *                 plain sentence, the same as on the intro screen (O36); the pill or Escape
+ *                 closes it and the focus goes back to the pill. One control instead of a pill
+ *                 and an info button keeps the phone's bar to one row (O46). The sentence is the
+ *                 game's own where it words its special (`ruleOf`, T119), else the platform's.
+ *                 A desktop's pill is plain: its info column has the special's line (T141).
  * Depends on:     react, @smg/contracts, @smg/ui (useDisclosure), @smg-game/registry/web
  *                 (types), ../season/*, ./roundSpecials.css
  * Used by:        ./FocusBar, ./RoundIntro
@@ -60,10 +61,12 @@ function PillFace({ state }: { readonly state: RoundStateView }): ReactElement {
 export function SeasonPill(p: {
   readonly state: RoundStateView;
   readonly rule: string;
+  // False: a plain pill, where the special's sentence shows elsewhere (a desktop's info column).
+  readonly note: boolean;
 }): ReactElement {
   const note = useDisclosure();
   const { state } = p;
-  if (!state.specialOn) {
+  if (!state.specialOn || !p.note) {
     return (
       <span className="round-season" data-season={state.season} data-halving={state.halving}>
         <PillFace state={state} />

@@ -7,7 +7,7 @@
  * Responsibility: the cooldown ring counts down and says Ready; the guess list merges the
  *                 game's guess rows and the event rows, newest at the top, each guess with the
  *                 player's colour dot, "You" and a highlight on the viewer's own, the answer in
- *                 colour and the comment under it, "answer arriving" while Frost holds an own
+ *                 colour and the comment on its line, "answer arriving" while Frost holds an own
  *                 answer (O20, O21); a player's colour is their team's when teams play, else a
  *                 season colour by roster order; the team tiles show each team's match points,
  *                 only when teams play; a player name stays whole, shortened, and opens on a
@@ -70,16 +70,18 @@ const gameWith = (rows: readonly object[]) =>
     },
   }) as never;
 const game = gameWith(guesses);
+// A desktop's list for the viewer Anna.
+const LOG = { viewerKey: 'a', phone: false } as const;
 const live = { ...ended, status: 'open', frostDelayMs: 3_000, game: {} } as const;
 
 describe('the guess list', () => {
-  it('merges guesses and events newest first, with "You", answers, comments and Frost', () => {
+  it('merges guesses and events newest first in the All list, with answers, comments, Frost', () => {
     const feed = [
       { key: '9', s: 9, at: 6_000, event: { type: 'Game', event: {} } },
       { key: '1', s: 1, at: 1_000, event: { type: 'RoundOpened' } },
     ];
-    render(<RoundLog feed={feed} game={game} state={live} viewerKey="a" now={9_000} />);
-    const rows = [...screen.getByTestId('guess-list').querySelectorAll('li')];
+    render(<RoundLog {...LOG} feed={feed} game={game} state={live} now={9_000} kind="all" />);
+    const rows = [...screen.getByTestId('all-list').querySelectorAll('li')];
     expect(rows.map((li) => li.textContent)).toEqual([
       'You45answer arriving… 2 s',
       'Leaf Fall: 12 fell.',
@@ -108,7 +110,7 @@ describe('the guess list', () => {
   });
 
   it('says so when nothing has happened yet', () => {
-    render(<RoundLog feed={[]} game={gameWith([])} state={live} viewerKey="a" now={0} />);
+    render(<RoundLog {...LOG} feed={[]} game={gameWith([])} state={live} now={0} kind="main" />);
     expect(screen.getByText('No guesses yet.')).toBeTruthy();
   });
 });

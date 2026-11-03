@@ -8,8 +8,9 @@
  *                 range is accepted and answered, and the result reveals the range (O19,
  *                 DECISIONS T52, T53). Journey 11 (390 × 844) — the Quick Test form takes
  *                 "-500" typed key by key into Lowest number and starts a round from −500 to
- *                 500 at once ("Start from the lobby" off), the range is shown, the ± button turns a typed number negative, the
- *                 guess is answered, and the round plays to its result (O18). Both check that the round view fits
+ *                 500 at once ("Start from the lobby" off), the range is shown on the info line
+ *                 (T141), the ± button turns a typed number negative, the guess is answered,
+ *                 and the round plays to its result (O18). Both check that the round view fits
  *                 the screen without a page scrollbar (02 §12) and that every text on it keeps
  *                 4.5:1 in light and dark (./contrast); on the phone the app header is hidden
  *                 and the round's own bar is one row of at most 64 px (O46). The Quick Test
@@ -114,9 +115,8 @@ test('journey 11: a range from -500 to 500 takes negative guesses on a phone', a
       'Shared number between -500 and 500',
     );
     await roundOpen(p.page);
-    await expect(p.page.getByTestId('range')).toContainText(
-      'The number is somewhere between -500 and 500',
-    );
+    // A phone's info line names the range (T141).
+    await expect(p.page.getByTestId('info-line')).toContainText('-500–500');
     await expect(p.page.getByTestId('guess-button')).toBeEnabled({ timeout: 10_000 });
     await fitsScreen(p.page);
     // During a round the app header is hidden and the round's own bar is one row of at most

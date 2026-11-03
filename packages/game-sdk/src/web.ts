@@ -12,7 +12,8 @@
  *                 event rows (`FeedLine`); the client draws both, in one list. On the result
  *                 page the game words the line about the best of the rest (`runnerUp`, O22).
  *                 A game whose guesses are not numbers gives them and their answers in words
- *                 (`text`, `answer`), and words its own special (`specialRule`, T119). The
+ *                 (`text`, `answer`) or as colour dots (`swatches`, T143), and words its own special
+ *                 (`specialRule`, T119). The
  *                 panels learn the cooldown's seconds left and the players' names and colours,
  *                 and `buttonText` words every send button during the cooldown (T125).
  * Depends on:     ./module
@@ -88,6 +89,12 @@ export interface GuessAnswer {
   readonly pegs?: readonly ('hit' | 'near' | 'miss')[];
 }
 
+// One colour dot of a guess: its name (read out and shown on hover) and its CSS colour.
+export interface GuessSwatch {
+  readonly name: string;
+  readonly color: string;
+}
+
 // One guess in the round's list, as far as this viewer's view shows it (O20, O21).
 export interface GuessRow {
   readonly key: string;
@@ -101,6 +108,9 @@ export interface GuessRow {
   // A guess that is not a number, in words ("0427", "red, blue, green", "(12, 34)"); null or
   // absent where the viewer may not see it (DECISIONS T119).
   readonly text?: string | null;
+  // A guess drawn as colour dots in order (Bomb Defusal's cut sequence, T143), each with its
+  // name as accessible text and tooltip; the platform draws them in place of `text`.
+  readonly swatches?: readonly GuessSwatch[] | null;
   // An answer other than higher/lower, used when `feedback` is null: its words, a tone the
   // platform colours by, and optional pegs drawn before the words (never colour alone).
   readonly answer?: GuessAnswer | null;

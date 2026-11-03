@@ -11,10 +11,10 @@
  *                 panel is open at a time; the chat panel stays mounted; the unread badge
  *                 counts others' messages while the chat is closed and clears on opening it;
  *                 the full-screen toggle shows only where the Fullscreen API is offered
- *                 (mocked) and follows the browser leaving full screen; the phone's compact
- *                 list holds guesses only and "All (N)" counts guesses (O49).
+ *                 (mocked) and follows the browser leaving full screen. The lists are
+ *                 ./log.test.
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ../chat/chatArrivals, ./fakes,
- *                 ./RoundLog, ./RoundScreen
+ *                 ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/09-testing-strategy.md §2
  */
 import type { RoundStateView } from '@smg/contracts';
@@ -24,7 +24,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatArrivals } from '../chat/chatArrivals.js';
 import { ended } from './fakes.js';
-import { RoundLog } from './RoundLog.js';
 import { RoundScreen } from './RoundScreen.js';
 
 afterEach(() => {
@@ -166,59 +165,5 @@ describe('the full-screen toggle', () => {
     for (const key of ['fullscreenEnabled', 'fullscreenElement'])
       Reflect.deleteProperty(document, key);
     Reflect.deleteProperty(HTMLElement.prototype, 'requestFullscreen');
-  });
-});
-
-describe("the phone's compact list", () => {
-  const row = { pending: false, tier: null, comment: null, feedback: null, playerId: 'w' };
-  const game = {
-    text: {
-      code: () => null,
-      event: () => null,
-      guesses: () => [1, 2, 3, 4, 5].map((i) => ({ ...row, key: String(i), at: i, value: i })),
-    },
-  } as never;
-
-  // A round event newer than every guess: the phone's list leaves it to the banner and the
-  // sheet (O49).
-  const feed = [{ key: '9r', s: 9, at: 9, event: { type: 'RoundOpened' } }];
-
-  it('holds guesses only, and "All (N)" counts the guesses', () => {
-    const toggle = vi.fn();
-    const more = { open: false, toggle, button: () => undefined };
-    render(<RoundLog feed={feed} game={game} state={open} viewerKey="a" now={0} more={more} />);
-    const rows = [...screen.getByTestId('guess-list').querySelectorAll('li')];
-    expect(rows.map((li) => li.querySelector('.round-value')?.textContent)).toEqual([
-      '5',
-      '4',
-      '3',
-      '2',
-      '1',
-    ]);
-    expect(screen.getByTestId('guess-list').textContent).not.toContain('The round is open');
-    fireEvent.click(screen.getByTestId('list-all'));
-    expect(screen.getByTestId('list-all').textContent).toBe('All (5)');
-    expect(toggle).toHaveBeenCalledTimes(1);
-  });
-
-  it('shows "All (N)" from the first guess on', () => {
-    const one = {
-      text: {
-        code: () => null,
-        event: () => null,
-        guesses: () => [{ ...row, key: '1', at: 1, value: 1 }],
-      },
-    } as never;
-    const more = { open: false, toggle: vi.fn(), button: () => undefined };
-    render(<RoundLog feed={feed} game={one} state={open} viewerKey="a" now={0} more={more} />);
-    expect(screen.getByTestId('list-all').textContent).toBe('All (1)');
-  });
-
-  it('the whole list has the events, but not the one the banner shows', () => {
-    render(<RoundLog feed={feed} game={game} state={open} viewerKey="a" now={0} />);
-    expect(screen.getByTestId('guess-list').textContent).toContain('The round is open');
-    cleanup();
-    render(<RoundLog feed={feed} game={game} state={open} viewerKey="a" now={0} hide="9r" />);
-    expect(screen.getByTestId('guess-list').textContent).not.toContain('The round is open');
   });
 });
