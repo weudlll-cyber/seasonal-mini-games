@@ -10,8 +10,8 @@
  *                 coordinates show as text, Guess sends and the own tile and row appear with
  *                 warm/cold only, the default (O53): no distance in the row, the tile filled in
  *                 its closeness colour and framed as the viewer's, without a number; then an
- *                 individual autumn round with distance only, set explicitly: the row and the
- *                 tile carry the distance, and fallen tiles are hatched. Each round view fits
+ *                 individual autumn round with distance only, set explicitly: fallen tiles are
+ *                 hatched, then the row and the tile carry the distance. Each round view fits
  *                 1280 × 720 and 390 × 844, the grid left of the column on the desktop (O51). The matches are aborted.
  * Depends on:     @playwright/test, ./guessGames, ./play
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 22); docs/spec/02d-game-seasonal-target.md
@@ -66,8 +66,9 @@ test('journey 22: Seasonal Target, warm/cold only (the default) and distance onl
     await expect(own).not.toHaveText(/\d/);
     await fitsBoth(p.page);
 
-    // Individual, autumn, distance only (set explicitly): the distance in the answer and on
-    // the tile; tiles fall.
+    // Individual, autumn, distance only (set explicitly): tiles fall, then the distance in the
+    // answer and on the tile. The fall first: with the distance a bot can find its target and
+    // end the round before a later check (CI, night 6).
     const started = await direct(p, {
       gameId: 'seasonal-target',
       mode: 'individual',
@@ -75,15 +76,17 @@ test('journey 22: Seasonal Target, warm/cold only (the default) and distance onl
       settings: { 'target.feedback': 'distance' },
     });
     codes.push(started.matchCode);
+    await expect(p.page.locator('[data-testid="tile"][data-fallen="true"]').first()).toBeVisible({
+      timeout: 30_000,
+    });
+    // A tile still standing: a fallen one is refused.
+    await p.page.locator('[data-testid="tile"]:not([data-fallen="true"])').nth(210).click();
     await p.page.getByTestId('guess-button').click();
     await expect(ownRows(p.page).first().locator('.round-answer')).toHaveText(DISTANCE, {
       timeout: 10_000,
     });
     await expect(own).toHaveAttribute('data-step', /^[1-5]$|correct/);
     await expect(own).toHaveText(/\d/);
-    await expect(p.page.locator('[data-testid="tile"][data-fallen="true"]').first()).toBeVisible({
-      timeout: 20_000,
-    });
     await fitsBoth(p.page);
   } finally {
     for (const code of codes) await abortMatch(p, code);

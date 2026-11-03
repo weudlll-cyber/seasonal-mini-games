@@ -8,20 +8,36 @@ Branch `feat/guess-games`. Owner decisions O47–O53 (2026-11-02); technical dec
 
 ### Status
 
-| Piece                                      | State   | Commit    |
-| ------------------------------------------ | ------- | --------- |
-| 1. Shared focus shell (O47, O48, O49, O52) | done    | see below |
-| 2. Seasonal Target (O51, O53)              | done    | see below |
-| 3. List games layout (O50)                 | done    | see below |
-| 4. Result screens                          | done    | see below |
-| 5. Small items                             | done    | `6c4491e` |
-| 6. Re-shoot, measure, self-review          | running |           |
+| Piece                                      | State | Commit    |
+| ------------------------------------------ | ----- | --------- |
+| 1. Shared focus shell (O47, O48, O49, O52) | done  | see below |
+| 2. Seasonal Target (O51, O53)              | done  | see below |
+| 3. List games layout (O50)                 | done  | see below |
+| 4. Result screens                          | done  | see below |
+| 5. Small items                             | done  | `6c4491e` |
+| 6. Re-shoot, measure, self-review          | done  | `88aa313` |
 
 Pieces 1–4 are one commit: they share the round view's grid (`round.css`, `RoundScreen.tsx`), the games' `text.ts` (hint lines and closest miss) and the decision and spec pages, and the subagent of piece 2 worked in parallel with pieces 1 and 3. `pnpm verify` green on that tree (116 files, 707 tests); e2e follows in piece 6.
 
 ### Needs the owner
 
 Nothing blocks. To look at and decide: OPEN.md, "Night-6 small items (T139), to confirm" and "Night-6 screenshot review, for the owner" (the list below, state "owner").
+
+### Handover
+
+- Branch `feat/guess-games`; the code is at the commit that adds this section (the commit after `88aa313` changes only journey 22 and this sheet). Dev servers restarted on it: API 3910, web 5410, admin 5411.
+- Quick Test: <http://127.0.0.1:5410/#/quick-test>. For every game: Game as named below, Seed `acorn`, a Season of your choice, **Fast specials** on, **Start from the lobby** on; in the lobby, Start round from the Host menu.
+
+| Game                  | What to look at                                                                                                                                                                                                                                         |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Guess The Number      | The list in the main area, the range panel alone on the right (O50); Summer: Heatwave said once; open Chat or Players on a desktop: the game moves aside (O48); on a phone the list fills the height (O49)                                              |
+| Seasonal Safecracker  | "1 right place, 2 right digits, wrong place", green from half the digits in place; the phone list's answers wrap inside the card                                                                                                                        |
+| Seasonal Bomb Defusal | "Boom!" once per row; the swatches' grey ring; the result's sequences separated by " · "                                                                                                                                                                |
+| Seasonal Target       | Grid size 20; the grid at full height on the left, legend, list, selection, ring and Guess on the right (O51); "Type coordinates"; Spring: the green "Hint" quarter; **Answers** all three: `closeness` (the default now, O53), `distance`, `direction` |
+
+- Results: the headline at half size, "Closest miss besides the winner: …", one screen at 1280 × 720.
+- Teams: "Team Spring" and the others everywhere (O52).
+- Screenshots: `reports/focus-mode-2/` with `play-through.txt`.
 
 ### Piece 1 — the shared focus shell
 
@@ -193,6 +209,11 @@ Not defects: the range bar does not narrow with the halving (decision 17); a clo
 ### Checks
 
 - `pnpm verify` green on pieces 1–4 (116 test files, 707 tests). Two earlier runs stopped on formatting (a doc saved during the run) and on a 61-line test function; both fixed.
+- `pnpm verify` green on piece 5 and on piece 6 with its review fixes (116 test files, 708 tests each).
+- E2E Chromium, journeys 1–27 (`chromium` and `chromium-timing`): 34/34 passed in 12.0 min on the final code. Journeys 24–27 assert at 1280 × 720 and 390 × 844 that with each panel open the action button stays visible and enabled or waiting, the panel leaves the input clear and the page does not scroll. Earlier in the night: 36 passed, 4 failed (a `boundingBox` on a missing stage, Bomb's disabled "Cut", Target's "9 away"), fixed in `17216d2`.
+- CI: piece 5's run (`6c4491e`) failed in journey 22 only: no fallen tile within 20 s, because with the distance the bot could end the round first. The journey now waits for the fall right after the round opens (30 s), then selects a tile still standing and guesses. CI for the final push: see the handover.
+- Security: no new intent, route or table; the authorization matrix is unchanged.
+- The re-shoot's first try failed on every round: the dev web server served a stale module after a hot reload (Bomb's `ResultPanel`); the servers were restarted and the shoot repeated. The halving day the shoot adds was removed at its end (204).
 
 ## Tiles and focus mode (2026-11-02, day task)
 
