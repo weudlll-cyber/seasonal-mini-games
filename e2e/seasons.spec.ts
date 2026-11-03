@@ -124,9 +124,10 @@ for (const s of SEASONS) {
       await introFits(p.page, s);
       await roundOpen(p.page);
       // The banner in the list's head, in the season colour (fast profile: within seconds;
-      // Spring Herald's and Frost's at the opening, so Frost's is read before the guess).
+      // Spring Herald's at the opening). A desktop shows no Frost banner: its special line
+      // says the same (T148); a phone's opening banner is the unit tests' (banner.test).
       const banner = p.page.getByTestId('special-banner');
-      if (s.season === 'winter') await expect(banner).toHaveText(s.banner);
+      if (s.season === 'winter') await expect(banner).toBeEmpty();
       await provoke(p.page, s);
       if (s.season !== 'winter') await expect(banner).toHaveText(s.banner, { timeout: 15_000 });
       await expect(p.page.getByTestId('round-special')).toHaveText(s.special);

@@ -8,18 +8,33 @@ Branch `feat/guess-games`. Owner decision O54 (2026-11-03); technical decisions 
 
 ### Status
 
-| Piece                             | State   | Commit                 |
-| --------------------------------- | ------- | ---------------------- |
-| 1. Layout system (O54)            | done    | see below              |
-| 2. Seasonal Target on this layout | done    | see below              |
-| 3. List games on this layout      | done    | see below              |
-| 4. Result screens                 | done    |                        |
-| 5. Known defects and clean-up     | done    | `749c005` (test split) |
-| 6. Re-shoot, measure, self-review | running |                        |
+| Piece                             | State | Commit                             |
+| --------------------------------- | ----- | ---------------------------------- |
+| 1. Layout system (O54)            | done  | `e72ff09`                          |
+| 2. Seasonal Target on this layout | done  | `5b3d369`                          |
+| 3. List games on this layout      | done  | `5b3d369`                          |
+| 4. Result screens                 | done  | `a073507`                          |
+| 5. Known defects and clean-up     | done  | `749c005`, `330810d`               |
+| 6. Re-shoot, measure, self-review | done  | `b7d2789` (fixes), shots `a9bcf3f` |
 
 ### Needs the owner
 
-Nothing blocks. To look at after play: OPEN.md, "Night-7 layout, to confirm".
+Nothing blocks. To look at after play: OPEN.md, "Night-7 layout, to confirm" (T141–T145, proposals) and "Night-6 screenshot review, for the owner" with the night-7 items (the list below, state "owner"). Delete the branch `shots/night-7` after the review.
+
+### Handover
+
+- Branch `feat/guess-games`; dev servers restarted on the final app code (`b7d2789`; the commits after it change only journey 16 and this sheet): API 3910, web 5410, admin 5411.
+- Screenshots: the orphan branch `shots/night-7` (526 images, 263 light/dark pairs, with `play-through.txt`), nothing in the working tree (T146).
+- Quick Test: <http://127.0.0.1:5410/#/quick-test>. For every game: Game as named below, Seed `acorn`, a Season of your choice, **Fast specials** on, **Start from the lobby** on; in the lobby, Start round from the Host menu.
+
+| Game                  | What to look at                                                                                                                                                                                                                                            |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Guess The Number      | The stage's one-line rows, "Your guesses" in the right column (shared), the special line on top of it; on a phone the info line "1–1,000" and its sheet; "All (N)" with the events; individual mode: "bot-01: 8 guesses" instead of their rows             |
+| Seasonal Safecracker  | "2 right · 1 wrong place", "no digit right", the legend line in the panel; the phone's compact digit strip with "Hint: 2nd is 4"                                                                                                                           |
+| Seasonal Bomb Defusal | Sequences as colour dots (hover for the names), "First 2 cuts right"; eight wires in one row, two rows with a panel open; the phone's "8 wires · cut 6 · wrong first cut +5 s"                                                                             |
+| Seasonal Target       | Grid size 20: about 31 px tiles at 1280 × 720, 49 px at 1920 × 1080, the full phone width (18.7 px a tile); Spring's "Hint" tag (with today a halving day it moves inside the area); **Answers** all three: `closeness` (default), `distance`, `direction` |
+
+- Results: the slim bar instead of the app header; the first part on one screen with the top three, "All placings" and the team line; standings below; End the round from the Host menu before anyone wins to see "Closest guess".
 
 ### Piece 1 — one layout system (O54, T141–T143)
 
@@ -62,6 +77,52 @@ Nothing blocks. To look at after play: OPEN.md, "Night-7 layout, to confirm".
 - "Opens in 0 s": no cause found while working on the shell; left as is (OPEN.md).
 - `roundLog.css` reached 305 lines with T147: the pegs and colour dots moved to `roundMarks.css` (54 lines), `roundLog.css` 262.
 - Checks: `pnpm verify` green (129 files, 741 tests).
+
+### Piece 6 — re-shoot, measurements, self-review
+
+- Two full shoots (`tmp/n7shoot.mjs`, git-ignored) to the scratchpad, never into the tree: every game, each season, shared and individual, at 1280 × 720, 1920 × 1080 and 390 × 844, light and dark of one moment; Target at 8, 20 and 30 per side in each answer mode at all three sizes; 15+ guesses shared and individual; Frost pending; halving (today added as a halving day and removed after); the loupe; every panel and sheet; each result (solved, time up) and the match summary. The second shoot (after the fixes, `b7d2789`) is the one on `shots/night-7`.
+- Review: one subagent per game on the first shoot; I checked the fixed states in the second shoot myself.
+
+**Measured** (second shoot, `play-through.txt`; the e2e journeys 24–27 measure the list's room with one guess, which the shoot cannot):
+
+| Check                                                 | Target                     | Measured                                                                                                                                                |
+| ----------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Page scroll in a round view (every state, all sizes)  | none                       | none; only result pages scroll, below their first part                                                                                                  |
+| A panel or sheet over the dock                        | never                      | never ("panel clear of the dock" on every open-panel shot)                                                                                              |
+| Target 20 × 20 tile, 1280 × 720 / 1920 × 1080 / phone | ≈ 30 / ≈ 48 / ≥ 18 px      | 30.9 / 48.9 px; phone grid 374 px (full width minus 8 px a side), 18.7 px a tile with its gap, 16.6 px fill (the shoot measures a tile's fill)          |
+| Target 8 × 8 and 30 × 30 at 1280 × 720                | as large as height allows  | grid 660 px at every size of grid                                                                                                                       |
+| Guess rows, 1280 × 720 stage                          | GTN ≥ 22, SC ≥ 20, BD ≥ 18 | room (journeys 24–26): ≥ 22, ≥ 20, ≥ 18 pass; in the shoot 23 GTN rows of a 32-guess round in view, all 16–17 rows of SC's and BD's busy rounds in view |
+| Guess rows, 390 × 844                                 | GTN, SC ≥ 10, BD ≥ 6       | room ≥ 10, ≥ 10, ≥ 6 pass; in the shoot GTN 25 rows in view, SC 17, BD 14, Target 7 under the grid                                                      |
+| Result first part, 1280 × 720 / 390 × 844             | fits                       | fits for every game and both results (bottom 324–712 px of 720; 516–834 px of 844); the summary one screen at every size                                |
+
+**Screenshot review** (first shoot; state after the second):
+
+| #   | Found                                                                                                      | State                                                                     |
+| --- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| 1   | Frost's "3 s" badge cut in the narrow column                                                               | fixed (T148): the words give way                                          |
+| 2   | Comments and answers cut to one letter in "Your guesses"                                                   | fixed (T148): the answer keeps its words there                            |
+| 3   | List-game results: an empty card and a gap before the placings                                             | fixed (T148): the first part as tall as its content                       |
+| 4   | The result's chat field cut at 1280 × 720                                                                  | fixed (T148)                                                              |
+| 5   | Placings: "Guesses Points" touching, "took part" wrapping, unplaced order                                  | fixed on a desktop (T148); a phone still wraps "took part" (owner, below) |
+| 6   | Eight wires overlapping, Safecracker's dock wrapping, with a panel open                                    | fixed (T148): two rows of four / one row with shrinking boxes             |
+| 7   | No special sentence on a phone outside the pill's note                                                     | fixed: also at the top of the game sheet                                  |
+| 8   | Frost's banner beside the special line saying the same                                                     | fixed: a desktop shows no Frost opening banner                            |
+| 9   | Chips cut without an ellipsis (result bar, "Harmless 2" on the info line)                                  | fixed                                                                     |
+| 10  | Safecracker's phone hint without room ("F…")                                                               | fixed: compact strip, "Hint: 2nd is 4"                                    |
+| 11  | "All (N)" under 44 px on a phone                                                                           | fixed                                                                     |
+| 12  | Target's halved area hard to see in dark                                                                   | fixed: outside tiles at 12 % in dark                                      |
+| 13  | Dark own-row tints: dots and answers losing contrast (the 34 % tint of T147)                               | fixed by going back to 22 %; the olive tint stays greyish (owner)         |
+| 14  | Range never narrows from the answers                                                                       | not a defect: O17                                                         |
+| 15  | Guess enabled on a fallen tile in the loupe                                                                | not a defect: refused at once with its sentence (T113)                    |
+| 16  | Counts differing between sizes (Fallen 10/20)                                                              | not a defect: the sizes are seconds apart                                 |
+| 17  | Target result: the grid shares the game part with every player's guesses (160 px on a solved phone result) | owner: the game's result panel draws both; a game-side change             |
+| 18  | Individual mode on a desktop: the info column empty under the panel                                        | owner: T141 leaves "Your guesses" out there (it would repeat the stage)   |
+| 19  | Phone placings: "dev…" cut and "took part" on two lines                                                    | owner: four columns at 390 px leave the name about 7 rem                  |
+| 20  | Target's busy shared round: the bot wins before 15 guesses (Quick Test has no slower bot)                  | not shot; the busy individual round has the 15+ rows                      |
+| 21  | Heatwave's banner ("now 14 s") beside the ring ("Wait 8 s")                                                | not a defect: the cooldown and the time left of it                        |
+
+- Checks: `pnpm verify` green on `b7d2789` (129 files, 741 tests; two runs had one or two property and jsdom tests time out at 5 s while other projects' dev servers loaded the machine, each passing alone); e2e Chromium 38/38 on `a073507`, journey 16 updated for T148 and passing; CI: `5b3d369` green; `749c005` failed in journey 26 (the row target before `5b3d369`'s wires fix), `330810d` in a server integration test (a Leaf Fall round's state without its game, code untouched tonight; passed on the next run), `b7d2789` in journey 16 (the removed desktop Frost banner, fixed in the next commit); the final push: see the summary.
+- Noticed and left alone: journey 21 waits up to 30 s for a harmless wire and failed once locally and once in CI (WebKit, night 6); Quick Test's bot guesses at the round's cooldown, so a busy shared round of Safecracker or Target needs few own guesses.
 
 ## Night 6 (2026-11-02/03)
 

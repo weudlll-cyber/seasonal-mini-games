@@ -96,6 +96,9 @@ Built as described in 02 §12 and DECISIONS T128–T132 and T134–T136 (O47–O
 
 **Night-6 screenshot review, for the owner** (the list with its places is in NIGHT-RUN.md, Night 6; night 7 solved every other item, BACKLOG part two):
 
+- Night 7: Seasonal Target's result panel draws the grid and every player's guesses in one part, so on a phone's solved result the grid is about 160 px; giving the grid the part would need the game's result panel split.
+- Night 7: in individual mode the desktop's info column is empty under the game's panel (T141 leaves "Your guesses" out, the stage holds the same rows).
+- Night 7: on a phone the result's placings cut a long name ("dev…") and put "took part" on two lines; four columns at 390 px leave the name about 7 rem.
 - In dark mode an own row's tint of a muted dot (olive, Team Spring) reads greyish; a stronger tint cost the colour dots and answers their contrast (T147), so it stays at 22 %.
 
 - Seasonal Target on a desktop: the square grid is as tall as the stage and centred in it, so at 1280 × 720 and 1920 × 1080 strips stay beside it. Left as is: whether the free width should sit on one side (the grid at the stage's left edge, the strip next to the info column) or the grid stay centred is a choice of look for the owner.
