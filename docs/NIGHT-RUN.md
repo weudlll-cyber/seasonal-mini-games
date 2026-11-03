@@ -36,6 +36,10 @@ Nothing blocks. To look at after play: OPEN.md, "Night-7 layout, to confirm" (T1
 
 - Results: the slim bar instead of the app header; the first part on one screen with the top three, "All placings" and the team line; standings below; End the round from the Host menu before anyone wins to see "Closest guess".
 
+### Addendum — CI on feature branches (T149)
+
+- `.github/workflows/ci.yml`: no CI for `shots/**`; the Playwright job in all three browsers on `master` and on pull requests to `master`, in Chromium only elsewhere (its specs, then its timing specs). Recorded as T149, docs/spec/09 §1 updated.
+
 ### Piece 1 — one layout system (O54, T141–T143)
 
 - New: `RoundBody.tsx` (the parts and the two layouts), `InfoParts.tsx` (the game's panel, the desktop's special line, the phone's info line and its sheet), `GuessLine.tsx` (one row, moved out of `RoundLog.tsx`), `useRoundView.ts` (the layout by viewport), each game's `InfoLine` (Guess The Number's own file; Safecracker in `Board.tsx`, Bomb Defusal in `panels.tsx`, Seasonal Target in `PlayerPanel.tsx`); tests `log.test.tsx`, `layout.test.tsx`, a `line.test.tsx` for Guess The Number and Seasonal Target (Safecracker's and Bomb Defusal's in their `panels.test.tsx`), and a `sentinel.test.tsx` in each game's web folder over `sentinelViews` of `@smg/game-sdk` (a round with the kit's sentinel secrets: the info line and both panels show no mark; the web app may not import the server registry, so the test lives with each game).
