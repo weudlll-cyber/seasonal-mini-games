@@ -25,7 +25,7 @@ Nothing blocks. To look at and decide: OPEN.md, "Night-6 small items (T139), to 
 
 ### Handover
 
-- Branch `feat/guess-games`; the code is at the commit that adds this section (the commit after `88aa313` changes only journey 22 and this sheet). Dev servers restarted on it: API 3910, web 5410, admin 5411.
+- Branch `feat/guess-games`; the app code is at `88aa313`; the commits after it change only journey 22 and this sheet. Dev servers restarted on it: API 3910, web 5410, admin 5411.
 - Quick Test: <http://127.0.0.1:5410/#/quick-test>. For every game: Game as named below, Seed `acorn`, a Season of your choice, **Fast specials** on, **Start from the lobby** on; in the lobby, Start round from the Host menu.
 
 | Game                  | What to look at                                                                                                                                                                                                                                         |
@@ -211,7 +211,7 @@ Not defects: the range bar does not narrow with the halving (decision 17); a clo
 - `pnpm verify` green on pieces 1–4 (116 test files, 707 tests). Two earlier runs stopped on formatting (a doc saved during the run) and on a 61-line test function; both fixed.
 - `pnpm verify` green on piece 5 and on piece 6 with its review fixes (116 test files, 708 tests each).
 - E2E Chromium, journeys 1–27 (`chromium` and `chromium-timing`): 34/34 passed in 12.0 min on the final code. Journeys 24–27 assert at 1280 × 720 and 390 × 844 that with each panel open the action button stays visible and enabled or waiting, the panel leaves the input clear and the page does not scroll. Earlier in the night: 36 passed, 4 failed (a `boundingBox` on a missing stage, Bomb's disabled "Cut", Target's "9 away"), fixed in `17216d2`.
-- CI: piece 5's run (`6c4491e`) failed in journey 22 only: no fallen tile within 20 s, because with the distance the bot could end the round first. The journey now waits for the fall right after the round opens (30 s), then selects a tile still standing and guesses. CI for the final push: see the handover.
+- CI: piece 5's run (`6c4491e`) failed in journey 22 (Chromium): no fallen tile within 20 s; `06b86c1` passed it in Chromium and Firefox and failed in WebKit (iPhone profile), 99 passed. Three causes, all in the journey: a fall takes only tiles that fit every answer so far (O37), and two distance answers to two targets leave almost none, so the fall must come before any guess; a bot on a 3 s cooldown found its distance target and ended the round (a 60 s cooldown for that round now); on a touch screen with tiles under 44 px a tap opens the loupe, which holds the arrows instead of "Type coordinates". Journey 22 then passed in Chromium, Firefox and WebKit locally. CI for the final push: see the handover.
 - Security: no new intent, route or table; the authorization matrix is unchanged.
 - The re-shoot's first try failed on every round: the dev web server served a stale module after a hot reload (Bomb's `ResultPanel`); the servers were restarted and the shoot repeated. The halving day the shoot adds was removed at its end (204).
 
