@@ -8,14 +8,14 @@ Branch `feat/guess-games`. Owner decision O54 (2026-11-03); technical decisions 
 
 ### Status
 
-| Piece                             | State   | Commit    |
-| --------------------------------- | ------- | --------- |
-| 1. Layout system (O54)            | done    | see below |
-| 2. Seasonal Target on this layout | running |           |
-| 3. List games on this layout      | open    |           |
-| 4. Result screens                 | open    |           |
-| 5. Known defects and clean-up     | open    |           |
-| 6. Re-shoot, measure, self-review | open    |           |
+| Piece                             | State   | Commit                 |
+| --------------------------------- | ------- | ---------------------- |
+| 1. Layout system (O54)            | done    | see below              |
+| 2. Seasonal Target on this layout | done    | see below              |
+| 3. List games on this layout      | done    | see below              |
+| 4. Result screens                 | running |                        |
+| 5. Known defects and clean-up     | running | `749c005` (test split) |
+| 6. Re-shoot, measure, self-review | open    |                        |
 
 ### Needs the owner
 
@@ -28,6 +28,22 @@ Nothing blocks. To look at after play: OPEN.md, "Night-7 layout, to confirm".
 - Extracted: Safecracker's `DigitStrip` (the panel's strip and the info line's compact one); the season pill's styles moved from `round.css` to `roundSpecials.css`.
 - Reused: `FocusPanel` and `usePanels` for the All panel and the game sheet, `colorsOf`, `playerColor`, `formatNumber`, `freeHint` and `hintText` of the games, `HeatLegend`, `leafFallOn`.
 - Checks: `pnpm verify` green (127 files, 734 tests, with the split test files of piece 5). E2E Chromium 34/34: 31 on the first run; journeys 24 (it measured a box the list games no longer have), 18 (Leaf Fall's row is now in the All list) and 11 (a phone reads the range on the info line) fixed in the journeys and passing on the re-run.
+
+### Piece 2 — Seasonal Target on this layout (T144)
+
+- Measured (probe, 20 × 20): 1280 × 720 grid 660 px, tile 30.9 px; 1920 × 1080 grid 1004 px, tile 48.1 px; 390 × 844 grid 374 px (the full width minus 8 px a side), 18.7 px a tile with its gap (17 px fill), the list under it 250 px (7 rows).
+- The phone's gutter was 16 px: the shell's one-screen padding has the same weight as focus mode's and loads later; `#root .shell-main:has(.focus-mode)` now wins (desktop too: 8 px above and below).
+- The "Hint" tag: `tagTileOf` in `TileGrid.tsx` (225 → 238 lines) puts it on the quarter's tile nearest the corner inside the area; new `hint.test.ts`; the panel test that pinned the tag on a dimmed corner tile now expects the moved tag.
+- Journey 27 plays a 20 × 20 grid (was 30 × 30) on a 30 s cooldown and checks the tile pitch: at least 30 px at 1280 × 720 and 18 px on the phone.
+
+### Piece 3 — the list games on this layout (T143)
+
+- Bomb Defusal: the sequence as colour dots with their names (`swatches`, `WIRE_COLORS` one map for the dots and the wire swatches; `swatch.css` 63 → 39 lines without its eight fill rules); "First 2 cuts right".
+- Safecracker: `counts` without zero parts; the panel's legend line (`Board.tsx`, `sc.css` 206 → 213).
+- Rows: the name keeps its room, the answer gives way with an ellipsis; tighter gaps on a phone.
+- Bomb Defusal on a desktop: eight wires in one row (`bd.css`, was two rows of four), so the stage's list has room for 18 rows at 1280 × 720 (16 before).
+- Checks: `pnpm verify` green (128 files, 737 tests); journeys 20–22 and 24–27 pass in Chromium (journey 21 failed once, waiting for a harmless wire, and passed on the re-run).
+- Rows in view (probe, measured room of the list): see piece 6's measurements; journeys 24–26 assert the room for 22/20/18 rows at 1280 × 720 and 10/10/6 on the phone.
 
 ## Night 6 (2026-11-02/03)
 

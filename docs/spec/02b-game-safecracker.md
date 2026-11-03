@@ -52,9 +52,9 @@ Worked example with the secret **1123**:
 
 | Guess | Exact | Common digits (min per digit) | Near | Words |
 |---|---|---|---|---|
-| 1312 | 1 (first 1) | 1: 2, 2: 1, 3: 1 → 4 | 3 | "1 right place, 3 right digits, wrong place" |
-| 1111 | 2 (first two 1s) | 1: min(4, 2) = 2 → 2 | 0 | "2 right places, 0 right digits, wrong place" — the extra 1s count for nothing |
-| 2211 | 0 | 1: 2, 2: 1 → 3 | 3 | "0 right places, 3 right digits, wrong place" — only one 2 counts |
+| 1312 | 1 (first 1) | 1: 2, 2: 1, 3: 1 → 4 | 3 | "1 right · 3 wrong places" |
+| 1111 | 2 (first two 1s) | 1: min(4, 2) = 2 → 2 | 0 | "2 right" — the extra 1s count for nothing |
+| 2211 | 0 | 1: 2, 2: 1 → 3 | 3 | "3 wrong places" — only one 2 counts |
 | 1123 | 4 | — | 0 | correct |
 
 Feedback goes to the guesser, held by Frost like every answer ([02](02-game-guess-the-number.md) §6.1, [03](03-seasonal-specials.md) §2.4). No deduction is computed for anyone: the server never shows which codes or digits are still possible, apart from Leaf Fall's fallen digits (owner, decisions 17 and 37).
@@ -131,7 +131,8 @@ The rules of [02](02-game-guess-the-number.md) §12 apply: one screen without a 
 
 - The answer carries `{ exact, near, solved }`; `solved` is exact = length, because the guess engine's `solved(answer)` does not see the code length.
 - Spring Herald draws the position under `springHerald/shared` or `springHerald/<playerId>`, uniformly; in individual mode the room gets one line "Spring Herald: everyone got a free hint." without any digit.
+- The answer's words leave out a zero part: "2 right · 1 wrong place", "2 right", "1 wrong place", and "no digit right" when both are zero; the code panel says once what they mean: "right = right digit, right place · wrong place = right digit in the wrong place" (DECISIONS T143).
 - A list row's tone is "close" (green) once at least half the digits are in the right place, the same rule for every row (DECISIONS T139), "far" below it, "correct" when solved; its words "N right places, M right digits, wrong place" (singular for 1) or "correct — the safe is open"; a hidden code reads "tried a code".
 - The digit strip shows in every season (with Leaf Fall it also marks the fallen digits).
 - A Leaf Fall takes `min(autumn.digitsPerFall, candidates)` digits under `leafFall/<k>`; with no candidate it adds nothing and the falls end.
-- The conformance kit plays codes of length 6: sentinel secrets of the digits 5–9, guesses of the digits 0–4, so every answer is 0 right places, 0 right digits, wrong place.
+- The conformance kit plays codes of length 6: sentinel secrets of the digits 5–9, guesses of the digits 0–4, so every answer is "no digit right".

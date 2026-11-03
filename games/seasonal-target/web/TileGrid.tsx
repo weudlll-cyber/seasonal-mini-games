@@ -106,9 +106,22 @@ interface TileProps {
 const covers = (a: Area | null | undefined, c: Cell): boolean => a != null && inArea(a, c);
 const isAt = (at: Cell | null | undefined, c: Cell): boolean => at != null && sameCell(at, c);
 
-// The quarter's tile in the grid's corner: its "Hint" tag hangs there, inward from the edges.
-const cornerOf = (q: Quarter | null): Cell | null =>
-  q === null ? null : { x: q.left === 1 ? q.left : q.right, y: q.top === 1 ? q.top : q.bottom };
+const clamp = (v: number, low: number, high: number) => Math.min(high, Math.max(low, v));
+
+// The quarter's tile nearest the grid's corner that is still inside the target area: its
+// "Hint" tag hangs there, inward from the edges, so a halving that dims the corner moves the
+// tag instead of hiding it (T144); none when no tile of the quarter is left in the area.
+export function tagTileOf(q: Quarter | null, area: Area | null): Cell | null {
+  if (q === null) return null;
+  const a = area ?? q;
+  const left = Math.max(q.left, a.left);
+  const right = Math.min(q.right, a.right);
+  const top = Math.max(q.top, a.top);
+  const bottom = Math.min(q.bottom, a.bottom);
+  if (left > right || top > bottom) return null;
+  const corner = { x: q.left === 1 ? q.left : q.right, y: q.top === 1 ? q.top : q.bottom };
+  return { x: clamp(corner.x, left, right), y: clamp(corner.y, top, bottom) };
+}
 
 // What one tile is: its guesses, fallen, outside the area, the target, and its words.
 function factsOf({ c, p, fallen }: TileProps) {
@@ -123,7 +136,7 @@ function factsOf({ c, p, fallen }: TileProps) {
   ].filter((n): n is string => n !== false);
   const t = tile ?? NO_TILE;
   // The tag gives way to a fill, a hatch or a ring; the other tiles keep the tint.
-  const tag = isAt(cornerOf(p.quarter), c) && tile === undefined && !isFallen && !target;
+  const tag = isAt(tagTileOf(p.quarter, p.area), c) && tile === undefined && !isFallen && !target;
   return {
     t,
     guessed: tile !== undefined,

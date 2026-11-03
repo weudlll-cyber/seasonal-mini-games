@@ -73,6 +73,13 @@
   color: var(--color-text);
 }
 
+/* What "right" and "wrong place" mean in the answers (T143): one quiet line. */
+.sc-legend {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
 /* Spring Herald's hint for the whole round: a highlighted line (O35). */
 .sc-hint {
   margin: 0;

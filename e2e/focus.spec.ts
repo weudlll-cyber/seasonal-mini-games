@@ -15,7 +15,8 @@
  *                 scrollbar;
  *                 one guess is played and comes back as the viewer's own row; the guess list
  *                 has room for its game's rows at each size (T142: Guess The Number 22 and 10,
- *                 Safecracker 20 and 10, Bomb Defusal 18 and 6);
+ *                 Safecracker 20 and 10, Bomb Defusal 18 and 6), Seasonal Target's 20 × 20
+ *                 tiles at least 30 px and 18 px apart (T144);
  *                 Seasonal Target is played on the phone through the loupe. The matches are
  *                 aborted.
  * Depends on:     @playwright/test, ./guessGames, ./play, ./screens
@@ -102,11 +103,12 @@ async function reaches(page: Page, targets: Targets, n: number): Promise<void> {
     expect(await listRoom(page), 'guess rows in view').toBeGreaterThanOrEqual(rows);
   const tile = targets.tile?.[n];
   if (tile !== undefined) {
-    const box = await page
-      .locator('[data-testid="tile-grid"] [data-testid="tile"]')
-      .first()
-      .boundingBox();
-    expect(box?.width ?? 0, 'a tile').toBeGreaterThanOrEqual(tile);
+    // A tile's pitch, its fill and one gap: the grid's width over its columns (T144).
+    const pitch = await page.getByTestId('tile-grid').evaluate((grid) => {
+      const columns = grid.querySelectorAll('[data-testid="tile"][data-y="1"]').length;
+      return grid.getBoundingClientRect().width / Math.max(1, columns);
+    });
+    expect(pitch, 'a tile').toBeGreaterThanOrEqual(tile);
   }
 }
 
@@ -223,11 +225,12 @@ test('journey 27: Seasonal Target in focus mode, the loupe on a phone', async ({
       await page.getByTestId('guess-button').click();
       await expect(loupe).toBeHidden();
     },
-    // The bot found a 20 × 20 target by its distances within two cooldowns of 20 s (CI): on a
-    // 30 × 30 grid with warm/cold only it needs many more guesses, so the round stays open.
+    // 20 × 20 tiles: about 30 px at 1280 × 720 and at least 18 px on a phone (T144). The bot
+    // found a 20 × 20 target by its distances within two cooldowns of 20 s (CI); with
+    // warm/cold only and a 30 s cooldown it needs many more of them, so the round stays open.
     {
-      targets: {},
-      round: { cooldownS: 10, settings: { 'target.size': 30, 'target.feedback': 'closeness' } },
+      targets: { tile: [30, 18] },
+      round: { cooldownS: 30, settings: { 'target.size': 20, 'target.feedback': 'closeness' } },
     },
   );
 });

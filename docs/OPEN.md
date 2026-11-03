@@ -85,6 +85,8 @@ Built as described in 02 §12 and DECISIONS T128–T132 and T134–T136 (O47–O
 - The phone's info line: one line per game, its tap opening the game's panel as a sheet; Guess The Number's Fallen numbers are a button inside that sheet (T141).
 - The list's head: the number of guesses or, in individual mode, the others' counts instead of their rows; the banner takes the head's place for 5 s; events (Leaf Fall, Heatwave, solves) are only in "All (N)", which counts guesses and events (T142).
 - One-line rows: a desktop cuts the comment with an ellipsis (the tooltip has it all); a phone shows the newest row's comment and a tap shows or hides any other's (T142).
+- Bomb Defusal's sequences as colour dots with their names in the tooltip; "First 2 cuts right" for a right start. Safecracker's answers without zero parts ("2 right · 1 wrong place", "no digit right") and the legend line in its panel (T143).
+- Seasonal Target: the "Hint" tag moves to the quarter's first tile inside a halved area; on a phone the grid is the full width minus 8 px a side (T144).
 
 **Night-6 small items (T139), to confirm:**
 

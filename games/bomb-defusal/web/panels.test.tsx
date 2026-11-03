@@ -8,7 +8,8 @@
  *                 wires (struck, by name); a spectator also sees the wires; the result shows
  *                 the secret as numbered chips or each player's own; the views become the
  *                 list's rows with the sequence in words and the answer with its tone ("Boom!"
- *                 with its icon, "The first 2 cuts were right.", "Defused!"), own rows pending under Frost,
+ *                 with its icon, "First 2 cuts right", "Defused!") and its colour dots (T143), own rows
+ *                 pending under Frost,
  *                 hidden sequences as "cut a sequence"; the event lines and the Leaf Fall
  *                 banner; the refusals; the closest miss; the intro; the special's sentence;
  *                 the web entry has the registry's shape.
@@ -131,14 +132,22 @@ describe('the game text', () => {
     ).toEqual([
       [null, 'blue → red → yellow → white', '💥 Boom!', 'boom', false],
       [null, 'blue → red → yellow → white', null, null, true],
-      ['p2', 'blue → red → yellow → white', 'The first 2 cuts were right.', 'close', false],
+      ['p2', 'blue → red → yellow → white', 'First 2 cuts right', 'close', false],
       ['p3', 'cut a sequence', null, null, false],
     ]);
     const more = bdText.guesses({ ...view, guesses: [own(1, 1), own(2, 4)], log: [] });
     expect(more.map((r) => [r.answer?.text, r.answer?.tone])).toEqual([
-      ['The first cut was right.', 'far'],
+      ['First cut right', 'far'],
       ['Defused!', 'correct'],
     ]);
+    // The sequence as colour dots in order, each named (T143); none where it is hidden.
+    expect(rows[0]?.swatches).toEqual([
+      { name: 'blue', color: '#1e5bd6' },
+      { name: 'red', color: '#d32f2f' },
+      { name: 'yellow', color: '#f5c518' },
+      { name: 'white', color: '#ffffff' },
+    ]);
+    expect(rows[3]?.swatches).toBeNull();
   });
 });
 

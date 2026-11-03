@@ -69,6 +69,11 @@ export function Board({ length, digits, fallen, hint }: BoardProps): ReactElemen
         {codeLine(length, digits)}
       </p>
       <DigitStrip digits={digits} fallen={fallen} />
+      {/* The answers' words, once (T143). */}
+      <p className="sc-legend" data-testid="sc-legend">
+        <strong>right</strong> = right digit, right place · <strong>wrong place</strong> = right
+        digit in the wrong place
+      </p>
       {hint === null ? null : (
         <p className="sc-hint" data-testid="hint">
           {freeHint(hint)}

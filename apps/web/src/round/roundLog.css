@@ -110,8 +110,9 @@ button.round-row-line {
   box-shadow: inset 4px 0 0 var(--own, var(--season));
 }
 
+/* The name keeps its room (up to 9 rem, then an ellipsis); the answer gives way first. */
 .round-who {
-  flex: 0 1 auto;
+  flex: none;
   min-width: 2.5rem;
   max-width: 9rem;
   overflow: hidden;
@@ -275,6 +276,18 @@ button.round-row-line {
 
 .round-peg[data-peg='miss'] {
   opacity: 0.45;
+}
+
+/* A phone: closer parts, so a long answer keeps more of its words. */
+@media (max-width: 899px) {
+  .round-row-line {
+    gap: 0.35rem;
+  }
+
+  .round-who {
+    min-width: 0;
+    max-width: 7rem;
+  }
 }
 
 /* A large screen (1920 × 1080): the stage's list reads larger, so the wide stage is not

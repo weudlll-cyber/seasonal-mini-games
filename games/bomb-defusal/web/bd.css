@@ -6,7 +6,7 @@
  * Responsibility: text colours only from the design tokens (light and dark); wire colours are
  *                 swatch fills with the wire's name in text beside them (the swatches are
  *                 ./swatch.css); wire buttons, Undo, Clear and Cut at least 44 px
- *                 (`--hit-target`); wires in one row on a desktop (two rows of four with 8),
+ *                 (`--hit-target`); wires in one row on a desktop (eight too, T143),
  *                 two even rows of up to four on a phone; slots at least 44 px, the hint in
  *                 slot 1 wrapping rather than cut off; the explosion's own styles are
  *                 ./explosion.css. Every class starts with `bd-`. Layouts work down to 390 px.
@@ -142,7 +142,8 @@
   padding: 0;
 }
 
-/* One row of wires on a desktop, two rows of four with 8 wires. */
+/* One row of wires on a desktop, eight too: the stage is wide, and the list above keeps its
+   rows (T143). */
 .bd-wires {
   display: grid;
   grid-template-columns: repeat(var(--bd-cols, 6), minmax(0, 1fr));
@@ -159,7 +160,7 @@
   --bd-cols: 7;
 }
 .bd-wires[data-count='8'] {
-  --bd-cols: 4;
+  --bd-cols: 8;
 }
 
 .bd-wire {

@@ -57,6 +57,10 @@ describe('the code block', () => {
     expect(chips[7]?.dataset.fallen).toBe('true');
     expect(chips[3]?.getAttribute('aria-label')).toBe('3');
     expect(screen.getByTestId('hint').textContent).toBe('Free hint: the 2nd digit is 4.');
+    // The answers' words explained once (T143).
+    expect(screen.getByTestId('sc-legend').textContent).toBe(
+      'right = right digit, right place · wrong place = right digit in the wrong place',
+    );
   });
 
   it('shows a spectator no hint where the view has none', () => {
@@ -91,10 +95,7 @@ describe('the result panel', () => {
       'The code was 0427 (4 digits, 0–9).',
     );
     const rows = screen.getAllByRole('listitem').map((li) => li.textContent);
-    expect(rows).toEqual([
-      'Ben: 1312 (0 right places, 1 right digit, wrong place)',
-      'Anna: 0427 open',
-    ]);
+    expect(rows).toEqual(['Ben: 1312 (1 wrong place)', 'Anna: 0427 open']);
   });
 
   it('shows every player’s own code in individual mode', () => {
@@ -118,10 +119,12 @@ describe('the result panel', () => {
 });
 
 describe('the text', () => {
-  it('says place for exactly one and places otherwise', () => {
-    expect(counts(f(1, 1))).toBe('1 right place, 1 right digit, wrong place');
-    expect(counts(f(2, 2))).toBe('2 right places, 2 right digits, wrong place');
-    expect(counts(f(0, 0))).toBe('0 right places, 0 right digits, wrong place');
+  it('leaves the zero parts out, "no digit right" when both are zero (T143)', () => {
+    expect(counts(f(2, 1))).toBe('2 right · 1 wrong place');
+    expect(counts(f(1, 2))).toBe('1 right · 2 wrong places');
+    expect(counts(f(3, 0))).toBe('3 right');
+    expect(counts(f(0, 2))).toBe('2 wrong places');
+    expect(counts(f(0, 0))).toBe('no digit right');
   });
 
   it('turns a view into rows with codes, answers and pegs', () => {
@@ -134,7 +137,7 @@ describe('the text', () => {
       pending: false,
     });
     expect(rows[0]?.answer).toEqual({
-      text: '1 right place, 3 right digits, wrong place',
+      text: '1 right · 3 wrong places',
       // Green only from half the digits in the right place (T139).
       tone: 'far',
       pegs: ['hit', 'near', 'near', 'near'],
@@ -181,7 +184,7 @@ describe('the sentences', () => {
     expect(text.event({ type: 'GuessFed' }, names)).toBeNull();
     const miss = { closestMiss: { playerId: 'p1', value: '0427', exact: 3, near: 1 } };
     expect(text.runnerUp(miss, names)).toBe(
-      'Closest miss besides the winner: Anna, 3 right places, 1 right digit, wrong place (0427).',
+      'Closest miss besides the winner: Anna, 3 right · 1 wrong place (0427).',
     );
     expect(text.runnerUp({ closestMiss: null }, names)).toBeNull();
     expect(text.intro?.(view, 'shared')).toBe('Shared 4-digit code, digits 0–9');

@@ -51,9 +51,9 @@ For an accepted sequence `g` and the guesser's secret `s`, the answer is `{ corr
 
 | Sequence | `correct` | Player reads | Tier |
 |---|---|---|---|
-| red, blue, green, white | 2 | "The first 2 cuts were right." (white in place 4 does not count) | burning |
+| red, blue, green, white | 2 | "First 2 cuts right" (white in place 4 does not count) | burning |
 | blue, red, yellow, white | 0 | "Boom! The first cut was wrong. +5 s waiting time." Next cut at receive time + 15 s | wayOff |
-| red, blue, yellow, black | 3 | "The first 3 cuts were right." | justMissed |
+| red, blue, yellow, black | 3 | "First 3 cuts right" | justMissed |
 | red, blue, yellow, white | 4 | "Defused!" | correct |
 
 ### 5.2 The explosion (owner, decision 40)
@@ -121,7 +121,7 @@ Inherited from 02 §12: intro card, top bar, banner above the list, the one list
 - **Sequence slots:** `cuts` numbered slots ("1", "2", …) above the wires, at least 44 px tall; a filled slot shows swatch and colour name; slot 1 shows the free hint as a highlighted outline with "hint: red", which wraps rather than being cut off on a phone.
 - **Wire buttons:** one per wire, colour swatch plus colour name, at least 44 × 44 px, in palette order. Tapping appends to the next free slot. A wire already in the slots is disabled and shows its slot number; a harmless wire is disabled with a crossed, dimmed swatch, a struck name and the accessible label "red, harmless" (no word "harmless" inside the button, so nothing overflows). Swatches have a border of 3:1 against the background (white and black included); every label meets 4.5:1 in light and dark. Never colour alone: every wire, chip and list entry carries its name.
 - **Undo** removes the last slot, **Clear** empties all, **Cut** sends; Cut is enabled only with every slot filled, the cooldown over and no cut on its way, and reads "Wait 6 s" during the cooldown (DECISIONS T125). A wire marked harmless while in the slots stays there, marked, with "The orange wire is harmless now — take it out." The sequence survives the round opening and is cleared only when its answer arrives (as DECISIONS T76). Keyboard: Tab and Space, keys 1–8 for the wires in order, Backspace = Undo, Escape = Clear, Enter = Cut.
-- **List rows:** name, the sequence as small chips with names, "The first 2 cuts were right." ("The first cut was right.") in text (or the explosion icon and "Boom!"), the comment under it; own rows tinted as 02 §12.
+- **List rows:** name, the sequence as colour dots in order, each with its colour's name as accessible text and tooltip (DECISIONS T143), "First 2 cuts right" ("First cut right") in text on the same line (or the explosion icon and "Boom!"), the comment under it; own rows tinted as 02 §12.
 - **Desktop 1280 × 720:** the list fills the main area (at least 14 rows with 6 wires, owner decisions 35 and 50); under it the input area: slots, wire buttons in one row (two rows of four with 8 wires), and the cooldown ring with Undo, Clear and Cut; the right column holds the bomb block only (02 §12).
 - **Phone 390 × 844:** top bar, bomb line, the list filling the height left (the only thing that scrolls), team tiles and Chat, then pinned at the bottom: slots in one row, wire buttons (at least 44 px tall) in two even rows of up to four (3 + 3 with six wires, 4 + 4 with eight, 3 + 2 with five, 4 + 3 with seven; one row with four), and a row with the ring, Undo, Clear and Cut.
 - Both sizes fit one screen without a page scrollbar, light and dark, with every necessary item visible.

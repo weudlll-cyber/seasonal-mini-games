@@ -8,8 +8,9 @@
  *                 room event (Leaf Fall's fallen digits; the hint shows once, in the code block) and
  *                 Leaf Fall's banner (O35); the list's guess rows from a player or spectator
  *                 view: the code as text, the answer in words with its pegs (one filled per
- *                 right place, one ring per right digit in a wrong place, T119), "tried a code" where the code
- *                 is hidden, own rows pending while Frost holds them; the closest miss on the
+ *                 right place, one ring per right digit in a wrong place, T119) and without its
+ *                 zero parts ("2 right · 1 wrong place", T143), "tried a code" where the code is
+ *                 hidden, own rows pending while Frost holds them; the closest miss on the
  *                 result (02b §8); the intro's secret line (O36) and the special's sentence.
  * Depends on:     @smg/game-sdk (GameText, GuessRow, GuessAnswer, FeedLine),
  *                 @smg-game/safecracker (types)
@@ -47,10 +48,16 @@ const CODES: Readonly<Record<string, string>> = {
   ALREADY_GUESSED: 'You already tried that code.',
 };
 
-// "1 right place, 2 right digits, wrong place": the rows, the result and the closest miss
-// (02b §5.2, §8); a near digit is named as what it is, a right digit in a wrong place.
-export const counts = (f: { readonly exact: number; readonly near: number }): string =>
-  `${String(f.exact)} right place${f.exact === 1 ? '' : 's'}, ${String(f.near)} right digit${f.near === 1 ? '' : 's'}, wrong place`;
+// "2 right · 1 wrong place": the rows, the result and the closest miss (02b §5.2, §8), each
+// zero part left out, "no digit right" when both are zero (T143); "right" is a right digit in
+// its right place, "wrong place" a right digit in a wrong place (the panel's legend says so).
+export function counts(f: { readonly exact: number; readonly near: number }): string {
+  const parts = [
+    f.exact === 0 ? null : `${String(f.exact)} right`,
+    f.near === 0 ? null : `${String(f.near)} wrong place${f.near === 1 ? '' : 's'}`,
+  ].filter((p): p is string => p !== null);
+  return parts.length === 0 ? 'no digit right' : parts.join(' · ');
+}
 
 // The answer in words with its pegs. One rule for every row, own and others' alike (night 6,
 // DECISIONS T139): green ("close") once at least half the digits are in the right place.
@@ -107,7 +114,7 @@ function guessRows(view: unknown): readonly GuessRow[] {
   return [...(v.guesses ?? []).map((g) => row(g, null)), ...v.log.map((g) => row(g, g.playerId))];
 }
 
-// "Closest miss besides the winner: Anna, 3 right places, 1 right digit, wrong place (0427)."
+// "Closest miss besides the winner: Anna, 3 right · 1 wrong place (0427)."
 // (02b §8)
 function runnerUp(view: unknown, names: Readonly<Record<string, string>>): string | null {
   const miss = (view as Partial<ResultView>).closestMiss ?? null;

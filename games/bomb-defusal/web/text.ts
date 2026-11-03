@@ -8,8 +8,10 @@
  *                 once, in the wire panel) and the banner when a fall strikes (02c §8, O35); the
  *                 list's guess rows from the player or spectator view: the sequence as
  *                 "red → blue → …" where the view shows it, else "cut a sequence", and the
- *                 answer in words ("The first 2 cuts were right.", "Boom!" with the icon,
- *                 "Defused!") with its tone (T119); the closest miss on the shared result
+ *                 answer in words ("First 2 cuts right", "Boom!" with the icon,
+ *                 "Defused!") with its tone (T119), and the sequence as colour dots with their
+ *                 names (`swatches`, T143; the fills are `WIRE_COLORS`, shared with the
+ *                 swatches of ./WireChip); the closest miss on the shared result
  *                 (02c §9); the intro's line on the bomb (02c §3); the season special in this
  *                 game's terms (T119). Server codes never reach the screen as codes.
  * Depends on:     @smg/game-sdk (GameText, GuessRow), @smg-game/bomb-defusal (types, wording)
@@ -81,9 +83,22 @@ function banner(event: unknown): string | null {
   return e.type === 'HarmlessOver' ? 'Leaf Fall: every harmless wire is marked.' : null;
 }
 
-// "The first cut was right.", "The first 2 cuts were right." (02c §5.1).
+// "First cut right", "First 2 cuts right" (02c §5.1): short, so the row keeps one line (T143).
 const rightText = (k: number): string =>
-  k === 1 ? 'The first cut was right.' : `The first ${String(k)} cuts were right.`;
+  k === 1 ? 'First cut right' : `First ${String(k)} cuts right`;
+
+// A wire's fill, the one source for the swatches (./swatch.css draws the ring) and the list's
+// colour dots (T143).
+export const WIRE_COLORS: Readonly<Record<Wire, string>> = {
+  red: '#d32f2f',
+  blue: '#1e5bd6',
+  yellow: '#f5c518',
+  green: '#2e9e48',
+  white: '#ffffff',
+  black: '#111111',
+  orange: '#f57c00',
+  purple: '#7b3fbf',
+};
 
 // The answer in words with its tone (T119): the explosion, the right start, or defused.
 export function answerText(f: Feedback, cuts: number): GuessAnswer {
@@ -111,6 +126,8 @@ function guessRows(view: unknown): readonly GuessRow[] {
     value: null,
     feedback: null,
     text: g.value === null ? 'cut a sequence' : sequenceText(g.value),
+    // The sequence as colour dots in order, each named (T143).
+    swatches: g.value === null ? null : g.value.map((w) => ({ name: w, color: WIRE_COLORS[w] })),
     answer: g.feedback === null ? null : answerText(g.feedback, v.cuts),
     comment: g.comment,
     tier: g.tier,

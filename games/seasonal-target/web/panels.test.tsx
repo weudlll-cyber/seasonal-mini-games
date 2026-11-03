@@ -156,11 +156,11 @@ describe('fallen, area and quarter', () => {
         fallen: [{ x: 3, y: 12 }],
       }),
     );
-    // "Hint" once, in the quarter's tile at the grid's corner.
+    // "Hint" once, on the quarter's tile nearest the corner inside the area (T144).
     const tag = screen.getByTestId('hint-tag');
     expect(tag.textContent).toBe('Hint');
     expect(tag.dataset['corner']).toBe('north-east');
-    expect(tag.closest<HTMLElement>('[data-x]')?.dataset['x']).toBe('20');
+    expect(tag.closest<HTMLElement>('[data-x]')?.dataset['x']).toBe('15');
     expect(tag.closest<HTMLElement>('[data-x]')?.dataset['y']).toBe('1');
     expect(tile(3, 12).dataset['fallen']).toBe('true');
     expect(tile(3, 12).title).toBe('column 3, row 12: fallen');

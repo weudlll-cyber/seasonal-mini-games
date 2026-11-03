@@ -23,13 +23,15 @@
   display: none;
 }
 
-.shell-main:has(.focus-mode) {
+/* Through #root: the shell's one-screen padding (../shell/shell.css, loaded after this
+   file) has the same weight and won, so a phone kept a 16 px gutter (night 7, T144). */
+#root .shell-main:has(.focus-mode) {
   max-width: none;
-  padding-block: var(--space-1);
+  padding: var(--space-1) var(--gutter);
 }
 
 @media (max-width: 640px) {
-  .shell-main:has(.focus-mode) {
+  #root .shell-main:has(.focus-mode) {
     padding: var(--space-1) 0.5rem;
   }
 }
