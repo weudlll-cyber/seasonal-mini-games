@@ -14,7 +14,7 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p e2e/tsconfig.json && pnpm -r typecheck",
-    "test": "vitest run",
+    "test": "vitest run --project \"!@smg/server\" && vitest run --project @smg/server src/ && vitest run --project @smg/server test/",
     "test:unit": "vitest run --project @smg/game-sdk --project @smg/guess-engine --project @smg/domain --project @smg/application --project @smg/contracts --project @smg-game/*",
     "test:coverage": "vitest run packages/game-sdk packages/guess-engine packages/domain packages/application games/guess-the-number games/safecracker games/bomb-defusal games/seasonal-target games/registry --coverage --testTimeout=20000",
     "e2e": "playwright test -c e2e/playwright.config.ts",

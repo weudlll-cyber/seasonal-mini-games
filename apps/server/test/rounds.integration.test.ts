@@ -124,7 +124,10 @@ describe('a shared round', () => {
     const code = await kit.openMatch(['player-1', 'player-2']);
     opened.push(code);
     const s = await watching(code, ['host', 'player-1', 'player-2']);
-    const id = await newRound(code);
+    // The first guess must come before the open: the eight calls between the start and it
+    // took over 3 s on a busy machine, so the countdown is long enough to hold them; the
+    // guesses after it wait for `opensAt` itself.
+    const id = await newRound(code, { 'round.countdownS': 15 });
     const again = await kit.clients.host.post(`/api/v1/matches/${code}/rounds`, {
       season: 'spring',
     });

@@ -37,8 +37,16 @@ export function fakeServer(answer: (call: Call) => Answer | undefined): Call[] {
     };
     calls.push(call);
     const a = answer(call) ?? { status: 204 };
-    const body = a.body === undefined ? null : JSON.stringify(a.body);
-    return Promise.resolve(new Response(body, { status: a.status }));
+    // What ../http reads of a response, settled in microtasks: a real `Response` parses its
+    // body through a stream over several turns of the event loop, more on a busy machine,
+    // so `flush` let a full test run miss an answer (play-test clean state, piece 3).
+    const reply = {
+      status: a.status,
+      ok: a.status >= 200 && a.status < 300,
+      json: () =>
+        a.body === undefined ? Promise.reject(new SyntaxError('no body')) : Promise.resolve(a.body),
+    };
+    return Promise.resolve(reply as unknown as Response);
   });
   vi.stubGlobal('fetch', fetch);
   return calls;

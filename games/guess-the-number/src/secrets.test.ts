@@ -11,10 +11,14 @@
  * Spec:           docs/spec/04-software-architecture.md §5.4, docs/spec/09-testing-strategy.md §3 G7
  */
 import { roundRng } from '@smg/game-sdk/crypto';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { input } from './fakes.js';
 import { deriveSecrets, secretOf } from './secrets.js';
+
+// The chi-square smoke test draws tens of thousands of secrets: 4 s alone on the development
+// laptop, so a full run's parallel files would pass 5 s (DECISIONS T206).
+vi.setConfig({ testTimeout: 20_000 });
 
 const seed = (n: number) => new Uint8Array(32).fill(n);
 

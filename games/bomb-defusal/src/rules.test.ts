@@ -20,11 +20,16 @@
 import { HEATWAVE_FLOOR_MS, resolveSettings } from '@smg/game-sdk';
 import { roundRng } from '@smg/game-sdk/crypto';
 import fc from 'fast-check';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { defaultConfig, input, Table } from './fakes.js';
 import { bombDefusal } from './module.js';
 import { answerOf, wiresOf, type Sequence } from './wires.js';
+
+// The chi-square smoke test and the explosion's property draw thousands of rounds: 2–2.8 s
+// alone on the development laptop, so a full run's parallel files would pass 5 s (DECISIONS
+// T206).
+vi.setConfig({ testTimeout: 20_000 });
 
 const SECRET: Sequence = ['red', 'blue', 'yellow', 'white'];
 const shared = (value: Sequence = SECRET) => ({ mode: 'shared', value }) as const;

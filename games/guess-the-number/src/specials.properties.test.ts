@@ -14,12 +14,16 @@
  */
 import { roundRng } from '@smg/game-sdk/crypto';
 import fc from 'fast-check';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { input } from './fakes.js';
 import { guessTheNumber } from './module.js';
 import { deriveSecrets, secretOf, type Secrets } from './secrets.js';
 import type { GtnEvent, GtnState } from './state.js';
+
+// Up to 1 000 generated rounds a property: 3.4 s alone on the development laptop, so a full
+// run's parallel files would pass 5 s (DECISIONS T206).
+vi.setConfig({ testTimeout: 20_000 });
 
 const hooks = guessTheNumber.specials;
 const PLAYERS = ['a', 'b', 'c', 'd'];

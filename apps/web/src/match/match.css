@@ -126,9 +126,20 @@
     display: none;
   }
 
-  .result-bar .smg-chip,
   .result-bar-code {
     flex: none;
+    white-space: nowrap;
+  }
+
+  /* The game's name whole where the bar has room; on a narrower screen, or another font's
+     wider letters (CI's Linux runner), it gives way first with an ellipsis, its full name
+     in its title, so the code and the buttons stay whole and nothing scrolls (T206). */
+  .result-bar-game {
+    flex: 0 1 auto;
+    min-width: 0;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
 

@@ -37,6 +37,11 @@ import {
 } from './fixtures.js';
 import { TargetInput } from './TargetInput.js';
 
+// jsdom draws the 400 tiles of a 20 × 20 grid on every selection and answer: up to 3.4 s a test
+// alone on the development laptop, so a full run's parallel files would pass 5 s (DECISIONS
+// T206).
+vi.setConfig({ testTimeout: 20_000 });
+
 afterEach(() => {
   cleanup();
   plainScreen();
@@ -102,8 +107,7 @@ describe('selecting', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Move west' }));
     expect(selected()).toBe('Selected: column 6, row 3');
     expect(screen.getByTestId('ring')).toBeTruthy();
-    // Ten moves, each drawing the 400 tiles again: over 5 s on a busy machine.
-  }, 15_000);
+  });
 
   it('selects the clicked tile, never one outside the area', () => {
     renderInput(playerView({ area: { left: 6, right: 15, top: 1, bottom: 20 } }));

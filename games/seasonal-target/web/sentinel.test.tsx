@@ -15,9 +15,13 @@
 import { seasonalTargetConformance, seasonalTarget } from '@smg-game/seasonal-target';
 import { sentinelViews } from '@smg/game-sdk';
 import { cleanup, render } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { seasonalTargetWeb as web } from './index.js';
+
+// jsdom draws the round's grid for every sentinel view: 2.4 s a test alone on the development
+// laptop (DECISIONS T206).
+vi.setConfig({ testTimeout: 20_000 });
 
 afterEach(() => {
   cleanup();

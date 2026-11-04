@@ -13,7 +13,7 @@ Branch `feat/guess-games` from `d2656f9`. Owner decision O63 (2026-11-04: Heatwa
 | 0. O63 recorded; CI's coverage gate | done  | `fbb3214` |
 | 1. Heatwave in the host menu (O63)  | done  | `886b203` |
 | 2. Two display fixes                | done  | `280dbbb` |
-| 3. A reliably green test suite      | open  |           |
+| 3. A reliably green test suite      | done  |           |
 | 4. Re-shoot (O55), handover         | open  |           |
 
 ### Piece 0 — O63 and CI's coverage gate
@@ -30,6 +30,14 @@ Branch `feat/guess-games` from `d2656f9`. Owner decision O63 (2026-11-04: Heatwa
 
 - Seasonal Target's own rows: the "you" tag once, "You" for a screen reader only (`GuessLine`'s `Name`, split from `Who` for its complexity in a follow-up commit, after lint flagged it past the commit); the other rows keep tag and name. Test: `tags.test.tsx`.
 - Seasonal Target's phone result: measured in the browser with the viewer in the table: the cell 121 px held "dev-host" at 43 of 64 px; narrower cell padding reached 49 px, the table's own place column (3.25rem, "took part" wrapping) 64 of 64, but then the first part was 876 of 844 px with the 309 px grid; a 244 px grid (`min(100 %, 100dvh − 37.5rem)`) gives 811–835 of 844 px with the name whole. Chosen: narrow the grid (the placings are below it on a phone already); the one-line "took part" rule removed from `resultBoard.css`.
+
+### Piece 3 — a reliably green test suite (T206)
+
+- Measured with nothing of this repository running: one full `vitest run` took 558 s with 30 failures in 14 files (5 s timeouts; a forks pool that timed out starting; two assertions). Without the server's project: 222 s, 21 failures, all CPU-bound files near 5 s alone (the conformance kit 1.2–4.3 s a test, GTN's chi-square 4 s, its Spring property 3.4 s, Target's input tests up to 3.4 s). With four forks: 440 s, green. The machine: Intel Core Ultra 7 165U, 12 cores (2 performance, 8 efficiency, 2 low-power), 14 threads, 15 W; outside load: Bingo's `sbr-rehearsal` container (about 22 % CPU, left alone), Docker, the editor.
+- Causes and fixes (T206): seven forks on two performance cores (now half the threads, at most four); the server's integration files beside the CPU-bound ones (now three passes: the rest, the server's `src/`, its `test/`; the harness's container stop 60 s, found when the first proof runs' server pass timed out in `afterAll` and in `maintenance.test`); wall-clock waits (the shared round's countdown 15 s in `rounds.integration`; in `specials.integration` the Heatwave test's own 5 s interval and polls for every special's effect in place of a fixed margin after it; in `security.integration` the rate-limit test sends until the first 429, the socket guard 10 s; found by the first proof run, whose server pass failed those two); the admin's fake `Response` read over a variable number of turns (now a plain answer settled in microtasks, `fakeServer.ts`); stale Vite processes of stopped dev tasks (stopped by process tree). Fake timers: the timing tests already use them (`banner.test`, `tags.test`'s 3 s tap); none waits on real time besides the two integration tests above.
+- CI's e2e (journey 33, `6ffd66b`): the phone's result bar wider than 390 px with the Linux runner's font metrics; the game's name now gives way first (`.result-bar-game`, its title the full name). Journeys 33 and 28 pass.
+- The proof (the owner's addendum: one green run here, CI on the final push the second): `pnpm verify` green in 743 s with nothing of this repository running (Bingo's containers left as they were): format, lint, types, then the tests in three passes, every project but the server's 113 files and 621 tests in 166 s, the server's unit tests 15 files and 69 tests in 4 s, its integration tests 19 files and 119 tests in 273 s; four forks of 14 threads (12 cores). The attempts before it, each failing only in the server's pass, led to the security, container-stop and pass-split fixes above.
+- Timeouts raised only where the work is the test (20 s, in the file, with the measured reason): the conformance kit, GTN's feedback, secrets and specials properties, Bomb Defusal's rules (chi-square), Target's input, panels, sentinel and tags tests; the one-test 15 s of the play-test run is replaced by its file's.
 
 ## Play-test fixes (2026-11-04)
 

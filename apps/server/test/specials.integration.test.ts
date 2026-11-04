@@ -41,6 +41,19 @@ let admin: Client;
 const opened: string[] = [];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+// Reads `read` every 200 ms until `done` holds or 20 s pass, and gives the last value: a special
+// fires on the server's schedule, which a busy machine runs late, so a fixed margin after it
+// raced it (DECISIONS T206).
+async function until<T>(read: () => Promise<T>, done: (v: T) => boolean): Promise<T> {
+  const end = Date.now() + 20_000;
+  let value = await read();
+  while (!done(value) && Date.now() < end) {
+    await sleep(200);
+    value = await read();
+  }
+  return value;
+}
+
 beforeAll(async () => {
   const url = await startFeed();
   kit = await startSocketKit({ SMG_DEV_FEED_URL: url });
@@ -92,35 +105,44 @@ async function state(id: string, who: Client = kit.clients['player-1']) {
 describe('specials in the fast test profile', () => {
   it('Leaf Fall strikes numbers for everyone and Heatwave lowers the cooldown', async () => {
     const autumn = await quick('autumn');
-    const summer = await quick('summer', { cooldownS: 6 });
+    // Heatwave's interval is the round's own since O63 (the fast profile keeps it): 5 s here.
+    const summer = await quick('summer', { cooldownS: 6, settings: { 'summer.stepIntervalS': 5 } });
     // Leaf Fall and Heatwave come 5 s after each round's own opening: wait for the later one
     // (the summer round is created second, so it opens later).
-    const opensAt = Math.max(
-      (await state(autumn.roundId)).opensAt,
-      (await state(summer.roundId)).opensAt,
+    const fell = await until(
+      () => state(autumn.roundId),
+      (v) => v.game.removed.length > 0,
     );
-    await sleep(Math.max(0, opensAt - Date.now()) + 5_600);
-    const fell = await state(autumn.roundId);
     expect(fell.game.removed.length).toBeGreaterThan(0);
     const spectator = await state(autumn.roundId, kit.clients['player-3']);
     expect(spectator.game.removed).toEqual(fell.game.removed);
-    expect((await state(summer.roundId)).cooldownMs).toBeLessThan(6_000);
-  }, 40_000);
+    const hot = await until(
+      () => state(summer.roundId),
+      (v) => v.cooldownMs < 6_000,
+    );
+    expect(hot.cooldownMs).toBeLessThan(6_000);
+  }, 60_000);
 
   it('Spring Herald gives the player a hint at the open', async () => {
     const spring = await quick('spring');
-    const opensAt = (await state(spring.roundId)).opensAt;
-    await sleep(Math.max(0, opensAt - Date.now()) + 300);
-    expect((await state(spring.roundId)).game.hint).toMatchObject({ kind: 'lastDigit' });
-  }, 20_000);
+    const hinted = await until(
+      () => state(spring.roundId),
+      (v) => v.game.hint !== null,
+    );
+    expect(hinted.game.hint).toMatchObject({ kind: 'lastDigit' });
+  }, 40_000);
+});
 
-  it('Frost delivers an answer after the delay and shows nothing of it before', async () => {
+describe('Frost in the fast test profile', () => {
+  it('delivers an answer after the delay and shows nothing of it before', async () => {
     const winter = await quick('winter', { rangeHigh: 1_000_000 });
     const socket = kit.open(kit.clients['player-1'].cookie);
     expect(await kit.connected(socket)).toBe('ok');
     expect((await kit.send(socket, 'match.watch', { code: winter.matchCode })).ok).toBe(true);
-    const opensAt = (await state(winter.roundId)).opensAt;
-    await sleep(Math.max(0, opensAt - Date.now()) + 100);
+    await until(
+      () => state(winter.roundId),
+      (v) => v.status === 'open',
+    );
     const arrived = new Promise<number>((resolve) => {
       socket.on(
         'events',
@@ -149,9 +171,10 @@ describe('specials in the fast test profile', () => {
 describe('a fallen number', () => {
   it('refuses a fallen number without cost: the next guess goes through at once', async () => {
     const autumn = await quick('autumn');
-    const opensAt = (await state(autumn.roundId)).opensAt;
-    await sleep(Math.max(0, opensAt - Date.now()) + 5_600);
-    const fell = await state(autumn.roundId);
+    const fell = await until(
+      () => state(autumn.roundId),
+      (v) => v.game.removed.length > 0,
+    );
     const socket = kit.open(kit.clients['player-1'].cookie);
     expect(await kit.connected(socket)).toBe('ok');
     const fallen = fell.game.removed[0];
@@ -241,9 +264,12 @@ describe('halving days', () => {
     expect(r.statusCode).toBe(201);
     const started = r.json<Started>();
     opened.push(started.matchCode);
-    const opensAt = (await state(started.roundId)).opensAt;
-    await sleep(Math.max(0, opensAt - Date.now()) + 6_400);
-    const range = (await state(started.roundId)).game.range;
+    const { range } = (
+      await until(
+        () => state(started.roundId),
+        (v) => v.game.range.high - v.game.range.low + 1 < 1_000,
+      )
+    ).game;
     expect(range.high - range.low + 1).toBe(500);
   }, 30_000);
 });

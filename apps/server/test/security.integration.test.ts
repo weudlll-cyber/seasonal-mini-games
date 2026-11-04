@@ -52,7 +52,9 @@ const inject = (o: InjectOptions) => kit.harness.built.fastify.inject(o);
 const cookieOf = (set: { name: string; value: string }[]) =>
   `smg_session=${set.find((c) => c.name === 'smg_session')?.value ?? ''}`;
 
-// Waits for the socket's disconnect, or answers 'still connected' after 3 s.
+// Waits for the socket's disconnect, or answers 'still connected' after 10 s: the wait starts
+// before the logout or the deletion, whose password check took over 3 s on a busy machine;
+// a passing test never waits it out (DECISIONS T206).
 const closed = (s: Socket) =>
   new Promise<string>((resolve) => {
     s.on('disconnect', (reason) => {
@@ -60,7 +62,7 @@ const closed = (s: Socket) =>
     });
     setTimeout(() => {
       resolve('still connected');
-    }, 3_000);
+    }, 10_000);
   });
 
 async function csrfOf(cookie: string): Promise<string> {
@@ -76,10 +78,14 @@ describe('per-address limits and session retention', () => {
     expect((await guest()).statusCode).toBe(429);
     const anonymous = () =>
       inject({ method: 'GET', url: '/api/v1/session', remoteAddress: '10.9.0.2' });
-    // 600 a minute, refilled as time passes: well within 700 requests one is refused.
-    const answers: number[] = [];
-    for (let i = 0; i < 700; i += 1) answers.push((await anonymous()).statusCode);
-    expect(answers).toContain(429);
+    // 600 a minute, refilled as time passes: sent faster than the refill, one is refused
+    // sooner or later. A fixed 700 relied on sending them within about 10 s, which a busy
+    // machine did not (DECISIONS T206).
+    let refused = false;
+    for (let i = 0; i < 3_000 && !refused; i += 1) {
+      refused = (await anonymous()).statusCode === 429;
+    }
+    expect(refused).toBe(true);
   });
 
   it('purges revoked and expired sessions, keeps live ones', async () => {

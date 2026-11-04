@@ -16,10 +16,14 @@
 import { marksOf } from '@smg/game-sdk';
 import { setHighlight, useHighlight } from '@smg/ui';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { other, own, playerView, plainScreen, props, screenOf } from './fixtures.js';
 import { TargetInput } from './TargetInput.js';
+
+// jsdom draws the 400 tiles of a 20 × 20 grid with 22 players' tags: up to 2 s a test alone on
+// the development laptop (DECISIONS T206).
+vi.setConfig({ testTimeout: 20_000 });
 
 afterEach(() => {
   act(() => {

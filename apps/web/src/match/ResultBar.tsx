@@ -28,7 +28,7 @@ export function ResultBar(p: {
   return (
     <header className="focus-bar result-bar" data-testid="result-bar">
       <strong className="result-bar-title">{p.title}</strong>
-      <span className="smg-chip" data-testid="match-game">
+      <span className="smg-chip result-bar-game" title={p.game} data-testid="match-game">
         {p.game}
       </span>
       <span className="focus-fact result-bar-code" data-testid="result-code">

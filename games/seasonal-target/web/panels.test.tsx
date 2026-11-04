@@ -37,6 +37,10 @@ import { PlayerPanel } from './PlayerPanel.js';
 import { ResultPanel } from './ResultPanel.js';
 import { SpectatorPanel } from './SpectatorPanel.js';
 
+// jsdom draws the 400 tiles of a 20 × 20 grid in every test: up to 2.5 s alone on the
+// development laptop (DECISIONS T206).
+vi.setConfig({ testTimeout: 20_000 });
+
 afterEach(() => {
   cleanup();
   plainScreen();

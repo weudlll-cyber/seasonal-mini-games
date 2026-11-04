@@ -20,9 +20,13 @@
 import type { Emitted, GameEntry, GameModule, RoundRng, SecretMode } from '@smg/game-sdk';
 import { roundRng } from '@smg/game-sdk/crypto';
 import fc from 'fast-check';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { GAMES } from './index.js';
+
+// Each property plays 100 scripted rounds per game and mode: 1.2–4.3 s alone on the development
+// laptop, so a full run's parallel files would pass 5 s (DECISIONS T206).
+vi.setConfig({ testTimeout: 20_000 });
 
 const PLAYERS = ['p1', 'p2', 'p3'];
 // The secrets are given directly; the round's DRBG still draws what else a game picks.
