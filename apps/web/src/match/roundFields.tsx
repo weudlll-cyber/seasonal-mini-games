@@ -114,29 +114,46 @@ export const formSeason = (c: SeasonChoice): SeasonName | null =>
 export const forSeason = (key: string, season: SeasonName | null): boolean =>
   !key.startsWith('summer.') || season === 'summer';
 
-// In Season when the feed is usable, else Spring by hand; halving off (`GET /seasons/current`).
-export function useSeasonChoice(): SeasonChoice {
-  const [season, setSeason] = useState<SeasonName | 'inSeason'>('inSeason');
-  const [halving, setHalving] = useState(false);
+// The host settings that belong to one season (Heatwave's), for a form that lists them apart.
+export const seasonalDefs = (defs: readonly SettingDef[]): SettingDef[] =>
+  defs.filter((d) => d.hostChooses && !forSeason(d.key, null));
+
+// Where the round form keeps its season choice among the last round's values, beside the
+// halving switch's own key (T209).
+export const SEASON_CHOICE = 'round.seasonChoice';
+
+const choiceOf = (v: SettingValue | undefined): SeasonName | 'inSeason' | null =>
+  v === 'inSeason' || SEASONS.includes(v as SeasonName) ? (v as SeasonName | 'inSeason') : null;
+
+// The last round's choice where the form keeps one (the next round starts from it, In Season
+// still selectable, T209); else In Season when the feed is usable, else Spring by hand;
+// halving as last time, else off (`GET /seasons/current`).
+export function useSeasonChoice(
+  last?: Readonly<Record<string, SettingValue>> | null,
+): SeasonChoice {
+  const kept = choiceOf(last?.[SEASON_CHOICE]);
+  const [season, setSeason] = useState<SeasonName | 'inSeason'>(kept ?? 'inSeason');
+  const [halving, setHalving] = useState(last?.['round.halving'] === true);
   const [now, setNow] = useState<SeasonsCurrentView | null>(null);
   useEffect(() => {
     void api<SeasonsCurrentView>('/seasons/current').then((s) => {
       setNow(s);
-      if (s.inSeason === null) setSeason('spring');
+      // In Season without a usable feed falls back to Spring, a kept choice or not.
+      if (s.inSeason === null) setSeason((was) => (was === 'inSeason' ? 'spring' : was));
     });
   }, []);
   return { now, season, setSeason, halving, setHalving };
 }
 
 // The host's fields of the round's season: Heatwave's only for summer (O63).
+// The settings document's bounds in force where there is one (the host menu); the Quick Test
+// has the definitions' own (T208).
 export function HostFields(p: {
   readonly fields: readonly SettingDef[];
-  readonly doc: MatchDetailsView['nextRoundDefaults'] & object;
-  readonly season: ReturnType<typeof formSeason>;
+  readonly doc?: MatchDetailsView['nextRoundDefaults'] & object;
+  readonly season: SeasonName | null;
   readonly values: Readonly<Record<string, SettingValue>>;
-  readonly set: (
-    update: (old: Record<string, SettingValue>) => Record<string, SettingValue>,
-  ) => void;
+  readonly set: (key: string, v: SettingValue) => void;
 }): ReactElement {
   return (
     <>
@@ -146,10 +163,10 @@ export function HostFields(p: {
           <Field
             key={d.key}
             def={d}
-            doc={p.doc}
+            {...(p.doc === undefined ? {} : { doc: p.doc })}
             value={p.values[d.key] ?? d.default}
             set={(v) => {
-              p.set((old) => ({ ...old, [d.key]: v }));
+              p.set(d.key, v);
             }}
           />
         ))}

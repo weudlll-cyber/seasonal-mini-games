@@ -8,14 +8,20 @@ Branch `feat/guess-games` from `f17d9d4`. Owner decision O64 (2026-11-04: tests 
 
 ### Status
 
-| Piece                                     | State | Commit |
-| ----------------------------------------- | ----- | ------ |
-| 0. O64 recorded (DECISIONS, CLAUDE.md)    | done  |        |
-| 1. Heatwave in every round setup          | open  |        |
-| 2. The next-round form keeps the season   | open  |        |
-| 3. Player lists: the name gets the space  | open  |        |
-| 4. Seasonal Target's result               | open  |        |
-| 5. Checks (O64), re-shoot (O55), handover | open  |        |
+| Piece                                     | State | Commit    |
+| ----------------------------------------- | ----- | --------- |
+| 0. O64 recorded (DECISIONS, CLAUDE.md)    | done  | `c107ce6` |
+| 1. Heatwave in every round setup          | done  |           |
+| 2. The next-round form keeps the season   | done  |           |
+| 3. Player lists: the name gets the space  | open  |           |
+| 4. Seasonal Target's result               | open  |           |
+| 5. Checks (O64), re-shoot (O55), handover | open  |           |
+
+### Pieces 1–2 — Heatwave in every round setup, the season kept (T208, T209)
+
+- The Quick Test form shows Heatwave's two fields for summer through `HostFields` (reused; its `doc` now optional, `set` by key) and sends them; a normal match's first round uses the host menu's form, which had them. One zod shape for both requests (`heatwaveSettings`, `heatwaveBody.ts`, extracted from `rounds.ts`).
+- The next-round form starts from the kept season choice and halving (`SEASON_CHOICE`, `useSeasonChoice(last)`), or the last round's own (MatchPage, after a Quick Test round).
+- Tests (the touched packages only, O64): `quickTest.test.tsx` (new: fields only for summer, defaults and bounds; the body with and without them), `roundBody.test.ts` (the Quick Test's contract), `heatwave.test.tsx` (the season kept, In Season's fallback).
 
 ## Clean state before the next play-test (2026-11-04)
 

@@ -32,6 +32,7 @@ import { useState, type ReactElement, type SyntheticEvent } from 'react';
 import { ChoiceField, NumberField, Problem, SwitchField, TextField } from '../components/fields.js';
 import { useGames } from '../lobby/games.js';
 import { FORM_HELP } from '../match/formHelp.js';
+import { HostFields, seasonalDefs } from '../match/roundFields.js';
 import { SEASON_NAMES, SEASONS } from '../season/season.js';
 import { api } from './http.js';
 import {
@@ -175,6 +176,13 @@ function QuickTestFields(p: {
       {fields(KEYS.slice(1, 2))}
       {more.bots}
       {fields([...KEYS.slice(2), ...gameKeysOf(extra.gameId)])}
+      {/* Heatwave's step and interval for a summer round, the host form's own (O63, T208). */}
+      <HostFields
+        fields={seasonalDefs(defs)}
+        season={extra.season === '' ? null : extra.season}
+        values={values}
+        set={set}
+      />
       {more.fast}
     </div>
   );

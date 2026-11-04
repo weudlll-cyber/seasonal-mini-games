@@ -6,7 +6,8 @@
  * Responsibility: the round settings every game's Quick Test shows and its starting values,
  *                 the chosen game's own host settings after them (O41), their fields through
  *                 the host form's own `Field`, and the body of `POST /dev/quicktest` with the
- *                 game's settings by key (DECISIONS T121). Development builds only, with
+ *                 game's settings by key (DECISIONS T121) and, for a summer round, Heatwave's
+ *                 step and interval (O63, T208). Development builds only, with
  *                 ./QuickTest.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (definitions), @smg-game/registry/web,
  *                 ../match/roundFields
@@ -18,7 +19,7 @@ import type { SeasonName } from '@smg/contracts';
 import { PLATFORM_ROUND_SETTINGS, type SettingDef, type SettingValue } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
-import { Field } from '../match/roundFields.js';
+import { Field, seasonalDefs } from '../match/roundFields.js';
 
 // The round settings the Quick Test offers for every game, in the form's order; the chosen
 // game's own host settings follow (O41). Its own starting values where they differ.
@@ -98,7 +99,13 @@ export function bodyOf(values: Values, extra: Extra) {
     cooldownS: values['round.cooldownS'],
     // The intro screen as long as in a normal round: the setting's default unless changed.
     countdownS: valueOf('round.countdownS'),
-    settings: Object.fromEntries(gameKeysOf(extra.gameId).map((key) => [key, valueOf(key)])),
+    settings: {
+      ...Object.fromEntries(gameKeysOf(extra.gameId).map((key) => [key, valueOf(key)])),
+      // Heatwave's step and interval for a summer round (O63, T208).
+      ...(extra.season === 'summer'
+        ? Object.fromEntries(seasonalDefs(defs).map((d) => [d.key, valueOf(d.key)]))
+        : {}),
+    },
     bots: extra.bots,
     fast: extra.fast,
     lobby: extra.lobby,

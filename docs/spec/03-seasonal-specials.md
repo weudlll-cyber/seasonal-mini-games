@@ -43,7 +43,7 @@ This section words Spring Herald, Leaf Fall and halving for Guess The Number. Th
 
 ### 2.2 Summer — Heatwave
 
-- **Trigger:** every `summer.stepIntervalS` (default 10 s, owner decision 57) after `opensAt`. The host sets the interval and the step per round in the host menu's round form ("Heatwave step" 1–10 s, "Heatwave every" 5–300 s, shown for a summer round), which starts from the admin's game settings and keeps the host's last values (owner decision 63).
+- **Trigger:** every `summer.stepIntervalS` (default 10 s, owner decision 57) after `opensAt`. The host sets the interval and the step per round wherever a round is set up, in the host menu's round form and in the Quick Test form ("Heatwave step" 1–10 s, "Heatwave every" 5–300 s, shown for a summer round), which starts from the admin's game settings and keeps the host's last values and season (owner decision 63, DECISIONS T208, T209).
 - **Effect:** the round's cooldown becomes `max(3 s, cooldown − summer.stepS)` (step default 1 s). The floor of 3 s is the owner's ("never below 3 s") and is not a setting. When the floor is reached, the timer stops. A round that starts with a 3 s cooldown gets no steps, and the host form says so.
 - **Running cooldowns:** a cooldown that is already running keeps its end time. The new value applies to every guess received from the step on ([02](02-game-guess-the-number.md) §7).
 - **Equality:** one cooldown value for all at any instant. Heatwave is announced once per round, at its first step ("Heatwave: waiting time is now 7 s and keeps getting shorter.", banner and one list row); the later steps show only on each player's cooldown ring and the button at the input (owner decision 47, DECISIONS T134).

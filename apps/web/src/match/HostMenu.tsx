@@ -34,7 +34,13 @@ import { intent } from '../live/socket.js';
 import { codeText } from '../round/roundText.js';
 import { api, ApiError } from '../shell/http.js';
 import { EndMatch } from './EndMatch.js';
-import { formSeason, HostFields, SeasonControls, useSeasonChoice } from './roundFields.js';
+import {
+  formSeason,
+  HostFields,
+  SEASON_CHOICE,
+  SeasonControls,
+  useSeasonChoice,
+} from './roundFields.js';
 
 // Season and halving have their own controls below the generic fields.
 const OWN_CONTROLS = new Set(['round.seasonSource', 'round.halving']);
@@ -59,7 +65,7 @@ function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
   const [values, setValues] = useState<Values>(() =>
     Object.fromEntries(fields.map((d) => [d.key, last?.[d.key] ?? doc.values[d.key] ?? d.default])),
   );
-  const choice = useSeasonChoice();
+  const choice = useSeasonChoice(last);
   const { season, halving } = choice;
   const [problem, setProblem] = useState<string | null>(null);
   const create = (startNow: boolean): void => {
@@ -71,7 +77,8 @@ function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
     api(`/matches/${match.code}/rounds`, { method: 'POST', body })
       .then(() => {
         setProblem(null);
-        done(values);
+        // The season choice and halving are kept with the settings for the next round (T209).
+        done({ ...values, 'round.halving': halving, [SEASON_CHOICE]: season });
       })
       .catch((error: unknown) => {
         setProblem(
@@ -92,7 +99,9 @@ function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
           doc={doc}
           season={formSeason(choice)}
           values={values}
-          set={setValues}
+          set={(key, v) => {
+            setValues((was) => ({ ...was, [key]: v }));
+          }}
         />
       </div>
       <Problem text={problem} />

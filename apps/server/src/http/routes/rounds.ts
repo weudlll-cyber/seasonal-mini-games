@@ -9,12 +9,11 @@
  *                 the result and the proof only after the end. Every answer names players by
  *                 their number in the match, never by account id; the state adds `you`, the
  *                 viewer's own number (T104). Codes map to 409 / 422 / 429.
- * Depends on:     fastify, zod, @smg/game-sdk (setting definitions), ../../match/*, ../../round/*
+ * Depends on:     fastify, zod, ./heatwaveBody, ../../match/*, ../../round/*
  * Used by:        ../app
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1, §4.3; docs/spec/02-game-guess-the-number.md §4, §10, §11
  */
 import type { Reply } from '@smg/domain';
-import { PLATFORM_ROUND_SETTINGS, type IntDef } from '@smg/game-sdk';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
@@ -24,31 +23,14 @@ import { forViewer, toPublic } from '../../match/publicIds.js';
 import type { GuessLimits } from '../../round/guessLimits.js';
 import type { LiveRound } from '../../round/liveRound.js';
 import type { PgRoundStore } from '../../round/pgRoundStore.js';
+import { heatwaveSettings } from './heatwaveBody.js';
 
 const SEASONS = ['spring', 'summer', 'autumn', 'winter'] as const;
 
-// Heatwave's step and interval, which the host sets per round (O63), checked in the request
-// against their definitions' bounds (1–10 s, 5–300 s); every setting, these too, is checked
-// again against the bounds in force when the round is made. The 3 s floor is the domain's.
-const heatwaveSeconds = (key: string) => {
-  const def = PLATFORM_ROUND_SETTINGS.find((d): d is IntDef => d.key === key && d.kind === 'int');
-  return z
-    .number()
-    .int()
-    .min(def?.min ?? 1)
-    .max(def?.max ?? 1)
-    .optional();
-};
-
 export const createRoundBody = z
   .object({
-    settings: z
-      .object({
-        'summer.stepS': heatwaveSeconds('summer.stepS'),
-        'summer.stepIntervalS': heatwaveSeconds('summer.stepIntervalS'),
-      })
-      .catchall(z.unknown())
-      .default({}),
+    // Heatwave's two in range (O63, ./heatwaveBody); the rest pass to the per-setting check.
+    settings: z.object(heatwaveSettings).catchall(z.unknown()).default({}),
     season: z.enum(SEASONS).optional(),
     startNow: z.boolean().default(false),
   })

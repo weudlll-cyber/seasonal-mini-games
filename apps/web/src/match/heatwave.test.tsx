@@ -7,7 +7,8 @@
  * Responsibility: "Heatwave step" and "Heatwave every" show only for a summer round,
  *                 prefilled from the admin's values (1 s, 10 s), limited to 1–10 s and
  *                 5–300 s; the host's values go out with the round and come back in the next
- *                 round's form, like the other round settings.
+ *                 round's form, like the other round settings; the next round starts from the
+ *                 last round's season (T209).
  * Depends on:     vitest, @testing-library/react, @smg/game-sdk, @smg-game/registry/web,
  *                 ./HostMenu
  * Spec:           docs/spec/03-seasonal-specials.md §2.2; docs/spec/08-admin-settings.md §3
@@ -18,6 +19,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { HostConsole } from './HostMenu.js';
+import { SEASON_CHOICE } from './roundFields.js';
 
 const posted: unknown[] = [];
 vi.mock('../shell/http.js', () => ({
@@ -71,8 +73,12 @@ async function open(last: Record<string, SettingValue> | null, setLast = vi.fn()
 }
 
 const field = (label: string) => screen.queryByLabelText<HTMLInputElement>(label);
+const seasonSelect = () =>
+  document.querySelector<HTMLSelectElement>(
+    'select:has(option[value="summer"])',
+  ) as HTMLSelectElement;
 const season = (value: string) => {
-  fireEvent.change(screen.getByLabelText('Season'), { target: { value } });
+  fireEvent.change(seasonSelect(), { target: { value } });
 };
 
 describe("Heatwave in the host's round form (O63)", () => {
@@ -102,10 +108,27 @@ describe("Heatwave in the host's round form (O63)", () => {
       settings: { 'summer.stepS': 3, 'summer.stepIntervalS': 20 },
     });
     const used = setLast.mock.calls[0]?.[0] as Record<string, SettingValue>;
-    expect(used).toMatchObject({ 'summer.stepS': 3, 'summer.stepIntervalS': 20 });
+    expect(used).toMatchObject({
+      'summer.stepS': 3,
+      'summer.stepIntervalS': 20,
+      [SEASON_CHOICE]: 'summer',
+    });
     cleanup();
+    // The next round starts from summer again, its Heatwave fields in view (T209).
     await open(used);
-    season('summer');
+    expect(seasonSelect().value).toBe('summer');
     expect([field('Heatwave step')?.value, field('Heatwave every')?.value]).toEqual(['3', '20']);
+  });
+});
+
+describe('the next-round form keeps the season (T209)', () => {
+  it("starts from the last round's season and halving where nothing was kept by the form", async () => {
+    await open({ [SEASON_CHOICE]: 'winter', 'round.halving': false });
+    expect(seasonSelect().value).toBe('winter');
+    expect(field('Heatwave step')).toBeNull();
+    // In Season stays a choice of its own; without a usable feed it falls back to Spring.
+    cleanup();
+    await open({ [SEASON_CHOICE]: 'inSeason' });
+    expect(seasonSelect().value).toBe('spring');
   });
 });

@@ -78,6 +78,10 @@ Built as described in 02 §12 and DECISIONS T128–T132 and T134–T136 (O47–O
 - The light/dark toggle lives in the app header, which focus mode hides; the theme chosen before the round stays, and O46's bar lists no toggle, so none was added. A sixth button would not fit the phone's bar beside Host and Full screen; inside the Players panel it could.
 - Guess The Number's Fallen numbers open from their "Fallen (N)" button as a sheet on a desktop too (T132); since O50 the list is in the main area, so they could stand open in the right column again.
 
+**Round 2, to confirm** (proposals; built on `feat/guess-games`, 2026-11-04):
+
+- The next round's form starts from the last round's season and halving (T209).
+
 **Clean state, to confirm** (proposals; built on `feat/guess-games`, 2026-11-04):
 
 - The host menu on a phone (T207): its panel spans the screen under the bar instead of hanging from the Host button.

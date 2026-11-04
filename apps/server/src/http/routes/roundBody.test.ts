@@ -1,16 +1,18 @@
 /**
  * @file   apps/server/src/http/routes/roundBody.test.ts
  * @module server/http
- * @brief  The round-setup request's contract: Heatwave's step and interval in range (O63).
+ * @brief  The round-setup requests' contract: Heatwave's step and interval in range (O63).
  *
  * Responsibility: `createRoundBody` takes Heatwave's step 1–10 s and interval 5–300 s as whole
  *                 seconds, refuses values outside or not whole, keeps the other settings for
- *                 the per-setting check, and stays strict at its top level.
- * Depends on:     vitest, ./rounds
+ *                 the per-setting check, and stays strict at its top level; the Quick Test's
+ *                 request, which sets up a first round, the same (T208).
+ * Depends on:     vitest, ./rounds, ./quickTest
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1; docs/spec/03-seasonal-specials.md §2.2
  */
 import { describe, expect, it } from 'vitest';
 
+import { quickTestBody } from './quickTest.js';
 import { createRoundBody } from './rounds.js';
 
 const ok = (settings: Record<string, unknown>) =>
@@ -41,5 +43,21 @@ describe('the round-setup contract (O63)', () => {
       expect(ok(s), JSON.stringify(s)).toBe(false);
     }
     expect(createRoundBody.safeParse({ settings: {}, extra: 1 }).success).toBe(false);
+  });
+});
+
+describe("the Quick Test's contract (T208)", () => {
+  const quick = (settings: Record<string, unknown>) =>
+    quickTestBody.safeParse({ gameId: 'seasonal-target', season: 'summer', settings }).success;
+
+  it("takes Heatwave's step and interval in range and refuses them outside", () => {
+    expect(quick({ 'summer.stepS': 10, 'summer.stepIntervalS': 5, 'target.size': 20 })).toBe(true);
+    for (const s of [
+      { 'summer.stepS': 11 },
+      { 'summer.stepIntervalS': 4 },
+      { 'summer.stepS': 1.5 },
+    ]) {
+      expect(quick(s), JSON.stringify(s)).toBe(false);
+    }
   });
 });

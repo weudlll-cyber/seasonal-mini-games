@@ -17,7 +17,9 @@ import { z } from 'zod';
 import { quickTests } from '../../dev/quickTest.js';
 import { PlayError, type Play } from '../../match/play.js';
 
-const body = z
+import { heatwaveSettings } from './heatwaveBody.js';
+
+export const quickTestBody = z
   .object({
     gameId: z.string().min(1).max(40).default('guess-the-number'),
     mode: z.enum(['shared', 'individual']).default('shared'),
@@ -47,9 +49,11 @@ const body = z
     season: z.enum(['spring', 'summer', 'autumn', 'winter']).optional(),
     // The chosen game's own round settings (O41); each is checked against the game's
     // definitions when the round is created, an unknown key refused (T121).
+    // Heatwave's two in range as in the round form (O63, ./heatwaveBody, T208).
     settings: z
-      .record(z.string().min(1).max(60), z.union([z.string().max(60), z.number(), z.boolean()]))
-      .refine((s) => Object.keys(s).length <= 40)
+      .object(heatwaveSettings)
+      .catchall(z.union([z.string().max(60), z.number(), z.boolean()]))
+      .refine((s) => Object.keys(s).length <= 40 && Object.keys(s).every((k) => k.length <= 60))
       .default({}),
   })
   .strict()
@@ -64,7 +68,7 @@ export function registerQuickTest(
   app.post('/api/v1/dev/quicktest', async (request, reply) => {
     const accountId = request.session?.accountId ?? null;
     if (accountId === null) return reply.status(401).send({ code: 'SIGN_IN_REQUIRED' });
-    const parsed = body.safeParse(request.body ?? {});
+    const parsed = quickTestBody.safeParse(request.body ?? {});
     if (!parsed.success) return reply.status(400).send({ code: 'VALIDATION_FAILED' });
     if (!deps.play.rounds.hasGame(parsed.data.gameId)) {
       return reply.status(422).send({ code: 'GAME_UNKNOWN' });
