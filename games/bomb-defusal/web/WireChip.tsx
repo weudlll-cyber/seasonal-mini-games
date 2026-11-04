@@ -6,12 +6,13 @@
  * Responsibility: every wire on a screen carries its name beside its swatch, so meaning never
  *                 rests on colour alone (02c §11); a harmless wire has a crossed, dimmed swatch
  *                 and a struck name, and says "harmless" to screen readers, so no word widens
- *                 a chip or button. The numbered list is the reveal of a sequence (02c §9).
- * Depends on:     react, @smg-game/bomb-defusal (types), ./text (WIRE_COLORS), ./swatch.css
+ *                 a chip or button. The numbered list is the reveal of a sequence (02c §9);
+ *                 the dots are a sequence in the result's history, as in the round's list.
+ * Depends on:     react, @smg-game/bomb-defusal (types, wording), ./text (WIRE_COLORS), ./swatch.css
  * Used by:        ./panels, ./WireInput, ./ResultPanel
  * Spec:           docs/spec/02c-game-bomb-defusal.md §9, §11
  */
-import type { Sequence, Wire } from '@smg-game/bomb-defusal';
+import { sequenceText, type Sequence, type Wire } from '@smg-game/bomb-defusal';
 import type { ReactElement } from 'react';
 
 import { WIRE_COLORS } from './text.js';
@@ -44,6 +45,20 @@ export function WireChip(p: { readonly wire: Wire; readonly harmless?: boolean }
       <Swatch wire={p.wire} crossed={harmless} />
       <span className="bd-chip-name">{p.wire}</span>
       {harmless ? <span className="smg-visually-hidden"> harmless</span> : null}
+    </span>
+  );
+}
+
+// A sequence as the round's colour dots (the list's swatches, T143): its names read out and on
+// hover, the same dots on the result's history (T150).
+export function SequenceDots(p: { readonly sequence: Sequence }): ReactElement {
+  const words = sequenceText(p.sequence);
+  return (
+    <span className="bd-dots" title={words}>
+      {p.sequence.map((w, i) => (
+        <Swatch key={i} wire={w} />
+      ))}
+      <span className="smg-visually-hidden">{words}</span>
     </span>
   );
 }

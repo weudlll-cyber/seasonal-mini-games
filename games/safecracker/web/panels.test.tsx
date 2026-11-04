@@ -34,7 +34,7 @@ const view = {
     { receiveSeq: 1, receivedAt: 1_000, value: '1312', ...answered },
     { receiveSeq: 3, receivedAt: 5_000, value: '0427', ...held },
   ],
-  log: [{ receiveSeq: 2, receivedAt: 2_000, playerId: 'p2', value: null, ...held }],
+  log: [{ receiveSeq: 2, receivedAt: 2_000, playerId: 'p2', value: null, ...held, held: false }],
 };
 const names = { p1: 'Anna', p2: 'Ben' };
 const colors = { p1: 'var(--color-spring)', p2: 'var(--color-autumn)' };
@@ -55,6 +55,11 @@ describe('the code block', () => {
     expect(chips).toHaveLength(10);
     expect(chips[7]?.getAttribute('aria-label')).toBe('7, fallen');
     expect(chips[7]?.dataset.fallen).toBe('true');
+    // Crossed from corner to corner (T153), no small badge that reads as "±".
+    expect(chips[7]?.querySelector('svg.sc-cross path')?.getAttribute('d')).toBe(
+      'M1 1 9 9M9 1 1 9',
+    );
+    expect(chips[7]?.textContent).toBe('7');
     expect(chips[3]?.getAttribute('aria-label')).toBe('3');
     expect(screen.getByTestId('hint').textContent).toBe('Free hint: the 2nd digit is 4.');
     // The answers' words explained once (T143).
@@ -90,10 +95,11 @@ describe('the result panel', () => {
       },
       closestMiss: null,
     };
-    render(<ResultPanel view={result} names={names} colors={colors} viewerKey="p2" />);
-    expect(screen.getByTestId('sc-result').textContent).toContain(
-      'The code was 0427 (4 digits, 0–9).',
-    );
+    const props = { view: result, names, colors, viewerKey: 'p2' };
+    render(<ResultPanel {...props} part="reveal" />);
+    expect(screen.getByTestId('sc-result').textContent).toBe('Code: 0427 (4 digits, 0–9)');
+    cleanup();
+    render(<ResultPanel {...props} part="history" />);
     const rows = screen.getAllByRole('listitem').map((li) => li.textContent);
     expect(rows).toEqual(['Ben: 1312 (1 wrong place)', 'Anna: 0427 open']);
   });
@@ -107,13 +113,16 @@ describe('the result panel', () => {
       guesses: { p1: [], p2: [] },
       closestMiss: null,
     };
-    render(<ResultPanel view={result} names={names} colors={colors} viewerKey={null} />);
+    const props = { view: result, names, colors, viewerKey: null };
+    render(<ResultPanel {...props} part="reveal" />);
     expect(screen.getByTestId('sc-result').textContent).toContain(
       'Everyone had their own code (3 digits, 0–5).',
     );
+    cleanup();
+    render(<ResultPanel {...props} part="history" />);
     expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual([
-      'Anna — code 012: no codes tried',
-      'Ben — code 345: no codes tried',
+      'Anna — code 012: did not guess',
+      'Ben — code 345: did not guess',
     ]);
   });
 });

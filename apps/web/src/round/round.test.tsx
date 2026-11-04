@@ -41,7 +41,7 @@ describe('the cooldown ring', () => {
     expect(screen.getByTestId('cooldown').textContent).toBe('3 s');
     cleanup();
     render(<CooldownRing endsAt={10_000} cooldownMs={5_000} now={10_000} />);
-    expect(screen.getByTestId('cooldown').getAttribute('aria-label')).toBe('Ready to guess');
+    expect(screen.getByTestId('cooldown').getAttribute('aria-label')).toBe('Ready');
   });
 });
 
@@ -193,8 +193,10 @@ describe('a solved player in individual mode (O25)', () => {
       'You found your number — place 2. Your guesses stay here while the others play on.',
     );
     expect(screen.queryByTestId('guess-input')).toBeNull();
+    // Every row is the viewer's in individual mode: no "You", no own colour (T150).
     const own = screen.getByTestId('guess-list').querySelector('li[data-own="true"]');
-    expect(own?.textContent).toBe('You92correct ✓Bullseye!');
+    expect(own?.textContent).toBe('92correct ✓Bullseye!');
+    expect(own?.getAttribute('data-solo')).toBe('true');
   });
 });
 

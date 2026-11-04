@@ -6,12 +6,12 @@
  * Responsibility: the result's first part is exactly the screen under the slim bar (T145,
  *                 `--result-top`, ../match/match.css) on a desktop and a phone: the headline
  *                 (at most two lines) with the margin or closest miss and the proof's
- *                 disclosure, the game's result visual taking the free height (a board game's
- *                 grid as large as it allows, a list of guesses scrolling inside itself), and
- *                 the top three placings with the team line, on a desktop to the right of the
- *                 visual, on a phone under it; with "All placings" open the part grows and the
- *                 page scrolls. The part below (team result, match standings) follows on the
- *                 page. The placings (and the match summary's standings) as a table with fixed
+ *                 disclosure, the game's reveal taking the free height (a board game's grid as
+ *                 large as it allows), and the top three placings with the team line, on a
+ *                 desktop to the right of the reveal, on a phone under it; with "All
+ *                 placings" open the part grows and the page scrolls. The parts below follow
+ *                 on the page at their own height: every player's guesses in full (T150), the
+ *                 team result and the match standings. The placings (and the match summary's standings) as a table with fixed
  *                 number columns that fits a 390 px phone without scrolling; a player's name on
  *                 one line, shrinking with an ellipsis at its end until focus or a tap shows it
  *                 whole (./PlayerName), "(you)" never cut; the viewer's own line highlighted;
@@ -37,16 +37,12 @@
   padding: var(--space-2) var(--space-3);
 }
 
-/* A list game's first part is as tall as its content, at most the screen: its result (each
-   player's guesses) scrolls inside itself, so no empty card and no gap before the placings
-   (night-7 review). A board game's grid keeps the part's full height. */
+/* A list game's first part is as tall as its content (its reveal is a line or two), so no
+   empty card and no gap before the placings (night-7 review). A board game's grid keeps the
+   part's full height. */
 .round-result:not([data-layout='board']) .round-result-first {
   height: auto;
   grid-template-rows: auto auto auto;
-}
-
-.round-result:not([data-layout='board']) .round-result-game {
-  max-height: calc(100dvh - var(--result-top, 4.5rem) - var(--result-rest, 32rem));
 }
 
 /* Every placing shown: the part grows and the page scrolls. */
@@ -113,7 +109,9 @@
   font-weight: var(--font-weight-strong);
 }
 
-/* Below the first part: the team result and the match standings, at their own height. */
+/* Below the first part: every player's guesses in full, then the team result and the match
+   standings, each at its own height (no box that cuts a line, T150). */
+.round-result-history,
 .round-result-more {
   display: grid;
   gap: var(--space-2);
@@ -131,10 +129,6 @@
 @media (min-width: 900px) {
   .round-result:not([data-layout='board']) .round-result-first {
     grid-template-rows: auto auto;
-  }
-
-  .round-result {
-    --result-rest: 9rem;
   }
 
   .round-result-first {
@@ -255,11 +249,11 @@
   }
 }
 
-/* A name never breaks inside a word; too long, it ends in an ellipsis until focus or a tap
-   shows it whole (./PlayerName). */
+/* A name never breaks inside a word; in full wherever its column has room, an ellipsis only
+   when the column is too narrow, until focus or a tap shows it whole (./PlayerName, T150). */
 .player-name {
   display: inline-block;
-  max-width: 9rem;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

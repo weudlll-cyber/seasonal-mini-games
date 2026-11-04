@@ -11,19 +11,31 @@ Branch `feat/guess-games` from `60821a6`. Owner decision O55 (2026-11-04: screen
 | Piece                                         | State   | Commit |
 | --------------------------------------------- | ------- | ------ |
 | 0. O55 recorded                               | done    |        |
-| 1. All games: review fixes                    | running |        |
-| 2. Seasonal Target: review fixes              | open    |        |
-| 3. Safecracker and Bomb Defusal: review fixes | open    |        |
+| 1. All games: review fixes                    | done    |        |
+| 2. Seasonal Target: review fixes              | done    |        |
+| 3. Safecracker and Bomb Defusal: review fixes | done    |        |
 | 4. Player account deletion screen             | running |        |
 | 5. Admin screens: providers, origins, hooks   | running |        |
 | 6. Admin app Trusted Types                    | open    |        |
-| 7. The "opens in 0 s" intro                   | open    |        |
+| 7. The "opens in 0 s" intro                   | running |        |
 | 8. Load scenarios L1 specials and halving     | done    |        |
 | 9. Re-shoot (O55), self-review, handover      | open    |        |
 
 ### Needs the owner
 
 Nothing so far.
+
+### Pieces 1–3 — the review fixes (T150–T153)
+
+- Piece 1, every game (T150): the desktop's special line holds the whole sentence, wrapping (a paragraph, no longer a one-line toggle); a row gives way comment first, then name, never the guess or the answer (no 9 rem cap on names); "Your guesses" shows guess and answer only (`bare`); individual mode's rows have no "You" and no own tint (`solo`, `data-solo`; `data-own` keeps saying whose row it is, the e2e helpers find rows by it), the others' counts are a row of their own ("Others: …", `others-line`) that the banner never replaces; the head "12 guesses" and "Log (M)"; every held Frost answer, others' too, says "answer arriving…" (the guess engine marks the others' held lines, `held`, false where the visibility hides the answer for good); the ring's check mark named "Ready"; names take the column's room, "(you)" apart; the phone info line's parts whole ("Hint: odd", "Hint: red first", "8 wires · cut 6"); results: the game's panel in two parts (`ResultPanelProps.part`: `reveal` in the first part, `history` below it in full, no inner scroll box), "did not guess" (`NO_GUESSES`), Bomb Defusal's history in the round's colour dots (`SequenceDots`), "Code: 0834", the phone bar without the match's title and the code's label.
+- The Heatwave line seen minutes later in the night-7 shots: the special line (the rule, on view all round), not the banner; the banner left 5 s after its event in every shot. It is the whole sentence now, so it no longer reads like a stale banner. The 5 s are checked with fake timers (`banner.test.tsx`) and in journey 3 (the banner appears and is empty again within 7 s).
+- Spring's hint appears once per view (the panel's line on a desktop, the info line on a phone); the banner says only that a hint came ("Spring Herald: everyone got a free hint."). Nothing to change.
+- Piece 2, Seasonal Target (T151, T152): seven colours in `closeness` mode (`heat.css`, split from `tiles.css`, 297 → 218 lines), five in the other modes, the legend of the round's mode; the tier from the shown rounded distance in `distance` and `direction` mode (`answerTier`, server; the worked example (10, 10)→(12, 12) is now hot there, burning in `closeness` mode; Leaf Fall's candidates at one rounded distance are one tier); halving dims only empty tiles; a fallen tile or one outside the area is never selected ("That tile fell."), the arrows step past fallen tiles, Guess disabled on a selected tile that fell; "Fallen (N)" in whole rows; "Just missed"; the ink-ringed own frame; the phone legend's "ColdHot" came from the platform's last-child ellipsis rule turning the legend into a block, removed with T150.
+- Piece 3 (T153): Safecracker's fallen digit greyed and crossed corner to corner (an SVG cross, no badge); Bomb Defusal's own marker a neutral ring beside colour dots (a platform rule for any row of colour dots); the revealed sequence on one line on a desktop; rows at 1.375 rem at 1920 × 1080.
+- Commits by file: lines of piece 3 in files piece 1 also changed (`roundLog.css`, `sc.css`, `bd.css`) and the decisions T151–T153 with OPEN went into piece 1's commit; no hunk staging (interactive git is not available).
+- Extracted: `Who` (the row's dot and name, `GuessLine.tsx`), `GamePart` (`ResultScreen.tsx`), `History` and `Reveal` (Target's `ResultPanel.tsx`), `tierBy` and `answerTier` (`geometry.ts`), `stepFrom` and `unselectable` (`TargetInput.tsx`), `shortHint` (GTN, Bomb Defusal; Safecracker had one), `SequenceDots` (`WireChip.tsx`, reusing `Swatch`). Reused: `othersLine`, `Swatch`, `sequenceText`, `CODES.OUT_OF_AREA`, `roundedDistance`. Removed: the special line's toggle state, the ring's "Ready" text and its size rule, the result's `--result-rest` box, the history lists' inner scroll boxes, the Fallen box's 5.4 rem cut, `.round-arriving-text`.
+- Lines before → after: GuessLine 177 → 203, RoundLog 183 → 189, InfoParts 132 → 124, CooldownRing 55 → 64, ResultScreen 109 → 131, MatchStandings 68 → 70, roundLog.css 281 → 280, round.css 249 → 235, result.css 289 → 283, cooldownRing.css 61 → 68, ResultBar 42 → 46, match.css 244 → 243, game-sdk web.ts 154 → 162, guess-engine views.ts 94 → 99; GTN ResultPanel 49 → 52, InfoLine 38 → 39, text.ts 152 → 167; Safecracker ResultPanel 61 → 64, text.ts 165 → 173, sc.css 232 → 234, Board 104 → 106; Bomb Defusal ResultPanel 55 → 71, WireChip 65 → 80, bd.css 267 → 294, text.ts 186 → 193; Target ResultPanel 81 → 102, TargetInput 206 → 239, heat.ts 151 → 167, heat.css new 184, tiles.css 297 → 218, st.css 190 → 181, words.ts 103 → 113, text.ts 136 → 144, fallen.css 84 → 93, HeatLegend 27 → 32, geometry.ts 171 → 185, rules.ts 41 → 42. New test file `rows.test.tsx`.
+- Checks: `pnpm verify` green (135 files, 769 tests; the golden run re-recorded: it gains only the `held` field). e2e Chromium: journey 28 (4/4), the timing journeys 1–7, 16–18, 20–22, 24–27 19/20 with journey 25 failed once because the bot opened the 4-digit code in 2 guesses before the page saw the round open, passing on its rerun (left alone: Quick Test's bot can win at once on a small code).
 
 ### Piece 8 — load scenarios L1: the special rounds and the halving round (T180–T184)
 

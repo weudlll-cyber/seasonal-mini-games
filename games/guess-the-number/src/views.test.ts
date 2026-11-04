@@ -74,6 +74,8 @@ describe('player view', () => {
           // 88 away: 8.8 %.
           tier: 'warm',
           comment: someLine,
+          // Released: nothing held for this viewer (T150).
+          held: false,
         },
       ],
       hint: null,
@@ -81,7 +83,8 @@ describe('player view', () => {
     const frosted = views.player(t.state, 'a', { releasedBefore: 1_000 });
     expect(frosted).toMatchObject({
       guesses: [{ feedback: null, tier: null, comment: null }],
-      log: [{ value: 500, feedback: null, tier: null, comment: null }],
+      // Another player's answer Frost holds is marked as on its way (T150).
+      log: [{ value: 500, feedback: null, tier: null, comment: null, held: true }],
     });
     expect(viewSchemas.player.safeParse(frosted).success).toBe(true);
     expect(views.player(t.state, 'nobody', all)).toMatchObject({ guesses: [] });

@@ -10,14 +10,16 @@
  *                 Frost the round's opening says answers arrive late, a held own answer no
  *                 banner; Heatwave is announced once; the round bar's season pill names the
  *                 special, on a phone it opens the special's sentence, which closes with
- *                 Escape; a desktop has the special line in its info column (T141).
+ *                 Escape; a desktop has the special line in its info column with the whole
+ *                 sentence (T141, T150); on a running round the banner leaves the list's head
+ *                 5 s after its event by the clock alone (fake timers).
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./fakes, ./RoundScreen,
  *                 ./SpecialBanner
  * Spec:           docs/spec/03-seasonal-specials.md §2, §6; docs/spec/09-testing-strategy.md §2
  */
 import type { RoundStateView } from '@smg/contracts';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ended, viewport } from './fakes.js';
 import { RoundScreen } from './RoundScreen.js';
@@ -140,21 +142,52 @@ describe('the season pill', () => {
     viewport(1024, 768);
   });
 
-  it('is plain on a desktop, whose info column has the special line instead (T141)', () => {
+  it('is plain on a desktop, whose info column has the whole special sentence (T141, T150)', () => {
     show(open);
     expect(screen.queryByTestId('special-info')).toBeNull();
     const line = screen.getByTestId('special-line');
     expect(line.textContent).toBe(
       'Leaf Fall: Every so often, some wrong numbers fall out of the game.',
     );
-    expect(line.getAttribute('aria-expanded')).toBe('false');
-    fireEvent.click(line);
-    expect(line.getAttribute('aria-expanded')).toBe('true');
+    // A paragraph, not a toggle: nothing of the sentence is hidden behind a click.
+    expect(line.tagName).toBe('P');
   });
 
   it('is a plain pill with the special off', () => {
     show({ ...open, specialOn: false });
     expect(screen.getByTestId('round-special').textContent).toBe('no special');
     expect(screen.queryByTestId('special-info')).toBeNull();
+  });
+});
+
+describe('the banner on a running round', () => {
+  it('leaves the list head 5 s after its event, by the clock alone', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(100_000);
+    const state = { ...open, endsAt: 700_000 };
+    const feed = [item('1', 100_000, heat(1, 4_000))];
+    render(
+      <RoundScreen
+        live={{ state, feed, reload: () => Promise.resolve() }}
+        gameId="none"
+        viewerKey="w"
+        host={null}
+        teamPoints={[]}
+        standings={[]}
+        chat={null}
+      />,
+    );
+    const banner = () => screen.getByTestId('special-banner').textContent;
+    expect(banner()).toBe('Heatwave: waiting time is now 4 s and keeps getting shorter.');
+    act(() => {
+      vi.advanceTimersByTime(4_500);
+    });
+    expect(banner()).not.toBe('');
+    act(() => {
+      vi.advanceTimersByTime(1_000);
+    });
+    expect(banner()).toBe('');
+    expect(screen.getByTestId('list-title').textContent).toBe('0 guesses');
+    vi.useRealTimers();
   });
 });

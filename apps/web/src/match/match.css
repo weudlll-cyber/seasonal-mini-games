@@ -118,18 +118,17 @@
   box-shadow: none;
 }
 
-/* A phone: the title, the game and the buttons; the code is in the lobby's head. */
+/* A phone: the game and the code whole, then the buttons; the match's title and the code's
+   label stay out, so nothing is cut (T150). */
 @media (max-width: 899px) {
-  .result-bar-code {
+  .result-bar-title,
+  .result-bar-label {
     display: none;
   }
 
-  .result-bar .smg-chip {
-    display: inline-block;
-    flex: 0 1 auto;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .result-bar .smg-chip,
+  .result-bar-code {
+    flex: none;
     white-space: nowrap;
   }
 

@@ -21,6 +21,7 @@ export const view = {
     { receiveSeq: 1, receivedAt: 1_000, value: 300, ...answered },
     { receiveSeq: 3, receivedAt: 5_000, value: 700, ...held },
   ],
-  log: [{ receiveSeq: 2, receivedAt: 2_000, playerId: 'p2', value: 40, ...held }],
+  // Another player's guess whose answer Frost still holds (`held`, T150).
+  log: [{ receiveSeq: 2, receivedAt: 2_000, playerId: 'p2', value: 40, ...held, held: true }],
   hint: { kind: 'parity' as const, odd: true },
 };

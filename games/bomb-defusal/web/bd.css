@@ -249,17 +249,44 @@
   margin: 0;
 }
 
+/* The secret on one line on a desktop (night-7 review: the chips wrapped at 1280 × 720). */
+@media (min-width: 900px) {
+  .bd-secret {
+    font-size: inherit;
+  }
+
+  .bd-secret .bd-sequence {
+    flex-wrap: nowrap;
+  }
+}
+
+/* Every player's sequences in full, below the result's first part (T150). */
 .bd-players {
   margin: 0;
   padding-left: 1.25rem;
   display: grid;
   gap: var(--space-1);
-  overflow-y: auto;
 }
 
-.bd-players li {
+.bd-players > li {
   display: grid;
   gap: 0.2rem;
+}
+
+/* One sequence a line: the round's colour dots, then the answer in words. */
+.bd-cuts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.bd-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  vertical-align: middle;
 }
 
 .bd-you {

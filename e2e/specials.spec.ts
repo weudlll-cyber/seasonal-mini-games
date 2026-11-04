@@ -4,7 +4,8 @@
  * @brief  Journeys 3 and 4: each season special once, and a halving round on a halving day.
  *
  * Responsibility: journey 3 — in Quick Test rounds of the fast test profile, Spring Herald's
- *                 free hint appears, Heatwave's cooldown drops (its row in the All list, T142),
+ *                 free hint appears, Heatwave's cooldown drops (its banner gone 5 s after it
+ *                 came, T150; its row in the Log list, T142),
  *                 Leaf Fall strikes numbers and Frost shows "answer arriving", readable on the
  *                 light page. Journey 4 — with today entered as a halving day, a halving
  *                 round's range halves, and a guess outside the new range is
@@ -63,6 +64,10 @@ test('journey 3: each season special shows itself', async ({ browser }) => {
     );
 
     codes.push(await quickRound(p, { season: 'summer', cooldownS: 8 }));
+    // The banner says Heatwave's first step and leaves 5 s later by itself (T150).
+    const banner = p.page.getByTestId('special-banner');
+    await expect(banner).toContainText('Heatwave:', { timeout: 15_000 });
+    await expect(banner).toHaveText('', { timeout: 7_000 });
     await expect.poll(() => cooldownSeconds(p.page), { timeout: 15_000 }).toBeLessThan(8);
     // Announced once (O47): one row however many steps follow, in the All list (T142).
     await p.page.getByTestId('list-all').click();

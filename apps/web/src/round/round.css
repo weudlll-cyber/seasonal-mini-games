@@ -137,26 +137,18 @@
   padding: 0.5rem 0.75rem;
 }
 
-/* The special line: one line in the season's frame, the whole sentence on a click. */
+/* The special line: the special's whole sentence in the season's frame, wrapping (a
+   sentence takes at most 3 lines in the 340 px column), never cut (T150). */
 .round-special-line {
   flex: none;
-  min-height: 36px;
+  margin: 0;
   padding: 0.35rem 0.75rem;
   border: 2px solid var(--season);
   border-radius: var(--radius-card);
   background: var(--color-surface);
   color: var(--color-text);
-  font: inherit;
   font-size: var(--font-size-small);
-  text-align: start;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  cursor: pointer;
-}
-
-.round-special-line[aria-expanded='true'] {
-  white-space: normal;
+  line-height: 1.3;
 }
 
 /* The same sentence at the top of the phone's game sheet. */
@@ -167,8 +159,9 @@
   font-size: var(--font-size-small);
 }
 
-/* The phone's info line: the game's line in one row, at most 48 px, cut at its end; the
-   game's parts sit side by side and its last part takes the ellipsis (games/registry/web). */
+/* The phone's info line: the game's line, at most 48 px; the game's parts sit side by side
+   and are never cut: one that has no room left goes whole to a second row (T150). The games
+   keep their parts short, the details are in the sheet (games/registry/web). */
 .round-line {
   grid-area: line;
   display: flex;
@@ -181,7 +174,7 @@
   font: inherit;
   font-size: var(--font-size-small);
   text-align: start;
-  white-space: nowrap;
+  line-height: 1.2;
   cursor: pointer;
 }
 
@@ -193,21 +186,14 @@
 
 .round-line-body > * {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.1rem 0.5rem;
   min-width: 0;
 }
 
 .round-line-body > * > * {
   flex: none;
-}
-
-.round-line-body > * > :last-child {
-  display: block;
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

@@ -37,9 +37,12 @@ describe('answers', () => {
       '1 tile away, to the north',
     );
     expect(longAnswer({ kind: 'closeness', tier: 'warm' })).toBe('Warm');
-    expect(shortAnswer({ kind: 'closeness', tier: 'justMissed' })).toBe(
+    // Short on the row, never cut; the tile's label keeps the sentence (T151).
+    expect(shortAnswer({ kind: 'closeness', tier: 'justMissed' })).toBe('Just missed');
+    expect(longAnswer({ kind: 'closeness', tier: 'justMissed' })).toBe(
       'Just missed — right next to it',
     );
+    expect(rowTier({ kind: 'closeness', tier: 'cold' })).toBe('st-k-cold');
     expect(longAnswer({ kind: 'correct' })).toBe('Target found!');
     expect(toneOf({ kind: 'correct' })).toBe('correct');
     expect(toneOf(ne)).toBe('far');
@@ -56,7 +59,17 @@ describe('rows', () => {
         { receiveSeq: 1, receivedAt: 10, value: { x: 12, y: 34 }, feedback: ne, ...seen },
         { receiveSeq: 3, receivedAt: 30, value: { x: 1, y: 1 }, feedback: null, ...seen },
       ],
-      log: [{ receiveSeq: 2, receivedAt: 20, playerId: 'b', value: null, feedback: null, ...seen }],
+      log: [
+        {
+          receiveSeq: 2,
+          receivedAt: 20,
+          playerId: 'b',
+          value: null,
+          feedback: null,
+          held: false,
+          ...seen,
+        },
+      ],
     };
     const rows = stText.guesses(view);
     expect(rows[0]).toMatchObject({

@@ -39,15 +39,6 @@
   flex: none;
 }
 
-/* The result's list of every guess repeats the grid in words: a box of its own that scrolls,
-   so the grid keeps the height (O51). */
-.st-result > .st-players {
-  flex: 0 1 auto;
-  min-height: 3rem;
-  max-height: 5.5rem;
-  overflow-y: auto;
-}
-
 .st-area,
 .st-note {
   margin: 0;
@@ -142,13 +133,13 @@
   font-weight: var(--font-weight-strong);
 }
 
+/* Every player's guesses in words, in full below the result's first part (T150): the grid
+   keeps the first part's height. */
 .st-players {
   margin: 0;
   padding-left: 1.25rem;
   display: grid;
   gap: var(--space-1);
-  overflow-y: auto;
-  max-height: 10rem;
 }
 
 .st-you {

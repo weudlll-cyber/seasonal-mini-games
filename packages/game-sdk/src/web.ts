@@ -60,12 +60,19 @@ export interface SpectatorPanelProps {
   readonly specialOn: boolean;
 }
 
+// The result panel draws one of its two parts (T150): `reveal`, the secret (a board game's
+// grid with it), in the result's first screen; `history`, every player's guesses in full,
+// below it.
 export interface ResultPanelProps {
   readonly view: unknown;
   readonly names: Readonly<Record<string, string>>;
   readonly colors: Readonly<Record<string, string>>;
   readonly viewerKey: string | null;
+  readonly part: 'reveal' | 'history';
 }
+
+// A player without a guess in a result's history (T150), the same words for every game.
+export const NO_GUESSES = 'did not guess';
 
 // A send button's words: its own while the player may act, "Wait 6 s" during the cooldown
 // (T125), the same for every game.
@@ -117,7 +124,8 @@ export interface GuessRow {
   // The closeness comment, exactly when the answer is shown; its tier for styling.
   readonly comment: string | null;
   readonly tier: string | null;
-  // The viewer's own guess whose answer Frost still holds ("answer arriving in 2 s").
+  // An answer Frost still holds ("answer arriving… 2 s"): the viewer's own, or another
+  // player's where the round shows the others' answers (T150).
   readonly pending: boolean;
 }
 

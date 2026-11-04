@@ -8,7 +8,8 @@
  *                 summary hide as a running round does (`focus-mode`, ../round/focus.css): the
  *                 match's title, cut with an ellipsis, its game, the match code, the host's menu
  *                 where the viewer hosts, and "Play", the way back to the lobby, which the
- *                 hidden header held.
+ *                 hidden header held. A phone leaves the title out and shows the code without
+ *                 its label, so the game's name and the code are never cut (T150).
  * Depends on:     react, ../shell/router, ./match.css
  * Used by:        ./MatchPage, ./MatchSummary
  * Spec:           docs/spec/02-game-guess-the-number.md §9, §12
@@ -30,7 +31,10 @@ export function ResultBar(p: {
       <span className="smg-chip" data-testid="match-game">
         {p.game}
       </span>
-      <span className="focus-fact result-bar-code">Code {p.code}</span>
+      <span className="focus-fact result-bar-code" data-testid="result-code">
+        <span className="result-bar-label">Code </span>
+        {p.code}
+      </span>
       <span className="focus-actions">
         {p.host}
         <a className="smg-btn result-bar-link" href={hrefOf({ name: 'lobby' })}>

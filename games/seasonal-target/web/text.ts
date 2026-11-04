@@ -78,7 +78,11 @@ type Seen = PlayerView['log'][number];
 // The list's rows of a player view (own guesses and the others') or a spectator view.
 function guessRows(view: unknown): readonly GuessRow[] {
   const v = view as Partial<PlayerView> & Pick<SpectatorView, 'log'>;
-  const row = (g: Omit<Seen, 'playerId'>, playerId: string | null): GuessRow => ({
+  const row = (
+    g: Omit<Seen, 'playerId' | 'held'>,
+    playerId: string | null,
+    held: boolean,
+  ): GuessRow => ({
     key: String(g.receiveSeq),
     at: g.receivedAt,
     playerId,
@@ -90,9 +94,13 @@ function guessRows(view: unknown): readonly GuessRow[] {
     // The answer's own tier, not the comment's (null with comments off): the game's styles
     // colour the answer by it like the tile (./st.css).
     tier: g.feedback === null ? null : rowTier(g.feedback),
-    pending: playerId === null && g.feedback === null,
+    // Frost's held answer, the viewer's own or another player's (T150).
+    pending: held,
   });
-  return [...(v.guesses ?? []).map((g) => row(g, null)), ...v.log.map((g) => row(g, g.playerId))];
+  return [
+    ...(v.guesses ?? []).map((g) => row(g, null, g.feedback === null)),
+    ...v.log.map((g) => row(g, g.playerId, g.held)),
+  ];
 }
 
 // The best guess of anyone but the winner: "Closest miss besides the winner: Anna, 3 tiles

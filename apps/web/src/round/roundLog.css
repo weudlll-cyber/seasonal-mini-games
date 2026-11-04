@@ -5,10 +5,12 @@
  *
  * Responsibility: a list fills the box it gets (the stage, the info column, the phone's main
  *                 row) and scrolls inside itself, newest at the top (O20), in larger text on a
- *                 large screen. Its head is one line: the count or the others' counts, the
- *                 banner in its place, "All (N)" at its end (T142). A guess row is one line on
- *                 both layouts: dot, name (cut with an ellipsis), the guess, the answer and on
- *                 a desktop the comment in small text, cut with an ellipsis; on a phone the
+ *                 large screen. Its head is one line: the count, the banner in its place,
+ *                 "Log (M)" at its end (T142, T150); in individual mode the others' counts in
+ *                 a row of their own under it. A guess row is one line on both layouts: dot,
+ *                 name, the guess, the answer and on a desktop the comment in small text;
+ *                 where the line is short the comment gives way first, then the name (with an
+ *                 ellipsis), the guess and the answer never (T150); on a phone the
  *                 row is a button and an open comment a second line under the name. The
  *                 viewer's own rows on a tint of their own dot's colour (`--own`, T75); Frost's held answer with its seconds in a small
  *                 badge; an event is one quieter line, a special's own row (Leaf Fall) on the
@@ -58,6 +60,21 @@
   margin: 0;
 }
 
+/* Individual mode: the others' counts, a row of its own that no banner replaces (T150); a
+   long roster wraps to a second line. */
+.round-log-others {
+  flex: none;
+  margin: 0;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-strong);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
 .round-log ol {
   flex: 1;
   min-width: 0;
@@ -103,34 +120,27 @@ button.round-row-line {
   cursor: pointer;
 }
 
-.round-row[data-own='true'] {
+.round-row[data-own='true']:not([data-solo]) {
   /* The viewer's own colour, their dot's (`--own`, ./RoundScreen). */
   background: color-mix(in srgb, var(--own, var(--season)) 22%, var(--color-card));
   box-shadow: inset 4px 0 0 var(--own, var(--season));
 }
 
-/* The name keeps its room (up to 9 rem, then an ellipsis); the answer gives way first. */
+/* The name in full where the line has room; it gives way after the comment, with an
+   ellipsis, down to a few letters (T150). */
 .round-who {
-  flex: none;
+  flex: 0 1 auto;
   min-width: 2.5rem;
-  max-width: 9rem;
   overflow: hidden;
   text-overflow: ellipsis;
   font-weight: var(--font-weight-strong);
 }
 
+/* The guess and the answer never give way (T150): the comment and the name do. */
 .round-value,
 .round-answer {
   flex: none;
   font-weight: var(--font-weight-strong);
-}
-
-/* An answer longer than a phone's row is cut at its end, after the comment has given way. */
-.round-answer {
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .round-value {
@@ -153,25 +163,14 @@ button.round-row-line {
   white-space: normal;
 }
 
-/* A held answer: the words are cut in a narrow column, the seconds badge stays whole. */
+/* A held answer stands where the answer will: whole, like it (T150). */
 .round-arriving {
-  flex: 0 1 auto;
-  min-width: 0;
+  flex: none;
   display: inline-flex;
   align-items: baseline;
   gap: 0.3rem;
   color: var(--color-winter-text);
   font-weight: var(--font-weight-strong);
-}
-
-.round-arriving-text {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.round-arriving-left {
-  flex: none;
 }
 
 /* The seconds until a held answer arrives: a small badge in Frost's colour. */
@@ -235,6 +234,13 @@ button.round-row-line {
   border: 1px solid var(--color-border);
 }
 
+/* A guess drawn as colour dots (Bomb Defusal's wires): the viewer's own marker is a neutral
+   ring, never a colour that reads as a wire; the own-row tint says whose row it is (T153). */
+.round-row[data-own='true']:has(.round-swatches) .round-dot {
+  background: transparent;
+  border: 2px solid var(--color-text);
+}
+
 .round-answer[data-feedback='higher'] {
   color: var(--color-success-text);
 }
@@ -250,13 +256,7 @@ button.round-row-line {
   color: var(--color-success-text);
 }
 
-/* The info column's lists: the answer whole, the comment takes what is left. */
-.round-column .round-answer {
-  flex: none;
-}
-
-/* A phone: closer parts, so a long answer keeps more of its words; "All (N)" a full touch
-   target (night-7 review). */
+/* A phone: closer parts; "Log (M)" a full touch target (night-7 review). */
 @media (max-width: 899px) {
   .round-log-all {
     min-height: var(--hit-target);
@@ -267,15 +267,14 @@ button.round-row-line {
   }
 
   .round-who {
-    min-width: 0;
-    max-width: 7rem;
+    min-width: 2rem;
   }
 }
 
-/* A large screen (1920 × 1080): the stage's list reads larger, so the wide stage is not
-   mostly empty (O50); 22 rows and more still fit. */
+/* A large screen (1920 × 1080): the stage's list reads larger, so with few guesses the wide
+   stage is not mostly empty (O50; night-8 review: 1.375 rem, T153); about 30 rows still fit. */
 @media (min-width: 1600px) and (min-height: 950px) {
   .round-stage--list .round-log {
-    font-size: 1.125rem;
+    font-size: 1.375rem;
   }
 }

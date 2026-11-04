@@ -19,7 +19,7 @@ import type { PlayerView, SpectatorView } from '@smg-game/bomb-defusal';
 import type { PlayerPanelProps, SpectatorPanelProps } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
-import { hintText } from './text.js';
+import { hintText, shortHint } from './text.js';
 import { WireChip } from './WireChip.js';
 
 type Bomb = Pick<SpectatorView, 'wires' | 'cuts' | 'penaltyS' | 'harmless' | 'hint'>;
@@ -74,18 +74,18 @@ export function SpectatorPanel(props: SpectatorPanelProps): ReactElement {
 
 // The phone's info line (T141): "6 wires · cut 4 · wrong first cut +5 s", the harmless
 // wires marked so far, the hint.
+// The phone's line: short parts, each whole (T150); the penalty and the wires are in the sheet.
 export function InfoLine(props: SpectatorPanelProps): ReactElement {
   const bomb = props.view as Bomb;
-  const penalty = bomb.penaltyS === 0 ? 'boom, no wait' : `+${String(bomb.penaltyS)} s`;
   return (
     <span className="bd-line" data-testid="bd-line">
       <strong>
-        {bomb.wires.length} wires · cut {bomb.cuts} · wrong first cut {penalty}
+        {bomb.wires.length} wires · cut {bomb.cuts}
       </strong>
       {bomb.harmless.length === 0 ? null : (
         <span className="smg-chip bd-line-chip">Harmless {bomb.harmless.length}</span>
       )}
-      {bomb.hint === null ? null : <span className="bd-line-hint">{hintText(bomb.hint)}</span>}
+      {bomb.hint === null ? null : <span className="bd-line-hint">{shortHint(bomb.hint)}</span>}
     </span>
   );
 }

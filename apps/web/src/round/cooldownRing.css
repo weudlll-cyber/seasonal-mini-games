@@ -5,7 +5,7 @@
  *
  * Responsibility: a 52 px ring on a track of half the text colour, whose arc in the season
  *                 colour closes as the cooldown runs,
- *                 with the seconds or "Ready" in its middle; the arc moves without a
+ *                 with the seconds or, once ready, a check mark in its middle; the arc moves without a
  *                 transition when the person asked for reduced motion. Moved out of
  *                 ./round.css to keep each file under the size limit. Colours only from
  *                 @smg/ui tokens.
@@ -55,7 +55,14 @@
   font-size: var(--font-size-small);
 }
 
-/* "Ready" is wider than the seconds: smaller, so it stays inside the ring. */
-.round-ring[aria-label='Ready to guess'] .round-ring-label {
-  font-size: 0.7rem;
+/* Ready: a check mark drawn in the ring's own box, so it scales with the ring (T150). */
+.round-ring svg.round-ring-check {
+  position: absolute;
+  inset: 0;
+  transform: none;
+  fill: none;
+  stroke: var(--color-text);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }

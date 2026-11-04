@@ -11,7 +11,7 @@
  *                 heading keeps its two numbers together and
  *                 dense fallen numbers merge into hatched gaps; the spectator and result
  *                 panels show what their views hold, the result with the range; the views become the list's guess
- *                 rows, own ones pending while Frost holds them (O20, O21); every room event
+ *                 rows, pending while Frost holds them, own and others' alike (O20, O21, T150); every room event
  *                 has its plain line, and guesses none (they are rows); the intro line names
  *                 the mode and the range, or that it is hidden (O36); the banners of Leaf Fall
  *                 and halving, and the hint as "Free hint: …" (O35).
@@ -108,22 +108,30 @@ describe('the spectator and result panels', () => {
       secrets: null,
       guesses: { p1: [{ value: 42, feedback: 'correct' }] },
     };
-    render(<ResultPanel view={result} {...who} viewerKey="p1" />);
+    render(<ResultPanel view={result} {...who} viewerKey="p1" part="reveal" />);
     expect(screen.getByTestId('secret').textContent).toBe('42');
     expect(screen.getByTestId('result-range').textContent).toBe('The range was -500 to 500.');
+    cleanup();
+    // The history below the first part (T150): every guess in full, "did not guess" without one.
+    const quiet = { ...result, guesses: { ...result.guesses, p2: [] } };
+    render(<ResultPanel view={quiet} {...who} viewerKey="p1" part="history" />);
+    expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual([
+      'Anna: 42 correct',
+      'p2: did not guess',
+    ]);
   });
 });
 
 describe('the guess rows', () => {
-  it('turn the views into rows: own ones first, pending while Frost holds them', () => {
+  it('turn the views into rows: own ones first, any held answer pending (T150)', () => {
     expect(gtnText.guesses(view)).toEqual([
       { key: '1', at: 1_000, playerId: null, value: 300, ...answered, pending: false },
       { key: '3', at: 5_000, playerId: null, value: 700, ...held, pending: true },
-      { key: '2', at: 2_000, playerId: 'p2', value: 40, ...held, pending: false },
+      { key: '2', at: 2_000, playerId: 'p2', value: 40, ...held, pending: true },
     ]);
     const spectator = { range: null, removed: [], hint: null, log: view.log };
     expect(gtnText.guesses(spectator)).toEqual([
-      { key: '2', at: 2_000, playerId: 'p2', value: 40, ...held, pending: false },
+      { key: '2', at: 2_000, playerId: 'p2', value: 40, ...held, pending: true },
     ]);
   });
 });

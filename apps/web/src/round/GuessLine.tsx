@@ -8,11 +8,15 @@
  *                 or its colour dots with their names as accessible text and tooltip, T143),
  *                 higher or lower in colour or a game's answer in words with its pegs (T119),
  *                 and on a desktop the closeness comment on the same line, cut with an
- *                 ellipsis, its whole text in the tooltip. On a phone the comment is a second
- *                 line, shown for the newest row; a tap on a row shows or hides its own (the
- *                 list keeps which, ./RoundLog). The viewer's own rows have their own colour
- *                 behind them (their dot's, `--own`); under Frost an own row says "answer
- *                 arriving…" with the seconds left in a small badge. An event (Spring Herald,
+ *                 ellipsis, its whole text in the tooltip. Where the line is short the comment
+ *                 gives way first, then the name; the guess and the answer never (T150). On a
+ *                 phone the comment is a second line, shown for the newest row; a tap on a row
+ *                 shows or hides its own (the list keeps which, ./RoundLog). The viewer's own
+ *                 rows have their own colour behind them (their dot's, `--own`). `solo` (every
+ *                 row is the viewer's: individual mode) drops the dot, the name and the own
+ *                 colour; `bare` ("Your guesses") keeps the guess and the answer only. Under
+ *                 Frost every held answer, the viewer's and another player's alike, says
+ *                 "answer arriving…" with the seconds left in a small badge. An event (Spring Herald,
  *                 Heatwave, halving, solves, the round opening and ending) is a quieter row; a
  *                 special's own row (Leaf Fall) stands out on the season's tint with its icon
  *                 (T115). Moved out of ./RoundLog to keep each file under the size limit.
@@ -41,6 +45,10 @@ export interface RowProps {
   readonly now: number;
   // A phone: the comment on a second line, shown while `open`; a tap on the row toggles it.
   readonly phone: boolean;
+  // Every row is the viewer's (individual mode): no dot, no name, no own colour (T150).
+  readonly solo: boolean;
+  // The guess and its answer only ("Your guesses", T150).
+  readonly bare: boolean;
   readonly open: boolean;
   readonly toggle: () => void;
 }
@@ -75,8 +83,8 @@ function Swatches({ swatches }: { readonly swatches: readonly GuessSwatch[] }): 
   );
 }
 
-// Higher or lower in colour, a game's own answer in words, or under Frost the seconds until an
-// own answer arrives.
+// Higher or lower in colour, a game's own answer in words, or under Frost the seconds until a
+// held answer arrives (the viewer's own or, where the round shows them, another player's).
 function Answer({ guess, state, now }: Pick<RowProps, 'guess' | 'state' | 'now'>) {
   if (guess.feedback !== null) {
     return (
@@ -95,11 +103,11 @@ function Answer({ guess, state, now }: Pick<RowProps, 'guess' | 'state' | 'now'>
     );
   }
   if (!guess.pending) return null;
+  // The same marker for every held answer (T150): its seconds count from the receive time.
   const left = Math.max(0, Math.ceil((guess.at + (state.frostDelayMs ?? 0) - now) / 1_000));
   return (
     <span className="round-arriving">
-      <span className="round-arriving-text">answer arriving…</span>{' '}
-      <span className="round-arriving-left">{left} s</span>
+      answer arriving… <span className="round-arriving-left">{left} s</span>
     </span>
   );
 }
@@ -112,22 +120,40 @@ function Value({ guess }: { readonly guess: GuessRow }): ReactElement {
   return <span className="round-value">{text}</span>;
 }
 
+// The player's dot and name; none where every row is the viewer's or only the guess shows.
+function Who(p: RowProps): ReactElement | null {
+  if (p.solo || p.bare) return null;
+  // The viewer's own rows come without a player: they are "You" (a solved player too, O25).
+  const key = p.guess.playerId ?? p.viewerKey;
+  const name = p.guess.playerId === null ? 'You' : (p.state.names[key ?? ''] ?? key ?? '');
+  return (
+    <>
+      <span className="round-dot" aria-hidden="true" style={dot(p.state, key)} />
+      <span className="round-who" title={name}>
+        {name}
+      </span>
+    </>
+  );
+}
+
 export function GuessLine(p: RowProps): ReactElement {
   const { guess, state } = p;
-  // The viewer's own rows come without a player: they are "You" (a solved player too, O25).
-  const own = guess.playerId === null;
-  const key = guess.playerId ?? p.viewerKey;
-  const name = own ? 'You' : (state.names[key ?? ''] ?? key ?? '');
-  const comment = guess.comment;
+  const comment = p.bare ? null : guess.comment;
   const parts: ReactNode = (
     <>
-      <span className="round-dot" aria-hidden="true" style={dot(state, key)} />
-      <span className="round-who">{name}</span>
+      <Who {...p} />
       <Value guess={guess} />
       <Answer guess={guess} state={state} now={p.now} />
     </>
   );
-  const row = { className: 'round-row', 'data-own': own, 'data-tier': guess.tier ?? undefined };
+  // `data-own` says whose row it is (the tests find the viewer's rows by it); `data-solo`
+  // turns the own colour off where every row is the viewer's.
+  const row = {
+    className: 'round-row',
+    'data-own': guess.playerId === null,
+    'data-solo': p.solo || undefined,
+    'data-tier': guess.tier ?? undefined,
+  };
   if (p.phone && comment !== null) {
     return (
       <li {...row}>

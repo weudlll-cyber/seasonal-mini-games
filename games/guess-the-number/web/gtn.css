@@ -208,12 +208,12 @@
   align-content: start;
 }
 
+/* Every player's guesses in full, below the result's first part (T150). */
 .gtn-players {
   margin: 0;
   padding-left: 1.25rem;
   display: grid;
   gap: var(--space-1);
-  overflow-y: auto;
 }
 
 .gtn-message {

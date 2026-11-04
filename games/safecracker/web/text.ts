@@ -110,7 +110,11 @@ type Seen = PlayerView['log'][number];
 // The list's rows of a player view (own codes and the others') or a spectator view.
 function guessRows(view: unknown): readonly GuessRow[] {
   const v = view as Partial<PlayerView> & SpectatorView;
-  const row = (g: Omit<Seen, 'playerId'>, playerId: string | null): GuessRow => ({
+  const row = (
+    g: Omit<Seen, 'playerId' | 'held'>,
+    playerId: string | null,
+    held: boolean,
+  ): GuessRow => ({
     key: String(g.receiveSeq),
     at: g.receivedAt,
     playerId,
@@ -120,9 +124,13 @@ function guessRows(view: unknown): readonly GuessRow[] {
     answer: g.feedback === null ? null : answerOf(g.feedback, v.length),
     comment: g.comment,
     tier: g.tier,
-    pending: playerId === null && g.feedback === null,
+    // Frost's held answer, the viewer's own or another player's (T150).
+    pending: held,
   });
-  return [...(v.guesses ?? []).map((g) => row(g, null)), ...v.log.map((g) => row(g, g.playerId))];
+  return [
+    ...(v.guesses ?? []).map((g) => row(g, null, g.feedback === null)),
+    ...v.log.map((g) => row(g, g.playerId, g.held)),
+  ];
 }
 
 // "Closest miss besides the winner: Anna, 3 right · 1 wrong place (0427)."

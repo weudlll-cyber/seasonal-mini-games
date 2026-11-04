@@ -6,9 +6,9 @@
  * Responsibility: colours only from the design tokens (light and dark); the season colour
  *                 (`--season`, set by the platform's round screen) only as tint and border,
  *                 never behind text without the card colour mixed in; the digit strip in one
- *                 row (0–9 side by side on a desktop); a fallen digit in full-contrast text,
- *                 struck through with a thick line, a dashed border and a × badge inside its own
- *                 chip, so colour is never the only sign and nothing overlaps the next chip;
+ *                 row (0–9 side by side on a desktop); a fallen digit clearly unavailable:
+ *                 greyed on a dashed border with a strong cross from corner to corner inside its
+ *                 own chip (T153), so colour is never the only sign and nothing overlaps the next chip;
  *                 digit boxes at least 44 × 44 px with a border of at least 3:1 even when empty
  *                 (the muted text colour: 7:1 light, 9:1 dark); on a phone the code block is one row of chips at least
  *                 28 px wide and the input row wraps to two lines (boxes, then ring and button),
@@ -66,23 +66,25 @@
   font-size: var(--font-size-small);
 }
 
-/* A fallen digit: struck through, a dashed border and a × badge — three signs, none of them
-   colour; the digit keeps the full text colour so it stays readable. */
+/* A fallen digit: greyed on a dashed border, crossed out from corner to corner — signs that
+   are not colour, plain at a phone's 1.35 rem chip (T153); the muted digit still reads at 7:1. */
 .sc-chip[data-fallen='true'] {
-  background: var(--color-card);
+  background: var(--color-surface);
   border-style: dashed;
   border-color: var(--color-text-muted);
-  text-decoration: line-through 2px;
+  color: var(--color-text-muted);
 }
 
-/* The badge sits inside the chip's top right corner, never over the next chip. */
+/* The cross fills its own chip, never the next one. */
 .sc-cross {
   position: absolute;
-  top: 0.05rem;
-  right: 0.1rem;
-  font-size: 0.55rem;
-  line-height: 1;
-  color: var(--color-text);
+  inset: 12%;
+  width: 76%;
+  height: 76%;
+  fill: none;
+  stroke: var(--color-text);
+  stroke-width: 1.4;
+  stroke-linecap: round;
 }
 
 /* What "right" and "wrong place" mean in the answers (T143): one quiet line. */
@@ -175,12 +177,12 @@
   white-space: nowrap;
 }
 
+/* Every player's codes in full, below the result's first part (T150). */
 .sc-players {
   margin: 0;
   padding-left: 1.25rem;
   display: grid;
   gap: var(--space-1);
-  overflow-y: auto;
 }
 
 .sc-you {

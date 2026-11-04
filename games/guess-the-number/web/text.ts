@@ -45,6 +45,13 @@ function hintBody(hint: HintView): string {
 // The range block's highlighted line for the whole round (O35).
 export const freeHint = (hint: HintView): string => `Free hint: ${hintBody(hint)}`;
 
+// The hint in a few words for the phone's info line, never cut there (T150): "Hint: odd",
+// "Hint: 1–500,000"; the sheet has the sentence.
+export const shortHint = (hint: HintView): string =>
+  hint.kind === 'parity'
+    ? `Hint: ${hint.odd ? 'odd' : 'even'}`
+    : `Hint: ${formatNumber(hint.low)}–${formatNumber(hint.high)}`;
+
 const CODES: Readonly<Record<string, string>> = {
   OUT_OF_RANGE: 'That number is outside the range.',
   NUMBER_REMOVED: 'Already fallen.',
@@ -102,7 +109,11 @@ type Seen = PlayerView['log'][number];
 // The list's rows of a player view (own guesses and the others') or a spectator view.
 function guessRows(view: unknown): readonly GuessRow[] {
   const v = view as Partial<PlayerView> & Pick<SpectatorView, 'log'>;
-  const row = (g: Omit<Seen, 'playerId'>, playerId: string | null): GuessRow => ({
+  const row = (
+    g: Omit<Seen, 'playerId' | 'held'>,
+    playerId: string | null,
+    held: boolean,
+  ): GuessRow => ({
     key: String(g.receiveSeq),
     at: g.receivedAt,
     playerId,
@@ -110,9 +121,13 @@ function guessRows(view: unknown): readonly GuessRow[] {
     feedback: g.feedback,
     comment: g.comment,
     tier: g.tier,
-    pending: playerId === null && g.feedback === null,
+    // Frost's held answer, the viewer's own or another player's (T150).
+    pending: held,
   });
-  return [...(v.guesses ?? []).map((g) => row(g, null)), ...v.log.map((g) => row(g, g.playerId))];
+  return [
+    ...(v.guesses ?? []).map((g) => row(g, null, g.feedback === null)),
+    ...v.log.map((g) => row(g, g.playerId, g.held)),
+  ];
 }
 
 // The closest miss on the shared result (O22), naming that the winner is not counted:

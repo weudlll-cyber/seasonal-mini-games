@@ -5,8 +5,9 @@
  *
  * Responsibility: one line over the phone's guess list (T141): the range ("1–1,000" or "Any
  *                 whole number" while it is hidden), in a Leaf Fall round a "Fallen 10" chip,
- *                 and Spring Herald's hint, cut with an ellipsis where the line ends; the
- *                 platform makes the line the button that opens the whole panel as a sheet.
+ *                 and Spring Herald's hint in a few words ("Hint: odd"), each part whole
+ *                 (T150); the platform makes the line the button that opens the whole panel
+ *                 as a sheet, which has the hint's sentence.
  *                 The player's and the spectator's views both carry these parts.
  * Depends on:     react, @smg/game-sdk (props, formatNumber), @smg-game/guess-the-number (types),
  *                 ./FallenNumbers, ./text
@@ -18,7 +19,7 @@ import { formatNumber, type SpectatorPanelProps } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
 import { leafFallOn } from './FallenNumbers.js';
-import { freeHint } from './text.js';
+import { shortHint } from './text.js';
 
 export function InfoLine(props: SpectatorPanelProps): ReactElement {
   const v = props.view as Pick<SpectatorView, 'range' | 'removed' | 'hint'>;
@@ -32,7 +33,7 @@ export function InfoLine(props: SpectatorPanelProps): ReactElement {
       {leafFallOn(props) ? (
         <span className="smg-chip gtn-line-chip">Fallen {formatNumber(v.removed.length)}</span>
       ) : null}
-      {v.hint === null ? null : <span className="gtn-line-hint">{freeHint(v.hint)}</span>}
+      {v.hint === null ? null : <span className="gtn-line-hint">{shortHint(v.hint)}</span>}
     </span>
   );
 }

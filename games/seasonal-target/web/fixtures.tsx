@@ -36,8 +36,13 @@ export const own = (seq: number, x: number, y: number, feedback: Feedback | null
   ...seen,
 });
 
-// Another player's guess: `other('b', own(2, 9, 9, ne))`.
-export const other = (playerId: string, guess: ReturnType<typeof own>) => ({ ...guess, playerId });
+// Another player's guess: `other('b', own(2, 9, 9, ne))`; `held` while Frost holds its
+// answer (T150).
+export const other = (playerId: string, guess: ReturnType<typeof own>, held = false) => ({
+  ...guess,
+  playerId,
+  held,
+});
 
 export function playerView(over: Partial<PlayerView> = {}): PlayerView {
   return {

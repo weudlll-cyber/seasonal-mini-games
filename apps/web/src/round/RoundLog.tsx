@@ -7,15 +7,18 @@
  *                 reload and follow the round's visibility and Frost, DECISIONS T74), the event
  *                 rows from the live frames; newest at the top, in a box that fills the height
  *                 it gets and scrolls only inside itself. Only this round, nothing of earlier
- *                 rounds or the match (O54). Three kinds (T141, T142):
+ *                 rounds or the match (O54). Three kinds (T141, T142, T150):
  *                 `main`, the round's guesses (own rows highlighted), under a one-line head
- *                 with their count, in individual mode the others' counts instead of their
- *                 rows ("bot-01: 8 guesses · bot-02: 5", each player has their own secret),
- *                 the special's banner in the head's place for 5 s (./SpecialBanner) and
- *                 "All (N)" for the whole list; `own`, "Your guesses", the viewer's own only;
- *                 `all`, the guesses with every event, where each special's line always stays
- *                 (the All panel). Rows are one line (./GuessLine); on a phone the newest
- *                 row's comment shows under it and a tap on a row shows or hides its own.
+ *                 with their count ("12 guesses"), the event banner in the count's place for
+ *                 5 s (./SpecialBanner) and "Log (M)" for the whole list (M: its guesses and
+ *                 events); in individual mode only the viewer's rows, without "You" and the
+ *                 own colour, and the others' counts in a row of their own above the list
+ *                 ("Others: bot-01: 8 guesses · bot-02: 5", each player has their own
+ *                 secret), which a banner never replaces; `own`, "Your guesses", the
+ *                 viewer's guesses and answers only; `all`, the guesses with every event,
+ *                 where each special's line always stays (the Log panel). Rows are one line
+ *                 (./GuessLine); on a phone the newest row's comment shows under it and a tap
+ *                 on a row shows or hides its own.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (rows), @smg-game/registry/web (types),
  *                 ../live/useRound, ./GuessLine, ./SpecialBanner, ./roundText, ./roundLog.css
  * Used by:        ./RoundBody
@@ -84,27 +87,21 @@ const LIST_IDS = { main: 'guess-list', own: 'own-list', all: 'all-list' } as con
 
 const guesses = (n: number): string => `${String(n)} ${n === 1 ? 'guess' : 'guesses'}`;
 
-// Individual mode: the other players' guesses as counts, "bot-01: 8 guesses · bot-02: 5";
-// null when the viewer plays alone.
+// Individual mode: the other players' guesses as counts, "Others: bot-01: 8 guesses ·
+// bot-02: 5"; null when the viewer plays alone.
 export function othersLine(state: RoundStateView, viewerKey: string | null): string | null {
   const others = state.roster.filter((r) => r.playerKey !== viewerKey);
   if (others.length === 0) return null;
-  return others
-    .map((r, i) => {
-      const name = state.names[r.playerKey] ?? r.playerKey;
-      return `${name}: ${i === 0 ? guesses(r.guesses) : String(r.guesses)}`;
-    })
-    .join(' · ');
+  const counts = others.map((r, i) => {
+    const name = state.names[r.playerKey] ?? r.playerKey;
+    return `${name}: ${i === 0 ? guesses(r.guesses) : String(r.guesses)}`;
+  });
+  return `Others: ${counts.join(' · ')}`;
 }
 
-// The one-line head: what the list holds, the banner in its place while one shows, "All".
+// The one-line head: what the list holds, the banner in its place while one shows, "Log".
 function Head(p: LogProps & { readonly count: number; readonly all: number }): ReactElement {
-  const title =
-    p.kind === 'own'
-      ? 'Your guesses'
-      : p.state.secretMode === 'individual'
-        ? (othersLine(p.state, p.viewerKey) ?? guesses(p.count))
-        : guesses(p.count);
+  const title = p.kind === 'own' ? 'Your guesses' : guesses(p.count);
   const banner = p.banner ?? null;
   return (
     <div className="round-log-head">
@@ -123,7 +120,7 @@ function Head(p: LogProps & { readonly count: number; readonly all: number }): R
           data-testid="list-all"
           onClick={p.more.toggle}
         >
-          All ({p.all})
+          Log ({p.all})
         </button>
       )}
     </div>
@@ -149,10 +146,17 @@ export function RoundLog(p: LogProps): ReactElement {
   const events = p.kind === 'main' || p.kind === 'all' ? eventsOf(p) : [];
   const rows = (p.kind === 'all' ? [...shown, ...events] : shown).sort((a, b) => b.at - a.at);
   const newest = rows.find((r) => r.kind === 'guess')?.key ?? null;
+  const solo = p.state.secretMode === 'individual';
+  const others = p.kind === 'main' && solo ? othersLine(p.state, p.viewerKey) : null;
   return (
     <section className="round-log" aria-label={p.kind === 'own' ? 'Your guesses' : 'Guesses'}>
       {p.kind === 'all' ? null : (
         <Head {...p} count={shown.length} all={shown.length + events.length} />
+      )}
+      {others === null ? null : (
+        <p className="round-log-others" data-testid="others-line" title={others}>
+          {others}
+        </p>
       )}
       {rows.length === 0 ? (
         <p className="smg-muted round-log-empty">No guesses yet.</p>
@@ -167,6 +171,8 @@ export function RoundLog(p: LogProps): ReactElement {
                 viewerKey={p.viewerKey}
                 now={p.now}
                 phone={p.phone}
+                solo={solo}
+                bare={p.kind === 'own'}
                 open={comments.isOpen(row.key, row.key === newest)}
                 toggle={() => {
                   comments.toggle(row.key);

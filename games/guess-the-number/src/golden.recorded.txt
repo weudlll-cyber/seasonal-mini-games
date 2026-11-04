@@ -817,7 +817,8 @@
        "value": 250,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "Not close. Not close at all."
+       "comment": "Not close. Not close at all.",
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -826,7 +827,8 @@
        "value": 750,
        "feedback": "higher",
        "tier": "cool",
-       "comment": "The number glanced in your direction."
+       "comment": "The number glanced in your direction.",
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -835,7 +837,8 @@
        "value": 880,
        "feedback": "higher",
        "tier": "hot",
-       "comment": "The right direction, finally."
+       "comment": "The right direction, finally.",
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -844,7 +847,8 @@
        "value": 370,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "The number yawned."
+       "comment": "The number yawned.",
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -853,7 +857,8 @@
        "value": 60,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "Your last one was closer."
+       "comment": "Your last one was closer.",
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -862,7 +867,8 @@
        "value": 940,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 11,
@@ -871,7 +877,8 @@
        "value": 500,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 12,
@@ -880,7 +887,8 @@
        "value": 310,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 14,
@@ -889,7 +897,8 @@
        "value": 990,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 15,
@@ -898,7 +907,8 @@
        "value": 15,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       }
      ],
      "hint": {
@@ -932,7 +942,8 @@
        "value": 500,
        "feedback": "higher",
        "tier": "cold",
-       "comment": "A long walk from here."
+       "comment": "A long walk from here.",
+       "held": false
       },
       {
        "receiveSeq": 2,
@@ -941,7 +952,8 @@
        "value": 250,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "Not close. Not close at all."
+       "comment": "Not close. Not close at all.",
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -950,7 +962,8 @@
        "value": 750,
        "feedback": "higher",
        "tier": "cool",
-       "comment": "The number glanced in your direction."
+       "comment": "The number glanced in your direction.",
+       "held": false
       },
       {
        "receiveSeq": 4,
@@ -959,7 +972,8 @@
        "value": 120,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "Far, far away. Like a fairy tale, minus the happy ending."
+       "comment": "Far, far away. Like a fairy tale, minus the happy ending.",
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -968,7 +982,8 @@
        "value": 880,
        "feedback": "higher",
        "tier": "hot",
-       "comment": "The right direction, finally."
+       "comment": "The right direction, finally.",
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -977,7 +992,8 @@
        "value": 370,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "The number yawned."
+       "comment": "The number yawned.",
+       "held": false
       },
       {
        "receiveSeq": 7,
@@ -986,7 +1002,8 @@
        "value": 630,
        "feedback": "higher",
        "tier": "cold",
-       "comment": "Closer than last time."
+       "comment": "Closer than last time.",
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -995,7 +1012,8 @@
        "value": 60,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "Your last one was closer."
+       "comment": "Your last one was closer.",
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -1004,7 +1022,8 @@
        "value": 940,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 10,
@@ -1013,7 +1032,8 @@
        "value": 440,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 11,
@@ -1022,7 +1042,8 @@
        "value": 500,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 12,
@@ -1031,7 +1052,8 @@
        "value": 310,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 13,
@@ -1040,7 +1062,8 @@
        "value": 560,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 14,
@@ -1049,7 +1072,8 @@
        "value": 990,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 15,
@@ -1058,7 +1082,8 @@
        "value": 15,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       }
      ]
     },
@@ -1824,7 +1849,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -1833,7 +1859,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -1842,7 +1869,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -1851,7 +1879,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -1860,7 +1889,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -1869,7 +1899,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 11,
@@ -1878,7 +1909,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 12,
@@ -1887,7 +1919,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 14,
@@ -1896,7 +1929,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 15,
@@ -1905,7 +1939,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       }
      ],
      "hint": {
@@ -1934,7 +1969,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 2,
@@ -1943,7 +1979,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -1952,7 +1989,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 4,
@@ -1961,7 +1999,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -1970,7 +2009,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -1979,7 +2019,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 7,
@@ -1988,7 +2029,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -1997,7 +2039,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -2006,7 +2049,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 10,
@@ -2015,7 +2059,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 11,
@@ -2024,7 +2069,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 12,
@@ -2033,7 +2079,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 13,
@@ -2042,7 +2089,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 14,
@@ -2051,7 +2099,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 15,
@@ -2060,7 +2109,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       }
      ]
     },
@@ -2965,7 +3015,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -2974,7 +3025,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -2983,7 +3035,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -2992,7 +3045,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -3001,7 +3055,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -3010,7 +3065,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 11,
@@ -3019,7 +3075,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 12,
@@ -3028,7 +3085,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 14,
@@ -3037,7 +3095,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 15,
@@ -3046,7 +3105,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       }
      ],
      "hint": {
@@ -3090,7 +3150,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 2,
@@ -3099,7 +3160,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -3108,7 +3170,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 4,
@@ -3117,7 +3180,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -3126,7 +3190,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -3135,7 +3200,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 7,
@@ -3144,7 +3210,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -3153,7 +3220,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -3162,7 +3230,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 10,
@@ -3171,7 +3240,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 11,
@@ -3180,7 +3250,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 12,
@@ -3189,7 +3260,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 13,
@@ -3198,7 +3270,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 14,
@@ -3207,7 +3280,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 15,
@@ -3216,7 +3290,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       }
      ]
     },
@@ -4121,7 +4196,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -4130,7 +4206,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -4139,7 +4216,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -4148,7 +4226,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -4157,7 +4236,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -4166,7 +4246,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 11,
@@ -4175,7 +4256,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 12,
@@ -4184,7 +4266,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 14,
@@ -4193,7 +4276,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 15,
@@ -4202,7 +4286,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       }
      ],
      "hint": {
@@ -4246,7 +4331,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 2,
@@ -4255,7 +4341,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -4264,7 +4351,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 4,
@@ -4273,7 +4361,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -4282,7 +4371,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -4291,7 +4381,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 7,
@@ -4300,7 +4391,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -4309,7 +4401,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -4318,7 +4411,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 10,
@@ -4327,7 +4421,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 11,
@@ -4336,7 +4431,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 12,
@@ -4345,7 +4441,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 13,
@@ -4354,7 +4451,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 14,
@@ -4363,7 +4461,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 15,
@@ -4372,7 +4471,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       }
      ]
     },
@@ -5291,7 +5391,8 @@
        "value": 250,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "Bold. Very bold. Also very wrong."
+       "comment": "Bold. Very bold. Also very wrong.",
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -5300,7 +5401,8 @@
        "value": 750,
        "feedback": "higher",
        "tier": "cool",
-       "comment": "Tepid. Try a bit harder."
+       "comment": "Tepid. Try a bit harder.",
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -5309,7 +5411,8 @@
        "value": 880,
        "feedback": "higher",
        "tier": "cool",
-       "comment": "A room-temperature guess."
+       "comment": "A room-temperature guess.",
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -5318,7 +5421,8 @@
        "value": 370,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "That guess took the scenic route."
+       "comment": "That guess took the scenic route.",
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -5327,7 +5431,8 @@
        "value": 60,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "That was more of a wish than a guess."
+       "comment": "That was more of a wish than a guess.",
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -5336,7 +5441,8 @@
        "value": 940,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 11,
@@ -5345,7 +5451,8 @@
        "value": 500,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 12,
@@ -5354,7 +5461,8 @@
        "value": 310,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 14,
@@ -5363,7 +5471,8 @@
        "value": 990,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 15,
@@ -5372,7 +5481,8 @@
        "value": 15,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       }
      ],
      "hint": {
@@ -5419,7 +5529,8 @@
        "value": 500,
        "feedback": "higher",
        "tier": "cold",
-       "comment": "Still a long way to go."
+       "comment": "Still a long way to go.",
+       "held": false
       },
       {
        "receiveSeq": 2,
@@ -5428,7 +5539,8 @@
        "value": 250,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "Bold. Very bold. Also very wrong."
+       "comment": "Bold. Very bold. Also very wrong.",
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -5437,7 +5549,8 @@
        "value": 750,
        "feedback": "higher",
        "tier": "cool",
-       "comment": "Tepid. Try a bit harder."
+       "comment": "Tepid. Try a bit harder.",
+       "held": false
       },
       {
        "receiveSeq": 4,
@@ -5446,7 +5559,8 @@
        "value": 120,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "That guess wandered off past the orchard."
+       "comment": "That guess wandered off past the orchard.",
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -5455,7 +5569,8 @@
        "value": 880,
        "feedback": "higher",
        "tier": "cool",
-       "comment": "A room-temperature guess."
+       "comment": "A room-temperature guess.",
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -5464,7 +5579,8 @@
        "value": 370,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "That guess took the scenic route."
+       "comment": "That guess took the scenic route.",
+       "held": false
       },
       {
        "receiveSeq": 7,
@@ -5473,7 +5589,8 @@
        "value": 630,
        "feedback": "higher",
        "tier": "cold",
-       "comment": "Warming up nicely."
+       "comment": "Warming up nicely.",
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -5482,7 +5599,8 @@
        "value": 60,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "That was more of a wish than a guess."
+       "comment": "That was more of a wish than a guess.",
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -5491,7 +5609,8 @@
        "value": 940,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 10,
@@ -5500,7 +5619,8 @@
        "value": 440,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 11,
@@ -5509,7 +5629,8 @@
        "value": 500,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 12,
@@ -5518,7 +5639,8 @@
        "value": 310,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 13,
@@ -5527,7 +5649,8 @@
        "value": 560,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 14,
@@ -5536,7 +5659,8 @@
        "value": 990,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 15,
@@ -5545,7 +5669,8 @@
        "value": 15,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       }
      ]
     },
@@ -6311,7 +6436,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -6320,7 +6446,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -6329,7 +6456,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -6338,7 +6466,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -6347,7 +6476,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -6356,7 +6486,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 11,
@@ -6365,7 +6496,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 12,
@@ -6374,7 +6506,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 14,
@@ -6383,7 +6516,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 15,
@@ -6392,7 +6526,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       }
      ],
      "hint": {
@@ -6421,7 +6556,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 2,
@@ -6430,7 +6566,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -6439,7 +6576,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 4,
@@ -6448,7 +6586,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -6457,7 +6596,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -6466,7 +6606,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 7,
@@ -6475,7 +6616,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -6484,7 +6626,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -6493,7 +6636,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 10,
@@ -6502,7 +6646,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 11,
@@ -6511,7 +6656,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 12,
@@ -6520,7 +6666,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 13,
@@ -6529,7 +6676,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 14,
@@ -6538,7 +6686,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 15,
@@ -6547,7 +6696,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       }
      ]
     },
@@ -7450,7 +7600,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -7459,7 +7610,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -7468,7 +7620,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -7477,7 +7630,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -7486,7 +7640,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -7495,7 +7650,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 11,
@@ -7504,7 +7660,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 12,
@@ -7513,7 +7670,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 14,
@@ -7522,7 +7680,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 15,
@@ -7531,7 +7690,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       }
      ],
      "hint": {
@@ -7575,7 +7735,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 2,
@@ -7584,7 +7745,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -7593,7 +7755,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 4,
@@ -7602,7 +7765,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -7611,7 +7775,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -7620,7 +7785,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 7,
@@ -7629,7 +7795,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -7638,7 +7805,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -7647,7 +7815,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 10,
@@ -7656,7 +7825,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 11,
@@ -7665,7 +7835,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 12,
@@ -7674,7 +7845,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 13,
@@ -7683,7 +7855,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 14,
@@ -7692,7 +7865,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 15,
@@ -7701,7 +7875,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       }
      ]
     },
@@ -8604,7 +8779,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -8613,7 +8789,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -8622,7 +8799,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -8631,7 +8809,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -8640,7 +8819,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -8649,7 +8829,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 11,
@@ -8658,7 +8839,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 12,
@@ -8667,7 +8849,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 14,
@@ -8676,7 +8859,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 15,
@@ -8685,7 +8869,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       }
      ],
      "hint": {
@@ -8729,7 +8914,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 2,
@@ -8738,7 +8924,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -8747,7 +8934,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 4,
@@ -8756,7 +8944,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -8765,7 +8954,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -8774,7 +8964,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 7,
@@ -8783,7 +8974,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -8792,7 +8984,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -8801,7 +8994,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 10,
@@ -8810,7 +9004,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 11,
@@ -8819,7 +9014,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 12,
@@ -8828,7 +9024,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 13,
@@ -8837,7 +9034,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 14,
@@ -8846,7 +9044,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 15,
@@ -8855,7 +9054,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       }
      ]
     },
@@ -9767,7 +9967,8 @@
        "value": 250,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "Right idea, wrong season."
+       "comment": "Right idea, wrong season.",
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -9776,7 +9977,8 @@
        "value": 750,
        "feedback": "higher",
        "tier": "cool",
-       "comment": "It’s a start."
+       "comment": "It’s a start.",
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -9785,7 +9987,8 @@
        "value": 880,
        "feedback": "higher",
        "tier": "warm",
-       "comment": "Closing the gap."
+       "comment": "Closing the gap.",
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -9794,7 +9997,8 @@
        "value": 370,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "Lost in the fog, that one."
+       "comment": "Lost in the fog, that one.",
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -9803,7 +10007,8 @@
        "value": 60,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "A step backwards."
+       "comment": "A step backwards.",
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -9812,7 +10017,8 @@
        "value": 940,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 11,
@@ -9821,7 +10027,8 @@
        "value": 500,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 12,
@@ -9830,7 +10037,8 @@
        "value": 310,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 14,
@@ -9839,7 +10047,8 @@
        "value": 990,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 15,
@@ -9848,7 +10057,8 @@
        "value": 15,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       }
      ],
      "hint": {
@@ -9888,7 +10098,8 @@
        "value": 500,
        "feedback": "higher",
        "tier": "cold",
-       "comment": "Far-ish. Keep at it."
+       "comment": "Far-ish. Keep at it.",
+       "held": false
       },
       {
        "receiveSeq": 2,
@@ -9897,7 +10108,8 @@
        "value": 250,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "Right idea, wrong season."
+       "comment": "Right idea, wrong season.",
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -9906,7 +10118,8 @@
        "value": 750,
        "feedback": "higher",
        "tier": "cool",
-       "comment": "It’s a start."
+       "comment": "It’s a start.",
+       "held": false
       },
       {
        "receiveSeq": 4,
@@ -9915,7 +10128,8 @@
        "value": 120,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "Well, that wasn’t it."
+       "comment": "Well, that wasn’t it.",
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -9924,7 +10138,8 @@
        "value": 880,
        "feedback": "higher",
        "tier": "warm",
-       "comment": "Closing the gap."
+       "comment": "Closing the gap.",
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -9933,7 +10148,8 @@
        "value": 370,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "Lost in the fog, that one."
+       "comment": "Lost in the fog, that one.",
+       "held": false
       },
       {
        "receiveSeq": 7,
@@ -9942,7 +10158,8 @@
        "value": 630,
        "feedback": "higher",
        "tier": "cold",
-       "comment": "Nope, nothing warm about that."
+       "comment": "Nope, nothing warm about that.",
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -9951,7 +10168,8 @@
        "value": 60,
        "feedback": "higher",
        "tier": "wayOff",
-       "comment": "A step backwards."
+       "comment": "A step backwards.",
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -9960,7 +10178,8 @@
        "value": 940,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 10,
@@ -9969,7 +10188,8 @@
        "value": 440,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 11,
@@ -9978,7 +10198,8 @@
        "value": 500,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 12,
@@ -9987,7 +10208,8 @@
        "value": 310,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 13,
@@ -9996,7 +10218,8 @@
        "value": 560,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 14,
@@ -10005,7 +10228,8 @@
        "value": 990,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       },
       {
        "receiveSeq": 15,
@@ -10014,7 +10238,8 @@
        "value": 15,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": true
       }
      ]
     },
@@ -10779,7 +11004,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -10788,7 +11014,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -10797,7 +11024,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -10806,7 +11034,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -10815,7 +11044,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -10824,7 +11054,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 11,
@@ -10833,7 +11064,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 12,
@@ -10842,7 +11074,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 14,
@@ -10851,7 +11084,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 15,
@@ -10860,7 +11094,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       }
      ],
      "hint": {
@@ -10888,7 +11123,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 2,
@@ -10897,7 +11133,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -10906,7 +11143,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 4,
@@ -10915,7 +11153,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -10924,7 +11163,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -10933,7 +11173,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 7,
@@ -10942,7 +11183,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -10951,7 +11193,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -10960,7 +11203,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 10,
@@ -10969,7 +11213,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 11,
@@ -10978,7 +11223,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 12,
@@ -10987,7 +11233,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 13,
@@ -10996,7 +11243,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 14,
@@ -11005,7 +11253,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 15,
@@ -11014,7 +11263,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       }
      ]
     },
@@ -11911,7 +12161,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -11920,7 +12171,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -11929,7 +12181,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -11938,7 +12191,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -11947,7 +12201,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -11956,7 +12211,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 11,
@@ -11965,7 +12221,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 12,
@@ -11974,7 +12231,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 14,
@@ -11983,7 +12241,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 15,
@@ -11992,7 +12251,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       }
      ],
      "hint": {
@@ -12036,7 +12296,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 2,
@@ -12045,7 +12306,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -12054,7 +12316,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 4,
@@ -12063,7 +12326,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -12072,7 +12336,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -12081,7 +12346,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 7,
@@ -12090,7 +12356,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -12099,7 +12366,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -12108,7 +12376,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 10,
@@ -12117,7 +12386,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 11,
@@ -12126,7 +12396,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 12,
@@ -12135,7 +12406,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 13,
@@ -12144,7 +12416,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 14,
@@ -12153,7 +12426,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 15,
@@ -12162,7 +12436,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       }
      ]
     },
@@ -13059,7 +13334,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -13068,7 +13344,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -13077,7 +13354,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -13086,7 +13364,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -13095,7 +13374,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -13104,7 +13384,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 11,
@@ -13113,7 +13394,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 12,
@@ -13122,7 +13404,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 14,
@@ -13131,7 +13414,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 15,
@@ -13140,7 +13424,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       }
      ],
      "hint": {
@@ -13184,7 +13469,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 2,
@@ -13193,7 +13479,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 3,
@@ -13202,7 +13489,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 4,
@@ -13211,7 +13499,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 5,
@@ -13220,7 +13509,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 6,
@@ -13229,7 +13519,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 7,
@@ -13238,7 +13529,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 8,
@@ -13247,7 +13539,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 9,
@@ -13256,7 +13549,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 10,
@@ -13265,7 +13559,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 11,
@@ -13274,7 +13569,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 12,
@@ -13283,7 +13579,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 13,
@@ -13292,7 +13589,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 14,
@@ -13301,7 +13599,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       },
       {
        "receiveSeq": 15,
@@ -13310,7 +13609,8 @@
        "value": null,
        "feedback": null,
        "tier": null,
-       "comment": null
+       "comment": null,
+       "held": false
       }
      ]
     },

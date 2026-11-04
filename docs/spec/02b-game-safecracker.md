@@ -109,7 +109,7 @@ None *(proposal)*. Safecracker implements no `halving` hook and sets `halvingAll
 
 ## 8. Winning, closest miss and the result page A time-up result without a winner shows the round's closest guess instead, "Closest guess: …" (DECISIONS T145).
 
-Winning, placings, end conditions, points and the winning margin are [02](02-game-guess-the-number.md) §8 and §9. The reveal shows the code (shared) or every player's code (individual), and the result's secret line reads "The code was 1123 (4 digits, 0–9)."
+Winning, placings, end conditions, points and the winning margin are [02](02-game-guess-the-number.md) §8 and §9. The reveal shows the code (shared) or every player's code (individual), and the result's secret line reads "Code: 1123 (4 digits, 0–9)" (DECISIONS T150).
 
 **Closest miss** *(proposal)*, shared mode with a winner and no second correct guess inside the margin window (owner, decision 22): among the wrong guesses of players other than the winner, the one with the most `exact`, then the most `near`, then the earlier receive order: "Closest miss besides the winner: Anna, 3 right places, 1 right digit, wrong place (0427)." Without such a guess there is no line. It is computed at the round's end and carried only in the result view ([02](02-game-guess-the-number.md) §9, DECISIONS T77).
 

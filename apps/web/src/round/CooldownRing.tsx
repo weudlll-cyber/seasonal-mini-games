@@ -5,7 +5,8 @@
  *
  * Responsibility: from the cooldown's end time the server sent (corrected by the clock
  *                 offset) and the cooldown in force, draw the ring and the seconds left, or
- *                 "Ready" (02 §7). Only a display: the server enforces the cooldown.
+ *                 once ready a check mark sized to the ring, named "Ready" (02 §7, T150).
+ *                 Only a display: the server enforces the cooldown.
  *                 Without motion when the player asks for reduced motion.
  * Depends on:     react, ./cooldownRing.css
  * Used by:        ./RoundScreen
@@ -28,12 +29,13 @@ export function CooldownRing({ endsAt, cooldownMs, now }: CooldownRingProps): Re
   const leftMs = Math.max(0, endsAt - now);
   const ready = leftMs === 0;
   const share = ready ? 0 : Math.min(1, leftMs / Math.max(1, cooldownMs));
-  const label = ready ? 'Ready' : `${String(Math.ceil(leftMs / 1_000))} s`;
+  const label = `${String(Math.ceil(leftMs / 1_000))} s`;
   return (
     <div
       className="round-ring"
       role="timer"
-      aria-label={ready ? 'Ready to guess' : `Cooldown, ${label} left`}
+      aria-label={ready ? 'Ready' : `Cooldown, ${label} left`}
+      data-ready={ready}
       data-testid="cooldown"
       // The cooldown in force (Heatwave lowers it), for the tests: the bar no longer shows it.
       data-cooldown-ms={cooldownMs}
@@ -49,7 +51,14 @@ export function CooldownRing({ endsAt, cooldownMs, now }: CooldownRingProps): Re
           strokeDashoffset={CIRCUMFERENCE * (1 - share)}
         />
       </svg>
-      <span className="round-ring-label">{label}</span>
+      {ready ? (
+        // The word "Ready" did not fit the ring (night-7 review): a check mark in its middle.
+        <svg className="round-ring-check" viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M20 33 l8 8 l16 -18" />
+        </svg>
+      ) : (
+        <span className="round-ring-label">{label}</span>
+      )}
     </div>
   );
 }

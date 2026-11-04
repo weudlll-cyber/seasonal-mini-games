@@ -60,6 +60,9 @@ const harmlessText = (wires: readonly Wire[]): string =>
 
 export const hintText = (wire: Wire): string => `Free hint: cut ${wire} first.`;
 
+// The hint in a few words for the phone's info line (T150): "Hint: red first".
+export const shortHint = (wire: Wire): string => `Hint: ${wire} first`;
+
 // A slot holding a wire marked harmless after it was put there (02c §11).
 export const takeOutText = (wire: Wire): string =>
   `The ${wire} wire is harmless now — take it out.`;
@@ -126,7 +129,7 @@ interface Seen {
 // The list's rows of a player view (own sequences and the others') or a spectator view.
 function guessRows(view: unknown): readonly GuessRow[] {
   const v = view as Partial<PlayerView> & Pick<SpectatorView, 'log' | 'cuts'>;
-  const row = (g: Seen, playerId: string | null): GuessRow => ({
+  const row = (g: Seen, playerId: string | null, held: boolean): GuessRow => ({
     key: String(g.receiveSeq),
     at: g.receivedAt,
     playerId,
@@ -138,9 +141,13 @@ function guessRows(view: unknown): readonly GuessRow[] {
     answer: g.feedback === null ? null : answerText(g.feedback, v.cuts),
     comment: g.comment,
     tier: g.tier,
-    pending: playerId === null && g.feedback === null,
+    // Frost's held answer, the viewer's own or another player's (T150).
+    pending: held,
   });
-  return [...(v.guesses ?? []).map((g) => row(g, null)), ...v.log.map((g) => row(g, g.playerId))];
+  return [
+    ...(v.guesses ?? []).map((g) => row(g, null, g.feedback === null)),
+    ...v.log.map((g) => row(g, g.playerId, g.held)),
+  ];
 }
 
 // 02c §9: "Closest: Anna, the first 3 cuts right (red → blue → yellow → black)."

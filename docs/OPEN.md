@@ -80,9 +80,13 @@ Built as described in 02 §12 and DECISIONS T128–T132 and T134–T136 (O47–O
 
 **Night 8, to confirm** (proposals; built on `feat/guess-games`):
 
+- Every game (T150): the desktop's special line with the whole sentence, wrapping; rows that cut the comment, then the name, never the guess or the answer; "Your guesses" with the guess and the answer only; the phone's info line in short whole parts ("Hint: odd", "8 wires · cut 6"); the list's head "12 guesses" and "Log (M)"; individual mode's "Others: …" row of its own, rows without "You" and the own colour; every held Frost answer with "answer arriving…"; the ring's check mark; result pages with the reveal in the first part and every player's guesses in full below it, Bomb Defusal's history in colour dots, "did not guess", "Code: 0834", the phone's result bar with the game's name and code whole.
+
+- Seasonal Target (T151): seven colours in closeness mode; the halving dims only empty tiles; a fallen tile or one outside the area cannot be selected ("That tile fell."), the arrows step past fallen tiles; "Fallen (N)" in whole rows; "Just missed"; the own tile's ink-and-colour frame; the result's grid with the first part's height.
+- Safecracker and Bomb Defusal (T153): the fallen digit crossed from corner to corner; Bomb Defusal's own marker a neutral ring beside the colour dots; the revealed sequence on one line; larger rows at 1920 × 1080.
 - Load scenario L1 (T180): six rounds (plain, each season's special, a halving round), as 09 §5 lists them, not the ten it counts.
 
-**Night-7 layout, to confirm** (proposals T141–T142, owner decision 54; built on `feat/guess-games`):
+**Night-7 layout, to confirm** (proposals T141–T142, owner decision 54; built on `feat/guess-games`; amended by T150 where night 8 changed it):
 
 - One layout for every game: a desktop (landscape, 900 px wide or more) has the stage on the left and a 340 px info column on the right; anything narrower or in portrait, a tablet held upright included, gets the phone layout (T141).
 - The desktop's info column: the special's line (one line, all of it on a click; the desktop's pill no longer opens a note), the game's panel, then "Your guesses" for the three list games in shared mode; in individual mode it is left out, because the stage then holds exactly the viewer's guesses (T141).
@@ -100,7 +104,6 @@ Built as described in 02 §12 and DECISIONS T128–T132 and T134–T136 (O47–O
 
 **Night-6 screenshot review, for the owner** (the list with its places is in NIGHT-RUN.md, Night 6; night 7 solved every other item, BACKLOG part two):
 
-- Night 7: Seasonal Target's result panel draws the grid and every player's guesses in one part, so on a phone's solved result the grid is about 160 px; giving the grid the part would need the game's result panel split.
 - Night 7: in individual mode the desktop's info column is empty under the game's panel (T141 leaves "Your guesses" out, the stage holds the same rows).
 - Night 7: on a phone the result's placings cut a long name ("dev…") and put "took part" on two lines; four columns at 390 px leave the name about 7 rem.
 - In dark mode an own row's tint of a muted dot (olive, Team Spring) reads greyish; a stronger tint cost the colour dots and answers their contrast (T147), so it stays at 22 %.

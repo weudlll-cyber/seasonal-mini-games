@@ -137,7 +137,7 @@ async function focusJourney(
       if (size === PHONE) await panel(p.page, 'info-line', 'This round', size);
       await fitsScreen(p.page);
       // The cooldown of the guess before has run out.
-      await expect(p.page.getByTestId('cooldown')).toHaveAttribute('aria-label', 'Ready to guess', {
+      await expect(p.page.getByTestId('cooldown')).toHaveAttribute('aria-label', 'Ready', {
         timeout: 40_000,
       });
       await play(p.page, n);

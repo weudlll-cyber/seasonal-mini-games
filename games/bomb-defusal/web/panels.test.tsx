@@ -45,8 +45,8 @@ const view = {
   hint: 'red',
   guesses: [own(1, 0), own(3, null)],
   log: [
-    { ...own(2, 2), playerId: 'p2' },
-    { ...own(4, null), playerId: 'p3', value: null },
+    { ...own(2, 2), playerId: 'p2', held: false },
+    { ...own(4, null), playerId: 'p3', value: null, held: false },
   ],
 };
 
@@ -96,10 +96,18 @@ describe('the result panel', () => {
       guesses,
       closestMiss: null,
     };
-    render(<ResultPanel view={v} names={{ a: 'Anna' }} viewerKey="b" colors={{}} />);
+    const props = { view: v, names: { a: 'Anna' }, viewerKey: 'b', colors: {} };
+    render(<ResultPanel {...props} part="reveal" />);
     expect(screen.getByTestId('secret').textContent).toBe('redblueyellowwhite');
-    expect(screen.getByText('red → blue → yellow → white: Defused!')).toBeTruthy();
-    expect(screen.getByText('no sequences')).toBeTruthy();
+    cleanup();
+    // The history (T150): each sequence as the round's colour dots, named, with its answer.
+    render(<ResultPanel {...props} part="history" />);
+    const cut = screen.getByTitle('red → blue → yellow → white');
+    expect([...cut.querySelectorAll('.bd-swatch')].map((s) => s.getAttribute('data-wire'))).toEqual(
+      ['red', 'blue', 'yellow', 'white'],
+    );
+    expect(cut.parentElement?.textContent).toBe('red → blue → yellow → white Defused!');
+    expect(screen.getByText('did not guess')).toBeTruthy();
   });
 
   it('shows every player’s own sequence in individual mode', () => {
@@ -111,8 +119,11 @@ describe('the result panel', () => {
       guesses,
       closestMiss: null,
     };
-    render(<ResultPanel view={v} names={{ a: 'Anna' }} viewerKey="a" colors={{}} />);
+    render(<ResultPanel view={v} names={{ a: 'Anna' }} viewerKey="a" colors={{}} part="reveal" />);
     expect(screen.queryByTestId('secret')).toBeNull();
+    expect(screen.getByText('Everyone had their own sequence.')).toBeTruthy();
+    cleanup();
+    render(<ResultPanel view={v} names={{ a: 'Anna' }} viewerKey="a" colors={{}} part="history" />);
     expect(screen.getByLabelText("Anna's sequence").textContent).toBe('redblueyellowwhite');
     expect(screen.getByLabelText("b's sequence").textContent).toBe('whiteredbluegreen');
   });
@@ -221,11 +232,11 @@ describe('the game text: results, intro and entry', () => {
 });
 
 describe("the phone's info line", () => {
-  it('names wires, cuts and the penalty, the harmless count and the hint (T141)', () => {
+  it('names wires and cuts, the harmless count and the hint in a few words (T141, T150)', () => {
     const at = { names: {}, colors: {}, season: 'spring' as const, specialOn: true };
     render(<InfoLine view={view} {...at} />);
     expect(screen.getByTestId('bd-line').textContent).toBe(
-      '6 wires · cut 4 · wrong first cut +5 sHarmless 1Free hint: cut red first.',
+      '6 wires · cut 4Harmless 1Hint: red first',
     );
   });
 });

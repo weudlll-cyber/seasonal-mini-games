@@ -4,9 +4,10 @@
  * @brief  The round's info parts: the game's panel, the desktop's special line, the phone's line.
  *
  * Responsibility: the game's panel (`GamePart`: a roster player's range, digits, wires or
- *                 legend with the hint and what has fallen, or the spectator's); on a desktop
+ *                 legend with the hint and what has fallen,  *                 spectator's); on a desktop
  *                 the special line at the top of the info column, the special's name and its
- *                 one plain sentence cut to one line, the whole sentence on a click (T141); on
+ *                 one plain sentence, whole and wrapping (T141, T150); the special's
+ *                 description lives there only; on
  *                 a phone the info line under the bar, one line of at most 48 px from the game
  *                 (`game.Line`), a button that opens the game's panel as a sheet over the rows
  *                 between the bar and the action dock, which it never covers (O48), the special's
@@ -18,7 +19,7 @@
  */
 import type { GameWeb } from '@smg-game/registry/web';
 import type { RoundStateView } from '@smg/contracts';
-import { useState, type ReactElement } from 'react';
+import type { ReactElement } from 'react';
 
 import { serverNow } from '../live/socket.js';
 import { SPECIALS } from '../season/season.js';
@@ -56,25 +57,16 @@ export function GamePart(p: {
   );
 }
 
-// The desktop's special line: one line, the whole sentence on a click; none without a special.
+// The desktop's special line: the whole sentence; none without a special.
 export function SpecialLine(p: {
   readonly state: RoundStateView;
   readonly rule: string;
 }): ReactElement | null {
-  const [open, setOpen] = useState(false);
   if (!p.state.specialOn) return null;
   return (
-    <button
-      type="button"
-      className="round-special-line"
-      aria-expanded={open}
-      data-testid="special-line"
-      onClick={() => {
-        setOpen((was) => !was);
-      }}
-    >
+    <p className="round-special-line" data-testid="special-line">
       <strong>{SPECIALS[p.state.season].name}:</strong> {p.rule}
-    </button>
+    </p>
   );
 }
 

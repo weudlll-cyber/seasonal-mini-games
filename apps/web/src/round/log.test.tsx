@@ -5,9 +5,9 @@
  * @brief  The round's lists (T142): main, "Your guesses", All; one-line rows and comments.
  *
  * Responsibility: the main list holds this round's guesses only, under a head with their
- *                 count and "All (N)" counting guesses and events; in individual mode the
- *                 others' guesses get no rows and the head counts them ("Walter: 9 guesses");
- *                 "Your guesses" holds the viewer's own only; the banner takes the head's place
+ *                 count and "Log (M)" counting guesses and events (T150); in individual mode
+ *                 the others' guesses get no rows and a row of their own counts them ("Others:
+ *                 Walter: 9 guesses"); "Your guesses" holds the viewer's own only; the banner takes the head's place
  *                 on one line while its event stays in the All list; a desktop row carries its
  *                 comment on its line with the whole text as tooltip, a phone shows the newest
  *                 row's comment and a tap toggles a row's own; a guess's colour dots carry
@@ -62,21 +62,22 @@ const values = (id: string) =>
   [...screen.getByTestId(id).querySelectorAll('.round-value')].map((v) => v.textContent);
 
 describe('the main list', () => {
-  it('holds the guesses only; "All (N)" counts guesses and events and opens the panel', () => {
+  it('holds the guesses only; "Log (M)" counts guesses and events and opens the panel', () => {
     const toggle = vi.fn();
     show({ more: { open: false, toggle, button: () => undefined } });
     expect(values('guess-list')).toEqual(['30', '50', '10']);
     expect(screen.getByTestId('guess-list').textContent).not.toContain('Leaf Fall');
     expect(screen.getByTestId('list-title').textContent).toBe('3 guesses');
     fireEvent.click(screen.getByTestId('list-all'));
-    expect(screen.getByTestId('list-all').textContent).toBe('All (4)');
+    expect(screen.getByTestId('list-all').textContent).toBe('Log (4)');
     expect(toggle).toHaveBeenCalledTimes(1);
   });
 
-  it('in individual mode leaves the others out and counts them in the head', () => {
+  it('in individual mode leaves the others out and counts them in a row of their own', () => {
     show({ state: { ...open, secretMode: 'individual' } });
     expect(values('guess-list')).toEqual(['30', '10']);
-    expect(screen.getByTestId('list-title').textContent).toBe('Walter: 9 guesses');
+    expect(screen.getByTestId('list-title').textContent).toBe('2 guesses');
+    expect(screen.getByTestId('others-line').textContent).toBe('Others: Walter: 9 guesses');
   });
 
   it('gives the banner the head’s place on one line; its event stays in the All list', () => {
@@ -92,14 +93,14 @@ describe('the main list', () => {
 });
 
 describe('the individual-mode summary line', () => {
-  it('reads "bot-01: 8 guesses · bot-02: 5" without the viewer', () => {
+  it('reads "Others: bot-01: 8 guesses · bot-02: 5" without the viewer', () => {
     const roster = [
       { playerKey: 'me', team: null, guesses: 3, cooldownEndsAt: 0, place: null, solved: false },
       { playerKey: 'b1', team: null, guesses: 8, cooldownEndsAt: 0, place: null, solved: false },
       { playerKey: 'b2', team: null, guesses: 5, cooldownEndsAt: 0, place: null, solved: false },
     ];
     const state = { ...open, roster, names: { me: 'Me', b1: 'bot-01', b2: 'bot-02' } };
-    expect(othersLine(state, 'me')).toBe('bot-01: 8 guesses · bot-02: 5');
+    expect(othersLine(state, 'me')).toBe('Others: bot-01: 8 guesses · bot-02: 5');
     expect(othersLine({ ...state, roster: roster.slice(0, 1) }, 'me')).toBeNull();
   });
 });

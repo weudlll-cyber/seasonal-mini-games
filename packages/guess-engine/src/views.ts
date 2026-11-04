@@ -63,6 +63,9 @@ export function othersGuesses<V, F>(state: GuessBase<V, F>, ctx: ViewCtx, except
       playerId,
       value: numbers ? g.value : null,
       ...answerOf(g, full && released(g, ctx)),
+      // An answer this viewer will see once Frost lets it go ("answer arriving…", T150);
+      // false where the visibility hides it for good.
+      held: full && !released(g, ctx),
     }));
 }
 
@@ -88,7 +91,9 @@ export function guessSchemas<V extends ZodType, F extends ZodType>(value: V, fee
   };
   return {
     own: z.object({ ...seen, value }).strict(),
-    other: z.object({ ...seen, playerId: z.string(), value: value.nullable() }).strict(),
+    other: z
+      .object({ ...seen, playerId: z.string(), value: value.nullable(), held: z.boolean() })
+      .strict(),
     result: z.record(z.string(), z.array(z.object({ value, feedback }).strict())),
   };
 }

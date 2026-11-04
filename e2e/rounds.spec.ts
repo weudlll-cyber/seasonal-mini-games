@@ -129,8 +129,8 @@ test('journey 2: an individual round places solvers in order and ends with time 
     await expect(solvedRow.locator('.round-comment')).not.toBeEmpty();
     await search(two);
     // Individual mode: player 2's guesses get no rows on player 1's list, only their count in
-    // the list's head (T142).
-    await expect(one.page.getByTestId('list-title')).toContainText(/dev-player-2: [1-9]/);
+    // the others' row above it (T142, T150).
+    await expect(one.page.getByTestId('others-line')).toContainText(/dev-player-2: [1-9]/);
     await expect(one.page.locator('[data-testid="guess-list"] li[data-own="false"]')).toHaveCount(
       0,
     );
