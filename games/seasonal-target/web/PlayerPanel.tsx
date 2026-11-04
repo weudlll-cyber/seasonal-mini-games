@@ -52,15 +52,17 @@ export function GridLines(p: {
 }
 
 // The phone's info line (T141): the target area once a halving shrank it, else Spring's
-// quarter ("Hint: south-east quarter"), else the heat legend; a spectator's view in
-// individual mode has no area of its own.
+// quarter ("Hint: south-east quarter"), else the heat legend of the round's mode, its words
+// and swatches spaced (T151); a spectator's view in individual mode has no area of its own.
 export function InfoLine(props: SpectatorPanelProps): ReactElement {
-  const v = props.view as Pick<PlayerView, 'map' | 'hint'> & { readonly area: Area | null };
+  const v = props.view as Pick<PlayerView, 'map' | 'hint' | 'feedbackMode'> & {
+    readonly area: Area | null;
+  };
   const shrunk = v.area !== null && !whole(v.area, v.map) ? areaLine(v.area) : null;
   const text = shrunk ?? (v.hint === null ? null : `Hint: ${v.hint.name} quarter`);
   return (
     <span className="st-line" data-testid="st-line">
-      {text === null ? <HeatLegend /> : <strong>{text}</strong>}
+      {text === null ? <HeatLegend mode={v.feedbackMode} /> : <strong>{text}</strong>}
     </span>
   );
 }
@@ -69,7 +71,7 @@ export function PlayerPanel(props: PlayerPanelProps): ReactElement {
   const v = props.view as PlayerView;
   return (
     <div className="st-player" data-testid="st-player">
-      <HeatLegend />
+      <HeatLegend mode={v.feedbackMode} />
       <GridLines map={v.map} area={v.area} sizeLine={null} hint={v.hint} />
       {leafFallOn(props) ? <FallenCells fallen={v.fallen} /> : null}
     </div>

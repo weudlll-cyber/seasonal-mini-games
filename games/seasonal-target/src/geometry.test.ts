@@ -9,7 +9,9 @@
  *                 float reference for every cell of 8 × 8, 20 × 20, 30 × 30 and 30 × 8 grids
  *                 (both sides of every threshold), every tier reachable at every size 8–30, the
  *                 pinned table of 02d §7 at 8, 20 and 30; touching cells; the answers in all
- *                 three modes, each wrong one with its tier.
+ *                 three modes, each wrong one with its tier; in `distance` and `direction` mode
+ *                 the tier follows the shown rounded distance, so equal numbers share a colour
+ *                 (T152), in `closeness` mode it is the exact one.
  * Depends on:     vitest, fast-check, ./geometry
  * Spec:           docs/spec/09-testing-strategy.md §4.1; docs/spec/02d-game-seasonal-target.md §5, §7
  */
@@ -18,6 +20,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   answerOf,
+  answerTier,
   cellsOf,
   COMPASS,
   directionOf,
@@ -63,23 +66,27 @@ describe('distance and direction', () => {
       }
     }
   });
+});
 
+describe('the worked examples', () => {
   it('answers the worked examples of 02d §5, each wrong answer with its tier', () => {
     const map = { width: 20, height: 20 };
     const rule = { mode: 'direction', map } as const;
     const dist = { mode: 'distance', map } as const;
     const close = { mode: 'closeness', map } as const;
+    // The tier of the shown distance (T152) and the exact one of `closeness` mode: √8 rounds
+    // to 3, which is hot, while 2.83 itself is burning.
     const cases = [
-      [{ x: 4, y: 14 }, { x: 12, y: 10 }, 9, 'NE', 'cold'],
-      [{ x: 4, y: 14 }, { x: 17, y: 11 }, 13, 'E', 'wayOff'],
-      [{ x: 10, y: 10 }, { x: 12, y: 12 }, 3, 'SE', 'burning'],
-      [{ x: 12, y: 11 }, { x: 12, y: 10 }, 1, 'N', 'justMissed'],
-      [{ x: 19, y: 2 }, { x: 2, y: 18 }, 23, 'SW', 'wayOff'],
+      [{ x: 4, y: 14 }, { x: 12, y: 10 }, 9, 'NE', 'cold', 'cold'],
+      [{ x: 4, y: 14 }, { x: 17, y: 11 }, 13, 'E', 'wayOff', 'wayOff'],
+      [{ x: 10, y: 10 }, { x: 12, y: 12 }, 3, 'SE', 'hot', 'burning'],
+      [{ x: 12, y: 11 }, { x: 12, y: 10 }, 1, 'N', 'justMissed', 'justMissed'],
+      [{ x: 19, y: 2 }, { x: 2, y: 18 }, 23, 'SW', 'wayOff', 'wayOff'],
     ] as const;
-    for (const [g, s, distance, direction, tier] of cases) {
+    for (const [g, s, distance, direction, tier, exact] of cases) {
       expect(answerOf(g, s, rule)).toEqual({ kind: 'direction', distance, direction, tier });
       expect(answerOf(g, s, dist)).toEqual({ kind: 'distance', distance, tier });
-      expect(answerOf(g, s, close)).toEqual({ kind: 'closeness', tier });
+      expect(answerOf(g, s, close)).toEqual({ kind: 'closeness', tier: exact });
     }
     expect(squared({ x: 19, y: 2 }, { x: 2, y: 18 })).toBe(545);
   });
@@ -193,6 +200,31 @@ describe('touching', () => {
     }
     // Two away is no longer touching, though close.
     expect(tierOf({ x: 10, y: 10 }, { x: 12, y: 10 }, { width: 30, height: 30 })).toBe('burning');
+  });
+});
+
+describe('the tier the answer shows (T152)', () => {
+  it('is one per rounded distance in distance and direction mode, exact in closeness mode', () => {
+    for (const map of [
+      { width: 8, height: 8 },
+      { width: 20, height: 20 },
+      { width: 30, height: 30 },
+    ]) {
+      const s = { x: 3, y: 4 };
+      const byDistance = new Map<number, string>();
+      for (const g of cellsOf(wholeMap(map))) {
+        if (g.x === s.x && g.y === s.y) continue;
+        const d = roundedDistance(squared(g, s));
+        for (const mode of ['distance', 'direction'] as const) {
+          const tier = answerTier(g, s, { mode, map });
+          expect(byDistance.get(d) ?? tier).toBe(tier);
+          byDistance.set(d, tier);
+        }
+        expect(answerTier(g, s, { mode: 'closeness', map })).toBe(tierOf(g, s, map));
+        // Only a touching tile is just missed, in every mode.
+        expect(answerTier(g, s, { mode: 'distance', map }) === 'justMissed').toBe(d === 1);
+      }
+    }
   });
 });
 

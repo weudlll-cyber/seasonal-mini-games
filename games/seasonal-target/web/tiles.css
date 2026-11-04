@@ -3,19 +3,16 @@
  * @module games/seasonal-target/web
  * @brief  Styles of the tile grid (O45): the heat palette, the tiles and their marks, the legend.
  *
- * Responsibility: the five heat steps (cold blue … burning red) and the found target's fill as
+ * Responsibility: the grid's own colours (empty tile, gap, ink, hatch, Spring's quarter) as
  *                 custom properties, light on :root and dark under [data-theme='dark'] (as
- *                 packages/ui/src/tokens.css): every fill at 3:1 or more against the empty tile,
- *                 its number at 4.5:1 or more against the fill, in both themes (02d §11); the
- *                 same steps as text colours for the guess list (./st.css), a shade darker in
- *                 light and lighter in dark. One CSS grid of square tiles: in the round's
+ *                 packages/ui/src/tokens.css); the heat steps are ./heat.css. One CSS grid of square tiles: in the round's
  *                 stage, the spectator's and the result's box as large as the box allows
  *                 (`.st-board` is a size container that takes the free height; the grid is the
  *                 smaller of its width and height), in the loupe at least 44 px a tile (the
- *                 loupe's box in ./loupe.css). Tiles outside the target area dimmed, Spring's
+ *                 loupe's box in ./loupe.css). Empty tiles outside the target area dimmed, Spring's
  *                 quarter a fixed green with a "Hint" tag (O51), fallen tiles hatched (a
  *                 pattern, not colour alone), the viewer's
- *                 own tiles framed inside in the viewer's own colour (their dot's, as their rows), others'
+ *                 own tiles framed inside, an ink ring around the viewer's own colour, others'
  *                 with a corner dot ringed in the empty tile's colour, the number moved clear
  *                 of it, the selection outlined outside the tile in the text colour, the
  *                 result's target ringed. Numbers scale with their tile (container units).
@@ -27,21 +24,6 @@
   --st-gap: #d9d3c2;
   --st-ink: #14171c;
   --st-hatch: #4f5663;
-  --st-step-1: #2d5fa8;
-  --st-step-2: #1c7680;
-  --st-step-3: #8a6400;
-  --st-step-4: #c2410c;
-  --st-step-5: #a3122a;
-  --st-on-step: #ffffff;
-  --st-correct: #14171c;
-  --st-on-correct: #ffffff;
-  /* The steps as text on the list's rows: 5.4:1 or more on the card and on every season's
-     own-row tint. */
-  --st-text-1: #28559a;
-  --st-text-2: #155e66;
-  --st-text-3: #6b4e00;
-  --st-text-4: #9c3409;
-  --st-text-5: #a3122a;
   /* Spring's quarter, the same in both themes: ink 8.5:1 on the green, so "…" and the tag
      read on it; 1.9:1 against the light empty tile and 7.2:1 against the dark one, apart from
      the hatch (a pattern) and the dimmed area (faded). */
@@ -54,20 +36,6 @@
   --st-gap: #0a1233;
   --st-ink: #f1f4fa;
   --st-hatch: #b3bcd0;
-  --st-step-1: #7fb0ff;
-  --st-step-2: #5fd4c8;
-  --st-step-3: #f2c94c;
-  --st-step-4: #ff9a52;
-  --st-step-5: #ff6b7a;
-  --st-on-step: #0a1233;
-  --st-correct: #f1f4fa;
-  --st-on-correct: #0a1233;
-  /* 5.1:1 or more on the dark card and every season's own-row tint. */
-  --st-text-1: #8cbaff;
-  --st-text-2: #5fd4c8;
-  --st-text-3: #f2c94c;
-  --st-text-4: #ff9a52;
-  --st-text-5: #ff8e99;
 }
 
 /* The grid's box in the round's stage, the spectator's panel and the result: the free height of
@@ -192,63 +160,33 @@
   background: repeating-linear-gradient(45deg, var(--st-hatch) 0 2px, var(--st-empty) 2px 7px);
 }
 
-.st-tile[data-step='1'],
-.st-swatch[data-step='1'] {
-  background: var(--st-step-1);
-}
-
-.st-tile[data-step='2'],
-.st-swatch[data-step='2'] {
-  background: var(--st-step-2);
-}
-
-.st-tile[data-step='3'],
-.st-swatch[data-step='3'] {
-  background: var(--st-step-3);
-}
-
-.st-tile[data-step='4'],
-.st-swatch[data-step='4'] {
-  background: var(--st-step-4);
-}
-
-.st-tile[data-step='5'],
-.st-swatch[data-step='5'] {
-  background: var(--st-step-5);
-}
-
-.st-tile[data-step] {
-  color: var(--st-on-step);
-}
-
-.st-tile[data-step='correct'] {
-  background: var(--st-correct);
-  color: var(--st-on-correct);
-}
-
-/* Outside the target area after a halving: still shown, dimmed. */
-.st-tile[data-out='true'] {
+/* Outside the target area after a halving: an empty tile dimmed; a guessed one keeps its
+   colour and number, readable in both themes (T151). */
+.st-tile[data-out='true']:not([data-step]) {
   opacity: 0.3;
 }
 
 /* Dark: the empty tile is close to the grid's own colour, so 30 % hid the area's edge
    (night-7 review); fainter outside, the target area stands out. */
-:root[data-theme='dark'] .st-tile[data-out='true'] {
+:root[data-theme='dark'] .st-tile[data-out='true']:not([data-step]) {
   opacity: 0.12;
 }
 
-/* The viewer's own tiles: a frame inside the tile in the own rows' colour, set off from the
-   fill by a thin line of the empty tile's colour. */
+/* The viewer's own tiles: an outer ring in the ink colour (high contrast on every fill and
+   the empty tile, in both themes), the viewer's own colour inside it (their dot's, as their
+   rows), seen at 30 × 30 px (T151). */
 .st-tile[data-own='true'] {
   box-shadow:
-    inset 0 0 0 3px var(--st-own),
-    inset 0 0 0 4px var(--st-empty);
+    inset 0 0 0 2px var(--st-ink),
+    inset 0 0 0 5px var(--st-own);
 }
 
-/* Tiles under 20 px (no numbers): a 1.5 px frame, or it covers the heat colour of a 10 px
-   tile on a phone (night-6 review). */
+/* Tiles under 20 px (no numbers): thinner, or it covers the heat colour of a 10 px tile on a
+   phone (night-6 review). */
 .st-grid[data-numbers='false'] .st-tile[data-own='true'] {
-  box-shadow: inset 0 0 0 1.5px var(--st-own);
+  box-shadow:
+    inset 0 0 0 1px var(--st-ink),
+    inset 0 0 0 2.5px var(--st-own);
 }
 
 /* Another player's guess: a small dot in their list colour in the top right corner, ringed
@@ -277,21 +215,4 @@
   border-radius: 50%;
   border: 3px solid var(--season, var(--color-accent));
   box-shadow: 0 0 0 1px var(--st-ink);
-}
-
-/* The legend: "Cold", the five steps, "Hot" (in the player's panel, the spectator's and the
-   result). */
-.st-heat {
-  margin: 0;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
-}
-
-.st-heat .st-swatch {
-  width: 1.1rem;
-  height: 0.8rem;
-  border-radius: 3px;
 }

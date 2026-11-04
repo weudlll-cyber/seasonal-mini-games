@@ -5,7 +5,8 @@
  *
  * Responsibility: in a round whose special is Leaf Fall, every fallen tile the view carries as
  *                 compact chips "(12, 34)", row by row as the state keeps them, with the count
- *                 in its heading; on a desktop a short box that scrolls inside itself, on a
+ *                 in its heading "Fallen (N)"; on a desktop a box of whole rows that scrolls
+ *                 inside itself, never a row cut in half (T151), on a
  *                 phone a "Fallen (N)" button that opens it as a sheet, closed by Close, the
  *                 button or Escape (T115). The grid shows the same tiles hatched.
  * Depends on:     react, @smg/game-sdk (Season), @smg/ui (useDisclosure),
@@ -50,7 +51,7 @@ export function FallenCells({ fallen }: { readonly fallen: readonly Cell[] }): R
       <div id={sheet.panelId} className="st-fallen-body">
         <div className="st-fallen-head">
           <h3 id={`${sheet.panelId}-title`} data-testid="fallen">
-            Fallen tiles ({n})
+            Fallen ({n})
           </h3>
           <button type="button" className="smg-btn st-fallen-close" onClick={sheet.close}>
             Close

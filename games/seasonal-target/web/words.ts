@@ -71,24 +71,30 @@ export const TIER_WORDS: Readonly<Record<string, string>> = {
   warm: 'Warm',
   hot: 'Hot',
   burning: 'Burning',
-  justMissed: 'Just missed — right next to it',
+  // Short, never cut on a row (T151); the tile's label has the whole sentence.
+  justMissed: 'Just missed',
 };
 
 const FOUND = 'Target found!';
 
-// "9 tiles away, to the north-east", "9 tiles away", "Warm".
+// "9 tiles away, to the north-east", "9 tiles away", "Warm", "Just missed — right next to it".
 export function longAnswer(f: Feedback): string {
   if (f.kind === 'correct') return FOUND;
-  if (f.kind === 'closeness') return TIER_WORDS[f.tier] ?? f.tier;
+  if (f.kind === 'closeness') {
+    return f.tier === 'justMissed'
+      ? 'Just missed — right next to it'
+      : (TIER_WORDS[f.tier] ?? f.tier);
+  }
   const away = `${tiles(f.distance)} away`;
   return f.kind === 'direction' ? `${away}, to the ${WORDS[f.direction]}` : away;
 }
 
-// "9 away, NE ↗" or "9 away" for the list.
+// "9 away, NE ↗", "9 away" or the tier's word ("Just missed") for the list.
 export function shortAnswer(f: Feedback): string {
   if (f.kind === 'direction') return `${n(f.distance)} away, ${f.direction} ${ARROWS[f.direction]}`;
   if (f.kind === 'distance') return `${n(f.distance)} away`;
-  return longAnswer(f);
+  if (f.kind === 'closeness') return TIER_WORDS[f.tier] ?? f.tier;
+  return FOUND;
 }
 
 // The row's tone: found in the platform's colour; every miss `far`, which the platform leaves
@@ -97,7 +103,11 @@ export const toneOf = (f: Feedback): GuessAnswer['tone'] =>
   f.kind === 'correct' ? 'correct' : 'far';
 
 // The row's tier for the list's styles: the server's (`correct` for a found target), prefixed,
-// because the game's styles apply to the platform's list and other games' tiers share names.
-export const rowTier = (f: Feedback): string => `st-${f.kind === 'correct' ? 'correct' : f.tier}`;
+// because the game's styles apply to the platform's list and other games' tiers share names;
+// `closeness` mode's own (`st-k-…`), coloured like its tile's step of its own (T151).
+export function rowTier(f: Feedback): string {
+  if (f.kind === 'correct') return 'st-correct';
+  return f.kind === 'closeness' ? `st-k-${f.tier}` : `st-${f.tier}`;
+}
 
 export const answerOf = (f: Feedback): GuessAnswer => ({ text: shortAnswer(f), tone: toneOf(f) });

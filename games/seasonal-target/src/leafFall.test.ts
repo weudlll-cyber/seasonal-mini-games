@@ -125,10 +125,11 @@ describe('Leaf Fall in distance mode', () => {
     // Due east and due south of the guess stay: the answer names no direction.
     expect(ten).toContainEqual({ x: 11, y: 1 });
     expect(ten).toContainEqual({ x: 1, y: 11 });
-    // Rounded 13 spans cold (n = 162) and way off (n = 169): the tile's colour tells them apart.
+    // Rounded 13 is one tier whatever √n is (n = 162 and n = 169 alike, T152): every cell 13
+    // away stays a candidate.
     const thirteen = pool({ x: 10, y: 10 });
-    expect(thirteen.every((c) => squared({ x: 1, y: 1 }, c) < 165)).toBe(true);
-    expect(thirteen).not.toContainEqual({ x: 14, y: 1 });
+    expect(thirteen.every((c) => roundedDistance(squared({ x: 1, y: 1 }, c)) === 13)).toBe(true);
+    expect(thirteen).toContainEqual({ x: 14, y: 1 });
   });
 });
 

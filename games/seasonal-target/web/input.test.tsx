@@ -8,9 +8,12 @@
  *                 the fields behind "Type coordinates", closed at first (O51); the selection
  *                 starts in the middle of the target area, moves with the keyboard arrows on the
  *                 focused grid, the arrow buttons and the Column and Row fields, follows a click
- *                 on a tile, and stays inside the area; "Selected: column …, row …" says where;
- *                 Guess (and Enter) sends `{ value: { x, y } }` and nothing else; a fallen or
- *                 tried tile is refused at once without sending, and no "Last guess" line
+ *                 on a tile, and stays inside the area; a fallen tile or one outside the area is
+ *                 never selected (a click, the fields): the selection stays and the view says
+ *                 why, the arrows step past fallen tiles, and Guess is disabled while the
+ *                 selected tile fell (T151); "Selected: column …, row …" says where;
+ *                 Guess (and Enter) sends `{ value: { x, y } }` and nothing else; a tried
+ *                 tile is refused at once without sending, and no "Last guess" line
  *                 repeats the list; a server `OUT_OF_MAP` on the grid says "outside the target
  *                 area"; Guess reads "Wait 6 s" during the cooldown. On a phone with small tiles the first tap
  *                 opens the loupe around it (clamped at the edges), a tap in it selects, Close
@@ -79,21 +82,44 @@ describe('selecting', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Move west' }));
     expect(selected()).toBe('Selected: column 10, row 10');
     fireEvent.change(screen.getByLabelText('Column'), { target: { value: '2' } });
-    // Clamped to the area's west edge.
-    expect(selected()).toBe('Selected: column 6, row 10');
+    // Outside the area: the selection stays, the view says why (T151).
+    expect(selected()).toBe('Selected: column 10, row 10');
+    expect(screen.getByRole('status').textContent).toBe('That tile is outside the target area.');
+    fireEvent.change(screen.getByLabelText('Column'), { target: { value: '6' } });
     fireEvent.change(screen.getByLabelText('Row'), { target: { value: '' } });
     fireEvent.change(screen.getByLabelText('Row'), { target: { value: '3' } });
+    expect(selected()).toBe('Selected: column 6, row 3');
+    // The arrows stop at the area's edge.
+    fireEvent.click(screen.getByRole('button', { name: 'Move west' }));
     expect(selected()).toBe('Selected: column 6, row 3');
     expect(screen.getByTestId('ring')).toBeTruthy();
   });
 
-  it('selects the clicked tile, and the nearest one inside the area', () => {
+  it('selects the clicked tile, never one outside the area', () => {
     renderInput(playerView({ area: { left: 6, right: 15, top: 1, bottom: 20 } }));
     fireEvent.click(tile(12, 7) as HTMLElement);
     expect(selected()).toBe('Selected: column 12, row 7');
     fireEvent.click(tile(2, 7) as HTMLElement);
-    expect(selected()).toBe('Selected: column 6, row 7');
+    expect(selected()).toBe('Selected: column 12, row 7');
+    expect(screen.getByRole('status').textContent).toBe('That tile is outside the target area.');
     expect(screen.queryByTestId('loupe')).toBeNull();
+  });
+
+  it('never selects a fallen tile; the arrows step past it (T151)', () => {
+    renderInput(
+      playerView({
+        fallen: [
+          { x: 12, y: 7 },
+          { x: 11, y: 10 },
+        ],
+      }),
+    );
+    fireEvent.click(tile(12, 7) as HTMLElement);
+    expect(selected()).toBe('Selected: column 10, row 10');
+    expect(screen.getByRole('status').textContent).toBe('That tile fell.');
+    fireEvent.keyDown(screen.getByTestId('tile-grid'), { key: 'ArrowRight' });
+    expect(selected()).toBe('Selected: column 12, row 10');
+    expect(screen.getByTestId('guess-button').hasAttribute('disabled')).toBe(false);
   });
 });
 
@@ -108,12 +134,13 @@ describe('guessing', () => {
     expect(send).toHaveBeenCalledTimes(2);
   });
 
-  it('refuses a fallen or tried tile at once without sending', () => {
+  it('keeps Guess disabled on a fallen tile, and refuses a tried one without sending', () => {
     const send = renderInput(
       playerView({ fallen: [{ x: 10, y: 10 }], guesses: [own(1, 10, 9, ne)] }),
     );
-    fireEvent.click(screen.getByTestId('guess-button'));
-    expect(screen.getByRole('status').textContent).toBe('That tile has fallen.');
+    // The selection's tile fell (here: the first one): Guess is disabled and the view says so.
+    expect(screen.getByTestId('guess-button').hasAttribute('disabled')).toBe(true);
+    expect(screen.getByRole('status').textContent).toBe('That tile fell.');
     typeCoordinates();
     fireEvent.click(screen.getByRole('button', { name: 'Move north' }));
     fireEvent.click(screen.getByTestId('guess-button'));

@@ -78,7 +78,7 @@ test('journey 22: Seasonal Target, warm/cold only (the default) and distance onl
     await expect(first).not.toHaveText('', { timeout: 10_000 });
     await expect(first).not.toHaveText(/away/);
     await expect(own).toHaveCount(1);
-    await expect(own).toHaveAttribute('data-step', /^[1-5]$|correct/);
+    await expect(own).toHaveAttribute('data-step', /^([1-5]|k[1-7]|correct)$/);
     await expect(own).not.toHaveText(/\d/);
     await fitsBoth(p.page);
 
@@ -102,7 +102,7 @@ test('journey 22: Seasonal Target, warm/cold only (the default) and distance onl
     await expect(ownRows(p.page).first().locator('.round-answer')).toHaveText(DISTANCE, {
       timeout: 10_000,
     });
-    await expect(own).toHaveAttribute('data-step', /^[1-5]$|correct/);
+    await expect(own).toHaveAttribute('data-step', /^([1-5]|k[1-7]|correct)$/);
     await expect(own).toHaveText(/\d/);
     await fitsBoth(p.page);
   } finally {

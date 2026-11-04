@@ -5,7 +5,8 @@
  *
  * Responsibility: two compact number fields that show the selection and set it, and the
  *                 N/W/E/S buttons (44 × 44 px, "Move north" … for screen readers) that move it
- *                 by one tile; the caller clamps to the target area. On a desktop behind the
+ *                 a tile that way (the caller steps past fallen tiles and refuses a tile it
+ *                 cannot select, T151). On a desktop behind the
  *                 input row's "Type coordinates" toggle, closed at first (`TypedSteer`,
  *                 `useDisclosure` of @smg/ui as the loupe; Escape closes it, O51); inside the
  *                 loupe on a phone (02d §11).
@@ -19,7 +20,8 @@ import type { ReactElement } from 'react';
 
 interface SteerProps {
   readonly selected: Cell;
-  readonly select: (c: Cell) => void;
+  // A typed tile, or with `step` an arrow's move from the selection.
+  readonly select: (c: Cell, step?: readonly [number, number]) => void;
 }
 
 // One coordinate field: it shows the selection and sets it.
@@ -75,7 +77,7 @@ export function Steer({ selected, select }: SteerProps): ReactElement {
             className={`smg-btn st-move st-move--${dir}`}
             aria-label={`Move ${dir}`}
             onClick={() => {
-              select({ x: selected.x + dx, y: selected.y + dy });
+              select(selected, [dx, dy]);
             }}
           >
             {glyph}

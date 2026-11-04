@@ -6,8 +6,10 @@
  * Responsibility: every guess a view carries (own always; others' from `numbers` on in shared
  *                 mode, the engine's newest 60, 02d §6) gathered per tile: the closest answer on
  *                 it (found first, then the nearer tier, then the smaller distance) gives the
- *                 tile its colour step from the server's tier (cold 1 … hot 5, or `correct`,
- *                 O45; nothing is computed here), the viewer's own guess its frame, a pending own
+ *                 tile its colour step from the server's tier (cold 1 … hot 5 in `distance` and
+ *                 `direction` mode, a step of its own for each of the seven tiers in
+ *                 `closeness` mode, k1 … k7, T151; or `correct`, O45; nothing is computed
+ *                 here), the viewer's own guess its frame, a pending own
  *                 answer under Frost the "…", another player's guess the corner mark in their
  *                 list colour (`colors`, T125), and every guess on the tile its words for the
  *                 tooltip and the screen reader: player (by `names`, "You" for the viewer),
@@ -20,8 +22,9 @@ import type { Cell, Feedback, MissTier } from '@smg-game/seasonal-target';
 
 import { cellWords, longAnswer } from './words.js';
 
-// The five colour steps, cold to hot, and the found target's own mark.
-type Step = 1 | 2 | 3 | 4 | 5 | 'correct';
+// The five colour steps of `distance` and `direction` mode, cold to hot; `closeness` mode's
+// seven, one a tier (its answer is the tier alone, T151); the found target's own mark.
+type Step = 1 | 2 | 3 | 4 | 5 | `k${1 | 2 | 3 | 4 | 5 | 6 | 7}` | 'correct';
 
 const STEPS: Readonly<Record<MissTier, Step>> = {
   wayOff: 1,
@@ -44,7 +47,20 @@ const NEARNESS: readonly MissTier[] = [
   'justMissed',
 ];
 
-export const stepOf = (f: Feedback): Step => (f.kind === 'correct' ? 'correct' : STEPS[f.tier]);
+const CLOSE_STEPS: Readonly<Record<MissTier, Step>> = {
+  wayOff: 'k1',
+  cold: 'k2',
+  cool: 'k3',
+  warm: 'k4',
+  hot: 'k5',
+  burning: 'k6',
+  justMissed: 'k7',
+};
+
+export function stepOf(f: Feedback): Step {
+  if (f.kind === 'correct') return 'correct';
+  return f.kind === 'closeness' ? CLOSE_STEPS[f.tier] : STEPS[f.tier];
+}
 
 // One guess on the grid: whose, where, and its answer once delivered.
 export interface Shot {

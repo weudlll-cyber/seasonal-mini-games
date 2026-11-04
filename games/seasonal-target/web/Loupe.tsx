@@ -66,7 +66,7 @@ export function Loupe(p: {
   readonly loupe: LoupeState;
   readonly grid: GridParts;
   readonly selected: Cell;
-  readonly pick: (c: Cell) => void;
+  readonly pick: (c: Cell, step?: readonly [number, number]) => void;
 }): ReactElement | null {
   const { sheet, shown } = p.loupe;
   if (!sheet.open) return null;

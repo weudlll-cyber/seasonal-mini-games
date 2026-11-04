@@ -14,7 +14,7 @@
  */
 import type { GuessAction as EngineAction, GuessRules } from '@smg/guess-engine';
 
-import { answerOf, inArea, sameCell, tierOf, type Cell, type Feedback } from './geometry.js';
+import { answerOf, answerTier, inArea, sameCell, type Cell, type Feedback } from './geometry.js';
 import type { Target } from './secrets.js';
 import type { StState } from './state.js';
 
@@ -37,5 +37,6 @@ export const stRules: GuessRules<StState, Cell, Feedback, Target> = {
   same: sameCell,
   answer: (value, target) => answerOf(value, target, target.rule),
   solved: (feedback) => feedback.kind === 'correct',
-  tier: (state, value, target) => tierOf(value, target, state.map),
+  // The comment's tier is the answer's (T152), so the words and the tile's colour agree.
+  tier: (_state, value, target) => answerTier(value, target, target.rule),
 };

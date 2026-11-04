@@ -63,8 +63,9 @@ describe('tiles by answer mode', () => {
     expect([2, 3, 4, 5, 6].map((k) => tile(k, k).dataset['step'])).toEqual([
       '1',
       '3',
-      '4',
-      '5',
+      // Closeness mode: a step of its own for every tier (T151).
+      'k5',
+      'k7',
       'correct',
     ]);
     expect(tile(2, 2).textContent).toBe('9↗');
@@ -202,7 +203,7 @@ describe('panels', () => {
     expect(screen.getByTestId('area-line').textContent).toBe(
       'Target area: columns 6–15, rows 1–20',
     );
-    expect(screen.getByTestId('fallen').textContent).toBe('Fallen tiles (1)');
+    expect(screen.getByTestId('fallen').textContent).toBe('Fallen (1)');
     fireEvent.click(screen.getByTestId('fallen-toggle'));
     expect(screen.getByTestId('fallen-list').textContent).toBe('(7, 2)');
     cleanup();
@@ -228,16 +229,16 @@ describe('panels', () => {
     expect(tile(9, 9).dataset['own']).toBe('false');
     expect(tile(9, 9).tabIndex).toBe(0);
     expect(screen.getByTestId('tile-grid').getAttribute('aria-readonly')).toBe('true');
-    expect(screen.getByTestId('fallen').textContent).toBe('Fallen tiles (0)');
+    expect(screen.getByTestId('fallen').textContent).toBe('Fallen (0)');
   });
 });
+// Walter found the target, the viewer b guessed once.
+const guesses = {
+  a: [{ value: { x: 12, y: 10 }, feedback: { kind: 'correct' } }],
+  b: [{ value: { x: 4, y: 14 }, feedback: ne }],
+};
 
-describe('result panel', () => {
-  const guesses = {
-    a: [{ value: { x: 12, y: 10 }, feedback: { kind: 'correct' } }],
-    b: [{ value: { x: 4, y: 14 }, feedback: ne }],
-  };
-
+describe('result panel, shared', () => {
   it('marks the shared target and shows every guess', () => {
     const view = { map: { width: 20, height: 20 }, target: { x: 12, y: 10 }, targets: null };
     render(
@@ -245,6 +246,7 @@ describe('result panel', () => {
         view={{ ...view, guesses, fallen: [{ x: 1, y: 1 }], closestMiss: null }}
         {...roster}
         viewerKey="b"
+        part="reveal"
       />,
     );
     expect(screen.getByTestId('secret').textContent).toBe('Target: column 12, row 10');
@@ -263,7 +265,9 @@ describe('result panel', () => {
     );
     expect(tile(1, 1).dataset['fallen']).toBe('true');
   });
+});
 
+describe('result panel, individual', () => {
   it('shows the viewer only their own target and guesses in individual mode, all in text', () => {
     const view = {
       map: { width: 20, height: 20 },
@@ -273,9 +277,8 @@ describe('result panel', () => {
       fallen: [],
       closestMiss: null,
     };
-    render(
-      <ResultPanel view={view} names={{ a: 'Walter' }} colors={roster.colors} viewerKey="b" />,
-    );
+    const props = { view, names: { a: 'Walter' }, colors: roster.colors, viewerKey: 'b' };
+    render(<ResultPanel {...props} part="reveal" />);
     expect(screen.getByTestId('secret').textContent).toBe('Target: column 5, row 5');
     expect(screen.getByTestId('target-tile').closest<HTMLElement>('[data-x]')?.dataset['x']).toBe(
       '5',
@@ -283,6 +286,9 @@ describe('result panel', () => {
     expect(tile(4, 14).dataset['step']).toBe('1');
     // Walter's guess was about his own target: not on the viewer's grid.
     expect(tile(12, 10).dataset['step']).toBeUndefined();
+    cleanup();
+    // The history below the first part (T150).
+    render(<ResultPanel {...props} part="history" />);
     const items = within(screen.getByRole('list', { name: 'Every guess' }))
       .getAllByRole('listitem')
       .map((li) => li.textContent);

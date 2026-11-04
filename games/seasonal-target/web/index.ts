@@ -21,6 +21,7 @@ import { TargetInput } from './TargetInput.js';
 import { stText } from './text.js';
 import './st.css';
 import './tiles.css';
+import './heat.css';
 
 export const seasonalTargetWeb = {
   Player: PlayerPanel,

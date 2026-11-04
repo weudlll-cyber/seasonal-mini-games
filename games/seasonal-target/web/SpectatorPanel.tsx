@@ -53,7 +53,7 @@ export function SpectatorPanel(props: SpectatorPanelProps): ReactElement {
           label="The grid with the players' guesses."
         />
       </div>
-      <HeatLegend />
+      <HeatLegend mode={v.feedbackMode} />
       {leafFallOn(props) ? <FallenCells fallen={v.fallen} /> : null}
     </div>
   );

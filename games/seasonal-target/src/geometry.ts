@@ -139,21 +139,35 @@ const TIER_TABLE: readonly (readonly [MissTier, number, number])[] = [
 // The squared diagonal D² = (W − 1)² + (H − 1)²: the farthest two cells can be.
 export const diagonal2 = (map: MapSize): number => (map.width - 1) ** 2 + (map.height - 1) ** 2;
 
-// The tier of a guess with squared distance `n` (n > 0) and touching or not. √n / D > p % is
-// decided as 10 000 · n > p² · D², √n > √m as n > m, in integers.
-export function tierOf(g: Cell, s: Cell, map: MapSize): Tier {
-  if (sameCell(g, s)) return 'correct';
-  if (Math.max(Math.abs(s.x - g.x), Math.abs(s.y - g.y)) === 1) return 'justMissed';
-  const n = squared(g, s);
+// The miss tier of a squared distance `n` (n > 0), touching or not. √n / D > p % is decided
+// as 10 000 · n > p² · D², √n > √m as n > m, in integers.
+function tierBy(n: number, touching: boolean, map: MapSize): MissTier {
+  if (touching) return 'justMissed';
   const d2 = diagonal2(map);
   for (const [tier, p, m] of TIER_TABLE) if (10_000 * n > p * p * d2 && n > m) return tier;
   return 'burning';
 }
 
+// The exact tier of guess `g` for target `s`.
+export function tierOf(g: Cell, s: Cell, map: MapSize): Tier {
+  if (sameCell(g, s)) return 'correct';
+  const touching = Math.max(Math.abs(s.x - g.x), Math.abs(s.y - g.y)) === 1;
+  return tierBy(squared(g, s), touching, map);
+}
+
+// The tier as the answer shows it (DECISIONS T152): in `distance` and `direction` mode from the
+// rounded distance on the tile, so two "4 away" answers always share a colour; in `closeness`
+// mode the exact one. Only a touching tile rounds to 1, so "just missed" stays exact.
+export function answerTier(g: Cell, s: Cell, rule: AnswerRule): Tier {
+  if (rule.mode === 'closeness' || sameCell(g, s)) return tierOf(g, s, rule.map);
+  const d = roundedDistance(squared(g, s));
+  return tierBy(d * d, d === 1, rule.map);
+}
+
 // The answer to guess `g` when the target is `s` (02d §5).
 export function answerOf(g: Cell, s: Cell, rule: AnswerRule): Feedback {
   if (sameCell(g, s)) return { kind: 'correct' };
-  const tier = tierOf(g, s, rule.map) as MissTier;
+  const tier = answerTier(g, s, rule) as MissTier;
   if (rule.mode === 'closeness') return { kind: 'closeness', tier };
   const distance = roundedDistance(squared(g, s));
   if (rule.mode === 'distance') return { kind: 'distance', distance, tier };
