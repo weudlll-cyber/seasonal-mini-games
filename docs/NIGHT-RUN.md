@@ -8,18 +8,23 @@ Branch `feat/guess-games` from `6260b84`, merged into `master` by this task (the
 
 ### Status
 
-| Piece                                      | State | Commit |
-| ------------------------------------------ | ----- | ------ |
-| 1. The team column                         | done  |        |
-| 2. The owner's confirmations, a clean OPEN | open  |        |
-| 3. The merge into master                   | open  |        |
-| 4. The sweep and the handover              | open  |        |
+| Piece                                      | State | Commit      |
+| ------------------------------------------ | ----- | ----------- |
+| 1. The team column                         | done  | `12fcc1c`   |
+| 2. The owner's confirmations, a clean OPEN | done  | this commit |
+| 3. The merge into master                   | open  |             |
+| 4. The sweep and the handover              | open  |             |
 
 ### Piece 1 — the team column (T212)
 
 - The waiting area's list and the Players panel: the team as its icon alone (`TeamIcon`, new in `season/`, used by both), named and titled; a heading row "Team"; the waiting area's column gaps 0.25rem. Measured with a 24-character name (192 px of text) in "Next round" → Players: before, the row 290 px, the name 172 of 192 px at 1280 × 720; with the icon and the narrower gaps 196 of 196 px at 1280 × 720 and 215 of 215 px at 390 × 844.
 - CI's e2e on `6260b84` failed journey 9: axe's `aria-prohibited-attr` on the result's "took part" (`aria-label` on a plain span, T211); now visually hidden text and an `aria-hidden` dash. Journey 9 passes.
 - Removed: the team names as text in those lists (`teamName` there), the `smg-muted` "no team yet" text. Tests (the web package only, O64): `waiting.test.tsx` (the icon's name and tooltip, the heading), `longNames.test.tsx`, `result.test.tsx`; e2e journey 35 (new, `playerNames.spec.ts`) and journey 9, once each.
+
+### Piece 2 — the confirmations, a clean OPEN (O65)
+
+- DECISIONS O65 records that the owner played all four games and confirmed every "to confirm" proposal, T170 and T177 among them, and the explosion penalty per round (O40 amended). The 26 T entries with a proposal marker now read "confirmed by the owner 2026-11-04"; 11 more T entries named in the confirmed sections carry the same note.
+- OPEN.md holds only what is open: the load gate (r), the built-as-proposed questions (w)–(ab), two Night-6 review points, the spec conflicts and gaps; 148 → 44 lines. The dropped entries are closed in BACKLOG part two with their reasons, with the three games (played, confirmed, merged by this task).
 
 ## Play-test round 2 (2026-11-04)
 
