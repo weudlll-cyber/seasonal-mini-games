@@ -73,7 +73,10 @@ async function startFromLobby(p: Person): Promise<string> {
   for (const bot of ['bot-01', 'bot-02', 'bot-03'])
     await expect(playerRow(p, bot)).toContainText('online', { timeout: 10_000 });
   await expect(p.page.getByTestId('match-players').locator('li img')).toHaveCount(3);
-  await expect(playerRow(p, 'dev-player-1')).toContainText('no team yet');
+  // The team column is a named icon (T212); no team yet is a named dash.
+  await expect(
+    playerRow(p, 'dev-player-1').getByRole('img', { name: 'no team yet' }),
+  ).toBeVisible();
   const summer = p.page
     .getByRole('group', { name: 'Season team' })
     .getByRole('button', { name: 'Summer' });
@@ -133,7 +136,9 @@ test('journey 12: the Quick Test through the lobby, two rounds, End match and th
     await expect(p.page.getByTestId('waiting-area')).toContainText('Next round');
     await chatApart(p.page);
     await expect(teams).toHaveCount(0);
-    await expect(playerRow(p, 'dev-player-1')).toContainText('Summer');
+    await expect(
+      playerRow(p, 'dev-player-1').getByRole('img', { name: 'Team Summer' }),
+    ).toBeVisible();
     // A second round from the host menu, then End match.
     await hostRound(p, { 'Highest number': '100' });
     await search(p);

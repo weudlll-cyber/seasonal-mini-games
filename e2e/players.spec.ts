@@ -71,7 +71,9 @@ test('journey 5: season teams are fixed for the match and the winner team scores
     const waiting = one.page.getByTestId('waiting-area');
     await expect(waiting).toContainText('Next round');
     await expect(waiting.getByRole('group', { name: 'Season team' })).toHaveCount(0);
-    await expect(waiting.getByTestId('match-players')).toContainText('Spring');
+    await expect(
+      waiting.getByTestId('match-players').getByRole('img', { name: 'Team Spring' }).first(),
+    ).toBeVisible();
     await expect(one.page.getByText('In this match')).toHaveCount(0);
   } finally {
     await abortMatch(host, code);

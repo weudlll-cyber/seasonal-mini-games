@@ -26,6 +26,11 @@ Branch `feat/guess-games` from `6260b84`, merged into `master` by this task (the
 - DECISIONS O65 records that the owner played all four games and confirmed every "to confirm" proposal, T170 and T177 among them, and the explosion penalty per round (O40 amended). The 26 T entries with a proposal marker now read "confirmed by the owner 2026-11-04"; 11 more T entries named in the confirmed sections carry the same note.
 - OPEN.md holds only what is open: the load gate (r), the built-as-proposed questions (w)–(ab), two Night-6 review points, the spec conflicts and gaps; 148 → 44 lines. The dropped entries are closed in BACKLOG part two with their reasons, with the three games (played, confirmed, merged by this task).
 
+### Piece 3 — the merge into master (T213)
+
+- One `pnpm verify` on `396fa3f`: green (148 test files, 816 tests). PR #1 into `master`.
+- CI on `396fa3f` (push) failed journeys 5 and 12: their checks still read the team as text in the player list. The PR's first run failed journey 34 on Firefox (a bot's random first guess won the round at once) and the Trusted Types check on webkit-mobile (the copied CSP's `upgrade-insecure-requests`); CodeQL flagged the harness's proxy (js/request-forgery). All four fixed (T213), each check run once in its browser.
+
 ## Play-test round 2 (2026-11-04)
 
 Branch `feat/guess-games` from `f17d9d4`. Owner decision O64 (2026-11-04: tests only where they answer something about the change), Heatwave in every round setup, the next-round form keeping the season, player lists giving the name the room, Seasonal Target's result. Technical decisions from T208; the ones that change what players or the host see are proposals (OPEN.md, "Round 2, to confirm"). Nothing goes to `master`.

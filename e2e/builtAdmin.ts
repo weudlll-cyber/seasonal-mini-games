@@ -51,18 +51,28 @@ function build(outDir: string): void {
   if (result.status !== 0) throw new Error(`admin build failed: ${result.stderr}`);
 }
 
+// Helmet's `upgrade-insecure-requests` (a default directive) is left out of the copy: this
+// page is plain http on 127.0.0.1, which Chromium and Firefox never upgrade but WebKit does,
+// so its scripts would fail the TLS handshake (CI, PR #1). Production is always behind TLS.
+const UPGRADE = /;?\s*upgrade-insecure-requests/;
+
 async function serverHeaders(): Promise<Record<string, string>> {
   const answer = await fetch(`${SERVER_URL}/admin/`, { redirect: 'manual' });
-  const pairs = COPIED.map((h) => [h, answer.headers.get(h)] as const);
-  return Object.fromEntries(pairs.filter((p): p is [string, string] => p[1] !== null));
+  const pairs = COPIED.map((h) => [h, answer.headers.get(h)?.replace(UPGRADE, '')] as const);
+  return Object.fromEntries(pairs.filter((p): p is [string, string] => p[1] !== undefined));
 }
 
-function proxy(req: IncomingMessage, res: ServerResponse): void {
-  const target = new URL(req.url ?? '/', SERVER_URL);
-  const out = request(target, { method: req.method, headers: req.headers }, (answer) => {
-    res.writeHead(answer.statusCode ?? 502, answer.headers);
-    answer.pipe(res);
-  });
+// Only the server on 3910 is reached: the path (an /api/ path, checked by the caller) is
+// appended to its fixed origin; a base URL would yield to an absolute request URL.
+function proxy(req: IncomingMessage, res: ServerResponse, apiPath: string): void {
+  const out = request(
+    `${SERVER_URL}${apiPath}`,
+    { method: req.method, headers: req.headers },
+    (answer) => {
+      res.writeHead(answer.statusCode ?? 502, answer.headers);
+      answer.pipe(res);
+    },
+  );
   req.pipe(out);
 }
 
@@ -93,7 +103,7 @@ export async function serveBuiltAdmin(): Promise<BuiltAdmin> {
   const headers = await serverHeaders();
   const server = createServer((req, res) => {
     const url = req.url ?? '/';
-    if (url.startsWith('/api/')) proxy(req, res);
+    if (url.startsWith('/api/')) proxy(req, res, url);
     else if (url.startsWith('/admin/')) serveFile(dir, headers, res, url);
     else res.writeHead(302, { location: '/admin/' }).end();
   });
