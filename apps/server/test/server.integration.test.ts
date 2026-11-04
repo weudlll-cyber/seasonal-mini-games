@@ -83,6 +83,11 @@ describe('server integration', () => {
     expect(response.headers['x-content-type-options']).toBe('nosniff');
     expect(response.headers['x-frame-options']).toBeDefined();
     expect(response.headers['referrer-policy']).toBe('no-referrer');
+    // Trusted Types for the admin app only (Bingo 03 §7, DECISIONS T178).
+    const trusted = "require-trusted-types-for 'script'";
+    expect(response.headers['content-security-policy']).not.toContain(trusted);
+    const admin = await app().inject({ method: 'GET', url: '/admin/' });
+    expect(admin.headers['content-security-policy']).toContain(`;${trusted}`);
   });
 
   it('returns problem+json on 404', async () => {

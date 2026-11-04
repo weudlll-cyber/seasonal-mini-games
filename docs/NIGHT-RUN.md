@@ -16,7 +16,7 @@ Branch `feat/guess-games` from `60821a6`. Owner decision O55 (2026-11-04: screen
 | 3. Safecracker and Bomb Defusal: review fixes | done  |           |
 | 4. Player account deletion screen             | done  | `d253ee6` |
 | 5. Admin screens: providers, origins, hooks   | done  | `3822148` |
-| 6. Admin app Trusted Types                    | open  |           |
+| 6. Admin app Trusted Types                    | done  |           |
 | 7. The "opens in 0 s" intro                   | done  | `7271721` |
 | 8. Load scenarios L1 specials and halving     | done  |           |
 | 9. Re-shoot (O55), self-review, handover      | open  |           |
@@ -69,6 +69,14 @@ Nothing so far.
 - **Server:** unchanged; the route already ends every session and clears the cookie (T105).
 - **Tests:** `DeleteAccount.test.tsx` (form, exact name, deletion, password step, refusal, the notice's route); e2e journey 29 (`e2e/accountDeletion.spec.ts`, timing project) with the host site's setup in `e2e/hostSite.ts`.
 - **For the owner:** T170 (OPEN, "Night 8, to confirm"). Noticed and left alone: the account page shows Change password to an account made by the handoff, which has no password (the server answers `PASSWORD_REQUIRED`); `e2e/embed.spec.ts` still says handoff accounts cannot delete themselves through `DELETE /me` and removes them in the database, and could use `e2e/hostSite.ts`.
+
+### Piece 6 — the admin app's Trusted Types header (T178, T179)
+
+- Report-only run of the built admin bundle in Chromium (every area and tab, signed in): one report, zod's `new Function('')` probe from the shared schemas. Fixed with `packages/contracts/src/withoutEval.ts` (zod `jitless` where a `document` exists, imported first by the index); afterwards no report and no console line, report-only and enforced. Details in [security-pass.md](security-pass.md).
+- Enforced: `securityHeaders.ts` appends `require-trusted-types-for 'script'` to every admin path's CSP (test in `server.integration.test.ts`: the admin path has it, `/` not). Caddy passes the header on unchanged.
+- E2E: `e2e/trustedTypes.spec.ts` with `e2e/builtAdmin.ts` builds the app and serves it with the server's own admin headers; it needs no dev-server restart (T179). Passes in Chromium; journeys 30–32 pass again in `chromium-timing`.
+- Checks: `pnpm verify` green (136 files, 772 tests).
+- For the coordinator: the player app (apps/web) now also runs zod without compiled parsers in the browser (the same probe was a `script-src 'self'` console violation there); no change in its files.
 
 ### Piece 5 — admin screens for identity providers, embed origins and webhooks (T175–T177)
 
