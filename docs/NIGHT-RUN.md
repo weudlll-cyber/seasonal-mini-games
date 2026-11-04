@@ -2,6 +2,24 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Clean state before the next play-test (2026-11-04)
+
+Branch `feat/guess-games` from `d2656f9`. Owner decision O63 (2026-11-04: Heatwave per round in the host menu), two display fixes and a reliably green test suite. Technical decisions from T203; the ones that change what players or the host see are proposals (OPEN.md, "Clean state, to confirm"). Nothing goes to `master`.
+
+### Status
+
+| Piece                               | State | Commit |
+| ----------------------------------- | ----- | ------ |
+| 0. O63 recorded; CI's coverage gate | done  |        |
+| 1. Heatwave in the host menu (O63)  | open  |        |
+| 2. Two display fixes                | open  |        |
+| 3. A reliably green test suite      | open  |        |
+| 4. Re-shoot (O55), handover         | open  |        |
+
+### Piece 0 — O63 and CI's coverage gate
+
+- CI's `verify` job failed on `3bd0e3a`, `d768f96` and `d2656f9` at `pnpm test:coverage`: game-sdk's branches 89.07 % for a 90 % threshold, from two unreachable fallbacks in the new `marks.ts` (`?? 'currentColor'`, `?? 'dot'`) and one in `tagOf` (`?? ''`). `markAt` now computes the colour's token and picks the shape without an index, `tagOf` reads the bot's number from the key; `pnpm test:coverage` passes locally (437 tests). The e2e job of `3bd0e3a` failed journey 33 on the phone's result bar, 3 px too wide, fixed in that commit's `match.css` already (CI ran the commit's own tree; `d768f96`'s e2e passed).
+
 ## Play-test fixes (2026-11-04)
 
 Branch `feat/guess-games` from `606eecf`. The owner's decisions after playing all four games, O56–O62 (2026-11-04), the defects found while playing, and night 8's leftovers. Technical decisions from T187 (piece 5: T200–T209); the ones that change what players see are proposals the owner confirms after play (OPEN.md, "Play-test fixes, to confirm"). Nothing goes to `master`. Piece 5 runs in a background agent in the same tree, on its own files, beside pieces 1–4.

@@ -34,15 +34,16 @@ export const MARK_SHAPES: readonly MarkShape[] = ['dot', 'ring', 'square'];
 // The tag of a player key as public views name them: "p3", a bot "b7"; "you" for the viewer.
 export function tagOf(key: string, viewerKey: string | null): string {
   if (key === viewerKey) return 'you';
-  const bot = /^bot-0*(\d+)$/.exec(key);
-  return bot === null ? key : `b${bot[1] ?? ''}`;
+  // A Quick Test bot's number without its leading zeros: "bot-07" is "b7".
+  return /^bot-\d+$/.test(key) ? `b${String(Number(key.slice(4)))}` : key;
 }
 
 // The colour and shape of the i-th player in join order: colours first, then the next shape.
 export function markAt(i: number): Omit<PlayerMark, 'tag'> {
+  const turn = Math.floor(i / MARK_COLORS.length) % MARK_SHAPES.length;
   return {
-    color: MARK_COLORS[i % MARK_COLORS.length] ?? 'currentColor',
-    shape: MARK_SHAPES[Math.floor(i / MARK_COLORS.length) % MARK_SHAPES.length] ?? 'dot',
+    color: `var(--mark-${String((i % MARK_COLORS.length) + 1)})`,
+    shape: turn === 0 ? 'dot' : turn === 1 ? 'ring' : 'square',
   };
 }
 
