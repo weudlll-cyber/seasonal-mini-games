@@ -49,7 +49,9 @@ export function ResultPanel({ view, names, viewerKey, part }: ResultPanelProps):
         const cuts = v.guesses[id] ?? [];
         return (
           <li key={id} className={id === viewerKey ? 'bd-you' : undefined}>
-            <strong>{names[id] ?? id}</strong>
+            <strong className="smg-one-line" title={names[id] ?? id}>
+              {names[id] ?? id}
+            </strong>
             {own === undefined ? null : (
               <SequenceChips sequence={own} label={`${names[id] ?? id}'s sequence`} />
             )}

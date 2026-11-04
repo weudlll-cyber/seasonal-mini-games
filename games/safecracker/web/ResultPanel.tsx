@@ -44,7 +44,9 @@ export function ResultPanel({ view, names, viewerKey, part }: ResultPanelProps):
     <ul className="sc-players" aria-label="Every code tried">
       {players.map((id) => (
         <li key={id} className={id === viewerKey ? 'sc-you' : undefined}>
-          <strong>{names[id] ?? id}</strong>
+          <strong className="smg-one-line" title={names[id] ?? id}>
+            {names[id] ?? id}
+          </strong>
           {v.secrets?.[id] === undefined ? null : (
             <>
               {' '}

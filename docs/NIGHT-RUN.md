@@ -39,6 +39,11 @@ Nothing so far.
 - Removed: the bar's gaps and their merging (`segmentsOf`, `MERGE_PERCENT`, `.gtn-range-gap`, `--merged`), the "Fallen (N)" button and its grid placement beside the bar (`.gtn-fallen-toggle`, the `:has(.gtn-fallen)` rules), `RangeBar`'s `removed` prop, the gap tests.
 - Tests: `fallen.test.tsx` rewritten (the list in view and plain, no button; "+8 more" of 20 with a laid-out list, the full sheet and Escape; "None yet."; the phone's line with the newest three and "Fallen 0"); `line.test.tsx`; the golden run re-recorded (it gains only `newest`). e2e journey 18: the list in view without opening, "+N more" when shown, the phone's line with the newest three and its sheet with all.
 
+### Piece 5 — the coordinator's part (games/**)
+
+- The games' result histories (`.gtn-players`, `.bd-players`, Safecracker's and Seasonal Target's lists) named a player in a plain `<strong>` that wrapped its line at 390 px with a long name (piece 5's probe: 24 → 48 px): now `.smg-one-line` (@smg/ui `base.css`, games cannot import apps/web's `PlayerName`), at most half the line, cut with an ellipsis, the full name in its title (T202). Test: GTN's `panels.test.tsx`.
+- The agent's report: display names are at most 24 characters (`smg.accounts` CHECK), so the 30-character name was written into the live page's name elements and measured there (piece 5 above).
+
 ### Pieces 2–4 — one commit
 
 - Pieces 2, 3 and 4 share files (the sheet, DECISIONS, `@smg/ui`'s index, the platform's round styles) and went into one commit; no hunk staging (interactive git is not available). `pnpm verify`: format, lint and types green; tests 800 of 803 with the other three passing on their own (two 5 s timeouts on the busy machine, one socket timing); Target's keyboard-selection test now has 15 s (ten moves redraw 400 tiles, 3.4 s alone).

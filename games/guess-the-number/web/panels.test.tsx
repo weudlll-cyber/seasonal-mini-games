@@ -102,6 +102,9 @@ describe('the spectator and result panels', () => {
       'Anna: 42 correct',
       'p2: did not guess',
     ]);
+    // A name on one line, cut at its end, whole in its title (T202).
+    const name = screen.getByText('Anna');
+    expect([name.className, name.title]).toEqual(['smg-one-line', 'Anna']);
   });
 });
 

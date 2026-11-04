@@ -48,7 +48,9 @@ function History({ view, names, viewerKey }: ResultPanelProps): ReactElement {
     <ul className="st-players" aria-label="Every guess">
       {players.map((id) => (
         <li key={id} className={id === viewerKey ? 'st-you' : undefined}>
-          <strong>{names[id] ?? id}</strong>
+          <strong className="smg-one-line" title={names[id] ?? id}>
+            {names[id] ?? id}
+          </strong>
           {v.targets?.[id] === undefined ? null : <> — target {cellText(v.targets[id])}</>}:{' '}
           {(v.guesses[id] ?? [])
             .map((g) => `${cellText(g.value)} ${shortAnswer(g.feedback)}`)

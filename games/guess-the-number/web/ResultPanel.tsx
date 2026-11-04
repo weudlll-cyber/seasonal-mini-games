@@ -39,10 +39,10 @@ export function ResultPanel({ view, names, viewerKey, part }: ResultPanelProps):
     <ul className="gtn-players" aria-label="Every guess">
       {players.map((id) => (
         <li key={id} className={id === viewerKey ? 'gtn-you' : undefined}>
-          <strong>{names[id] ?? id}</strong>
-          {v.secrets?.[id] === undefined ? null : (
-            <> — number {formatNumber(v.secrets[id])}</>
-          )}:{' '}
+          <strong className="smg-one-line" title={names[id] ?? id}>
+            {names[id] ?? id}
+          </strong>
+          {v.secrets?.[id] === undefined ? null : <> — number {formatNumber(v.secrets[id])}</>}:{' '}
           {(v.guesses[id] ?? []).map((g) => `${formatNumber(g.value)} ${g.feedback}`).join(', ') ||
             NO_GUESSES}
         </li>
