@@ -43,8 +43,8 @@
 | `round.halving` | false | — | — | owner (only on a halving day) | host | frozen |
 | `round.repeatGuessRejected` | true | — | — | owner (O15) | game admin | frozen |
 | `spring.hintType` | `lastDigit` | — | — (`lastDigit`, `half`) | owner (O56) | game admin | frozen |
-| `summer.stepS` | 1 | 1 | 10 | owner (O57) | game admin | frozen |
-| `summer.stepIntervalS` | 10 | 5 | 300 | owner (O57) | game admin | frozen |
+| `summer.stepS` | 1 | 1 | 10 | owner (O57, O63) | host ("Heatwave step", a summer round); default: game admin | frozen |
+| `summer.stepIntervalS` | 10 | 5 | 300 | owner (O57, O63) | host ("Heatwave every", a summer round); default: game admin | frozen |
 | Heatwave floor | 3 s | — | — | owner (not a setting) | — | — |
 | `autumn.intervalS` | 20 | 5 | 120 | owner (O15) | game admin | frozen |
 | `autumn.count` | 10 | 1 | 100 | owner (O15) | game admin | frozen |

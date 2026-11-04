@@ -10,7 +10,8 @@
  *                 round bar (../round/FocusShell, O46), which closes the same way. Inside: while a round
  *                 runs, Start (a created round), End and Abort with a reason; otherwise a form
  *                 with every setting the host chooses per round (in a match without teams not
- *                 the season teams, O34), prefilled with the
+ *                 the season teams, O34; Heatwave's step and interval only for a summer round,
+ *                 O63), prefilled with the
  *                 last round's choices or the document's values and limited to the bounds in
  *                 force (08 §3; the server checks again), the season (In Season when it is
  *                 usable, or one by hand), the halving round only on a halving day; then
@@ -33,7 +34,7 @@ import { intent } from '../live/socket.js';
 import { codeText } from '../round/roundText.js';
 import { api, ApiError } from '../shell/http.js';
 import { EndMatch } from './EndMatch.js';
-import { Field, SeasonControls, useSeasonChoice } from './roundFields.js';
+import { formSeason, HostFields, SeasonControls, useSeasonChoice } from './roundFields.js';
 
 // Season and halving have their own controls below the generic fields.
 const OWN_CONTROLS = new Set(['round.seasonSource', 'round.halving']);
@@ -86,17 +87,13 @@ function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
     <form className="smg-stack" onSubmit={submit} data-testid="round-form">
       <div className="host-form">
         <SeasonControls {...choice} />
-        {fields.map((d) => (
-          <Field
-            key={d.key}
-            def={d}
-            doc={doc}
-            value={values[d.key] ?? d.default}
-            set={(v) => {
-              setValues((old) => ({ ...old, [d.key]: v }));
-            }}
-          />
-        ))}
+        <HostFields
+          fields={fields}
+          doc={doc}
+          season={formSeason(choice)}
+          values={values}
+          set={setValues}
+        />
       </div>
       <Problem text={problem} />
       <div className="smg-row">

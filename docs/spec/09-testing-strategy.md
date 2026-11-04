@@ -94,7 +94,7 @@ Journeys 1–19 are Guess The Number's and stay unchanged by the guess engine (D
 
 Journeys 1, 10, 11, 16, 20–22 and 24–27 also check that the round view fits the screen: `document.scrollingElement.scrollHeight` is at most `window.innerHeight` ([02](02-game-guess-the-number.md) §12).
 
-The **fast test profile** exists only in development builds (as Bingo 12 §4): special intervals of a few seconds; the countdown stays as chosen, because it is the round's intro screen (owner decision 36), and scripted Quick Test calls choose 3 s. Published defaults are unchanged, and a test proves it.
+The **fast test profile** exists only in development builds (as Bingo 12 §4): special intervals of a few seconds, Heatwave's the round's own (the host's, owner decision 63); the countdown stays as chosen, because it is the round's intro screen (owner decision 36), and scripted Quick Test calls choose 3 s. Published defaults are unchanged, and a test proves it.
 
 ### 4.1 The guess games' tests
 

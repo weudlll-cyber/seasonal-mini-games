@@ -7,7 +7,9 @@
  *                 label and one-line help and the bounds in force (the document's narrowed
  *                 bounds, never wider than the catalogue, 08 §1); the Quick Test uses the same
  *                 fields. The season choice offers In Season only while it is usable, and the
- *                 halving switch only on a halving day (03 §3, §4).
+ *                 halving switch only on a halving day (03 §3, §4). `HostFields` shows the
+ *                 host's fields of the round's season (`formSeason`): Heatwave's step and
+ *                 interval only for summer (`forSeason`, O63).
  * Depends on:     react, @smg/contracts, @smg/game-sdk (bounds), ../components/fields,
  *                 ./formHelp, ../season/season, ../shell/http
  * Used by:        ./HostMenu, ../shell/QuickTest
@@ -103,6 +105,15 @@ export interface SeasonChoice {
   readonly setHalving: (h: boolean) => void;
 }
 
+// The round's season as the form stands: the one chosen by hand, or In Season's; null while
+// the feed is not known.
+export const formSeason = (c: SeasonChoice): SeasonName | null =>
+  c.season === 'inSeason' ? (c.now?.inSeason?.season ?? null) : c.season;
+
+// A season's own fields show only for that season: Heatwave's in summer (O63).
+export const forSeason = (key: string, season: SeasonName | null): boolean =>
+  !key.startsWith('summer.') || season === 'summer';
+
 // In Season when the feed is usable, else Spring by hand; halving off (`GET /seasons/current`).
 export function useSeasonChoice(): SeasonChoice {
   const [season, setSeason] = useState<SeasonName | 'inSeason'>('inSeason');
@@ -115,4 +126,33 @@ export function useSeasonChoice(): SeasonChoice {
     });
   }, []);
   return { now, season, setSeason, halving, setHalving };
+}
+
+// The host's fields of the round's season: Heatwave's only for summer (O63).
+export function HostFields(p: {
+  readonly fields: readonly SettingDef[];
+  readonly doc: MatchDetailsView['nextRoundDefaults'] & object;
+  readonly season: ReturnType<typeof formSeason>;
+  readonly values: Readonly<Record<string, SettingValue>>;
+  readonly set: (
+    update: (old: Record<string, SettingValue>) => Record<string, SettingValue>,
+  ) => void;
+}): ReactElement {
+  return (
+    <>
+      {p.fields
+        .filter((d) => forSeason(d.key, p.season))
+        .map((d) => (
+          <Field
+            key={d.key}
+            def={d}
+            doc={p.doc}
+            value={p.values[d.key] ?? d.default}
+            set={(v) => {
+              p.set((old) => ({ ...old, [d.key]: v }));
+            }}
+          />
+        ))}
+    </>
+  );
 }

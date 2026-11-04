@@ -8,17 +8,23 @@ Branch `feat/guess-games` from `d2656f9`. Owner decision O63 (2026-11-04: Heatwa
 
 ### Status
 
-| Piece                               | State | Commit |
-| ----------------------------------- | ----- | ------ |
-| 0. O63 recorded; CI's coverage gate | done  |        |
-| 1. Heatwave in the host menu (O63)  | open  |        |
-| 2. Two display fixes                | open  |        |
-| 3. A reliably green test suite      | open  |        |
-| 4. Re-shoot (O55), handover         | open  |        |
+| Piece                               | State | Commit    |
+| ----------------------------------- | ----- | --------- |
+| 0. O63 recorded; CI's coverage gate | done  | `fbb3214` |
+| 1. Heatwave in the host menu (O63)  | done  |           |
+| 2. Two display fixes                | open  |           |
+| 3. A reliably green test suite      | open  |           |
+| 4. Re-shoot (O55), handover         | open  |           |
 
 ### Piece 0 — O63 and CI's coverage gate
 
 - CI's `verify` job failed on `3bd0e3a`, `d768f96` and `d2656f9` at `pnpm test:coverage`: game-sdk's branches 89.07 % for a 90 % threshold, from two unreachable fallbacks in the new `marks.ts` (`?? 'currentColor'`, `?? 'dot'`) and one in `tagOf` (`?? ''`). `markAt` now computes the colour's token and picks the shape without an index, `tagOf` reads the bot's number from the key; `pnpm test:coverage` passes locally (437 tests). The e2e job of `3bd0e3a` failed journey 33 on the phone's result bar, 3 px too wide, fixed in that commit's `match.css` already (CI ran the commit's own tree; `d768f96`'s e2e passed).
+
+### Piece 1 — Heatwave in the host menu (O63, T203)
+
+- "Heatwave step" (1–10 s) and "Heatwave every" (5–300 s) in the round form for a summer round, from the admin's values (1 s, 10 s), kept from round to round (`last`, as every round setting); `createRoundBody` names both in the request's contract; the server takes the round's values over the defaults (`chooseRoundSettings`); the fast profile keeps them.
+- Reused: the generic host fields (`Field`, `hostChooses`), the settings check (`settingProblem`), the round form's `last`. New: `formSeason`, `forSeason` (roundFields), `HostFields` (HostMenu, split from `RoundForm`).
+- Tests: `roundBody.test.ts` (in and out of range, not whole, strict), `roundSession.test.ts` (the round's values over the defaults, outside the bounds refused), `heatwave.test.tsx` (only in summer, prefilled, bounds, sent, kept).
 
 ## Play-test fixes (2026-11-04)
 

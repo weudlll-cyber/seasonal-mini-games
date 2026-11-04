@@ -9,11 +9,12 @@
  *                 the result and the proof only after the end. Every answer names players by
  *                 their number in the match, never by account id; the state adds `you`, the
  *                 viewer's own number (T104). Codes map to 409 / 422 / 429.
- * Depends on:     fastify, zod, ../../match/*, ../../round/*
+ * Depends on:     fastify, zod, @smg/game-sdk (setting definitions), ../../match/*, ../../round/*
  * Used by:        ../app
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1, §4.3; docs/spec/02-game-guess-the-number.md §4, §10, §11
  */
 import type { Reply } from '@smg/domain';
+import { PLATFORM_ROUND_SETTINGS, type IntDef } from '@smg/game-sdk';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
@@ -25,9 +26,29 @@ import type { LiveRound } from '../../round/liveRound.js';
 import type { PgRoundStore } from '../../round/pgRoundStore.js';
 
 const SEASONS = ['spring', 'summer', 'autumn', 'winter'] as const;
-const createBody = z
+
+// Heatwave's step and interval, which the host sets per round (O63), checked in the request
+// against their definitions' bounds (1–10 s, 5–300 s); every setting, these too, is checked
+// again against the bounds in force when the round is made. The 3 s floor is the domain's.
+const heatwaveSeconds = (key: string) => {
+  const def = PLATFORM_ROUND_SETTINGS.find((d): d is IntDef => d.key === key && d.kind === 'int');
+  return z
+    .number()
+    .int()
+    .min(def?.min ?? 1)
+    .max(def?.max ?? 1)
+    .optional();
+};
+
+export const createRoundBody = z
   .object({
-    settings: z.record(z.string(), z.unknown()).default({}),
+    settings: z
+      .object({
+        'summer.stepS': heatwaveSeconds('summer.stepS'),
+        'summer.stepIntervalS': heatwaveSeconds('summer.stepIntervalS'),
+      })
+      .catchall(z.unknown())
+      .default({}),
     season: z.enum(SEASONS).optional(),
     startNow: z.boolean().default(false),
   })
@@ -92,7 +113,7 @@ export function registerRoundRoutes(app: FastifyInstance, deps: RoundRouteDeps):
 
 function registerHostRoutes(app: FastifyInstance, deps: RoundRouteDeps): void {
   app.post('/api/v1/matches/:code/rounds', async (request, reply) => {
-    const body = createBody.safeParse(request.body);
+    const body = createRoundBody.safeParse(request.body);
     if (!body.success) return reply.status(400).send({ code: 'VALIDATION_FAILED' });
     const match = await findMatch(deps.pool, (request.params as { code: string }).code);
     const actor = await hostOf(request, reply, match);

@@ -65,6 +65,24 @@ describe('round settings', () => {
   });
 });
 
+describe("Heatwave's numbers per round (O63)", () => {
+  it("use the host's step and interval over the admin's defaults, inside the bounds", () => {
+    const defaults = chooseRoundSettings(findGame, {}, {});
+    expect(defaults.platform.specials.heatwave).toEqual({ stepMs: 1_000, intervalMs: 10_000 });
+    const chosen = chooseRoundSettings(
+      findGame,
+      { 'summer.stepIntervalS': { value: 30 } },
+      { 'summer.stepS': 4, 'summer.stepIntervalS': 20 },
+    );
+    expect(chosen.platform.specials.heatwave).toEqual({ stepMs: 4_000, intervalMs: 20_000 });
+    for (const choices of [{ 'summer.stepS': 11 }, { 'summer.stepIntervalS': 4 }]) {
+      expect(() => chooseRoundSettings(findGame, {}, choices)).toThrow(
+        expect.objectContaining({ code: 'ROUND_SETTINGS_INVALID' }),
+      );
+    }
+  });
+});
+
 describe('a round session', () => {
   it('commits to its seed, finds a winner and reveals the seed and secrets at the end', () => {
     const { s, log, run } = session();
