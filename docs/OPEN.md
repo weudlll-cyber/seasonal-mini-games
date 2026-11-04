@@ -6,7 +6,7 @@ Full list: [BACKLOG.md](BACKLOG.md). Decisions: [DECISIONS.md](DECISIONS.md).
 - Merged into `master` on 2026-11-01 (merge `fd8ef34`): the foundation, Guess The Number with its server, client, admin app, e2e journeys 1–19 and a first load check, built on `feat/guess-the-number` and `night/2026-10-27` ([NIGHT-RUN.md](NIGHT-RUN.md)); both branches are deleted.
 - E2E journey 8 (embedded handoff) runs against a local test host page (night run 2, N7); the real website side is a website task.
 - From the website repository: the In Season feed (with halving days), the handoff endpoint for `seasonal-mini-games` with the optional `links` claim, the chat room `mini-games`, and the route import into its Caddy.
-- Merged into `master` on 2026-11-04 (merge MERGE_SHA): Seasonal Safecracker, Seasonal Bomb Defusal and Seasonal Target with focus mode, the night-7 and night-8 work and the play-test fixes, built on `feat/guess-games` ([NIGHT-RUN.md](NIGHT-RUN.md)); the owner played all four games and confirmed every proposal (DECISIONS O65); the branch is deleted.
+- Merged into `master` on 2026-11-04 (merge `4b86ba6`, PR #1): Seasonal Safecracker, Seasonal Bomb Defusal and Seasonal Target with focus mode, the night-7 and night-8 work and the play-test fixes, built on `feat/guess-games` ([NIGHT-RUN.md](NIGHT-RUN.md)); the owner played all four games and confirmed every proposal (DECISIONS O65); the branch is deleted.
 
 ## Owner questions
 

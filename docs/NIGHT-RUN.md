@@ -11,9 +11,9 @@ Branch `feat/guess-games` from `6260b84`, merged into `master` by this task (the
 | Piece                                      | State | Commit      |
 | ------------------------------------------ | ----- | ----------- |
 | 1. The team column                         | done  | `12fcc1c`   |
-| 2. The owner's confirmations, a clean OPEN | done  | this commit |
-| 3. The merge into master                   | open  |             |
-| 4. The sweep and the handover              | open  |             |
+| 2. The owner's confirmations, a clean OPEN | done  | `396fa3f`   |
+| 3. The merge into master                   | done  | `4b86ba6`   |
+| 4. The sweep and the handover              | done  | this commit |
 
 ### Piece 1 — the team column (T212)
 
@@ -31,6 +31,12 @@ Branch `feat/guess-games` from `6260b84`, merged into `master` by this task (the
 - One `pnpm verify` on `396fa3f`: green (148 test files, 816 tests). PR #1 into `master`.
 - CI on `396fa3f` (push) failed journeys 5 and 12: their checks still read the team as text in the player list. The PR's first run failed journey 34 on Firefox (a bot's random first guess won the round at once) and the Trusted Types check on webkit-mobile (the copied CSP's `upgrade-insecure-requests`); CodeQL flagged the harness's proxy (js/request-forgery). All four fixed (T213), each check run once in its browser.
 - The PR's second run (`fa66cea`): 101 passed; journey 22 failed on firefox-timing with one "Hint" tag, the other's tile filled by the bot's random guess (T144). Journey 22 now accepts that (T213); run once on Firefox, passed.
+
+- The PR's third run (`0337a33`, all three browsers): every job green — verify, docs, security, image, e2e (136 passed, 2 skipped, 38 min); CodeQL green. Merged with a merge commit, `4b86ba6` (parents `10f4cd3`, `0337a33`).
+
+### Piece 4 — the sweep
+
+- The merge's tree equals `feat/guess-games`' final tree (`git diff 0337a33 4b86ba6` empty; `master` had no commit the branch lacked). `feat/guess-games` and `shots/playtest-1` deleted on origin and locally; origin lists `master` alone. This line and OPEN's merge SHA are a docs commit on `master`.
 
 ## Play-test round 2 (2026-11-04)
 
