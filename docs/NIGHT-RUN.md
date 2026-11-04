@@ -2,6 +2,25 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## The team column, the owner's confirmations, the merge (2026-11-04)
+
+Branch `feat/guess-games` from `6260b84`, merged into `master` by this task (the owner's approval of 2026-11-04). Technical decisions from T212.
+
+### Status
+
+| Piece                                      | State | Commit |
+| ------------------------------------------ | ----- | ------ |
+| 1. The team column                         | done  |        |
+| 2. The owner's confirmations, a clean OPEN | open  |        |
+| 3. The merge into master                   | open  |        |
+| 4. The sweep and the handover              | open  |        |
+
+### Piece 1 — the team column (T212)
+
+- The waiting area's list and the Players panel: the team as its icon alone (`TeamIcon`, new in `season/`, used by both), named and titled; a heading row "Team"; the waiting area's column gaps 0.25rem. Measured with a 24-character name (192 px of text) in "Next round" → Players: before, the row 290 px, the name 172 of 192 px at 1280 × 720; with the icon and the narrower gaps 196 of 196 px at 1280 × 720 and 215 of 215 px at 390 × 844.
+- CI's e2e on `6260b84` failed journey 9: axe's `aria-prohibited-attr` on the result's "took part" (`aria-label` on a plain span, T211); now visually hidden text and an `aria-hidden` dash. Journey 9 passes.
+- Removed: the team names as text in those lists (`teamName` there), the `smg-muted` "no team yet" text. Tests (the web package only, O64): `waiting.test.tsx` (the icon's name and tooltip, the heading), `longNames.test.tsx`, `result.test.tsx`; e2e journey 35 (new, `playerNames.spec.ts`) and journey 9, once each.
+
 ## Play-test round 2 (2026-11-04)
 
 Branch `feat/guess-games` from `f17d9d4`. Owner decision O64 (2026-11-04: tests only where they answer something about the change), Heatwave in every round setup, the next-round form keeping the season, player lists giving the name the room, Seasonal Target's result. Technical decisions from T208; the ones that change what players or the host see are proposals (OPEN.md, "Round 2, to confirm"). Nothing goes to `master`.

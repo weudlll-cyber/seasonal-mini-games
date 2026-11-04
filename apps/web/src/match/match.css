@@ -170,7 +170,9 @@
   list-style: none;
   display: grid;
   grid-template-columns: minmax(0, 1fr) max-content max-content;
-  gap: var(--space-1) var(--space-2);
+  /* Narrow gaps: the name column keeps the width, a 24-character name whole beside the team's
+     icon and "online" in the 340 px side column (T212). */
+  gap: var(--space-1) 0.25rem;
 }
 
 .match-players li {
@@ -264,4 +266,10 @@
   display: grid;
   gap: var(--space-2);
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+}
+
+/* The heading row over the team column ("Team"), in the muted small type (T212). */
+.match-players-head {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
 }

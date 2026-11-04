@@ -5,9 +5,11 @@
  *
  * Responsibility: shown before the first round and between rounds (O23): whether the next
  *                 round is set up and who starts it; and every player with their name (one
- *                 line, cut with an ellipsis, ../round/PlayerName), their team (icon and name,
- *                 or "no team yet", left-aligned in a column of one width on every row, T202)
- *                 and, apart from it, their connection (a dot and "online" or "away"). A player picks a team once and keeps it for the match
+ *                 line, cut with an ellipsis only where the row is too narrow,
+ *                 ../round/PlayerName), their team under the heading "Team" as its icon alone
+ *                 (its name the icon's accessible name and tooltip, "no team yet" a named dash,
+ *                 ../season/TeamIcon, T212) and their connection (a dot and "online" or
+ *                 "away"), the columns as wide as their widest entry (T210). A player picks a team once and keeps it for the match
  *                 (O26): until their first round the area says what teams are for and shows
  *                 the four team buttons, the chosen one pressed, in its season colour with its
  *                 icon in the text colour and a check (03 §5); afterwards no buttons, and
@@ -29,6 +31,7 @@ import { PlayerName } from '../round/PlayerName.js';
 import { codeText } from '../round/roundText.js';
 import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASONS, seasonColor, teamName } from '../season/season.js';
+import { TeamIcon } from '../season/TeamIcon.js';
 
 interface Props {
   readonly match: MatchDetailsView;
@@ -81,26 +84,26 @@ function Teams({ match, viewerKey, reload }: Props): ReactElement {
 // alone: a filled or a hollow dot, and the word).
 function Players({ match }: { readonly match: MatchDetailsView }): ReactElement {
   const connected = new Set(match.connected);
-  const team = (t: TeamName | null): ReactElement =>
-    t === null ? (
-      <span className="match-player-team smg-muted">no team yet</span>
-    ) : (
-      <span className="match-player-team">
-        <span aria-hidden="true">
-          <SeasonIcon season={t} size="1rem" />
-        </span>{' '}
-        {teamName(t)}
-      </span>
-    );
   return (
     <ul className="match-players" data-testid="match-players" data-teams={match.teamMatch}>
+      {/* The team column's heading; a screen reader hears each icon's name instead. */}
+      {match.teamMatch ? (
+        <li className="match-players-head" aria-hidden="true">
+          <span /> <span>Team</span> <span />
+        </li>
+      ) : null}
       {match.players.map((p) => {
         const online = connected.has(p.playerKey);
         return (
           // The spaces between the parts keep them apart for screen readers; the grid
           // does not render them.
           <li key={p.playerKey}>
-            <PlayerName name={p.name} /> {match.teamMatch ? <>{team(p.team)} </> : null}
+            <PlayerName name={p.name} />{' '}
+            {match.teamMatch ? (
+              <>
+                <TeamIcon team={p.team} className="match-player-team" />{' '}
+              </>
+            ) : null}
             <span className="match-presence" data-online={online}>
               <span className="match-dot" aria-hidden="true" /> {online ? 'online' : 'away'}
             </span>

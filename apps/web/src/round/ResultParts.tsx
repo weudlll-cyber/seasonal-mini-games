@@ -52,8 +52,11 @@ function Shortened(p: { readonly long: string; readonly short: string }): ReactE
 function PlaceCell(p: { readonly state: RoundStateView; readonly place: number | null }) {
   if (p.place !== null) return <>{formatNumber(p.place)}</>;
   if (p.state.secretMode !== 'shared') return <>not solved</>;
+  // The words as text for a screen reader (an aria-label on a plain span is not allowed,
+  // axe's aria-prohibited-attr), the dash for the eye, the words again as its tooltip.
   return (
-    <span aria-label="took part" title="took part">
+    <span title="took part">
+      <span className="smg-visually-hidden">took part</span>
       <span aria-hidden="true">–</span>
     </span>
   );

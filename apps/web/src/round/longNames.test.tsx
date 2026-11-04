@@ -99,7 +99,10 @@ describe('a 30-character name, in its cells', () => {
     render(<PlayersPanelBody state={state} points={[]} viewerKey="a" />);
     const [name] = expectWhole(screen.getByTestId('players-panel'));
     const row = name?.closest('li');
-    expect(row?.querySelector('.round-player-team')?.textContent).toBe(' Team Autumn');
+    // The team as its icon alone, named (T212).
+    expect(row?.querySelector('.round-player-team')?.getAttribute('aria-label')).toBe(
+      'Team Autumn',
+    );
     expect(row?.querySelector('.round-player-guesses')?.textContent).toBe('9 guesses');
     expect(row?.parentElement?.dataset.teams).toBe('true');
   });
@@ -123,7 +126,6 @@ describe('a 30-character name, in its cells', () => {
     const [name] = expectWhole(screen.getByTestId('match-players'));
     const parts = [...(name?.closest('li')?.children ?? [])].map((c) => c.className);
     expect(parts).toEqual(['player-name', 'match-player-team', 'match-presence']);
-    const other = screen.getByText('no team yet');
-    expect(other.className).toBe('match-player-team smg-muted');
+    expect(screen.getByRole('img', { name: 'no team yet' }).className).toBe('match-player-team');
   });
 });

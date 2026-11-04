@@ -76,3 +76,9 @@
   font-size: var(--font-size-small);
   color: var(--color-text-muted);
 }
+
+/* The heading row over the team column ("Team"), in the muted small type (T212). */
+.round-player-head {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}

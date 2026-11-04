@@ -9,10 +9,11 @@
  *                 per season team with its match points and its players in this round, shown
  *                 only when teams play (03 §5), each named "Team Spring" (O52). The focus
  *                 mode's Players panel (O46) holds the tiles and the round's players with
- *                 colour, name (cut with an ellipsis, ./PlayerName), team (icon and name in a
- *                 column of one width, T202) and number of guesses; in a game with player
+ *                 colour, name (cut with an ellipsis only where too narrow, ./PlayerName),
+ *                 team under the heading "Team" as its icon alone (its name the accessible name
+ *                 and tooltip, ../season/TeamIcon, T212) and number of guesses; in a game with player
  *                 tags the player's marker and tag in place of the dot (O62).
- * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), ../season/* (teamName),
+ * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), ../season/* (teamName, TeamIcon),
  *                 ./PlayerName, ./players.css
  * Used by:        ./RoundScreen, ./RoundLog
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §5
@@ -24,6 +25,7 @@ import type { CSSProperties, ReactElement } from 'react';
 
 import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASONS, seasonColor, teamName } from '../season/season.js';
+import { TeamIcon } from '../season/TeamIcon.js';
 import { PlayerName } from './PlayerName.js';
 import './players.css';
 
@@ -76,6 +78,12 @@ export function PlayersPanelBody(p: {
         aria-label="Players in this round"
         data-teams={state.teamsOn}
       >
+        {/* The team column's heading; a screen reader hears each icon's name instead. */}
+        {state.teamsOn ? (
+          <li className="round-player-head" aria-hidden="true">
+            <span /> <span /> <span>Team</span> <span />
+          </li>
+        ) : null}
         {rows.map((r) => (
           <li key={r.playerKey} data-own={r.playerKey === p.viewerKey}>
             <Marker state={state} playerKey={r.playerKey} mark={p.marks?.[r.playerKey]} />
@@ -83,16 +91,7 @@ export function PlayersPanelBody(p: {
               name={r.playerKey === p.viewerKey ? 'You' : (state.names[r.playerKey] ?? r.playerKey)}
             />
             {state.teamsOn ? (
-              <span className="round-player-team">
-                {r.team === null ? null : (
-                  <>
-                    <span aria-hidden="true">
-                      <SeasonIcon season={r.team} size="0.9rem" />
-                    </span>{' '}
-                    {teamName(r.team)}
-                  </>
-                )}
-              </span>
+              <TeamIcon team={r.team} className="round-player-team" size="0.9rem" />
             ) : null}
             <span className="round-player-guesses">
               {r.guesses} {r.guesses === 1 ? 'guess' : 'guesses'}

@@ -37,9 +37,13 @@ describe('the result screen', () => {
     const rows = [...screen.getByTestId('placings').querySelectorAll('tbody tr')].map(
       (tr) => tr.textContent,
     );
-    expect(rows).toEqual(['1 Walter910', '– Anna (you)40']);
-    // "–" is "took part" for a screen reader; "Pts" on a phone is "Points" (T211).
-    expect(screen.getByLabelText('took part').textContent).toBe('–');
+    expect(rows).toEqual(['1 Walter910', 'took part– Anna (you)40']);
+    // "–" for the eye, "took part" as text for a screen reader and as the tooltip, no
+    // aria-label on a plain span (axe); "Pts" on a phone is "Points" (T211).
+    const took = screen.getByTitle('took part');
+    expect(took.querySelector('.smg-visually-hidden')?.textContent).toBe('took part');
+    expect(took.querySelector('[aria-hidden="true"]')?.textContent).toBe('–');
+    expect(took.getAttribute('aria-label')).toBeNull();
     const points = within(screen.getByTestId('placings')).getByRole('columnheader', {
       name: 'Points',
     });
