@@ -2,6 +2,29 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Night 8 (2026-11-04)
+
+Branch `feat/guess-games` from `60821a6`. Owner decision O55 (2026-11-04: screenshot runs cover only the changed states). Technical decisions from T150; the ones that change what players or admins see are proposals the owner confirms after play (OPEN.md, "Night 8, to confirm"). Nothing goes to `master`. Pieces 4–6 and 8 ran in background agents in the same tree, on their own files, beside pieces 1–3.
+
+### Status
+
+| Piece                                         | State   | Commit |
+| --------------------------------------------- | ------- | ------ |
+| 0. O55 recorded                               | done    |        |
+| 1. All games: review fixes                    | running |        |
+| 2. Seasonal Target: review fixes              | open    |        |
+| 3. Safecracker and Bomb Defusal: review fixes | open    |        |
+| 4. Player account deletion screen             | running |        |
+| 5. Admin screens: providers, origins, hooks   | running |        |
+| 6. Admin app Trusted Types                    | open    |        |
+| 7. The "opens in 0 s" intro                   | open    |        |
+| 8. Load scenarios L1 specials and halving     | running |        |
+| 9. Re-shoot (O55), self-review, handover      | open    |        |
+
+### Needs the owner
+
+Nothing so far.
+
 ## Night 7 (2026-11-03)
 
 Branch `feat/guess-games`. Owner decision O54 (2026-11-03); technical decisions T141 onward, the layout ones proposals the owner confirms after play (OPEN.md, "Night-7 layout, to confirm"). Nothing goes to `master`.

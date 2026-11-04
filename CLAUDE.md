@@ -36,6 +36,7 @@ Everything in this repository is English: code, comments, commit messages, docs,
 - Accounts created for a test are removed by that test; matches it created are aborted, never deleted (the round event log is append-only, docs/spec/06-data-model-api-realtime.md §2.3).
 - Never disable a trigger, constraint or other protection. If a task needs that, list it under the owner's questions in the report and continue without it.
 - Screenshots never go into a working branch: images under `reports/` are git-ignored; push a run's screenshots, with their `play-through.txt`, only to an orphan branch of their own (`shots/<night>`, nothing else in it), which the owner deletes after the review (DECISIONS T146).
+- A screenshot run covers only the states the change touched: 1280 × 720 and 390 × 844 in light mode, one dark pair per changed state per game, 1920 × 1080 only where the layout differs from 1280 × 720; about 60–100 images (DECISIONS O55).
 - Run commands one at a time. Do not chain them with `&&`, `;` or `|` unless a single tool needs a pipe; chained commands do not match the permission rules and make the owner approve them by hand.
 
 ## Before reporting
