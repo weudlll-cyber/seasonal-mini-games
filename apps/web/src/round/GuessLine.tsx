@@ -20,7 +20,8 @@
  *                 Heatwave, halving, solves, the round opening and ending) is a quieter row; a
  *                 special's own row (Leaf Fall) stands out on the season's tint with its icon
  *                 (T115). With `marks` (a game with player tags, O62) a row starts with the
- *                 player's marker and tag in place of the dot ("you" for the viewer), and
+ *                 player's marker and tag in place of the dot (the viewer's rows "you" alone,
+ *                 "You" for a screen reader), and
  *                 hovering, focusing or (phone) tapping it highlights the player on the
  *                 game's board, a tap for 3 s; a row of the highlighted player stands out,
  *                 the others fade. Moved out of ./RoundLog to keep each file under the size
@@ -149,9 +150,14 @@ function Who(p: RowProps): ReactElement | null {
       ) : (
         <PlayerMark mark={mark} />
       )}
-      <span className="round-who" title={name}>
-        {name}
-      </span>
+      {mark !== undefined && p.guess.playerId === null ? (
+        // The "you" tag says it once; "You" stays for a screen reader (T204).
+        <span className="smg-visually-hidden">You</span>
+      ) : (
+        <span className="round-who" title={name}>
+          {name}
+        </span>
+      )}
     </>
   );
 }

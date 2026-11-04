@@ -70,6 +70,10 @@ describe('rows of a game with player tags (O62)', () => {
   it("start with the player's marker and tag; other games keep the dot", () => {
     const [mine, w] = show(true).reverse();
     expect(mine?.querySelector('.smg-mark-tag')?.textContent).toBe('you');
+    // The viewer's row says "you" once; "You" only for a screen reader (T204).
+    expect(mine?.querySelector('.round-who')).toBeNull();
+    expect(mine?.querySelector('.smg-visually-hidden')?.textContent).toBe('You');
+    expect(w?.querySelector('.round-who')?.textContent).toBe('Walter');
     expect(w?.querySelector('.smg-mark-tag')?.textContent).toBe('w');
     expect(w?.querySelector('.round-dot')).toBeNull();
     cleanup();

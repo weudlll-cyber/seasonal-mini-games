@@ -39,11 +39,15 @@
   flex: none;
 }
 
-/* A phone: the result's grid as wide as the card, a square under the target's line (T195). */
+/* A phone: the result's grid a square under the target's line, as wide as the card but no
+   taller than the screen leaves beside the placings (about 244 px at 844 px), so the first part
+   fits with "dev-host (you)" whole in a table at its own widths (T195, T205). */
 @media (max-width: 899px) {
   .st-result > .st-board {
     flex: none;
     aspect-ratio: 1;
+    width: min(100%, calc(100dvh - 37.5rem));
+    align-self: center;
   }
 }
 

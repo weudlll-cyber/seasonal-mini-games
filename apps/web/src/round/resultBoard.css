@@ -5,10 +5,9 @@
  *
  * Responsibility: on a desktop the placings column at its narrowest (24.5rem, narrower number
  *                 and place columns, "dev-host (you)" still whole), so the game's column is
- *                 wide enough for a square of the part's free height; on a phone the grid a
- *                 square as wide as the card (Seasonal Target's st.css), the part as tall as its
- *                 content, and "took part" on one line, so the part still fits the screen
- *                 (T195). Moved out of ./result.css to keep each file under the size limit.
+ *                 wide enough for a square of the part's free height; on a phone the part as
+ *                 tall as its content, its grid sized so it fits the screen (Seasonal Target's
+ *                 st.css, T195, T205). Moved out of ./result.css to keep each file under the size limit.
  * Spec:           docs/spec/02d-game-seasonal-target.md §11
  */
 @media (min-width: 900px) {
@@ -39,15 +38,5 @@
   .round-result[data-layout='board'] .round-result-first {
     height: auto;
     grid-template-rows: auto auto auto;
-  }
-}
-
-@media (max-width: 480px) {
-  .round-result[data-layout='board'] .round-col-place {
-    width: 4.75rem;
-  }
-
-  .round-result[data-layout='board'] .round-table td:first-child {
-    white-space: nowrap;
   }
 }
