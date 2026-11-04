@@ -19,7 +19,8 @@
  *                 round's verification page (02 §9, §10; 03 §5).
  * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber),
  *                 @smg-game/registry/web (types), ../season/*, ../shell/router,
- *                 ./MatchStandings, ./ResultParts, ./RoundSide, ./roundText, ./result.css
+ *                 ./MatchStandings, ./ResultParts, ./RoundSide, ./roundText, ./result.css,
+ *                 ./resultBoard.css
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §10; docs/spec/03-seasonal-specials.md §5
  */
@@ -33,6 +34,7 @@ import { Placings, TeamLine, Teams } from './ResultParts.js';
 import { colorsOf } from './RoundSide.js';
 import { endHeadline, marginText } from './roundText.js';
 import './result.css';
+import './resultBoard.css';
 
 function Proof({ state }: { readonly state: RoundStateView }): ReactElement | null {
   if (state.commitment === null) return null;
@@ -98,7 +100,7 @@ export function ResultScreen({
     <section
       className="round-result"
       data-testid="result"
-      // A board game's grid gets the free height of the first part (./result.css).
+      // A board game's grid gets the free height of the first part (./resultBoard.css).
       data-layout={game?.layout ?? 'list'}
     >
       <div className="smg-panel round-result-first" data-testid="result-first">

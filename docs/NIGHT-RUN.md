@@ -10,17 +10,24 @@ Branch `feat/guess-games` from `606eecf`. The owner's decisions after playing al
 
 | Piece                                    | State | Commit    |
 | ---------------------------------------- | ----- | --------- |
-| 0. O56–O62 recorded                      | done  |           |
+| 0. O56–O62 recorded                      | done  | `69de4f9` |
 | 1. Specials (O56, O57, O59–O61)          | done  | `587eee2` |
-| 2. Guess The Number: fallen numbers      | done  |           |
-| 3. Bomb Defusal: result, help, slot tap  | done  |           |
-| 4. Seasonal Target: messages, tags, grid | done  |           |
+| 2. Guess The Number: fallen numbers      | done  | `3bd0e3a` |
+| 3. Bomb Defusal: result, help, slot tap  | done  | `3bd0e3a` |
+| 4. Seasonal Target: messages, tags, grid | done  | `3bd0e3a` |
 | 5. All games and leftovers               | done  | `5a4a92c` |
-| 6. Re-shoot (O55), self-review, handover | open  |           |
+| 6. Re-shoot (O55), self-review, handover | done  |           |
 
 ### Needs the owner
 
-Nothing so far.
+Nothing blocks. To decide after play (OPEN.md, "Play-test fixes, to confirm"): T187–T197 (the specials' details, the fallen list, Bomb Defusal's help line, the wrapping banner and comments, players by tag, the layout and result sizes, the review fixes), T201 (no password change for website accounts), T202 (names on one line, team columns). Questions:
+
+- O57 says the host can still change Heatwave's step and interval: both are game-admin settings (the admin app's game document), not fields of the host's round form; they were not made host settings (no decision says so).
+- Display names are at most 24 characters (the accounts' CHECK), so the 30-character name was written into the page to test it (piece 5).
+- Seasonal Target's phone result: the full-width grid leaves the placings less room, so "dev-host" ends in an ellipsis there, "(you)" whole (T197); a narrower grid would keep it whole.
+- The shoot has 33 images, under the aim of 40–60: the changed states are fewer than night 8's.
+- Journey 22 failed once in its cleanup (an empty answer from `/session` while aborting the match); it passed on rerun.
+- Delete the branch `shots/playtest-1` after the review.
 
 ### Piece 1 — the specials (O56, O57, O59–O61; T187–T191)
 
@@ -38,6 +45,33 @@ Nothing so far.
 - Reused: `useDisclosure` (the "+N more" sheet, as the old button's), `formatNumber`, `.smg-chip`, `leafFallOn`. New and shared: `useFit`/`fitCount` in @smg/ui (how many items of a clipped list show whole).
 - Removed: the bar's gaps and their merging (`segmentsOf`, `MERGE_PERCENT`, `.gtn-range-gap`, `--merged`), the "Fallen (N)" button and its grid placement beside the bar (`.gtn-fallen-toggle`, the `:has(.gtn-fallen)` rules), `RangeBar`'s `removed` prop, the gap tests.
 - Tests: `fallen.test.tsx` rewritten (the list in view and plain, no button; "+8 more" of 20 with a laid-out list, the full sheet and Escape; "None yet."; the phone's line with the newest three and "Fallen 0"); `line.test.tsx`; the golden run re-recorded (it gains only `newest`). e2e journey 18: the list in view without opening, "+N more" when shown, the phone's line with the newest three and its sheet with all.
+
+### Handover
+
+- Branch `feat/guess-games` at the final commit, piece 6's (the handover message names its SHA); dev servers restarted on it: API 3910, web 5410, admin 5411.
+- Screenshots: the orphan branch `shots/playtest-1` (33 images and `play-through.txt`); `shots/night-8` is deleted on origin.
+- Quick Test: <http://127.0.0.1:5410/#/quick-test>. For each game: Game as below, Seed `acorn`, the Season named, **Fast specials** on, **Start from the lobby** on; Start round from the Host menu.
+
+| Game                  | What to look at                                                                                                                                                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Guess The Number      | Spring: "Free hint: the number ends in 7." and the phone's "Hint: ends in 7" in the season colour. Autumn: the fallen numbers in the panel, three rows then "+N more"; the phone's "Fallen 12: …, …, …". Summer: Heatwave every 10 s |
+| Seasonal Safecracker  | Spring: the hint's digit locked in its box, in the season colour; typing steps over it                                                                                                                                               |
+| Seasonal Bomb Defusal | Spring: the help line above the picker, the hint's colour locked in slot 1, tap a filled slot to empty it; the result's sequence wraps, nothing scrolls sideways                                                                     |
+| Seasonal Target       | Tile size 20, **Bots** 20 (a busy grid): tags on the tiles, hover a list row (only that player's tiles stay bright), the wide column; Spring: two green quarters; the result's larger grid                                           |
+
+### Summary
+
+- All six pieces done; nothing dropped for time (piece 5's last bullet checked on the shots). Piece 5 ran in a background agent (its report in its section); I did 0–4 and 6.
+- Decisions: O56–O62; T187–T197, T200–T202.
+- Checks per piece in their sections; CI for the final push: reported after the handover.
+
+### Piece 6 — the re-shoot (O55), the review, the handover (T197)
+
+- The shoot: `tmp/ptshoot.mjs` (git-ignored), 33 images to `shots/playtest-1`: each game's spring round (Guess The Number also individual), Guess The Number's autumn with 50 fallen numbers, Bomb Defusal's picker (help line, locked slot) and result, Seasonal Target with 20 bots (22 guesses, a hovered row, the result), the long-name views (the 30-character name written into the page). 1280 × 720 light and dark, 390 × 844 light, 1920 × 1080 for Target's widened column.
+- Measured (`play-through.txt`): no round view scrolls; Target's grid 652 px (30.5 px tiles) with a 556 px column at 1280 × 720, 1 012 px (48.5 px) with 836 px at 1920 × 1080, 374 px (16.6 px) on a phone; the busy list 15 of 22 rows in view at 1280 × 720, 22 of 22 at 1920 × 1080, 7 on a phone; the result grid 387 px at 1280 × 720 (night 8: 331) and 309 px on a phone (night 8: 211), both first parts fit (712 of 720, 837 of 844). Truncation check: nothing a player needs cut, but by design the long names' ellipsis, their comments giving way first (T150), and "dev-host" on Target's phone result.
+- My review of every new shot: fixed — Bomb Defusal's phone slot cut "yellow" (number and swatch only); Target's result placings cut "dev-host (you)" at 1280 × 720 (narrower columns, 387 px grid), its phone first part was 900 of 844 px ("took part" on one line); the long-name state's script. Seen and correct — both quarters tinted, a "Hint" tag giving way to the own tile on (1, 1), the hint chips in the season colour, "+38 more", the "Others" row and the hint leave the phone's list well over six rows (piece 5's last bullet), the tags and markers on 20 players, a hovered row fading the rest. Owner items: "Needs the owner".
+- e2e after the fixes: journeys 21, 22 (once failed in its cleanup, then passed), 24–28, 33, 34 pass in Chromium.
+- `pnpm verify` at the end: format, lint and types green; tests 776 of 803, the 27 others in 13 files all 5 s timeouts and two timing waits of the admin's webhook test while the dev servers ran beside it, every one of the 13 files passing on its own (85 tests).
 
 ### Piece 5 — the coordinator's part (games/**)
 

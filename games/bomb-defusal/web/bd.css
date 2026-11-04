@@ -242,4 +242,15 @@
   .bd-slot-number {
     font-size: var(--font-size-small);
   }
+
+  /* Six slots in 358 px: a filled slot shows its number and swatch, the name only to a screen
+     reader (its wire button shows the name with the slot's number, T193). */
+  .bd-slot .bd-chip-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
