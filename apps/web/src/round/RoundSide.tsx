@@ -9,7 +9,8 @@
  *                 per season team with its match points and its players in this round, shown
  *                 only when teams play (03 §5), each named "Team Spring" (O52). The focus
  *                 mode's Players panel (O46) holds the tiles and the round's players with
- *                 colour, team and number of guesses.
+ *                 colour, name (cut with an ellipsis, ./PlayerName), team (icon and name in a
+ *                 column of one width, T202) and number of guesses.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), ../season/* (teamName),
  *                 ./PlayerName, ./players.css
  * Used by:        ./RoundScreen, ./RoundLog
@@ -50,7 +51,11 @@ export function PlayersPanelBody(p: {
   return (
     <div className="round-players" data-testid="players-panel">
       <TeamTiles state={state} points={p.points} />
-      <ul className="round-player-list" aria-label="Players in this round">
+      <ul
+        className="round-player-list"
+        aria-label="Players in this round"
+        data-teams={state.teamsOn}
+      >
         {rows.map((r) => (
           <li key={r.playerKey} data-own={r.playerKey === p.viewerKey}>
             <span
@@ -61,8 +66,17 @@ export function PlayersPanelBody(p: {
             <PlayerName
               name={r.playerKey === p.viewerKey ? 'You' : (state.names[r.playerKey] ?? r.playerKey)}
             />
-            {state.teamsOn && r.team !== null ? (
-              <span className="round-player-team">{teamName(r.team)}</span>
+            {state.teamsOn ? (
+              <span className="round-player-team">
+                {r.team === null ? null : (
+                  <>
+                    <span aria-hidden="true">
+                      <SeasonIcon season={r.team} size="0.9rem" />
+                    </span>{' '}
+                    {teamName(r.team)}
+                  </>
+                )}
+              </span>
             ) : null}
             <span className="round-player-guesses">
               {r.guesses} {r.guesses === 1 ? 'guess' : 'guesses'}

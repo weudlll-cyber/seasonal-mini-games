@@ -4,7 +4,8 @@
  * @brief  One room of the builtin chat: its messages, the text field, refusals in plain words.
  *
  * Responsibility: the room's messages oldest first, newest at the bottom, in a box that
- *                 scrolls inside itself and follows new messages; each line the author (or a
+ *                 scrolls inside itself and follows new messages; each line the author (one
+ *                 line, cut with an ellipsis, ../round/PlayerName) and the text (or a
  *                 system line, or "Message deleted") with its actions (./ModActions: Report,
  *                 and the moderators' actions with chat.moderate); a text field where Enter
  *                 sends, one message at a time, emptied only if it still holds the message
@@ -12,8 +13,8 @@
  *                 is locked or the viewer may not write now; the server's refusal of a message
  *                 in a plain sentence under the field. Each live message by another player is
  *                 told to the screen around it (./chatArrivals: the round's unread badge).
- * Depends on:     react, @smg/contracts (views), ../shell/session, ./chatArrivals, ./ModActions,
- *                 ./useChat
+ * Depends on:     react, @smg/contracts (views), ../round/PlayerName, ../shell/session,
+ *                 ./chatArrivals, ./ModActions, ./useChat
  * Used by:        ./ChatPanel
  * Spec:           docs/spec/07-integration.md §2; Bingo 06 §7, Bingo 03 §12
  */
@@ -27,6 +28,7 @@ import {
   type SyntheticEvent,
 } from 'react';
 
+import { PlayerName } from '../round/PlayerName.js';
 import { useSession } from '../shell/session.js';
 import { ChatArrivals } from './chatArrivals.js';
 import { LineActions } from './ModActions.js';
@@ -44,7 +46,9 @@ function Line(p: {
   }
   return (
     <li className="chat-line">
-      <strong className="chat-author">{m.author ?? 'Former player'}</strong>{' '}
+      <strong className="chat-author">
+        <PlayerName name={m.author ?? 'Former player'} />
+      </strong>{' '}
       {m.text === null ? <em className="smg-muted">Message deleted</em> : <span>{m.text}</span>}
       <LineActions
         message={m}

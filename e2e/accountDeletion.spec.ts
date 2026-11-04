@@ -6,7 +6,8 @@
  *
  * Responsibility: the test host site (./host-page) is registered as in journey 8 (./hostSite);
  *                 its user is signed in by the handoff inside the embedded game, opens the game
- *                 directly at #/account, opens "Delete my account", sees what is deleted and
+ *                 directly at #/account, finds no "Change password" (the account has none,
+ *                 T201), opens "Delete my account", sees what is deleted and
  *                 what stays, finds Delete off with the name typed in the wrong case, types the
  *                 display name and deletes; the page says the account is gone and the session
  *                 is signed out; the profile answers 404 and the admin search no longer finds the
@@ -15,7 +16,7 @@
  *                 fails, then the provider and the origin.
  * Depends on:     @playwright/test, ./devStack, ./hostSite, ./play
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 29); docs/spec/07-integration.md §4;
- *                 DECISIONS T105, T170
+ *                 DECISIONS T105, T170, T201
  */
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
@@ -68,6 +69,9 @@ async function deleteIfSignedIn(ctx: BrowserContext): Promise<void> {
 
 async function deleteOnAccountPage(page: Page, user: string): Promise<void> {
   await page.goto(`${CLIENT_URL}/#/account`);
+  // A website account has no password: no form to change it, the line that says why (T201).
+  await expect(page.getByTestId('account-no-password')).toContainText('through the website');
+  await expect(page.getByTestId('password-form')).toHaveCount(0);
   await page.getByTestId('delete-account-open').click();
   const effects = page.getByTestId('delete-account-effects');
   await expect(effects).toContainText('What is deleted');

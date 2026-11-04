@@ -44,6 +44,8 @@ const points = (n: number, what: string): string =>
   `${formatNumber(n)} ${what}${n === 1 ? '' : 's'}`;
 
 // One placing: the place, the team's icon, the name (cut at its end), "(you)" apart from it.
+// When teams play the icon has a slot of its own, so the names line up also beside a player
+// without a team (T202).
 function PlacingRow(p: {
   readonly state: RoundStateView;
   readonly r: Result;
@@ -55,7 +57,11 @@ function PlacingRow(p: {
       <td>{placeText(p.state, r.place)}</td>
       <td>
         <span className="round-player">
-          {r.team === null ? null : <SeasonIcon season={r.team} size="1rem" />}{' '}
+          {p.state.teamsOn ? (
+            <span className="round-team-slot">
+              {r.team === null ? null : <SeasonIcon season={r.team} size="1rem" />}
+            </span>
+          ) : null}{' '}
           <PlayerName name={p.state.names[r.playerId] ?? r.playerId} />
           {p.you ? <span className="round-you-mark"> (you)</span> : null}
         </span>

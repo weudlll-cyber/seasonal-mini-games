@@ -31,6 +31,8 @@ export interface Session {
   readonly kind: SessionKind;
   readonly csrfToken: string;
   readonly displayName: string | null;
+  // False for an account the website's handoff made (no password to change, T201).
+  readonly hasPassword: boolean;
   readonly roles: readonly string[];
   readonly permissions: readonly string[];
 }
@@ -67,6 +69,7 @@ interface SessionRow {
   kind: SessionKind;
   csrf_token: string;
   display_name: string | null;
+  has_password: boolean | null;
   roles: string[] | null;
   permissions: string[] | null;
 }
@@ -80,6 +83,7 @@ export async function findSession(pool: DbPool, token: string): Promise<Session 
          AND s.expires_at > now() AND s.idle_expires_at > now()
      RETURNING s.id, s.account_id, s.kind, s.csrf_token,
        (SELECT a.display_name FROM smg.accounts a WHERE a.id = s.account_id AND a.status = 'active') AS display_name,
+       (SELECT a.password_hash IS NOT NULL FROM smg.accounts a WHERE a.id = s.account_id) AS has_password,
        (SELECT array_agg(ra.role_id ORDER BY ra.role_id) FROM smg.role_assignments ra
           WHERE ra.account_id = s.account_id) AS roles,
        (SELECT array_agg(DISTINCT rp.permission) FROM smg.role_permissions rp
@@ -98,6 +102,7 @@ export async function findSession(pool: DbPool, token: string): Promise<Session 
     kind: row.kind,
     csrfToken: row.csrf_token,
     displayName: row.display_name,
+    hasPassword: row.has_password === true,
     roles: row.roles ?? [],
     permissions: row.permissions ?? [],
   };

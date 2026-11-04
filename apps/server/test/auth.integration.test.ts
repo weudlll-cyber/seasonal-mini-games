@@ -50,7 +50,7 @@ async function session(cookie: string) {
     kind: string | null;
     permissions: string[];
     csrfToken: string | null;
-    account: { displayName: string } | null;
+    account: { displayName: string; hasPassword: boolean } | null;
   }>();
 }
 
@@ -78,6 +78,8 @@ describe('local accounts and sessions', () => {
     const s = await session(cookieOf(r));
     expect(s.signedIn).toBe(true);
     expect(s.account?.displayName).toBe('ann');
+    // A local account has a password, so the account page offers to change it (T201).
+    expect(s.account?.hasPassword).toBe(true);
     expect(s.permissions).toContain('match.join');
     expect(s.permissions).not.toContain('match.create');
     expect(s.csrfToken).toMatch(/^[\w-]{40,}$/);

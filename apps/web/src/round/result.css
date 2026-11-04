@@ -14,7 +14,7 @@
  *                 team result and the match standings. The placings (and the match summary's standings) as a table with fixed
  *                 number columns that fits a 390 px phone without scrolling; a player's name on
  *                 one line, shrinking with an ellipsis at its end until focus or a tap shows it
- *                 whole (./PlayerName), "(you)" never cut; the viewer's own line highlighted;
+ *                 whole (./PlayerName, ./playerName.css), "(you)" never cut; the viewer's own line highlighted;
  *                 the team result list. Colours only from @smg/ui tokens.
  * Spec:           docs/spec/02-game-guess-the-number.md §9, §12
  */
@@ -209,11 +209,11 @@
   flex: none;
 }
 
-/* Asked for in full (focus or a tap), the name wraps inside its cell instead. */
-.round-player .player-name:focus-visible,
-.round-player .player-name[data-full='true'] {
-  white-space: normal;
-  overflow-wrap: anywhere;
+/* The team icon's slot: one width on every row, so the names start in one column. */
+.round-team-slot {
+  flex: none;
+  display: inline-flex;
+  width: 1rem;
 }
 
 /* Close cells: the player column keeps the room for an icon, a name and "(you)" whole
@@ -249,22 +249,6 @@
   .round-player {
     gap: 0.25rem;
   }
-}
-
-/* A name never breaks inside a word; in full wherever its column has room, an ellipsis only
-   when the column is too narrow, until focus or a tap shows it whole (./PlayerName, T150). */
-.player-name {
-  display: inline-block;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  vertical-align: bottom;
-}
-
-.player-name:focus-visible,
-.player-name[data-full='true'] {
-  max-width: none;
 }
 
 .round-you {

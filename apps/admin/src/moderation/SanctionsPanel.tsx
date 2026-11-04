@@ -9,7 +9,8 @@
  *                 (`POST /admin/chat/sanctions`); lift
  *                 one (`POST …/:id/lift`). Both through the confirm dialog with the effect in
  *                 one sentence.
- * Depends on:     react, @smg/contracts (ChatSanctionView), ../ConfirmDialog, ../http, ../TextInput
+ * Depends on:     react, @smg/contracts (ChatSanctionView), ../ConfirmDialog, ../http,
+ *                 ../TextInput, ../DisplayName
  * Used by:        ./ModerationPage
  * Spec:           Bingo 11 §1, §3.5; Bingo 03 §12; Bingo 05 §3
  */
@@ -17,6 +18,7 @@ import type { ChatSanctionView } from '@smg/contracts';
 import { useCallback, useEffect, useState, type ReactElement } from 'react';
 
 import { useConfirm, type ConfirmRequest } from '../ConfirmDialog.js';
+import { DisplayName } from '../DisplayName.js';
 import { api, failureText } from '../http.js';
 import { TextInput } from '../TextInput.js';
 
@@ -166,7 +168,9 @@ function Rows(p: {
         <tbody>
           {items.map((s) => (
             <tr key={s.id}>
-              <td>{s.displayName}</td>
+              <td>
+                <DisplayName name={s.displayName} />
+              </td>
               <td>{s.kind}</td>
               <td>{s.scope === 'global' ? 'every room' : s.scope}</td>
               <td>{s.reason}</td>

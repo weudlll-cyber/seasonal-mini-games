@@ -31,7 +31,12 @@ import { api, setCsrfToken } from './http.js';
 
 interface SessionInfo {
   readonly signedIn: boolean;
-  readonly account: { readonly id: string; readonly displayName: string } | null;
+  // `hasPassword`: false for an account the website's handoff made (T201).
+  readonly account: {
+    readonly id: string;
+    readonly displayName: string;
+    readonly hasPassword: boolean;
+  } | null;
   readonly permissions: readonly string[];
   readonly csrfToken: string | null;
 }

@@ -9,7 +9,8 @@
  *                 it with a reason. Every change goes through the confirm dialog with its
  *                 effect in one sentence; the server checks the rules again (never oneself, a
  *                 super admin only by a super admin).
- * Depends on:     react, @smg/contracts (AccountView), ../ConfirmDialog, ../http, ../TextInput
+ * Depends on:     react, @smg/contracts (AccountView), ../ConfirmDialog, ../http, ../TextInput,
+ *                 ../DisplayName
  * Used by:        ../App
  * Spec:           docs/spec/05-security-threat-model.md §1; Bingo 11 §1, §3.6; Bingo 03 §5.3
  */
@@ -17,6 +18,7 @@ import type { AccountView } from '@smg/contracts';
 import { useCallback, useEffect, useState, type ReactElement } from 'react';
 
 import { useConfirm, type ConfirmRequest } from '../ConfirmDialog.js';
+import { DisplayName } from '../DisplayName.js';
 import { api } from '../http.js';
 import { TextInput } from '../TextInput.js';
 
@@ -69,7 +71,9 @@ function Row(p: {
   const { a, rights, open } = p;
   return (
     <tr data-testid={`account-${a.displayName}`}>
-      <td>{a.displayName}</td>
+      <td>
+        <DisplayName name={a.displayName} />
+      </td>
       <td>{a.status}</td>
       <td>
         {rights.roles ? (

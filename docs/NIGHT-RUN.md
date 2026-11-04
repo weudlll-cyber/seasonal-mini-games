@@ -32,6 +32,13 @@ Nothing so far.
 - e2e: journey 20 types round the locked box and checks its name; journey 21 checks the locked slot, and makes its wrong first cut in a summer round (cut, and if the first wire was right, cut again with another first wire), since a spring round's first cut can no longer be wrong; journey 22 two "Hint" tags; journeys 3 and 17 the new hint text.
 - Removed: the `parity` hint (state, view schema, settings, text), `.bd-slot-hint` and the phone's wider hint slot, the single-quarter `quarter` prop and event field, `tagTileOf`'s null case.
 
+### Piece 5 — all games and leftovers (T200–T202)
+
+- Long names (T202): `PlayerName` (apps/web/src/round) is now the name in the waiting area and the chat's author as well as the result tables and the Players panel; its styles moved to `playerName.css`, imported by the component. A name focused or tapped wraps inside its box. The admin app's account, abuse and sanction tables use the new `DisplayName` (one line, ellipsis, title). Display names are at most 24 characters (the accounts table's check), so the browser probe (`tmp/p5names.mjs`) wrote a 30-character name into each name element and measured it at 1280 × 720 and 390 × 844: cut with an ellipsis where its box is narrower, no row taller, "(you)" never cut, no page scroll. The round list and "Your guesses" (GuessLine, the rows lock) follow in the next commit.
+- Team columns (T202): the waiting area's team and connection, and the Players panel's team and guesses, are fixed columns; the Players panel shows the team's icon; the placings keep a slot for the team icon when teams play.
+- Change password (T201): `GET /session`'s account carries `hasPassword`; a website account sees no form, a line that says why, and "Delete my account". Tests: `AccountPage.test.tsx`, the integration tests of register and handoff, journey 29 (`e2e/accountDeletion.spec.ts`).
+- L1 (T200): `l1` plays ten rounds (five plain, the four specials, halving); T180 amended, 09 §5 and OPEN aligned.
+
 ## Night 8 (2026-11-04)
 
 Branch `feat/guess-games` from `60821a6`. Owner decision O55 (2026-11-04: screenshot runs cover only the changed states). Technical decisions from T150; the ones that change what players or admins see are proposals the owner confirms after play (OPEN.md, "Night 8, to confirm"). Nothing goes to `master`. Pieces 4–6 and 8 ran in background agents in the same tree, on their own files, beside pieces 1–3.

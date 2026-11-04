@@ -89,7 +89,7 @@ async function clientOf(answer: Awaited<ReturnType<typeof handoff>>) {
     cookie,
     session: s.json<{
       signedIn: boolean;
-      account: { id: string; displayName: string };
+      account: { id: string; displayName: string; hasPassword: boolean };
       permissions: string[];
     }>(),
   };
@@ -150,7 +150,11 @@ describe('the handoff', () => {
     const first = await handoff(token({ name: 'Walter', email: hostEmail, links: ['telegram'] }));
     expect(first.statusCode).toBe(200);
     const one = await clientOf(first);
-    expect(one.session).toMatchObject({ signedIn: true, account: { displayName: 'Walter' } });
+    // No password: the account page offers no "Change password" (T201).
+    expect(one.session).toMatchObject({
+      signedIn: true,
+      account: { displayName: 'Walter', hasPassword: false },
+    });
     // Never linked by e-mail: the dev host keeps its own account.
     expect(one.session.account.id).not.toBe(await kit.accountId('host'));
     expect(one.session.permissions).not.toContain('match.create');

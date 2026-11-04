@@ -5,8 +5,8 @@
  *
  * Responsibility: the host settings of each L1 round (shared, cooldown 3 s, range
  *                 1–1 000 000): plain, each season with its special, a halving round; the
- *                 named scenarios as lists of those rounds (`l1` is all of them in one match,
- *                 one after another); and, for a halving round, today's halving day (in the
+ *                 named scenarios as lists of those rounds (`l1` is 09 §5's ten in one match,
+ *                 one after another: five plain, the four specials, the halving round); and, for a halving round, today's halving day (in the
  *                 time zone of the `seasons` settings) through the admin route, removed again
  *                 afterwards when the check added it. Special timings stay the game
  *                 document's (Heatwave 30 s, Leaf Fall 20 s, halving 60 s, Frost 3 s by default).
@@ -54,7 +54,10 @@ export const ROUNDS = {
 export const SCENARIOS = {
   ...Object.fromEntries(Object.keys(ROUNDS).map((name) => [name, [name]])),
   specials: ['spring', 'summer', 'autumn', 'winter'],
-  l1: ['plain', 'spring', 'summer', 'autumn', 'winter', 'halving'],
+  // 09 §5's ten rounds: "plain, then each special, then a halving round"; the plain rounds
+  // fill the count, so the match also shows whether anything builds up from round to round
+  // before the specials start (DECISIONS T180, amended by T200).
+  l1: [...Array(5).fill('plain'), 'spring', 'summer', 'autumn', 'winter', 'halving'],
 };
 
 const TOKEN = 'load-check';

@@ -146,6 +146,10 @@ describe('the builtin room', () => {
     await screen.findByText('gg');
     expect(list.textContent).toContain('Round 1: Walter found it first');
     expect(list.textContent).toContain('Message deleted');
+    // The author is the one-line name, cut with an ellipsis, in full as its title (T202).
+    expect(screen.getByText('Walter', { selector: '.chat-author .player-name' }).title).toBe(
+      'Walter',
+    );
     const text = list.textContent;
     expect(text.indexOf('Round 1')).toBeLessThan(text.indexOf('gg'));
     const field = screen.getByTestId('chat-input');

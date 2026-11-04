@@ -115,7 +115,7 @@ describe('the player rows', () => {
       ['Anna', 'Team Summer', 'away'],
       ['bot-01', 'Team Winter', 'online'],
     ]);
-    expect(rows[0]?.children[1]?.className).toBe('smg-muted');
+    expect(rows[0]?.children[1]?.className).toBe('match-player-team smg-muted');
     const presence = rows.map((li) => li.querySelector('.match-presence'));
     expect(presence.map((p) => p?.getAttribute('data-online'))).toEqual(['true', 'false', 'true']);
     expect(presence.every((p) => p?.querySelector('.match-dot[aria-hidden="true"]'))).toBe(true);

@@ -6,7 +6,7 @@
  * Responsibility: colours only from @smg/ui tokens (light and dark follow the system); wide
  *                 tables scroll inside their panel, never the page; the confirm dialog over a
  *                 scrim; version history, recovery codes and moderation lists; multi-line
- *                 inputs (keys, role mappings).
+ *                 inputs (keys, role mappings); display names on one line with an ellipsis.
  * Spec:           docs/spec/08-admin-settings.md §1; Bingo 11 §1
  */
 body {
@@ -75,6 +75,16 @@ body {
   vertical-align: top;
   padding: var(--space-1) var(--space-2);
   border-bottom: 1px solid var(--color-border);
+}
+
+/* A display name on one line, cut with an ellipsis at its end; the full name is its title
+   (T202). A block inside the cell, since a table cell ignores max-width. */
+.admin-name {
+  display: block;
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .admin-table ul {
