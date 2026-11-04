@@ -51,9 +51,11 @@ function DigitStrip(p: {
           >
             {d}
             {gone ? (
-              <span className="sc-cross" aria-hidden="true">
-                ✕
-              </span>
+              // A cross from corner to corner over the greyed digit (T153): no small badge
+              // that a phone's chip turns into a "±".
+              <svg className="sc-cross" viewBox="0 0 10 10" aria-hidden="true" focusable="false">
+                <path d="M1 1 9 9M9 1 1 9" />
+              </svg>
             ) : null}
           </li>
         );
