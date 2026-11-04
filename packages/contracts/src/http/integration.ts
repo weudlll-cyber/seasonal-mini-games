@@ -6,7 +6,8 @@
  *
  * Responsibility: the body of `POST /auth/handoff` (a host-signed token, ≤ 60 s, single use,
  *                 audience `seasonal-mini-games`, optional `links` claim, 07 §4); the admin's
- *                 views and bodies for identity providers, embed origins and webhook endpoints
+ *                 views and bodies for identity providers (a change may leave the pinned key
+ *                 as it is), embed origins and webhook endpoints
  *                 (a webhook's secret is shown once, at creation); the webhook events of 07
  *                 §3.2 and their payload envelope; and the answers of the public read API
  *                 (07 §1: open matches, the current round of a match, the current season board
@@ -35,19 +36,34 @@ export interface IdentityProviderView {
   readonly enabled: boolean;
 }
 
-export const IdentityProviderBody = z
+export const HANDOFF_ALGS = ['EdDSA', 'ES256', 'RS256'] as const;
+// The platform roles a host role may map to; security_admin and super_admin never (Bingo 07 §2.1).
+export const MAPPED_ROLES = ['player', 'organizer', 'moderator'] as const;
+
+const IdentityProviderFields = z
   .object({
     name: z.string().trim().min(1).max(80),
     issuer: z.url(),
-    allowedAlgs: z.array(z.enum(['EdDSA', 'ES256', 'RS256'])).min(1),
+    allowedAlgs: z.array(z.enum(HANDOFF_ALGS)).min(1),
     jwksUrl: z.url().startsWith('https://').nullable(),
     pinnedPublicKey: z.string().max(4_000).nullable(),
-    // Host role → platform role; security_admin and super_admin are refused (Bingo 07 §2.1).
-    roleMapping: z.record(z.string().max(40), z.enum(['player', 'organizer', 'moderator'])),
+    // Host role → platform role.
+    roleMapping: z.record(z.string().max(40), z.enum(MAPPED_ROLES)),
     enabled: z.boolean(),
   })
-  .strict()
-  .refine((p) => p.jwksUrl !== null || p.pinnedPublicKey !== null, 'a key or a JWKS address');
+  .strict();
+
+const KEY_SOURCE = 'a key or a JWKS address';
+const hasKeySource = (p: { jwksUrl: string | null; pinnedPublicKey?: string | null | undefined }) =>
+  p.jwksUrl !== null || p.pinnedPublicKey !== null;
+
+export const IdentityProviderBody = IdentityProviderFields.refine(hasKeySource, KEY_SOURCE);
+
+// A change (PUT): without `pinnedPublicKey` the pinned key in force stays, since no view
+// carries it back to the admin (DECISIONS T175).
+export const IdentityProviderChange = IdentityProviderFields.partial({
+  pinnedPublicKey: true,
+}).refine(hasKeySource, KEY_SOURCE);
 
 export interface EmbedOriginView {
   readonly origin: string;

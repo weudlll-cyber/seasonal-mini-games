@@ -15,7 +15,7 @@ Branch `feat/guess-games` from `60821a6`. Owner decision O55 (2026-11-04: screen
 | 2. Seasonal Target: review fixes              | done    |           |
 | 3. Safecracker and Bomb Defusal: review fixes | done    |           |
 | 4. Player account deletion screen             | done    | `d253ee6` |
-| 5. Admin screens: providers, origins, hooks   | running |           |
+| 5. Admin screens: providers, origins, hooks   | done    |           |
 | 6. Admin app Trusted Types                    | open    |           |
 | 7. The "opens in 0 s" intro                   | running |           |
 | 8. Load scenarios L1 specials and halving     | done    |           |
@@ -69,6 +69,14 @@ Nothing so far.
 - **Server:** unchanged; the route already ends every session and clears the cookie (T105).
 - **Tests:** `DeleteAccount.test.tsx` (form, exact name, deletion, password step, refusal, the notice's route); e2e journey 29 (`e2e/accountDeletion.spec.ts`, timing project) with the host site's setup in `e2e/hostSite.ts`.
 - **For the owner:** T170 (OPEN, "Night 8, to confirm"). Noticed and left alone: the account page shows Change password to an account made by the handoff, which has no password (the server answers `PASSWORD_REQUIRED`); `e2e/embed.spec.ts` still says handoff accounts cannot delete themselves through `DELETE /me` and removes them in the database, and could use `e2e/hostSite.ts`.
+
+### Piece 5 — admin screens for identity providers, embed origins and webhooks (T175–T177)
+
+- New: the admin app's Integration area (`apps/admin/src/integration/`: `IntegrationPage`, `ProvidersPanel` with `ProviderForm`, `OriginsPanel`, `WebhooksPanel` with `WebhookForm` and `WebhookDeliveries`, the shared `form.tsx` (checkbox, text area, `issueText`, `FormEnd`, `NewOrForm`, `Table`) and `useListed.ts` (the list, its confirm dialog, `put`)); `App.tsx` opens it for `integration.manage`.
+- Server, no new route: a provider's PUT without `pinnedPublicKey` keeps the key (`IdentityProviderChange`, `HANDOFF_ALGS` and `MAPPED_ROLES` in @smg/contracts; `updateProvider`, `adminIntegration.ts`), test `providers.integration.test.ts`. The authorization matrix rows were there (authzTable, `INTEGRATION`).
+- Reused: `useConfirm`/`ConfirmDialog`, `StepUp` through `http.ts`, `TextInput`, `failureText`, the moderation tabs' markup, the contract schemas (`IdentityProviderBody`, `EmbedOriginBody`, `WebhookEndpointBody`).
+- Tests: `providers.test.tsx`, `origins.test.tsx`, `webhooks.test.tsx` (step-up retry included; helper `fakeServer.ts`), the areas test in `admin.test.tsx`; e2e journeys 30–32 (`e2e/integration.spec.ts`, TIMING) pass in Chromium. `pnpm verify`: lint, typecheck and 772 tests green; format check failed only in `apps/web/src/live/useMatch.ts` and `useRound.ts` (another piece's files, half-way).
+- Noticed, left alone: the server's `MAPPABLE_ROLES` set in `integration/providers.ts` could use the contract's `MAPPED_ROLES`.
 
 ## Night 7 (2026-11-03)
 

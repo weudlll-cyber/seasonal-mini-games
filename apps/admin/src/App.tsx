@@ -7,12 +7,14 @@
  *                 builds, "Sign in as admin"); with one the areas its permissions allow —
  *                 Live rounds and Settings (`admin.view`), Accounts (`account.view`), Seasons
  *                 (`season.manage`), Moderation (`chat.moderate`), Abuse (`abuse.view`), Audit
- *                 log (`audit.read`) and Two-factor (every account) — chosen with the
+ *                 log (`audit.read`), Integration (`integration.manage`) and Two-factor (every
+ *                 account) — chosen with the
  *                 address's hash (08 §1, §2); the step-up dialog (./StepUp) for writes that
  *                 need a fresh two-factor check. The server checks every permission again.
  * Depends on:     react, ./http, ./SignIn, ./StepUp, ./live/LivePage, ./accounts/AccountsPage,
  *                 ./settings/SettingsPage, ./seasons/SeasonsPage, ./moderation/ModerationPage,
- *                 ./abuse/AbusePage, ./audit/AuditPage, ./twofactor/TwoFactorPage
+ *                 ./abuse/AbusePage, ./audit/AuditPage, ./integration/IntegrationPage,
+ *                 ./twofactor/TwoFactorPage
  * Used by:        ./main
  * Spec:           docs/spec/08-admin-settings.md §1, §2; Bingo 11 §1, §2
  */
@@ -22,6 +24,7 @@ import { AbusePage } from './abuse/AbusePage.js';
 import { AccountsPage } from './accounts/AccountsPage.js';
 import { AuditPage } from './audit/AuditPage.js';
 import { api, setCsrfToken } from './http.js';
+import { IntegrationPage } from './integration/IntegrationPage.js';
 import { LivePage } from './live/LivePage.js';
 import { ModerationPage } from './moderation/ModerationPage.js';
 import { SeasonsPage } from './seasons/SeasonsPage.js';
@@ -45,6 +48,7 @@ const AREAS = [
   { hash: 'moderation', label: 'Moderation', permission: 'chat.moderate' },
   { hash: 'abuse', label: 'Abuse', permission: 'abuse.view' },
   { hash: 'audit', label: 'Audit log', permission: 'audit.read' },
+  { hash: 'integration', label: 'Integration', permission: 'integration.manage' },
   { hash: 'two-factor', label: 'Two-factor', permission: null },
 ] as const;
 type Area = (typeof AREAS)[number]['hash'];
@@ -98,6 +102,8 @@ function Area({
       return <AbusePage canSuspend={can('account.suspend')} />;
     case 'audit':
       return <AuditPage />;
+    case 'integration':
+      return <IntegrationPage />;
   }
 }
 

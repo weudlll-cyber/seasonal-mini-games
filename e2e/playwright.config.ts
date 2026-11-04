@@ -51,6 +51,8 @@ const TIMING = [
   // Change the embed allowlist and the identity providers (journeys 8 and 29).
   'embed.spec.ts',
   'accountDeletion.spec.ts',
+  // Journeys 30–32: add and remove an identity provider, an embed origin and a webhook.
+  'integration.spec.ts',
 ];
 const BROWSERS = [
   { name: 'chromium', use: { ...devices['Desktop Chrome'] } },

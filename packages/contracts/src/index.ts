@@ -50,7 +50,10 @@ export {
 export {
   EmbedOriginBody,
   HandoffBody,
+  HANDOFF_ALGS,
   IdentityProviderBody,
+  IdentityProviderChange,
+  MAPPED_ROLES,
   WEBHOOK_EVENTS,
   WebhookEndpointBody,
   type EmbedConfigView,
