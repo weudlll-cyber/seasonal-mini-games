@@ -2,6 +2,21 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Play-test round 2 (2026-11-04)
+
+Branch `feat/guess-games` from `f17d9d4`. Owner decision O64 (2026-11-04: tests only where they answer something about the change), Heatwave in every round setup, the next-round form keeping the season, player lists giving the name the room, Seasonal Target's result. Technical decisions from T208; the ones that change what players or the host see are proposals (OPEN.md, "Round 2, to confirm"). Nothing goes to `master`.
+
+### Status
+
+| Piece                                     | State | Commit |
+| ----------------------------------------- | ----- | ------ |
+| 0. O64 recorded (DECISIONS, CLAUDE.md)    | done  |        |
+| 1. Heatwave in every round setup          | open  |        |
+| 2. The next-round form keeps the season   | open  |        |
+| 3. Player lists: the name gets the space  | open  |        |
+| 4. Seasonal Target's result               | open  |        |
+| 5. Checks (O64), re-shoot (O55), handover | open  |        |
+
 ## Clean state before the next play-test (2026-11-04)
 
 Branch `feat/guess-games` from `d2656f9`. Owner decision O63 (2026-11-04: Heatwave per round in the host menu), two display fixes and a reliably green test suite. Technical decisions from T203; the ones that change what players or the host see are proposals (OPEN.md, "Clean state, to confirm"). Nothing goes to `master`.

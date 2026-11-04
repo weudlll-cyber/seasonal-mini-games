@@ -37,6 +37,7 @@ Everything in this repository is English: code, comments, commit messages, docs,
 - Never disable a trigger, constraint or other protection. If a task needs that, list it under the owner's questions in the report and continue without it.
 - Screenshots never go into a working branch: images under `reports/` are git-ignored; push a run's screenshots, with their `play-through.txt`, only to an orphan branch of their own (`shots/<night>`, nothing else in it), which the owner deletes after the review (DECISIONS T146).
 - A screenshot run covers only the states the change touched: 1280 × 720 and 390 × 844 in light mode, one dark pair per changed state per game, 1920 × 1080 only where the layout differs from 1280 × 720; about 60–100 images (DECISIONS O55).
+- Tests run only where they can answer something about the change (DECISIONS O64): while working, only the tests of the package or game being changed; at the end of a task one full `pnpm verify`; e2e only for the journeys the change touches, once; CI on the final push is the second proof, so hand over without waiting for it and report it afterwards; repeated runs only when a test's flakiness is the subject; screenshots per O55; all three browsers and the full e2e suite only at the merge into master.
 - Run commands one at a time. Do not chain them with `&&`, `;` or `|` unless a single tool needs a pipe; chained commands do not match the permission rules and make the owner approve them by hand.
 
 ## Before reporting
