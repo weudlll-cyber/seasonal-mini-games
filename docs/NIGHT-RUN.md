@@ -2,6 +2,26 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Play-test fixes (2026-11-04)
+
+Branch `feat/guess-games` from `606eecf`. The owner's decisions after playing all four games, O56–O62 (2026-11-04), the defects found while playing, and night 8's leftovers. Technical decisions from T187 (piece 5: T200–T209); the ones that change what players see are proposals the owner confirms after play (OPEN.md, "Play-test fixes, to confirm"). Nothing goes to `master`. Piece 5 runs in a background agent in the same tree, on its own files, beside pieces 1–4.
+
+### Status
+
+| Piece                                    | State | Commit |
+| ---------------------------------------- | ----- | ------ |
+| 0. O56–O62 recorded                      | done  |        |
+| 1. Specials (O56, O57, O59–O61)          | open  |        |
+| 2. Guess The Number: fallen numbers      | open  |        |
+| 3. Bomb Defusal: result, help, slot tap  | open  |        |
+| 4. Seasonal Target: messages, tags, grid | open  |        |
+| 5. All games and leftovers               | open  |        |
+| 6. Re-shoot (O55), self-review, handover | open  |        |
+
+### Needs the owner
+
+Nothing so far.
+
 ## Night 8 (2026-11-04)
 
 Branch `feat/guess-games` from `60821a6`. Owner decision O55 (2026-11-04: screenshot runs cover only the changed states). Technical decisions from T150; the ones that change what players or admins see are proposals the owner confirms after play (OPEN.md, "Night 8, to confirm"). Nothing goes to `master`. Pieces 4–6 and 8 ran in background agents in the same tree, on their own files, beside pieces 1–3.
