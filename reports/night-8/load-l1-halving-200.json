@@ -1,0 +1,68 @@
+{
+  "scenario": "halving",
+  "players": 200,
+  "spectators": 100,
+  "runS": 87,
+  "rounds": [
+    {
+      "round": "halving",
+      "season": "spring",
+      "specialOn": false,
+      "halving": true,
+      "roundS": 66,
+      "cooldownAtEndMs": 3000,
+      "ackMs": {
+        "p50": 66,
+        "p95": 358,
+        "p99": 849,
+        "count": 3453
+      },
+      "ownAnswerMs": {
+        "p50": 65,
+        "p95": 356,
+        "p99": 848,
+        "count": 3453
+      },
+      "frostLateMs": null,
+      "specials": {
+        "fired": ["halving/1"],
+        "lateMs": {
+          "p50": 11,
+          "p95": 11,
+          "p99": 11,
+          "count": 1
+        },
+        "seenLateMs": {
+          "p50": 136,
+          "p95": 136,
+          "p99": 136,
+          "count": 1
+        }
+      },
+      "refused": {},
+      "integrity": {
+        "proofOk": true,
+        "acceptedInLog": 3478,
+        "acknowledged": 3453,
+        "acknowledgedButMissing": 0,
+        "duplicates": 0,
+        "gapFree": true,
+        "ownOrderKept": true,
+        "winners": 1,
+        "endReason": "solved"
+      },
+      "server": {
+        "cpuPeakCores": "0.50",
+        "cpuMeanCores": "0.35",
+        "rssPeakMiB": 504,
+        "loopLagP99PeakMs": 69
+      },
+      "driverBusiestWorker": "0.09",
+      "socketProblems": 0
+    }
+  ],
+  "problems": {
+    "http": 0,
+    "examples": []
+  }
+}

@@ -3,8 +3,9 @@
  * @module web/round
  * @brief  The cooldown ring at the start of the input row: track, closing arc, seconds.
  *
- * Responsibility: a 52 px ring whose arc in the season colour closes as the cooldown runs,
- *                 with the seconds or "Ready" in its middle; the arc moves without a
+ * Responsibility: a 52 px ring on a track of half the text colour, whose arc in the season
+ *                 colour closes as the cooldown runs,
+ *                 with the seconds or, once ready, a check mark in its middle; the arc moves without a
  *                 transition when the person asked for reduced motion. Moved out of
  *                 ./round.css to keep each file under the size limit. Colours only from
  *                 @smg/ui tokens.
@@ -26,7 +27,9 @@
 
 .round-ring-track {
   fill: none;
-  stroke: var(--color-surface-2);
+  /* Half the text colour: a track of at least 3:1 on the page in light and dark (the second
+     surface it was nearly vanished on the cream and the navy, night-6 review). */
+  stroke: color-mix(in srgb, var(--color-text) 45%, transparent);
   stroke-width: 6;
 }
 
@@ -50,4 +53,16 @@
   place-items: center;
   font-weight: var(--font-weight-strong);
   font-size: var(--font-size-small);
+}
+
+/* Ready: a check mark drawn in the ring's own box, so it scales with the ring (T150). */
+.round-ring svg.round-ring-check {
+  position: absolute;
+  inset: 0;
+  transform: none;
+  fill: none;
+  stroke: var(--color-text);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }

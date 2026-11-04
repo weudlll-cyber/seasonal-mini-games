@@ -9,7 +9,8 @@
  *                 match the players join and watch (the host plays too, O16; `playerRow` is a
  *                 player's row in the waiting area); the host menu's
  *                 form creates a round; `fitsScreen` checks the round view has no page
- *                 scrollbar; `ownRows` are the viewer's own rows of the round's guess list (O20);
+ *                 scrollbar; `ownRows` are the viewer's own rows of the round's guess list (O20),
+ *                 `listRoom` the rows that list has room for (T142);
  *                 `search` plays a player's round from the screen only — the middle of what the
  *                 range and the player's own answers leave, until the round ends or the player
  *                 solved — exactly as a person reading the screen would.
@@ -145,19 +146,36 @@ export async function hostRound(
   await roundStarted(host.page);
 }
 
-// The round started: the intro counts down (O36), or the round is already open.
+// The round started: its view in focus mode, counting down (the intro, O36) or already open.
 export async function roundStarted(page: Page): Promise<void> {
-  await expect(page.getByTestId('round-intro').or(page.getByTestId('round-banner'))).toBeVisible();
+  await expect(page.getByTestId('round-banner')).toBeVisible();
 }
 
-// The round is open: the intro (10 s by default, OPEN (ab)) has given way to the top bar.
+// The round is open: the intro (10 s by default, OPEN (ab)) has given way to the round itself;
+// the round bar stays from the countdown on (O46).
 export async function roundOpen(page: Page): Promise<void> {
-  await expect(page.getByTestId('round-banner')).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('[data-testid="round-view"][data-status="open"]')).toBeVisible({
+    timeout: 20_000,
+  });
 }
 
 // The viewer's own rows of the round's one guess list, newest first (O20).
 export function ownRows(page: Page): Locator {
   return page.locator('[data-testid="guess-list"] li[data-own="true"]');
+}
+
+// How many one-line guess rows the round's list has room for (T142): the list's box over one
+// row's pitch (its line, its padding and the gap), so it holds with one guess as with twenty.
+export async function listRoom(page: Page): Promise<number> {
+  return page.getByTestId('guess-list').evaluate((ol) => {
+    const list = getComputedStyle(ol);
+    const gap = parseFloat(list.rowGap) || 0;
+    const line = ol.querySelector('.round-row-line');
+    const row = line?.closest('li');
+    const pad = row == null ? 0 : parseFloat(getComputedStyle(row).paddingTop) * 2;
+    const pitch = (line?.getBoundingClientRect().height ?? 20) + pad + gap;
+    return Math.floor((ol.clientHeight + gap) / pitch);
+  });
 }
 
 // A number as the screen writes it, thousands separators included ("1,000,000", T114).
@@ -167,12 +185,14 @@ export const shownNumber = (text: string): number => Number(text.replaceAll(',',
 // What the player knows, worked out as a person does (the server sends no narrowed range,
 // O17): the range on screen, or the input's span while it is hidden, cut by their own answers.
 async function stillPossible(page: Page): Promise<{ low: number; high: number }> {
+  // A desktop's range block, or a phone's info line ("1–1,000", T141).
   const text =
     (await page
       .getByTestId('range')
+      .or(page.getByTestId('info-line'))
       .textContent({ timeout: 3_000 })
       .catch(() => '')) ?? '';
-  const shown = new RegExp(`between (${NUMBER}) and (${NUMBER})`).exec(text);
+  const shown = new RegExp(`(?:between )?(${NUMBER})(?: and |–)(${NUMBER})`).exec(text);
   let low = shown === null ? -1_000_000_000 : shownNumber(shown[1] ?? '');
   let high = shown === null ? 1_000_000_000 : shownNumber(shown[2] ?? '');
   const answers = await ownRows(page)

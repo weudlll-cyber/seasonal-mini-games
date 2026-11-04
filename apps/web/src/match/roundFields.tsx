@@ -7,7 +7,9 @@
  *                 label and one-line help and the bounds in force (the document's narrowed
  *                 bounds, never wider than the catalogue, 08 §1); the Quick Test uses the same
  *                 fields. The season choice offers In Season only while it is usable, and the
- *                 halving switch only on a halving day (03 §3, §4).
+ *                 halving switch only on a halving day (03 §3, §4). `HostFields` shows the
+ *                 host's fields of the round's season (`formSeason`): Heatwave's step and
+ *                 interval only for summer (`forSeason`, O63).
  * Depends on:     react, @smg/contracts, @smg/game-sdk (bounds), ../components/fields,
  *                 ./formHelp, ../season/season, ../shell/http
  * Used by:        ./HostMenu, ../shell/QuickTest
@@ -103,16 +105,71 @@ export interface SeasonChoice {
   readonly setHalving: (h: boolean) => void;
 }
 
-// In Season when the feed is usable, else Spring by hand; halving off (`GET /seasons/current`).
-export function useSeasonChoice(): SeasonChoice {
-  const [season, setSeason] = useState<SeasonName | 'inSeason'>('inSeason');
-  const [halving, setHalving] = useState(false);
+// The round's season as the form stands: the one chosen by hand, or In Season's; null while
+// the feed is not known.
+export const formSeason = (c: SeasonChoice): SeasonName | null =>
+  c.season === 'inSeason' ? (c.now?.inSeason?.season ?? null) : c.season;
+
+// A season's own fields show only for that season: Heatwave's in summer (O63).
+export const forSeason = (key: string, season: SeasonName | null): boolean =>
+  !key.startsWith('summer.') || season === 'summer';
+
+// The host settings that belong to one season (Heatwave's), for a form that lists them apart.
+export const seasonalDefs = (defs: readonly SettingDef[]): SettingDef[] =>
+  defs.filter((d) => d.hostChooses && !forSeason(d.key, null));
+
+// Where the round form keeps its season choice among the last round's values, beside the
+// halving switch's own key (T209).
+export const SEASON_CHOICE = 'round.seasonChoice';
+
+const choiceOf = (v: SettingValue | undefined): SeasonName | 'inSeason' | null =>
+  v === 'inSeason' || SEASONS.includes(v as SeasonName) ? (v as SeasonName | 'inSeason') : null;
+
+// The last round's choice where the form keeps one (the next round starts from it, In Season
+// still selectable, T209); else In Season when the feed is usable, else Spring by hand;
+// halving as last time, else off (`GET /seasons/current`).
+export function useSeasonChoice(
+  last?: Readonly<Record<string, SettingValue>> | null,
+): SeasonChoice {
+  const kept = choiceOf(last?.[SEASON_CHOICE]);
+  const [season, setSeason] = useState<SeasonName | 'inSeason'>(kept ?? 'inSeason');
+  const [halving, setHalving] = useState(last?.['round.halving'] === true);
   const [now, setNow] = useState<SeasonsCurrentView | null>(null);
   useEffect(() => {
     void api<SeasonsCurrentView>('/seasons/current').then((s) => {
       setNow(s);
-      if (s.inSeason === null) setSeason('spring');
+      // In Season without a usable feed falls back to Spring, a kept choice or not.
+      if (s.inSeason === null) setSeason((was) => (was === 'inSeason' ? 'spring' : was));
     });
   }, []);
   return { now, season, setSeason, halving, setHalving };
+}
+
+// The host's fields of the round's season: Heatwave's only for summer (O63).
+// The settings document's bounds in force where there is one (the host menu); the Quick Test
+// has the definitions' own (T208).
+export function HostFields(p: {
+  readonly fields: readonly SettingDef[];
+  readonly doc?: MatchDetailsView['nextRoundDefaults'] & object;
+  readonly season: SeasonName | null;
+  readonly values: Readonly<Record<string, SettingValue>>;
+  readonly set: (key: string, v: SettingValue) => void;
+}): ReactElement {
+  return (
+    <>
+      {p.fields
+        .filter((d) => forSeason(d.key, p.season))
+        .map((d) => (
+          <Field
+            key={d.key}
+            def={d}
+            {...(p.doc === undefined ? {} : { doc: p.doc })}
+            value={p.values[d.key] ?? d.default}
+            set={(v) => {
+              p.set(d.key, v);
+            }}
+          />
+        ))}
+    </>
+  );
 }

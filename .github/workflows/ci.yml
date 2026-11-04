@@ -4,16 +4,19 @@
 #
 # Responsibility: run what "pnpm verify" runs and the domain/application coverage, the
 #                 dependency/secret scans, the license check of the production
-#                 dependencies, the markdown link check and the Playwright suite in three
-#                 browsers on every push; on the way to master also the image build, scan
-#                 and size check. Any red job blocks merge.
+#                 dependencies, the markdown link check and the Playwright suite on every
+#                 push: in three browsers on master and on pull requests to master, in
+#                 Chromium only on other branches (CI time on feature branches, DECISIONS
+#                 T149); on the way to master also the image build, scan and size check. The
+#                 screenshot branches (`shots/**`, T146) run nothing. Any red job blocks merge.
 # Depends on:     .github/actions/setup, Dockerfile, osv-scanner.toml, e2e/
 # Spec:           Bingo 08 §3–§4, Bingo 03 §18
 name: CI
 
 on:
   push:
-    branches: ['**']
+    # Every branch but the screenshot branches, which hold images only (T146, T149).
+    branches: ['**', '!shots/**']
   pull_request:
     branches: [master]
 
@@ -99,18 +102,33 @@ jobs:
   e2e:
     # On every push and pull request: a branch learns of a red browser test before it
     # reaches master (MERGE-AUDIT-1: master went red four times on tests no branch had run).
+    # All three browsers on master and on pull requests to master; Chromium only on the
+    # other branches, where the run took about 35 minutes (DECISIONS T149).
     runs-on: ubuntu-latest
+    env:
+      ALL_BROWSERS: ${{ github.ref == 'refs/heads/master' || github.event_name == 'pull_request' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - name: Playwright browsers (Chromium, Firefox, WebKit)
+        if: env.ALL_BROWSERS == 'true'
         run: pnpm exec playwright install --with-deps chromium firefox webkit
+      - name: Playwright browser (Chromium)
+        if: env.ALL_BROWSERS != 'true'
+        run: pnpm exec playwright install --with-deps chromium
       # Playwright starts its web servers before its global setup, so PostgreSQL must be up
       # first: the server migrates on start and exits when the database is unreachable.
       - name: PostgreSQL (ops/compose.dev.yml)
         run: docker compose --env-file ops/.env.dev.example -f ops/compose.dev.yml up -d --wait postgres
       # The server on 3910 and the client on 5410 (e2e/playwright.config.ts).
-      - run: pnpm e2e
+      - if: env.ALL_BROWSERS == 'true'
+        run: pnpm e2e
+      # Chromium alone: its own specs, then its timing specs one at a time after them (the
+      # timing project waits for all three browsers otherwise, so it runs without its deps).
+      - if: env.ALL_BROWSERS != 'true'
+        run: pnpm e2e --project=chromium
+      - if: env.ALL_BROWSERS != 'true'
+        run: pnpm e2e --project=chromium-timing --no-deps
       # On a failure: the traces and page snapshots of the failed tests, for a week.
       - if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

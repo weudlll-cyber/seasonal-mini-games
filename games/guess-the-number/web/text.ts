@@ -4,9 +4,9 @@
  * @brief  Every sentence Guess The Number puts on a screen, in plain English.
  *
  * Responsibility: the game's refusals, the Spring Herald hint (and its highlighted "Free
- *                 hint: the number is even." in the range block, O35), one line per room event for
- *                 the round's list (02 §12; 03 §2): Leaf Fall with the fallen numbers named,
- *                 the shared hint and halving, and the shorter banner when Leaf Fall or
+ *                 hint: the number ends in 7." in the range block, O35), one line per room event for
+ *                 the round's list (02 §12; 03 §2): Leaf Fall with the fallen numbers named and
+ *                 halving (the hint shows once, in the range block, O47), and the shorter banner when Leaf Fall or
  *                 halving strikes ("Leaf Fall: 10 numbers fell.", O35); the list's guess rows from the player or
  *                 spectator view, own guesses and the others' at the round's visibility, with
  *                 answers and comments as far as the view carries them (O20, O21); and the
@@ -24,25 +24,33 @@ import {
   type ResultView,
   type SpectatorView,
 } from '@smg-game/guess-the-number';
-import { formatNumber, type FeedLine, type GameText, type GuessRow } from '@smg/game-sdk';
+import {
+  closestLabel,
+  type FeedLine,
+  formatNumber,
+  type GameText,
+  type GuessRow,
+} from '@smg/game-sdk';
 
 export type HintView =
-  | { readonly kind: 'parity'; readonly odd: boolean }
+  | { readonly kind: 'lastDigit'; readonly digit: number }
   | { readonly kind: 'half'; readonly low: number; readonly high: number };
 
-// The hint's words after a lead-in: "the number is even."
+// The hint's words after a lead-in: "the number ends in 7."
 function hintBody(hint: HintView): string {
-  if (hint.kind === 'parity') return `the number is ${hint.odd ? 'odd' : 'even'}.`;
+  if (hint.kind === 'lastDigit') return `the number ends in ${String(hint.digit)}.`;
   return `the number is between ${formatNumber(hint.low)} and ${formatNumber(hint.high)}.`;
-}
-
-function hintText(hint: HintView): string {
-  const body = hintBody(hint);
-  return `${body.charAt(0).toUpperCase()}${body.slice(1)}`;
 }
 
 // The range block's highlighted line for the whole round (O35).
 export const freeHint = (hint: HintView): string => `Free hint: ${hintBody(hint)}`;
+
+// The hint in a few words for the phone's info line, never cut there (T150): "Hint: ends in 7",
+// "Hint: 1–500,000"; the sheet has the sentence.
+export const shortHint = (hint: HintView): string =>
+  hint.kind === 'lastDigit'
+    ? `Hint: ends in ${String(hint.digit)}`
+    : `Hint: ${formatNumber(hint.low)}–${formatNumber(hint.high)}`;
 
 const CODES: Readonly<Record<string, string>> = {
   OUT_OF_RANGE: 'That number is outside the range.',
@@ -67,8 +75,9 @@ function eventText(e: GtnEvent): FeedLine | null {
     // and the Fallen numbers panel are where they are named (T54).
     case 'NumbersRemoved':
       return { ...roundLine(`Leaf Fall: ${listOf(e.numbers)} fell.`), special: true };
+    // The hint shows once, in the range block; the platform's row says that it came (O47).
     case 'HintGiven':
-      return e.playerId === null ? roundLine(`Spring Herald: ${hintText(e.hint)}`) : null;
+      return null;
     case 'RangeHalved':
       if (e.range === null)
         return roundLine(`Halving: every range is now ${formatNumber(e.size)} numbers.`);
@@ -100,7 +109,11 @@ type Seen = PlayerView['log'][number];
 // The list's rows of a player view (own guesses and the others') or a spectator view.
 function guessRows(view: unknown): readonly GuessRow[] {
   const v = view as Partial<PlayerView> & Pick<SpectatorView, 'log'>;
-  const row = (g: Omit<Seen, 'playerId'>, playerId: string | null): GuessRow => ({
+  const row = (
+    g: Omit<Seen, 'playerId' | 'held'>,
+    playerId: string | null,
+    held: boolean,
+  ): GuessRow => ({
     key: String(g.receiveSeq),
     at: g.receivedAt,
     playerId,
@@ -108,21 +121,29 @@ function guessRows(view: unknown): readonly GuessRow[] {
     feedback: g.feedback,
     comment: g.comment,
     tier: g.tier,
-    pending: playerId === null && g.feedback === null,
+    // Frost's held answer, the viewer's own or another player's (T150).
+    pending: held,
   });
-  return [...(v.guesses ?? []).map((g) => row(g, null)), ...v.log.map((g) => row(g, g.playerId))];
+  return [
+    ...(v.guesses ?? []).map((g) => row(g, null, g.feedback === null)),
+    ...v.log.map((g) => row(g, g.playerId, g.held)),
+  ];
 }
 
-// The closest miss on the shared result (O22): "bot-01 missed by just 1 (92)." up to 2 away.
-function runnerUp(view: unknown, names: Readonly<Record<string, string>>): string | null {
+// The closest miss on the shared result (O22), naming that the winner is not counted:
+// "Closest miss besides the winner: bot-01, missed by just 1 (92)." up to 2 away.
+function runnerUp(
+  view: unknown,
+  names: Readonly<Record<string, string>>,
+  won: boolean,
+): string | null {
   const miss = (view as Partial<ResultView>).closestMiss ?? null;
   if (miss === null) return null;
   const name = names[miss.playerId] ?? miss.playerId;
   const n = formatNumber(miss.distance);
   const guess = formatNumber(miss.value);
-  return miss.distance <= 2
-    ? `${name} missed by just ${n} (${guess}).`
-    : `Closest miss: ${name}, ${n} away (${guess}).`;
+  const how = miss.distance <= 2 ? `missed by just ${n}` : `${n} away`;
+  return `${closestLabel(won)}: ${name}, ${how} (${guess}).`;
 }
 
 // The intro's line (O36): the mode and the range, or that the range is hidden (O19).

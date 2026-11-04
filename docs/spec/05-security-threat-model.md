@@ -24,7 +24,7 @@ The whole of Bingo's security architecture applies, with the names of [04](04-so
 | Uploads (admin branding only) | Bingo 03 §14 | None. |
 | Backup and disaster recovery | Bingo 03 §15 | A host failure aborts running rounds. Rounds in `countdown` or `open` resume after a plain process restart (§2). |
 | Audit log (append-only, hash chain) | Bingo 03 §16 | More actions are logged (§8). |
-| OWASP Top 10 mapping, supply chain, privacy | Bingo 03 §17, §18, §19 | None. |
+| OWASP Top 10 mapping, supply chain, privacy | Bingo 03 §17, §18, §19 | Account deletion (`DELETE /me`): the account goes with its sessions, roles, league points and website link; matches, rounds and chat messages keep their history without the link to it. An account made by the website's handoff confirms with its display name typed (DECISIONS T105); the player client's form is on the account page (T170). |
 
 ## 2. Cooldown enforcement on the server
 
@@ -45,7 +45,36 @@ The cooldown (owner, decision 3) exists **only** on the server. The client's coo
 - **No timing side channel.** The work done for a guess does not depend on how close it is to the secret: one comparison and constant-size answers. With Frost, every answer is held for exactly the same delay.
 - **A hidden range is a secret too.** With the range hidden ([02](02-game-guess-the-number.md) §3, owner decision 19), its bounds reach no client while the round runs: the views carry `range: null`, no guess is refused as out of range, Spring Herald gives no half hint and no halving runs (DECISIONS T52–T56). P2 searches for the bounds as for the secrets.
 - **Leaf Fall hints by design (owner decision 37).** In autumn rounds with visibility `full` the fallen numbers are drawn only from the numbers still possible given the public answers, so they reveal the candidate region around the shared number. This is accepted as an exception to owner decision 17; the candidates use no answer a player could not see (a Frost-held answer counts once delivered), never contain a secret, and no view carries a narrowed range (DECISIONS T111). With `own`, `numbers` and in individual mode no answer is used. As before, fallen numbers lie inside a hidden range.
+- **The other guess games ([02b](02b-game-safecracker.md), [02c](02c-game-bomb-defusal.md), [02d](02d-game-seasonal-target.md)).** Every rule above holds for each of them: the code, the wire sequence and the target cell are derived through the guess engine ([04](04-software-architecture.md) §4.7), never stored, and appear in no view, frame or event of a running round; P2 covers each game through its conformance kit with sentinel secrets that no test guess can hit or neighbour. Their Leaf Fall analogues (fallen digits, harmless wires, fallen cells) follow owner decision 37 exactly as above: with a shared secret and `full`, candidates only from what every delivered public answer still allows; otherwise only values nobody has guessed; never a secret, and in individual mode never any player's secret, so a fall cannot tell one player about another's code. Spring Herald's reveal (a digit, the first cut's colour, two map quarters) and Seasonal Target's halving window are about the viewer's own secret in individual mode and go to that player alone. Seasonal Target's two quarters are the target's and a decoy from the round's randomness, always sent in the fixed quarter order, so nothing a client receives tells which one holds the target (owner decision 61). Game-specific threats are listed in each game's section.
 - **After the end:** the secret or secrets are public (shown on the result), and so is the range. With the fairness proof on, so is the seed ([02](02-game-guess-the-number.md) §10).
+
+### 3.1 The guess games, per game
+
+**Seasonal Safecracker**
+
+- **The code never leaves the engine in a running round:** derived from the round seed (`secret/shared`, `secret/<playerId>`), absent from every player and spectator view schema, room frame, rejection, log line and admin answer; the result view carries it after the end (05 §3). A rejection never depends on the secret (`CODE_INVALID`, `DIGIT_REMOVED`, `ALREADY_GUESSED` are decided from settings, fallen digits and the guesser's own list only).
+- **Spring Herald in individual mode:** each player's hint (position and digit of their own code) goes only to `player:<id>`; spectators and other players get only "everyone got a free hint".
+- **Leaf Fall candidate leakage (O37):** a fall reveals only that a digit is absent from every secret of the round. Under shared `full` the candidates use only answers every player saw (the 0/0 rule, Frost cut `releasedBefore`); under `own`, `numbers` and in individual mode no answer is used, only accepted guesses. Accepted residual: under `own` a fall shows that no one has guessed that digit yet, and in individual mode it shows that the digit is in no player's code (the same kind of hint as Guess The Number's Leaf Fall, DECISIONS T111). With many individual players nearly every digit is in some code, so falls stop early; that ends the falls and leaks nothing more.
+- **No timing side channel:** the feedback is a fixed-size count over at most 6 positions; work does not depend on closeness.
+- **Input validation:** the action schema is zod `{ value: string }` with `^[0-9]{3,6}$` and length ≤ 6 before `validate`; anything else is `CODE_INVALID` (or a schema rejection at the boundary), never an exception. Guesses are the existing `guess` intent with its rate limit (05 §5); typing into the boxes sends nothing.
+
+**Seasonal Bomb Defusal**
+
+- The secret sequence never in any view, frame, event or rejection of a running round; the result alone reveals it (P2 with sentinel sequences).
+- Explosion as a side channel (residual risk, proposal, OPEN): the penalty is part of the one platform cooldown end (T120), so under Frost the guesser's own ring shows a wrong first cut up to `winter.delayS` early (that player only), and where the platform shows others' cooldown state (02 §11) a longer cooldown of another player may be noticed. No game-specific special case.
+- Leaf Fall candidate leakage (O37): candidates use only delivered public answers (shared `full`), never a private answer, never any secret wire; outside shared `full` no wire that appears in a guess; individual mode one set for all.
+- Input: the action is the existing guess intent with a zod schema (array of exactly `cuts` palette names, at most 6 entries, strings from the enum only); nothing is sent per tap; per-intent rate limits as 05 §5.
+- Penalty bounds: `bomb.explosionPenaltyS` validated 0–30 on the match form and again on the server (`ROUND_SETTINGS_INVALID`); a client cannot shorten its own `cooldownEndsAt` (05 §2).
+
+**Seasonal Target**
+
+- **Map clicks are local:** selecting, tapping, the arrow buttons, keyboard arrows and typed coordinates never send anything; only Guess sends the existing guess intent with its rate limit and cooldown, so no new intent or per-click traffic exists and hover/selection never leaks where a player is aiming.
+- **Coordinates validated:** zod accepts only integers inside the round's map; floats, huge numbers, strings and extra fields are refused before the game sees them; the window check is server-side (`OUT_OF_MAP`).
+- **Candidate leakage (O37):** only answers delivered before `releasedBefore` and only with shared + `full` cut the Leaf Fall candidates; under `own`, `numbers` and individual mode the candidates use no answer. With `full`, fallen cells lie where the target can still be — accepted as with Guess The Number (03 §2.3). Fallen cells never include a secret, so the remaining cells hold every secret; the `autumn.minCellsLeft` stop keeps at least that many non-secret candidates.
+- **Per-player parts:** individual quarter pairs, windows and the own guesses' cells reach only their player; spectators and the room line get only counts and sizes. Under `own` and in individual mode no view carries other players' cells.
+- **Triangulation is by design:** `direction` answers under `full` let everyone locate the target from a few public answers; that is the game, not a leak. No server-computed candidate area exists in any view (O17).
+- **Cost of the candidate rule:** up to 10 000 cells × every delivered public answer; computed incrementally (each new answer cuts the remaining set once), never re-scanning all answers per fall, so a fall stays within the queue's processing budget at 500 players and a 100 × 100 map (load test L1 with Seasonal Target).
+- **View size:** others' dots come only from the engine's newest-60 guesses; the own guesses are capped by the cooldown and round length; the result's full dot list is sent once at the end.
 
 ## 4. Cryptographic randomness
 
@@ -66,6 +95,8 @@ Bingo's layers apply (Bingo 03 §13). The intent limits differ:
 | Host round commands (create, start, end, abort) | 1 / 2 s per host | `RATE_LIMITED` |
 | Other intents | 10 / s per socket overall | as Bingo 06 §8 |
 | Sockets per account / per IP | 5 / 10 | as Bingo 06 §8 |
+
+The guess games of [02b](02b-game-safecracker.md)–[02d](02d-game-seasonal-target.md) add no intent: a Safecracker code, a Bomb Defusal sequence and a Seasonal Target cell are each one `guess` with the limits above, validated with the game's zod schema before the round queue. Typing a digit, tapping a wire, and clicking, tapping or arrow-moving the selection on the map change only the client's own selection and send nothing; only "Guess" (the full code, "Cut", the selected cell) sends, so a burst of map clicks costs the server nothing (map-click rate limits).
 
 The round queue is bounded at 5 000 items. Beyond that, new guesses are refused with `ROUND_BUSY`, are not queued, and do not start a cooldown. With the limits above, the bound is reached only in an attack. The load gate checks that it is never reached in normal play ([09](09-testing-strategy.md) §5).
 

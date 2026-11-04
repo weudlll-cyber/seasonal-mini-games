@@ -59,7 +59,7 @@ Webhook events (Bingo 07 §5 mechanics): `match.opened`, `round.countdown` (with
 - The handoff token may carry an optional claim `links`: an array with `telegram` and/or `discord` when the website user has linked those accounts. It carries only the fact of the link, never the handles.
 - It is read only for the multi-account rule `antiMulti.requireLinkedChat` ([05](05-security-threat-model.md) §6, owner decision 10), stored as `external_identities.last_claims.links`, and refreshed at every login.
 - Standalone installs have no such claim, so the rule cannot be switched on there: the admin form disables it with its reason, and the server refuses it (`SETTING_UNAVAILABLE`). An install counts as a website install when it has an enabled JWT handoff provider (DECISIONS T103).
-- An account the handoff created has no password: `DELETE /me` asks it to type its display name instead (`{ confirm }`, DECISIONS T105).
+- An account the handoff created has no password: `DELETE /me` asks it to type its display name instead (`{ confirm }`, DECISIONS T105), and `GET /session` says so (`account.hasPassword: false`), so the account page offers no "Change password" (T201).
 - Adding the claim is a website task (BACKLOG, "Needed from the website repository").
 
 ## 5. The In Season feed (new)

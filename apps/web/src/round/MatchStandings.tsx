@@ -53,7 +53,9 @@ export function MatchStandings({
                 <td>
                   <span className="round-player">
                     <PlayerName name={s.name} />
-                    {s.playerKey === viewerKey ? <span> (you)</span> : null}
+                    {s.playerKey === viewerKey ? (
+                      <span className="round-you-mark"> (you)</span>
+                    ) : null}
                   </span>
                 </td>
                 <td>{formatNumber(s.points)}</td>

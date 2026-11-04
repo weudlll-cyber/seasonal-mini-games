@@ -34,6 +34,17 @@ export type {
   ViewCtx,
 } from './module.js';
 export { formatNumber } from './format.js';
+export {
+  MARK_COLORS,
+  MARK_SHAPES,
+  markAt,
+  marksOf,
+  tagOf,
+  type MarkShape,
+  type PlayerMark,
+} from './marks.js';
+export { sentinelViews } from './sentinel.js';
+export { buttonText, closestLabel, NO_GUESSES } from './web.js';
 export { inRange, rangeSize, type Range } from './range.js';
 export type { Drbg, RoundRng } from './random.js';
 export { HEATWAVE_FLOOR_MS, type SpecialTiming } from './specialSettings.js';
@@ -65,7 +76,9 @@ export type {
   ActReply,
   FeedLine,
   GameText,
+  GuessAnswer,
   GuessRow,
+  GuessSwatch,
   PlayerPanelProps,
   ResultPanelProps,
   SpectatorPanelProps,

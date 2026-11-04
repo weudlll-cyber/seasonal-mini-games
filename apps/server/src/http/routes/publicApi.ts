@@ -61,11 +61,11 @@ export function registerPublicApi(app: FastifyInstance, deps: PublicApiDeps): vo
     if (!q.success) return reply.status(400).send({ code: 'VALIDATION_FAILED' });
     const season = (await periods(pool)).find((p) => p.kind === 'season' && p.status === 'active');
     if (season === undefined) return reply.status(404).send({ code: 'NOT_FOUND' });
-    const page = await boardPage(pool, season.id, 0, null);
+    const page = await boardPage(pool, { periodId: season.id, game: null }, 0, null);
     const view: PublicLeaderboardView = {
       periodName: season.name,
       rows: page.rows.slice(0, q.data.limit).map(({ you: _you, ...row }) => row),
-      teams: await teamBoard(pool, season.id),
+      teams: await teamBoard(pool, { periodId: season.id, game: null }),
     };
     return view;
   });

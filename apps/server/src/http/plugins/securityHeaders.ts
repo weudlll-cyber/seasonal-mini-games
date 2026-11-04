@@ -9,7 +9,9 @@
  *                 the host chat's origin while the chat provider is hostEmbed; `frame-ancestors`
  *                 admits the embed allowlist (07 §1, Bingo 07 §3.4), and X-Frame-Options is
  *                 dropped where it would contradict it; the admin app is framed by nobody
- *                 (`frame-ancestors 'none'`, X-Frame-Options DENY); fonts only from this origin.
+ *                 (`frame-ancestors 'none'`, X-Frame-Options DENY) and requires Trusted Types
+ *                 for scripts (`require-trusted-types-for 'script'`, enforced since the built
+ *                 app was checked in Chromium, DECISIONS T178); fonts only from this origin.
  *                 HSTS comes from the TLS proxy.
  * Depends on:     @fastify/helmet
  * Used by:        ../app.ts
@@ -70,10 +72,17 @@ export async function registerSecurityHeaders(
     reply.header('permissions-policy', PERMISSIONS_POLICY);
     // X-Frame-Options knows no list of sites: with an allowlist, frame-ancestors decides alone.
     // The admin app is framed by nobody, its own origin included (Bingo 03 §7).
-    if (isAdminPath(request.raw.url)) reply.header('x-frame-options', 'DENY');
-    else if (embedOrigins().length > 0) reply.removeHeader('x-frame-options');
+    if (isAdminPath(request.raw.url)) {
+      reply.header('x-frame-options', 'DENY');
+      // Helmet has set the CSP by now; the admin app adds Trusted Types (Bingo 03 §7).
+      const csp = reply.getHeader('content-security-policy');
+      if (typeof csp === 'string')
+        reply.header('content-security-policy', `${csp};${TRUSTED_TYPES}`);
+    } else if (embedOrigins().length > 0) reply.removeHeader('x-frame-options');
     done();
   });
 }
 
+// No string reaches a script sink (eval, innerHTML of a script…) without a Trusted Types policy.
+const TRUSTED_TYPES = "require-trusted-types-for 'script'";
 const PERMISSIONS_POLICY = 'camera=(), microphone=(), geolocation=(), payment=()';

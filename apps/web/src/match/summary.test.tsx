@@ -26,7 +26,11 @@ const calls: string[] = [];
 vi.mock('../shell/http.js', () => ({
   api: (path: string) => {
     calls.push(path);
-    return Promise.resolve(undefined);
+    // The installed games, for the summary's game line (O41).
+    const games = [
+      { id: 'guess-the-number', name: 'Guess The Number', secretModes: [], teams: true },
+    ];
+    return Promise.resolve(path === '/games' ? { games } : undefined);
   },
   ApiError: class extends Error {},
   BASE_PATH: '/',
@@ -87,6 +91,13 @@ const ended: MatchDetailsView = {
 };
 
 describe('the match summary', () => {
+  it('names the match’s game (O41)', async () => {
+    render(<MatchSummary match={ended} viewerKey="a" />);
+    await waitFor(() => {
+      expect(screen.getByTestId('match-game').textContent).toBe('Guess The Number');
+    });
+  });
+
   it('names the end, the rounds, the players in standings order, the teams and the way back', () => {
     render(<MatchSummary match={ended} viewerKey="a" />);
     expect(screen.getByTestId('match-end').textContent).toBe('The host ended the match.');
@@ -97,12 +108,12 @@ describe('the match summary', () => {
       ['2', 'bot-01', '0', '0'],
     ]);
     expect(screen.getByTestId('match-teams').textContent).toBe(
-      ' Summer: 2 points Winter: 0 points',
+      ' Team Summer: 2 points Team Winter: 0 points',
     );
     expect(screen.getByRole('link', { name: 'Back to Play' }).getAttribute('href')).toBe('#/');
     // One screen: the standings in their own column, the rest beside them (./summary.css).
     const summary = screen.getByTestId('match-summary');
-    expect(summary.className).toContain('one-screen');
+    expect(summary.closest('.one-screen')).not.toBeNull();
     const standings = summary.querySelector('.match-summary-standings');
     const side = summary.querySelector('.match-summary-side');
     expect(standings?.contains(screen.getByTestId('match-standings'))).toBe(true);

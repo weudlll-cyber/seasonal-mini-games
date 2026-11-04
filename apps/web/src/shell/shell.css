@@ -9,9 +9,10 @@
  *                 it; on phones the bar wraps into two rows, scrolls away with the page and
  *                 the navigation scrolls sideways. While a round runs, and on a match's
  *                 summary, the page is one screen high (`.one-screen`) and the view fills what
- *                 the bar leaves; on a phone the bar is then one row of at most 56 px with the account behind "Menu" and Play as the
- *                 only navigation pill. Colours come
- *                 from @smg/ui.
+ *                 the bar leaves; on a phone the bar is then one row of at most 56 px with the
+ *                 account behind "Menu" and Play as the only navigation pill. A running round
+ *                 in focus mode hides the bar altogether (../round/focus.css, O46). Colours
+ *                 come from @smg/ui.
  * Spec:           Bingo 01 §13; docs/spec/02-game-guess-the-number.md §12
  */
 
@@ -154,6 +155,12 @@
   display: flex;
   flex-direction: column;
   height: 100dvh;
+}
+
+/* Such a view never scrolls the page, so no gutter is kept for a scrollbar (the empty strip
+   at the right edge the night-5 review found). */
+html:has(.one-screen) {
+  scrollbar-gutter: auto;
 }
 
 .shell-main:has(.one-screen) {

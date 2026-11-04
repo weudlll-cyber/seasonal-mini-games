@@ -3,21 +3,26 @@
  * @module web/match
  * @brief  One match: its players and teams, joining and leaving, the host's console and the round.
  *
- * Responsibility: from the countdown to the end, the round view alone, filling the screen
- *                 (O16: the host gets the same view and plays along; the host menu sits in its
- *                 top bar; the match chat in its right column, ../round/RoundScreen). Otherwise
- *                 the match lobby of 02 §2: title, code and status with the host menu; join or
+ * Responsibility: from the countdown to the end, the round view alone in focus mode, filling
+ *                 the screen without the app header (O46; O16: the host gets the same view and
+ *                 plays along; the host's controls and the match chat are panels from its bar,
+ *                 ../round/FocusShell). The result keeps the app header hidden: the slim
+ *                 result bar (./ResultBar) over the result, the next round's box and the chat
+ *                 beside it on a desktop and under it on a phone (T145, replacing T128).
+ *                 Otherwise
+ *                 the match lobby of 02 §2: title, the match's game (O41), code and status with
+ *                 the host menu; join or
  *                 leave; the last round's result, if any; and the waiting area with the team
  *                 picker and the players (./WaitingArea, O23) with the match chat as a panel
  *                 of its own under it, on a phone behind a "Chat" button (07 §2, T116),
  *                 also while the next round is only set up. A player who joins during a round
  *                 watches it and plays from the next one. The host's last round settings are
- *                 kept here, so the next round's form is prefilled whichever layout made them.
+ *                 kept here, so the next round's form is prefilled whichever layout made them;
+ *                 without them, the last round's season and halving (T209).
  *                 A closed or aborted match shows its summary (./MatchSummary, O27).
  * Depends on:     react, @smg/contracts, ../chat/*, ../live/*, ../shell/*, ./HostMenu,
- *                 ./MatchSummary, ./WaitingArea, ../round/RoundChat, ../round/RoundScreen,
- *                 ../round/roundText,
- *                 ./match.css
+ *                 ./MatchSummary, ./ResultBar, ./WaitingArea, ../round/RoundChat, ../round/RoundScreen,
+ *                 ../round/roundText, ../lobby/games, ./match.css
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/02-game-guess-the-number.md §2, §4, §11; docs/spec/03-seasonal-specials.md §5
  */
@@ -29,13 +34,16 @@ import { useChatConfig } from '../chat/useChat.js';
 import { useMatch } from '../live/useMatch.js';
 import { useRound, type RoundLive } from '../live/useRound.js';
 import { RoundChat } from '../round/RoundChat.js';
+import { gameName, useGames } from '../lobby/games.js';
 import { codeText } from '../round/roundText.js';
 import { RoundScreen } from '../round/RoundScreen.js';
 import { api, ApiError } from '../shell/http.js';
 import { useSession } from '../shell/session.js';
-import { HostMenu, type Values } from './HostMenu.js';
+import { HostConsole, HostMenu, hosts, type Values } from './HostMenu.js';
 import { MatchSummary } from './MatchSummary.js';
+import { ResultBar } from './ResultBar.js';
 import { WaitingArea } from './WaitingArea.js';
+import { SEASON_CHOICE } from './roundFields.js';
 import './match.css';
 
 function JoinLeave({
@@ -144,9 +152,15 @@ function MatchView(p: {
   };
   const status = live.state?.status ?? null;
   const chat = useMatchChat(match.code);
-  const hostMenu = (
-    <HostMenu match={match} roundStatus={status} reload={refresh} last={last} setLast={setLast} />
-  );
+  // Before the host's form made a round here (a Quick Test's first round), the next round
+  // still starts from the last round's season and halving (T209).
+  const kept =
+    last ??
+    (live.state === null
+      ? null
+      : { [SEASON_CHOICE]: live.state.season, 'round.halving': live.state.halving });
+  const menu = { match, roundStatus: status, reload: refresh, last: kept, setLast };
+  const hostMenu = <HostMenu {...menu} />;
   const phase = phaseOf(match, status);
   const round =
     phase !== 'live' && phase !== 'after' ? null : (
@@ -154,7 +168,7 @@ function MatchView(p: {
         live={live}
         gameId={match.gameId}
         viewerKey={viewer}
-        hostMenu={hostMenu}
+        host={hosts(match) ? (close) => <HostConsole {...menu} close={close} /> : null}
         teamPoints={match.teamStandings}
         standings={match.standings}
         // The chat is in the round view only while the round runs; after it, the waiting
@@ -162,9 +176,10 @@ function MatchView(p: {
         chat={phase === 'live' ? chat : null}
       />
     );
+  // A running round in focus mode: one screen, no app header (O46, T128).
   if (phase === 'live') {
     return (
-      <div className="match-live one-screen" data-testid="match">
+      <div className="match-live one-screen focus-mode" data-testid="match">
         {round}
       </div>
     );
@@ -176,62 +191,70 @@ function MatchView(p: {
       </p>
     );
   }
-  return (
-    <LobbyView
-      match={match}
-      viewerKey={viewer}
-      refresh={refresh}
-      hostMenu={hostMenu}
-      round={round}
-      chat={chat}
-    />
-  );
+  const lobby = { match, viewerKey: viewer, refresh, hostMenu, chat };
+  return phase === 'after' ? <AfterView {...lobby} round={round} /> : <LobbyView {...lobby} />;
 }
 
-// Before and between rounds: the match head with the host menu, joining, then the last
-// result with the waiting area and the chat beside it on a wide screen and under it on a
-// phone (T79, T116).
-function LobbyView(p: {
+interface LobbyProps {
   readonly match: MatchDetailsView;
   readonly viewerKey: string | null;
   readonly refresh: () => void;
   readonly hostMenu: ReactElement;
-  readonly round: ReactElement | null;
   // The match chat, a panel under the waiting area (07 §2), or null without a chat.
   readonly chat: ReactElement | null;
-}): ReactElement {
-  const { match } = p;
-  // "Before the round" or "Next round" with the players, and under it the chat as a panel
-  // of its own (on a phone behind its "Chat" button, ../round/RoundChat, T116).
-  const side = (
+}
+
+// "Before the round" or "Next round" with the players, and under it the chat as a panel of
+// its own (on a phone behind its "Chat" button, ../round/RoundChat, T116).
+function Side(p: LobbyProps & { readonly after: boolean }): ReactElement {
+  return (
     <div className="match-side">
-      <WaitingArea
-        match={match}
-        viewerKey={p.viewerKey}
-        after={p.round !== null}
-        reload={p.refresh}
-      />
+      <JoinLeave match={p.match} reload={p.refresh} />
+      <WaitingArea match={p.match} viewerKey={p.viewerKey} after={p.after} reload={p.refresh} />
       <RoundChat chat={p.chat} />
     </div>
   );
+}
+
+// A finished round: the slim bar instead of the app header (T145), the result's first part
+// on one screen, the next round's box and the chat beside it on a desktop, under it on a
+// phone, where the page scrolls.
+function AfterView(p: LobbyProps & { readonly round: ReactElement | null }): ReactElement {
+  const games = useGames();
+  return (
+    <div className="match-result-page focus-mode" data-testid="match">
+      <ResultBar
+        title={p.match.title}
+        game={gameName(games, p.match.gameId)}
+        code={p.match.code}
+        host={p.hostMenu}
+      />
+      <div className="match-after">
+        {p.round}
+        <Side {...p} after />
+      </div>
+    </div>
+  );
+}
+
+// Before the first round and while the next is set up: the match head with the host menu,
+// then the waiting area with joining and the chat (T79, T116).
+function LobbyView(p: LobbyProps): ReactElement {
+  const { match } = p;
+  const games = useGames();
   return (
     <div className="smg-stack" data-testid="match">
       <header className="match-head">
         <h1>{match.title}</h1>
+        <span className="smg-chip" data-testid="match-game">
+          {gameName(games, match.gameId)}
+        </span>
         <span className="smg-chip">
           Code {match.code} · {match.status}
         </span>
         {p.hostMenu}
       </header>
-      <JoinLeave match={match} reload={p.refresh} />
-      {p.round === null ? (
-        side
-      ) : (
-        <div className="match-after">
-          {p.round}
-          {side}
-        </div>
-      )}
+      <Side {...p} after={false} />
     </div>
   );
 }

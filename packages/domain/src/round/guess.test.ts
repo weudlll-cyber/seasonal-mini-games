@@ -14,7 +14,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { PickDriver } from './fakes.js';
+import { pickGame, PickDriver } from './fakes.js';
 
 function lastResults(d: PickDriver) {
   const ended = d.log.at(-1);
@@ -133,6 +133,27 @@ describe('individual rounds', () => {
 });
 
 describe('game signals', () => {
+  it('lengthen the guesser’s cooldown by the game’s extra time, recorded in the log (T120)', () => {
+    // The pick game with 19 costing 2 s more of cooldown, like an explosion.
+    const longer19: typeof pickGame = {
+      ...pickGame,
+      decide: (s, act, ctx) => {
+        const d = pickGame.decide(s, act, ctx);
+        return d.ok && act.action.value === 19 ? { ...d, extraCooldownMs: 2_000 } : d;
+      },
+    };
+    const d = new PickDriver({}, undefined, undefined, longer19);
+    const t = d.start(['a', 'b']);
+    const plain = d.guess('b', 2, t);
+    if (!plain.ok) throw new Error('b’s guess is accepted');
+    const longer = (plain.cooldownEndsAt ?? 0) + 2_000;
+    expect(d.guess('a', 19, t)).toEqual({ ok: true, receiveSeq: 2, cooldownEndsAt: longer });
+    expect(d.guess('a', 3, longer - 1)).toMatchObject({ ok: false, code: 'COOLDOWN_ACTIVE' });
+    expect(d.guess('a', 3, longer)).toMatchObject({ ok: true });
+    const accepted = d.log.filter((e) => e.type === 'GuessAccepted');
+    expect(accepted[1]).toMatchObject({ playerId: 'a', cooldownEndsAt: longer });
+  });
+
   it('end the round when the game asks', () => {
     const d = new PickDriver();
     const t = d.start(['a']);

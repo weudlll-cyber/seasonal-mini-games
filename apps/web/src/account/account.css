@@ -1,10 +1,11 @@
 /**
  * @file   apps/web/src/account/account.css
  * @module web/account
- * @brief  The sign-in and register forms.
+ * @brief  The account forms: sign-in, register, the account page and its deletion form.
  *
- * Responsibility: a narrow card centred in the column, fields stacked with their hints;
- *                 colours and spacing from @smg/ui tokens.
+ * Responsibility: a narrow card centred in the column, fields stacked with their hints, the
+ *                 deletion form's lists close to their headings; colours and spacing from
+ *                 @smg/ui tokens.
  * Spec:           Bingo 01 §13
  */
 
@@ -22,4 +23,14 @@
 
 .account-form p {
   margin: 0;
+}
+
+.account-form h3 {
+  margin: var(--space-2) 0 0;
+  font-size: var(--font-size-body);
+}
+
+.account-form ul {
+  margin: var(--space-1) 0 0;
+  padding-left: var(--space-3);
 }

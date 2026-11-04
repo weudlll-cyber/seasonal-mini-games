@@ -5,7 +5,8 @@
  *
  * Responsibility: for `integration.manage` (Bingo 05 §3): list, save and remove embed origins;
  *                 list, create, change and remove `jwt_handoff` providers (a pinned key must be a
- *                 PEM public key; the role mapping never grants an admin role). Every write is
+ *                 PEM public key, a change without one keeps the key in force; the role mapping
+ *                 never grants an admin role). Every write is
  *                 audited without key material.
  * Depends on:     fastify, zod, @smg/application (audit), @smg/contracts, ../../integration/*,
  *                 ./adminGuard
@@ -13,7 +14,7 @@
  * Spec:           docs/spec/07-integration.md §1; Bingo 07 §2.1, §3.4; Bingo 05 §3
  */
 import type { AuditLog } from '@smg/application';
-import { EmbedOriginBody, IdentityProviderBody } from '@smg/contracts';
+import { EmbedOriginBody, IdentityProviderBody, IdentityProviderChange } from '@smg/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
@@ -94,10 +95,18 @@ function registerEmbedOrigins(app: FastifyInstance, deps: IntegrationRouteDeps):
   });
 }
 
-// The provider body, its pinned key checked; null after a 400 answer.
-async function providerBody(request: FastifyRequest, reply: FastifyReply) {
-  const body = IdentityProviderBody.safeParse(request.body);
-  const key = body.success ? body.data.pinnedPublicKey : null;
+type Change = z.infer<typeof IdentityProviderChange>;
+const NO_KEY_SOURCE = { code: 'VALIDATION_FAILED', problem: 'a key or a JWKS address' } as const;
+
+// The provider body (a new one, or a change, which may keep the pinned key), its pinned key
+// checked; null after a 400 answer.
+async function providerBody<T extends Change>(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  schema: z.ZodType<T>,
+): Promise<T | null> {
+  const body = schema.safeParse(request.body);
+  const key = body.success ? (body.data.pinnedPublicKey ?? null) : null;
   const problem = key === null ? null : pinnedKeyProblem(key);
   if (!body.success || problem !== null) {
     await reply.status(400).send({ code: 'VALIDATION_FAILED', ...(problem ? { problem } : {}) });
@@ -107,10 +116,11 @@ async function providerBody(request: FastifyRequest, reply: FastifyReply) {
 }
 
 // What the audit keeps of a provider: everything but the key itself.
-const auditedProvider = (b: z.infer<typeof IdentityProviderBody>) => ({
-  ...b,
-  pinnedPublicKey: b.pinnedPublicKey === null ? null : 'set',
-});
+function auditedProvider(b: Change) {
+  const key = b.pinnedPublicKey;
+  if (key === undefined) return { ...b, pinnedPublicKey: 'kept' };
+  return { ...b, pinnedPublicKey: key === null ? null : 'set' };
+}
 
 function registerProviders(app: FastifyInstance, deps: IntegrationRouteDeps): void {
   const { pool, audit } = deps;
@@ -122,7 +132,7 @@ function registerProviders(app: FastifyInstance, deps: IntegrationRouteDeps): vo
   app.post('/api/v1/admin/identity-providers', async (request, reply) => {
     const actor = await permitted(request, reply, PERMISSION);
     if (actor === null) return reply;
-    const body = await providerBody(request, reply);
+    const body = await providerBody(request, reply, IdentityProviderBody);
     if (body === null) return reply;
     const made = await createProvider(pool, body);
     if (made === null) return reply.status(409).send({ code: 'ISSUER_TAKEN' });
@@ -139,10 +149,11 @@ function registerProviders(app: FastifyInstance, deps: IntegrationRouteDeps): vo
     const actor = await permitted(request, reply, PERMISSION);
     if (actor === null) return reply;
     const params = idParams.safeParse(request.params);
-    const body = await providerBody(request, reply);
+    const body = await providerBody(request, reply, IdentityProviderChange);
     if (body === null) return reply;
     const changed = params.success ? await updateProvider(pool, params.data.id, body) : null;
     if (changed === null) return reply.status(404).send({ code: 'NOT_FOUND' });
+    if (changed === 'NO_KEY') return reply.status(400).send(NO_KEY_SOURCE);
     await audit.append(actor, {
       action: 'identityProvider.update',
       targetType: 'identityProvider',

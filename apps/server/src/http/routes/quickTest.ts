@@ -3,8 +3,9 @@
  * @module server/http
  * @brief  POST /api/v1/dev/quicktest: start a Quick Test round against bots.
  *
- * Responsibility: validate the body with zod and start the Quick Test for the signed-in
- *                 player, at once or through the waiting area (`lobby`, O24). Registered only in development builds (SMG_DEV=1), like every
+ * Responsibility: validate the body with zod and start the Quick Test of the chosen game
+ *                 (O41, with its own settings) for the signed-in player, at once or through the
+ *                 waiting area (`lobby`, O24); settings the game refuses answer 422. Registered only in development builds (SMG_DEV=1), like every
  *                 development route. Replaces Bingo's in-memory runner of the same name.
  * Depends on:     fastify, zod, ../../dev/quickTest, ../../match/play
  * Used by:        ../app
@@ -14,9 +15,11 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
 import { quickTests } from '../../dev/quickTest.js';
-import type { Play } from '../../match/play.js';
+import { PlayError, type Play } from '../../match/play.js';
 
-const body = z
+import { heatwaveSettings } from './heatwaveBody.js';
+
+export const quickTestBody = z
   .object({
     gameId: z.string().min(1).max(40).default('guess-the-number'),
     mode: z.enum(['shared', 'individual']).default('shared'),
@@ -40,8 +43,18 @@ const body = z
     // Short for scripted callers; the Quick Test form sends the round setting's default, so
     // the intro screen shows as long as in a normal round (O36).
     countdownS: z.number().int().min(3).max(30).default(3),
+    // Bots wait this much longer after each guess (T154): a busy round with no early winner.
+    botDelayS: z.number().int().min(0).max(120).default(0),
     seedText: z.string().trim().min(1).max(64).optional(),
     season: z.enum(['spring', 'summer', 'autumn', 'winter']).optional(),
+    // The chosen game's own round settings (O41); each is checked against the game's
+    // definitions when the round is created, an unknown key refused (T121).
+    // Heatwave's two in range as in the round form (O63, ./heatwaveBody, T208).
+    settings: z
+      .object(heatwaveSettings)
+      .catchall(z.union([z.string().max(60), z.number(), z.boolean()]))
+      .refine((s) => Object.keys(s).length <= 40 && Object.keys(s).every((k) => k.length <= 60))
+      .default({}),
   })
   .strict()
   // At least 10 numbers, as for every round (08 §3).
@@ -55,12 +68,18 @@ export function registerQuickTest(
   app.post('/api/v1/dev/quicktest', async (request, reply) => {
     const accountId = request.session?.accountId ?? null;
     if (accountId === null) return reply.status(401).send({ code: 'SIGN_IN_REQUIRED' });
-    const parsed = body.safeParse(request.body ?? {});
+    const parsed = quickTestBody.safeParse(request.body ?? {});
     if (!parsed.success) return reply.status(400).send({ code: 'VALIDATION_FAILED' });
     if (!deps.play.rounds.hasGame(parsed.data.gameId)) {
       return reply.status(422).send({ code: 'GAME_UNKNOWN' });
     }
-    const started = await quick.start({ ...parsed.data, playerId: accountId });
-    return reply.status(201).send(started);
+    try {
+      const started = await quick.start({ ...parsed.data, playerId: accountId });
+      return await reply.status(201).send(started);
+    } catch (error) {
+      // Settings that do not fit the game: refused in its words, like the host's form.
+      if (error instanceof PlayError) return reply.status(422).send({ code: error.code });
+      throw error;
+    }
   });
 }

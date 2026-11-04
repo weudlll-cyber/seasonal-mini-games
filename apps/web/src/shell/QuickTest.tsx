@@ -3,12 +3,14 @@
  * @module web/shell
  * @brief  The development Quick Test: one round against bots, with a seed field.
  *
- * Responsibility: choose whether to start from the lobby (on by default, O24), the seed text
- *                 (the same text gives the same secret and season), the secret mode, the
- *                 season (or the seed's), what others see, the bots, the cooldown, the
- *                 countdown with the round's intro screen (O36), the lowest
- *                 and highest number, whether the range is shown, the closeness comments (O21),
- *                 the fast test profile and whether it is a team match (O34); start it (`POST /dev/quicktest`) and go to the
+ * Responsibility: choose the game (O41, with a help line), whether to start from the lobby
+ *                 (on by default, O24), the seed text (the same text gives the same secret and
+ *                 season), the secret mode, the season (or the seed's), what others see, the
+ *                 bots, the cooldown, the countdown with the round's intro screen (O36), the
+ *                 chosen game's own host settings and only those (Guess The Number: lowest and
+ *                 highest number, whether the range is shown, the closeness comments, O21),
+ *                 the fast test profile and whether it is a team match (O34); start it
+ *                 (`POST /dev/quicktest`, the game's settings by key, T121) and go to the
  *                 match, where the player hosts it: in the waiting area, where the bots join
  *                 and the player starts the round from the host menu, or with the round
  *                 counting down at once. Every field has
@@ -16,119 +18,61 @@
  *                 definitions through the host form's own `Field`, the rest from FORM_HELP, so
  *                 both forms say the same. Development builds only: the shell loads this module
  *                 on demand and a production build leaves it out.
- * Depends on:     react, @smg/contracts, @smg/game-sdk (definitions), @smg-game/registry/web,
- *                 ./http, ./router, ../season/season, ../components/fields, ../match/* (and its
- *                 form grid, ../match/match.css)
+ * Depends on:     react, @smg/contracts, @smg-game/registry/web, ./quickTestSettings,
+ *                 ./http, ./router, ../season/season, ../components/fields, ../lobby/games,
+ *                 ../match/* (and its form grid, ../match/match.css)
  * Used by:        ./AppShell (lazy, development only)
  * Spec:           docs/spec/11-roadmap.md (phase 1 Quick Test); docs/spec/09-testing-strategy.md §1, §4
  */
 import { GAME_SCREENS } from '@smg-game/registry/web';
-import type { QuickTestStartedView, SeasonName } from '@smg/contracts';
-import { PLATFORM_ROUND_SETTINGS, type SettingDef, type SettingValue } from '@smg/game-sdk';
+import type { GameInfoView, QuickTestStartedView, SeasonName } from '@smg/contracts';
+import type { SettingValue } from '@smg/game-sdk';
 import { useState, type ReactElement, type SyntheticEvent } from 'react';
 
 import { ChoiceField, NumberField, Problem, SwitchField, TextField } from '../components/fields.js';
+import { useGames } from '../lobby/games.js';
 import { FORM_HELP } from '../match/formHelp.js';
-import { Field } from '../match/roundFields.js';
+import { HostFields, seasonalDefs } from '../match/roundFields.js';
 import { SEASON_NAMES, SEASONS } from '../season/season.js';
 import { api } from './http.js';
+import {
+  bodyOf,
+  defsOf,
+  gameKeysOf,
+  KEYS,
+  SettingFields,
+  START,
+  type Extra,
+  type Values,
+} from './quickTestSettings.js';
 import { navigate } from './router.js';
 import '../match/match.css';
 
-const GAME = 'guess-the-number';
-// The settings the Quick Test offers, in the form's order, with its own starting values.
-const KEYS = [
-  'round.secretMode',
-  'round.feedbackVisibility',
-  'round.cooldownS',
-  'round.countdownS',
-] as const;
-const RANGE_KEYS = [
-  'round.rangeLow',
-  'round.rangeHigh',
-  'round.rangeVisible',
-  'round.comments',
-] as const;
-const START: Readonly<Record<string, SettingValue>> = {
-  'round.secretMode': 'shared',
-  'round.feedbackVisibility': 'full',
-  'round.cooldownS': 5,
-  'round.rangeLow': 1,
-  'round.rangeHigh': 100,
-  'round.rangeVisible': true,
-  'round.comments': true,
-};
 const SEASON_CHOICES = [
   { value: '' as const, label: 'from the seed' },
   ...SEASONS.map((s) => ({ value: s, label: SEASON_NAMES[s] })),
 ];
 
-const defs: readonly SettingDef[] = [
-  ...PLATFORM_ROUND_SETTINGS,
-  ...(GAME_SCREENS[GAME]?.settings ?? []),
-];
-const defOf = (key: string) => defs.find((d) => d.key === key);
-
-interface Extra {
-  readonly seedText: string;
-  readonly season: SeasonName | '';
-  readonly bots: number;
-  readonly fast: boolean;
-  readonly lobby: boolean;
-  readonly teamMatch: boolean;
-}
-
-type Values = Readonly<Record<string, SettingValue>>;
-
-function SettingFields(p: {
-  readonly keys: readonly string[];
-  readonly values: Values;
-  readonly set: (key: string, v: SettingValue) => void;
-}): ReactElement {
-  return (
-    <>
-      {p.keys.map((key) => {
-        const def = defOf(key);
-        return def === undefined ? null : (
-          <Field
-            key={key}
-            def={def}
-            value={p.values[key] ?? def.default}
-            set={(v) => {
-              p.set(key, v);
-            }}
-          />
-        );
-      })}
-    </>
-  );
-}
-
-// The request body: the server's Quick Test names its fields itself.
-function bodyOf(values: Values, extra: Extra) {
-  return {
-    mode: values['round.secretMode'],
-    visibility: values['round.feedbackVisibility'],
-    cooldownS: values['round.cooldownS'],
-    // The intro screen as long as in a normal round: the setting's default unless changed.
-    countdownS: values['round.countdownS'] ?? defOf('round.countdownS')?.default,
-    rangeLow: values['round.rangeLow'],
-    rangeHigh: values['round.rangeHigh'],
-    rangeVisible: values['round.rangeVisible'],
-    comments: values['round.comments'],
-    bots: extra.bots,
-    fast: extra.fast,
-    lobby: extra.lobby,
-    teamMatch: extra.teamMatch,
-    ...(extra.seedText.trim() === '' ? {} : { seedText: extra.seedText }),
-    ...(extra.season === '' ? {} : { season: extra.season }),
-  };
-}
-
 // The fields that are not settings, by name, to place between the settings.
-function extraFields(p: { readonly extra: Extra; readonly set: (e: Partial<Extra>) => void }) {
+function extraFields(p: {
+  readonly extra: Extra;
+  readonly set: (e: Partial<Extra>) => void;
+  readonly games: readonly GameInfoView[];
+}) {
   const { extra, set } = p;
   return {
+    game: (
+      <ChoiceField
+        label="Game"
+        help={FORM_HELP.game}
+        value={extra.gameId}
+        options={p.games.map((g) => ({ value: g.id, label: g.name }))}
+        testId="quick-game"
+        onChange={(gameId) => {
+          set({ gameId });
+        }}
+      />
+    ),
     seed: (
       <TextField
         label="Seed"
@@ -208,9 +152,48 @@ function switchFields(p: { readonly extra: Extra; readonly set: (e: Partial<Extr
   };
 }
 
+// The form's fields in order: the game first, then the settings every game has, then the
+// chosen game's own (O41).
+function QuickTestFields(p: {
+  readonly extra: Extra;
+  readonly values: Values;
+  readonly set: (key: string, v: SettingValue) => void;
+  readonly more: ReturnType<typeof extraFields>;
+}): ReactElement {
+  const { extra, values, set, more } = p;
+  const defs = defsOf(extra.gameId);
+  const fields = (keys: readonly string[]) => (
+    <SettingFields keys={keys} defs={defs} values={values} set={set} />
+  );
+  return (
+    <div className="host-form">
+      {more.game}
+      {more.lobby}
+      {more.teamMatch}
+      {more.seed}
+      {fields(KEYS.slice(0, 1))}
+      {more.season}
+      {fields(KEYS.slice(1, 2))}
+      {more.bots}
+      {fields([...KEYS.slice(2), ...gameKeysOf(extra.gameId)])}
+      {/* Heatwave's step and interval for a summer round, the host form's own (O63, T208). */}
+      <HostFields
+        fields={seasonalDefs(defs)}
+        season={extra.season === '' ? null : extra.season}
+        values={values}
+        set={set}
+      />
+      {more.fast}
+    </div>
+  );
+}
+
 export function QuickTest(): ReactElement {
+  const games = useGames();
   const [values, setValues] = useState<Values>(START);
   const [extra, setExtra] = useState<Extra>({
+    // The registry's first game until the player chooses.
+    gameId: Object.keys(GAME_SCREENS)[0] ?? '',
     seedText: '',
     season: '',
     bots: 3,
@@ -224,6 +207,7 @@ export function QuickTest(): ReactElement {
   };
   const more = extraFields({
     extra,
+    games,
     set: (e) => {
       setExtra((old) => ({ ...old, ...e }));
     },
@@ -236,7 +220,7 @@ export function QuickTest(): ReactElement {
       })
       .catch(() => {
         setProblem(
-          'The Quick Test could not start. Are you signed in, and is the range at least 10 numbers?',
+          'The Quick Test could not start. Are you signed in, and do the game’s settings fit together?',
         );
       });
   };
@@ -247,17 +231,7 @@ export function QuickTest(): ReactElement {
         One round against bots, which you host and play: from the lobby, where the bots join and you
         start the round, or at once. The same seed gives the same secret and the same season.
       </p>
-      <div className="host-form">
-        {more.lobby}
-        {more.teamMatch}
-        {more.seed}
-        <SettingFields keys={KEYS.slice(0, 1)} values={values} set={set} />
-        {more.season}
-        <SettingFields keys={KEYS.slice(1, 2)} values={values} set={set} />
-        {more.bots}
-        <SettingFields keys={[...KEYS.slice(2), ...RANGE_KEYS]} values={values} set={set} />
-        {more.fast}
-      </div>
+      <QuickTestFields extra={extra} values={values} set={set} more={more} />
       <Problem text={problem} />
       <button type="submit" className="smg-btn smg-btn--primary" data-testid="start-quick-test">
         Start Quick Test

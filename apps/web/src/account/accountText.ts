@@ -1,7 +1,7 @@
 /**
  * @file   apps/web/src/account/accountText.ts
  * @module web/account
- * @brief  The sign-in and register forms' checks and messages, in plain English.
+ * @brief  The account forms' checks and messages, in plain English.
  *
  * Responsibility: the spec's rules checked before sending (display name 3–24 letters,
  *                 digits, "_", "." or "-"; an e-mail address; a password of 12 to 128
@@ -9,9 +9,9 @@
  *                 passwords), and a sentence for every refusal the server gives: wrong
  *                 e-mail or password (one answer, so it never tells whether an account
  *                 exists), name or e-mail in use (one answer), weak password, too many tries,
- *                 e-mail not confirmed.
+ *                 e-mail not confirmed, a deletion whose typed display name does not match.
  * Depends on:     ../shell/http (types)
- * Used by:        ./Register, ./formParts, ./AccountPage
+ * Used by:        ./Register, ./formParts, ./AccountPage, ./DeleteAccount
  * Spec:           Bingo 03 §2.1, §13; Bingo 05 §2.1
  */
 import { ApiError } from '../shell/http.js';
@@ -54,6 +54,7 @@ export function accountError(error: unknown): string {
     EMAIL_NOT_VERIFIED: 'Please confirm your e-mail address first (see the mail we sent you).',
     VALIDATION_FAILED: 'Please check the form.',
     PASSWORD_REQUIRED: 'The current password is not right.',
+    CONFIRMATION_REQUIRED: 'The name you typed is not your display name.',
   };
   if (error.code === 'PASSWORD_WEAK')
     return passwordText(error.reason) ?? 'Please choose a stronger password.';

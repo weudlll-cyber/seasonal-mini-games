@@ -5,7 +5,8 @@
  *
  * Responsibility: save what a person sees in the browser window (the viewport) in both
  *                 themes, switched with the top bar's own toggle (no reload, so a running
- *                 match goes on); the page's theme is put back afterwards.
+ *                 match goes on; in a round's focus mode, which hides the toggle, on <html>
+ *                 directly); the page's theme is put back afterwards.
  *                 `captureLook` adds the desktop (1280×800) and phone (390×844) size, and can
  *                 bring one element into view first.
  * Depends on:     @playwright/test, node:path, ./devStack
@@ -27,9 +28,18 @@ export const PHONE = { width: 390, height: 844 };
 const themeNow = (page: Page) =>
   page.evaluate(() => document.documentElement.getAttribute('data-theme'));
 
-// Presses the top bar's toggle until <html> carries the theme (the icon follows).
+// Presses the top bar's toggle until <html> carries the theme (the icon follows). A round in
+// focus mode hides the app's header with the toggle (O46): there the theme is put on <html>
+// directly, which is what the tokens follow.
 export async function setTheme(page: Page, theme: string): Promise<void> {
-  if ((await themeNow(page)) !== theme) await page.getByTestId('theme-toggle').click();
+  const toggle = page.getByTestId('theme-toggle');
+  if ((await themeNow(page)) !== theme) {
+    if (await toggle.isVisible()) await toggle.click();
+    else
+      await page.evaluate((t) => {
+        document.documentElement.setAttribute('data-theme', t);
+      }, theme);
+  }
   await expect.poll(() => themeNow(page)).toBe(theme);
   // Buttons fade their background (160 ms): the picture waits until the fade is done.
   await page.waitForTimeout(400);

@@ -27,6 +27,7 @@ const boundaries = /** @type {import('eslint').ESLint.Plugin} */ (
 // generic game patterns so they match first.
 const ELEMENTS = [
   { type: 'game-sdk', pattern: 'packages/game-sdk' },
+  { type: 'guess-engine', pattern: 'packages/guess-engine' },
   { type: 'domain', pattern: 'packages/domain' },
   { type: 'application', pattern: 'packages/application' },
   { type: 'contracts', pattern: 'packages/contracts' },
@@ -43,9 +44,10 @@ const ELEMENTS = [
 
 /**
  * Which element may import which (04 §3). Anything not listed is disallowed: game-sdk and
- * embed-loader import nothing from other workspace projects, contracts only the SDK, a game imports
- * only game-sdk, and no platform package names a game. Only the server and the player
- * client reach games, and only through the registry.
+ * embed-loader import nothing from other workspace projects, contracts only the SDK, the guess
+ * engine only the SDK, a game only game-sdk and the guess engine (04 §4.7), and no platform
+ * package names a game or the engine. Only the server and the player client reach games, and
+ * only through the registry.
  * @param {string} from
  * @param {string[]} to
  */
@@ -59,7 +61,8 @@ const LAYER_POLICIES = [
   // Contracts carry the SDK's setting definitions to the admin app (types and pure checks).
   allow('contracts', ['game-sdk']),
   allow('ui', ['contracts']),
-  allow('game', ['game-sdk']),
+  allow('guess-engine', ['game-sdk']),
+  allow('game', ['game-sdk', 'guess-engine']),
   allow('game-web', ['game-sdk', 'game', 'ui']),
   allow('registry', ['game', 'game-sdk']),
   allow('registry-web', ['game-web', 'game-sdk']),

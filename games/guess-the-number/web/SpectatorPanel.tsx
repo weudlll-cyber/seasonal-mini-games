@@ -27,7 +27,7 @@ export function SpectatorPanel(props: SpectatorPanelProps): ReactElement {
   const v = props.view as SpectatorView;
   return (
     <div className="gtn-spectator" data-testid="gtn-spectator">
-      <RangeBar range={v.range} removed={v.removed} />
+      <RangeBar range={v.range} />
       {v.hint === null ? null : (
         <p className="gtn-hint" data-testid="hint">
           {freeHint(v.hint)}

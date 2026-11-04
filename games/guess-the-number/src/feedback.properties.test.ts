@@ -11,10 +11,14 @@
  * Spec:           docs/spec/09-testing-strategy.md §3 G5, G6; docs/spec/02-game-guess-the-number.md §6.1
  */
 import fc from 'fast-check';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { input, Table } from './fakes.js';
 import { feedbackFor } from './feedback.js';
+
+// 500 and 200 generated rounds: 2–3 s alone on the development laptop, so a full run's parallel
+// files would pass 5 s (DECISIONS T206).
+vi.setConfig({ testTimeout: 20_000 });
 
 const LOW = 1;
 const HIGH = 100;

@@ -8,15 +8,24 @@
  *                 loads the room as the viewer sees it (the lobby or a match's room), joins it
  *                 over the game socket (`chat.join`, again after every reconnect) for the last
  *                 50 messages, applies the room's `chat` frames (a new message, a deletion, a
- *                 changed lock or slow mode), sends with `chat.send` and leaves when the screen
- *                 goes. After a refusal the room is loaded again, so "may I write" stays true.
+ *                 changed lock or slow mode), tells its caller of each message arriving live
+ *                 (for an unread count, ./chatArrivals), sends with `chat.send` and leaves when
+ *                 the screen goes. After a refusal the room is loaded again, so "may I write"
+ *                 stays true.
  *                 The server decides every refusal; the client only words it.
  * Depends on:     react, @smg/contracts (views), ../shell/http, ../live/socket, ./chatText
  * Used by:        ./ChatPanel, ../match/MatchPage
  * Spec:           docs/spec/07-integration.md §2; Bingo 06 §7
  */
 import type { ChatConfigView, ChatEventView, ChatMessageView, ChatRoomView } from '@smg/contracts';
-import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from 'react';
 
 import { gameSocket, intent } from '../live/socket.js';
 import { api, ApiError } from '../shell/http.js';
@@ -70,12 +79,19 @@ function roomPath(target: ChatTarget): string {
     : `/chat/rooms/match/${encodeURIComponent(target.code)}`;
 }
 
-// Joins the room over the socket (again after a reconnect) and applies its frames.
+// Joins the room over the socket (again after a reconnect) and applies its frames; `onLive`
+// hears of each message that arrives live (not the history the join loads).
 function useRoomFrames(
   roomId: string | null,
   setRoom: Dispatch<SetStateAction<ChatRoomView | null>>,
   setMessages: Dispatch<SetStateAction<readonly ChatMessageView[]>>,
+  onLive: (m: ChatMessageView) => void,
 ): void {
+  // The newest callback, without joining the room again when it changes.
+  const live = useRef(onLive);
+  useEffect(() => {
+    live.current = onLive;
+  });
   useEffect(() => {
     if (roomId === null) return;
     const socket = gameSocket();
@@ -93,6 +109,7 @@ function useRoomFrames(
       if (about !== roomId) return;
       if (e.type === 'room') setRoom((r) => (r === null ? r : { ...r, ...e.room }));
       else setMessages((list) => apply(list, e));
+      if (e.type === 'message') live.current(e.message);
     };
     join();
     socket.on('connect', join);
@@ -105,7 +122,12 @@ function useRoomFrames(
   }, [roomId]);
 }
 
-export function useChatRoom(target: ChatTarget): ChatRoomLive {
+const nobody = (): void => undefined;
+
+export function useChatRoom(
+  target: ChatTarget,
+  onLive: (m: ChatMessageView) => void = nobody,
+): ChatRoomLive {
   const path = roomPath(target);
   const [room, setRoom] = useState<ChatRoomView | null>(null);
   const [messages, setMessages] = useState<readonly ChatMessageView[]>([]);
@@ -127,7 +149,7 @@ export function useChatRoom(target: ChatTarget): ChatRoomLive {
     void load();
   }, [load]);
   const roomId = room?.id ?? null;
-  useRoomFrames(roomId, setRoom, setMessages);
+  useRoomFrames(roomId, setRoom, setMessages, onLive);
   const send = useCallback(
     async (text: string): Promise<string | null> => {
       if (roomId === null) return chatCodeText(undefined);

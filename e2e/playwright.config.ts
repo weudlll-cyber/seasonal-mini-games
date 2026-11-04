@@ -33,6 +33,12 @@ const TIMING = [
   'specials.spec.ts',
   'seasons.spec.ts',
   'leafFall.spec.ts',
+  // The guess games' journeys 20–22: specials and the explosion's cooldown.
+  'safecracker.spec.ts',
+  'bombDefusal.spec.ts',
+  'target.spec.ts',
+  // Journeys 24–27: each game in focus mode, a guess at each size after a cooldown.
+  'focus.spec.ts',
   'players.spec.ts',
   'access.spec.ts',
   'range.spec.ts',
@@ -42,8 +48,11 @@ const TIMING = [
   'chat.spec.ts',
   // Changes and rolls back the game's settings document, and aborts a round.
   'admin.spec.ts',
-  // Changes the embed allowlist and the identity providers (journey 8).
+  // Change the embed allowlist and the identity providers (journeys 8 and 29).
   'embed.spec.ts',
+  'accountDeletion.spec.ts',
+  // Journeys 30–32: add and remove an identity provider, an embed origin and a webhook.
+  'integration.spec.ts',
 ];
 const BROWSERS = [
   { name: 'chromium', use: { ...devices['Desktop Chrome'] } },

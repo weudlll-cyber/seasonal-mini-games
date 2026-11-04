@@ -1,0 +1,212 @@
+/**
+ * @file   apps/web/src/round/focus.css
+ * @module web/round
+ * @brief  The focus mode's slim bar and its panels on demand: drawers and sheets (O46).
+ *
+ * Responsibility: the app header hidden and the page's column as wide as the screen while
+ *                 the focus mode lasts; the bar in one row of small text (about 14 px), at most
+ *                 44 px high on a desktop (36 px controls) and 52 px on a phone (44 px touch
+ *                 targets, O47): the season pill, "9:50 left", the panel buttons with their
+ *                 icons (and their words on a desktop) and the unread badge. A panel
+ *                 (./FocusPanel) on a desktop is a third column of 360 px of the round view's
+ *                 grid (./round.css), so it pushes the game aside and covers nothing (O48); in
+ *                 the phone layout it is a sheet over the rows between the bar and the action
+ *                 dock, whose bottom edge ends above the dock, so the player can still guess.
+ *                 Opaque as menus are, no backdrop; its body scrolls inside itself; the focus
+ *                 moved into it is drawn only for the keyboard (:focus-visible). In full screen
+ *                 the round view keeps the page's background. Colours only from @smg/ui tokens.
+ * Spec:           docs/spec/02-game-guess-the-number.md §12
+ */
+/* A running round in focus mode (`.focus-mode` on the match page): no app header at all, the
+   round's own bar instead, and the round view as wide as the screen (../shell/shell.css). */
+#root:has(.focus-mode) .shell-bar {
+  display: none;
+}
+
+/* Through #root: the shell's one-screen padding (../shell/shell.css, loaded after this
+   file) has the same weight and won, so a phone kept a 16 px gutter (night 7, T144). */
+#root .shell-main:has(.focus-mode) {
+  max-width: none;
+  padding: var(--space-1) var(--gutter);
+}
+
+@media (max-width: 640px) {
+  #root .shell-main:has(.focus-mode) {
+    padding: var(--space-1) 0.5rem;
+  }
+}
+
+.focus-bar {
+  grid-area: bar;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+  min-width: 0;
+  max-height: 44px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.focus-fact {
+  flex: none;
+  font-weight: var(--font-weight-strong);
+}
+
+.focus-actions {
+  flex: none;
+  display: flex;
+  gap: var(--space-1);
+  margin-left: auto;
+}
+
+/* Flat buttons of 36 px on a desktop: the bar is a strip, not a toolbar of large buttons. */
+.focus-button,
+.focus-bar .round-season {
+  min-height: 36px;
+}
+
+.focus-button {
+  position: relative;
+  gap: 0.4rem;
+  min-width: 36px;
+  padding-inline: 0.65rem;
+  font-size: inherit;
+  box-shadow: none;
+}
+
+.focus-bar .round-season-icon {
+  width: 1.6rem;
+  height: 1.6rem;
+}
+
+.focus-icon {
+  flex: none;
+}
+
+/* The unread count on the Chat button's corner: a dark pill, never the only sign (it is read
+   out as "3 unread"). */
+.focus-badge {
+  position: absolute;
+  top: -0.35rem;
+  right: -0.35rem;
+  display: grid;
+  place-items: center;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  padding-inline: 0.3rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-solid);
+  color: var(--color-on-solid);
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+/* A panel on demand: on a desktop the round view's third column (./round.css), beside the
+   game, never over it (O48). */
+.focus-panel {
+  grid-area: panel;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  white-space: normal;
+}
+
+.focus-panel[hidden] {
+  display: none;
+}
+
+/* The focus moves to the panel on opening; its ring shows only for the keyboard. */
+.focus-panel:focus {
+  outline: none;
+}
+
+/* The base ring (@smg/ui), drawn inside: outside it would be clipped at the screen edge. */
+.focus-panel:focus-visible {
+  outline-offset: -3px;
+}
+
+.focus-panel-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.focus-panel-head h2 {
+  margin: 0;
+  font-size: var(--font-size-lead);
+}
+
+.focus-panel-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  overflow-y: auto;
+}
+
+/* The chat fills its drawer: its list scrolls, the text field stays at the bottom. */
+.focus-panel-body > .chat-panel {
+  flex: 1;
+  min-height: 0;
+}
+
+/* The round view in full screen keeps the page's colours and a margin. */
+.round-live:fullscreen {
+  padding: var(--space-2);
+  background: var(--page-background);
+}
+
+/* A phone: the bar's buttons show their icons only (their words are read out) and keep 44 px
+   touch targets. */
+@media (max-width: 899px) {
+  .focus-bar {
+    gap: 0.25rem;
+    max-height: 52px;
+  }
+
+  .focus-mode-fact,
+  .focus-button-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .focus-actions {
+    gap: 0.25rem;
+  }
+
+  .focus-button,
+  .focus-bar .round-season {
+    min-height: var(--hit-target);
+  }
+
+  .focus-button {
+    width: var(--hit-target);
+    min-width: var(--hit-target);
+    padding: 0;
+    justify-content: center;
+  }
+}
+
+/* The phone layout (./useRoundView): a panel is a sheet from the row under the bar to the one
+   above the action dock (the grid's last), so the dock stays in view and usable (O48). */
+.round-live[data-view='phone'] > .focus-panel {
+  z-index: 40;
+  grid-area: auto;
+  grid-column: 1 / -1;
+  grid-row: 2 / -2;
+  box-shadow: var(--shadow-raised);
+}

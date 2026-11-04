@@ -13,7 +13,7 @@
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/09-testing-strategy.md §2
  */
 import { GAME_SCREENS } from '@smg-game/registry/web';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { ended } from './fakes.js';
@@ -37,9 +37,25 @@ describe('the result screen', () => {
     const rows = [...screen.getByTestId('placings').querySelectorAll('tbody tr')].map(
       (tr) => tr.textContent,
     );
-    expect(rows).toEqual(['1 Walter910', 'took part Anna (you)40']);
+    expect(rows).toEqual(['1 Walter910', 'took part– Anna (you)40']);
+    // "–" for the eye, "took part" as text for a screen reader and as the tooltip, no
+    // aria-label on a plain span (axe); "Pts" on a phone is "Points" (T211).
+    const took = screen.getByTitle('took part');
+    expect(took.querySelector('.smg-visually-hidden')?.textContent).toBe('took part');
+    expect(took.querySelector('[aria-hidden="true"]')?.textContent).toBe('–');
+    expect(took.getAttribute('aria-label')).toBeNull();
+    const points = within(screen.getByTestId('placings')).getByRole('columnheader', {
+      name: 'Points',
+    });
+    expect(points.querySelector('.round-long')?.textContent).toBe('Points');
+    expect(points.querySelector('.round-short')?.getAttribute('aria-hidden')).toBe('true');
+    expect(points.querySelector('.round-short')?.textContent).toBe('Pts');
+    const place = within(screen.getByTestId('placings')).getByRole('columnheader', {
+      name: 'Place',
+    });
+    expect(place.querySelector('.round-short')?.textContent).toBe('#');
     expect(screen.getByTestId('team-result').textContent).toContain(
-      'Autumn: 1 point — the winner’s team',
+      'Autumn: 1 team point — the winner’s team',
     );
     expect(screen.getByTestId('proof').textContent).toContain('cd'.repeat(32));
     expect(screen.getByRole('link', { name: 'Verify this round' }).getAttribute('href')).toBe(
@@ -65,14 +81,16 @@ describe('the result without a margin', () => {
     const state = { ...ended, margin: null, game: view };
     render(<ResultScreen state={state} game={game} viewerKey="a" standings={[]} />);
     expect(screen.queryByTestId('margin')).toBeNull();
-    expect(screen.getByTestId('closest-miss').textContent).toBe('Anna missed by just 1 (93).');
+    expect(screen.getByTestId('closest-miss').textContent).toBe(
+      'Closest miss besides the winner: Anna, missed by just 1 (93).',
+    );
     cleanup();
     const far = { ...view, closestMiss: { playerId: 'a', value: 60, distance: 32 } };
     render(
       <ResultScreen state={{ ...state, game: far }} game={game} viewerKey="a" standings={[]} />,
     );
     expect(screen.getByTestId('closest-miss').textContent).toBe(
-      'Closest miss: Anna, 32 away (60).',
+      'Closest miss besides the winner: Anna, 32 away (60).',
     );
     cleanup();
     // With a margin, the margin stays and the closest miss is not shown (O13).

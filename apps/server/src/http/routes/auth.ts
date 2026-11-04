@@ -3,7 +3,8 @@
  * @module server/http
  * @brief  Session and local-account routes under /api/v1 (taken over from Bingo).
  *
- * Responsibility: GET /session (account summary, permissions, CSRF token, feature flags),
+ * Responsibility: GET /session (account summary with whether it has a password, T201;
+ *                 permissions, CSRF token, feature flags),
  *                 POST /auth/register, /auth/login, /auth/logout, /auth/guest, and DELETE /me
  *                 (the account, after its password is checked, or for an account made by the
  *                 website's handoff, which has none, after its display name is typed). Login answers
@@ -104,7 +105,10 @@ function sessionSummary(request: FastifyRequest, features: Features) {
   return {
     signedIn: s !== null && s.accountId !== null,
     kind: s?.kind ?? null,
-    account: s?.accountId ? { id: s.accountId, displayName: s.displayName } : null,
+    // `hasPassword`: whether the account page offers "Change password" (T201).
+    account: s?.accountId
+      ? { id: s.accountId, displayName: s.displayName, hasPassword: s.hasPassword }
+      : null,
     permissions: s?.permissions ?? [],
     csrfToken: s?.csrfToken ?? null,
     features,

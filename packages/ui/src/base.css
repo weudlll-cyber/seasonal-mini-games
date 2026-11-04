@@ -223,6 +223,24 @@ a {
   font-weight: var(--font-weight-strong);
 }
 
+/* A player's name in a game's own lists (a result's history): one line, at most half of it,
+   cut with an ellipsis at its end; the full name is the element's title (T202). */
+.smg-one-line {
+  display: inline-block;
+  max-width: 50%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+/* Spring Herald's hint in a game's short lines: the round's season colour (`--season`, set by
+   the round screen) as tint and border, the text in the normal ink (O56). */
+.smg-hint {
+  border-color: var(--season, var(--color-accent));
+  background: color-mix(in srgb, var(--season, var(--color-accent)) 22%, var(--color-card));
+}
+
 .smg-badge-live {
   padding: 0.15rem 0.55rem;
   border-radius: var(--radius-pill);

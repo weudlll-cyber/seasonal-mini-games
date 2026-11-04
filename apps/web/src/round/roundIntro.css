@@ -3,7 +3,7 @@
  * @module web/round
  * @brief  The round intro screen during the countdown: one card in the season's colours.
  *
- * Responsibility: the intro fills the round's space under the app bar and never scrolls the
+ * Responsibility: the intro fills the round's space under the round bar and never scrolls the
  *                 page: a card framed and tinted in the season colour, everything centred, the
  *                 season name in the largest type, the special's name and sentence, the
  *                 facts, and the seconds left; sizes follow the viewport's smaller side, so it
@@ -11,14 +11,10 @@
  *                 so light and dark both work.
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6
  */
-/* Over the round view's grid (./round.css, loaded later): one card, the whole space. */
-.round-live.round-live--intro {
-  display: flex;
-}
-
+/* Under the round bar: one card, the rest of the round view (./round.css). */
 .round-intro {
-  position: relative;
-  flex: 1;
+  grid-column: 1 / -1;
+  grid-row: 2 / -1;
   min-height: 0;
   overflow: hidden;
   display: flex;
@@ -31,14 +27,6 @@
   border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--season) 16%, var(--color-surface));
   text-align: center;
-}
-
-/* The host menu stays where the top bar had it: the top right corner. */
-.round-intro-host {
-  position: absolute;
-  top: var(--space-2);
-  right: var(--space-2);
-  text-align: left;
 }
 
 .round-intro-head {

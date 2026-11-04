@@ -17,6 +17,8 @@ seasonal-mini-games/
 ├─ packages/
 │  ├─ game-sdk/src/        contract.ts (GameModule and its types), random.ts, settings.ts, range.ts,
 │  │                       crypto.ts (entry @smg/game-sdk/crypto: drbg.ts, commitment.ts), conformance/
+│  ├─ guess-engine/src/    the shared guess engine (04 §4.7): secrets, state, rules, comments, tiers,
+│  │                       views, candidates, closestMiss, settings, module (guessModule)
 │  ├─ domain/src/          match/, round/ (lifecycle, roster, cooldown, order, placings), specials/
 │  │                       (scheduling, Heatwave, Frost), teams/, seasons/, standings/
 │  ├─ application/src/     round/ (engine.ts: the round actor, batcher.ts, queue.ts), match/, seasons/,
@@ -25,10 +27,13 @@ seasonal-mini-games/
 │  └─ ui/                  shared React components, design tokens (as Bingo)
 ├─ games/
 │  ├─ registry/            src/index.ts (modules), web/index.ts (screens): the installed games (04 §3)
-│  └─ guess-the-number/
-│     ├─ src/              module.ts, feedback.ts, hints.ts, leafFall.ts, halving.ts, views.ts, events.ts,
-│     │                    settings/ (schema.ts, defaults.ts), *.test.ts
-│     └─ web/              GameScreen.tsx, RangeBar.tsx, CooldownRing.tsx, GuessList.tsx, strings.ts
+│  ├─ guess-the-number/
+│  │  ├─ src/              module.ts, feedback.ts, hints.ts, leafFall.ts, halving.ts, views.ts, events.ts,
+│  │  │                    settings/ (schema.ts, defaults.ts), *.test.ts
+│  │  └─ web/              GameScreen.tsx, RangeBar.tsx, CooldownRing.tsx, GuessList.tsx, strings.ts
+│  ├─ safecracker/         02b; src/ and web/ as above, on the guess engine
+│  ├─ bomb-defusal/        02c; likewise
+│  └─ seasonal-target/     02d; likewise
 ├─ apps/
 │  ├─ server/src/          main.ts, cli.ts, config/, http/, auth/, realtime/ (gateway, intents, inOrder),
 │  │                       round/ (actor host, pgRoundStore, pgScheduler), seasons/ (feed client), db/, dev/

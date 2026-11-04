@@ -7,7 +7,7 @@
  * Responsibility: the cooldown ring counts down and says Ready; the guess list merges the
  *                 game's guess rows and the event rows, newest at the top, each guess with the
  *                 player's colour dot, "You" and a highlight on the viewer's own, the answer in
- *                 colour and the comment under it, "answer arriving" while Frost holds an own
+ *                 colour and the comment on its line, "answer arriving" while Frost holds an own
  *                 answer (O20, O21); a player's colour is their team's when teams play, else a
  *                 season colour by roster order; the team tiles show each team's match points,
  *                 only when teams play; a player name stays whole, shortened, and opens on a
@@ -41,7 +41,7 @@ describe('the cooldown ring', () => {
     expect(screen.getByTestId('cooldown').textContent).toBe('3 s');
     cleanup();
     render(<CooldownRing endsAt={10_000} cooldownMs={5_000} now={10_000} />);
-    expect(screen.getByTestId('cooldown').getAttribute('aria-label')).toBe('Ready to guess');
+    expect(screen.getByTestId('cooldown').getAttribute('aria-label')).toBe('Ready');
   });
 });
 
@@ -70,16 +70,18 @@ const gameWith = (rows: readonly object[]) =>
     },
   }) as never;
 const game = gameWith(guesses);
+// A desktop's list for the viewer Anna.
+const LOG = { viewerKey: 'a', phone: false } as const;
 const live = { ...ended, status: 'open', frostDelayMs: 3_000, game: {} } as const;
 
 describe('the guess list', () => {
-  it('merges guesses and events newest first, with "You", answers, comments and Frost', () => {
+  it('merges guesses and events newest first in the All list, with answers, comments, Frost', () => {
     const feed = [
-      { key: '9', at: 6_000, event: { type: 'Game', event: {} } },
-      { key: '1', at: 1_000, event: { type: 'RoundOpened' } },
+      { key: '9', s: 9, at: 6_000, event: { type: 'Game', event: {} } },
+      { key: '1', s: 1, at: 1_000, event: { type: 'RoundOpened' } },
     ];
-    render(<RoundLog feed={feed} game={game} state={live} viewerKey="a" now={9_000} />);
-    const rows = [...screen.getByTestId('guess-list').querySelectorAll('li')];
+    render(<RoundLog {...LOG} feed={feed} game={game} state={live} now={9_000} kind="all" />);
+    const rows = [...screen.getByTestId('all-list').querySelectorAll('li')];
     expect(rows.map((li) => li.textContent)).toEqual([
       'You45answer arriving… 2 s',
       'Leaf Fall: 12 fell.',
@@ -108,7 +110,7 @@ describe('the guess list', () => {
   });
 
   it('says so when nothing has happened yet', () => {
-    render(<RoundLog feed={[]} game={gameWith([])} state={live} viewerKey="a" now={0} />);
+    render(<RoundLog {...LOG} feed={[]} game={gameWith([])} state={live} now={0} kind="main" />);
     expect(screen.getByText('No guesses yet.')).toBeTruthy();
   });
 });
@@ -154,6 +156,7 @@ describe('a solved player in individual mode (O25)', () => {
     const view = {
       range: { low: 1, high: 100 },
       removed: [],
+      newest: [],
       guesses: [
         {
           receiveSeq: 1,
@@ -181,7 +184,7 @@ describe('a solved player in individual mode (O25)', () => {
         live={roundLive}
         gameId="guess-the-number"
         viewerKey="a"
-        hostMenu={null}
+        host={null}
         teamPoints={[]}
         standings={[]}
         chat={null}
@@ -191,8 +194,10 @@ describe('a solved player in individual mode (O25)', () => {
       'You found your number — place 2. Your guesses stay here while the others play on.',
     );
     expect(screen.queryByTestId('guess-input')).toBeNull();
+    // Every row is the viewer's in individual mode: no "You", no own colour (T150).
     const own = screen.getByTestId('guess-list').querySelector('li[data-own="true"]');
-    expect(own?.textContent).toBe('You92correct ✓Bullseye!');
+    expect(own?.textContent).toBe('92correct ✓Bullseye!');
+    expect(own?.getAttribute('data-solo')).toBe('true');
   });
 });
 
@@ -204,9 +209,18 @@ describe('the words', () => {
     expect(endHeadline({ ...ended, endReason: 'timeUp' })).toBe('Time is up.');
     expect(marginText({ ...ended, margin: null })).toBeNull();
     expect(marginText({ ...ended, secretMode: 'individual' })).toBeNull();
-    expect(platformLine({ type: 'CooldownChanged', cooldownMs: 7_000 }, {})?.text).toBe(
-      'Heatwave: waiting time is now 7 s.',
+    // Heatwave is one row per round, at its first step (O47).
+    const heat = (index: number) => ({
+      type: 'SpecialFired',
+      special: 'heatwave',
+      index,
+      summary: { cooldownMs: 7_000 },
+    });
+    expect(platformLine(heat(1), {})?.text).toBe(
+      'Heatwave: waiting time is now 7 s and keeps getting shorter.',
     );
+    expect(platformLine(heat(2), {})).toBeNull();
+    expect(platformLine({ type: 'CooldownChanged', cooldownMs: 7_000 }, {})).toBeNull();
     expect(platformLine({ type: 'PlayerSolved', playerId: 'a', place: 2 }, ended.names)).toEqual({
       text: 'Anna found their number — place 2.',
       playerId: 'a',

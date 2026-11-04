@@ -1,32 +1,34 @@
 /**
  * @file   apps/web/src/round/round.css
  * @module web/round
- * @brief  Layout of the round view: top bar, main area with the guess list, team tiles, input.
+ * @brief  Layout of the round view in focus mode, desktop and phone (T141); the season pill.
  *
- * Responsibility: the round view fills the space under the app's top bar exactly and never
- *                 scrolls the page (only the lists scroll, inside themselves): on a desktop a
- *                 one-line top bar (the season chip naming the special, the special's info
- *                 button), the guess list with the special's banner above it taking the whole
- *                 left column above the input row, and a 380 px right column with the game's
- *                 range block at its top, the team tiles under it and the match chat in the
- *                 rest (./roundChat.css, T101), so the list shows as many rows as the screen
- *                 allows (O35, DECISIONS T110); on a phone the top bar (the chip names the
- *                 season, the special behind its info button, the time without "left"), the range block, the list taking the
- *                 remaining height, the team tiles and the "Chat" button in one row (its panel
- *                 lies over the round above the input row), and the input row pinned at the
- *                 bottom (O20). The list's rows are in ./roundLog.css, the banner and the info
- *                 note in ./roundSpecials.css, the intro screen in ./roundIntro.css, the
- *                 cooldown ring in ./cooldownRing.css. The platform's refusal line; a solved
- *                 player's notice in
- *                 place of the input row (O25). Colours only from @smg/ui tokens, so light and
- *                 dark both work (Bingo 01 §13). The result is ./result.css, the match head and
- *                 the host menu ../match/match.css.
+ * Responsibility: the round view fills the screen the hidden app header leaves (O46) exactly
+ *                 and never scrolls the page (only the lists scroll, inside themselves), in one
+ *                 of two layouts set on the container (`data-view`, ./useRoundView). A desktop:
+ *                 the slim bar (./focus.css) over the stage on the left (a list game's guesses
+ *                 with the action dock at its bottom, a board game's board, square, the column
+ *                 beside it taking the rest) and the 340 px info
+ *                 column on the right (the special line, the game's compact panel, then "Your
+ *                 guesses" or a board game's list with the dock); an open panel on demand is a
+ *                 third column that pushes the game aside (O48). A phone: the bar, the info line
+ *                 (at most 48 px, the game's panel behind it as a sheet), a board game's board
+ *                 as wide as the screen, the round's guesses filling the height that is left,
+ *                 at least four rows under a board, and the dock at the bottom, which no sheet
+ *                 covers. The season pill in its token colour (./SeasonPill); a solved player's
+ *                 notice in the dock (O25); the platform's refusal line. The Players panel is
+ *                 ./players.css, the list's rows ./roundLog.css, the banner ./roundSpecials.css,
+ *                 the intro ./roundIntro.css, the cooldown ring ./cooldownRing.css. Colours only
+ *                 from @smg/ui tokens, so light and dark both work (Bingo 01 §13). The result is
+ *                 ./result.css, the match head and the host menu ../match/match.css.
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6;
  *                 docs/spec/07-integration.md §2
  */
 
-/* The match page while a round runs: as tall as the space left under the app bar. */
+/* The match page while a round runs: the whole screen under the hidden app header. */
 .match-live {
+  /* A size container: a board game's columns follow its height (below). */
+  container-type: size;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -34,129 +36,199 @@
 }
 
 .round-live {
+  position: relative;
   flex: 1;
   min-height: 0;
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-1);
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
-  grid-template-areas: 'top' 'range' 'main' 'side' 'input';
 }
 
-/* A desktop: the guess list takes the whole left column above the input row; the range block
-   sits at the top of the right column, over the team tiles and the chat (O35). */
-@media (min-width: 900px) {
-  .round-live {
-    grid-template-columns: minmax(0, 1fr) 380px;
-    grid-template-rows: auto auto minmax(0, 1fr) auto;
-    grid-template-areas:
-      'top top'
-      'main range'
-      'main side'
-      'input side';
-  }
+/* A desktop: the stage on the left, the info column of 340 px on the right; a panel on demand
+   is a third column, so it pushes the game aside instead of covering it (O48). */
+.round-live[data-view='desktop'] {
+  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    'bar bar'
+    'stage info';
 }
 
-.round-range {
-  grid-area: range;
+.round-live[data-view='desktop'][data-panel] {
+  grid-template-columns: minmax(0, 1fr) 340px 360px;
+  grid-template-areas:
+    'bar bar bar'
+    'stage info panel';
+}
+
+/* A board game on a desktop: the stage is as wide as it is tall, so the square board keeps its
+   full height and size, and the info column takes all the room beside it (at least 340 px),
+   so the list's rows have room for their comments (O62's review: messages readable). The bar
+   row is its fixed 44 px, which the stage's height is reckoned from. */
+.round-live[data-view='desktop'][data-layout='board'] {
+  --board-side: min(calc(100cqh - 44px - var(--space-1)), calc(100cqw - 340px - var(--space-1)));
+  grid-template-columns: var(--board-side) minmax(340px, 1fr);
+  grid-template-rows: 44px minmax(0, 1fr);
+}
+
+.round-live[data-view='desktop'][data-layout='board'][data-panel] {
+  --board-side: min(
+    calc(100cqh - 44px - var(--space-1)),
+    calc(100cqw - 700px - 2 * var(--space-1))
+  );
+  grid-template-columns: var(--board-side) minmax(340px, 1fr) 360px;
+}
+
+/* A phone: bar, info line, the round's guesses filling the height, the dock at the bottom. A
+   sheet lies over every row between the bar and the dock (./focus.css), so this box is its
+   grid. */
+.round-live[data-view='phone'] {
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  grid-template-areas: 'bar' 'line' 'main' 'dock';
+}
+
+/* A board game on a phone: the board under the info line, as wide as the screen; the list
+   under it keeps at least four rows. */
+.round-live[data-view='phone'][data-layout='board'] {
+  grid-template-rows: auto auto auto minmax(7rem, 1fr) auto;
+  grid-template-areas: 'bar' 'line' 'stage' 'main' 'dock';
+}
+
+.round-live[data-view='phone'][data-layout='board'] .round-stage {
+  aspect-ratio: 1 / 1;
+}
+
+.round-live[data-view='phone'] > .round-input {
+  grid-area: dock;
+}
+
+/* The stage: a board game draws its board into it (the input's `stage`, T123); a list game's
+   holds the round's guesses with the dock at its bottom, both from the same left edge. */
+.round-stage {
+  grid-area: stage;
   min-width: 0;
-  padding: var(--space-2);
-}
-
-/* The top bar: one line, the season chip first, the host menu last. */
-.round-top {
-  grid-area: top;
+  min-height: 0;
   display: flex;
-  align-items: center;
-  gap: var(--space-1) var(--space-2);
+  flex-direction: column;
+}
+
+.round-stage:not(.round-stage--list) > * {
+  flex: 1;
+  min-height: 0;
+}
+
+.round-stage--list {
+  gap: var(--space-2);
+  padding: 0.6rem 0.75rem;
+}
+
+.round-stage--list > .round-log {
+  flex: 1;
+}
+
+/* The info column: the special line and the game's panel keep their height (the panel at
+   most 45 % of it, scrolling inside), the list under them takes the rest. */
+.round-column {
+  grid-area: info;
   min-width: 0;
-  white-space: nowrap;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
-.round-season {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-  min-height: var(--hit-target);
-  padding: 0 0.9rem 0 0.35rem;
-  border-radius: var(--radius-pill);
-  background: var(--season);
-  color: var(--color-on-season);
-  overflow: hidden;
-}
-
-/* The chip's words give way with an ellipsis rather than push the bar off the screen. */
-.round-season-text {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* "Autumn · Leaf Fall": the special's name in the chip (O35). */
-.round-special::before {
-  content: '· ';
-}
-
-.round-season-icon {
+.round-panel {
   flex: none;
-  display: grid;
-  place-items: center;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  background: var(--color-surface);
+  min-width: 0;
+  max-height: 45%;
+  overflow-y: auto;
+  padding: 0.6rem 0.75rem;
 }
 
-.round-badge {
-  padding: 0 0.6rem;
-  border-radius: var(--radius-pill);
-  border: 2px solid var(--color-on-season);
+.round-main,
+.round-own {
+  grid-area: main;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* Tighter than a panel's padding: the list gets the room (O35). */
+  padding: 0.5rem 0.75rem;
+}
+
+/* The special line: the special's whole sentence in the season's frame, wrapping (a
+   sentence takes at most 3 lines in the 340 px column), never cut (T150). */
+.round-special-line {
+  flex: none;
+  margin: 0;
+  padding: 0.35rem 0.75rem;
+  border: 2px solid var(--season);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: var(--font-size-small);
+  line-height: 1.3;
+}
+
+/* The same sentence at the top of the phone's game sheet. */
+.round-sheet-special {
+  margin: 0;
+  padding: 0.35rem 0.75rem;
+  border-left: 4px solid var(--season);
   font-size: var(--font-size-small);
 }
 
-.round-fact {
-  flex: none;
-  font-weight: var(--font-weight-strong);
-}
-
-.round-top .host-menu {
-  margin-left: auto;
-}
-
-.round-main {
-  grid-area: main;
-  display: grid;
-  /* The special's banner (empty when nothing fires) and the guess list. */
-  grid-template-rows: auto minmax(0, 1fr);
+/* The phone's info line: the game's line, at most 48 px; the game's parts sit side by side
+   and are never cut: one that has no room left goes whole to a second row (T150). The games
+   keep their parts short, the details are in the sheet (games/registry/web). */
+.round-line {
+  grid-area: line;
+  display: flex;
+  align-items: center;
   gap: var(--space-1);
-  min-height: 0;
+  min-height: var(--hit-target);
+  max-height: 48px;
+  padding: 0.2rem 0.75rem;
+  color: var(--color-text);
+  font: inherit;
+  font-size: var(--font-size-small);
+  text-align: start;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.round-line-body {
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
-  /* Tighter than a panel's padding: the guess list gets the room (O35). */
-  padding: var(--space-2);
 }
 
-/* The empty banner takes no row gap either. */
-.round-special-banner:empty {
-  display: none;
+.round-line-body > * {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.1rem 0.5rem;
+  min-width: 0;
 }
 
-.round-side {
-  grid-area: side;
+.round-line-body > * > * {
+  flex: none;
+  white-space: nowrap;
+}
+
+.round-line-more {
+  flex: none;
+  font-size: 1.4rem;
+  line-height: 1;
+}
+
+/* The action dock: the game's input with the ring, at the start of the list above it. */
+.round-input {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  min-height: 0;
-}
-
-/* No teams: the column holds nothing, and on a phone it takes no row. */
-.round-side:empty {
-  display: none;
-}
-
-.round-input {
-  grid-area: input;
-  display: grid;
   gap: var(--space-1);
 }
 
@@ -170,99 +242,11 @@
   font-weight: var(--font-weight-strong);
 }
 
-/* The team tiles: four in one row. */
-.round-teams {
-  flex: none;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-1);
-}
-
-.round-team {
-  display: grid;
-  justify-items: center;
-  gap: 0.15rem;
-  padding: 0.4rem 0.25rem;
-  border-radius: var(--radius);
-  border: 2px solid var(--season);
-  background: var(--color-card);
-  font-size: var(--font-size-small);
-}
-
-.round-team-points {
-  font-size: var(--font-size-lead);
-}
-
-/* A phone: the facts that do not fit go (their words stay for screen readers) and the team
-   tiles shrink to icon and points; the main area with the list takes the height that is left. */
+/* A phone: the panels tighter. */
 @media (max-width: 899px) {
-  .round-mode {
-    display: none;
-  }
-
-  /* The chip names the season; the special's name goes to screen readers, and the info
-     button beside the chip says what it is and does. The bar's parts sit closer, so the
-     chip fits beside the time and the Host button. */
-  .round-top {
-    column-gap: 0.3rem;
-  }
-
-  .round-season {
-    gap: 0.35rem;
-    padding: 0 0.5rem 0 0.25rem;
-    font-size: var(--font-size-small);
-  }
-
-  .round-season-icon {
-    width: 1.75rem;
-    height: 1.75rem;
-  }
-
-  .round-special,
-  .round-fact-label,
-  .round-team-name {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-
-  .round-team {
-    grid-auto-flow: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    padding: 0.25rem;
-  }
-
   .round-main,
-  .round-range {
+  .round-panel {
     padding: var(--space-1) var(--space-2);
-  }
-
-  /* The team tiles and the Chat button share one row; the list gets the height (O35). */
-  .round-side {
-    flex-direction: row;
-    align-items: stretch;
-  }
-
-  .round-side .round-teams {
-    flex: 1;
-  }
-
-  .round-side .round-chat {
-    flex: none;
-  }
-
-  .round-side .round-chat-toggle {
-    height: 100%;
-    padding-inline: var(--space-2);
-  }
-
-  .round-info-button {
-    width: 2rem;
   }
 }
 

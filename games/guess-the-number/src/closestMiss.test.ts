@@ -5,7 +5,8 @@
  *
  * Responsibility: the smallest distance over the wrong guesses of everyone but the winner,
  *                 the winner's own misses left out; a tie goes to the earlier guess; none
- *                 without a winner or without another player's wrong guess; a guess outside a
+ *                 without another player's wrong guess, the round's closest guess without a
+ *                 winner (T145); a guess outside a
  *                 hidden range counts by its plain distance; the result view carries it in
  *                 shared mode only and validates.
  * Depends on:     vitest, ./closestMiss, ./fakes, ./module
@@ -39,10 +40,11 @@ describe('the closest miss', () => {
     expect(closestMiss(t.state, 92)).toEqual({ playerId: 'b', value: 94, distance: 2 });
   });
 
-  it('is none without a winner, or when nobody else guessed wrong', () => {
+  it('is the closest guess without a winner (T145), none when nobody else guessed wrong', () => {
     const open = shared(92);
     open.play('b', 91);
-    expect(closestMiss(open.state, 92)).toBeNull();
+    open.play('c', 50);
+    expect(closestMiss(open.state, 92)).toEqual({ playerId: 'b', value: 91, distance: 1 });
     const alone = shared(92);
     alone.play('a', 50);
     alone.play('a', 92);

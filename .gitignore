@@ -18,6 +18,13 @@ night-task.md
 tmp/
 # Screenshots of the latest browser-test run (e2e/screens.ts and the specs write them)
 reports/screens/latest/
+# Screenshots never enter a working branch: a run's images go to an orphan branch
+# shots/<night> (DECISIONS T146); text reports under reports/ stay tracked.
+reports/**/*.png
+reports/**/*.jpg
+reports/**/*.jpeg
+reports/**/*.webp
+reports/**/*.gif
 # Editor and OS noise
 .DS_Store
 Thumbs.db

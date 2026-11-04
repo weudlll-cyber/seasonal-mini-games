@@ -1,24 +1,170 @@
 /**
  * @file   apps/web/src/round/result.css
  * @module web/round
- * @brief  The result page: headline, placings table, player names, the proof's hex values.
+ * @brief  The result page: its first screen, the part below, the placings table, names, hex.
  *
- * Responsibility: placings (and the match summary's standings) as a table with fixed number
- *                 columns that fits a 390 px phone without scrolling, words wrapping whole and
- *                 tighter cells below 480 px; a player's name on one line, shrinking with an
- *                 ellipsis until focus or a tap shows it whole (./PlayerName); the
- *                 viewer's own line highlighted; the team result list. Colours only from
- *                 @smg/ui tokens.
+ * Responsibility: the result's first part is exactly the screen under the slim bar (T145,
+ *                 `--result-top`, ../match/match.css) on a desktop and a phone: the headline
+ *                 (at most two lines) with the margin or closest miss and the proof's
+ *                 disclosure, the game's reveal taking the free height (a board game's grid as
+ *                 large as it allows), and the top three placings with the team line, on a
+ *                 desktop to the right of the reveal, on a phone under it; with "All
+ *                 placings" open the part grows and the page scrolls. The parts below follow
+ *                 on the page at their own height: every player's guesses in full (T150), the
+ *                 team result and the match standings. The placings (and the match summary's standings) as a table with fixed
+ *                 number columns that fits a 390 px phone without scrolling; a player's name on
+ *                 one line, shrinking with an ellipsis at its end until focus or a tap shows it
+ *                 whole (./PlayerName, ./playerName.css), "(you)" never cut; the viewer's own line highlighted;
+ *                 the team result list. Colours only from @smg/ui tokens.
  * Spec:           docs/spec/02-game-guess-the-number.md §9, §12
  */
 .round-result {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--space-2);
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
+/* The first part: one screen under the bar (the page's top offset is ../match/match.css's). */
+.round-result-first {
+  display: grid;
+  gap: var(--space-2);
+  height: calc(100dvh - var(--result-top, 4.5rem));
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'head' 'game' 'places';
+  padding: var(--space-2) var(--space-3);
+}
+
+/* A list game's first part is as tall as its content (its reveal is a line or two), so no
+   empty card and no gap before the placings (night-7 review). A board game's grid keeps the
+   part's full height. */
+.round-result:not([data-layout='board']) .round-result-first {
+  height: auto;
+  grid-template-rows: auto auto auto;
+}
+
+/* Every placing shown: the part grows and the page scrolls. */
+.round-result-first:has([data-testid='all-placings'][aria-expanded='true']) {
+  height: auto;
+  min-height: calc(100dvh - var(--result-top, 4.5rem));
+}
+
+.round-result-head {
+  grid-area: head;
+  display: grid;
+  gap: 0.25rem;
+}
+
+.round-result-head p {
+  margin: 0;
+}
+
+/* The headline at about half the page title's size, at most two lines (balanced). */
 .round-result h1 {
   margin: 0;
-  font-size: var(--font-size-title);
+  font-size: clamp(1.25rem, 1rem + 0.6vw, 1.5rem);
+  text-wrap: balance;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.round-result-game {
+  grid-area: game;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.round-result-game > * {
+  flex: 1;
+  min-height: 0;
+}
+
+.round-result-places {
+  grid-area: places;
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: var(--space-1);
+}
+
+.round-placings {
+  display: grid;
+  gap: var(--space-1);
+  justify-items: start;
+}
+
+.round-placings .round-table-wrap {
+  width: 100%;
+}
+
+.round-team-line {
+  margin: 0;
+  font-weight: var(--font-weight-strong);
+}
+
+/* Below the first part: every player's guesses in full, then the team result and the match
+   standings, each at its own height (no box that cuts a line, T150). */
+.round-result-history,
+.round-result-more {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+  padding: var(--space-2) var(--space-3);
+}
+
+.round-result-more h2 {
+  margin: 0;
+  font-size: var(--font-size-lead);
+}
+
+/* A desktop: the visual on the left at the part's full height, the top three and the team
+   line in a column on its right; the proof's disclosure beside the headline. */
+@media (min-width: 900px) {
+  .round-result:not([data-layout='board']) .round-result-first {
+    grid-template-rows: auto auto;
+  }
+
+  .round-result-first {
+    grid-template-columns: minmax(0, 1fr) minmax(20rem, 28rem);
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-areas:
+      'head head'
+      'game places';
+  }
+
+  .round-result-head {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .round-result-head > :not(.round-proof) {
+    grid-column: 1;
+  }
+
+  .round-result-head > .round-proof {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    max-width: 24rem;
+  }
+
+  /* "took part" on one line; "Guesses" and "Points" apart. */
+  .round-result .round-col-place {
+    width: 6.5rem;
+  }
+
+  .round-result .round-col-num {
+    width: 5.25rem;
+  }
+
+  .round-result .round-table td:first-child {
+    white-space: nowrap;
+  }
 }
 
 /* A table never widens the page; with the fixed columns below it fits a 390 px phone. */
@@ -45,7 +191,7 @@
   width: 5rem;
 }
 
-/* The player cell: icon, name and "(you)" on one line; only the name shrinks. */
+/* The player cell: icon, name and "(you)" on one line; only the name shrinks, "(you)" never. */
 .round-player {
   display: flex;
   align-items: center;
@@ -59,65 +205,78 @@
   max-width: none;
 }
 
-/* Asked for in full (focus or a tap), the name wraps inside its cell instead. */
-.round-player .player-name:focus-visible,
-.round-player .player-name[data-full='true'] {
-  white-space: normal;
-  overflow-wrap: anywhere;
+.round-you-mark {
+  flex: none;
 }
 
-.round-result {
-  min-width: 0;
-  overflow-wrap: anywhere;
+/* The team icon's slot: one width on every row, so the names start in one column. */
+.round-team-slot {
+  flex: none;
+  display: inline-flex;
+  width: 1rem;
 }
 
+/* Close cells: the player column keeps the room for an icon, a name and "(you)" whole
+   (night-8 review: "dev-h… (you)" at 1280 × 720, T150). */
 .round-table th,
 .round-table td {
   text-align: left;
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-1);
   border-bottom: 1px solid var(--color-border);
 }
 
-/* A phone fits all four columns with the small text size, tighter cells and narrower number
-   columns, so the player column keeps room for a name ("took part" wraps whole). */
+/* A shared round's place is a number or "–" (took part, its words for a screen reader):
+   a narrow column, so the name has the room (T211). */
+.round-table[data-mode='shared'] .round-col-place {
+  width: 3rem;
+}
+
+/* A word a phone shows short ("Pts" for "Points"); the long one stays for a screen reader. */
+.round-short {
+  display: none;
+}
+
+/* A phone fits all four columns on one line a row with the small text size: "Guesses" and
+   "Pts" with room between them, the name the rest (T211). */
 @media (max-width: 480px) {
   .round-table {
     font-size: var(--font-size-small);
   }
 
-  .round-table th,
-  .round-table td {
-    padding: var(--space-1);
+  .round-col-place {
+    width: 3.25rem;
   }
 
-  .round-col-place {
-    width: 3.5rem;
+  .round-table[data-mode='shared'] .round-col-place {
+    width: 2rem;
   }
 
   .round-col-num {
     width: 4.25rem;
   }
 
-  /* The last column ("Points", "Wins") needs less than "Guesses". */
+  /* The last column ("Pts", "Wins") needs less than "Guesses". */
   .round-col-num:last-child {
-    width: 3.5rem;
+    width: 3.25rem;
   }
-}
 
-/* A name never breaks inside a word; too long, it ends in an ellipsis until focus or a tap
-   shows it whole (./PlayerName). */
-.player-name {
-  display: inline-block;
-  max-width: 9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  vertical-align: bottom;
-}
+  .round-long {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 
-.player-name:focus-visible,
-.player-name[data-full='true'] {
-  max-width: none;
+  .round-short {
+    display: inline;
+  }
+
+  /* The icon, the name and "(you)" closer: "dev-host (you)" whole at 390 px (night 8). */
+  .round-player {
+    gap: 0.25rem;
+  }
 }
 
 .round-you {

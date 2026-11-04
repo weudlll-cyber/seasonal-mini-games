@@ -9,9 +9,11 @@
  *                 "Sign in" and "Register". Below the bar, the screen of the current route.
  *                 In development also the "Dev sign-in" menu (./DevTools), loaded on demand so
  *                 a production build (Vite's DEV false) leaves it out; `dev` decides whether
- *                 it shows. While a round runs on a phone the bar is one compact row and the
- *                 account and development controls sit behind one "Menu" button (./shell.css).
- *                 The navigation has Play and Leaderboard; the compact bar keeps Play only.
+ *                 it shows. On a one-screen view on a phone (a match's summary) the bar is one
+ *                 compact row and the account and development controls sit behind one "Menu"
+ *                 button (./shell.css); a running round hides the bar altogether, its focus
+ *                 mode has a bar of its own (O46). The navigation has Play and Leaderboard;
+ *                 the compact bar keeps Play only.
  *                 Bingo's shell, without its game screens.
  * Depends on:     react, ./router, ./session, ./ThemeToggle, ./DevTools (lazy, development
  *                 only), @smg/ui (useDisclosure), ../lobby/Lobby, ../account/*,
@@ -24,6 +26,7 @@ import { useDisclosure } from '@smg/ui';
 
 import emblem from '../../../../assets/brand/emblem.webp';
 import { AccountPage } from '../account/AccountPage.js';
+import { AccountDeleted } from '../account/DeleteAccount.js';
 import { Register } from '../account/Register.js';
 import { SignIn } from '../account/SignIn.js';
 import { LeaderboardPage } from '../boards/LeaderboardPage.js';
@@ -189,14 +192,36 @@ function Screen({
       ) : (
         <Lobby key={who} dev={dev} />
       );
+    default:
+      return isAccountRoute(route) ? (
+        <AccountScreen who={who} route={route} />
+      ) : (
+        <BoardScreen key={who} route={route} />
+      );
+  }
+}
+
+type AccountRoute = Extract<Route, { name: 'signIn' | 'register' | 'account' | 'accountDeleted' }>;
+const ACCOUNT_ROUTES: readonly string[] = ['signIn', 'register', 'account', 'accountDeleted'];
+const isAccountRoute = (r: ShellRoute): r is AccountRoute => ACCOUNT_ROUTES.includes(r.name);
+
+// The account's screens: sign in, register, the own account and the notice after its deletion.
+function AccountScreen({
+  who,
+  route,
+}: {
+  readonly who: string;
+  readonly route: AccountRoute;
+}): ReactElement {
+  switch (route.name) {
     case 'signIn':
       return <SignIn />;
     case 'register':
       return <Register />;
     case 'account':
       return <AccountPage key={who} />;
-    default:
-      return <BoardScreen key={who} route={route} />;
+    case 'accountDeleted':
+      return <AccountDeleted />;
   }
 }
 

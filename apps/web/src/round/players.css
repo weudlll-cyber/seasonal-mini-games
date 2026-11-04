@@ -1,0 +1,84 @@
+/**
+ * @file   apps/web/src/round/players.css
+ * @module web/round
+ * @brief  The Players panel of the focus mode: the team tiles and the round's player rows.
+ *
+ * Responsibility: the team tiles, four in one row, each "Team Spring" with its icon and match
+ *                 points in its season's frame (O52); the rows of the round's players with dot,
+ *                 name, team and guesses, the viewer's on the season's tint. Moved out of
+ *                 ./round.css to keep each file under the size limit. Colours only from @smg/ui
+ *                 tokens.
+ * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §5
+ */
+/* The team tiles of the Players panel: four in one row. */
+.round-teams {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+.round-team {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 0.15rem;
+  padding: 0.4rem 0.25rem;
+  border-radius: var(--radius);
+  border: 2px solid var(--season);
+  background: var(--color-card);
+  font-size: var(--font-size-small);
+}
+
+.round-team-points {
+  font-size: var(--font-size-lead);
+}
+
+/* The Players panel's rows: dot, name, team, guesses; the viewer's on the season's tint.
+   The team (icon and name) and the guesses start at the same place on every row; without
+   teams the team column goes (T202, T210). */
+.round-players {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* The list holds the columns and every row takes them (subgrid): the marker, the name taking
+   all the room the team and the guesses (each as wide as its widest entry) leave (T210). */
+.round-player-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) max-content max-content;
+  gap: 0.15rem 0.5rem;
+}
+
+.round-player-list li {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius);
+}
+
+.round-player-list[data-teams='false'] {
+  grid-template-columns: auto minmax(0, 1fr) max-content;
+}
+
+.round-player-list li[data-own='true'] {
+  background: color-mix(in srgb, var(--own, var(--season)) 22%, var(--color-card));
+}
+
+.round-player-team,
+.round-player-guesses {
+  justify-self: start;
+  white-space: nowrap;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+/* The heading row over the team column ("Team"), in the muted small type (T212). */
+.round-player-head {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}

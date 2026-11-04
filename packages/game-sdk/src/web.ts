@@ -11,11 +11,17 @@
  *                 turns its view into the list's guess rows (`GuessRow`, O20) and words its
  *                 event rows (`FeedLine`); the client draws both, in one list. On the result
  *                 page the game words the line about the best of the rest (`runnerUp`, O22).
+ *                 A game whose guesses are not numbers gives them and their answers in words
+ *                 (`text`, `answer`) or as colour dots (`swatches`, T143), and words its own special
+ *                 (`specialRule`, T119). The
+ *                 panels learn the cooldown's seconds left and the players' names and colours,
+ *                 and `buttonText` words every send button during the cooldown (T125).
  * Depends on:     ./module
  * Used by:        ./index, games/<game>/web, games/registry/web, apps/web
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/02-game-guess-the-number.md §12
  */
 import type { Season } from './module.js';
+import type { PlayerMark } from './marks.js';
 
 export interface ActReply {
   readonly ok: boolean;
@@ -38,20 +44,48 @@ export interface PlayerPanelProps {
   // Whether the round's season special is on: a game shows a special's own parts (Guess The
   // Number's fallen numbers in autumn) only then.
   readonly specialOn: boolean;
+  // Whole seconds left of the viewer's cooldown while the round is open, else null: the
+  // send button then reads "Wait 6 s" (`buttonText`), not as broken (T125).
+  readonly waitS: number | null;
+  // The round's players by key: display names and the one colour each has in the list, for
+  // a game that draws players elsewhere too (Seasonal Target's dots, T125).
+  readonly names: Readonly<Record<string, string>>;
+  readonly colors: Readonly<Record<string, string>>;
+  // A game with player tags (O62): every player's tag and marker, as the list shows them, and
+  // the viewer's own key; absent for the other games.
+  readonly marks?: Readonly<Record<string, PlayerMark>> | undefined;
+  readonly viewerKey?: string | null | undefined;
 }
 
 export interface SpectatorPanelProps {
   readonly view: unknown;
   readonly names: Readonly<Record<string, string>>;
+  readonly colors: Readonly<Record<string, string>>;
+  readonly marks?: Readonly<Record<string, PlayerMark>> | undefined;
+  readonly viewerKey?: string | null | undefined;
   readonly season: Season;
   readonly specialOn: boolean;
 }
 
+// The result panel draws one of its two parts (T150): `reveal`, the secret (a board game's
+// grid with it), in the result's first screen; `history`, every player's guesses in full,
+// below it.
 export interface ResultPanelProps {
   readonly view: unknown;
   readonly names: Readonly<Record<string, string>>;
+  readonly colors: Readonly<Record<string, string>>;
   readonly viewerKey: string | null;
+  readonly marks?: Readonly<Record<string, PlayerMark>> | undefined;
+  readonly part: 'reveal' | 'history';
 }
+
+// A player without a guess in a result's history (T150), the same words for every game.
+export const NO_GUESSES = 'did not guess';
+
+// A send button's words: its own while the player may act, "Wait 6 s" during the cooldown
+// (T125), the same for every game.
+export const buttonText = (label: string, waitS: number | null): string =>
+  waitS === null ? label : `Wait ${String(waitS)} s`;
 
 // An event row of the round's list: the line and the player it is about (for the colour
 // dot), or null for the round as a whole. `special`: the row of the season special striking
@@ -60,6 +94,20 @@ export interface FeedLine {
   readonly text: string;
   readonly playerId: string | null;
   readonly special?: boolean;
+}
+
+// The answer of a game that is not about higher or lower (T119): "2 right place, 1 wrong
+// place" with its pegs, "The first 2 cuts were right", "12 away, NE".
+export interface GuessAnswer {
+  readonly text: string;
+  readonly tone: 'correct' | 'close' | 'far' | 'boom';
+  readonly pegs?: readonly ('hit' | 'near' | 'miss')[];
+}
+
+// One colour dot of a guess: its name (read out and shown on hover) and its CSS colour.
+export interface GuessSwatch {
+  readonly name: string;
+  readonly color: string;
 }
 
 // One guess in the round's list, as far as this viewer's view shows it (O20, O21).
@@ -72,17 +120,33 @@ export interface GuessRow {
   // Null where the viewer may not see the number.
   readonly value: number | null;
   readonly feedback: 'higher' | 'lower' | 'correct' | null;
+  // A guess that is not a number, in words ("0427", "red, blue, green", "(12, 34)"); null or
+  // absent where the viewer may not see it (DECISIONS T119).
+  readonly text?: string | null;
+  // A guess drawn as colour dots in order (Bomb Defusal's cut sequence, T143), each with its
+  // name as accessible text and tooltip; the platform draws them in place of `text`.
+  readonly swatches?: readonly GuessSwatch[] | null;
+  // An answer other than higher/lower, used when `feedback` is null: its words, a tone the
+  // platform colours by, and optional pegs drawn before the words (never colour alone).
+  readonly answer?: GuessAnswer | null;
   // The closeness comment, exactly when the answer is shown; its tier for styling.
   readonly comment: string | null;
   readonly tier: string | null;
-  // The viewer's own guess whose answer Frost still holds ("answer arriving in 2 s").
+  // An answer Frost still holds ("answer arriving… 2 s"): the viewer's own, or another
+  // player's where the round shows the others' answers (T150).
   readonly pending: boolean;
 }
 
+// The closest-miss line's start (O22, T145): with a winner the best of the rest, on a time-up
+// result the closest guess of the round.
+export const closestLabel = (won: boolean): string =>
+  won ? 'Closest miss besides the winner' : 'Closest guess';
+
 // Plain English for the game's own rejection codes and room events (02 §12); null when the
 // text is not the game's. `guesses` turns the game's player or spectator view into rows.
-// `runnerUp` words the best of the rest from the result view, shown where the winning margin
-// goes when the round has none (O22), or null.
+// `runnerUp` words the best of the rest from the result view (`won`: the round has a winner;
+// without one, the closest guess, T145), shown where the winning margin goes when the round
+// has none (O22), or null.
 export interface GameText {
   readonly code: (code: string) => string | null;
   readonly event: (event: unknown, names: Readonly<Record<string, string>>) => FeedLine | null;
@@ -90,6 +154,7 @@ export interface GameText {
   readonly runnerUp: (
     resultView: unknown,
     names: Readonly<Record<string, string>>,
+    won: boolean,
   ) => string | null;
   // The banner above the round's list when one of the game's special events happens, short
   // and in the season colour ("Leaf Fall: 10 numbers fell.", O35); null, or no hook, shows
@@ -98,4 +163,8 @@ export interface GameText {
   // The round intro's line on the secret ("Shared number between 1 and 100", "Hidden range"),
   // from a player's or spectator's view during the countdown; null, or no hook, shows none.
   readonly intro?: (view: unknown, secretMode: 'shared' | 'individual') => string | null;
+  // The season special's one plain sentence in the game's terms ("Every so often, a digit
+  // that is not in the code falls out."), for the intro screen and the top bar's note; null,
+  // or no hook, keeps the platform's sentence (T119).
+  readonly specialRule?: (season: Season) => string | null;
 }

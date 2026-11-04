@@ -3,16 +3,17 @@
  * @module web/match
  * @brief  The match summary on one screen: standings, rounds played, teams, the way back.
  *
- * Responsibility: the summary fills the space under the app bar exactly (the shell's
- *                 `one-screen` rule) and never scrolls the page: on a desktop the standings in
+ * Responsibility: the summary fills the space under the slim result bar exactly (the
+ *                 shell's `one-screen` rule, T145) and never scrolls the page: on a desktop the standings in
  *                 the left column and the rounds played, the team standing and "Back to Play"
  *                 in a 20 rem right column; on a phone one column, the standings between the
- *                 head and the rest. Rows are compact, so 12 players fit 1280 × 720 and
+ *                 head and the rest; the team list one line per team. Rows are compact, so 12 players fit 1280 × 720 and
  *                 390 × 844; with more, only the standings table scrolls inside its own box,
  *                 its header staying in view. Colours only from @smg/ui tokens.
  * Spec:           docs/spec/02-game-guess-the-number.md §2, §12
  */
 .match-summary {
+  display: grid;
   flex: 1;
   min-height: 0;
   grid-template-columns: minmax(0, 1fr);
@@ -91,15 +92,30 @@
   gap: var(--space-2);
 }
 
-/* A phone: the four teams in two columns, so the side part stays short. */
+/* The page under the slim bar: the bar, then the summary in the rest. */
+.match-summary-page {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* One line per team, never wrapping (T145): "Team Autumn: 1 point". */
+.match-summary-teams {
+  padding-left: 0;
+  list-style: none;
+}
+
+.match-summary-teams li {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* A phone: tighter. */
 @media (max-width: 899px) {
   .match-summary {
     padding: var(--space-2);
-  }
-
-  .match-summary-teams {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    padding-left: 0;
-    list-style-position: inside;
   }
 }

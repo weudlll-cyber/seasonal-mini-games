@@ -1,78 +1,190 @@
 /**
  * @file   apps/web/src/round/roundLog.css
  * @module web/round
- * @brief  The round's one guess list: guess rows, event rows, dots, answers and comments.
+ * @brief  The round's lists: the head, one-line guess rows, event rows, dots, answers, comments.
  *
- * Responsibility: the list takes the height left under the range block and scrolls inside
- *                 itself, newest at the top (O20); a guess row is compact (O35: more rows in
- *                 view): dot, name, number, answer and the comment in small text on one line
- *                 when it fits, the comment wrapping under them otherwise; the viewer's own
- *                 rows on a tint of the season colour (T75); Frost's held answer with its
- *                 seconds in a small badge; an event is one quieter line, a special's own row
- *                 (Leaf Fall) one on the season's tint with its icon in bold (T115). Moved out of
- *                 ./round.css to keep each file under the size limit. Colours only from @smg/ui
- *                 tokens.
+ * Responsibility: a list fills the box it gets (the stage, the info column, the phone's main
+ *                 row) and scrolls inside itself, newest at the top (O20), in larger text on a
+ *                 large screen. Its head is one line: the count, the banner in its place,
+ *                 "Log (M)" at its end (T142, T150); in individual mode the others' counts in
+ *                 a row of their own under it. A guess row is one line on both layouts: dot,
+ *                 name, the guess, the answer and on a desktop the comment in small text;
+ *                 where the line is short the comment gives way first, then the name (with an
+ *                 ellipsis), the guess and the answer never (T150); on a phone the
+ *                 row is a button and an open comment a second line under the name. The
+ *                 viewer's own rows on a tint of their own dot's colour (`--own`, T75); Frost's held answer with its seconds in a small
+ *                 badge; an event is one quieter line, a special's own row (Leaf Fall) on the
+ *                 season's outline with its icon in bold (T115). The pegs and colour dots are
+ *                 ./roundMarks.css. Colours only from @smg/ui tokens.
  * Spec:           docs/spec/02-game-guess-the-number.md §6.3, §12
  */
-/* The guess list: the height left under the range block, newest at the top, scrolling only
-   inside its box. */
 .round-log {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 0.3rem;
   min-height: 0;
+}
+
+/* The head: one line that never grows; the banner takes the title's place. */
+.round-log-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  min-height: 2rem;
+  font-size: var(--font-size-small);
+}
+
+.round-log-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-strong);
+}
+
+.round-log-all {
+  flex: none;
+  min-height: 2rem;
+  margin-left: auto;
+  padding-inline: 0.7rem;
+  font-size: inherit;
+  box-shadow: none;
+}
+
+.round-log-empty {
+  margin: 0;
+}
+
+/* Individual mode: the others' counts, a row of its own that no banner replaces (T150); a
+   long roster wraps to a second line. */
+.round-log-others {
+  flex: none;
+  margin: 0;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-strong);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
 .round-log ol {
   flex: 1;
+  min-width: 0;
   min-height: 0;
+  /* One column no wider than the box: a long row is cut, never widening the list. */
+  grid-template-columns: minmax(0, 1fr);
   margin: 0;
   padding: 0;
   list-style: none;
   display: grid;
   align-content: start;
-  gap: 0.1rem;
+  gap: 0.08rem;
   overflow-y: auto;
 }
 
-/* A guess on one line: dot, name, number, answer, and the comment while it fits; a comment
-   that does not fit wraps under the others, still in small text. */
 .round-row {
+  min-width: 0;
+  /* Close lines: 22 rows fit a list game's stage at 1280 × 720 (T142). */
+  padding: 0.05rem 0.5rem;
+  border-radius: var(--radius);
+  line-height: 1.25;
+}
+
+/* A guess on one line: dot, name, guess, answer and, on a desktop, the comment. A part that
+   has no room left goes whole to a second line, so an answer is never cut (night-8 review:
+   Safecracker's six-digit rows on a phone, a held answer in Target's 340 px column, T150);
+   the comment, sized from 0, only takes room that is left. */
+.round-row-line {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 0 0.5rem;
-  padding: 0.1rem 0.5rem;
-  border-radius: var(--radius);
-  line-height: 1.3;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
-.round-row[data-own='true'] {
-  background: color-mix(in srgb, var(--season) 22%, var(--color-card));
-  box-shadow: inset 4px 0 0 var(--season);
+/* On a phone the line is the button that shows or hides the row's comment. */
+button.round-row-line {
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
 }
 
+.round-row[data-own='true']:not([data-solo]) {
+  /* The viewer's own colour, their dot's (`--own`, ./RoundScreen). */
+  background: color-mix(in srgb, var(--own, var(--season)) 22%, var(--color-card));
+  box-shadow: inset 4px 0 0 var(--own, var(--season));
+}
+
+/* The name in full where the line has room; it gives way after the comment, with an
+   ellipsis, down to a few letters (T150). At most half the line, so a long name never
+   pushes the guess and the answer onto a second line (a 30-character name, T202). The
+   title holds the full name; the row is not ../PlayerName, since on a phone the row is a
+   button and a name inside it cannot take focus of its own. */
 .round-who {
   flex: 0 1 auto;
-  min-width: 0;
-  max-width: 12rem;
+  min-width: 2.5rem;
+  max-width: 50%;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  font-weight: var(--font-weight-strong);
+}
+
+/* The guess and the answer never give way (T150): the comment and the name do. */
+.round-value,
+.round-answer {
+  flex: none;
   font-weight: var(--font-weight-strong);
 }
 
 .round-value {
   font-variant-numeric: tabular-nums;
-  font-weight: var(--font-weight-strong);
 }
 
+/* A desktop's comment: the rest of the line, cut with an ellipsis (the tooltip has it all). */
 .round-comment {
-  flex: 1 1 10rem;
+  flex: 1 1 0;
   min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   font-size: var(--font-size-small);
 }
 
+/* A board game's list (the column beside the grid): a comment without room beside the answer
+   goes whole to a second line in its smaller size, wrapping, never cut (T194). */
+.round-live[data-layout='board'] .round-row-line .round-comment {
+  flex: 1 1 14rem;
+  white-space: normal;
+  overflow: visible;
+}
+
+/* A phone's open comment: a second line under the name, past the dot. */
+.round-row > .round-comment {
+  display: block;
+  padding-left: calc(0.7rem + 0.5rem);
+  white-space: normal;
+}
+
+/* A held answer stands where the answer will: whole, like it (T150). */
 .round-arriving {
+  flex: none;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.3rem;
   color: var(--color-winter-text);
   font-weight: var(--font-weight-strong);
 }
@@ -91,20 +203,23 @@
 
 /* An event: one quieter line. */
 .round-row--event {
-  flex-wrap: nowrap;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
   padding-block: 0.05rem;
   font-size: var(--font-size-small);
   color: var(--color-text-muted);
 }
 
-/* A special's row (Leaf Fall): on the season's tint with the season icon, in bold text of
-   the normal colour, wrapping when it names many numbers; readable in light and dark. */
+/* A special's row (Leaf Fall): a dashed outline in the season colour with the season icon, in
+   bold text of the normal colour, wrapping when it names many numbers; no tint and no bar,
+   so it never looks like the viewer's own row (night-5 review); readable in light and dark. */
 .round-row--special {
   flex-wrap: nowrap;
   align-items: flex-start;
   padding: 0.2rem 0.5rem;
-  border-left: 4px solid var(--season);
-  background: color-mix(in srgb, var(--season) 26%, var(--color-card));
+  border: 2px dashed var(--season);
+  background: var(--color-card);
   color: var(--color-text);
   font-size: inherit;
   font-weight: var(--font-weight-strong);
@@ -135,15 +250,47 @@
   border: 1px solid var(--color-border);
 }
 
-.round-answer {
-  font-weight: var(--font-weight-strong);
-  white-space: nowrap;
+/* A guess drawn as colour dots (Bomb Defusal's wires): the viewer's own marker is a neutral
+   ring, never a colour that reads as a wire; the own-row tint says whose row it is (T153). */
+.round-row[data-own='true']:has(.round-swatches) .round-dot {
+  background: transparent;
+  border: 2px solid var(--color-text);
 }
 
 .round-answer[data-feedback='higher'] {
   color: var(--color-success-text);
 }
 
-.round-answer[data-feedback='lower'] {
+.round-answer[data-feedback='lower'],
+.round-answer[data-feedback='boom'] {
   color: var(--color-danger);
+}
+
+/* A game's own answers (T119): close and found in the success colour, far in plain text. */
+.round-answer[data-feedback='close'],
+.round-answer[data-feedback='correct'] {
+  color: var(--color-success-text);
+}
+
+/* A phone: closer parts; "Log (M)" a full touch target (night-7 review). */
+@media (max-width: 899px) {
+  .round-log-all {
+    min-height: var(--hit-target);
+  }
+
+  .round-row-line {
+    gap: 0 0.35rem;
+  }
+
+  .round-who {
+    min-width: 2rem;
+  }
+}
+
+/* A large screen (1920 × 1080): the stage's list reads larger, so with few guesses the wide
+   stage is not mostly empty (O50; night-8 review: 1.375 rem, T153); about 30 rows still fit. */
+@media (min-width: 1600px) and (min-height: 950px) {
+  .round-stage--list .round-log {
+    font-size: 1.375rem;
+  }
 }

@@ -1,16 +1,19 @@
 /**
  * @file   apps/web/src/account/AccountPage.tsx
  * @module web/account
- * @brief  The own account: change the password.
+ * @brief  The own account: change the password, delete the account.
  *
- * Responsibility: a form with the current password and the new one twice; the rules are
- *                 checked before sending (./accountText), the server's refusal shows as a
- *                 sentence; on success the page says that every other device was signed out.
- *                 Signed out, the page points to Sign in.
+ * Responsibility: for an account with a password (the session says so, T201), a form with
+ *                 the current password and the new one twice; the rules are checked before
+ *                 sending (./accountText), the server's refusal shows as a sentence; on
+ *                 success the page says that every other device was signed out. An account
+ *                 the website's handoff made has no password: no form, one line saying it
+ *                 signs in through the website. Below either "Delete my account"
+ *                 (./DeleteAccount). Signed out, the page points to Sign in.
  * Depends on:     react, ../shell/http, ../shell/router, ../shell/session, ./formParts,
- *                 ./accountText, ./account.css
+ *                 ./accountText, ./DeleteAccount, ./account.css
  * Used by:        ../shell/AppShell
- * Spec:           docs/spec/05-security-threat-model.md §1; Bingo 03 §2.1
+ * Spec:           docs/spec/05-security-threat-model.md §1; Bingo 03 §2.1; DECISIONS T105, T201
  */
 import { useState, type ReactElement, type SyntheticEvent } from 'react';
 
@@ -18,6 +21,7 @@ import { api } from '../shell/http.js';
 import { hrefOf } from '../shell/router.js';
 import { useSession } from '../shell/session.js';
 import { accountError, passwordText } from './accountText.js';
+import { DeleteAccount } from './DeleteAccount.js';
 import { AccountField, FormError } from './formParts.js';
 import './account.css';
 
@@ -36,16 +40,40 @@ function problem(p: Passwords): string | null {
 
 export function AccountPage(): ReactElement {
   const { session } = useSession();
-  const [values, setValues] = useState<Passwords>(EMPTY);
-  const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState(false);
-  if (session?.account == null) {
+  const account = session?.account ?? null;
+  if (account === null) {
     return (
       <p className="smg-panel">
         <a href={hrefOf({ name: 'signIn' })}>Sign in</a> to see your account.
       </p>
     );
   }
+  const heading = (
+    <>
+      <h1>Your account</h1>
+      <p className="smg-muted">Signed in as {account.displayName}.</p>
+    </>
+  );
+  return (
+    <div className="smg-stack">
+      {account.hasPassword ? (
+        <ChangePassword heading={heading} />
+      ) : (
+        // A website account has no password to change (T201): it signs in through the website.
+        <div className="smg-panel account-form" data-testid="account-no-password">
+          {heading}
+          <p>You sign in through the website, so this account has no password here.</p>
+        </div>
+      )}
+      <DeleteAccount displayName={account.displayName} />
+    </div>
+  );
+}
+
+function ChangePassword({ heading }: { readonly heading: ReactElement }): ReactElement {
+  const [values, setValues] = useState<Passwords>(EMPTY);
+  const [error, setError] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
   const submit = (event: SyntheticEvent): void => {
     event.preventDefault();
     const found = problem(values);
@@ -63,8 +91,7 @@ export function AccountPage(): ReactElement {
   };
   return (
     <form className="smg-panel account-form" onSubmit={submit} data-testid="password-form">
-      <h1>Your account</h1>
-      <p className="smg-muted">Signed in as {session.account.displayName}.</p>
+      {heading}
       <h2>Change password</h2>
       <PasswordFields values={values} onChange={setValues} />
       <FormError text={error} testId="password-error" />

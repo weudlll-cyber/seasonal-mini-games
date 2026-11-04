@@ -63,13 +63,17 @@ test('journey 5: season teams are fixed for the match and the winner team scores
     const locked = await attempt(one, 'POST', `/matches/${code}/team`, { team: 'winter' });
     expect(locked.body).toMatchObject({ code: 'TEAM_LOCKED' });
     await Promise.all(players.map((p) => search(p)));
-    await expect(host.page.getByTestId('team-result')).toContainText('1 point — the winner’s team');
+    await expect(host.page.getByTestId('team-result')).toContainText(
+      '1 team point — the winner’s team',
+    );
     // After the result: the waiting area for the next round lists the players with their
     // teams and has no team buttons; the result has no player box of its own (O23, O26).
     const waiting = one.page.getByTestId('waiting-area');
     await expect(waiting).toContainText('Next round');
     await expect(waiting.getByRole('group', { name: 'Season team' })).toHaveCount(0);
-    await expect(waiting.getByTestId('match-players')).toContainText('Spring');
+    await expect(
+      waiting.getByTestId('match-players').getByRole('img', { name: 'Team Spring' }).first(),
+    ).toBeVisible();
     await expect(one.page.getByText('In this match')).toHaveCount(0);
   } finally {
     await abortMatch(host, code);
@@ -94,7 +98,7 @@ test('journey 6: a reload mid-round keeps the cooldown and delivers the held ans
     await p.page.getByTestId('guess-button').click();
     await expect(ownRows(p.page)).toContainText('answer arriving…');
     await p.page.reload();
-    await expect(p.page.getByTestId('cooldown')).not.toHaveText('Ready');
+    await expect(p.page.getByTestId('cooldown')).toHaveAttribute('data-ready', 'false');
     await expect(ownRows(p.page)).toHaveCount(1);
     await expect(ownRows(p.page).locator('.round-answer')).toBeVisible({ timeout: 10_000 });
     await expect(ownRows(p.page)).toHaveCount(1);

@@ -8,7 +8,8 @@
  *                 their schemas. Secrets are their own value (`Sec`), derived from the round
  *                 randomness and never part of the state, so snapshots and views of state can
  *                 never hold one (05 §3). Checks a game owns run in `validate`, before the
- *                 platform's cooldown check (02 §5.1 order; DECISIONS T29).
+ *                 platform's cooldown check (02 §5.1 order; DECISIONS T29). An accepted
+ *                 decision may lengthen the guesser's cooldown (`extraCooldownMs`, T120).
  * Depends on:     zod (schemas), ./random, ./settings
  * Used by:        ./index, packages/domain (round engine), games/*
  * Spec:           docs/spec/04-software-architecture.md §4, docs/spec/02-game-guess-the-number.md §5.1
@@ -93,6 +94,9 @@ export type Decision<E> =
       readonly ok: true;
       readonly events: readonly Emitted<E>[];
       readonly signals: readonly Signal[];
+      // Added to this player's cooldown after this action (Bomb Defusal's explosion, O40;
+      // DECISIONS T120); the platform computes and records the end.
+      readonly extraCooldownMs?: number;
     }
   | { readonly ok: false; readonly code: string };
 

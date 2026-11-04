@@ -1,0 +1,190 @@
+/*
+ * @file   games/seasonal-target/web/st.css
+ * @module games/seasonal-target/web
+ * @brief  Styles of the Seasonal Target panels: their lines, the input row, the result, the list.
+ *
+ * Responsibility: colours only from the design tokens (light and dark) and the heat steps of
+ *                 ./tiles.css; the spectator's panel and the result as flex columns that give
+ *                 the grid's box (./tiles.css) the free height and the rest its natural height,
+ *                 never by viewport arithmetic (the platform's boxes are of definite height);
+ *                 the hint line; the input row in the info column (O51, T141): the selected tile,
+ *                 the ring with a Guess at least 44 px, the "Type coordinates" toggle with the
+ *                 compact Column and Row fields and the arrow cross 44 × 44 px; the result's
+ *                 lines; a miss's answer in the guess list in its tile's heat step (O51). The
+ *                 grid and its tiles are styled in ./tiles.css, the loupe in ./loupe.css, the
+ *                 Fallen tiles panel in ./fallen.css. Classes are prefixed `st-`.
+ * Spec:           docs/spec/02d-game-seasonal-target.md §8, §11
+ */
+.st-player,
+.st-input {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+/* The spectator's panel fills the stage, the result its box: the grid's box grows, the rest
+   keeps its height. */
+.st-spectator,
+.st-result {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.st-spectator > :not(.st-board),
+.st-result > :not(.st-board) {
+  flex: none;
+}
+
+/* A phone: the result's grid a square under the target's line, as wide as the card; the
+   placings below fit one line a row (T195, T211; T205's narrower grid is gone). */
+@media (max-width: 899px) {
+  .st-result > .st-board {
+    flex: none;
+    aspect-ratio: 1;
+  }
+}
+
+.st-area,
+.st-note {
+  margin: 0;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+/* Spring Herald's quarter for the whole round: a highlighted line (O35). */
+.st-hint {
+  margin: 0;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius);
+  border-left: 4px solid var(--season, var(--color-accent));
+  background: color-mix(in srgb, var(--season, var(--color-accent)) 22%, var(--color-card));
+  font-weight: var(--font-weight-strong);
+}
+
+/* The ring and Guess under the selected tile, Guess taking the row's free width. */
+.st-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.st-selected {
+  margin: 0;
+  font-weight: var(--font-weight-strong);
+}
+
+.st-typed {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.st-typed-toggle {
+  justify-self: start;
+  min-height: var(--hit-target);
+}
+
+.st-steer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: var(--space-1);
+}
+
+.st-fields {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.st-field {
+  display: grid;
+  font-size: var(--font-size-small);
+}
+
+.st-field input {
+  width: 4rem;
+  min-height: var(--hit-target);
+}
+
+.st-cross {
+  display: grid;
+  grid-template-columns: repeat(4, var(--hit-target));
+  gap: 0.25rem;
+}
+
+.st-move {
+  width: var(--hit-target);
+  height: var(--hit-target);
+  min-width: var(--hit-target);
+  min-height: var(--hit-target);
+  padding: 0;
+  font-size: var(--font-size-lead);
+}
+
+.st-go {
+  flex: 1;
+  min-height: 3.25rem;
+  padding: 0 1.75rem;
+  font-size: var(--font-size-lead);
+}
+
+.st-message {
+  margin: 0;
+  color: var(--color-danger);
+}
+
+.st-secret {
+  margin: 0;
+  font-size: var(--font-size-lead);
+  font-weight: var(--font-weight-strong);
+}
+
+/* Every player's guesses in words, in full below the result's first part (T150): the grid
+   keeps the first part's height. */
+.st-players {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.st-you {
+  font-weight: var(--font-weight-strong);
+}
+
+/* A phone (the loupe's fields): narrow padding, so "30" fits (night-5 review). */
+@media (max-width: 899px) {
+  .st-field input {
+    width: 3.5rem;
+    padding-inline: 0.3rem;
+    text-align: center;
+  }
+}
+
+/* A miss in the platform's guess list: its answer in its tile's heat step, by the row's tier
+   (`guessRows` in ./text, prefixed `st-`, so other games' rows keep their look); the
+   platform leaves the `far` tone plain (O51). */
+.round-row[data-tier='st-wayOff'] .round-answer,
+.round-row[data-tier='st-cold'] .round-answer {
+  color: var(--st-text-1);
+}
+
+.round-row[data-tier='st-cool'] .round-answer {
+  color: var(--st-text-2);
+}
+
+.round-row[data-tier='st-warm'] .round-answer {
+  color: var(--st-text-3);
+}
+
+.round-row[data-tier='st-hot'] .round-answer {
+  color: var(--st-text-4);
+}
+
+.round-row[data-tier='st-burning'] .round-answer,
+.round-row[data-tier='st-justMissed'] .round-answer {
+  color: var(--st-text-5);
+}

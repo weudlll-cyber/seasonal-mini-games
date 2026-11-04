@@ -5,7 +5,7 @@
  *
  * Responsibility: Heatwave's step and interval, Frost's delay, Leaf Fall's interval and count,
  *                 the halving interval (08 §3): the parts of the specials the platform
- *                 schedules. What a special does to a game's state (which numbers fall, where
+ *                 schedules; Heatwave's two the host chooses per round (O63). What a special does to a game's state (which numbers fall, where
  *                 a window sits, a hint's type and when falls stop) belongs to the game. The
  *                 Heatwave floor of 3 s is the owner's and no setting (03 §2.2).
  * Depends on:     ./settings
@@ -42,18 +42,28 @@ const seconds = (
 });
 
 export const SPECIAL_SETTINGS: readonly SettingDef[] = [
-  seconds(
-    'summer.stepS',
-    'Heatwave step',
-    'How much the cooldown shrinks at each step.',
-    [1, 1, 10],
-  ),
-  seconds(
-    'summer.stepIntervalS',
-    'Heatwave interval',
-    'Time between two Heatwave steps.',
-    [30, 5, 300],
-  ),
+  // Heatwave's defaults are the owner's: 1 s shorter every 10 s, in every game (O57); the host
+  // sets both per round, starting from these (O63).
+  {
+    ...seconds(
+      'summer.stepS',
+      'Heatwave step',
+      'How much the cooldown shrinks at each step.',
+      [1, 1, 10],
+    ),
+    hostChooses: true,
+    decision: 'O63',
+  },
+  {
+    ...seconds(
+      'summer.stepIntervalS',
+      'Heatwave every',
+      'Time between two Heatwave steps.',
+      [10, 5, 300],
+    ),
+    hostChooses: true,
+    decision: 'O63',
+  },
   seconds(
     'autumn.intervalS',
     'Leaf Fall interval',

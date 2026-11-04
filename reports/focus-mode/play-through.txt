@@ -1,0 +1,188 @@
+guess-the-number spring-shared: own guess 200
+reports/focus-mode/guess-the-number/spring-shared-1280x720: open, scrollHeight 720/720, pill 8.37:1
+reports/focus-mode/guess-the-number/spring-shared-1920x1080: open, scrollHeight 1080/1080, pill 8.37:1
+reports/focus-mode/guess-the-number/spring-shared-390x844: open, scrollHeight 844/844, pill 8.37:1
+guess-the-number spring-individual: own guess 200
+reports/focus-mode/guess-the-number/spring-individual-1280x720: open, scrollHeight 720/720, pill 8.37:1
+reports/focus-mode/guess-the-number/spring-individual-1920x1080: open, scrollHeight 1080/1080, pill 8.37:1
+reports/focus-mode/guess-the-number/spring-individual-390x844: open, scrollHeight 844/844, pill 8.37:1
+guess-the-number summer-shared: own guess 200
+reports/focus-mode/guess-the-number/summer-shared-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/guess-the-number/summer-shared-1920x1080: open, scrollHeight 1080/1080, pill 5.49:1
+reports/focus-mode/guess-the-number/summer-shared-390x844: open, scrollHeight 844/844, pill 5.49:1
+reports/focus-mode/guess-the-number/summer-shared-open-focus-chat-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/guess-the-number/summer-shared-open-focus-chat-390x844: open, scrollHeight 844/844, pill 5.49:1
+reports/focus-mode/guess-the-number/summer-shared-open-focus-players-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/guess-the-number/summer-shared-open-focus-players-390x844: open, scrollHeight 844/844, pill 5.49:1
+reports/focus-mode/guess-the-number/summer-shared-open-host-menu-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/guess-the-number/summer-shared-open-host-menu-390x844: open, scrollHeight 844/844, pill 5.49:1
+reports/focus-mode/guess-the-number/summer-shared-open-list-all-390x844: open, scrollHeight 844/844, pill 5.49:1
+guess-the-number summer-individual: own guess 200
+reports/focus-mode/guess-the-number/summer-individual-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/guess-the-number/summer-individual-1920x1080: open, scrollHeight 1080/1080, pill 5.49:1
+reports/focus-mode/guess-the-number/summer-individual-390x844: open, scrollHeight 844/844, pill 5.49:1
+guess-the-number autumn-shared: own guess 200
+reports/focus-mode/guess-the-number/autumn-shared-1280x720: open, scrollHeight 720/720, pill 9.11:1
+reports/focus-mode/guess-the-number/autumn-shared-1920x1080: open, scrollHeight 1080/1080, pill 9.11:1
+reports/focus-mode/guess-the-number/autumn-shared-390x844: open, scrollHeight 844/844, pill 9.11:1
+guess-the-number autumn-individual: own guess 200
+reports/focus-mode/guess-the-number/autumn-individual-1280x720: open, scrollHeight 720/720, pill 9.11:1
+reports/focus-mode/guess-the-number/autumn-individual-1920x1080: open, scrollHeight 1080/1080, pill 9.11:1
+reports/focus-mode/guess-the-number/autumn-individual-390x844: open, scrollHeight 844/844, pill 9.11:1
+guess-the-number winter-shared: own guess 200
+reports/focus-mode/guess-the-number/winter-shared-1280x720: open, scrollHeight 720/720, pill 6.93:1
+reports/focus-mode/guess-the-number/winter-shared-1920x1080: open, scrollHeight 1080/1080, pill 6.93:1
+reports/focus-mode/guess-the-number/winter-shared-390x844: open, scrollHeight 844/844, pill 6.93:1
+guess-the-number winter-individual: own guess 200
+reports/focus-mode/guess-the-number/winter-individual-1280x720: open, scrollHeight 720/720, pill 6.93:1
+reports/focus-mode/guess-the-number/winter-individual-1920x1080: open, scrollHeight 1080/1080, pill 6.93:1
+reports/focus-mode/guess-the-number/winter-individual-390x844: open, scrollHeight 844/844, pill 6.93:1
+safecracker spring-shared: own guess 200
+reports/focus-mode/safecracker/spring-shared-1280x720: open, scrollHeight 720/720, pill 8.37:1
+reports/focus-mode/safecracker/spring-shared-1920x1080: open, scrollHeight 1080/1080, pill 8.37:1
+reports/focus-mode/safecracker/spring-shared-390x844: open, scrollHeight 844/844, pill 8.37:1
+safecracker spring-individual: own guess 200
+reports/focus-mode/safecracker/spring-individual-1280x720: open, scrollHeight 720/720, pill 8.37:1
+reports/focus-mode/safecracker/spring-individual-1920x1080: open, scrollHeight 1080/1080, pill 8.37:1
+reports/focus-mode/safecracker/spring-individual-390x844: open, scrollHeight 844/844, pill 8.37:1
+safecracker summer-shared: own guess 200
+reports/focus-mode/safecracker/summer-shared-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/safecracker/summer-shared-1920x1080: open, scrollHeight 1080/1080, pill 5.49:1
+reports/focus-mode/safecracker/summer-shared-390x844: open, scrollHeight 844/844, pill 5.49:1
+reports/focus-mode/safecracker/summer-shared-open-focus-chat-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/safecracker/summer-shared-open-focus-chat-390x844: open, scrollHeight 844/844, pill 5.49:1
+reports/focus-mode/safecracker/summer-shared-open-focus-players-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/safecracker/summer-shared-open-focus-players-390x844: open, scrollHeight 844/844, pill 5.49:1
+reports/focus-mode/safecracker/summer-shared-open-host-menu-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/safecracker/summer-shared-open-host-menu-390x844: open, scrollHeight 844/844, pill 5.49:1
+reports/focus-mode/safecracker/summer-shared-open-list-all-390x844: open, scrollHeight 844/844, pill 5.49:1
+safecracker summer-individual: own guess 200
+reports/focus-mode/safecracker/summer-individual-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/safecracker/summer-individual-1920x1080: open, scrollHeight 1080/1080, pill 5.49:1
+reports/focus-mode/safecracker/summer-individual-390x844: open, scrollHeight 844/844, pill 5.49:1
+safecracker autumn-shared: own guess 200
+reports/focus-mode/safecracker/autumn-shared-1280x720: open, scrollHeight 720/720, pill 9.11:1
+reports/focus-mode/safecracker/autumn-shared-1920x1080: open, scrollHeight 1080/1080, pill 9.11:1
+reports/focus-mode/safecracker/autumn-shared-390x844: open, scrollHeight 844/844, pill 9.11:1
+safecracker autumn-individual: own guess 200
+reports/focus-mode/safecracker/autumn-individual-1280x720: open, scrollHeight 720/720, pill 9.11:1
+reports/focus-mode/safecracker/autumn-individual-1920x1080: open, scrollHeight 1080/1080, pill 9.11:1
+reports/focus-mode/safecracker/autumn-individual-390x844: open, scrollHeight 844/844, pill 9.11:1
+safecracker winter-shared: own guess 200
+reports/focus-mode/safecracker/winter-shared-1280x720: open, scrollHeight 720/720, pill 6.93:1
+reports/focus-mode/safecracker/winter-shared-1920x1080: open, scrollHeight 1080/1080, pill 6.93:1
+reports/focus-mode/safecracker/winter-shared-390x844: open, scrollHeight 844/844, pill 6.93:1
+safecracker winter-individual: own guess 200
+reports/focus-mode/safecracker/winter-individual-1280x720: open, scrollHeight 720/720, pill 6.93:1
+reports/focus-mode/safecracker/winter-individual-1920x1080: open, scrollHeight 1080/1080, pill 6.93:1
+reports/focus-mode/safecracker/winter-individual-390x844: open, scrollHeight 844/844, pill 6.93:1
+bomb-defusal spring-shared: own guess 200
+reports/focus-mode/bomb-defusal/spring-shared-1280x720: open, scrollHeight 720/720, pill 8.37:1
+reports/focus-mode/bomb-defusal/spring-shared-1920x1080: open, scrollHeight 1080/1080, pill 8.37:1
+reports/focus-mode/bomb-defusal/spring-shared-390x844: open, scrollHeight 844/844, pill 8.37:1
+bomb-defusal spring-individual: own guess 200
+reports/focus-mode/bomb-defusal/spring-individual-1280x720: open, scrollHeight 720/720, pill 8.37:1
+reports/focus-mode/bomb-defusal/spring-individual-1920x1080: open, scrollHeight 1080/1080, pill 8.37:1
+reports/focus-mode/bomb-defusal/spring-individual-390x844: open, scrollHeight 844/844, pill 8.37:1
+bomb-defusal summer-shared: own guess 200
+reports/focus-mode/bomb-defusal/summer-shared-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/bomb-defusal/summer-shared-1920x1080: open, scrollHeight 1080/1080, pill 5.49:1
+reports/focus-mode/bomb-defusal/summer-shared-390x844: open, scrollHeight 844/844, pill 5.49:1
+reports/focus-mode/bomb-defusal/summer-shared-open-focus-chat-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/bomb-defusal/summer-shared-open-focus-chat-390x844: open, scrollHeight 844/844, pill 5.49:1
+reports/focus-mode/bomb-defusal/summer-shared-open-focus-players-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/bomb-defusal/summer-shared-open-focus-players-390x844: open, scrollHeight 844/844, pill 5.49:1
+reports/focus-mode/bomb-defusal/summer-shared-open-host-menu-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/bomb-defusal/summer-shared-open-host-menu-390x844: open, scrollHeight 844/844, pill 5.49:1
+reports/focus-mode/bomb-defusal/summer-shared-open-list-all-390x844: open, scrollHeight 844/844, pill 5.49:1
+bomb-defusal summer-individual: own guess 200
+reports/focus-mode/bomb-defusal/summer-individual-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/bomb-defusal/summer-individual-1920x1080: open, scrollHeight 1080/1080, pill 5.49:1
+reports/focus-mode/bomb-defusal/summer-individual-390x844: open, scrollHeight 844/844, pill 5.49:1
+bomb-defusal autumn-shared: own guess 200
+reports/focus-mode/bomb-defusal/autumn-shared-1280x720: open, scrollHeight 720/720, pill 9.11:1
+reports/focus-mode/bomb-defusal/autumn-shared-1920x1080: open, scrollHeight 1080/1080, pill 9.11:1
+reports/focus-mode/bomb-defusal/autumn-shared-390x844: open, scrollHeight 844/844, pill 9.11:1
+bomb-defusal autumn-individual: own guess 200
+reports/focus-mode/bomb-defusal/autumn-individual-1280x720: open, scrollHeight 720/720, pill 9.11:1
+reports/focus-mode/bomb-defusal/autumn-individual-1920x1080: open, scrollHeight 1080/1080, pill 9.11:1
+reports/focus-mode/bomb-defusal/autumn-individual-390x844: open, scrollHeight 844/844, pill 9.11:1
+bomb-defusal winter-shared: own guess 200
+reports/focus-mode/bomb-defusal/winter-shared-1280x720: open, scrollHeight 720/720, pill 6.93:1
+reports/focus-mode/bomb-defusal/winter-shared-1920x1080: open, scrollHeight 1080/1080, pill 6.93:1
+reports/focus-mode/bomb-defusal/winter-shared-390x844: open, scrollHeight 844/844, pill 6.93:1
+bomb-defusal winter-individual: own guess 200
+reports/focus-mode/bomb-defusal/winter-individual-1280x720: open, scrollHeight 720/720, pill 6.93:1
+reports/focus-mode/bomb-defusal/winter-individual-1920x1080: open, scrollHeight 1080/1080, pill 6.93:1
+reports/focus-mode/bomb-defusal/winter-individual-390x844: open, scrollHeight 844/844, pill 6.93:1
+bomb-defusal autumn-all-harmless: own guess 200
+reports/focus-mode/bomb-defusal/autumn-all-harmless-1280x720: open, scrollHeight 720/720, pill 9.11:1
+reports/focus-mode/bomb-defusal/autumn-all-harmless-1920x1080: open, scrollHeight 1080/1080, pill 9.11:1
+reports/focus-mode/bomb-defusal/autumn-all-harmless-390x844: open, scrollHeight 844/844, pill 9.11:1
+seasonal-target spring-shared: own guess 200
+reports/focus-mode/seasonal-target/spring-shared-1280x720: open, scrollHeight 720/720, pill 8.37:1
+reports/focus-mode/seasonal-target/spring-shared-1920x1080: open, scrollHeight 1080/1080, pill 8.37:1
+reports/focus-mode/seasonal-target/spring-shared-390x844: open, scrollHeight 844/844, pill 8.37:1
+seasonal-target spring-individual: own guess 200
+reports/focus-mode/seasonal-target/spring-individual-1280x720: open, scrollHeight 720/720, pill 8.37:1
+reports/focus-mode/seasonal-target/spring-individual-1920x1080: open, scrollHeight 1080/1080, pill 8.37:1
+reports/focus-mode/seasonal-target/spring-individual-390x844: open, scrollHeight 844/844, pill 8.37:1
+seasonal-target summer-shared: own guess 200
+reports/focus-mode/seasonal-target/summer-shared-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/seasonal-target/summer-shared-1920x1080: open, scrollHeight 1080/1080, pill 5.49:1
+reports/focus-mode/seasonal-target/summer-shared-390x844: open, scrollHeight 844/844, pill 5.49:1
+reports/focus-mode/seasonal-target/summer-shared-open-focus-chat-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/seasonal-target/summer-shared-open-focus-chat-390x844: open, scrollHeight 844/844, pill 5.49:1
+reports/focus-mode/seasonal-target/summer-shared-open-focus-players-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/seasonal-target/summer-shared-open-focus-players-390x844: open, scrollHeight 844/844, pill 5.49:1
+reports/focus-mode/seasonal-target/summer-shared-open-host-menu-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/seasonal-target/summer-shared-open-host-menu-390x844: open, scrollHeight 844/844, pill 5.49:1
+reports/focus-mode/seasonal-target/summer-shared-open-list-all-390x844: open, scrollHeight 844/844, pill 5.49:1
+reports/focus-mode/seasonal-target/summer-shared-open-tile-390x844: open, scrollHeight 844/844, pill 5.49:1
+seasonal-target summer-individual: own guess 200
+reports/focus-mode/seasonal-target/summer-individual-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/seasonal-target/summer-individual-1920x1080: open, scrollHeight 1080/1080, pill 5.49:1
+reports/focus-mode/seasonal-target/summer-individual-390x844: open, scrollHeight 844/844, pill 5.49:1
+seasonal-target autumn-shared: own guess 200
+reports/focus-mode/seasonal-target/autumn-shared-1280x720: open, scrollHeight 720/720, pill 9.11:1
+reports/focus-mode/seasonal-target/autumn-shared-1920x1080: open, scrollHeight 1080/1080, pill 9.11:1
+reports/focus-mode/seasonal-target/autumn-shared-390x844: open, scrollHeight 844/844, pill 9.11:1
+seasonal-target autumn-individual: own guess 200
+reports/focus-mode/seasonal-target/autumn-individual-1280x720: open, scrollHeight 720/720, pill 9.11:1
+reports/focus-mode/seasonal-target/autumn-individual-1920x1080: open, scrollHeight 1080/1080, pill 9.11:1
+reports/focus-mode/seasonal-target/autumn-individual-390x844: open, scrollHeight 844/844, pill 9.11:1
+seasonal-target winter-shared: own guess 200
+reports/focus-mode/seasonal-target/winter-shared-1280x720: open, scrollHeight 720/720, pill 6.93:1
+reports/focus-mode/seasonal-target/winter-shared-1920x1080: open, scrollHeight 1080/1080, pill 6.93:1
+reports/focus-mode/seasonal-target/winter-shared-390x844: open, scrollHeight 844/844, pill 6.93:1
+seasonal-target winter-individual: own guess 200
+reports/focus-mode/seasonal-target/winter-individual-1280x720: open, scrollHeight 720/720, pill 6.93:1
+reports/focus-mode/seasonal-target/winter-individual-1920x1080: open, scrollHeight 1080/1080, pill 6.93:1
+reports/focus-mode/seasonal-target/winter-individual-390x844: open, scrollHeight 844/844, pill 6.93:1
+seasonal-target answers-direction: own guess 200
+reports/focus-mode/seasonal-target/answers-direction-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/seasonal-target/answers-direction-1920x1080: open, scrollHeight 1080/1080, pill 5.49:1
+reports/focus-mode/seasonal-target/answers-direction-390x844: open, scrollHeight 844/844, pill 5.49:1
+seasonal-target answers-distance: own guess 200
+reports/focus-mode/seasonal-target/answers-distance-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/seasonal-target/answers-distance-1920x1080: open, scrollHeight 1080/1080, pill 5.49:1
+reports/focus-mode/seasonal-target/answers-distance-390x844: open, scrollHeight 844/844, pill 5.49:1
+seasonal-target answers-closeness: own guess 200
+reports/focus-mode/seasonal-target/answers-closeness-1280x720: open, scrollHeight 720/720, pill 5.49:1
+reports/focus-mode/seasonal-target/answers-closeness-1920x1080: open, scrollHeight 1080/1080, pill 5.49:1
+reports/focus-mode/seasonal-target/answers-closeness-390x844: open, scrollHeight 844/844, pill 5.49:1
+seasonal-target grid-8x8: own guess 200
+reports/focus-mode/seasonal-target/grid-8x8-1280x720: open, scrollHeight 720/720, pill 9.11:1
+reports/focus-mode/seasonal-target/grid-8x8-1920x1080: open, scrollHeight 1080/1080, pill 9.11:1
+reports/focus-mode/seasonal-target/grid-8x8-390x844: open, scrollHeight 844/844, pill 9.11:1
+seasonal-target grid-20x20: own guess 200
+reports/focus-mode/seasonal-target/grid-20x20-1280x720: open, scrollHeight 720/720, pill 9.11:1
+reports/focus-mode/seasonal-target/grid-20x20-1920x1080: open, scrollHeight 1080/1080, pill 9.11:1
+reports/focus-mode/seasonal-target/grid-20x20-390x844: open, scrollHeight 844/844, pill 9.11:1
+seasonal-target grid-30x30: own guess 200
+seasonal-target grid-30x30: retaken after Error: clock.pauseAt: Error: Cannot fast-forward to the past
+    at ClockControl
+seasonal-target grid-30x30: own guess 200
+reports/focus-mode/seasonal-target/grid-30x30-1280x720: open, scrollHeight 720/720, pill 9.11:1
+reports/focus-mode/seasonal-target/grid-30x30-1920x1080: open, scrollHeight 1080/1080, pill 9.11:1
+reports/focus-mode/seasonal-target/grid-30x30-390x844: open, scrollHeight 844/844, pill 9.11:1

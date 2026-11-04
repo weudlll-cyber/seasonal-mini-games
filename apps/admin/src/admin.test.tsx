@@ -121,7 +121,7 @@ describe('the app', () => {
   it('opens only the areas the permissions allow', async () => {
     serve({
       account: { id: 'm', displayName: 'mod' },
-      permissions: ['admin.view', 'abuse.view'],
+      permissions: ['admin.view', 'abuse.view', 'integration.manage'],
       csrfToken: 'x',
     });
     await renderApp();
@@ -130,6 +130,7 @@ describe('the app', () => {
       'Live',
       'Settings',
       'Abuse',
+      'Integration',
       'Two-factor',
     ]);
   });

@@ -35,6 +35,9 @@ export const SEASON_NAMES: Readonly<Record<SeasonName, string>> = {
   winter: 'Winter',
 };
 
+// A season team's name wherever a team appears: "Team Spring" (O52).
+export const teamName = (team: SeasonName): string => `Team ${SEASON_NAMES[team]}`;
+
 export const SPECIALS: Readonly<
   Record<SeasonName, { readonly name: string; readonly rule: string }>
 > = {

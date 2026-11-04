@@ -1,0 +1,65 @@
+/**
+ * @file   apps/web/src/round/roundMarks.css
+ * @module web/round
+ * @brief  The marks inside a guess row: pegs, colour dots, a player's tag; the highlight.
+ *
+ * Responsibility: pegs before an answer's words (T119: filled for a hit, ringed for a near
+ *                 one, hollow for a miss, in the answer's colour) and a guess drawn as colour
+ *                 dots in order (T143), each with one grey ring for every colour, as on the wire
+ *                 swatches (T139); a tagged row's highlight (O62): the highlighted player's
+ *                 rows ringed, the others faded. Moved out of ./roundLog.css to keep each file under the size
+ *                 limit. Colours only from @smg/ui tokens and the game's own fills.
+ * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/02b-game-safecracker.md §10
+ */
+/* Pegs before an answer's words: filled for a hit, ringed for a near one, hollow for a miss. */
+.round-pegs {
+  display: inline-flex;
+  gap: 0.15rem;
+  margin-inline-end: 0.35rem;
+  vertical-align: middle;
+}
+
+.round-peg {
+  width: 0.6rem;
+  height: 0.6rem;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+
+.round-peg[data-peg='hit'] {
+  background: currentColor;
+}
+
+.round-peg[data-peg='near'] {
+  background: radial-gradient(circle, currentColor 35%, transparent 40%);
+}
+
+.round-peg[data-peg='miss'] {
+  opacity: 0.45;
+}
+
+/* A guess as colour dots in order (T143): each named, with one ring for every colour. */
+.round-swatches {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  align-self: center;
+}
+
+.round-swatch {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  border: 2px solid #7a808c;
+  background: var(--swatch);
+}
+
+/* A game with player tags (O62): the highlighted player's rows ringed, the others faded. */
+.round-row[data-hl='on'] {
+  outline: 2px solid var(--color-text);
+  outline-offset: -2px;
+}
+
+.round-row[data-hl='off'] {
+  opacity: 0.45;
+}

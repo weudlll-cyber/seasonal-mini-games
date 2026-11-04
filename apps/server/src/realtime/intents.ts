@@ -6,7 +6,8 @@
  * Responsibility: every intent is `{ t, seq, data }`, answered `{ ok, data? }` or
  *                 `{ ok: false, code }`. `seq` must grow strictly per socket (REPLAYED) and a
  *                 socket sends at most 10 intents a second; both are checked when the intent
- *                 is read. `guessIntent` is synchronous up to the queue: shape, account, the
+ *                 is read. `guessIntent` is synchronous up to the queue: shape (a bounded
+ *                 value of any game, its exact form the game's, T122), account, the
  *                 per-account limit and the round's queue, nothing awaited. The others:
  *                 match.watch / match.unwatch (at most 3 matches, a match player also joins
  *                 their own room and counts as connected, the host joins the host room),
@@ -46,7 +47,16 @@ const envelope = z.object({
   data: z.unknown(),
 });
 const codeData = z.object({ code: z.string().min(1).max(16) });
-const guessData = z.object({ roundId: z.uuid(), value: z.number() }).strict();
+// A guess's value as the wire may carry it, bounded in size: a number, a short code, a short
+// list of names (wires), a small record of numbers (a cell). The round's game checks the exact
+// shape with its own schema before anything else (DECISIONS T122).
+const guessValue = z.union([
+  z.number(),
+  z.string().max(32),
+  z.array(z.string().max(16)).max(16),
+  z.record(z.string().max(8), z.number()).refine((o) => Object.keys(o).length <= 4),
+]);
+const guessData = z.object({ roundId: z.uuid(), value: guessValue }).strict();
 const teamData = codeData.extend({ team: z.enum(['spring', 'summer', 'autumn', 'winter']) });
 const roundData = z.object({
   roundId: z.uuid(),

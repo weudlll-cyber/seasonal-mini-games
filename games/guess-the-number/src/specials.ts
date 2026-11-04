@@ -3,7 +3,7 @@
  * @module games/guess-the-number
  * @brief  What Spring Herald, Leaf Fall and halving do in Guess The Number.
  *
- * Responsibility: Spring Herald gives one true hint (odd or even, or which half) about the
+ * Responsibility: Spring Herald gives one true hint (the last digit, O56, or which half) about the
  *                 shared secret to everyone, or about each player's own number to that player
  *                 (03 §2.1). Leaf Fall removes `count` numbers chosen uniformly from the
  *                 numbers still possible, never a secret (./leafFall, O37). Halving replaces a
@@ -22,7 +22,9 @@ import { secretOf, type Secrets } from './secrets.js';
 import type { GtnEvent, GtnState, Hint } from './state.js';
 
 function hintFor(state: GtnState, secret: number, range: Range): Hint {
-  if (state.specials.hintType === 'parity') return { kind: 'parity', odd: secret % 2 !== 0 };
+  // The digit as written: −27 ends in 7 (O18 allows negative secrets).
+  if (state.specials.hintType === 'lastDigit')
+    return { kind: 'lastDigit', digit: Math.abs(secret) % 10 };
   const mid = Math.floor((range.low + range.high) / 2);
   return secret <= mid
     ? { kind: 'half', low: range.low, high: mid }

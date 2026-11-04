@@ -1,0 +1,184 @@
+/*
+ * @file   games/seasonal-target/web/heat.css
+ * @module games/seasonal-target/web
+ * @brief  The heat palette of the tile grid: its steps, the found target's fill, the legend.
+ *
+ * Responsibility: as custom properties, light on :root and dark under [data-theme='dark'] (as
+ *                 packages/ui/src/tokens.css): in `distance` and `direction` mode five steps
+ *                 (cold blue … burning red; the number on the tile tells tiers one step
+ *                 apart), in `closeness` mode one colour of its own for each of the seven
+ *                 tiers, slate, blue, teal, ochre, orange, red and magenta, no two alike, the
+ *                 tier being the whole answer (T151); every fill at 3:1 or more against the
+ *                 empty tile, its number at 4.5:1 or more against the fill, in both themes
+ *                 (02d §11). The steps as text colours for the guess list's answers (the
+ *                 closeness colours are 5:1 or more on the card and serve as text too); the
+ *                 legend: "Cold", the steps of the round's mode, "Hot". Moved out of ./tiles.css
+ *                 to keep each file under the size limit. Classes are prefixed `st-`.
+ * Spec:           docs/spec/02d-game-seasonal-target.md §6, §11
+ */
+:root {
+  --st-step-1: #2d5fa8;
+  --st-step-2: #1c7680;
+  --st-step-3: #8a6400;
+  --st-step-4: #c2410c;
+  --st-step-5: #a3122a;
+  --st-on-step: #ffffff;
+  --st-correct: #14171c;
+  --st-on-correct: #ffffff;
+  /* The steps as text on the list's rows: 5.4:1 or more on the card and on every season's
+     own-row tint. */
+  --st-text-1: #28559a;
+  --st-text-2: #155e66;
+  --st-text-3: #6b4e00;
+  --st-text-4: #9c3409;
+  --st-text-5: #a3122a;
+  /* Closeness mode, way off … just missed: 5:1 or more on the empty tile and the card. */
+  --st-k-1: #4a5468;
+  --st-k-2: #1f5fbf;
+  --st-k-3: #0f7466;
+  --st-k-4: #7a5a00;
+  --st-k-5: #b23c0a;
+  --st-k-6: #a3122a;
+  --st-k-7: #8a1a78;
+}
+
+:root[data-theme='dark'] {
+  --st-step-1: #7fb0ff;
+  --st-step-2: #5fd4c8;
+  --st-step-3: #f2c94c;
+  --st-step-4: #ff9a52;
+  --st-step-5: #ff6b7a;
+  --st-on-step: #0a1233;
+  --st-correct: #f1f4fa;
+  --st-on-correct: #0a1233;
+  /* 5.1:1 or more on the dark card and every season's own-row tint. */
+  --st-text-1: #8cbaff;
+  --st-text-2: #5fd4c8;
+  --st-text-3: #f2c94c;
+  --st-text-4: #ff9a52;
+  --st-text-5: #ff8e99;
+  /* 5.7:1 or more on the dark empty tile and the dark card. */
+  --st-k-1: #a9b3c8;
+  --st-k-2: #6fb0ff;
+  --st-k-3: #4fd1b8;
+  --st-k-4: #f2c94c;
+  --st-k-5: #ff9a52;
+  --st-k-6: #ff7182;
+  --st-k-7: #f08ae0;
+}
+
+.st-tile[data-step='1'],
+.st-swatch[data-step='1'] {
+  background: var(--st-step-1);
+}
+
+.st-tile[data-step='2'],
+.st-swatch[data-step='2'] {
+  background: var(--st-step-2);
+}
+
+.st-tile[data-step='3'],
+.st-swatch[data-step='3'] {
+  background: var(--st-step-3);
+}
+
+.st-tile[data-step='4'],
+.st-swatch[data-step='4'] {
+  background: var(--st-step-4);
+}
+
+.st-tile[data-step='5'],
+.st-swatch[data-step='5'] {
+  background: var(--st-step-5);
+}
+
+.st-tile[data-step] {
+  color: var(--st-on-step);
+}
+
+.st-tile[data-step='correct'] {
+  background: var(--st-correct);
+  color: var(--st-on-correct);
+}
+
+/* Closeness mode: a colour for each tier (T151). */
+.st-tile[data-step='k1'],
+.st-swatch[data-step='k1'] {
+  background: var(--st-k-1);
+}
+
+.st-tile[data-step='k2'],
+.st-swatch[data-step='k2'] {
+  background: var(--st-k-2);
+}
+
+.st-tile[data-step='k3'],
+.st-swatch[data-step='k3'] {
+  background: var(--st-k-3);
+}
+
+.st-tile[data-step='k4'],
+.st-swatch[data-step='k4'] {
+  background: var(--st-k-4);
+}
+
+.st-tile[data-step='k5'],
+.st-swatch[data-step='k5'] {
+  background: var(--st-k-5);
+}
+
+.st-tile[data-step='k6'],
+.st-swatch[data-step='k6'] {
+  background: var(--st-k-6);
+}
+
+.st-tile[data-step='k7'],
+.st-swatch[data-step='k7'] {
+  background: var(--st-k-7);
+}
+
+/* The same colour for the answer of a closeness row in the list. */
+.round-row[data-tier='st-k-wayOff'] .round-answer {
+  color: var(--st-k-1);
+}
+
+.round-row[data-tier='st-k-cold'] .round-answer {
+  color: var(--st-k-2);
+}
+
+.round-row[data-tier='st-k-cool'] .round-answer {
+  color: var(--st-k-3);
+}
+
+.round-row[data-tier='st-k-warm'] .round-answer {
+  color: var(--st-k-4);
+}
+
+.round-row[data-tier='st-k-hot'] .round-answer {
+  color: var(--st-k-5);
+}
+
+.round-row[data-tier='st-k-burning'] .round-answer {
+  color: var(--st-k-6);
+}
+
+.round-row[data-tier='st-k-justMissed'] .round-answer {
+  color: var(--st-k-7);
+}
+
+/* The legend: "Cold", the steps of the round's mode, "Hot" (in the player's panel, the spectator's and the
+   result). */
+.st-heat {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+.st-heat .st-swatch {
+  width: 1.1rem;
+  height: 0.8rem;
+  border-radius: 3px;
+}

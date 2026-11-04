@@ -8,7 +8,8 @@
  *                 owner's sentence, or "No special this round." when it is off; it shows the
  *                 game's line on the secret, the cooldown, the halving badge on a halving
  *                 round and the whole seconds until the round opens; the round screen shows
- *                 the intro, not the round's top bar, while the round counts down.
+ *                 the intro under the round bar, without the list, while the round counts
+ *                 down.
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./fakes, ./RoundIntro,
  *                 ./RoundScreen
  * Spec:           docs/spec/03-seasonal-specials.md §2, §6; docs/spec/09-testing-strategy.md §2
@@ -37,7 +38,7 @@ const game = {
 } as never;
 
 const show = (state: RoundStateView, now = 2_100) =>
-  render(<RoundIntro state={state} game={game} now={now} hostMenu={null} />);
+  render(<RoundIntro state={state} game={game} now={now} />);
 
 const SENTENCES: readonly [SeasonName, string, string, string][] = [
   ['spring', 'Spring', 'Spring Herald', 'Everyone gets one free hint when the round opens.'],
@@ -78,20 +79,23 @@ describe('the round intro', () => {
     expect(screen.getByTestId('countdown').textContent).toBe('Opens in 0 s');
   });
 
-  it('takes the place of the round view while the round counts down', () => {
+  it('takes the place of the round view under the round bar while the round counts down', () => {
     const live = { state: counting, feed: [], reload: () => Promise.resolve() };
     render(
       <RoundScreen
         live={live as never}
         gameId="none"
         viewerKey="w"
-        hostMenu={null}
+        host={null}
         teamPoints={[]}
         standings={[]}
         chat={null}
       />,
     );
     expect(screen.getByTestId('round-intro')).toBeTruthy();
-    expect(screen.queryByTestId('round-banner')).toBeNull();
+    // The bar keeps the panels (O46); the seconds to the opening are only the intro's.
+    expect(screen.getByTestId('round-banner')).toBeTruthy();
+    expect(screen.getAllByTestId('countdown')).toHaveLength(1);
+    expect(screen.queryByTestId('guess-list')).toBeNull();
   });
 });

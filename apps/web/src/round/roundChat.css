@@ -1,16 +1,15 @@
 /**
  * @file   apps/web/src/round/roundChat.css
  * @module web/round
- * @brief  The match chat in the round view: a card in the right column, a panel on a phone.
+ * @brief  The match chat between rounds: a card under the waiting area, a panel on a phone.
  *
- * Responsibility: on a wide screen the chat card takes the right column's free height under
- *                 the team tiles; below 900 px a "Chat" button in the side row, and the open
- *                 chat as an opaque panel over the round whose top and bottom ./RoundChat
- *                 measures. Colours only from @smg/ui tokens.
+ * Responsibility: on a wide screen the chat card has the height ../match/match.css gives it
+ *                 beside the waiting area; below 900 px a "Chat" button, and the open chat as
+ *                 an opaque panel over the page whose top and bottom ./RoundChat measures.
+ *                 Colours only from @smg/ui tokens.
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/07-integration.md §2
  */
-/* The match chat under the team tiles (./RoundChat): a card that takes the column's free
-   height, its list scrolling inside itself, so the view still fits one screen. */
+/* The match chat (./RoundChat): a card whose list scrolls inside itself. */
 .round-chat {
   flex: 1;
   min-height: 0;
@@ -39,8 +38,8 @@
   flex-direction: column;
 }
 
-/* A phone: one "Chat" button in the side row; open, the chat lies over the round between the
-   top bar and the input row (its edges measured on opening), opaque as menus are. */
+/* A phone: one "Chat" button; open, the chat lies over the page between the app bar and the
+   button (its edges measured on opening), opaque as menus are. */
 @media (max-width: 899px) {
   .round-chat {
     flex: none;

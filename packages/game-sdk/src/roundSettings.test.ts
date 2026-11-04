@@ -35,7 +35,8 @@ describe('platform round settings', () => {
       commitReveal: true,
       points: { sharedWinner: 10, individualPlaces: [10, 7, 5, 3], individualOtherSolver: 1 },
       specials: {
-        heatwave: { stepMs: 1_000, intervalMs: 30_000 },
+        // Heatwave: 1 s shorter every 10 s (O57).
+        heatwave: { stepMs: 1_000, intervalMs: 10_000 },
         frostDelayMs: 3_000,
         leafFall: { intervalMs: 20_000, count: 10 },
         halvingIntervalMs: 60_000,

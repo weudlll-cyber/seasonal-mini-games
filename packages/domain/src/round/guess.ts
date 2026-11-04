@@ -5,7 +5,8 @@
  *
  * Responsibility: checks 1–7 of 02 §5.1 in that order (platform 1–3, the game's own 4–6 via
  *                 `validate`, the cooldown 7), then the game's decide. An accepted action
- *                 gets the next receive number and starts the cooldown from its receive time.
+ *                 gets the next receive number and starts the cooldown from its receive time,
+ *                 longer by the game's `extraCooldownMs` when it gives one (T120).
  *                 `Solved` signals become placings: in shared mode the first ends the round,
  *                 in individual mode solve order is place order (O4, O5). After a shared
  *                 win, a would-be correct guess inside the margin window sets the winning
@@ -76,7 +77,8 @@ export function guess<S, A, E, Cfg, Sec>(step: Step<S, A, E, Cfg, Sec>, cmd: Gue
   const tried = attempt(step, s, cmd);
   if (!tried.ok) return tried.reply;
   const receiveSeq = tried.act.receiveSeq;
-  const cooldownEndsAt = cmd.receivedAt + s.cooldownMs;
+  // The game may lengthen this player's wait (an explosion, O40); the end is recorded (T120).
+  const cooldownEndsAt = cmd.receivedAt + s.cooldownMs + (tried.decision.extraCooldownMs ?? 0);
   const { playerId, receivedAt, action } = cmd;
   step.emit({ type: 'GuessAccepted', playerId, receiveSeq, receivedAt, action, cooldownEndsAt });
   // Frost holds answers back; order, signals and the cooldown are not delayed (03 §2.4).

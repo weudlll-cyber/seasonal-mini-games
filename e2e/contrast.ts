@@ -171,6 +171,17 @@ export async function readable(
   const before = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
   for (const theme of themes) {
     await setTheme(page, theme);
+    // A special's banner fades in: measured in its first frames its text is still nearly
+    // transparent (1.29:1 once in a full run). Every running animation that ends (not an
+    // endless glow) ends first.
+    await page.evaluate(() =>
+      Promise.all(
+        document
+          .getAnimations()
+          .filter((a) => a.effect?.getTiming().iterations !== Infinity)
+          .map((a) => a.finished.catch(() => undefined)),
+      ),
+    );
     expect(await failures(page), `text below 4.5:1 on the ${where}, ${theme}`).toEqual([]);
   }
   await setTheme(page, before ?? 'light');

@@ -2,6 +2,15 @@
 
 The results of the security scans of roadmap phase 8 ([spec/11](spec/11-roadmap.md)), newest first. Each pass names its tools with their versions, the commands, every finding with its verdict, and what was fixed. The raw reports are in `reports/`. Where this file sits: [DECISIONS](DECISIONS.md) T106.
 
+## 2026-11-04 — Trusted Types for the admin app (night 8, piece 6)
+
+Branch `feat/guess-games`. Bingo 03 §7 asks the admin app for `require-trusted-types-for 'script'`.
+
+- **Check, report-only.** The admin app built for production (`vite build`, as the image does) and served under `/admin/` with the server's admin CSP read from the running server (3910), plus `Content-Security-Policy-Report-Only: require-trusted-types-for 'script'; report-uri /csp-report`; Playwright 1.64.1 (Chromium) signed in as the development admin opened every area and every tab. One report: `Function` (a `TrustedScript` sink) in the bundle, zod 4's eval probe (`new Function('')`, run when an object schema is created to choose compiled parsers). It was already a `script-src 'self'` violation (zod catches it and falls back), and came with the shared schemas the Integration screens of piece 5 brought into the admin bundle.
+- **Fix (code, no policy).** `@smg/contracts` switches zod to `jitless` before its first schema in any page with a `document` (`packages/contracts/src/withoutEval.ts`, imported first by its index); the server keeps the compiled parsers. No default Trusted Types policy: nothing in the app writes a string into a script sink, and a default policy would only let such a string through. After the fix: no report, no console line, report-only and enforced.
+- **Enforced.** Every admin path's CSP ends in `require-trusted-types-for 'script'` (`apps/server/src/http/plugins/securityHeaders.ts`, test in `server.integration.test.ts`); the player app has no such directive. Caddy passes the server's headers on (it adds HSTS only).
+- **E2E.** `e2e/trustedTypes.spec.ts` builds the admin app, serves it with the server's own admin headers (`e2e/builtAdmin.ts`, `/api` passed on to 3910) and walks every area with the header enforced, with no violation and no console error (DECISIONS T178, T179).
+
 ## 2026-11-01 — the parts that need no VPS (night run 3, N4)
 
 Branch `night/2026-10-27`; scans against the development servers on one machine. Reports: `reports/security-pass-2026-11-01/`.
@@ -37,5 +46,5 @@ The ZAP scans of the Vite servers went to their IP address, because Vite answers
 
 ### Left for later
 
-- Bingo 03 §7 also asks the admin app for `require-trusted-types-for 'script'`. It is not set: nothing here loads the built admin app in a browser, and the header can stop a bundle that writes HTML in a way the development server never shows. BACKLOG part one.
+- Bingo 03 §7 also asks the admin app for `require-trusted-types-for 'script'`: done on 2026-11-04 (above).
 - A ZAP baseline against a production install (behind Caddy, with TLS) belongs to the VPS part of phase 8.

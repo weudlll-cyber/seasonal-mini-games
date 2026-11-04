@@ -1,0 +1,93 @@
+/*
+ * @file   games/seasonal-target/web/fallen.css
+ * @module games/seasonal-target/web
+ * @brief  Styles of the Fallen tiles panel of a Leaf Fall round.
+ *
+ * Responsibility: on a desktop a box of three whole rows of chips that scrolls inside itself,
+ *                 a row at a time, so no row is cut in half (T151); on a phone a
+ *                 "Fallen (N)" button that opens the chips as a sheet at the bottom (T115).
+ *                 Colours only from the design tokens (light and dark).
+ * Spec:           docs/spec/02d-game-seasonal-target.md §8.3, §11
+ */
+/* The Fallen tiles panel: a short box of chips on a desktop. */
+.st-fallen-toggle,
+.st-fallen-close {
+  display: none;
+}
+
+.st-fallen-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+}
+
+.st-fallen-head h3 {
+  margin: 0;
+  font-size: var(--font-size-small);
+}
+
+.st-fallen-body {
+  display: grid;
+  gap: 0.25rem;
+}
+
+/* Rows of one height: the box holds exactly three of them, and scrolling stops on a row. */
+.st-fallen-list {
+  --st-chip: 1.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(4.75rem, 1fr));
+  grid-auto-rows: var(--st-chip);
+  gap: 0.2rem;
+  max-height: calc(3 * var(--st-chip) + 2 * 0.2rem);
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+}
+
+.st-fallen-list li {
+  scroll-snap-align: start;
+  display: grid;
+  place-items: center;
+  white-space: nowrap;
+  padding: 0 0.4rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--season, var(--color-border));
+  background: color-mix(in srgb, var(--season, var(--color-accent)) 14%, var(--color-card));
+  font-size: var(--font-size-small);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A phone: the panel behind its button, opened as a sheet. */
+@media (max-width: 899px) {
+  .st-fallen-toggle,
+  .st-fallen-close {
+    display: inline-flex;
+    min-height: var(--hit-target);
+  }
+
+  .st-fallen-body {
+    display: none;
+  }
+
+  .st-fallen[data-open='true'] .st-fallen-body {
+    display: grid;
+    position: fixed;
+    left: var(--gutter);
+    right: var(--gutter);
+    bottom: var(--gutter);
+    z-index: 30;
+    max-height: 60dvh;
+    padding: var(--space-2);
+    border: 2px solid var(--season, var(--color-border));
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-raised);
+  }
+
+  .st-fallen[data-open='true'] .st-fallen-list {
+    max-height: none;
+  }
+}

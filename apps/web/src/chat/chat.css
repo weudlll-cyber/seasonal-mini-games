@@ -59,6 +59,11 @@
   color: var(--color-text);
 }
 
+/* A long name gives way with an ellipsis, so the message still starts on its line (T202). */
+.chat-author .player-name {
+  max-width: 60%;
+}
+
 .chat-actions {
   display: inline;
   margin-left: 0.4rem;

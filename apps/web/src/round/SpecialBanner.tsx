@@ -1,19 +1,21 @@
 /**
  * @file   apps/web/src/round/SpecialBanner.tsx
  * @module web/round
- * @brief  The short banner above the guess list when a season special fires (O35).
+ * @brief  The one-line banner in the head of the round's list when a season special fires.
  *
- * Responsibility: for about 3 s after a special fires, one line in the season colour says
- *                 what happened: Leaf Fall's numbers falling and the range halved in the
- *                 game's words (its `banner` hook), Heatwave's new waiting time and Spring
- *                 Herald's hint in the platform's (./roundText); under Frost, while the
- *                 viewer's newest guess has just been sent and its answer is held, when it
- *                 will arrive. Derived from the live feed and the view on every tick, so no
- *                 timer of its own; the newest event wins. The same events keep their rows
- *                 in the guess list. A live region announces each new line.
+ * Responsibility: for 5 s after a special fires, one line in the season colour says what
+ *                 happened: Leaf Fall's numbers falling and the range halved in the game's words
+ *                 (its `banner` hook), Heatwave's new waiting time and Spring Herald's hint in
+ *                 the platform's (./roundText); under Frost, for the first 5 s of the round and
+ *                 on a phone only (a desktop's special line says it), that answers arrive late (a held own answer is said by its row, "answer
+ *                 arriving… 3 s", O47). It takes the place of the list head's title, so it never
+ *                 pushes the list down, and is cut with an ellipsis rather than wrapping (T142);
+ *                 the event's own line stays in the All list (./RoundLog). Derived from the live
+ *                 feed and the view on every tick, so no timer of its own; the newest event
+ *                 wins. A live region announces each new line.
  * Depends on:     react, @smg/contracts, @smg-game/registry/web (types), ../live/useRound
  *                 (FeedItem), ./roundText, ./roundSpecials.css
- * Used by:        ./RoundScreen
+ * Used by:        ./RoundBody, ./RoundLog
  * Spec:           docs/spec/03-seasonal-specials.md §2, §6; docs/spec/02-game-guess-the-number.md §12
  */
 import type { GameWeb } from '@smg-game/registry/web';
@@ -24,8 +26,8 @@ import type { FeedItem } from '../live/useRound.js';
 import { platformBanner } from './roundText.js';
 import './roundSpecials.css';
 
-// How long a banner stays (O35: about 3 s).
-const BANNER_MS = 3_000;
+// How long a banner stays (T142: 5 s).
+export const BANNER_MS = 5_000;
 
 function textOf(event: unknown, game: GameWeb | null): string | null {
   const e = event as { type?: string; event?: unknown };
@@ -33,22 +35,18 @@ function textOf(event: unknown, game: GameWeb | null): string | null {
   return platformBanner(event);
 }
 
-// Frost: the viewer's guess sent in the last 3 s whose answer is still held.
-function frostText(state: RoundStateView, game: GameWeb | null, now: number): string | null {
-  if (state.frostDelayMs === null || game === null || state.game === null) return null;
-  const held = game.text
-    .guesses(state.game)
-    .filter((g) => g.playerId === null && g.pending && now - g.at < BANNER_MS);
-  const newest = Math.max(...held.map((g) => g.at));
-  if (!Number.isFinite(newest)) return null;
-  const left = Math.max(1, Math.ceil((newest + state.frostDelayMs - now) / 1_000));
-  return `Frost: your answer arrives in ${String(left)} s.`;
+// Frost at the opening: the round opened with answers held (night-5 review: Frost had no sign
+// of itself until the first guess).
+function frostOpening(state: RoundStateView, now: number): string | null {
+  if (state.frostDelayMs === null || state.opensAt === null) return null;
+  if (now < state.opensAt || now - state.opensAt >= BANNER_MS) return null;
+  return `Frost: answers arrive ${String(Math.round(state.frostDelayMs / 1_000))} s late.`;
 }
 
-// The banner to show now, or null: the newest special event of the last 3 s, else Frost's.
-export function bannerOf(
+// The newest special event of the last 5 s in a line, or null. A desktop's banner is this
+// alone: its special line says Frost's sentence already (night-7 review).
+export function eventBanner(
   feed: readonly FeedItem[],
-  state: RoundStateView,
   game: GameWeb | null,
   now: number,
 ): string | null {
@@ -58,20 +56,30 @@ export function bannerOf(
     const text = textOf(item.event, game);
     if (text !== null) return text;
   }
-  return frostText(state, game, now);
+  return null;
 }
 
-export function SpecialBanner(p: {
-  readonly feed: readonly FeedItem[];
-  readonly state: RoundStateView;
-  readonly game: GameWeb | null;
-  readonly now: number;
-}): ReactElement {
-  const text = bannerOf(p.feed, p.state, p.game, p.now);
+// The phone's banner now, or null: the newest special event of the last 5 s, else Frost's at
+// the opening.
+export function bannerOf(
+  feed: readonly FeedItem[],
+  state: RoundStateView,
+  game: GameWeb | null,
+  now: number,
+): string | null {
+  return eventBanner(feed, game, now) ?? frostOpening(state, now);
+}
+
+export function SpecialBanner({ text }: { readonly text: string | null }): ReactElement {
   // The live region stays in the page, so each new line is announced; empty, it takes no room.
   return (
-    <div className="round-special-banner" role="status" data-testid="special-banner">
-      {text === null ? null : <p>{text}</p>}
-    </div>
+    <p
+      className="round-banner"
+      role="status"
+      data-testid="special-banner"
+      title={text ?? undefined}
+    >
+      {text}
+    </p>
   );
 }

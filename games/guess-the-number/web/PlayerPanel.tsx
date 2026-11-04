@@ -10,21 +10,21 @@
  *                 (O20). `GuessInput` is the input row, placed by the platform (pinned at the
  *                 bottom on a phone): the platform's cooldown ring, a number field that takes
  *                 a minus sign (with the shared ± button of @smg/ui where negative numbers are
- *                 possible, since phone keypads often lack one, T57) and a large Guess button;
- *                 Enter sends. Guess waits while a guess is on its way, and the field is
- *                 emptied only if it still holds the guess sent, so nothing typed is lost
- *                 (T76). The field takes whole numbers from −1 000 000 000 to 1 000 000 000
+ *                 possible, since phone keypads often lack one, T57) and a large Guess button
+ *                 that reads "Wait 6 s" during the cooldown (`buttonText`, T125); Enter sends.
+ *                 Guess waits while a guess is on its way, and the field is emptied only if
+ *                 it still holds the guess sent, so nothing typed is lost (T76). The field takes whole numbers from −1 000 000 000 to 1 000 000 000
  *                 (T53). The game's own refusals are shown in plain words; the platform's are
  *                 shown by the platform. A fallen number gets "Already fallen." at once,
  *                 without being sent (O37).
- * Depends on:     react, @smg/game-sdk (props), @smg/ui (sign toggle),
+ * Depends on:     react, @smg/game-sdk (props, buttonText), @smg/ui (sign toggle),
  *                 @smg-game/guess-the-number (types, limit), ./FallenNumbers, ./RangeBar,
  *                 ./text
  * Used by:        ./index
  * Spec:           docs/spec/02-game-guess-the-number.md §6, §12; docs/spec/03-seasonal-specials.md §2.1, §2.4
  */
 import { GUESS_LIMIT, type PlayerView } from '@smg-game/guess-the-number';
-import type { PlayerPanelProps } from '@smg/game-sdk';
+import { buttonText, type PlayerPanelProps } from '@smg/game-sdk';
 import { flipSign, SignToggle } from '@smg/ui';
 import { useState, type ReactElement, type ReactNode, type SyntheticEvent } from 'react';
 
@@ -113,7 +113,7 @@ export function GuessInput(props: GtnPlayerProps): ReactElement {
           disabled={!props.canAct || sending}
           data-testid="guess-button"
         >
-          Guess
+          {buttonText('Guess', props.waitS)}
         </button>
       </form>
       {message === null ? null : (
@@ -129,7 +129,7 @@ export function PlayerPanel(props: PlayerPanelProps): ReactElement {
   const view = props.view as PlayerView;
   return (
     <div className="gtn-player" data-testid="gtn-player">
-      <RangeBar range={view.range} removed={view.removed} />
+      <RangeBar range={view.range} />
       {view.hint === null ? null : (
         <p className="gtn-hint" data-testid="hint">
           {freeHint(view.hint)}

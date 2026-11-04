@@ -4,21 +4,33 @@
  * @brief  One room of the builtin chat: its messages, the text field, refusals in plain words.
  *
  * Responsibility: the room's messages oldest first, newest at the bottom, in a box that
- *                 scrolls inside itself and follows new messages; each line the author (or a
+ *                 scrolls inside itself and follows new messages; each line the author (one
+ *                 line, cut with an ellipsis, ../round/PlayerName) and the text (or a
  *                 system line, or "Message deleted") with its actions (./ModActions: Report,
  *                 and the moderators' actions with chat.moderate); a text field where Enter
  *                 sends, one message at a time, emptied only if it still holds the message
  *                 sent (T102), for viewers with chat.send (guests read only); a hint when the room
  *                 is locked or the viewer may not write now; the server's refusal of a message
- *                 in a plain sentence under the field.
- * Depends on:     react, @smg/contracts (views), ../shell/session, ./ModActions, ./useChat
+ *                 in a plain sentence under the field. Each live message by another player is
+ *                 told to the screen around it (./chatArrivals: the round's unread badge).
+ * Depends on:     react, @smg/contracts (views), ../round/PlayerName, ../shell/session,
+ *                 ./chatArrivals, ./ModActions, ./useChat
  * Used by:        ./ChatPanel
  * Spec:           docs/spec/07-integration.md §2; Bingo 06 §7, Bingo 03 §12
  */
 import type { ChatMessageView, ChatRoomView } from '@smg/contracts';
-import { useEffect, useRef, useState, type ReactElement, type SyntheticEvent } from 'react';
+import {
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactElement,
+  type SyntheticEvent,
+} from 'react';
 
+import { PlayerName } from '../round/PlayerName.js';
 import { useSession } from '../shell/session.js';
+import { ChatArrivals } from './chatArrivals.js';
 import { LineActions } from './ModActions.js';
 import { useChatRoom, type ChatTarget } from './useChat.js';
 
@@ -34,7 +46,9 @@ function Line(p: {
   }
   return (
     <li className="chat-line">
-      <strong className="chat-author">{m.author ?? 'Former player'}</strong>{' '}
+      <strong className="chat-author">
+        <PlayerName name={m.author ?? 'Former player'} />
+      </strong>{' '}
       {m.text === null ? <em className="smg-muted">Message deleted</em> : <span>{m.text}</span>}
       <LineActions
         message={m}
@@ -102,8 +116,13 @@ function Writer(p: {
 }
 
 export function ChatRoom({ target }: { readonly target: ChatTarget }): ReactElement {
-  const { room, messages, problem, send } = useChatRoom(target);
   const { session, can } = useSession();
+  const me = session?.account?.displayName ?? null;
+  const arrived = useContext(ChatArrivals);
+  // Unread counts another player's message, never the viewer's own or a system line.
+  const { room, messages, problem, send } = useChatRoom(target, (m) => {
+    if (m.kind === 'player' && m.author !== me) arrived?.();
+  });
   const list = useRef<HTMLOListElement>(null);
   // Follow the newest message at the bottom.
   useEffect(() => {
@@ -113,7 +132,6 @@ export function ChatRoom({ target }: { readonly target: ChatTarget }): ReactElem
   if (problem !== null) return <p className="smg-muted">{problem}</p>;
   if (room === null) return <p className="smg-muted">Loading the chat…</p>;
   const writes = can('chat.send');
-  const me = session?.account?.displayName ?? null;
   return (
     <>
       <ol ref={list} className="chat-list" data-testid="chat-messages" aria-live="polite">

@@ -7,13 +7,14 @@
  *                 the latest signals in plain words (05 §7, DECISIONS T25); a score never
  *                 sanctions by itself (S5) — a security admin may suspend an account with a
  *                 reason, which ends its sessions and is audited.
- * Depends on:     react, @smg/contracts, ../http, ../TextInput
+ * Depends on:     react, @smg/contracts, ../http, ../TextInput, ../DisplayName
  * Used by:        ../App
  * Spec:           docs/spec/05-security-threat-model.md §2, §7; docs/spec/08-admin-settings.md §6
  */
 import type { AbuseRowView } from '@smg/contracts';
 import { useCallback, useEffect, useState, type ReactElement } from 'react';
 
+import { DisplayName } from '../DisplayName.js';
 import { api, ApiError } from '../http.js';
 import { TextInput } from '../TextInput.js';
 
@@ -92,7 +93,9 @@ export function AbusePage({ canSuspend }: { readonly canSuspend: boolean }): Rea
             <tbody>
               {rows.map((r) => (
                 <tr key={r.accountId}>
-                  <td>{r.displayName}</td>
+                  <td>
+                    <DisplayName name={r.displayName} />
+                  </td>
                   <td>{r.score}</td>
                   <td>
                     <ul>

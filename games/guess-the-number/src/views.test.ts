@@ -54,6 +54,7 @@ describe('player view', () => {
     expect(open).toEqual({
       range: { low: 1, high: 1_000 },
       removed: [],
+      newest: [],
       guesses: [
         {
           receiveSeq: 1,
@@ -74,6 +75,8 @@ describe('player view', () => {
           // 88 away: 8.8 %.
           tier: 'warm',
           comment: someLine,
+          // Released: nothing held for this viewer (T150).
+          held: false,
         },
       ],
       hint: null,
@@ -81,7 +84,8 @@ describe('player view', () => {
     const frosted = views.player(t.state, 'a', { releasedBefore: 1_000 });
     expect(frosted).toMatchObject({
       guesses: [{ feedback: null, tier: null, comment: null }],
-      log: [{ value: 500, feedback: null, tier: null, comment: null }],
+      // Another player's answer Frost holds is marked as on its way (T150).
+      log: [{ value: 500, feedback: null, tier: null, comment: null, held: true }],
     });
     expect(viewSchemas.player.safeParse(frosted).success).toBe(true);
     expect(views.player(t.state, 'nobody', all)).toMatchObject({ guesses: [] });
@@ -195,8 +199,8 @@ describe('result view', () => {
       secret: 412,
       secrets: null,
       guesses: { a: [{ value: 300, feedback: 'higher' }], b: [{ value: 500, feedback: 'lower' }] },
-      // Nobody won, so there is no closest miss (O22).
-      closestMiss: null,
+      // Nobody won: the round's closest guess, 500 is 88 away (T145).
+      closestMiss: { playerId: 'b', value: 500, distance: 88 },
     });
     const ind = played('full', 'individual');
     expect(views.result(ind.state, ind.secrets)).toMatchObject({

@@ -66,7 +66,7 @@ describe('the waiting area before the player’s first round', () => {
     expect(area.textContent).toContain('You keep it for the whole match');
     expect(area.textContent).toContain('you join the smallest team when your first round starts');
     const pressed = teamButtons().filter((b) => b.ariaPressed === 'true');
-    expect(pressed.map((b) => b.textContent)).toEqual([' Summer✓']);
+    expect(pressed.map((b) => b.textContent)).toEqual([' Team Summer✓']);
     expect(teamButtons()).toHaveLength(4);
     // The pressed team's icon is drawn in the button's text colour (a mask), not as a picture.
     const icon = pressed[0]?.querySelector<HTMLElement>('[role="img"]');
@@ -104,18 +104,33 @@ describe('the waiting area once the team is fixed (O26)', () => {
 });
 
 describe('the player rows', () => {
-  it('name the team or "no team yet", and the connection apart with a dot', () => {
+  it('show the team as its icon under "Team", named, and the connection apart with a dot', () => {
     show(match, 'a');
-    const rows = [...screen.getByTestId('match-players').querySelectorAll('li')];
-    const cells = rows.map((li) =>
-      [...li.children].map((c) => c.textContent.replace(/\s+/g, ' ').trim()),
-    );
-    expect(cells).toEqual([
-      ['Hanna', 'no team yet', 'online'],
-      ['Anna', 'Summer', 'away'],
-      ['bot-01', 'Winter', 'online'],
+    const list = screen.getByTestId('match-players');
+    // The heading row over the team column, hidden from a screen reader (T212).
+    const head = list.querySelector('.match-players-head');
+    expect(head?.getAttribute('aria-hidden')).toBe('true');
+    expect(head?.textContent.trim()).toBe('Team');
+    const rows = [...list.querySelectorAll('li:not(.match-players-head)')];
+    const teams = rows.map((li) => li.querySelector('.match-player-team'));
+    // The icon alone: the team's name is its accessible name and tooltip, never text.
+    expect(teams.map((t) => t?.getAttribute('aria-label'))).toEqual([
+      'no team yet',
+      'Team Summer',
+      'Team Winter',
     ]);
-    expect(rows[0]?.children[1]?.className).toBe('smg-muted');
+    expect(teams.map((t) => t?.getAttribute('title'))).toEqual([
+      'no team yet',
+      'Team Summer',
+      'Team Winter',
+    ]);
+    expect(teams.every((t) => t?.getAttribute('role') === 'img')).toBe(true);
+    expect(teams.map((t) => t?.textContent.trim())).toEqual(['–', '', '']);
+    expect(rows.map((li) => li.querySelector('.player-name')?.textContent)).toEqual([
+      'Hanna',
+      'Anna',
+      'bot-01',
+    ]);
     const presence = rows.map((li) => li.querySelector('.match-presence'));
     expect(presence.map((p) => p?.getAttribute('data-online'))).toEqual(['true', 'false', 'true']);
     expect(presence.every((p) => p?.querySelector('.match-dot[aria-hidden="true"]'))).toBe(true);

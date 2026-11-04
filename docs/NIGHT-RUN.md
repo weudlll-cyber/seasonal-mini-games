@@ -2,6 +2,876 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## The team column, the owner's confirmations, the merge (2026-11-04)
+
+Branch `feat/guess-games` from `6260b84`, merged into `master` by this task (the owner's approval of 2026-11-04). Technical decisions from T212.
+
+### Status
+
+| Piece                                      | State | Commit      |
+| ------------------------------------------ | ----- | ----------- |
+| 1. The team column                         | done  | `12fcc1c`   |
+| 2. The owner's confirmations, a clean OPEN | done  | this commit |
+| 3. The merge into master                   | open  |             |
+| 4. The sweep and the handover              | open  |             |
+
+### Piece 1 — the team column (T212)
+
+- The waiting area's list and the Players panel: the team as its icon alone (`TeamIcon`, new in `season/`, used by both), named and titled; a heading row "Team"; the waiting area's column gaps 0.25rem. Measured with a 24-character name (192 px of text) in "Next round" → Players: before, the row 290 px, the name 172 of 192 px at 1280 × 720; with the icon and the narrower gaps 196 of 196 px at 1280 × 720 and 215 of 215 px at 390 × 844.
+- CI's e2e on `6260b84` failed journey 9: axe's `aria-prohibited-attr` on the result's "took part" (`aria-label` on a plain span, T211); now visually hidden text and an `aria-hidden` dash. Journey 9 passes.
+- Removed: the team names as text in those lists (`teamName` there), the `smg-muted` "no team yet" text. Tests (the web package only, O64): `waiting.test.tsx` (the icon's name and tooltip, the heading), `longNames.test.tsx`, `result.test.tsx`; e2e journey 35 (new, `playerNames.spec.ts`) and journey 9, once each.
+
+### Piece 2 — the confirmations, a clean OPEN (O65)
+
+- DECISIONS O65 records that the owner played all four games and confirmed every "to confirm" proposal, T170 and T177 among them, and the explosion penalty per round (O40 amended). The 26 T entries with a proposal marker now read "confirmed by the owner 2026-11-04"; 11 more T entries named in the confirmed sections carry the same note.
+- OPEN.md holds only what is open: the load gate (r), the built-as-proposed questions (w)–(ab), two Night-6 review points, the spec conflicts and gaps; 148 → 44 lines. The dropped entries are closed in BACKLOG part two with their reasons, with the three games (played, confirmed, merged by this task).
+
+### Piece 3 — the merge into master (T213)
+
+- One `pnpm verify` on `396fa3f`: green (148 test files, 816 tests). PR #1 into `master`.
+- CI on `396fa3f` (push) failed journeys 5 and 12: their checks still read the team as text in the player list. The PR's first run failed journey 34 on Firefox (a bot's random first guess won the round at once) and the Trusted Types check on webkit-mobile (the copied CSP's `upgrade-insecure-requests`); CodeQL flagged the harness's proxy (js/request-forgery). All four fixed (T213), each check run once in its browser.
+- The PR's second run (`fa66cea`): 101 passed; journey 22 failed on firefox-timing with one "Hint" tag, the other's tile filled by the bot's random guess (T144). Journey 22 now accepts that (T213); run once on Firefox, passed.
+
+## Play-test round 2 (2026-11-04)
+
+Branch `feat/guess-games` from `f17d9d4`. Owner decision O64 (2026-11-04: tests only where they answer something about the change), Heatwave in every round setup, the next-round form keeping the season, player lists giving the name the room, Seasonal Target's result. Technical decisions from T208; the ones that change what players or the host see are proposals (OPEN.md, "Round 2, to confirm"). Nothing goes to `master`.
+
+### Status
+
+| Piece                                     | State | Commit    |
+| ----------------------------------------- | ----- | --------- |
+| 0. O64 recorded (DECISIONS, CLAUDE.md)    | done  | `c107ce6` |
+| 1. Heatwave in every round setup          | done  | `bfcbeec` |
+| 2. The next-round form keeps the season   | done  | `bfcbeec` |
+| 3. Player lists: the name gets the space  | done  | `f0ccb8d` |
+| 4. Seasonal Target's result               | done  | `b67b76b` |
+| 5. Checks (O64), re-shoot (O55), handover | done  |           |
+
+### Pieces 1–2 — Heatwave in every round setup, the season kept (T208, T209)
+
+- The Quick Test form shows Heatwave's two fields for summer through `HostFields` (reused; its `doc` now optional, `set` by key) and sends them; a normal match's first round uses the host menu's form, which had them. One zod shape for both requests (`heatwaveSettings`, `heatwaveBody.ts`, extracted from `rounds.ts`).
+- The next-round form starts from the kept season choice and halving (`SEASON_CHOICE`, `useSeasonChoice(last)`), or the last round's own (MatchPage, after a Quick Test round).
+- Tests (the touched packages only, O64): `quickTest.test.tsx` (new: fields only for summer, defaults and bounds; the body with and without them), `roundBody.test.ts` (the Quick Test's contract), `heatwave.test.tsx` (the season kept, In Season's fallback).
+
+### Pieces 3–4 — the name gets the space, Seasonal Target's result (T210, T211)
+
+- The waiting area's list and the Players panel hold their columns on the list (subgrid): team and status as wide as their widest entry, the name the rest (`match.css`, `players.css`); the fixed 7.75rem/7rem team columns are gone. Test: `longNames.test.tsx` (the rules).
+- The result: T205's narrower phone grid removed (`st.css`); the placings' place `PlaceCell` ("–", named "took part") and `Shortened` ("Pts" and "#" on a phone, "Points" and "Place" for a screen reader) in `ResultParts.tsx`; the place column narrow for a shared round (`data-mode`), the phone's number columns 4.25rem; a board game's placings 21rem on a desktop (`resultBoard.css`, its 6rem place column removed). The placings rows take part in the highlight, without markers (the shoot's probe: a marker left "dev-host" 17 of 73 px at 1280 × 720; without it and with 0.25rem cell sides, 73 of 73, and 64 of 64 on a phone): `useHighlightRow` (@smg/ui) extracted from GuessLine's own and used by both; the result's game panel gets `marks` from `roundMarks`.
+- Tests: `result.test.tsx` ("–" and its name, "Pts" and "Points"), `tags.test.tsx` in web/round (the placings' markers and highlight) and in Target (the result grid's tags and highlight).
+
+### Needs the owner
+
+Nothing blocks. To decide after play (OPEN.md, "Round 2, to confirm"): T209 (the kept season), T210 (the list columns), T211 ("–", "#" and "Pts" in every game's placings; Seasonal Target's result grid with tags and the highlight, its placings without markers). Delete the branch `shots/playtest-1` after the review.
+
+### Handover
+
+- Branch `feat/guess-games` at the final commit, piece 5's (the handover message names its SHA); dev servers restarted on it: API 3910, web 5410, admin 5411.
+- Quick Test: <http://127.0.0.1:5410/#/quick-test>. Seasonal Target, Seed `acorn`, Season summer (the Heatwave fields in the form), Tile size 20, Bots 19, **Fast specials** on, **Start from the lobby** on; after the round, Host: the next round's form keeps summer.
+
+### Piece 5 — checks (O64), re-shoot (O55), handover
+
+- e2e once, Chromium, the touched journeys: 23 (the game choice and Quick Test start), 28 (the four result pages), 34 (Target with 20 bots), the lobby's two (the host menu): all pass.
+- The shoot: `tmp/r2shoot.mjs` (git-ignored), 14 images on `shots/playtest-1` under `round-2/`: the Quick Test form in summer, the next-round form keeping summer after a summer round, "Next round" → Players with a 24-character name (85 and 104 px of 192: the row is too narrow, the ellipsis right), Target's result with 19 bots (443 px grid, 20 px tiles, every tag; a hovered row), its phone result (309 px, one line a row, "#", "–", "Pts", the first part 813–837 of 844 px). Review fixes: the placings' markers cut "dev-host (you)" (gone; cells 0.25rem), "Place" ran into "Player" on a phone ("#").
+- `pnpm verify`, the one run (O64): 565 s, format, lint and types green, five tests in three files past 5 s (Target's leafFall and specials properties, the admin's webhooks screen, whose timed-out first test ran into the next two). Their cause as T206's: CPU-bound files, 1.1–1.8 s alone, three to four times slower in the full run; the five files get T206's 20 s file timeout with the measured reason, and the run was done once more (below).
+- `pnpm verify` once more: green in 1 050 s (every project but the server's 114 files and 627 tests in 173 s, the server's unit tests 15 files and 70 tests in 5 s, its integration tests 19 files and 119 tests in 296 s). CI on the final push is the second proof (O64).
+
+## Clean state before the next play-test (2026-11-04)
+
+Branch `feat/guess-games` from `d2656f9`. Owner decision O63 (2026-11-04: Heatwave per round in the host menu), two display fixes and a reliably green test suite. Technical decisions from T203; the ones that change what players or the host see are proposals (OPEN.md, "Clean state, to confirm"). Nothing goes to `master`.
+
+### Status
+
+| Piece                               | State | Commit    |
+| ----------------------------------- | ----- | --------- |
+| 0. O63 recorded; CI's coverage gate | done  | `fbb3214` |
+| 1. Heatwave in the host menu (O63)  | done  | `886b203` |
+| 2. Two display fixes                | done  | `280dbbb` |
+| 3. A reliably green test suite      | done  | `67e45ee` |
+| 4. Re-shoot (O55), handover         | done  |           |
+
+### Piece 0 — O63 and CI's coverage gate
+
+- CI's `verify` job failed on `3bd0e3a`, `d768f96` and `d2656f9` at `pnpm test:coverage`: game-sdk's branches 89.07 % for a 90 % threshold, from two unreachable fallbacks in the new `marks.ts` (`?? 'currentColor'`, `?? 'dot'`) and one in `tagOf` (`?? ''`). `markAt` now computes the colour's token and picks the shape without an index, `tagOf` reads the bot's number from the key; `pnpm test:coverage` passes locally (437 tests). The e2e job of `3bd0e3a` failed journey 33 on the phone's result bar, 3 px too wide, fixed in that commit's `match.css` already (CI ran the commit's own tree; `d768f96`'s e2e passed).
+
+### Piece 1 — Heatwave in the host menu (O63, T203)
+
+- "Heatwave step" (1–10 s) and "Heatwave every" (5–300 s) in the round form for a summer round, from the admin's values (1 s, 10 s), kept from round to round (`last`, as every round setting); `createRoundBody` names both in the request's contract; the server takes the round's values over the defaults (`chooseRoundSettings`); the fast profile keeps them.
+- Reused: the generic host fields (`Field`, `hostChooses`), the settings check (`settingProblem`), the round form's `last`. New: `formSeason`, `forSeason` (roundFields), `HostFields` (HostMenu, split from `RoundForm`).
+- Tests: `roundBody.test.ts` (in and out of range, not whole, strict), `roundSession.test.ts` (the round's values over the defaults, outside the bounds refused), `heatwave.test.tsx` (only in summer, prefilled, bounds, sent, kept).
+
+### Piece 2 — two display fixes (T204, T205)
+
+- Seasonal Target's own rows: the "you" tag once, "You" for a screen reader only (`GuessLine`'s `Name`, split from `Who` for its complexity in a follow-up commit, after lint flagged it past the commit); the other rows keep tag and name. Test: `tags.test.tsx`.
+- Seasonal Target's phone result: measured in the browser with the viewer in the table: the cell 121 px held "dev-host" at 43 of 64 px; narrower cell padding reached 49 px, the table's own place column (3.25rem, "took part" wrapping) 64 of 64, but then the first part was 876 of 844 px with the 309 px grid; a 244 px grid (`min(100 %, 100dvh − 37.5rem)`) gives 811–835 of 844 px with the name whole. Chosen: narrow the grid (the placings are below it on a phone already); the one-line "took part" rule removed from `resultBoard.css`.
+
+### Piece 3 — a reliably green test suite (T206)
+
+- Measured with nothing of this repository running: one full `vitest run` took 558 s with 30 failures in 14 files (5 s timeouts; a forks pool that timed out starting; two assertions). Without the server's project: 222 s, 21 failures, all CPU-bound files near 5 s alone (the conformance kit 1.2–4.3 s a test, GTN's chi-square 4 s, its Spring property 3.4 s, Target's input tests up to 3.4 s). With four forks: 440 s, green. The machine: Intel Core Ultra 7 165U, 12 cores (2 performance, 8 efficiency, 2 low-power), 14 threads, 15 W; outside load: Bingo's `sbr-rehearsal` container (about 22 % CPU, left alone), Docker, the editor.
+- Causes and fixes (T206): seven forks on two performance cores (now half the threads, at most four); the server's integration files beside the CPU-bound ones (now three passes: the rest, the server's `src/`, its `test/`; the harness's container stop 60 s, found when the first proof runs' server pass timed out in `afterAll` and in `maintenance.test`); wall-clock waits (the shared round's countdown 15 s in `rounds.integration`; in `specials.integration` the Heatwave test's own 5 s interval and polls for every special's effect in place of a fixed margin after it; in `security.integration` the rate-limit test sends until the first 429, the socket guard 10 s; found by the first proof run, whose server pass failed those two); the admin's fake `Response` read over a variable number of turns (now a plain answer settled in microtasks, `fakeServer.ts`); stale Vite processes of stopped dev tasks (stopped by process tree). Fake timers: the timing tests already use them (`banner.test`, `tags.test`'s 3 s tap); none waits on real time besides the two integration tests above.
+- CI's e2e (journey 33, `6ffd66b`): the phone's result bar wider than 390 px with the Linux runner's font metrics; the game's name now gives way first (`.result-bar-game`, its title the full name). Journeys 33 and 28 pass.
+- The proof (the owner's addendum: one green run here, CI on the final push the second): `pnpm verify` green in 743 s with nothing of this repository running (Bingo's containers left as they were): format, lint, types, then the tests in three passes, every project but the server's 113 files and 621 tests in 166 s, the server's unit tests 15 files and 69 tests in 4 s, its integration tests 19 files and 119 tests in 273 s; four forks of 14 threads (12 cores). The attempts before it, each failing only in the server's pass, led to the security, container-stop and pass-split fixes above.
+- Timeouts raised only where the work is the test (20 s, in the file, with the measured reason): the conformance kit, GTN's feedback, secrets and specials properties, Bomb Defusal's rules (chi-square), Target's input, panels, sentinel and tags tests; the one-test 15 s of the play-test run is replaced by its file's.
+
+### Piece 4 — the re-shoot (O55), the handover (T207)
+
+- `tmp/csshoot.mjs` (git-ignored), 8 images added to `shots/playtest-1` under `clean-state/`: the host menu's next-round form for summer with "Heatwave step" 1 and "Heatwave every" 10 (1280 × 720 light and dark, 390 × 844 light), Seasonal Target's own rows with "you" once (1280 × 720 light and dark, 390 × 844 light), its phone result (light and dark). Measured: nothing cut; the phone result's grid 244 px, its first part 811 of 844 px, "dev-host (you)" whole.
+- My review: the phone's host panel ran past the screen's left edge, hiding the start of every field (it predates O63): fixed (T207), re-shot. Correct: both Heatwave fields only in summer, their help lines, the rows' "you" tag alone, the tags of 20 bots.
+- e2e after the fix: the lobby journeys pass.
+
+### Needs the owner
+
+Nothing blocks. To decide after play (OPEN.md, "Clean state, to confirm"): T205 (the phone result's 244 px grid), T207 (the host panel on a phone). Questions:
+
+- The proof is one green `pnpm verify` here (the owner's addendum) and CI on the final push. Bingo's `sbr-rehearsal` container used about 22 % CPU throughout and was left alone.
+- Delete the branch `shots/playtest-1` after the review.
+
+### Handover
+
+- Branch `feat/guess-games` at the final commit, piece 4's (the handover message names its SHA); dev servers restarted on it: API 3910, web 5410, admin 5411.
+- Quick Test: <http://127.0.0.1:5410/#/quick-test>. Each game with Seed `acorn`, **Fast specials** on, **Start from the lobby** on. Heatwave: Season summer; after a round, the Host menu's form shows "Heatwave step" and "Heatwave every" (the first round's form is the Quick Test's); Seasonal Target: Tile size 20, Bots 20.
+
+## Play-test fixes (2026-11-04)
+
+Branch `feat/guess-games` from `606eecf`. The owner's decisions after playing all four games, O56–O62 (2026-11-04), the defects found while playing, and night 8's leftovers. Technical decisions from T187 (piece 5: T200–T209); the ones that change what players see are proposals the owner confirms after play (OPEN.md, "Play-test fixes, to confirm"). Nothing goes to `master`. Piece 5 runs in a background agent in the same tree, on its own files, beside pieces 1–4.
+
+### Status
+
+| Piece                                    | State | Commit    |
+| ---------------------------------------- | ----- | --------- |
+| 0. O56–O62 recorded                      | done  | `69de4f9` |
+| 1. Specials (O56, O57, O59–O61)          | done  | `587eee2` |
+| 2. Guess The Number: fallen numbers      | done  | `3bd0e3a` |
+| 3. Bomb Defusal: result, help, slot tap  | done  | `3bd0e3a` |
+| 4. Seasonal Target: messages, tags, grid | done  | `3bd0e3a` |
+| 5. All games and leftovers               | done  | `5a4a92c` |
+| 6. Re-shoot (O55), self-review, handover | done  |           |
+
+### Needs the owner
+
+Nothing blocks. To decide after play (OPEN.md, "Play-test fixes, to confirm"): T187–T197 (the specials' details, the fallen list, Bomb Defusal's help line, the wrapping banner and comments, players by tag, the layout and result sizes, the review fixes), T201 (no password change for website accounts), T202 (names on one line, team columns). Questions:
+
+- O57 says the host can still change Heatwave's step and interval: both are game-admin settings (the admin app's game document), not fields of the host's round form; they were not made host settings (no decision says so).
+- Display names are at most 24 characters (the accounts' CHECK), so the 30-character name was written into the page to test it (piece 5).
+- Seasonal Target's phone result: the full-width grid leaves the placings less room, so "dev-host" ends in an ellipsis there, "(you)" whole (T197); a narrower grid would keep it whole.
+- The shoot has 33 images, under the aim of 40–60: the changed states are fewer than night 8's.
+- Journey 22 failed once in its cleanup (an empty answer from `/session` while aborting the match); it passed on rerun.
+- Delete the branch `shots/playtest-1` after the review.
+
+### Piece 1 — the specials (O56, O57, O59–O61; T187–T191)
+
+- O56, Guess The Number: the hint `{ kind: 'lastDigit', digit }` ("Free hint: the number ends in 7.", "Hint: ends in 7"), the default of `spring.hintType` (options `lastDigit`, `half`; a stored `parity` falls back to the default, T187); a hidden range gets the last digit (T56 amended). Shown from `opensAt` as before; the phone's chip now in the season colour (`.smg-hint`, T188, all four games). The golden run re-recorded: it changes only in the hint.
+- O57: `summer.stepIntervalS` default 30 → 10 s (`summer.stepS` 1 s), both marked O57; the 3 s floor unchanged.
+- O59, Safecracker: the hint's digit locked in its box (T189). O60, Bomb Defusal: the hint's colour locked in slot 1; the slots now hold a wire or nothing, so a tapped slot empties just that one (piece 3's slot tap, built here with the model, T190).
+- O61, Seasonal Target: two quarters, the decoy from `spring/<shared|playerId>`, a tuple in the fixed order (`QUARTER_NAMES`, `quarterPair`); both tinted and tagged; the old single-quarter path is gone (T191).
+- Tests: the last digit as a property (negative ranges too; individual hints only to their own player, one room event in shared mode); Heatwave's defaults (`roundSettings.test.ts`); the locked box (`hint.test.tsx`, new) and slots (`slots.test.tsx`, new); the server checks the whole code and sequence after a hint (`rules.test.ts` of both games); the two quarters (`spring.test.ts`, new: fixed order, the target's first about a third of the time for a south-west target, every other quarter drawn as the decoy, deterministic, from the `spring` label) and on the grid (`quarters.test.tsx`, split from `panels.test.tsx`, 300 → 275 lines).
+- e2e: journey 20 types round the locked box and checks its name; journey 21 checks the locked slot, and makes its wrong first cut in a summer round (cut, and if the first wire was right, cut again with another first wire), since a spring round's first cut can no longer be wrong; journey 22 two "Hint" tags; journeys 3 and 17 the new hint text.
+- Removed: the `parity` hint (state, view schema, settings, text), `.bd-slot-hint` and the phone's wider hint slot, the single-quarter `quarter` prop and event field, `tagTileOf`'s null case.
+
+### Piece 2 — Guess The Number's fallen numbers (O58, T192)
+
+- The panel lists the fallen numbers under the range block, plain chips, ascending, with "Fallen numbers (N)": three rows on a desktop, then "+N more" opening the full list; every one in the phone's sheet. The phone's line: "Fallen 12: 902, 77, 431" (the view's new `newest`, newest first).
+- Reused: `useDisclosure` (the "+N more" sheet, as the old button's), `formatNumber`, `.smg-chip`, `leafFallOn`. New and shared: `useFit`/`fitCount` in @smg/ui (how many items of a clipped list show whole).
+- Removed: the bar's gaps and their merging (`segmentsOf`, `MERGE_PERCENT`, `.gtn-range-gap`, `--merged`), the "Fallen (N)" button and its grid placement beside the bar (`.gtn-fallen-toggle`, the `:has(.gtn-fallen)` rules), `RangeBar`'s `removed` prop, the gap tests.
+- Tests: `fallen.test.tsx` rewritten (the list in view and plain, no button; "+8 more" of 20 with a laid-out list, the full sheet and Escape; "None yet."; the phone's line with the newest three and "Fallen 0"); `line.test.tsx`; the golden run re-recorded (it gains only `newest`). e2e journey 18: the list in view without opening, "+N more" when shown, the phone's line with the newest three and its sheet with all.
+
+### Handover
+
+- Branch `feat/guess-games` at the final commit, piece 6's (the handover message names its SHA); dev servers restarted on it: API 3910, web 5410, admin 5411.
+- Screenshots: the orphan branch `shots/playtest-1` (33 images and `play-through.txt`); `shots/night-8` is deleted on origin.
+- Quick Test: <http://127.0.0.1:5410/#/quick-test>. For each game: Game as below, Seed `acorn`, the Season named, **Fast specials** on, **Start from the lobby** on; Start round from the Host menu.
+
+| Game                  | What to look at                                                                                                                                                                                                                      |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Guess The Number      | Spring: "Free hint: the number ends in 7." and the phone's "Hint: ends in 7" in the season colour. Autumn: the fallen numbers in the panel, three rows then "+N more"; the phone's "Fallen 12: …, …, …". Summer: Heatwave every 10 s |
+| Seasonal Safecracker  | Spring: the hint's digit locked in its box, in the season colour; typing steps over it                                                                                                                                               |
+| Seasonal Bomb Defusal | Spring: the help line above the picker, the hint's colour locked in slot 1, tap a filled slot to empty it; the result's sequence wraps, nothing scrolls sideways                                                                     |
+| Seasonal Target       | Tile size 20, **Bots** 20 (a busy grid): tags on the tiles, hover a list row (only that player's tiles stay bright), the wide column; Spring: two green quarters; the result's larger grid                                           |
+
+### Summary
+
+- All six pieces done; nothing dropped for time (piece 5's last bullet checked on the shots). Piece 5 ran in a background agent (its report in its section); I did 0–4 and 6.
+- Decisions: O56–O62; T187–T197, T200–T202.
+- Checks per piece in their sections; CI for the final push: reported after the handover.
+
+### Piece 6 — the re-shoot (O55), the review, the handover (T197)
+
+- The shoot: `tmp/ptshoot.mjs` (git-ignored), 33 images to `shots/playtest-1`: each game's spring round (Guess The Number also individual), Guess The Number's autumn with 50 fallen numbers, Bomb Defusal's picker (help line, locked slot) and result, Seasonal Target with 20 bots (22 guesses, a hovered row, the result), the long-name views (the 30-character name written into the page). 1280 × 720 light and dark, 390 × 844 light, 1920 × 1080 for Target's widened column.
+- Measured (`play-through.txt`): no round view scrolls; Target's grid 652 px (30.5 px tiles) with a 556 px column at 1280 × 720, 1 012 px (48.5 px) with 836 px at 1920 × 1080, 374 px (16.6 px) on a phone; the busy list 15 of 22 rows in view at 1280 × 720, 22 of 22 at 1920 × 1080, 7 on a phone; the result grid 387 px at 1280 × 720 (night 8: 331) and 309 px on a phone (night 8: 211), both first parts fit (712 of 720, 837 of 844). Truncation check: nothing a player needs cut, but by design the long names' ellipsis, their comments giving way first (T150), and "dev-host" on Target's phone result.
+- My review of every new shot: fixed — Bomb Defusal's phone slot cut "yellow" (number and swatch only); Target's result placings cut "dev-host (you)" at 1280 × 720 (narrower columns, 387 px grid), its phone first part was 900 of 844 px ("took part" on one line); the long-name state's script. Seen and correct — both quarters tinted, a "Hint" tag giving way to the own tile on (1, 1), the hint chips in the season colour, "+38 more", the "Others" row and the hint leave the phone's list well over six rows (piece 5's last bullet), the tags and markers on 20 players, a hovered row fading the rest. Owner items: "Needs the owner".
+- e2e after the fixes: journeys 21, 22 (once failed in its cleanup, then passed), 24–28, 33, 34 pass in Chromium.
+- `pnpm verify` at the end: format, lint and types green; tests 776 of 803, the 27 others in 13 files all 5 s timeouts and two timing waits of the admin's webhook test while the dev servers ran beside it, every one of the 13 files passing on its own (85 tests).
+
+### Piece 5 — the coordinator's part (games/**)
+
+- The games' result histories (`.gtn-players`, `.bd-players`, Safecracker's and Seasonal Target's lists) named a player in a plain `<strong>` that wrapped its line at 390 px with a long name (piece 5's probe: 24 → 48 px): now `.smg-one-line` (@smg/ui `base.css`, games cannot import apps/web's `PlayerName`), at most half the line, cut with an ellipsis, the full name in its title (T202). Test: GTN's `panels.test.tsx`.
+- The agent's report: display names are at most 24 characters (`smg.accounts` CHECK), so the 30-character name was written into the live page's name elements and measured there (piece 5 above).
+
+### Pieces 2–4 — one commit
+
+- Pieces 2, 3 and 4 share files (the sheet, DECISIONS, `@smg/ui`'s index, the platform's round styles) and went into one commit; no hunk staging (interactive git is not available). `pnpm verify`: format, lint and types green; tests 800 of 803 with the other three passing on their own (two 5 s timeouts on the busy machine, one socket timing); Target's keyboard-selection test now has 15 s (ten moves redraw 400 tiles, 3.4 s alone).
+
+### Piece 3 — Bomb Defusal: the result, the help line, the slot tap (T193)
+
+- The help line above the picker; the slot tap and the locked slot came with piece 1's slot model (T190). The revealed sequence wraps as whole chips; the probe found no element wider than the page at 1280 × 720 and 1920 × 1080, and at 390 × 844 the result bar 3 px too wide ("Seasonal Bomb Defusal", the code, Host, Play): the bar's buttons got slimmer sides (`match.css`, after piece 5's commit).
+- Extracted: `WireButtons` (WireInput, 61 → 60-line function), `useSlots` (useSequence), `pickerHelp` (text). Removed: the desktop's one-line rule for the revealed sequence.
+- Tests: `slots.test.tsx` (the help line); e2e journey 33 new (`bombPicker.spec.ts`: help line one line / at most two, locked slot, slot tap, a cut, the result without sideways scroll at the three sizes); journey 26's desktop rows 18 → 17 (the help line's row; the spec asks 14).
+
+### Piece 4 — Seasonal Target: messages, tags, the grid (O62, T194–T196)
+
+- The info column widens beside the square grid (T195): measured 652 px grid and 556 px column at 1280 × 720, 1 012 px and 836 px at 1920 × 1080, the phone's grid 374 px; no page scroll, no list comment cut (scrollWidth ≤ clientWidth) at any size. Comments wrap to a second line in a board game's list, the banner wraps everywhere (T194).
+- Players by tag (T196): `marksOf`, `MARK_COLORS`, `MARK_SHAPES`, `tagOf` (game-sdk), `PlayerMark`, `marks.css`, the `--mark-*` tokens and the shared highlight (`setHighlight`, `flashHighlight`, `useHighlight`, `lit`, @smg/ui); `GameWeb.playerTags`; the platform's `roundMarks` for rows (GuessLine `useRowHighlight`), the Players panel (`Marker` in RoundSide, via FocusShell) and the game's props (`marks`, `viewerKey`); Target's `marksFor`, `tileHighlight.ts` (split from TileGrid, 297 → 261 lines), `heat.ts` `who` in place of `mark`.
+- Result grid (T195): 331 → 427 px at 1280 × 720 (placings 22rem; the part's free height 476 px), 211 → 309 px on a phone (a full-width square, the part as tall as its content).
+- Removed: the colour-only corner dot (`.st-mark`, `markOf`, `NEUTRAL`), the banner's ellipsis. The stale sentence above `sameAnswer` corrected to T151's rule.
+- Tests: `marks.test.ts` (tags; 24 distinct combinations, none repeated before the 25th, colours first; join order), `tags.test.tsx` in Target (22 players' tags and 22 distinct markers, no tag under 20 px, the highlight on and off, hovering a tile) and in web/round (rows' marker and tag, other games keep the dot, hover, focus and a phone's 3 s tap, the Players panel); the tile tests read the tile's face (`faceOf`). e2e journey 34 new (`targetTags.spec.ts`); journeys 22 and 27 pass.
+
+### Piece 5 — all games and leftovers (T200–T202)
+
+- Long names (T202): `PlayerName` (apps/web/src/round) is now the name in the waiting area and the chat's author as well as the result tables and the Players panel; its styles moved to `playerName.css`, imported by the component. A name focused or tapped wraps inside its box. The admin app's account, abuse and sanction tables use the new `DisplayName` (one line, ellipsis, title). Display names are at most 24 characters (the accounts table's check), so the browser probe (`tmp/p5names.mjs`) wrote a 30-character name into each name element and measured it at 1280 × 720 and 390 × 844: cut with an ellipsis where its box is narrower, no row taller, "(you)" never cut, no page scroll. The round list (`.round-who` in `roundLog.css`, a separate commit under the rows lock) caps a name at half its line, so a long name no longer pushes the guess and answer onto a second line at 390 px (row 39 → 59 px before, unchanged after); it keeps its own span with a title, not `PlayerName`, since on a phone the row is a button and a focusable name inside it would be invalid. "Your guesses" shows no names (T150).
+- Team columns (T202): the waiting area's team and connection, and the Players panel's team and guesses, are fixed columns; the Players panel shows the team's icon; the placings keep a slot for the team icon when teams play.
+- Change password (T201): `GET /session`'s account carries `hasPassword`; a website account sees no form, a line that says why, and "Delete my account". Tests: `AccountPage.test.tsx`, the integration tests of register and handoff, journey 29 (`e2e/accountDeletion.spec.ts`).
+- L1 (T200): `l1` plays ten rounds (five plain, the four specials, halving); T180 amended, 09 §5 and OPEN aligned. Smoke run under the heavy lock, 20 players + 100 spectators (not the 200-player run): all ten rounds solved, proof ok, gap-free, nothing lost or duplicated, one winner each, no HTTP or socket problem, 772 s.
+
+## Night 8 (2026-11-04)
+
+Branch `feat/guess-games` from `60821a6`. Owner decision O55 (2026-11-04: screenshot runs cover only the changed states). Technical decisions from T150; the ones that change what players or admins see are proposals the owner confirms after play (OPEN.md, "Night 8, to confirm"). Nothing goes to `master`. Pieces 4–6 and 8 ran in background agents in the same tree, on their own files, beside pieces 1–3.
+
+### Status
+
+| Piece                                         | State | Commit    |
+| --------------------------------------------- | ----- | --------- |
+| 0. O55 recorded                               | done  | `103082c` |
+| 1. All games: review fixes                    | done  | `08eb91d` |
+| 2. Seasonal Target: review fixes              | done  | `735ac7b` |
+| 3. Safecracker and Bomb Defusal: review fixes | done  | `77e8ce5` |
+| 4. Player account deletion screen             | done  | `d253ee6` |
+| 5. Admin screens: providers, origins, hooks   | done  | `3822148` |
+| 6. Admin app Trusted Types                    | done  | `745b083` |
+| 7. The "opens in 0 s" intro                   | done  | `7271721` |
+| 8. Load scenarios L1 specials and halving     | done  | `3faed63` |
+| 9. Re-shoot (O55), self-review, handover      | done  | `fff4db6` |
+
+### Needs the owner
+
+Nothing blocks. To decide after play (OPEN.md, "Night 8, to confirm"): T150, T151, T153 (the review fixes), T170 (account deletion), T177 (the admin Integration area), T180 (L1 has six rounds, not ten). Questions:
+
+- The session's API budget (120 requests a minute) is less than a round page's reload rate in a busy round (up to four a second); since T185 a refused load is tried again after a second, so the cost is a short delay (piece 7).
+- The load runs: under Frost, every release of held answers is its own commit batch, so a 200-player winter round's acknowledgements were 5.6 s at p95 on this laptop (piece 8; a server proposal in OPEN (r); the gate is the reference VPS).
+- The account page offers Change password to accounts made by the website handoff, which have no password (piece 4).
+- The admin app's phone layout: its navigation is a tall column of links above the page (seen on the Integration shots; it predates piece 5).
+- Quick Test's bot can open a 4-digit code in two guesses, so journey 25 failed once before its round opened (passes on rerun).
+- Delete the branch `shots/night-8` after the review.
+
+### Pieces 1–3 — the review fixes (T150–T153)
+
+- Piece 1, every game (T150): the desktop's special line holds the whole sentence, wrapping (a paragraph, no longer a one-line toggle); a row gives way comment first, then name, never the guess or the answer (no 9 rem cap on names); "Your guesses" shows guess and answer only (`bare`); individual mode's rows have no "You" and no own tint (`solo`, `data-solo`; `data-own` keeps saying whose row it is, the e2e helpers find rows by it), the others' counts are a row of their own ("Others: …", `others-line`) that the banner never replaces; the head "12 guesses" and "Log (M)"; every held Frost answer, others' too, says "answer arriving…" (the guess engine marks the others' held lines, `held`, false where the visibility hides the answer for good); the ring's check mark named "Ready"; names take the column's room, "(you)" apart; the phone info line's parts whole ("Hint: odd", "Hint: red first", "8 wires · cut 6"); results: the game's panel in two parts (`ResultPanelProps.part`: `reveal` in the first part, `history` below it in full, no inner scroll box), "did not guess" (`NO_GUESSES`), Bomb Defusal's history in the round's colour dots (`SequenceDots`), "Code: 0834", the phone bar without the match's title and the code's label.
+- The Heatwave line seen minutes later in the night-7 shots: the special line (the rule, on view all round), not the banner; the banner left 5 s after its event in every shot. It is the whole sentence now, so it no longer reads like a stale banner. The 5 s are checked with fake timers (`banner.test.tsx`) and in journey 3 (the banner appears and is empty again within 7 s).
+- Spring's hint appears once per view (the panel's line on a desktop, the info line on a phone); the banner says only that a hint came ("Spring Herald: everyone got a free hint."). Nothing to change.
+- Piece 2, Seasonal Target (T151, T152): seven colours in `closeness` mode (`heat.css`, split from `tiles.css`, 297 → 218 lines), five in the other modes, the legend of the round's mode; the tier from the shown rounded distance in `distance` and `direction` mode (`answerTier`, server; the worked example (10, 10)→(12, 12) is now hot there, burning in `closeness` mode; Leaf Fall's candidates at one rounded distance are one tier); halving dims only empty tiles; a fallen tile or one outside the area is never selected ("That tile fell."), the arrows step past fallen tiles, Guess disabled on a selected tile that fell; "Fallen (N)" in whole rows; "Just missed"; the ink-ringed own frame; the phone legend's "ColdHot" came from the platform's last-child ellipsis rule turning the legend into a block, removed with T150.
+- Piece 3 (T153): Safecracker's fallen digit greyed and crossed corner to corner (an SVG cross, no badge); Bomb Defusal's own marker a neutral ring beside colour dots (a platform rule for any row of colour dots); the revealed sequence on one line on a desktop; rows at 1.375 rem at 1920 × 1080.
+- Commits by file: lines of piece 3 in files piece 1 also changed (`roundLog.css`, `sc.css`, `bd.css`) and the decisions T151–T153 with OPEN went into piece 1's commit; no hunk staging (interactive git is not available).
+- Extracted: `Who` (the row's dot and name, `GuessLine.tsx`), `GamePart` (`ResultScreen.tsx`), `History` and `Reveal` (Target's `ResultPanel.tsx`), `tierBy` and `answerTier` (`geometry.ts`), `stepFrom` and `unselectable` (`TargetInput.tsx`), `shortHint` (GTN, Bomb Defusal; Safecracker had one), `SequenceDots` (`WireChip.tsx`, reusing `Swatch`). Reused: `othersLine`, `Swatch`, `sequenceText`, `CODES.OUT_OF_AREA`, `roundedDistance`. Removed: the special line's toggle state, the ring's "Ready" text and its size rule, the result's `--result-rest` box, the history lists' inner scroll boxes, the Fallen box's 5.4 rem cut, `.round-arriving-text`.
+- Lines before → after: GuessLine 177 → 203, RoundLog 183 → 189, InfoParts 132 → 124, CooldownRing 55 → 64, ResultScreen 109 → 131, MatchStandings 68 → 70, roundLog.css 281 → 280, round.css 249 → 235, result.css 289 → 283, cooldownRing.css 61 → 68, ResultBar 42 → 46, match.css 244 → 243, game-sdk web.ts 154 → 162, guess-engine views.ts 94 → 99; GTN ResultPanel 49 → 52, InfoLine 38 → 39, text.ts 152 → 167; Safecracker ResultPanel 61 → 64, text.ts 165 → 173, sc.css 232 → 234, Board 104 → 106; Bomb Defusal ResultPanel 55 → 71, WireChip 65 → 80, bd.css 267 → 294, text.ts 186 → 193; Target ResultPanel 81 → 102, TargetInput 206 → 239, heat.ts 151 → 167, heat.css new 184, tiles.css 297 → 218, st.css 190 → 181, words.ts 103 → 113, text.ts 136 → 144, fallen.css 84 → 93, HeatLegend 27 → 32, geometry.ts 171 → 185, rules.ts 41 → 42. New test file `rows.test.tsx`.
+- Checks: `pnpm verify` green (135 files, 769 tests; the golden run re-recorded: it gains only the `held` field). e2e Chromium: journey 28 (4/4), the timing journeys 1–7, 16–18, 20–22, 24–27 19/20 with journey 25 failed once because the bot opened the 4-digit code in 2 guesses before the page saw the round open, passing on its rerun (left alone: Quick Test's bot can win at once on a small code).
+
+### Handover
+
+- Branch `feat/guess-games` at the final commit (see the summary below); dev servers restarted on it: API 3910, web 5410, admin 5411.
+- Screenshots: the orphan branch `shots/night-8` (114 images and `play-through.txt`); `shots/night-7` is deleted on origin.
+- Quick Test: <http://127.0.0.1:5410/#/quick-test>. Admin: <http://127.0.0.1:5411/> (Dev sign-in as admin; the Integration area). For each game: Game as below, Seed `acorn`, a Season, **Fast specials** on, **Start from the lobby** on; Start round from the Host menu.
+
+| Game                  | What to look at                                                                                                                                                                                                                                                                    |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Guess The Number      | The special line's whole sentence; "Your guesses" with guess and answer only; "Log (M)"; individual mode's "Others: …" row and rows without "You"; winter: every held answer "answer arriving…"; the ring's check mark; the result's history below the first part, "did not guess" |
+| Seasonal Safecracker  | Autumn: fallen digits crossed from corner to corner; on a phone the six-digit answers whole (a second line where needed); the result's "Code: 0834"                                                                                                                                |
+| Seasonal Bomb Defusal | The neutral ring as your own marker beside the wire dots; the phone line "8 wires · cut 6" with "Hint: red first"; the result's history in colour dots, the sequence on one line                                                                                                   |
+| Seasonal Target       | Tile size 20; **Answers** `closeness` (seven colours, the legend with seven), `distance` and `direction` (two tiles with one number share a colour); autumn: click a fallen tile ("That tile fell."), "Fallen (N)"; spring with a halving day: only empty tiles dimmed             |
+
+- Also: the account page's "Delete my account" (sign in through the host page, or as a dev player to see the form); the admin app's Integration area.
+
+### Piece 9 — re-shoot, self-review
+
+- First shoot of the games (`tmp/n8shoot.mjs`, git-ignored) and its review, fixed at once: a phone row clipped Safecracker's six-digit answer and Seasonal Target's 340 px column clipped "answer arriving… 2 s" (rows now put a part without room whole on a second line, everywhere); the placings cut "dev-h… (you)" with room to spare (cells' side padding 16 → 8 px; on a phone the number, guesses and place columns narrower, the cell's parts 4 px apart: the cell measured 121 px for 126 px of parts, now 129 of 126); Bomb Defusal's revealed sequence put its numbers above the chips once kept on one line (each number now stays with its chip); Seasonal Target's rounds ended before the shots because the bot found the target (T154: a Quick Test `botDelayS`, used by the shoot: the busy shared round had 18 guesses and no winner).
+
+- The shoot (O55): `tmp/n8shoot.mjs` and `tmp/n8shoot2.mjs` (git-ignored), 114 images, `shots/night-8`. Changed states only: each game's shared summer round, individual autumn, Frost pending, the result (and Guess The Number's time-up), the spring hint line where it changed; Safecracker's fallen digits, Bomb Defusal's harmless line; Seasonal Target in closeness and distance mode, halving, a fallen tile clicked, a busy shared round (18 guesses, no winner); the account deletion form and its notice; the admin Integration area's three lists and their forms. 1280 × 720 light and dark, 390 × 844 light, 1920 × 1080 for the list games' larger rows and Target's grid. 14 images above the aim of 60–100: the account and admin screens came on top of the four games.
+- Measured (`play-through.txt`): no round view scrolls; every result's first part fits (324–712 px of 720, 515–828 of 844, 1 072 of 1 080); Target's 20 × 20 grid 660 px at 1280 × 720 (30.9 px tiles), 1 020 px at 1920 × 1080 (48.9 px), 374 px on a phone; the 30 × 30 busy round 19.9 px tiles; the result's 8 × 8 grid 331 px at 1280 × 720, 835 px at 1920 × 1080, 211 px on a phone; busy round 15 of 19 rows in view at 1280 × 720, 19 of 19 at 1920 × 1080. Truncation check (answers, held markers, guesses, names, "(you)", the special line, the info line's parts, the result bar, list heads, Fallen chips, digit and wire chips): nothing cut in the last shot of every state.
+- My review (every new shot of the list games' shared, individual, Frost and result states, Target's states, the account and admin screens): fixed — the items above; owner items — in "Needs the owner"; seen and correct — the special line wraps to two lines, Leaf Fall's and halving's banners leave after 5 s, a halving banner is cut with an ellipsis in Target's 340 px column (the banner is one line by design, T142; its Log row has it whole), the fallen-tile message with Guess disabled when the selected tile fell.
+- Checks: `pnpm verify` green at `c66e38d` (136 files, 772 tests); e2e journeys as listed under pieces 1–8.
+
+### Summary
+
+- All nine pieces done; nothing dropped for time. Agents: pieces 4, 5+6, 7, 8 (reports in their sections); I did 1–3 and 9.
+- Decisions: O55; T150–T154, T170–T171, T175–T179, T180–T184, T185–T186.
+- Lines and checks per piece in their sections. CI for the final push: reported after the handover.
+
+### Piece 8 — load scenarios L1: the special rounds and the halving round (T180–T184)
+
+- The driver plays L1's rounds (09 §5): `node load/guessStorm.mjs <players> [out.json] <scenario>`, scenario `plain`, `spring`, `summer`, `autumn`, `winter`, `halving`, `specials` (the four season rounds) or `l1` (all six in one match). New `load/scenarios.mjs` (the rounds' host settings, today's halving day through the admin route, token `load-check`, removed afterwards) and `load/measure.mjs` (server samples, percentiles, the fairness checks and the specials fired, moved out of `guessStorm.mjs`). No server change, no new route; the special timings are the game document's defaults (T182).
+- Fixed on the way: since T104 frames name players by number, so the night-1 driver no longer recognised its own answers; players now read their number (`you`) after joining (T183). Bots guess only after their last answer arrived (needed under Frost), track a halved range and fallen numbers from the room, and a turn left from the previous round writes only to that round's record. Clean-up runs in a `finally`.
+- Spec questions: 09 §5 says "ten rounds" but lists six (T180, proposal in OPEN); Heatwave cannot fire at L1's 3 s cooldown (03 §2.2 floor), so its round starts at 6 s (T181). Not built: L1 with Seasonal Target (05 §76 names it); that needs a target bot in the driver.
+- Runs, one each, 200 players + 100 spectators, on the shared server 3910 under the heavy lock (T184), laptop busy with the other agents' work; development-machine numbers, not the gate. Every round: proof ok, receive numbers gap-free, nothing lost, duplicated or reordered, one winner, ended by a solve, no HTTP or socket problem.
+
+| Round   | Length | Ack p50 / p95 / p99 (ms) | Specials fired (server lateness)      | Frost answer late p50 / p95 | CPU mean / peak | RSS peak | Loop lag p99 peak |
+| ------- | ------ | ------------------------ | ------------------------------------- | --------------------------- | --------------- | -------- | ----------------- |
+| plain   | 66 s   | 111 / 731 / 1 150        | none                                  | –                           | 0.36 / 0.49     | 331 MiB  | 115 ms            |
+| spring  | 66 s   | 54 / 163 / 256           | Spring Herald, 8 ms (seen 62 ms)      | –                           | 0.31 / 0.47     | 476 MiB  | 66 ms             |
+| summer  | 97 s   | 60 / 4 253 / 4 952       | Heatwave ×3, ≤ 4 ms (seen ≤ 168 ms)   | –                           | 0.27 / 0.49     | 496 MiB  | 80 ms             |
+| autumn  | 70 s   | 56 / 317 / 449           | Leaf Fall ×3, p95 30 ms (seen 445 ms) | –                           | 0.31 / 0.62     | 521 MiB  | 64 ms             |
+| winter  | 106 s  | 2 607 / 5 564 / 6 698    | (Frost has no firing)                 | 1 979 / 5 265 ms            | 0.61 / 0.83     | 415 MiB  | 167 ms            |
+| halving | 66 s   | 66 / 358 / 849           | halving ×1, 11 ms (seen 136 ms)       | –                           | 0.35 / 0.50     | 504 MiB  | 69 ms             |
+
+- Reading: the specials fire on time; what is slow is the round's serial commit chain on this laptop, 41–46 ms a batch (plain: 1 200 batches in 66 s). Under Frost every release is a batch of its own (`HeldDelivered`): 2 009 batches in 106 s; the server released all 4 202 held answers within 100 ms of their time, but they and the acknowledgements queued behind commits. A first winter run (overwritten) gave ack p95 3.3 s, Frost late p95 3.3 s. Proposal in OPEN (r): measure on the reference VPS; if Frost misses there, release without a commit of its own.
+- The API server stopped twice during the night (other pieces' server-side edits); two runs died with it and left `match.maxPlayers` at 1 000, put back by hand, load accounts deleted, the open load match aborted.
+- Commands: `node load/guessStorm.mjs 200 reports/night-8/load-l1-<round>-200.json <round>` for each round above. Reports: `reports/night-8/load-l1-*-200.json`.
+- Files: `load/guessStorm.mjs` 211 → 184 lines, `load/stormWorker.mjs` 107 → 179, `load/measure.mjs` new 101, `load/scenarios.mjs` new 82; `load/http.mjs` unchanged (reused: `signIn`, `call`, `inGroups`).
+
+### Piece 4 — player account deletion screen (T170, T171)
+
+- **Built:** "Delete my account" on the account page (`apps/web/src/account/DeleteAccount.tsx`): what is deleted and what stays, worded from `DELETE /me` and the tables' foreign keys; Delete stays off until the display name is typed exactly; an account with a password is asked for it once the server answers `PASSWORD_REQUIRED`; then the session is refreshed (signed out) and `#/account/deleted` says so. `deleteAccount` in `session.tsx`, the route in `router.ts`, the account screens split out of `AppShell`'s `Screen` (complexity).
+- **Reused:** `api`/`ApiError` (shell/http), `useSession`, `AccountField` and `FormError` (account/formParts), `accountError` (one new code, `CONFIRMATION_REQUIRED`), `ActionButton` (components/fields); the confirm pattern mirrors the admin app's `ConfirmDialog` (effect first, Cancel beside a danger button that stays off until the input is right). The admin dialog checks only a minimum length, not an exact text, so nothing was moved to `@smg/ui`.
+- **Server:** unchanged; the route already ends every session and clears the cookie (T105).
+- **Tests:** `DeleteAccount.test.tsx` (form, exact name, deletion, password step, refusal, the notice's route); e2e journey 29 (`e2e/accountDeletion.spec.ts`, timing project) with the host site's setup in `e2e/hostSite.ts`.
+- **For the owner:** T170 (OPEN, "Night 8, to confirm"). Noticed and left alone: the account page shows Change password to an account made by the handoff, which has no password (the server answers `PASSWORD_REQUIRED`); `e2e/embed.spec.ts` still says handoff accounts cannot delete themselves through `DELETE /me` and removes them in the database, and could use `e2e/hostSite.ts`.
+
+### Piece 6 — the admin app's Trusted Types header (T178, T179)
+
+- Report-only run of the built admin bundle in Chromium (every area and tab, signed in): one report, zod's `new Function('')` probe from the shared schemas. Fixed with `packages/contracts/src/withoutEval.ts` (zod `jitless` where a `document` exists, imported first by the index); afterwards no report and no console line, report-only and enforced. Details in [security-pass.md](security-pass.md).
+- Enforced: `securityHeaders.ts` appends `require-trusted-types-for 'script'` to every admin path's CSP (test in `server.integration.test.ts`: the admin path has it, `/` not). Caddy passes the header on unchanged.
+- E2E: `e2e/trustedTypes.spec.ts` with `e2e/builtAdmin.ts` builds the app and serves it with the server's own admin headers; it needs no dev-server restart (T179). Passes in Chromium; journeys 30–32 pass again in `chromium-timing`.
+- Checks: `pnpm verify` green (136 files, 772 tests).
+- For the coordinator: the player app (apps/web) now also runs zod without compiled parsers in the browser (the same probe was a `script-src 'self'` console violation there); no change in its files.
+
+### Piece 5 — admin screens for identity providers, embed origins and webhooks (T175–T177)
+
+- New: the admin app's Integration area (`apps/admin/src/integration/`: `IntegrationPage`, `ProvidersPanel` with `ProviderForm`, `OriginsPanel`, `WebhooksPanel` with `WebhookForm` and `WebhookDeliveries`, the shared `form.tsx` (checkbox, text area, `issueText`, `FormEnd`, `NewOrForm`, `Table`) and `useListed.ts` (the list, its confirm dialog, `put`)); `App.tsx` opens it for `integration.manage`.
+- Server, no new route: a provider's PUT without `pinnedPublicKey` keeps the key (`IdentityProviderChange`, `HANDOFF_ALGS` and `MAPPED_ROLES` in @smg/contracts; `updateProvider`, `adminIntegration.ts`), test `providers.integration.test.ts`. The authorization matrix rows were there (authzTable, `INTEGRATION`).
+- Reused: `useConfirm`/`ConfirmDialog`, `StepUp` through `http.ts`, `TextInput`, `failureText`, the moderation tabs' markup, the contract schemas (`IdentityProviderBody`, `EmbedOriginBody`, `WebhookEndpointBody`).
+- Tests: `providers.test.tsx`, `origins.test.tsx`, `webhooks.test.tsx` (step-up retry included; helper `fakeServer.ts`), the areas test in `admin.test.tsx`; e2e journeys 30–32 (`e2e/integration.spec.ts`, TIMING) pass in Chromium. `pnpm verify`: lint, typecheck and 772 tests green; format check failed only in `apps/web/src/live/useMatch.ts` and `useRound.ts` (another piece's files, half-way).
+- Noticed, left alone: the server's `MAPPABLE_ROLES` set in `integration/providers.ts` could use the contract's `MAPPED_ROLES`.
+
+### Piece 7 — the "opens in 0 s" intro (T185, T186)
+
+- Method: a throwaway Playwright script (scratchpad, not in the repo) signed in as `dev-player-1` against the running dev stack (web 5410, API 3910), under the heavy lock. Each attempt starts a Quick Test (lobby off, so the round counts down at once) straight after the previous one, its round still running, records the round's `opensAt` from `GET /rounds/:id/state`, when the intro shows "Opens in 0 s" and when it goes (a MutationObserver in the page), every intent with its answer and every `events` frame (`page.on('websocket')`), and every API answer of 400 or more. The intro leaving 300–400 ms after `opensAt` is the frame's path (the frame plus the 250 ms reload delay), 750 ms or more T127's reload.
+- Same tab, in-app Quick Test page started again (`location.hash`, same socket): 30 attempts, the intro left 314–355 ms after `opensAt` every time, the frame arrived 45–60 ms after it, no intent refused (`match.watch` ok every time).
+- `page.goto` to the next match's address (same document, same socket; the Quick Test started through `POST /dev/quicktest`, as journey `direct` does): 23 + 30 + 30 attempts (the first run's 24th attempt timed out, the script then kept going): intro left 305–363 ms after `opensAt` in every attempt that showed it, no intent refused. In 2 of 30 in each of the last two runs the intro never showed: the round's first state load was answered 429 (the session's 120 requests a minute, spent by the page and the script's own requests together) and not tried again, so the page showed nothing of the round until the next frame 3 s later.
+- So the coordinator's hypothesis (`match.watch` refused by the intent limit or the room limit) did not hold in 113 switches. The stall comes from the HTTP rate limit: with the session's budget spent just before the opening (130 `GET /session` 150 ms before `opensAt`, 5 attempts), the frame came 93–207 ms after `opensAt`, its load was answered 429, and the intro stayed at "Opens in 0 s" for 4.6 s and 4.4 s (T127's load refused too, rescued only by the next bot frame) and 0.65 s twice (T127's load passed). Reproduced in 4 of 5.
+- Fix (T185): `apps/web/src/live/retry.ts` (new, 48 lines: `retryable`, `useRetry`); `useRound.ts` 158 → 194 (the state load in `useStateLoad`, retried a second later after a 429, a server error or no answer, cancelled when the round changes); `useMatch.ts` 54 → 73 (the match load retried, a `match.watch` answered `RATE_LIMITED` sent again). T127's reload kept as the safety net for a frame that never comes (T186). After the fix, the same drained run: 1.48 s at worst (two refusals in a row), 0.78–0.79 s otherwise; 10 + 10 normal attempts in each mode 312–349 ms, none stalled.
+- Tests: `retry.test.tsx` (new, 3 tests: a refused round load tried again a second later until it passes, a 404 not tried again, the match load and a refused watch sent again). No e2e spec added: draining a session's API budget at the right moment is a timing test against the shared server; the probe above is its record. Journeys 1 and 2 (`rounds.spec.ts`, Chromium timing) pass.
+- Noticed, left alone: the probe's teardown aborts were refused with 429 as well (the 44 matches were aborted afterwards, throttled); a round page may load its state four times a second, twice the session's budget over a minute, which a long busy round can spend (for the owner: the budget is a default, not changed).
+- Checks: scoped eslint, prettier, typecheck and vitest green; `pnpm verify`: format, lint and typecheck green, tests 770 passed, one file failing outside this piece (`apps/server/test/webhooks.integration.test.ts`, "asn1 encoding routines::illegal padding" in its setup).
+
+## Night 7 (2026-11-03)
+
+Branch `feat/guess-games`. Owner decision O54 (2026-11-03); technical decisions T141 onward, the layout ones proposals the owner confirms after play (OPEN.md, "Night-7 layout, to confirm"). Nothing goes to `master`.
+
+### Status
+
+| Piece                             | State | Commit                             |
+| --------------------------------- | ----- | ---------------------------------- |
+| 1. Layout system (O54)            | done  | `e72ff09`                          |
+| 2. Seasonal Target on this layout | done  | `5b3d369`                          |
+| 3. List games on this layout      | done  | `5b3d369`                          |
+| 4. Result screens                 | done  | `a073507`                          |
+| 5. Known defects and clean-up     | done  | `749c005`, `330810d`               |
+| 6. Re-shoot, measure, self-review | done  | `b7d2789` (fixes), shots `a9bcf3f` |
+
+### Needs the owner
+
+Nothing blocks. To look at after play: OPEN.md, "Night-7 layout, to confirm" (T141–T145, proposals) and "Night-6 screenshot review, for the owner" with the night-7 items (the list below, state "owner"). Delete the branch `shots/night-7` after the review.
+
+### Handover
+
+- Branch `feat/guess-games`; dev servers restarted on the final app code (`b7d2789`; the commits after it change only journey 16 and this sheet): API 3910, web 5410, admin 5411.
+- Screenshots: the orphan branch `shots/night-7` (526 images, 263 light/dark pairs, with `play-through.txt`), nothing in the working tree (T146).
+- Quick Test: <http://127.0.0.1:5410/#/quick-test>. For every game: Game as named below, Seed `acorn`, a Season of your choice, **Fast specials** on, **Start from the lobby** on; in the lobby, Start round from the Host menu.
+
+| Game                  | What to look at                                                                                                                                                                                                                                            |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Guess The Number      | The stage's one-line rows, "Your guesses" in the right column (shared), the special line on top of it; on a phone the info line "1–1,000" and its sheet; "All (N)" with the events; individual mode: "bot-01: 8 guesses" instead of their rows             |
+| Seasonal Safecracker  | "2 right · 1 wrong place", "no digit right", the legend line in the panel; the phone's compact digit strip with "Hint: 2nd is 4"                                                                                                                           |
+| Seasonal Bomb Defusal | Sequences as colour dots (hover for the names), "First 2 cuts right"; eight wires in one row, two rows with a panel open; the phone's "8 wires · cut 6 · wrong first cut +5 s"                                                                             |
+| Seasonal Target       | Grid size 20: about 31 px tiles at 1280 × 720, 49 px at 1920 × 1080, the full phone width (18.7 px a tile); Spring's "Hint" tag (with today a halving day it moves inside the area); **Answers** all three: `closeness` (default), `distance`, `direction` |
+
+- Results: the slim bar instead of the app header; the first part on one screen with the top three, "All placings" and the team line; standings below; End the round from the Host menu before anyone wins to see "Closest guess".
+
+### Addendum — CI on feature branches (T149)
+
+- `.github/workflows/ci.yml`: no CI for `shots/**`; the Playwright job in all three browsers on `master` and on pull requests to `master`, in Chromium only elsewhere (its specs, then its timing specs). Recorded as T149, docs/spec/09 §1 updated. Its first run (`5493a05`): verify, security and docs green; e2e Chromium 29 of 30 timing tests and every other spec passed, journey 16 (spring) missed Spring Herald's 5 s banner on the slow runner; the journey now checks the line in the All list (the banner's timing is `banner.test`'s).
+
+### Piece 1 — one layout system (O54, T141–T143)
+
+- New: `RoundBody.tsx` (the parts and the two layouts), `InfoParts.tsx` (the game's panel, the desktop's special line, the phone's info line and its sheet), `GuessLine.tsx` (one row, moved out of `RoundLog.tsx`), `useRoundView.ts` (the layout by viewport), each game's `InfoLine` (Guess The Number's own file; Safecracker in `Board.tsx`, Bomb Defusal in `panels.tsx`, Seasonal Target in `PlayerPanel.tsx`); tests `log.test.tsx`, `layout.test.tsx`, a `line.test.tsx` for Guess The Number and Seasonal Target (Safecracker's and Bomb Defusal's in their `panels.test.tsx`), and a `sentinel.test.tsx` in each game's web folder over `sentinelViews` of `@smg/game-sdk` (a round with the kit's sentinel secrets: the info line and both panels show no mark; the web app may not import the server registry, so the test lives with each game).
+- Removed: the old banner stack above the list and its `hide` rule (an event now always stays in All), `useNarrow`/`NARROW`, the phone-only "All" sheet path, the phone halving cap of T140 (the panel is no longer above the list), the centred 46 rem input box, `.round-range`.
+- Extracted: Safecracker's `DigitStrip` (the panel's strip and the info line's compact one); the season pill's styles moved from `round.css` to `roundSpecials.css`.
+- Reused: `FocusPanel` and `usePanels` for the All panel and the game sheet, `colorsOf`, `playerColor`, `formatNumber`, `freeHint` and `hintText` of the games, `HeatLegend`, `leafFallOn`.
+- Checks: `pnpm verify` green (127 files, 734 tests, with the split test files of piece 5). E2E Chromium 34/34: 31 on the first run; journeys 24 (it measured a box the list games no longer have), 18 (Leaf Fall's row is now in the All list) and 11 (a phone reads the range on the info line) fixed in the journeys and passing on the re-run.
+
+### Piece 2 — Seasonal Target on this layout (T144)
+
+- Measured (probe, 20 × 20): 1280 × 720 grid 660 px, tile 30.9 px; 1920 × 1080 grid 1004 px, tile 48.1 px; 390 × 844 grid 374 px (the full width minus 8 px a side), 18.7 px a tile with its gap (17 px fill), the list under it 250 px (7 rows).
+- The phone's gutter was 16 px: the shell's one-screen padding has the same weight as focus mode's and loads later; `#root .shell-main:has(.focus-mode)` now wins (desktop too: 8 px above and below).
+- The "Hint" tag: `tagTileOf` in `TileGrid.tsx` (225 → 238 lines) puts it on the quarter's tile nearest the corner inside the area; new `hint.test.ts`; the panel test that pinned the tag on a dimmed corner tile now expects the moved tag.
+- Journey 27 plays a 20 × 20 grid (was 30 × 30) on a 30 s cooldown and checks the tile pitch: at least 30 px at 1280 × 720 and 18 px on the phone.
+
+### Piece 3 — the list games on this layout (T143)
+
+- Bomb Defusal: the sequence as colour dots with their names (`swatches`, `WIRE_COLORS` one map for the dots and the wire swatches; `swatch.css` 63 → 39 lines without its eight fill rules); "First 2 cuts right".
+- Safecracker: `counts` without zero parts; the panel's legend line (`Board.tsx`, `sc.css` 206 → 213).
+- Rows: the name keeps its room, the answer gives way with an ellipsis; tighter gaps on a phone.
+- Bomb Defusal on a desktop: eight wires in one row (`bd.css`, was two rows of four), so the stage's list has room for 18 rows at 1280 × 720 (16 before).
+- Checks: `pnpm verify` green (128 files, 737 tests); journeys 20–22 and 24–27 pass in Chromium (journey 21 failed once, waiting for a harmless wire, and passed on the re-run).
+- Rows in view (probe, measured room of the list): see piece 6's measurements; journeys 24–26 assert the room for 22/20/18 rows at 1280 × 720 and 10/10/6 on the phone.
+
+### Piece 4 — result screens (T145)
+
+- New: `ResultBar.tsx` (the slim bar of the result and the summary), `ResultParts.tsx` (placings with the top three and "All placings", the team line, the team result; moved out of `ResultScreen.tsx`, 174 → 109 lines), `placings.test.tsx`, `e2e/results.spec.ts` (journey 28, a first-part fit check per game).
+- `MatchPage.tsx` (248 → 251): `AfterView` and the shared `Side` (joining, the waiting area, the chat); `LobbyView` no longer carries the result. `match.css` (235 → 227) loses T138's one-screen rules; `result.css` (251 → 265) gets the first part; `summary.css` (105 → 121): the page under the bar, the team list one line per team; Seasonal Target's `st.css` drops the phone result's forced square board (the first part has a height now).
+- The closest guess on a time-up result: `closestMissBy` (guess-engine) takes every player's guesses without a winner; `GameText.runnerUp` gets `won`; `closestLabel` (game-sdk) words it for the four games.
+- The golden run of Guess The Number (T118) re-recorded for this one change: its three time-up rounds now carry the closest guess (`closestMiss` was `null`); nothing else in the recording moved. The four games' closest-miss tests say so.
+- Checks: `pnpm verify` green (129 files, 741 tests); e2e Chromium 38/38 (journeys 1–27 and the four of journey 28).
+- Measured (probe): the first part ends at 712 px of 720 at 1280 × 720, 1072 of 1080 at 1920 × 1080, 828 of 844 at 390 × 844; Seasonal Target's 8 × 8 result grid 331 px at 1280 × 720.
+
+### Piece 5 — known defects and clean-up
+
+- The night-6 review list (OPEN.md): solved by the layout and pieces 2–4 — the empty column under a list game's panel ("Your guesses" fills it, T141), the result's phone header, the viewer listed first, team points beside player points, no closest line on a time-up result, the summary's wrapping team list (T145), Safecracker's zero parts (T143), the "Hint" tag dimmed by a halving and Target's capped phone panel in a halving round (T144, T141), the centred 46 rem input row (the dock starts with the list, T141); Kept for the owner, with its reason: Target's strips beside the centred grid on a desktop, and the dark own-row tint of a muted dot (T147: a stronger tint was tried and cost contrast).
+- The test files over 300 lines split by subject (`749c005`): `boards.test.tsx` (324 lines, 9 tests) into `leaderboard.test.tsx` (4), `profile.test.tsx` (2), `verify.test.tsx` (3) with `fakes.tsx`; Guess The Number's `panels.test.tsx` (327 lines, 14 tests) into `panels.test.tsx` (9, 200 lines) and `input.test.tsx` (5) with `fixtures.ts`. No test lost.
+- Screenshots out of the tree (T146): 1,310 image files under `reports/` removed in one commit, `.gitignore` keeps them out, CLAUDE.md's rule; the night's shots go to `shots/night-7` only.
+- "Opens in 0 s": no cause found while working on the shell; left as is (OPEN.md).
+- `roundLog.css` reached 305 lines with T147: the pegs and colour dots moved to `roundMarks.css` (54 lines), `roundLog.css` 262.
+- Checks: `pnpm verify` green (129 files, 741 tests).
+
+### Piece 6 — re-shoot, measurements, self-review
+
+- Two full shoots (`tmp/n7shoot.mjs`, git-ignored) to the scratchpad, never into the tree: every game, each season, shared and individual, at 1280 × 720, 1920 × 1080 and 390 × 844, light and dark of one moment; Target at 8, 20 and 30 per side in each answer mode at all three sizes; 15+ guesses shared and individual; Frost pending; halving (today added as a halving day and removed after); the loupe; every panel and sheet; each result (solved, time up) and the match summary. The second shoot (after the fixes, `b7d2789`) is the one on `shots/night-7`.
+- Review: one subagent per game on the first shoot; I checked the fixed states in the second shoot myself.
+
+**Measured** (second shoot, `play-through.txt`; the e2e journeys 24–27 measure the list's room with one guess, which the shoot cannot):
+
+| Check                                                 | Target                     | Measured                                                                                                                                                |
+| ----------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Page scroll in a round view (every state, all sizes)  | none                       | none; only result pages scroll, below their first part                                                                                                  |
+| A panel or sheet over the dock                        | never                      | never ("panel clear of the dock" on every open-panel shot)                                                                                              |
+| Target 20 × 20 tile, 1280 × 720 / 1920 × 1080 / phone | ≈ 30 / ≈ 48 / ≥ 18 px      | 30.9 / 48.9 px; phone grid 374 px (full width minus 8 px a side), 18.7 px a tile with its gap, 16.6 px fill (the shoot measures a tile's fill)          |
+| Target 8 × 8 and 30 × 30 at 1280 × 720                | as large as height allows  | grid 660 px at every size of grid                                                                                                                       |
+| Guess rows, 1280 × 720 stage                          | GTN ≥ 22, SC ≥ 20, BD ≥ 18 | room (journeys 24–26): ≥ 22, ≥ 20, ≥ 18 pass; in the shoot 23 GTN rows of a 32-guess round in view, all 16–17 rows of SC's and BD's busy rounds in view |
+| Guess rows, 390 × 844                                 | GTN, SC ≥ 10, BD ≥ 6       | room ≥ 10, ≥ 10, ≥ 6 pass; in the shoot GTN 25 rows in view, SC 17, BD 14, Target 7 under the grid                                                      |
+| Result first part, 1280 × 720 / 390 × 844             | fits                       | fits for every game and both results (bottom 324–712 px of 720; 516–834 px of 844); the summary one screen at every size                                |
+
+**Screenshot review** (first shoot; state after the second):
+
+| #   | Found                                                                                                      | State                                                                     |
+| --- | ---------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| 1   | Frost's "3 s" badge cut in the narrow column                                                               | fixed (T148): the words give way                                          |
+| 2   | Comments and answers cut to one letter in "Your guesses"                                                   | fixed (T148): the answer keeps its words there                            |
+| 3   | List-game results: an empty card and a gap before the placings                                             | fixed (T148): the first part as tall as its content                       |
+| 4   | The result's chat field cut at 1280 × 720                                                                  | fixed (T148)                                                              |
+| 5   | Placings: "Guesses Points" touching, "took part" wrapping, unplaced order                                  | fixed on a desktop (T148); a phone still wraps "took part" (owner, below) |
+| 6   | Eight wires overlapping, Safecracker's dock wrapping, with a panel open                                    | fixed (T148): two rows of four / one row with shrinking boxes             |
+| 7   | No special sentence on a phone outside the pill's note                                                     | fixed: also at the top of the game sheet                                  |
+| 8   | Frost's banner beside the special line saying the same                                                     | fixed: a desktop shows no Frost opening banner                            |
+| 9   | Chips cut without an ellipsis (result bar, "Harmless 2" on the info line)                                  | fixed                                                                     |
+| 10  | Safecracker's phone hint without room ("F…")                                                               | fixed: compact strip, "Hint: 2nd is 4"                                    |
+| 11  | "All (N)" under 44 px on a phone                                                                           | fixed                                                                     |
+| 12  | Target's halved area hard to see in dark                                                                   | fixed: outside tiles at 12 % in dark                                      |
+| 13  | Dark own-row tints: dots and answers losing contrast (the 34 % tint of T147)                               | fixed by going back to 22 %; the olive tint stays greyish (owner)         |
+| 14  | Range never narrows from the answers                                                                       | not a defect: O17                                                         |
+| 15  | Guess enabled on a fallen tile in the loupe                                                                | not a defect: refused at once with its sentence (T113)                    |
+| 16  | Counts differing between sizes (Fallen 10/20)                                                              | not a defect: the sizes are seconds apart                                 |
+| 17  | Target result: the grid shares the game part with every player's guesses (160 px on a solved phone result) | owner: the game's result panel draws both; a game-side change             |
+| 18  | Individual mode on a desktop: the info column empty under the panel                                        | owner: T141 leaves "Your guesses" out there (it would repeat the stage)   |
+| 19  | Phone placings: "dev…" cut and "took part" on two lines                                                    | owner: four columns at 390 px leave the name about 7 rem                  |
+| 20  | Target's busy shared round: the bot wins before 15 guesses (Quick Test has no slower bot)                  | not shot; the busy individual round has the 15+ rows                      |
+| 21  | Heatwave's banner ("now 14 s") beside the ring ("Wait 8 s")                                                | not a defect: the cooldown and the time left of it                        |
+
+- Checks: `pnpm verify` green on `b7d2789` (129 files, 741 tests; two runs had one or two property and jsdom tests time out at 5 s while other projects' dev servers loaded the machine, each passing alone); e2e Chromium 38/38 on `a073507`, journey 16 updated for T148 and passing; CI: `5b3d369` green; `749c005` failed in journey 26 (the row target before `5b3d369`'s wires fix), `330810d` in a server integration test (a Leaf Fall round's state without its game, code untouched tonight; passed on the next run), `b7d2789` in journey 16 (the removed desktop Frost banner, fixed in the next commit); the final push: see the summary.
+- Noticed and left alone: journey 21 waits up to 30 s for a harmless wire and failed once locally and once in CI (WebKit, night 6); Quick Test's bot guesses at the round's cooldown, so a busy shared round of Safecracker or Target needs few own guesses.
+
+## Night 6 (2026-11-02/03)
+
+Branch `feat/guess-games`. Owner decisions O47–O53 (2026-11-02); technical decisions T134–T138. Nothing goes to `master`.
+
+### Status
+
+| Piece                                      | State | Commit    |
+| ------------------------------------------ | ----- | --------- |
+| 1. Shared focus shell (O47, O48, O49, O52) | done  | see below |
+| 2. Seasonal Target (O51, O53)              | done  | see below |
+| 3. List games layout (O50)                 | done  | see below |
+| 4. Result screens                          | done  | see below |
+| 5. Small items                             | done  | `6c4491e` |
+| 6. Re-shoot, measure, self-review          | done  | `88aa313` |
+
+Pieces 1–4 are one commit: they share the round view's grid (`round.css`, `RoundScreen.tsx`), the games' `text.ts` (hint lines and closest miss) and the decision and spec pages, and the subagent of piece 2 worked in parallel with pieces 1 and 3. `pnpm verify` green on that tree (116 files, 707 tests); e2e follows in piece 6.
+
+### Needs the owner
+
+Nothing blocks. To look at and decide: OPEN.md, "Night-6 small items (T139), to confirm" and "Night-6 screenshot review, for the owner" (the list below, state "owner").
+
+### Handover
+
+- Branch `feat/guess-games`; the app code is at `88aa313`; the commits after it change only journey 22 and this sheet. Dev servers restarted on it: API 3910, web 5410, admin 5411.
+- Quick Test: <http://127.0.0.1:5410/#/quick-test>. For every game: Game as named below, Seed `acorn`, a Season of your choice, **Fast specials** on, **Start from the lobby** on; in the lobby, Start round from the Host menu.
+
+| Game                  | What to look at                                                                                                                                                                                                                                         |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Guess The Number      | The list in the main area, the range panel alone on the right (O50); Summer: Heatwave said once; open Chat or Players on a desktop: the game moves aside (O48); on a phone the list fills the height (O49)                                              |
+| Seasonal Safecracker  | "1 right place, 2 right digits, wrong place", green from half the digits in place; the phone list's answers wrap inside the card                                                                                                                        |
+| Seasonal Bomb Defusal | "Boom!" once per row; the swatches' grey ring; the result's sequences separated by " · "                                                                                                                                                                |
+| Seasonal Target       | Grid size 20; the grid at full height on the left, legend, list, selection, ring and Guess on the right (O51); "Type coordinates"; Spring: the green "Hint" quarter; **Answers** all three: `closeness` (the default now, O53), `distance`, `direction` |
+
+- Results: the headline at half size, "Closest miss besides the winner: …", one screen at 1280 × 720.
+- Teams: "Team Spring" and the others everywhere (O52).
+- Screenshots: `reports/focus-mode-2/` with `play-through.txt` (the images left the tree in night 7, T146; they are in the history at `b4eebd0`).
+
+### Piece 1 — the shared focus shell
+
+- **Bar (O47):** "Wait N s" removed (`FocusBar`, its CSS and the `round-cooldown` test id); "9:50 left" stays. 14 px text, 36 px flat controls, 44 px high on a desktop; 52 px on a phone with 44 px touch targets. The pill's size in the bar comes from `focus.css`.
+- **Heatwave once (T134):** the domain keeps emitting `CooldownChanged` (it lowers the cooldown in the round's state, which the ring and button follow) and `SpecialFired`; the client words only the first firing ("Heatwave: waiting time is now 7 s and keeps getting shorter."), banner and one row. The ring carries `data-cooldown-ms` for journey 3, since the bar no longer shows the cooldown.
+- **No message twice (T135):** `bannerOf` returns the feed key it shows; the list leaves that row out while the banner stands. The four games no longer word a shared `HintGiven` as a list line (the hint stands in the game's panel or as Target's hint quarter); Spring Herald's one row and its banner say the same.
+- **Panels (O48, T136):** on a desktop an open panel is the round view's third grid column (360 px), so the game narrows instead of being covered; on a phone the sheet spans the grid rows from under the bar to the one above the input row (`grid-row: 2 / -2`). The focus moves to the panel element, its ring only under `:focus-visible` (the title's box is gone).
+- **Phone list (O49):** guesses only, filling the free height; "All (N)" counts guesses and shows from the first guess; the sheet has guesses and events. The sheet is a child of the round view's grid (it was inside the main area at first, which put it in the wrong box — caught in the first look).
+- **Teams (O52):** `teamName()` ("Team Spring") in `season.ts`, used by the Players panel, the team tiles, the result's team list, the match summary, the waiting area's picker and player rows, and the team leaderboard.
+- **Contrast:** the disabled button is 6.6:1 (T68) and the muted system text #4f5663 on the card; measured in piece 6. The banner balances its lines (`text-wrap: balance`).
+- **Frost:** the pending own row ("answer arriving… 3 s") already existed in every game (`pending` in each `guessRows`); kept, captured in piece 6.
+
+### Piece 2 — Seasonal Target (subagent in `games/seasonal-target/` only)
+
+- The input draws the grid into the platform's stage (`createPortal`; the new `stage` prop of a board game's input, `games/registry/web`); `react-dom` 19.3.1 and `@types/react-dom` 19.3.0 added to the game package (the versions apps/web uses), lockfile +6 lines.
+- Right column: legend, hint, fallen tiles; the list; selection, ring and Guess; "Type coordinates" (`useDisclosure`, closed by default) for the fields and arrows; the loupe keeps its own.
+- Removed: the "Grid: N × N tiles" line, the "Last guess" line, the input's legend, the `flow` grid variant and their CSS.
+- Numbers on tiles of at least 20 px (`NUMBER_MIN_PX`, T137); the hint quarter in a fixed green #7cc46a with a "Hint" tag in both themes; the corner dot with a 2 px ring and the number moved clear of it; the list's answer in the tile's tier colour (`data-tier="st-…"`, text shades at 4.5:1 or more).
+- Default answer mode `closeness` (O53), with a test that a stored `distance` stays `distance`; there is no platform-side Quick Test default.
+- "cell" → "tile" in every player-visible text.
+
+### Piece 3 — list games layout (O50)
+
+- Guess The Number, Safecracker and Bomb Defusal: the banner and the list in the main area with the input row at its bottom (up to 46 rem wide), the game's panel alone in the 320 px column. One list component (`RoundLog`), no per-game copy. Larger list text from 1600 × 950.
+- `InputRow.tsx` extracted from `RoundScreen.tsx` (293 → 230 lines).
+
+### Piece 4 — result screens
+
+- Headline 1.25–1.5 rem (was the page title's 1.8–2.75 rem), balanced, one line at 1280 px.
+- "Closest miss besides the winner: …" in all four games (Target: "… 3 tiles away (9, 10)."); the closest miss exists only with a winner (`closestMissBy`).
+- Desktop one screen (T138): head across with the proof's disclosure, the game's result left, the tables right, the chat filling the side column; Target's grid fills the part's height (the list of every guess capped at about three lines). A phone scrolls the page, the result first.
+
+### Piece 5 — small items (T139)
+
+- **Bomb Defusal:** "Boom!" once per row: the explosion comments no longer start with "Boom"/"Kaboom"/"Bang" (a test checks); one fixed grey ring (#7a808c) on every swatch, so white and black look alike in both themes. Rows are laid out alike for the viewer and others (dot, name, sequence, answer, comment; checked in the look shots); the harmless chips' crossed swatch and struck name and the struck wire buttons are measured in piece 6.
+- **Safecracker:** green once at least half the digits are in the right place, the same rule for every row; "1 right place, 2 right digits, wrong place"; no stray indent seen in individual mode on the desktop (the phone in piece 6); the fallen chips' × sits inside the chip's corner (unchanged, captured in piece 6).
+- **Own colour:** own rows, the Players panel's own row and Seasonal Target's own-tile frame use the viewer's dot colour (`--own`).
+- **Phone bar:** the season pill's note starts with "Shared round." or "Individual round." before the special's name and sentence.
+- **Host menu:** End match is a danger button from the first click.
+- Lines: Bomb Defusal `commentLines.ts` 204 → 205, `commentLines.test.ts` 60 → 65, `bd.css` 309 → 257 (it was over the limit before; the swatches moved to the new `swatch.css`, 63), `WireChip.tsx` +2; Safecracker `text.ts` 145 → 143, `panels.test.tsx` 200 → 207; `RoundScreen.tsx` 230 → 237, `SeasonPill.tsx` 91 → 94, `EndMatch.tsx` 71 → 73, `roundLog.css` 210 → 211, Target `tiles.css` 284 → 285.
+
+### Lines before → after
+
+| File                                           | Lines before → after |
+| ---------------------------------------------- | -------------------- |
+| `apps/web/src/boards/TeamBoard.tsx`            | 65 → 65              |
+| `apps/web/src/boards/boards.test.tsx`          | 324 → 324            |
+| `apps/web/src/match/MatchPage.tsx`             | 244 → 248            |
+| `apps/web/src/match/MatchSummary.tsx`          | 106 → 106            |
+| `apps/web/src/match/WaitingArea.tsx`           | 148 → 148            |
+| `apps/web/src/match/match.css`                 | 172 → 235            |
+| `apps/web/src/match/summary.test.tsx`          | 140 → 140            |
+| `apps/web/src/match/waiting.test.tsx`          | 152 → 152            |
+| `apps/web/src/round/CooldownRing.tsx`          | 53 → 55              |
+| `apps/web/src/round/FocusBar.tsx`              | 137 → 131            |
+| `apps/web/src/round/FocusPanel.tsx`            | 71 → 71              |
+| `apps/web/src/round/FocusShell.tsx`            | 136 → 138            |
+| `apps/web/src/round/ResultScreen.tsx`          | 158 → 174            |
+| `apps/web/src/round/RoundLog.tsx`              | 218 → 225            |
+| `apps/web/src/round/RoundScreen.tsx`           | 293 → 230            |
+| `apps/web/src/round/RoundSide.tsx`             | 104 → 107            |
+| `apps/web/src/round/SpecialBanner.tsx`         | 87 → 90              |
+| `apps/web/src/round/banner.test.tsx`           | 133 → 154            |
+| `apps/web/src/round/focus.css`                 | 204 → 209            |
+| `apps/web/src/round/focus.test.tsx`            | 180 → 224            |
+| `apps/web/src/round/result.css`                | 138 → 251            |
+| `apps/web/src/round/result.test.tsx`           | 89 → 91              |
+| `apps/web/src/round/round.css`                 | 266 → 255            |
+| `apps/web/src/round/round.test.tsx`            | 216 → 225            |
+| `apps/web/src/round/roundLog.css`              | 194 → 210            |
+| `apps/web/src/round/roundSpecials.css`         | 73 → 75              |
+| `apps/web/src/round/roundText.ts`              | 140 → 144            |
+| `apps/web/src/season/season.ts`                | 55 → 58              |
+| `e2e/focus.spec.ts`                            | 161 → 197            |
+| `e2e/lobby.spec.ts`                            | 181 → 181            |
+| `e2e/seasons.spec.ts`                          | 183 → 183            |
+| `e2e/specials.spec.ts`                         | 134 → 135            |
+| `e2e/target.spec.ts`                           | 83 → 87              |
+| `games/bomb-defusal/web/panels.test.tsx`       | 212 → 211            |
+| `games/bomb-defusal/web/text.ts`               | 158 → 158            |
+| `games/guess-the-number/web/panels.test.tsx`   | 326 → 327            |
+| `games/guess-the-number/web/text.ts`           | 146 → 142            |
+| `games/registry/web/index.ts`                  | 63 → 68              |
+| `games/safecracker/web/panels.test.tsx`        | 201 → 200            |
+| `games/safecracker/web/text.ts`                | 151 → 145            |
+| `games/seasonal-target/package.json`           | 29 → 31              |
+| `games/seasonal-target/src/fakes.ts`           | 96 → 96              |
+| `games/seasonal-target/src/rules.test.ts`      | 214 → 223            |
+| `games/seasonal-target/src/settings.ts`        | 125 → 126            |
+| `games/seasonal-target/src/views.test.ts`      | 205 → 201            |
+| `games/seasonal-target/web/FallenCells.tsx`    | 71 → 71              |
+| `games/seasonal-target/web/Loupe.tsx`          | 98 → 99              |
+| `games/seasonal-target/web/PlayerPanel.tsx`    | 61 → 62              |
+| `games/seasonal-target/web/ResultPanel.tsx`    | 77 → 81              |
+| `games/seasonal-target/web/SpectatorPanel.tsx` | 60 → 60              |
+| `games/seasonal-target/web/Steer.tsx`          | 84 → 110             |
+| `games/seasonal-target/web/TargetInput.tsx`    | 216 → 206            |
+| `games/seasonal-target/web/TileGrid.tsx`       | 196 → 223            |
+| `games/seasonal-target/web/fallen.css`         | 84 → 84              |
+| `games/seasonal-target/web/fixtures.tsx`       | 100 → 105            |
+| `games/seasonal-target/web/heat.ts`            | 151 → 151            |
+| `games/seasonal-target/web/index.ts`           | 33 → 35              |
+| `games/seasonal-target/web/input.test.tsx`     | 180 → 199            |
+| `games/seasonal-target/web/measure.ts`         | 70 → 78              |
+| `games/seasonal-target/web/panels.test.tsx`    | 270 → 294            |
+| `games/seasonal-target/web/st.css`             | 150 → 199            |
+| `games/seasonal-target/web/text.test.ts`       | 155 → 154            |
+| `games/seasonal-target/web/text.ts`            | 121 → 120            |
+| `games/seasonal-target/web/tiles.css`          | 272 → 284            |
+| `games/seasonal-target/web/words.ts`           | 98 → 103             |
+| `pnpm-lock.yaml`                               | 5741 → 5747          |
+| `apps/web/src/round/InputRow.tsx`              | 0 → 103              |
+| `apps/web/src/round/players.css`               | 0 → 66               |
+| `games/seasonal-target/web/loupe.css`          | 0 → 47               |
+
+Removed: the bar's waiting figure and its CSS (`.focus-facts`, `.focus-fact-time`), `round-cooldown`, the per-step Heatwave row and banner, the games' shared hint lines (and Guess The Number's `hintText`), the compact list's `LATEST` slice, the absolute drawer and 60 % sheet, the heading's focus target, Target's size line, "Last guess" line, input legend, `flow` variant and `.st-last`. Extracted: `InputRow.tsx` (from `RoundScreen.tsx`), `players.css` (from `round.css`), `loupe.css` (from `tiles.css`), `partsOf` and `ListPart` in `RoundScreen.tsx`, `TypedSteer` in Target's `Steer.tsx`. Reused: `useDisclosure` (Type coordinates), `RoundLog` for both list views, `TileGrid` and `useTileSize` for the round and the result, `bannerOf`, `formatNumber`, `buttonText`; new shared helper `teamName()`.
+
+### Piece 6 — re-shoot, measure, self-review
+
+- `reports/focus-mode-2/`: 226 light/dark pairs (452 shots), each pair of one moment: every game, season, shared and individual at 1280 × 720, 1920 × 1080 and 390 × 844; results (solved, time up) and the match summary; 15 guesses and more; Frost pending; Target halving, fallen tiles, the hint quarter, 8/20/30 per side in all three modes; every panel at every size; the desktop ready state; the loupe with the hint and with fallen tiles. `play-through.txt` holds per shot the page's scroll height against the viewport, Target's grid and tile size, the list rows wholly in view and whether a panel leaves the input clear.
+- Review: four subagents (one per game) on the first full shoot, then the lead on the retakes of every fixed state; the fixes are T140. The last full shoot ran after the subagents' fixes, with retakes of the states fixed after it.
+
+- Lines (the review fixes): `FocusBar.tsx` 131 → 133, `SeasonPill.tsx` 94 → 100, `SpecialBanner.tsx` 90 → 78 (Frost's held-answer text removed), `banner.test.tsx` 154 → 149, `cooldownRing.css` 53 → 61, `focus.css` 209 → 210, `players.css` 66 → 67, `round.css` 255 → 265, `roundLog.css` 211 → 218, `e2e/seasons.spec.ts` 185 → 187; Bomb Defusal `ResultPanel.tsx` 55 → 55; Safecracker `ResultPanel.tsx` 61 → 61, `sc.css` 201 → 206; Seasonal Target `TileGrid.tsx` 223 → 225, `text.ts` 120 → 126, `text.test.ts` 154 → 156, `tiles.css` 285 → 291. Removed: `frostText` (the banner's held-answer sentence). Reused: `.round-phone-hidden` (visually hidden on a phone) for the bar's "left" and "round", the pill's `data-halving` for the phone cap.
+
+### Measurements
+
+| What                                             | 1280 × 720              | 1920 × 1080           | 390 × 844                    |
+| ------------------------------------------------ | ----------------------- | --------------------- | ---------------------------- |
+| Page scroll in a round (every round shot)        | none (720/720)          | none (1080/1080)      | none (844/844)               |
+| Page scroll on a result                          | none (one screen, T138) | none                  | 1420–2316 px (by design)     |
+| Panel over the input                             | never (pushes aside)    | never                 | never (the sheet ends above) |
+| Target grid, 8 × 8                               | 644 px, tile 78.3 px    | —                     | 358 px, tile 42.5 px         |
+| Target grid, 20 × 20                             | 644 px, tile 30.1 px    | about 48 px (by size) | 358 px, tile 15.8 px         |
+| Target grid, 30 × 30                             | 644 px, tile 19.4 px    | 1004 px, tile 31.4 px | 358 px, tile 9.9 px          |
+| Target grid, 30 × 30, a panel open               | 520 px, tile 15.3 px    | 1004 px, tile 31.4 px | 358 px                       |
+| List rows in view, 15+ guesses: Guess The Number | 22                      | —                     | 15                           |
+| Safecracker                                      | 22                      | —                     | 5–6 (answers wrap)           |
+| Bomb Defusal                                     | 16                      | —                     | 9                            |
+| Seasonal Target                                  | 10                      | —                     | 4; 3 in a halving round      |
+
+Tile numbers show on tiles of 20 px or more (T137): on 30 × 30 at 1280 × 720 and on every phone grid above 8 × 8 the tiles carry their colour and frame only; the loupe gives 44 px tiles there.
+
+### Screenshot review
+
+| Found                                                                                  | Where                               | State                                                        |
+| -------------------------------------------------------------------------------------- | ----------------------------------- | ------------------------------------------------------------ |
+| A long answer widened the phone list past its card                                     | Safecracker, 390 × 844              | fixed: one column no wider than the box, answers wrap        |
+| The halving badge and the time pushed the phone bar to two rows                        | all games, halving, 390 × 844       | fixed: "Halving" in place of the season's name, "9:40"       |
+| The ring's track vanished on the second surface; "Ready" crowded it                    | all games                           | fixed: track at half the text colour, smaller label          |
+| Frost said a held answer twice (banner and row)                                        | all games, winter                   | fixed: the banner only at the opening, the row says the rest |
+| An own 10 px phone tile lost its heat colour under its frame                           | Seasonal Target, 390 × 844          | fixed: a 1.5 px frame under 20 px                            |
+| Every later Leaf Fall row read alike                                                   | Seasonal Target, autumn             | fixed: "(fall 3)"                                            |
+| Team names off-centre in their tiles; narrow phone buttons; a short "All (N)"          | Players panel, bar, list            | fixed: centred, 44 px                                        |
+| A player's sequences ran together on the result                                        | Bomb Defusal result                 | fixed: " · " between them                                    |
+| The phone list kept one row in a halving round                                         | Seasonal Target, 390 × 844          | fixed: the panel above capped and scrolling there (3 rows)   |
+| "(4 digits, 0–9)" broke at its dash                                                    | Safecracker result                  | fixed: one line                                              |
+| The hint's text cut in that capped panel; 1½ rows while the halving banner stands      | Seasonal Target, 390 × 844, halving | owner (OPEN)                                                 |
+| An empty right column under a list game's panel                                        | list games, desktop                 | owner (OPEN, O50)                                            |
+| The result's game part scrolls inside itself with many guesses                         | results, desktop                    | owner (OPEN, T138)                                           |
+| The full header on a phone result; the summary's wrapped team list                     | results, 390 × 844                  | owner (OPEN, T128)                                           |
+| Team points beside player points; the viewer listed first with 0 guesses               | results                             | owner (OPEN)                                                 |
+| No closest miss on a time-up result                                                    | results                             | owner (OPEN, O22)                                            |
+| Zero parts in Safecracker's counts                                                     | Safecracker                         | owner (OPEN, T139)                                           |
+| "Hint" tag dimmed by a halving; strips beside the desktop grid; olive own tint in dark | Seasonal Target                     | owner (OPEN)                                                 |
+| The input row's controls not under the list's start                                    | Safecracker, Bomb Defusal, desktop  | owner (OPEN)                                                 |
+
+Not defects: the range bar does not narrow with the halving (decision 17); a closest-miss tie goes to the earlier guess; another player's held Frost answer shows no word until it arrives (the server sends none before).
+
+### Checks
+
+- `pnpm verify` green on pieces 1–4 (116 test files, 707 tests). Two earlier runs stopped on formatting (a doc saved during the run) and on a 61-line test function; both fixed.
+- `pnpm verify` green on piece 5 and on piece 6 with its review fixes (116 test files, 708 tests each).
+- E2E Chromium, journeys 1–27 (`chromium` and `chromium-timing`): 34/34 passed in 12.0 min on the final code. Journeys 24–27 assert at 1280 × 720 and 390 × 844 that with each panel open the action button stays visible and enabled or waiting, the panel leaves the input clear and the page does not scroll. Earlier in the night: 36 passed, 4 failed (a `boundingBox` on a missing stage, Bomb's disabled "Cut", Target's "9 away"), fixed in `17216d2`.
+- CI: piece 5's run (`6c4491e`) failed in journey 22 (Chromium): no fallen tile within 20 s; `06b86c1` passed it in Chromium and Firefox and failed in WebKit (iPhone profile), 99 passed. Three causes, all in the journey: a fall takes only tiles that fit every answer so far (O37), and two distance answers to two targets leave almost none, so the fall must come before any guess; a bot on a 3 s cooldown found its distance target and ended the round (a 60 s cooldown for that round now); on a touch screen with tiles under 44 px a tap opens the loupe, which holds the arrows instead of "Type coordinates". Journey 22 then passed in Chromium, Firefox and WebKit locally. CI green on `5b19ec3` (run 41583961644, 34 min, every browser); the commit that adds this note changes only this sheet.
+- Security: no new intent, route or table; the authorization matrix is unchanged.
+- The re-shoot's first try failed on every round: the dev web server served a stale module after a hot reload (Bomb's `ResultPanel`); the servers were restarted and the shoot repeated. The halving day the shoot adds was removed at its end (204).
+
+## Tiles and focus mode (2026-11-02, day task)
+
+Branch `feat/guess-games`. Owner decisions O45 (Seasonal Target on large heat-coloured tiles) and O46 (focus mode for every game); technical decisions T128–T133. Nothing goes to `master`.
+
+- **Seasonal Target (O45):** one tile grid (`target.size` 8–30, default 20) for the input, the loupe, the spectator and the result; a 5-step cold–hot fill with the distance (and its arrow) by answer mode, colour only with warm/cold only; own tiles framed, others' corner marks, one tile for several guesses with every guess in its title; hatched fallen tiles, the tinted Spring quarter, dimmed tiles outside a halved area; on a phone a loupe of 5 × 5 tiles of at least 44 px. The answers carry their tier; the tier table got a minimum distance beside each share of the diagonal, so all five colours occur from 8 to 30 per side (proposal in OPEN). Migration 0013 writes a version of `game.seasonal-target` without the old map size. Built by a subagent in `games/seasonal-target/` only; the platform parts by the lead.
+- **Focus mode (O46):** from the countdown until the round ends no app header; one bar (the season pill with the special's note, "Wait 15 s · 9:50 left", Chat with an unread count, Players with the teams, Host, Full screen where offered); one shared drawer/sheet component for chat, players and the host's controls, one at a time, Close and Escape, the focus back on its button; the stage on the left and a 320 px column with the game's panel and the list on a desktop; the newest 3 rows with "All (N)" on a phone. The result keeps the header (T128).
+- **Small item:** "Wrong corner of the map." replaced in Guess The Number's catalogue; no catalogue holds another game's line.
+- **Checks:** `pnpm verify` green (700 tests; two runs before it timed out under the machine's load, different tests each time, all passing alone); the authorization matrix unchanged (no new intent or route). E2E Chromium, the whole suite (journeys 1–27, 24–27 new): 33/34 in the last full run; the one failure, journey 11's contrast check catching the Spring Herald banner in its first fade-in frames (1.29:1), passed three times repeated, and the check now waits for running animations to end. On the way: the round bar shows from the countdown, so `roundOpen` waits for the open round view; the theme of the contrast check is set on `<html>` where focus mode hides the toggle; journeys 20 and 21 read Leaf Fall from the round's state, since CI once lost the live row of a fall before the page had loaded.
+- **Screenshots:** `reports/focus-mode/` — 146 light/dark pairs, each of one moment (the page's clock paused for the pair), nothing scrolls, every round open when shot (`play-through.txt`).
+
+**Review list:**
+
+| Found                                                                    | Where                                                | State                                                                                                                                          |
+| ------------------------------------------------------------------------ | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| The phone bar was 10 px too wide: Full screen cut off                    | all games, 390 × 844                                 | fixed: the pill's "i" left out on a phone, the pill still the special's button                                                                 |
+| Guess The Number at 1280 × 720 had room for about 11 rows                | right column                                         | fixed: Fallen numbers behind their button on a desktop too, tighter gaps, the heading over the bar's row (12.5 rows now; journey 24 checks 12) |
+| The heading broke into four lines beside "Fallen (N)"                    | Guess The Number, desktop                            | fixed: the button beside the bar, the heading across                                                                                           |
+| The loupe's Close button was scrolled out of its box                     | Seasonal Target, 390 × 844                           | fixed: the loupe stands on the grid's lower edge and may reach over the list                                                                   |
+| Tile numbers small at 26 px tiles                                        | Seasonal Target, 20 × 20 at 1280 × 720               | improved to 12.5 px digits; larger needs a larger grid (the legend and the controls take the stage's lower part) — for the owner               |
+| A disabled "Wait 7 s" looked navy in one shot                            | Guess The Number, 1920 × 1080                        | not a defect: a shot during the theme fade; the play-through now waits for it                                                                  |
+| A list game's stage holds only the input row, the left half mostly empty | Guess The Number, Safecracker, Bomb Defusal, desktop | for the owner (OPEN): O46 puts the range and fallen panels in the right column                                                                 |
+| In summer the phone's 3 newest rows are often Heatwave steps             | all games, 390 × 844                                 | for the owner: the 3 rows are O46's number                                                                                                     |
+| No light/dark toggle during a round                                      | all games                                            | for the owner (OPEN): O46's bar lists none                                                                                                     |
+| The answers still say "cells"                                            | Seasonal Target                                      | for the owner (OPEN): wording                                                                                                                  |
+
+## Night 5 (2026-11-02)
+
+Branch `feat/guess-games` (same thread, from `a02e9cc`). Nothing goes to `master`. 14 logical cores; subagents only on disjoint folders, the lead alone on shared code.
+
+| Piece                            | State | What                                                                                                                            | Commit                        |
+| -------------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| N1 owner decisions O42–O44       | done  | O42 Bomb Leaf Fall, O43 three Target modes, O44 game boards; docs, OPEN closed, BACKLOG; verify green                           | the commit that adds this row |
+| N2 stale displays                | done  | Cause measured and fixed once in the shared round hook (T124)                                                                   | `4ef175f`                     |
+| N3 display and layout defects    | done  | Shared fixes by the lead (Frost banner, Wait buttons, header, event rows, gutter, phone rows), per-game fixes by four subagents | the commit that adds this row |
+| N4 checks and fresh play-through | done  | verify, e2e 1–23 and CI green; 108 light/dark pairs in `reports/guess-games-2/`; review list below                              | `77c73ba`, this commit        |
+| N5 handover                      | done  | dev servers restarted on the final code; how to try each game below                                                             | this commit                   |
+
+**Needs the owner:** play the four games (below), then confirm or change the proposals in OPEN "To confirm after the owner has played" and the phone-map item; nothing blocks.
+
+### N5 — handover
+
+- Branch `feat/guess-games`; the code is at `f82f3fd` (CI green with the same code at `77c73ba`); the commit that adds this section changes only this sheet. Dev servers restarted on it: API 3910, web 5410, admin 5411, all answering 200.
+- Quick Test: <http://127.0.0.1:5410/#/quick-test>. For every game: Game as named below, Seed `acorn`, a Season of your choice, **Fast specials** on, **Start from the lobby** on; in the lobby, Start round from the Host menu.
+
+| Game                  | What to try                                                                                                                                                                                              |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Guess The Number      | Autumn: the range bar's merged hatched gaps on a phone; Winter: the Frost banner at the start and "answer arriving… N s" on your rows                                                                    |
+| Seasonal Safecracker  | Spring: the free digit; Autumn: fallen digits in the strip and "That digit has fallen."; the counts in words ("1 wrong place", "2 wrong places")                                                         |
+| Seasonal Bomb Defusal | Autumn: one wire marked per fall until "Leaf Fall: every harmless wire is marked."; a wrong first cut: "Boom!" and the longer wait                                                                       |
+| Seasonal Target       | **Answers** in the round settings, all three: `direction` (cells away and the compass), `distance` (the default, cells away only), `closeness` (warm/cold only); dots in each player's colour with names |
+
+- Leaderboards: the Game picker ("All games" first) at <http://127.0.0.1:5410/#/leaderboard>.
+- Proposals still to confirm: OPEN "To confirm after the owner has played" — the rules of Safecracker, Bomb Defusal and Seasonal Target as built from the architect's rules (owner decision 38), the explosion's waiting time as a round setting (O40), the closeness comment thresholds (z), and the new phone-map item from the N4 review.
+
+### N1 — owner decisions O42–O44
+
+- Recorded in DECISIONS §1 (O39 marked amended by O43); spec 02c §8.3, 02d §3 §5 §8.3, 06 §1, 08 §3.2 §3.3, 09 §4 §4.1; OPEN items closed (Bomb Leaf Fall and individual mode, O39 per match, the shared boards, the board layout, the dot names) and moved to BACKLOG part two.
+- O42 (subagent, `games/bomb-defusal`): each Leaf Fall marks one wire outside every secret sequence, whatever the guesses; the fall that marks the last one also says "Leaf Fall: every harmless wire is marked." and the falls stop; individual mode counts only wires outside every player's sequence. `autumn.wiresPerFall` removed; `src/leafFall.ts` (the O37 proof rule for wires) deleted, −70. Tests: one wire per fall, the stop and its line, marking whatever the cuts, individual mode, no candidates, a 200-run property.
+- O43 (subagent, `games/seasonal-target`): `target.feedback` takes `direction`, `distance` (new, the default) and `closeness`; a distance answer is "9 cells away"; Leaf Fall under `full` keeps the cells at the same rounded distance; tests for all three modes, the default and the bot.
+- O44 (lead): `?game=<id>` on the three board routes, summed from the awards of that game's matches; the total stays the stored entries (staff adjustments count in the total only, T126); a Game picker on the leaderboard page ("All games" first); profile rows already name the game. Tests: `league.integration.test.ts` (total, each game, teams, an unknown game empty, a malformed one 400), `boards.test.tsx` (the picker asks for the game's board).
+
+### N3 — display and layout defects
+
+Shared (lead):
+
+- Frost: a banner "Frost: answers arrive N s late." for the round's first 3 s (`SpecialBanner.tsx`, test); held own answers already read "answer arriving… N s".
+- Panels learn `waitS`, `names`, `colors`; `buttonText` makes every send button read "Wait 6 s" during the cooldown (T125).
+- Season pill: its words in the strong weight (the token pair is about 7:1, the thin special name read pale); the N4 play-through measures the computed contrast on every season.
+- Phone header: "Wait 15 s" and "9:50 left" in the small size; the info button keeps its 44 px (a phone rule had narrowed it to 32 px).
+- A special's list row: a dashed outline in the season colour without tint or bar, so it never looks like the viewer's own row.
+- The right-edge strip: `scrollbar-gutter: stable` was kept on one-screen views that never scroll; now `auto` there (`shell.css`).
+- Phone list rows: the comment on its own line under the name, not under the dot.
+
+Per game (four subagents in parallel, one folder each):
+
+- Guess The Number: 500 vs 502 is not a defect — both are `cold` (secret 891 for seed `acorn`, 39.1 % and 38.9 % of the range); the two lines are random picks of the same pool (`cold[9]`, `cold[17]`); a regression test pins it, and the tier property test already exists. Range bar: gaps closer than 1.5 % merge, hatched where not every number fell; the heading never breaks between the numbers; five off-theme lines replaced (golden file re-recorded for those lines only).
+- Safecracker: empty boxes with a 2 px border (7:1 light); fallen digits at full contrast with a strike, dashed border and a badge inside the chip; 0–9 in one row on desktop; plurals ("1 right place", "2 right places"); three "treasure" lines replaced.
+- Bomb Defusal: a harmless wire by a crossed, dimmed swatch, a struck name and an accessible label; slot 1's hint wraps; slots at least 44 px; the phone grid splits evenly; "The first cut was right."; one off-theme line replaced.
+- Seasonal Target: dots in each player's list colour with their name (focusable, titled, a legend on desktop); room for the axis labels on every edge; phone ticks ≥ 11 px, Column and Row fields, arrows 44 × 44; twelve off-theme lines replaced.
+
+### N2 — stale displays after events
+
+- Measured first (a probe in a real autumn round, every 50 ms for 40 s): after each Leaf Fall the list's row and the Fallen numbers panel disagreed for 248, 308, 250 and 246 ms, then agreed. Nothing stayed stale; the review's screenshots were taken inside that window.
+- Cause: `apps/web/src/live/useRound.ts` — the list took each event straight from the live frame (`onFrame`, `setFeed`), while the state that feeds the panels, the digit strip and the top bar's cooldown was reloaded 250 ms later (`pending.current ??= window.setTimeout(…, 250)`) plus the request. One render showed two moments. A second, latent fault in the same place: two reloads crossing on the way could put the older state over the newer one.
+- Fix (shared, once for all four games, T124): a feed event is shown only once the loaded state holds it (`s ≤ state.seq`, the field the state view already had), and an older state answer is dropped. After the fix the probe found 0 disagreements in 660 samples.
+- Tests: `apps/web/src/live/useRoundFeed.test.tsx` new (an event waits for its state; a crossing older answer is dropped); feed fixtures of `round.test.tsx` and `banner.test.tsx` carry the event's place.
+- Lines: useRound.ts +29/−2; useRoundFeed.test.tsx new, 93 lines; round.test.tsx ±2; banner.test.tsx ±1.
+
+### N4 — checks and fresh play-through
+
+- `pnpm verify` green (after moving the new board test into its own block: one function had grown past 60 lines). Authorization matrix: no new intent or route; the board routes' new `game` query is read-only and validated (400 on a malformed id); the matrix rows for the three board routes stand.
+- E2E in Chromium, the whole suite (journeys 1–23): first run 28/30 — journey 21's individual autumn round had no wire outside both sequences (6 wires, 4 cuts, two players), which O42 rightly leaves unmarked, so the journey now plays it with 8 wires and 3 cuts; journey 22's first round was 731 px high at 1280 × 720 with Seasonal Target's new legend, so the map gives 1.5 rem back. Then the intro of journey 22's second round stayed at "Opens in 0 s" once: the server had opened the round on time (probe), the client had missed the opening's frame — the night-4 CI symptom — so the client now loads the state again after `opensAt` (T127, test). Second run: 30/30.
+- CI: `974d280` failed on journeys 21 and 22 (fixed in `9dcaa58`); `9dcaa58` failed on journeys 20 and 21 because of the bots' luck: a bot defused a 6-wire, 4-cut bomb with its first cut, and with a 3 s cooldown the bot had guessed every digit before the first Leaf Fall (O37 leaves those standing). Journey 21 now plays 8 wires and 6 cuts, journey 20's individual round a 30 s cooldown (`77c73ba`). CI green with `77c73ba` (verify, e2e in Chromium, Firefox and WebKit, security, docs).
+- Play-through `reports/guess-games-2/` (nothing in `reports/guess-games/` replaced): the four games, every season, shared and individual, at 1280 × 720, 1920 × 1080 and 390 × 844; light and dark of each pair from the same moment (the page's text compared before and after the theme switch, retaken if it differed — none did); screenshots with animations disabled, so no shot catches a colour mid-transition; Seasonal Target once per answer mode; Bomb Defusal in autumn after both harmless wires were marked. 108 pairs, 216 shots; no page scrollbar; the season pill's computed text contrast 5.49–9.11 : 1 (`play-through.txt`).
+
+**Review list** (every shot looked at in groups, a sample one by one):
+
+| Found                                                                             | Where                      | State                                                                                                                 |
+| --------------------------------------------------------------------------------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Phone header without the "·" of "Wait 15 s · 9:50 left"                           | all games, 390 × 844       | fixed (`round.css`)                                                                                                   |
+| With the "·" the season pill was cut to "Autu…"                                   | all games, 390 × 844       | fixed: narrower Host button, tighter gaps, a pill that never shrinks; checked in every season (no cut, no overflow)   |
+| The banner said "the red wire is harmless" while the newest row said every one is | Bomb Defusal, autumn       | fixed: the banner names the final event                                                                               |
+| Column and Row fields cut their value ("2!" for 25)                               | Seasonal Target, 390 × 844 | fixed: narrow padding, centred                                                                                        |
+| A disabled send button looked grey-blue in one shot                               | Seasonal Target, 390 × 844 | not a defect: the live colours are #4f5663 on #f1f3f6; the shot had caught a transition; shots now disable animations |
+| A comment speaks of a map in Guess The Number ("Wrong corner of the map.")        | Guess The Number           | left: seasonal enough; listed for the owner's reading of the catalogues                                               |
+| On a phone in Seasonal Target the list shows two rows above the map               | Seasonal Target, 390 × 844 | needs the owner: the map takes the height the screen rule asks for; a smaller map is a trade-off (OPEN)               |
+| At 1920 × 1080 the round view keeps its column width, wide margins left and right | all games                  | left: nothing is cramped there; the width is the platform's reading width                                             |
+
+## Night 4 (2026-11-01)
+
+Branch `feat/guess-games` from `master` `10f4cd3`. Nothing goes to `master`: the owner plays the games first. 14 logical cores; at most three subagents at once (one per new game), the lead alone on the shared packages.
+
+| Piece              | State | What                                                                                                                                                                                                                                                           | Commit                                                                             |
+| ------------------ | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| N0 spec            | done  | The guess engine (04 §4.7), 02b Safecracker, 02c Bomb Defusal, 02d Seasonal Target, settings (08 §3.1–§3.3), tests (09), threats (05), O38–O41, T117–T120                                                                                                      | `ec8c3f4`                                                                          |
+| N1 engine          | done  | `@smg/guess-engine`; Guess The Number moved onto it with no change in behaviour (golden run); contract: `extraCooldownMs`, `GuessRow.text/answer`, `GameText.specialRule`                                                                                      | `6ef481e` (golden), `3c72b05`                                                      |
+| N2 Safecracker     | done  | built on the engine by a subagent, registered, conformance green                                                                                                                                                                                               | `462a227`, the next two, `e70ceef` (registry)                                      |
+| N3 Bomb Defusal    | done  | built on the engine by a subagent, registered, conformance green                                                                                                                                                                                               | `462a227`, the next two, `e70ceef` (registry)                                      |
+| N4 Seasonal Target | done  | built on the engine by a subagent, registered, conformance green                                                                                                                                                                                               | `462a227`, the next two, `e70ceef` (registry)                                      |
+| N5 game choice     | done  | The platform part: Game in the create-match form and the Quick Test (only the chosen game's settings), the game named in the Play list, on the match page, in its summary and in the profile's rounds; boards shared across games (proposal); T121. journey 23 | `ae781ab`, `3f86e22` (T122)                                                        |
+| N6 checks          | done  | verify green; journeys 20–23 green in Chromium, 1–19 unchanged; play-through 120 screenshots, all on one screen after the fixes (T123)                                                                                                                         | `1c1f7a6`, `236b13a` (CI green: verify, e2e in all three browsers, security, docs) |
+| N7 handover        | done  | servers restarted on the final commit; Quick Test settings and proposals below                                                                                                                                                                                 | the commit that adds this row                                                      |
+
+**Needs the owner:** the proposals in [OPEN.md](OPEN.md) under "To confirm after the owner has played" (nothing blocks the night).
+
+### N0 — spec first
+
+- Built: the spec only, no code. Engine decision T117 closes T21 and supersedes R7.
+- Lines: docs/spec/02b-game-safecracker.md new, 128 lines; 02c-game-bomb-defusal.md new, 135 lines; 02d-game-seasonal-target.md new, 137 lines; 04 +29, 05 +31, 08 +36, 09 +41, 03 +2, README +3, 02 ±1, 11 ±1; DECISIONS +O38–O41, T117–T120 (T21, R7 superseded); OPEN +50; BACKLOG +3.
+- Drafted by three subagents in parallel (one file each), merged and checked by the lead; their gaps were decided as proposals (OPEN): Safecracker's and Bomb Defusal's tier tables rescaled so every tier occurs; the explosion penalty under Frost as an accepted residual risk instead of a platform special case; Seasonal Target's O39 choice as a round setting (spec conflict in OPEN).
+- Reused: Guess The Number's sections (02 §2–§12) are cited, not repeated; the platform's special settings, Heatwave and Frost apply unchanged.
+- Noticed, left alone (N0): every game's settings document carries the platform's `autumn.count` and `round.halving`; Safecracker and Bomb Defusal use their own per-fall setting and have no halving, so those keys mean nothing there (listed in OPEN).
+
+### N1 — the shared guess engine
+
+- Built: `packages/guess-engine` (`@smg/guess-engine`, spec 04 §4.7, T117): secrets per round or per player, the guess list and its events, the check order with the repeat rule, the decision (answer, room line per visibility, comment, `Solved`, extra cooldown), comment picking from a game's catalogue, the tier ladder and trend, Frost-aware views and their schemas, the closest miss, the O37 public-answer helper with the uniform distinct draw, the shared setting definitions and `guessModule`. Guess The Number now runs on it.
+- Proof of no change (T118): the golden run (`golden.test.ts`, seeds `acorn`, `meadow`, `frost`; shared and individual; `full` and `own`; secrets, hint, 15 guesses with every code and event, two falls, three halvings, the three views) was recorded on the unchanged game in `6ef481e` and passes byte for byte after the move; all 124 existing tests of the game, the registry's conformance suite and the domain pass unchanged.
+- Contract (lead): `Decision.extraCooldownMs` added to the cooldown end the platform records (T120, domain test); `GuessRow.text` and `GuessRow.answer` (tone, pegs) drawn in the round's list; `GameText.specialRule` on the intro and in the info note (T119, `apps/web/src/round/gameWords.test.tsx`).
+- Lines: packages/guess-engine new — candidates 43, closestMiss 49, comments 87, index 42, module 76, rules 129, secrets 42, settings 80, state 126, tiers 53, views 94, fakes 148, engine.test 179, parts.test 200. Guess The Number (added/removed): closeness +9/−43, closestMiss +14/−42, commentLines +4/−7, comments +12/−53, feedback +1/−6, leafFall +13/−26, module +36/−31, rules +30/−101, secrets +18/−29, settings +30/−62, state +38/−97, views +25/−86 (net −353). Platform: game-sdk module +5/−1, web +20, index +1; domain guess +4/−2, fakes +2 (an optional module for one test), guess.test +21; web RoundLog +33/−6, roundLog.css +35/−1, SpecialInfo +17/−7, RoundScreen +5/−3, RoundIntro +4/−3; eslint +7/−4, vitest +2, package.json scripts.
+- Extracted from Guess The Number (no copy left): secret derivation, the guess list and both events with their folding, `withPlayer`, the check and decision with the room line, comment picking and line bookkeeping, tiers and trend, the views' guess lists, Frost cut and newest-60 limit, the view schemas of guesses, the closest-miss search, the public answers of Leaf Fall and the Fisher–Yates draw, the four shared setting definitions. Kept as the game's own: the range, hints, falls and halvings, the higher/lower rule, the range-relative tier, its lines and its screens; the game's files that tests import stay as thin bindings with their signatures (T118).
+- Reused: the SDK's `RoundRng`, `inRange`, `rangeSize`, `formatNumber`; Guess The Number's code moved, not rewritten.
+- Noticed, left alone: the platform's `SPECIALS` sentences speak of numbers; the new hook only adds the games' own words.
+- Also in this commit: the empty package skeletons of `games/safecracker`, `games/bomb-defusal` and `games/seasonal-target` (package file, both tsconfigs, a one-line entry each), created by the lead before N2–N4 so the lockfile is changed once, by one agent; the game agents replace the entries.
+
+### N2–N4 — the three games (three subagents in parallel, each only in its own folder)
+
+Common to all three: built on `guessModule`; reused from the engine `baseState`, `withPlayer`, `commentPicker`, `ownGuesses`, `othersGuesses`, `resultGuesses`, `guessSchemas`, `closestMissBy`, `publicGuesses`, `guessedValues`, `pickDistinct`, `allSecrets`, `secretOf`, `TIERS`, `readGuessConfig` and the four shared setting definitions; from Guess The Number the shape of module, state, views, specials, fakes, conformance kit and the T76 rule for keeping typed input. Registered by the lead (registry: each entry keeps its own types through `use`, so four differently typed games are one list); the conformance suite P1–P6 passes for all four (20 tests). Coverage of all game sources together: lines 99.8 %, branches 95.2 % (CI's gate 95/90; the coverage run now has a 20 s per-test timeout, because three more projects in parallel pushed three Guess The Number property tests over 5 s under coverage — each takes at most 1.5 s alone). Verify: green except one load timeout (`maintenance.test.ts`, 6.5 s in the full run, 1 s alone). Their own decisions are listed at the end of 02b, 02c and 02d and in OPEN.
+
+- **N2 Seasonal Safecracker** (`games/safecracker`, 54 tests, src 100 % lines / 98.8 % branches): new — src feedback 62, settings 99, state 84, rules 43, leafFall 63, specials 55, views 117, commentLines 208, module 57, conformance 70, devBot 70, fakes 96, index 21; tests feedback 141, rules 164, specials 148, views 164, devBot 120, comments 56; web text 146, Board 71, CodeInput 180, ResultPanel 61, sc.css 194, index 31; tests input 157, panels 186. Noticed, left alone: the platform's list draws codes in the body face, not monospaced.
+- **N3 Seasonal Bomb Defusal** (`games/bomb-defusal`, 59 tests): new — src wires 87, settings 112, state 86, rules 44, leafFall 70, specials 49, views 124, commentLines 204, module 56, conformance 78, devBot 57, fakes 82, index 21; tests wires 118, rules 204, specials 268, views 172, devBot 71, commentLines 60, conformance 60; web index 30, text 154, panels 72, WireInput 135, useSequence 98, Explosion 61, WireChip 45, ResultPanel 55, bd.css 276, explosion.css 80; tests input 176, panels 207. The explosion uses `rules.extraCooldownMs` (T120). Noticed, left alone: `GameText.code` gets no seconds, so a cooldown refusal is the platform's sentence.
+- **N4 Seasonal Target** (`games/seasonal-target`, 68 tests): new — src geometry 159, settings 118, state 136, secrets 40, rules 41, leafFall 68, specials 131, views 167, commentLines 221, module 51, conformance 73, devBot 39, fakes 96, index 31; tests geometry 157, rules 166, leafFall 170, specials 168, views 204, devBot 76, comments 85; web words 95, text 121, dots 92, MapBoard 265, TargetInput 222, PlayerPanel 60, SpectatorPanel 48, ResultPanel 71, FallenCells 70, st.css 296, index 30; tests text 143, panels 254. Noticed, needs the platform: the map lives in the input row (selection is input), which the round layout puts under the list; other players' dots have no names or roster colours in the player panel (both in OPEN, checked in the play-through).
+
+### N5 — game choice
+
+- Built: a Game choice with its help line in the create-match form and in the Quick Test, which shows only the chosen game's own settings and sends them by key (`settings`, checked by the game's definitions, an unknown key refused with 422); the match's game in the Play list, on the match page, in its summary and in the profile's last rounds; boards stay one per period for every game (proposal in OPEN), an award's game being its match's (T121). The `guess` intent now takes any game's bounded value (T122): before, the socket refused every guess that was not a number. Journey 23 (`e2e/gameChoice.spec.ts`).
+- Lines (added/removed against master): apps/web — lobby/games.ts new, 50 lines; shell/quickTestSettings.tsx new, 109 lines (split from QuickTest.tsx, now 233); Lobby +33/−20, MatchPage +8/−3, MatchSummary +8/−2, ProfilePage +9/−3, formHelp +4; tests forms, summary, boards updated. apps/server — dev/quickTest +21/−7, routes/quickTest +18/−5, round/rounds +12/−1 (with the registry's `use`), league/profiles +3/−1, realtime/intents +12/−2. contracts boards +2.
+- Reused: the server's `/games` list, the settings layer's own check of round choices, the host form's `Field`.
+
+### N6 — checks
+
+- `pnpm verify` green on the final code (format, lint, typecheck, 670+ unit, component and integration tests). Coverage gate green (all game sources lines 99.8 %, branches 95.2 %).
+- Authorization matrix: the three games add no intent and no route — a code, a wire sequence and a cell are each the existing `guess` intent (T122), whose matrix row stands for every game; the Quick Test route's row covers its new `settings` field. Nothing to add.
+- E2E in Chromium, the whole suite: journeys 1–19 unchanged and green; new journeys 20 (Safecracker), 21 (Bomb Defusal), 22 (Seasonal Target, both answer modes, the map left of the list) and 23 (game choice) green; each new game through the lobby (shared) and started at once (individual), its season specials and no page scrollbar at 1280 × 720 and 390 × 844. Found on the way: three bots could solve a bomb with their first cuts before the player's (Spring's hint leaves 60 orders), so the lobby helper starts with one bot. CI on `330ae35`: green in all browsers (before the new journeys).
+- Play-through (`reports/guess-games/<game>/`, `play-through.txt`): Guess The Number and the three games, each season shared plus autumn individual, light and dark, at 1280 × 720, 1920 × 1080 and 390 × 844 — 120 screenshots, none with a page scrollbar, every own guess accepted. Found and fixed: Seasonal Target's map pushed the round to 769 px and its result to 1 757 px at 1280 × 720, and left the phone's list no height — a board layout (T123) and screen-sized maps; Safecracker's digit strip was cut off at the right on a phone — now a row of its own.
+- Noticed, left alone: at 1280 × 720 Bomb Defusal's wire button for a harmless wire cuts off the word "harmless" (the strike-through and the bomb block still say it); in Seasonal Target with distance and direction the bots often find the cell in three guesses (the owner's rule, to judge after playing); with the board layout the list shows about five rows at 1280 × 720.
+- CI on `1c1f7a6`: journeys 20–22 failed in CI only, each at its second round: the tab went straight from the first match (its round still running) to the second by the address alone, and the second round's intro stayed at "Opens in 0 s" (the client got no opening). Locally the same journeys passed four times. The journeys now load the second match's page afresh, as every other journey opens a match; the switch itself is listed in OPEN for a closer look (the client's watch and unwatch run in order, so the cause is not found yet).
+- No load test: the games use the same round pipeline.
+
+### N7 — handover
+
+- Final commit: the one that adds these lines, after `236b13a` (CI run 41358052864 green: verify with coverage, e2e with journeys 1–23 in Chromium, Firefox and WebKit, security, docs). The dev servers run on `feat/guess-games` at that commit; 3910, 5410 and 5411 answer. Nothing is merged into `master`.
+- Quick Test: http://127.0.0.1:5410/#/quick-test, "Dev sign-in" → player 1. For each game: Game (Seasonal Safecracker / Seasonal Bomb Defusal / Seasonal Target), Seed `acorn`, a Season, Fast specials on, Start from the lobby on; in the waiting area pick a team and start the round from the Host menu. Worth trying: Safecracker in spring (a revealed digit) and autumn (fallen digits); Bomb Defusal with a wrong first cut (the explosion and the longer wait) and autumn (harmless wires); Seasonal Target with Answers = direction and = closeness, and autumn (fallen cells); the create-match form in the lobby (Game) and the match summary.
+- Proposals to confirm after playing: [OPEN.md](OPEN.md), "To confirm after the owner has played (night 4)" — the three games' rules, tier tables, specials, screens, the explosion penalty and the per-match settings (O39, O40), the shared boards, the board layout and the dot names.
+
 ## Leaf Fall (2026-11-01, day task)
 
 On `night/2026-10-27`. Nothing goes to `master`.

@@ -39,12 +39,14 @@ export interface NewRound {
 
 // The fast test profile of development builds (09 §4): specials every few seconds. The
 // cooldown stays as chosen, so Heatwave has room to step down, and so does the countdown,
-// which is the round's intro screen (O36, DECISIONS T109). Published defaults are untouched.
+// which is the round's intro screen (O36, DECISIONS T109). Heatwave keeps the round's own
+// step and interval, which the host sets in the round form (O63, DECISIONS T203). Published
+// defaults are untouched.
 function fastProfile(p: PlatformRoundConfig): PlatformRoundConfig {
   return {
     ...p,
     specials: {
-      heatwave: { stepMs: 1_000, intervalMs: 5_000 },
+      heatwave: p.specials.heatwave,
       frostDelayMs: 3_000,
       leafFall: { intervalMs: 5_000, count: p.specials.leafFall.count },
       halvingIntervalMs: 6_000,

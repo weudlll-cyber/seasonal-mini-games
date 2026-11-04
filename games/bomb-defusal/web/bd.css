@@ -1,0 +1,256 @@
+/*
+ * @file   games/bomb-defusal/web/bd.css
+ * @module games/bomb-defusal/web
+ * @brief  Styles of the Seasonal Bomb Defusal panels: bomb block, slots, wire buttons.
+ *
+ * Responsibility: text colours only from the design tokens (light and dark); wire colours are
+ *                 swatch fills with the wire's name in text beside them (the swatches are
+ *                 ./swatch.css); wire buttons, Undo, Clear and Cut at least 44 px
+ *                 (`--hit-target`); wires in one row on a desktop (eight too, T143),
+ *                 two even rows of up to four on a phone; slots at least 44 px, the hint
+ *                 locked in slot 1 (O60); the explosion's own styles are ./explosion.css, the
+ *                 result's ./result.css. Every class starts with `bd-`. Layouts work down to
+ *                 390 px.
+ * Spec:           docs/spec/02c-game-bomb-defusal.md §5.2, §11
+ */
+.bd-bomb {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.bd-bomb-title {
+  margin: 0;
+  font-size: var(--font-size-lead);
+  font-weight: var(--font-weight-heading);
+  line-height: 1.2;
+}
+
+.bd-bomb-note {
+  margin: 0;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+/* Spring Herald's hint for the whole round: a highlighted line (O35). */
+.bd-hint {
+  margin: 0;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius);
+  border-left: 4px solid var(--season, var(--color-accent));
+  background: color-mix(in srgb, var(--season, var(--color-accent)) 22%, var(--color-card));
+  font-weight: var(--font-weight-strong);
+}
+
+.bd-chips,
+.bd-sequence {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.bd-sequence {
+  counter-reset: bd-step;
+}
+
+/* A numbered chip of a revealed sequence: "1", "2", … before the chip. */
+.bd-sequence li::before {
+  counter-increment: bd-step;
+  content: counter(bd-step) '. ';
+  font-variant-numeric: tabular-nums;
+}
+
+.bd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-card);
+  font-size: var(--font-size-small);
+}
+
+/* A harmless wire: a struck name beside a crossed swatch; the word is for screen readers. */
+.bd-chip[data-harmless='true'] .bd-chip-name {
+  text-decoration: line-through;
+}
+
+.bd-wire-note {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+/* The input row: slots, wire buttons, then the ring with Undo, Clear and Cut. */
+.bd-input {
+  /* The wire rows follow the dock's own width (a panel on demand narrows the stage). */
+  container-type: inline-size;
+  display: grid;
+  gap: var(--space-1);
+}
+
+/* The picker's help line: small, one line on a desktop, at most two on a phone. */
+.bd-help {
+  margin: 0;
+  font-size: var(--font-size-small);
+  line-height: 1.25;
+  color: var(--color-text-muted);
+}
+
+.bd-slots {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  gap: 0.3rem;
+}
+
+.bd-slot {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: var(--hit-target);
+  display: flex;
+  border-radius: var(--radius);
+  border: 1px dashed var(--color-border-strong);
+  overflow: hidden;
+}
+
+.bd-slot[data-filled='true'] {
+  border-style: solid;
+}
+
+/* Slot 1 with Spring Herald's colour, locked: outlined and tinted in the season colour (O60). */
+.bd-slot[data-hint='true'] {
+  outline: 3px solid var(--season, var(--color-accent));
+  outline-offset: -1px;
+  background: color-mix(in srgb, var(--season, var(--color-accent)) 22%, var(--color-card));
+}
+
+/* A slot's number and wire; a filled slot the player may empty is a button over the slot. */
+.bd-slot-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.3rem;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+}
+
+.bd-slot-take {
+  cursor: pointer;
+}
+
+.bd-slot-number {
+  font-weight: var(--font-weight-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.bd-slot .bd-chip {
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 0;
+}
+
+/* One row of wires on a desktop, eight too: the stage is wide, and the list above keeps its
+   rows (T143). */
+.bd-wires {
+  display: grid;
+  grid-template-columns: repeat(var(--bd-cols, 6), minmax(0, 1fr));
+  gap: 0.3rem;
+}
+
+.bd-wires[data-count='4'] {
+  --bd-cols: 4;
+}
+.bd-wires[data-count='5'] {
+  --bd-cols: 5;
+}
+.bd-wires[data-count='7'] {
+  --bd-cols: 7;
+}
+.bd-wires[data-count='8'] {
+  --bd-cols: 8;
+}
+
+/* A narrow dock (a desktop with a panel on demand open): eight wires in two rows of four. */
+@container (max-width: 760px) {
+  .bd-wires[data-count='8'] {
+    --bd-cols: 4;
+  }
+}
+
+.bd-wire {
+  min-height: var(--hit-target);
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0 0.4rem;
+}
+
+.bd-wire[data-harmless='true'] .bd-wire-name {
+  text-decoration: line-through;
+}
+
+.bd-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.bd-action {
+  min-height: var(--hit-target);
+  padding-inline: var(--space-2);
+}
+
+.bd-cut {
+  flex: 1 1 auto;
+  min-height: var(--hit-target);
+  font-size: var(--font-size-lead);
+}
+
+.bd-message {
+  margin: 0;
+  color: var(--color-danger);
+}
+
+/* A phone: two even rows of up to four wires (3 + 3 with six, 4 + 4 with eight, 3 + 2 with
+   five, 4 + 3 with seven, one row with four). */
+@media (max-width: 899px) {
+  .bd-wires {
+    --bd-cols: 3;
+  }
+  .bd-wires[data-count='4'],
+  .bd-wires[data-count='7'],
+  .bd-wires[data-count='8'] {
+    --bd-cols: 4;
+  }
+
+  .bd-bomb-title {
+    font-size: var(--font-size-body);
+  }
+
+  .bd-slot-number {
+    font-size: var(--font-size-small);
+  }
+
+  /* Six slots in 358 px: a filled slot shows its number and swatch, the name only to a screen
+     reader (its wire button shows the name with the slot's number, T193). */
+  .bd-slot .bd-chip-name {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

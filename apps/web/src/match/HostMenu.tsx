@@ -3,13 +3,15 @@
  * @module web/match
  * @brief  The host menu: one button that opens the next round's settings, Start, End and Abort.
  *
- * Responsibility: the host's controls sit behind one button of at least 44 px (O16), in the
- *                 round view's top bar while a round runs and in the match head otherwise; the
- *                 menu opens on its own before the first round, closes with Escape (focus goes
- *                 back to the button) and after a successful action. Inside: while a round
+ * Responsibility: the host's controls (`HostConsole`) sit behind one button of at least 44 px
+ *                 (O16): in the match head between rounds, a menu that opens on its own before
+ *                 the first round, closes with Escape (focus goes back to the button) and after
+ *                 a successful action; while a round runs, the focus mode's Host panel from the
+ *                 round bar (../round/FocusShell, O46), which closes the same way. Inside: while a round
  *                 runs, Start (a created round), End and Abort with a reason; otherwise a form
  *                 with every setting the host chooses per round (in a match without teams not
- *                 the season teams, O34), prefilled with the
+ *                 the season teams, O34; Heatwave's step and interval only for a summer round,
+ *                 O63), prefilled with the
  *                 last round's choices or the document's values and limited to the bounds in
  *                 force (08 §3; the server checks again), the season (In Season when it is
  *                 usable, or one by hand), the halving round only on a halving day; then
@@ -32,7 +34,13 @@ import { intent } from '../live/socket.js';
 import { codeText } from '../round/roundText.js';
 import { api, ApiError } from '../shell/http.js';
 import { EndMatch } from './EndMatch.js';
-import { Field, SeasonControls, useSeasonChoice } from './roundFields.js';
+import {
+  formSeason,
+  HostFields,
+  SEASON_CHOICE,
+  SeasonControls,
+  useSeasonChoice,
+} from './roundFields.js';
 
 // Season and halving have their own controls below the generic fields.
 const OWN_CONTROLS = new Set(['round.seasonSource', 'round.halving']);
@@ -57,7 +65,7 @@ function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
   const [values, setValues] = useState<Values>(() =>
     Object.fromEntries(fields.map((d) => [d.key, last?.[d.key] ?? doc.values[d.key] ?? d.default])),
   );
-  const choice = useSeasonChoice();
+  const choice = useSeasonChoice(last);
   const { season, halving } = choice;
   const [problem, setProblem] = useState<string | null>(null);
   const create = (startNow: boolean): void => {
@@ -69,7 +77,8 @@ function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
     api(`/matches/${match.code}/rounds`, { method: 'POST', body })
       .then(() => {
         setProblem(null);
-        done(values);
+        // The season choice and halving are kept with the settings for the next round (T209).
+        done({ ...values, 'round.halving': halving, [SEASON_CHOICE]: season });
       })
       .catch((error: unknown) => {
         setProblem(
@@ -85,17 +94,15 @@ function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
     <form className="smg-stack" onSubmit={submit} data-testid="round-form">
       <div className="host-form">
         <SeasonControls {...choice} />
-        {fields.map((d) => (
-          <Field
-            key={d.key}
-            def={d}
-            doc={doc}
-            value={values[d.key] ?? d.default}
-            set={(v) => {
-              setValues((old) => ({ ...old, [d.key]: v }));
-            }}
-          />
-        ))}
+        <HostFields
+          fields={fields}
+          doc={doc}
+          season={formSeason(choice)}
+          values={values}
+          set={(key, v) => {
+            setValues((was) => ({ ...was, [key]: v }));
+          }}
+        />
       </div>
       <Problem text={problem} />
       <div className="smg-row">
@@ -235,10 +242,35 @@ function MenuBody({ p, close }: { readonly p: HostMenuProps; readonly close: () 
   );
 }
 
+// Whether the viewer hosts this match and so gets the host's controls.
+export const hosts = (match: MatchDetailsView): boolean =>
+  match.youHost && match.nextRoundDefaults !== null;
+
+// The host's controls themselves: in the menu's panel between rounds, in the focus mode's
+// Host panel while a round runs (../round/FocusShell, O46).
+export function HostConsole(
+  p: HostMenuProps & {
+    readonly close: () => void;
+    readonly id?: string;
+    readonly className?: string;
+  },
+): ReactElement {
+  return (
+    <section
+      id={p.id}
+      className={`smg-stack ${p.className ?? ''}`}
+      aria-label="Host"
+      data-testid="host-console"
+    >
+      <MenuBody p={p} close={p.close} />
+    </section>
+  );
+}
+
 export function HostMenu(p: HostMenuProps): ReactElement | null {
   // Open by itself before the first round, so the host sees where to start.
   const menu = useDisclosure(p.match.round === null);
-  if (!p.match.youHost || p.match.nextRoundDefaults === null) return null;
+  if (!hosts(p.match)) return null;
   return (
     <div className="host-menu" onKeyDown={menu.onKeyDown}>
       <button
@@ -253,14 +285,7 @@ export function HostMenu(p: HostMenuProps): ReactElement | null {
         Host
       </button>
       {menu.open ? (
-        <section
-          id={menu.panelId}
-          className="host-menu-panel smg-stack"
-          aria-label="Host"
-          data-testid="host-console"
-        >
-          <MenuBody p={p} close={menu.close} />
-        </section>
+        <HostConsole {...p} close={menu.close} id={menu.panelId} className="host-menu-panel" />
       ) : null}
     </div>
   );

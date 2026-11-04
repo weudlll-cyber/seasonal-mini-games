@@ -5,9 +5,10 @@
  *
  * Responsibility: call `GET <path>` when the path changes and keep its answer or its
  *                 ApiError; an answer always belongs to the current path (a stale answer of
- *                 an earlier path is dropped), and `null` loads nothing.
+ *                 an earlier path is dropped), and `null` loads nothing; `withGame` adds a
+ *                 board's game filter (O44).
  * Depends on:     react, ../shell/http
- * Used by:        ./LeaderboardPage, ./TeamBoard, ./ProfilePage, ./VerifyPage
+ * Used by:        ./LeaderboardPage, ./PlayerBoard, ./TeamBoard, ./ProfilePage, ./VerifyPage
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1
  */
 import { useEffect, useState } from 'react';
@@ -44,3 +45,7 @@ export function useApi<T>(path: string | null): Loaded<T> {
   }, [path]);
   return loaded.path === path ? loaded : NOTHING;
 }
+
+// A board path for one game, or for every game when `game` is null (O44, T126).
+export const withGame = (path: string, game: string | null): string =>
+  game === null ? path : `${path}${path.includes('?') ? '&' : '?'}game=${encodeURIComponent(game)}`;

@@ -37,7 +37,7 @@ import { RoundScheduler } from './scheduler.js';
 // Every registered game's settings document (08 §1: id `game.<gameId>`).
 export function gameDocuments(): Record<string, readonly SettingDef[]> {
   return Object.fromEntries(
-    GAMES.map((g) => [`game.${g.module.meta.id}`, gameSettingsDefs(g.module)]),
+    GAMES.map((g) => [`game.${g.id}`, g.use((e) => gameSettingsDefs(e.module))]),
   );
 }
 

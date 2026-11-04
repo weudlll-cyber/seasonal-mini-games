@@ -8,19 +8,20 @@
  *                 their season uses. Friendly and playful, teasing at the far end, never
  *                 insulting, never about a name, no profanity, no digits, and no word about the
  *                 range or its size (a hidden range must stay hidden; ./comments.test checks).
- * Depends on:     @smg/game-sdk (Season), ./closeness (Tier)
+ *                 Every line fits the seasonal theme (weather, nature, the seasons): no sea,
+ *                 ships, islands, captains or space. Within a tier lines are drawn at random,
+ *                 so two guesses of one tier may get lines that sound a little nearer or
+ *                 farther than each other; only the tier says how close a guess is.
+ * Depends on:     @smg/guess-engine (CommentLines, Pool)
  * Used by:        ./comments, ./comments.test
  * Spec:           docs/spec/02-game-guess-the-number.md §6.3
  */
-import type { Season } from '@smg/game-sdk';
-
-import type { Tier } from './closeness.js';
+import type { CommentLines } from '@smg/guess-engine';
 
 // A tier's lines, or the trend lines for a guess closer or farther than the player's last.
-export type Pool = Tier | 'closer' | 'farther';
-type Line = string | { readonly text: string; readonly season: Season };
+export type { Pool } from '@smg/guess-engine';
 
-export const COMMENT_LINES: Readonly<Record<Pool, readonly Line[]>> = {
+export const COMMENT_LINES: CommentLines = {
   wayOff: [
     'Well, that wasn’t it.',
     'Not even in the same postcode.',
@@ -32,19 +33,19 @@ export const COMMENT_LINES: Readonly<Record<Pool, readonly Line[]>> = {
     'A brave shot into the wilderness.',
     'That’s a different neighbourhood entirely.',
     'Not close. Not close at all.',
-    'You could see that one from space.',
+    'That one landed in the next valley.',
     'The number sends its regards from very far away.',
     'Interesting choice. Wrong, but interesting.',
     'That guess took the scenic route.',
     'Way off. Shake it off and try again.',
-    'If guesses had passports, that one needs a visa.',
+    'That guess wandered off past the orchard.',
     'Swing and a miss — a big one.',
-    'Lost at sea, that one.',
+    'Lost in the fog, that one.',
     'Nowhere near. The number is relaxed.',
     'That was more of a wish than a guess.',
     'Far, far away. Like a fairy tale, minus the happy ending.',
     'Plenty of room for improvement there.',
-    'Right idea, wrong planet.',
+    'Right idea, wrong season.',
     'Off by a country mile.',
     'The number yawned.',
     { text: 'A snowball’s chance with that one.', season: 'winter' },
@@ -71,7 +72,7 @@ export const COMMENT_LINES: Readonly<Record<Pool, readonly Line[]>> = {
     'A long walk from here.',
     'Nope, nothing warm about that.',
     'Some distance to cover yet.',
-    'Wrong corner of the map.',
+    'Wrong end of the number line.',
     'The number is not impressed. Yet.',
     'Out in the cold, but the door’s still open.',
     'Keep your gloves on.',
@@ -258,7 +259,7 @@ export const COMMENT_LINES: Readonly<Record<Pool, readonly Line[]>> = {
     'That went the wrong way.',
     'Colder than last time.',
     'Oops — further away now.',
-    'Wrong direction, captain.',
+    'Wrong turn on the woodland path.',
     'A step backwards.',
     'Your last one was closer.',
     'Drifting away.',

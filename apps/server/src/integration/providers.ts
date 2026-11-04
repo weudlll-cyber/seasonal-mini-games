@@ -6,12 +6,17 @@
  * Responsibility: the rows of smg.identity_providers (kind `jwt_handoff`) as the admin's view
  *                 (whether a key is pinned, never the key itself) and as the handoff's policy
  *                 (issuer, audience `seasonal-mini-games`, algorithms, key source, role mapping);
- *                 a mapping to security_admin or super_admin is refused on save and ignored on use.
+ *                 a mapping to security_admin or super_admin is refused on save and ignored on use;
+ *                 a change without a key keeps the pinned one.
  * Depends on:     @smg/contracts (views, body), ../db/pool, ./keys (types)
  * Used by:        ./handoff, ../http/routes/adminIntegration
  * Spec:           docs/spec/07-integration.md §1; Bingo 07 §2.1, §2.2; Bingo 04 §3.1
  */
-import type { IdentityProviderBody, IdentityProviderView } from '@smg/contracts';
+import type {
+  IdentityProviderBody,
+  IdentityProviderChange,
+  IdentityProviderView,
+} from '@smg/contracts';
 import type { z } from 'zod';
 
 import type { DbPool } from '../db/pool.js';
@@ -82,13 +87,15 @@ export async function enabledProvider(pool: DbPool, issuer: string): Promise<Pro
 }
 
 type Body = z.infer<typeof IdentityProviderBody>;
+// A change: `pinnedPublicKey` left out keeps the key in force (DECISIONS T175).
+type Change = z.infer<typeof IdentityProviderChange>;
 
-const values = (b: Body) => [
+const values = (b: Change) => [
   b.name,
   b.issuer,
   b.allowedAlgs,
   b.jwksUrl,
-  b.pinnedPublicKey,
+  b.pinnedPublicKey ?? null,
   JSON.stringify(b.roleMapping),
   b.enabled,
 ];
@@ -105,22 +112,27 @@ export async function createProvider(pool: DbPool, b: Body): Promise<IdentityPro
   return r.rows[0] === undefined ? null : view(r.rows[0]);
 }
 
-// The provider changed; null when it does not exist (or the new issuer is another's).
+// The provider changed; null when it does not exist (or the new issuer is another's);
+// NO_KEY when the change would leave it with neither a pinned key nor a JWKS address.
 export async function updateProvider(
   pool: DbPool,
   id: string,
-  b: Body,
-): Promise<IdentityProviderView | null> {
+  b: Change,
+): Promise<IdentityProviderView | 'NO_KEY' | null> {
   try {
     const r = await pool.query<Row>(
       `UPDATE smg.identity_providers SET name = $2, issuer = $3, allowed_algs = $4, jwks_url = $5,
-         pinned_public_key = $6, role_mapping = $7, enabled = $8, updated_at = now()
+         pinned_public_key = CASE WHEN $9::boolean THEN pinned_public_key ELSE $6 END,
+         role_mapping = $7, enabled = $8, updated_at = now()
        WHERE id = $1 RETURNING ${COLUMNS}`,
-      [id, ...values(b)],
+      [id, ...values(b), b.pinnedPublicKey === undefined],
     );
     return r.rows[0] === undefined ? null : view(r.rows[0]);
   } catch (error) {
-    if ((error as { code?: string }).code === '23505') return null;
+    const code = (error as { code?: string }).code;
+    if (code === '23505') return null;
+    // The table's check: a JWKS address or a pinned key (migration 0009).
+    if (code === '23514') return 'NO_KEY';
     throw error;
   }
 }
