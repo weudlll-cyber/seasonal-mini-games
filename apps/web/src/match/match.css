@@ -247,6 +247,18 @@
   white-space: normal;
 }
 
+/* A phone: the Host button sits left of Play, so a panel hung from its right edge ran past the
+   screen's left one; it spans the screen under the bar instead (T207). */
+@media (max-width: 899px) {
+  .host-menu-panel {
+    position: fixed;
+    top: 3.75rem;
+    left: var(--gutter);
+    right: var(--gutter);
+    width: auto;
+  }
+}
+
 .host-form {
   display: grid;
   gap: var(--space-2);

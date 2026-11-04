@@ -13,8 +13,8 @@ Branch `feat/guess-games` from `d2656f9`. Owner decision O63 (2026-11-04: Heatwa
 | 0. O63 recorded; CI's coverage gate | done  | `fbb3214` |
 | 1. Heatwave in the host menu (O63)  | done  | `886b203` |
 | 2. Two display fixes                | done  | `280dbbb` |
-| 3. A reliably green test suite      | done  |           |
-| 4. Re-shoot (O55), handover         | open  |           |
+| 3. A reliably green test suite      | done  | `67e45ee` |
+| 4. Re-shoot (O55), handover         | done  |           |
 
 ### Piece 0 — O63 and CI's coverage gate
 
@@ -38,6 +38,24 @@ Branch `feat/guess-games` from `d2656f9`. Owner decision O63 (2026-11-04: Heatwa
 - CI's e2e (journey 33, `6ffd66b`): the phone's result bar wider than 390 px with the Linux runner's font metrics; the game's name now gives way first (`.result-bar-game`, its title the full name). Journeys 33 and 28 pass.
 - The proof (the owner's addendum: one green run here, CI on the final push the second): `pnpm verify` green in 743 s with nothing of this repository running (Bingo's containers left as they were): format, lint, types, then the tests in three passes, every project but the server's 113 files and 621 tests in 166 s, the server's unit tests 15 files and 69 tests in 4 s, its integration tests 19 files and 119 tests in 273 s; four forks of 14 threads (12 cores). The attempts before it, each failing only in the server's pass, led to the security, container-stop and pass-split fixes above.
 - Timeouts raised only where the work is the test (20 s, in the file, with the measured reason): the conformance kit, GTN's feedback, secrets and specials properties, Bomb Defusal's rules (chi-square), Target's input, panels, sentinel and tags tests; the one-test 15 s of the play-test run is replaced by its file's.
+
+### Piece 4 — the re-shoot (O55), the handover (T207)
+
+- `tmp/csshoot.mjs` (git-ignored), 8 images added to `shots/playtest-1` under `clean-state/`: the host menu's next-round form for summer with "Heatwave step" 1 and "Heatwave every" 10 (1280 × 720 light and dark, 390 × 844 light), Seasonal Target's own rows with "you" once (1280 × 720 light and dark, 390 × 844 light), its phone result (light and dark). Measured: nothing cut; the phone result's grid 244 px, its first part 811 of 844 px, "dev-host (you)" whole.
+- My review: the phone's host panel ran past the screen's left edge, hiding the start of every field (it predates O63): fixed (T207), re-shot. Correct: both Heatwave fields only in summer, their help lines, the rows' "you" tag alone, the tags of 20 bots.
+- e2e after the fix: the lobby journeys pass.
+
+### Needs the owner
+
+Nothing blocks. To decide after play (OPEN.md, "Clean state, to confirm"): T205 (the phone result's 244 px grid), T207 (the host panel on a phone). Questions:
+
+- The proof is one green `pnpm verify` here (the owner's addendum) and CI on the final push. Bingo's `sbr-rehearsal` container used about 22 % CPU throughout and was left alone.
+- Delete the branch `shots/playtest-1` after the review.
+
+### Handover
+
+- Branch `feat/guess-games` at the final commit, piece 4's (the handover message names its SHA); dev servers restarted on it: API 3910, web 5410, admin 5411.
+- Quick Test: <http://127.0.0.1:5410/#/quick-test>. Each game with Seed `acorn`, **Fast specials** on, **Start from the lobby** on. Heatwave: Season summer; after a round, the Host menu's form shows "Heatwave step" and "Heatwave every" (the first round's form is the Quick Test's); Seasonal Target: Tile size 20, Bots 20.
 
 ## Play-test fixes (2026-11-04)
 
