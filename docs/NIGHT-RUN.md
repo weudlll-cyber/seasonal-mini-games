@@ -15,7 +15,7 @@ Branch `feat/guess-games` from `606eecf`. The owner's decisions after playing al
 | 2. Guess The Number: fallen numbers      | done  |           |
 | 3. Bomb Defusal: result, help, slot tap  | done  |           |
 | 4. Seasonal Target: messages, tags, grid | done  |           |
-| 5. All games and leftovers               | open  |           |
+| 5. All games and leftovers               | done  | `5a4a92c` |
 | 6. Re-shoot (O55), self-review, handover | open  |           |
 
 ### Needs the owner
@@ -59,10 +59,10 @@ Nothing so far.
 
 ### Piece 5 — all games and leftovers (T200–T202)
 
-- Long names (T202): `PlayerName` (apps/web/src/round) is now the name in the waiting area and the chat's author as well as the result tables and the Players panel; its styles moved to `playerName.css`, imported by the component. A name focused or tapped wraps inside its box. The admin app's account, abuse and sanction tables use the new `DisplayName` (one line, ellipsis, title). Display names are at most 24 characters (the accounts table's check), so the browser probe (`tmp/p5names.mjs`) wrote a 30-character name into each name element and measured it at 1280 × 720 and 390 × 844: cut with an ellipsis where its box is narrower, no row taller, "(you)" never cut, no page scroll. The round list and "Your guesses" (GuessLine, the rows lock) follow in the next commit.
+- Long names (T202): `PlayerName` (apps/web/src/round) is now the name in the waiting area and the chat's author as well as the result tables and the Players panel; its styles moved to `playerName.css`, imported by the component. A name focused or tapped wraps inside its box. The admin app's account, abuse and sanction tables use the new `DisplayName` (one line, ellipsis, title). Display names are at most 24 characters (the accounts table's check), so the browser probe (`tmp/p5names.mjs`) wrote a 30-character name into each name element and measured it at 1280 × 720 and 390 × 844: cut with an ellipsis where its box is narrower, no row taller, "(you)" never cut, no page scroll. The round list (`.round-who` in `roundLog.css`, a separate commit under the rows lock) caps a name at half its line, so a long name no longer pushes the guess and answer onto a second line at 390 px (row 39 → 59 px before, unchanged after); it keeps its own span with a title, not `PlayerName`, since on a phone the row is a button and a focusable name inside it would be invalid. "Your guesses" shows no names (T150).
 - Team columns (T202): the waiting area's team and connection, and the Players panel's team and guesses, are fixed columns; the Players panel shows the team's icon; the placings keep a slot for the team icon when teams play.
 - Change password (T201): `GET /session`'s account carries `hasPassword`; a website account sees no form, a line that says why, and "Delete my account". Tests: `AccountPage.test.tsx`, the integration tests of register and handoff, journey 29 (`e2e/accountDeletion.spec.ts`).
-- L1 (T200): `l1` plays ten rounds (five plain, the four specials, halving); T180 amended, 09 §5 and OPEN aligned.
+- L1 (T200): `l1` plays ten rounds (five plain, the four specials, halving); T180 amended, 09 §5 and OPEN aligned. Smoke run under the heavy lock, 20 players + 100 spectators (not the 200-player run): all ten rounds solved, proof ok, gap-free, nothing lost or duplicated, one winner each, no HTTP or socket problem, 772 s.
 
 ## Night 8 (2026-11-04)
 

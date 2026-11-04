@@ -115,7 +115,9 @@ describe('the order in which a row gives way', () => {
   it('cuts the comment first, then the name, never the guess or the answer', () => {
     expect(rule('.round-comment')).toContain('flex: 1 1 0');
     expect(rule('.round-who')).toContain('flex: 0 1 auto');
-    expect(rule('.round-who')).not.toContain('max-width');
+    // No fixed cap (T150), only half the line, so a long name never wraps the row (T202).
+    expect(rule('.round-who')).toContain('max-width: 50%');
+    expect(rule('.round-who')).not.toMatch(/max-width: [\d.]+rem/);
     expect(rule('.round-value,\n.round-answer')).toContain('flex: none');
     expect(rule('.round-arriving')).toContain('flex: none');
   });

@@ -131,10 +131,14 @@ button.round-row-line {
 }
 
 /* The name in full where the line has room; it gives way after the comment, with an
-   ellipsis, down to a few letters (T150). */
+   ellipsis, down to a few letters (T150). At most half the line, so a long name never
+   pushes the guess and the answer onto a second line (a 30-character name, T202). The
+   title holds the full name; the row is not ../PlayerName, since on a phone the row is a
+   button and a name inside it cannot take focus of its own. */
 .round-who {
   flex: 0 1 auto;
   min-width: 2.5rem;
+  max-width: 50%;
   overflow: hidden;
   text-overflow: ellipsis;
   font-weight: var(--font-weight-strong);
