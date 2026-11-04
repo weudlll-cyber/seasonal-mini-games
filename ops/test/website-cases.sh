@@ -108,7 +108,7 @@ website_server() {
   if [[ $mode == nginx ]]; then
     on "$s" 'apt-get install -y -q nginx >/dev/null'
     on "$s" "install -d -m 755 /etc/seasonal/routes && echo 3800 >/etc/seasonal/site-local-port && cp $SITE/nginx-site /etc/nginx/sites-available/default"
-    on "$s" 'nginx -t -q && systemctl reload nginx'
+    on "$s" 'nginx -t -q && systemctl enable -q nginx && systemctl restart nginx'
   fi
   on "$s" "cd $SITE && docker compose up -d --quiet-pull --wait"
 }

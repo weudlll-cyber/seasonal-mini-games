@@ -187,7 +187,7 @@ detect_website() {
 feed_last_success() {
   local body at
   body=$(compose "$1" exec -T app wget -qO- http://127.0.0.1:3100/readyz 2>/dev/null || true)
-  at=$(sed -n 's/.*"websiteFeed":{[^}]*"lastSuccessAt":"\{0,1\}\([^",}]*\).*/\1/p' <<<"$body")
+  at=$(sed -n 's/.*"websiteFeed": *{[^}]*"lastSuccessAt": *"\{0,1\}\([^", }]*\).*/\1/p' <<<"$body")
   [[ $at != null ]] || at='none yet'
   printf '%s' "${at:-unknown}"
 }
