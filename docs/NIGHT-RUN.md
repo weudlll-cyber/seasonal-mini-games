@@ -10,20 +10,27 @@ Branch `feat/guess-games` from `60821a6`. Owner decision O55 (2026-11-04: screen
 
 | Piece                                         | State | Commit    |
 | --------------------------------------------- | ----- | --------- |
-| 0. O55 recorded                               | done  |           |
-| 1. All games: review fixes                    | done  |           |
-| 2. Seasonal Target: review fixes              | done  |           |
-| 3. Safecracker and Bomb Defusal: review fixes | done  |           |
+| 0. O55 recorded                               | done  | `103082c` |
+| 1. All games: review fixes                    | done  | `08eb91d` |
+| 2. Seasonal Target: review fixes              | done  | `735ac7b` |
+| 3. Safecracker and Bomb Defusal: review fixes | done  | `77e8ce5` |
 | 4. Player account deletion screen             | done  | `d253ee6` |
 | 5. Admin screens: providers, origins, hooks   | done  | `3822148` |
 | 6. Admin app Trusted Types                    | done  | `745b083` |
 | 7. The "opens in 0 s" intro                   | done  | `7271721` |
 | 8. Load scenarios L1 specials and halving     | done  | `3faed63` |
-| 9. Re-shoot (O55), self-review, handover      | open  |           |
+| 9. Re-shoot (O55), self-review, handover      | done  | `fff4db6` |
 
 ### Needs the owner
 
-Nothing so far.
+Nothing blocks. To decide after play (OPEN.md, "Night 8, to confirm"): T150, T151, T153 (the review fixes), T170 (account deletion), T177 (the admin Integration area), T180 (L1 has six rounds, not ten). Questions:
+
+- The session's API budget (120 requests a minute) is less than a round page's reload rate in a busy round (up to four a second); since T185 a refused load is tried again after a second, so the cost is a short delay (piece 7).
+- The load runs: under Frost, every release of held answers is its own commit batch, so a 200-player winter round's acknowledgements were 5.6 s at p95 on this laptop (piece 8; a server proposal in OPEN (r); the gate is the reference VPS).
+- The account page offers Change password to accounts made by the website handoff, which have no password (piece 4).
+- The admin app's phone layout: its navigation is a tall column of links above the page (seen on the Integration shots; it predates piece 5).
+- Quick Test's bot can open a 4-digit code in two guesses, so journey 25 failed once before its round opened (passes on rerun).
+- Delete the branch `shots/night-8` after the review.
 
 ### Pieces 1–3 — the review fixes (T150–T153)
 
@@ -37,9 +44,35 @@ Nothing so far.
 - Lines before → after: GuessLine 177 → 203, RoundLog 183 → 189, InfoParts 132 → 124, CooldownRing 55 → 64, ResultScreen 109 → 131, MatchStandings 68 → 70, roundLog.css 281 → 280, round.css 249 → 235, result.css 289 → 283, cooldownRing.css 61 → 68, ResultBar 42 → 46, match.css 244 → 243, game-sdk web.ts 154 → 162, guess-engine views.ts 94 → 99; GTN ResultPanel 49 → 52, InfoLine 38 → 39, text.ts 152 → 167; Safecracker ResultPanel 61 → 64, text.ts 165 → 173, sc.css 232 → 234, Board 104 → 106; Bomb Defusal ResultPanel 55 → 71, WireChip 65 → 80, bd.css 267 → 294, text.ts 186 → 193; Target ResultPanel 81 → 102, TargetInput 206 → 239, heat.ts 151 → 167, heat.css new 184, tiles.css 297 → 218, st.css 190 → 181, words.ts 103 → 113, text.ts 136 → 144, fallen.css 84 → 93, HeatLegend 27 → 32, geometry.ts 171 → 185, rules.ts 41 → 42. New test file `rows.test.tsx`.
 - Checks: `pnpm verify` green (135 files, 769 tests; the golden run re-recorded: it gains only the `held` field). e2e Chromium: journey 28 (4/4), the timing journeys 1–7, 16–18, 20–22, 24–27 19/20 with journey 25 failed once because the bot opened the 4-digit code in 2 guesses before the page saw the round open, passing on its rerun (left alone: Quick Test's bot can win at once on a small code).
 
-### Piece 9 — re-shoot (running)
+### Handover
 
-- First shoot of the games (`tmp/n8shoot.mjs`, git-ignored) and its review, fixed at once: a phone row clipped Safecracker's six-digit answer and Seasonal Target's 340 px column clipped "answer arriving… 2 s" (rows now put a part without room whole on a second line, everywhere); the placings cut "dev-h… (you)" with room to spare (cells' side padding 16 → 8 px; on a phone the number columns and the place column narrower, the cell's parts 4 px apart: the cell measured 121 px for 126 px of parts, now 129 of 126); Bomb Defusal's revealed sequence put its numbers above the chips once kept on one line (each number now stays with its chip); Seasonal Target's rounds ended before the shots because the bot found the target (T154: a Quick Test `botDelayS`, used by the shoot: the busy shared round had 18 guesses and no winner).
+- Branch `feat/guess-games` at the final commit (see the summary below); dev servers restarted on it: API 3910, web 5410, admin 5411.
+- Screenshots: the orphan branch `shots/night-8` (114 images and `play-through.txt`); `shots/night-7` is deleted on origin.
+- Quick Test: <http://127.0.0.1:5410/#/quick-test>. Admin: <http://127.0.0.1:5411/> (Dev sign-in as admin; the Integration area). For each game: Game as below, Seed `acorn`, a Season, **Fast specials** on, **Start from the lobby** on; Start round from the Host menu.
+
+| Game                  | What to look at                                                                                                                                                                                                                                                                    |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Guess The Number      | The special line's whole sentence; "Your guesses" with guess and answer only; "Log (M)"; individual mode's "Others: …" row and rows without "You"; winter: every held answer "answer arriving…"; the ring's check mark; the result's history below the first part, "did not guess" |
+| Seasonal Safecracker  | Autumn: fallen digits crossed from corner to corner; on a phone the six-digit answers whole (a second line where needed); the result's "Code: 0834"                                                                                                                                |
+| Seasonal Bomb Defusal | The neutral ring as your own marker beside the wire dots; the phone line "8 wires · cut 6" with "Hint: red first"; the result's history in colour dots, the sequence on one line                                                                                                   |
+| Seasonal Target       | Tile size 20; **Answers** `closeness` (seven colours, the legend with seven), `distance` and `direction` (two tiles with one number share a colour); autumn: click a fallen tile ("That tile fell."), "Fallen (N)"; spring with a halving day: only empty tiles dimmed             |
+
+- Also: the account page's "Delete my account" (sign in through the host page, or as a dev player to see the form); the admin app's Integration area.
+
+### Piece 9 — re-shoot, self-review
+
+- First shoot of the games (`tmp/n8shoot.mjs`, git-ignored) and its review, fixed at once: a phone row clipped Safecracker's six-digit answer and Seasonal Target's 340 px column clipped "answer arriving… 2 s" (rows now put a part without room whole on a second line, everywhere); the placings cut "dev-h… (you)" with room to spare (cells' side padding 16 → 8 px; on a phone the number, guesses and place columns narrower, the cell's parts 4 px apart: the cell measured 121 px for 126 px of parts, now 129 of 126); Bomb Defusal's revealed sequence put its numbers above the chips once kept on one line (each number now stays with its chip); Seasonal Target's rounds ended before the shots because the bot found the target (T154: a Quick Test `botDelayS`, used by the shoot: the busy shared round had 18 guesses and no winner).
+
+- The shoot (O55): `tmp/n8shoot.mjs` and `tmp/n8shoot2.mjs` (git-ignored), 114 images, `shots/night-8`. Changed states only: each game's shared summer round, individual autumn, Frost pending, the result (and Guess The Number's time-up), the spring hint line where it changed; Safecracker's fallen digits, Bomb Defusal's harmless line; Seasonal Target in closeness and distance mode, halving, a fallen tile clicked, a busy shared round (18 guesses, no winner); the account deletion form and its notice; the admin Integration area's three lists and their forms. 1280 × 720 light and dark, 390 × 844 light, 1920 × 1080 for the list games' larger rows and Target's grid. 14 images above the aim of 60–100: the account and admin screens came on top of the four games.
+- Measured (`play-through.txt`): no round view scrolls; every result's first part fits (324–712 px of 720, 515–828 of 844, 1 072 of 1 080); Target's 20 × 20 grid 660 px at 1280 × 720 (30.9 px tiles), 1 020 px at 1920 × 1080 (48.9 px), 374 px on a phone; the 30 × 30 busy round 19.9 px tiles; the result's 8 × 8 grid 331 px at 1280 × 720, 835 px at 1920 × 1080, 211 px on a phone; busy round 15 of 19 rows in view at 1280 × 720, 19 of 19 at 1920 × 1080. Truncation check (answers, held markers, guesses, names, "(you)", the special line, the info line's parts, the result bar, list heads, Fallen chips, digit and wire chips): nothing cut in the last shot of every state.
+- My review (every new shot of the list games' shared, individual, Frost and result states, Target's states, the account and admin screens): fixed — the items above; owner items — in "Needs the owner"; seen and correct — the special line wraps to two lines, Leaf Fall's and halving's banners leave after 5 s, a halving banner is cut with an ellipsis in Target's 340 px column (the banner is one line by design, T142; its Log row has it whole), the fallen-tile message with Guess disabled when the selected tile fell.
+- Checks: `pnpm verify` green at `c66e38d` (136 files, 772 tests); e2e journeys as listed under pieces 1–8.
+
+### Summary
+
+- All nine pieces done; nothing dropped for time. Agents: pieces 4, 5+6, 7, 8 (reports in their sections); I did 1–3 and 9.
+- Decisions: O55; T150–T154, T170–T171, T175–T179, T180–T184, T185–T186.
+- Lines and checks per piece in their sections. CI for the final push: reported after the handover.
 
 ### Piece 8 — load scenarios L1: the special rounds and the halving round (T180–T184)
 
