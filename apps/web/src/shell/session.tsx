@@ -4,8 +4,9 @@
  * @brief  The signed-in session for the whole client: who, permissions, CSRF token.
  *
  * Responsibility: load GET /session on start, keep its CSRF token for ./http, and offer
- *                 the development quick sign-in (host, admin or player 1–3), sign-out, and the
- *                 sign-in with a host's handoff token (an embedded page, 07 §1).
+ *                 the development quick sign-in (host, admin or player 1–3), sign-out, the
+ *                 sign-in with a host's handoff token (an embedded page, 07 §1), and the
+ *                 deletion of the own account (DELETE /me, which ends every session).
  *                 Only the newest refresh sets the session (an older answer arriving late
  *                 never undoes a sign-in). Screens read it through `useSession`.
  * Depends on:     react, ./http
@@ -47,6 +48,9 @@ interface SessionContextValue {
   readonly register: (account: NewAccount) => Promise<void>;
   // A host-signed token exchanged for a session (Bingo 07 §2.2).
   readonly handoff: (token: string) => Promise<void>;
+  // DELETE /me: the display name typed, and the password for an account that has one
+  // (DECISIONS T105); throws ApiError on refusal.
+  readonly deleteAccount: (confirm: DeleteConfirm) => Promise<void>;
   readonly can: (permission: string) => boolean;
 }
 
@@ -54,6 +58,11 @@ interface NewAccount {
   readonly displayName: string;
   readonly email: string;
   readonly password: string;
+}
+
+interface DeleteConfirm {
+  readonly confirm: string;
+  readonly password?: string;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -106,6 +115,11 @@ export function SessionProvider({ children }: { children: ReactNode }): ReactEle
       },
       handoff: async (token) => {
         await api('/auth/handoff', { method: 'POST', body: { token } });
+        await changed();
+      },
+      // The server has ended the sessions and cleared the cookie: no logout call follows.
+      deleteAccount: async (confirm) => {
+        await api('/me', { method: 'DELETE', body: confirm });
         await changed();
       },
       can: (permission) => session?.permissions.includes(permission) === true,

@@ -48,8 +48,9 @@ const TIMING = [
   'chat.spec.ts',
   // Changes and rolls back the game's settings document, and aborts a round.
   'admin.spec.ts',
-  // Changes the embed allowlist and the identity providers (journey 8).
+  // Change the embed allowlist and the identity providers (journeys 8 and 29).
   'embed.spec.ts',
+  'accountDeletion.spec.ts',
 ];
 const BROWSERS = [
   { name: 'chromium', use: { ...devices['Desktop Chrome'] } },

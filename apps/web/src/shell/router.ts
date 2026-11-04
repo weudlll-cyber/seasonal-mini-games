@@ -1,8 +1,8 @@
 /**
  * @file   apps/web/src/shell/router.ts
  * @module web/shell
- * @brief  Hash routes of the player client: lobby, account, match, boards, profiles, proofs,
- *         and the embedded views.
+ * @brief  Hash routes of the player client: lobby, account (and its "deleted" notice), match,
+ *         boards, profiles, proofs, and the embedded views.
  *
  * Responsibility: parse `location.hash` into a route and back, and a hook that follows
  *                 hash changes, including one between its first render and its listener.
@@ -23,6 +23,7 @@ export type Route =
   | { readonly name: 'signIn' }
   | { readonly name: 'register' }
   | { readonly name: 'account' }
+  | { readonly name: 'accountDeleted' }
   | { readonly name: 'match'; readonly code: string }
   | { readonly name: 'quickTest' }
   | { readonly name: 'leaderboard'; readonly periodId: string | null }
@@ -45,7 +46,7 @@ const PARSERS = new Map<string, (rest: Rest) => Route | null>([
   ['quick-test', () => ({ name: 'quickTest' })],
   ['sign-in', () => ({ name: 'signIn' })],
   ['register', () => ({ name: 'register' })],
-  ['account', () => ({ name: 'account' })],
+  ['account', ([what]) => ({ name: what === 'deleted' ? 'accountDeleted' : 'account' })],
   ['leaderboard', ([periodId]) => ({ name: 'leaderboard', periodId: periodId ?? null })],
   ['players', ([n]) => (n === undefined ? null : { name: 'player', displayName: n })],
   [
@@ -81,6 +82,7 @@ const FIXED: Partial<Record<Route['name'], string>> = {
   signIn: '#/sign-in',
   register: '#/register',
   account: '#/account',
+  accountDeleted: '#/account/deleted',
   quickTest: '#/quick-test',
 };
 

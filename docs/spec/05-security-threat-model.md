@@ -24,7 +24,7 @@ The whole of Bingo's security architecture applies, with the names of [04](04-so
 | Uploads (admin branding only) | Bingo 03 §14 | None. |
 | Backup and disaster recovery | Bingo 03 §15 | A host failure aborts running rounds. Rounds in `countdown` or `open` resume after a plain process restart (§2). |
 | Audit log (append-only, hash chain) | Bingo 03 §16 | More actions are logged (§8). |
-| OWASP Top 10 mapping, supply chain, privacy | Bingo 03 §17, §18, §19 | None. |
+| OWASP Top 10 mapping, supply chain, privacy | Bingo 03 §17, §18, §19 | Account deletion (`DELETE /me`): the account goes with its sessions, roles, league points and website link; matches, rounds and chat messages keep their history without the link to it. An account made by the website's handoff confirms with its display name typed (DECISIONS T105); the player client's form is on the account page (T170). |
 
 ## 2. Cooldown enforcement on the server
 

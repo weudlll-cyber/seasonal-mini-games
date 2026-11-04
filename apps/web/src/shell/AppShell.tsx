@@ -26,6 +26,7 @@ import { useDisclosure } from '@smg/ui';
 
 import emblem from '../../../../assets/brand/emblem.webp';
 import { AccountPage } from '../account/AccountPage.js';
+import { AccountDeleted } from '../account/DeleteAccount.js';
 import { Register } from '../account/Register.js';
 import { SignIn } from '../account/SignIn.js';
 import { LeaderboardPage } from '../boards/LeaderboardPage.js';
@@ -191,14 +192,36 @@ function Screen({
       ) : (
         <Lobby key={who} dev={dev} />
       );
+    default:
+      return isAccountRoute(route) ? (
+        <AccountScreen who={who} route={route} />
+      ) : (
+        <BoardScreen key={who} route={route} />
+      );
+  }
+}
+
+type AccountRoute = Extract<Route, { name: 'signIn' | 'register' | 'account' | 'accountDeleted' }>;
+const ACCOUNT_ROUTES: readonly string[] = ['signIn', 'register', 'account', 'accountDeleted'];
+const isAccountRoute = (r: ShellRoute): r is AccountRoute => ACCOUNT_ROUTES.includes(r.name);
+
+// The account's screens: sign in, register, the own account and the notice after its deletion.
+function AccountScreen({
+  who,
+  route,
+}: {
+  readonly who: string;
+  readonly route: AccountRoute;
+}): ReactElement {
+  switch (route.name) {
     case 'signIn':
       return <SignIn />;
     case 'register':
       return <Register />;
     case 'account':
       return <AccountPage key={who} />;
-    default:
-      return <BoardScreen key={who} route={route} />;
+    case 'accountDeleted':
+      return <AccountDeleted />;
   }
 }
 

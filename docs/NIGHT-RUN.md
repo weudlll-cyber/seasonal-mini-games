@@ -14,7 +14,7 @@ Branch `feat/guess-games` from `60821a6`. Owner decision O55 (2026-11-04: screen
 | 1. All games: review fixes                    | done    |        |
 | 2. Seasonal Target: review fixes              | done    |        |
 | 3. Safecracker and Bomb Defusal: review fixes | done    |        |
-| 4. Player account deletion screen             | running |        |
+| 4. Player account deletion screen             | done    |        |
 | 5. Admin screens: providers, origins, hooks   | running |        |
 | 6. Admin app Trusted Types                    | open    |        |
 | 7. The "opens in 0 s" intro                   | running |        |
@@ -57,6 +57,14 @@ Nothing so far.
 - The API server stopped twice during the night (other pieces' server-side edits); two runs died with it and left `match.maxPlayers` at 1 000, put back by hand, load accounts deleted, the open load match aborted.
 - Commands: `node load/guessStorm.mjs 200 reports/night-8/load-l1-<round>-200.json <round>` for each round above. Reports: `reports/night-8/load-l1-*-200.json`.
 - Files: `load/guessStorm.mjs` 211 → 184 lines, `load/stormWorker.mjs` 107 → 179, `load/measure.mjs` new 101, `load/scenarios.mjs` new 82; `load/http.mjs` unchanged (reused: `signIn`, `call`, `inGroups`).
+
+### Piece 4 — player account deletion screen (T170, T171)
+
+- **Built:** "Delete my account" on the account page (`apps/web/src/account/DeleteAccount.tsx`): what is deleted and what stays, worded from `DELETE /me` and the tables' foreign keys; Delete stays off until the display name is typed exactly; an account with a password is asked for it once the server answers `PASSWORD_REQUIRED`; then the session is refreshed (signed out) and `#/account/deleted` says so. `deleteAccount` in `session.tsx`, the route in `router.ts`, the account screens split out of `AppShell`'s `Screen` (complexity).
+- **Reused:** `api`/`ApiError` (shell/http), `useSession`, `AccountField` and `FormError` (account/formParts), `accountError` (one new code, `CONFIRMATION_REQUIRED`), `ActionButton` (components/fields); the confirm pattern mirrors the admin app's `ConfirmDialog` (effect first, Cancel beside a danger button that stays off until the input is right). The admin dialog checks only a minimum length, not an exact text, so nothing was moved to `@smg/ui`.
+- **Server:** unchanged; the route already ends every session and clears the cookie (T105).
+- **Tests:** `DeleteAccount.test.tsx` (form, exact name, deletion, password step, refusal, the notice's route); e2e journey 29 (`e2e/accountDeletion.spec.ts`, timing project) with the host site's setup in `e2e/hostSite.ts`.
+- **For the owner:** T170 (OPEN, "Night 8, to confirm"). Noticed and left alone: the account page shows Change password to an account made by the handoff, which has no password (the server answers `PASSWORD_REQUIRED`); `e2e/embed.spec.ts` still says handoff accounts cannot delete themselves through `DELETE /me` and removes them in the database, and could use `e2e/hostSite.ts`.
 
 ## Night 7 (2026-11-03)
 

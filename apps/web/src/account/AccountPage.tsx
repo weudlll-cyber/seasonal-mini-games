@@ -1,16 +1,17 @@
 /**
  * @file   apps/web/src/account/AccountPage.tsx
  * @module web/account
- * @brief  The own account: change the password.
+ * @brief  The own account: change the password, delete the account.
  *
  * Responsibility: a form with the current password and the new one twice; the rules are
  *                 checked before sending (./accountText), the server's refusal shows as a
  *                 sentence; on success the page says that every other device was signed out.
- *                 Signed out, the page points to Sign in.
+ *                 Below it "Delete my account" (./DeleteAccount). Signed out, the page points
+ *                 to Sign in.
  * Depends on:     react, ../shell/http, ../shell/router, ../shell/session, ./formParts,
- *                 ./accountText, ./account.css
+ *                 ./accountText, ./DeleteAccount, ./account.css
  * Used by:        ../shell/AppShell
- * Spec:           docs/spec/05-security-threat-model.md §1; Bingo 03 §2.1
+ * Spec:           docs/spec/05-security-threat-model.md §1; Bingo 03 §2.1; DECISIONS T105
  */
 import { useState, type ReactElement, type SyntheticEvent } from 'react';
 
@@ -18,6 +19,7 @@ import { api } from '../shell/http.js';
 import { hrefOf } from '../shell/router.js';
 import { useSession } from '../shell/session.js';
 import { accountError, passwordText } from './accountText.js';
+import { DeleteAccount } from './DeleteAccount.js';
 import { AccountField, FormError } from './formParts.js';
 import './account.css';
 
@@ -62,21 +64,24 @@ export function AccountPage(): ReactElement {
       });
   };
   return (
-    <form className="smg-panel account-form" onSubmit={submit} data-testid="password-form">
-      <h1>Your account</h1>
-      <p className="smg-muted">Signed in as {session.account.displayName}.</p>
-      <h2>Change password</h2>
-      <PasswordFields values={values} onChange={setValues} />
-      <FormError text={error} testId="password-error" />
-      {done ? (
-        <p role="status" data-testid="password-done">
-          Password changed. Every other device was signed out.
-        </p>
-      ) : null}
-      <button type="submit" className="smg-btn smg-btn--primary" data-testid="password-submit">
-        Change password
-      </button>
-    </form>
+    <div className="smg-stack">
+      <form className="smg-panel account-form" onSubmit={submit} data-testid="password-form">
+        <h1>Your account</h1>
+        <p className="smg-muted">Signed in as {session.account.displayName}.</p>
+        <h2>Change password</h2>
+        <PasswordFields values={values} onChange={setValues} />
+        <FormError text={error} testId="password-error" />
+        {done ? (
+          <p role="status" data-testid="password-done">
+            Password changed. Every other device was signed out.
+          </p>
+        ) : null}
+        <button type="submit" className="smg-btn smg-btn--primary" data-testid="password-submit">
+          Change password
+        </button>
+      </form>
+      <DeleteAccount displayName={session.account.displayName} />
+    </div>
   );
 }
 
