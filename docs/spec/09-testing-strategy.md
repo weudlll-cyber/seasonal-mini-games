@@ -127,6 +127,8 @@ The **fast test profile** exists only in development builds (as Bingo 12 §4): s
 
 Driver: `load/guessStorm.mjs`, Node.js with `socket.io-client`. It signs in load accounts through the development-only route, as Bingo's `load/drawLatency.mjs` does. Bots binary-search their own feedback and guess when their cooldown ends, plus a human-like delay (uniform 200–1 500 ms).
 
+Command, from the repository root against a running development stack: `node load/guessStorm.mjs <players> [out.json] [scenario]`. The scenario is one of L1's rounds alone (`plain`, `spring`, `summer`, `autumn`, `winter`, `halving`), `specials` (the four season rounds) or `l1` (all six in one match, one after another); L4 is `l1` with 1 000 players. Each round is shared, cooldown 3 s (Heatwave's 6 s, so that it steps), range 1–1 000 000, with the game document's special timings; a halving round adds today's halving day through the admin route when there is none and removes it afterwards (DECISIONS T180–T184).
+
 | Scenario | Shape |
 |---|---|
 | L1 `shared-500` | One shared round, 500 players, cooldown 3 s, plus 100 spectators. Ten rounds one after another: plain, then each special, then a halving round. |

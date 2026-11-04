@@ -1,0 +1,68 @@
+{
+  "scenario": "autumn",
+  "players": 200,
+  "spectators": 100,
+  "runS": 77,
+  "rounds": [
+    {
+      "round": "autumn",
+      "season": "autumn",
+      "specialOn": true,
+      "halving": false,
+      "roundS": 70,
+      "cooldownAtEndMs": 3000,
+      "ackMs": {
+        "p50": 56,
+        "p95": 317,
+        "p99": 449,
+        "count": 3667
+      },
+      "ownAnswerMs": {
+        "p50": 56,
+        "p95": 316,
+        "p99": 448,
+        "count": 3667
+      },
+      "frostLateMs": null,
+      "specials": {
+        "fired": ["leafFall/1", "leafFall/2", "leafFall/3"],
+        "lateMs": {
+          "p50": 24,
+          "p95": 30,
+          "p99": 30,
+          "count": 3
+        },
+        "seenLateMs": {
+          "p50": 151,
+          "p95": 445,
+          "p99": 445,
+          "count": 3
+        }
+      },
+      "refused": {},
+      "integrity": {
+        "proofOk": true,
+        "acceptedInLog": 3669,
+        "acknowledged": 3667,
+        "acknowledgedButMissing": 0,
+        "duplicates": 0,
+        "gapFree": true,
+        "ownOrderKept": true,
+        "winners": 1,
+        "endReason": "solved"
+      },
+      "server": {
+        "cpuPeakCores": "0.62",
+        "cpuMeanCores": "0.31",
+        "rssPeakMiB": 521,
+        "loopLagP99PeakMs": 64
+      },
+      "driverBusiestWorker": "0.08",
+      "socketProblems": 0
+    }
+  ],
+  "problems": {
+    "http": 0,
+    "examples": []
+  }
+}

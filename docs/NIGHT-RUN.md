@@ -18,12 +18,33 @@ Branch `feat/guess-games` from `60821a6`. Owner decision O55 (2026-11-04: screen
 | 5. Admin screens: providers, origins, hooks   | running |        |
 | 6. Admin app Trusted Types                    | open    |        |
 | 7. The "opens in 0 s" intro                   | open    |        |
-| 8. Load scenarios L1 specials and halving     | running |        |
+| 8. Load scenarios L1 specials and halving     | done    |        |
 | 9. Re-shoot (O55), self-review, handover      | open    |        |
 
 ### Needs the owner
 
 Nothing so far.
+
+### Piece 8 — load scenarios L1: the special rounds and the halving round (T180–T184)
+
+- The driver plays L1's rounds (09 §5): `node load/guessStorm.mjs <players> [out.json] <scenario>`, scenario `plain`, `spring`, `summer`, `autumn`, `winter`, `halving`, `specials` (the four season rounds) or `l1` (all six in one match). New `load/scenarios.mjs` (the rounds' host settings, today's halving day through the admin route, token `load-check`, removed afterwards) and `load/measure.mjs` (server samples, percentiles, the fairness checks and the specials fired, moved out of `guessStorm.mjs`). No server change, no new route; the special timings are the game document's defaults (T182).
+- Fixed on the way: since T104 frames name players by number, so the night-1 driver no longer recognised its own answers; players now read their number (`you`) after joining (T183). Bots guess only after their last answer arrived (needed under Frost), track a halved range and fallen numbers from the room, and a turn left from the previous round writes only to that round's record. Clean-up runs in a `finally`.
+- Spec questions: 09 §5 says "ten rounds" but lists six (T180, proposal in OPEN); Heatwave cannot fire at L1's 3 s cooldown (03 §2.2 floor), so its round starts at 6 s (T181). Not built: L1 with Seasonal Target (05 §76 names it); that needs a target bot in the driver.
+- Runs, one each, 200 players + 100 spectators, on the shared server 3910 under the heavy lock (T184), laptop busy with the other agents' work; development-machine numbers, not the gate. Every round: proof ok, receive numbers gap-free, nothing lost, duplicated or reordered, one winner, ended by a solve, no HTTP or socket problem.
+
+| Round   | Length | Ack p50 / p95 / p99 (ms) | Specials fired (server lateness)      | Frost answer late p50 / p95 | CPU mean / peak | RSS peak | Loop lag p99 peak |
+| ------- | ------ | ------------------------ | ------------------------------------- | --------------------------- | --------------- | -------- | ----------------- |
+| plain   | 66 s   | 111 / 731 / 1 150        | none                                  | –                           | 0.36 / 0.49     | 331 MiB  | 115 ms            |
+| spring  | 66 s   | 54 / 163 / 256           | Spring Herald, 8 ms (seen 62 ms)      | –                           | 0.31 / 0.47     | 476 MiB  | 66 ms             |
+| summer  | 97 s   | 60 / 4 253 / 4 952       | Heatwave ×3, ≤ 4 ms (seen ≤ 168 ms)   | –                           | 0.27 / 0.49     | 496 MiB  | 80 ms             |
+| autumn  | 70 s   | 56 / 317 / 449           | Leaf Fall ×3, p95 30 ms (seen 445 ms) | –                           | 0.31 / 0.62     | 521 MiB  | 64 ms             |
+| winter  | 106 s  | 2 607 / 5 564 / 6 698    | (Frost has no firing)                 | 1 979 / 5 265 ms            | 0.61 / 0.83     | 415 MiB  | 167 ms            |
+| halving | 66 s   | 66 / 358 / 849           | halving ×1, 11 ms (seen 136 ms)       | –                           | 0.35 / 0.50     | 504 MiB  | 69 ms             |
+
+- Reading: the specials fire on time; what is slow is the round's serial commit chain on this laptop, 41–46 ms a batch (plain: 1 200 batches in 66 s). Under Frost every release is a batch of its own (`HeldDelivered`): 2 009 batches in 106 s; the server released all 4 202 held answers within 100 ms of their time, but they and the acknowledgements queued behind commits. A first winter run (overwritten) gave ack p95 3.3 s, Frost late p95 3.3 s. Proposal in OPEN (r): measure on the reference VPS; if Frost misses there, release without a commit of its own.
+- The API server stopped twice during the night (other pieces' server-side edits); two runs died with it and left `match.maxPlayers` at 1 000, put back by hand, load accounts deleted, the open load match aborted.
+- Commands: `node load/guessStorm.mjs 200 reports/night-8/load-l1-<round>-200.json <round>` for each round above. Reports: `reports/night-8/load-l1-*-200.json`.
+- Files: `load/guessStorm.mjs` 211 → 184 lines, `load/stormWorker.mjs` 107 → 179, `load/measure.mjs` new 101, `load/scenarios.mjs` new 82; `load/http.mjs` unchanged (reused: `signIn`, `call`, `inGroups`).
 
 ## Night 7 (2026-11-03)
 

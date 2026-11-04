@@ -1,0 +1,68 @@
+{
+  "scenario": "spring",
+  "players": 200,
+  "spectators": 100,
+  "runS": 73,
+  "rounds": [
+    {
+      "round": "spring",
+      "season": "spring",
+      "specialOn": true,
+      "halving": false,
+      "roundS": 66,
+      "cooldownAtEndMs": 3000,
+      "ackMs": {
+        "p50": 54,
+        "p95": 163,
+        "p99": 256,
+        "count": 3454
+      },
+      "ownAnswerMs": {
+        "p50": 53,
+        "p95": 161,
+        "p99": 254,
+        "count": 3454
+      },
+      "frostLateMs": null,
+      "specials": {
+        "fired": ["springHerald/0"],
+        "lateMs": {
+          "p50": 8,
+          "p95": 8,
+          "p99": 8,
+          "count": 1
+        },
+        "seenLateMs": {
+          "p50": 62,
+          "p95": 62,
+          "p99": 62,
+          "count": 1
+        }
+      },
+      "refused": {},
+      "integrity": {
+        "proofOk": true,
+        "acceptedInLog": 3455,
+        "acknowledged": 3454,
+        "acknowledgedButMissing": 0,
+        "duplicates": 0,
+        "gapFree": true,
+        "ownOrderKept": true,
+        "winners": 1,
+        "endReason": "solved"
+      },
+      "server": {
+        "cpuPeakCores": "0.47",
+        "cpuMeanCores": "0.31",
+        "rssPeakMiB": 476,
+        "loopLagP99PeakMs": 66
+      },
+      "driverBusiestWorker": "0.08",
+      "socketProblems": 0
+    }
+  ],
+  "problems": {
+    "http": 0,
+    "examples": []
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "scenario": "winter",
+  "players": 200,
+  "spectators": 100,
+  "runS": 117,
+  "rounds": [
+    {
+      "round": "winter",
+      "season": "winter",
+      "specialOn": true,
+      "halving": false,
+      "roundS": 106,
+      "cooldownAtEndMs": 3000,
+      "ackMs": {
+        "p50": 2607,
+        "p95": 5564,
+        "p99": 6698,
+        "count": 3506
+      },
+      "ownAnswerMs": {
+        "p50": 4998,
+        "p95": 8268,
+        "p99": 9516,
+        "count": 3440
+      },
+      "frostLateMs": {
+        "p50": 1979,
+        "p95": 5265,
+        "p99": 6508,
+        "count": 3440
+      },
+      "specials": {
+        "fired": [],
+        "lateMs": {
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "count": 0
+        },
+        "seenLateMs": {
+          "p50": null,
+          "p95": null,
+          "p99": null,
+          "count": 0
+        }
+      },
+      "refused": {
+        "ROUND_OVER": 90
+      },
+      "integrity": {
+        "proofOk": true,
+        "acceptedInLog": 3506,
+        "acknowledged": 3506,
+        "acknowledgedButMissing": 0,
+        "duplicates": 0,
+        "gapFree": true,
+        "ownOrderKept": true,
+        "winners": 1,
+        "endReason": "solved"
+      },
+      "server": {
+        "cpuPeakCores": "0.83",
+        "cpuMeanCores": "0.61",
+        "rssPeakMiB": 415,
+        "loopLagP99PeakMs": 167
+      },
+      "driverBusiestWorker": "0.16",
+      "socketProblems": 0
+    }
+  ],
+  "problems": {
+    "http": 0,
+    "examples": []
+  }
+}
