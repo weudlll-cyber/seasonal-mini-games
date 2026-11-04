@@ -2,6 +2,20 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Website mode (2026-11-05)
+
+Branch `feat/website-mode` from `master` at `4ab2986`; not merged by this task. Owner decisions O66 (website sign-in, guests, steps, deleted and locked accounts, the website's chat) and O67 (one installer for both variants). Reference: Seasonal Bingo Royale's website mode (its 07 §2.3, 03 §2.2, D37, D40–D43; `websiteIdentity.ts`, `websiteAccounts.ts`, `websiteSignIn.ts`, `ops/lib/website.sh`) and the website's contract (its `server/src/bingo/routes.js`, docs/AUTH.md "Seasonal Bingo Royale"), generalised there for `/games/mini-games`.
+
+### Status
+
+| Piece                                    | State | Commit      |
+| ---------------------------------------- | ----- | ----------- |
+| 0. Owner decisions O66, O67              | done  | this commit |
+| 1. Website auth mode (server)            | open  |             |
+| 2. The website's chat in the game        | open  |             |
+| 3. The installer for both variants       | open  |             |
+| 4. Tests: e2e journey, installer, verify | open  |             |
+
 ## The team column, the owner's confirmations, the merge (2026-11-04)
 
 Branch `feat/guess-games` from `6260b84`, merged into `master` by this task (the owner's approval of 2026-11-04). Technical decisions from T212.
