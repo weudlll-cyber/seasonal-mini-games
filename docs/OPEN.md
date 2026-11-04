@@ -82,7 +82,7 @@ Built as described in 02 §12 and DECISIONS T128–T132 and T134–T136 (O47–O
 
 - The next round's form starts from the last round's season and halving (T209).
 - Player lists (T210): the team and status columns as wide as their widest entry, the name the rest.
-- Results (T211): "–" for "took part" in every game's placings, "Pts" on a phone; Seasonal Target's result grid with the players' tags and the highlight.
+- Results (T211): "–" for "took part" in every game's placings, "Pts" and "#" on a phone; Seasonal Target's result grid with the players' tags and the highlight.
 
 **Clean state, to confirm** (proposals; built on `feat/guess-games`, 2026-11-04):
 

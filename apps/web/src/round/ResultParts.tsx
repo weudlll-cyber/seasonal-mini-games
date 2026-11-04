@@ -11,14 +11,14 @@
  *                 round (+1 team point)", "No team wins this round."); the team result below,
  *                 each team's team points named as such, so they read apart from player points.
  *                 Moved out of ./ResultScreen to keep each file under the size limit.
- * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), @smg/ui (marker,
- *                 highlight), ../season/*, ../useMediaQuery, ./PlayerName
+ * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), @smg/ui (highlight),
+ *                 ../season/*, ../useMediaQuery, ./PlayerName
  * Used by:        ./ResultScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/03-seasonal-specials.md §5
  */
 import type { RoundStateView } from '@smg/contracts';
 import { formatNumber, type PlayerMark } from '@smg/game-sdk';
-import { PlayerMark as PlayerMarkView, useHighlightRow } from '@smg/ui';
+import { useHighlightRow } from '@smg/ui';
 import { useState, type ReactElement } from 'react';
 
 import { SeasonIcon } from '../season/SeasonIcon.js';
@@ -34,8 +34,8 @@ const NARROW = '(max-width: 480px)';
 
 type Result = NonNullable<RoundStateView['results']>[number];
 
-// A word that a phone shows short (`round-short`, ./result.css), the long one for a screen
-// reader there; elsewhere the long one only.
+// A heading a phone shows short ("#" for "Place", "Pts" for "Points", `round-short`,
+// ./result.css), the long one for a screen reader there; elsewhere the long one only.
 function Shortened(p: { readonly long: string; readonly short: string }): ReactElement {
   return (
     <>
@@ -80,9 +80,9 @@ function PlacingRow(p: {
   readonly phone: boolean;
 }): ReactElement {
   const { r } = p;
-  const mark = p.marks?.[r.playerId];
-  // A game with player tags: the row's marker and tag, and its part in the highlight (T211).
-  const row = useHighlightRow(mark === undefined ? null : r.playerId, p.phone);
+  // A game with player tags: the row takes part in the grid's highlight (T211). It shows no
+  // marker: the name says who it is, and the room goes to the name.
+  const row = useHighlightRow(p.marks?.[r.playerId] === undefined ? null : r.playerId, p.phone);
   return (
     <tr className={p.you ? 'round-you' : undefined} {...row}>
       <td>
@@ -90,7 +90,6 @@ function PlacingRow(p: {
       </td>
       <td>
         <span className="round-player">
-          {mark === undefined ? null : <PlayerMarkView mark={mark} />}
           {p.state.teamsOn ? (
             <span className="round-team-slot">
               {r.team === null ? null : <SeasonIcon season={r.team} size="1rem" />}
@@ -124,7 +123,7 @@ export function Placings(p: {
           <thead>
             <tr>
               <th scope="col" className="round-col-place">
-                Place
+                <Shortened long="Place" short="#" />
               </th>
               <th scope="col">Player</th>
               <th scope="col" className="round-col-num">

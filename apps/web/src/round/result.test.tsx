@@ -46,6 +46,10 @@ describe('the result screen', () => {
     expect(points.querySelector('.round-long')?.textContent).toBe('Points');
     expect(points.querySelector('.round-short')?.getAttribute('aria-hidden')).toBe('true');
     expect(points.querySelector('.round-short')?.textContent).toBe('Pts');
+    const place = within(screen.getByTestId('placings')).getByRole('columnheader', {
+      name: 'Place',
+    });
+    expect(place.querySelector('.round-short')?.textContent).toBe('#');
     expect(screen.getByTestId('team-result').textContent).toContain(
       'Autumn: 1 team point — the winner’s team',
     );

@@ -9,7 +9,7 @@
  *                 hovering or focusing a row highlights its player and leaving clears it; a
  *                 tap on a phone keeps the highlight for 3 s; while a player is highlighted
  *                 their rows are marked 'on', the others 'off'; the Players panel shows the
- *                 same marker and tag; the result's placings too, with the highlight (T211).
+ *                 same marker and tag; the result's placings take part in the highlight (T211).
  * Depends on:     vitest, @testing-library/react, @smg/contracts, @smg/game-sdk, @smg/ui,
  *                 ./fakes, ./RoundLog, ./RoundSide
  * Spec:           docs/spec/02d-game-seasonal-target.md §11
@@ -128,7 +128,7 @@ describe('the Players panel with player tags', () => {
 });
 
 describe('the placings with player tags (T211)', () => {
-  it("show each player's marker, and a row's hover highlights the player", () => {
+  it("take part in the grid's highlight: a row's hover highlights its player", () => {
     const marks = marksOf(
       ended.roster.map((r) => r.playerKey),
       'a',
@@ -140,7 +140,8 @@ describe('the placings with player tags (T211)', () => {
       </>,
     );
     const rows = [...screen.getByTestId('placings').querySelectorAll('tbody tr')];
-    expect(rows.map((r) => r.querySelector('.smg-mark-tag')?.textContent)).toEqual(['w', 'you']);
+    // No marker in the placings: the name says who, the room goes to it.
+    expect(rows.map((r) => r.querySelector('.smg-mark'))).toEqual([null, null]);
     fireEvent.mouseEnter(rows[0] as HTMLElement);
     expect(seen).toBe('w');
     expect((rows[1] as HTMLElement).dataset['hl']).toBe('off');

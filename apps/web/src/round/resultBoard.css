@@ -30,6 +30,12 @@
   }
 }
 
+/* The cells' sides tighter, so "dev-host (you)" stays whole beside the grid (T211). */
+.round-result[data-layout='board'] .round-table th,
+.round-result[data-layout='board'] .round-table td {
+  padding-inline: 0.25rem;
+}
+
 @media (max-width: 899px) {
   .round-result[data-layout='board'] .round-result-first {
     height: auto;
