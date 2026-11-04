@@ -81,11 +81,12 @@ Built as described in 02 §12 and DECISIONS T128–T132 and T134–T136 (O47–O
 **Round 2, to confirm** (proposals; built on `feat/guess-games`, 2026-11-04):
 
 - The next round's form starts from the last round's season and halving (T209).
+- Player lists (T210): the team and status columns as wide as their widest entry, the name the rest.
+- Results (T211): "–" for "took part" in every game's placings, "Pts" on a phone; Seasonal Target's result grid with the players' tags and the highlight.
 
 **Clean state, to confirm** (proposals; built on `feat/guess-games`, 2026-11-04):
 
 - The host menu on a phone (T207): its panel spans the screen under the bar instead of hanging from the Host button.
-- Seasonal Target's phone result (T205): the grid 244 px at 844 px (a square fitted to the screen's height) so that "dev-host (you)" stays whole and the first part fits.
 
 **Play-test fixes, to confirm** (proposals; built on `feat/guess-games` after the owner's play-test of 2026-11-04):
 

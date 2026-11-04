@@ -30,6 +30,7 @@ import type { ReactElement } from 'react';
 
 import { hrefOf } from '../shell/router.js';
 import { MatchStandings } from './MatchStandings.js';
+import { roundMarks } from './playerMarks.js';
 import { Placings, TeamLine, Teams } from './ResultParts.js';
 import { colorsOf } from './RoundSide.js';
 import { endHeadline, marginText } from './roundText.js';
@@ -71,6 +72,8 @@ function GamePart(p: {
       names={state.names}
       colors={colorsOf(state)}
       viewerKey={p.viewerKey}
+      // A game with player tags: the round's marks on its grid too (O62, T211).
+      marks={roundMarks(state, p.game, p.viewerKey)}
       part={p.part}
     />
   );
@@ -113,7 +116,11 @@ export function ResultScreen({
         {/* The game's reveal (the secret, a board game's grid): the part that grows. */}
         <div className="round-result-game">{part('reveal')}</div>
         <div className="round-result-places">
-          <Placings state={state} viewerKey={viewerKey} />
+          <Placings
+            state={state}
+            viewerKey={viewerKey}
+            marks={roundMarks(state, game, viewerKey)}
+          />
           <TeamLine state={state} />
         </div>
       </div>

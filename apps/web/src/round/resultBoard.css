@@ -3,16 +3,16 @@
  * @module web/round
  * @brief  The result page of a board game (Seasonal Target): its grid as large as the part allows.
  *
- * Responsibility: on a desktop the placings column at its narrowest (24.5rem, narrower number
- *                 and place columns, "dev-host (you)" still whole), so the game's column is
- *                 wide enough for a square of the part's free height; on a phone the part as
- *                 tall as its content, its grid sized so it fits the screen (Seasonal Target's
- *                 st.css, T195, T205). Moved out of ./result.css to keep each file under the size limit.
+ * Responsibility: on a desktop the placings column at its narrowest (21rem, narrower number
+ *                 columns, a shared round's place a number or "–", "dev-host (you)" still
+ *                 whole), so the game's column is wide enough for a square of the part's free
+ *                 height and tiles of 20 px with their players' tags (T211); on a phone the part as
+ *                 tall as its content (Seasonal Target's grid as wide as the card, T195, T211). Moved out of ./result.css to keep each file under the size limit.
  * Spec:           docs/spec/02d-game-seasonal-target.md §11
  */
 @media (min-width: 900px) {
   .round-result[data-layout='board'] .round-result-first {
-    grid-template-columns: minmax(0, 1fr) 24.5rem;
+    grid-template-columns: minmax(0, 1fr) 21rem;
   }
 
   /* The icon, the name and "(you)" closer, as on a phone. */
@@ -27,10 +27,6 @@
   /* "Points" needs less than "Guesses". */
   .round-result[data-layout='board'] .round-col-num:last-child {
     width: 4rem;
-  }
-
-  .round-result[data-layout='board'] .round-col-place {
-    width: 6rem;
   }
 }
 

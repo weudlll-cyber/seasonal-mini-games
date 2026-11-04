@@ -40,7 +40,7 @@ import {
   type GuessSwatch,
   type PlayerMark as Mark,
 } from '@smg/game-sdk';
-import { flashHighlight, lit, PlayerMark, setHighlight, useHighlight } from '@smg/ui';
+import { PlayerMark, useHighlightRow } from '@smg/ui';
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 
 import { SeasonIcon } from '../season/SeasonIcon.js';
@@ -167,36 +167,6 @@ function Who(p: RowProps): ReactElement | null {
   );
 }
 
-// A tagged row's part in the highlight (O62): hover and focus highlight its player while
-// they last, a tap on a phone for 3 s; `data-hl` says whether the row is the highlighted
-// player's ('on') or another's ('off').
-function useRowHighlight(p: RowProps) {
-  const highlighted = useHighlight();
-  const key = p.guess.playerId ?? p.viewerKey;
-  if (p.marks === undefined || key === null) return {};
-  const off = (): void => {
-    setHighlight(null);
-  };
-  return {
-    'data-hl': lit(highlighted, [key]),
-    // Reachable by keyboard on a desktop; a phone's row is a tap target already.
-    tabIndex: p.phone ? undefined : 0,
-    onMouseEnter: () => {
-      setHighlight(key);
-    },
-    onMouseLeave: off,
-    onFocus: () => {
-      setHighlight(key);
-    },
-    onBlur: off,
-    onClick: p.phone
-      ? () => {
-          flashHighlight(key);
-        }
-      : undefined,
-  };
-}
-
 export function GuessLine(p: RowProps): ReactElement {
   const { guess, state } = p;
   const comment = p.bare ? null : guess.comment;
@@ -214,7 +184,8 @@ export function GuessLine(p: RowProps): ReactElement {
     'data-own': guess.playerId === null,
     'data-solo': p.solo || undefined,
     'data-tier': guess.tier ?? undefined,
-    ...useRowHighlight(p),
+    // A tagged row's part in the highlight (O62, @smg/ui).
+    ...useHighlightRow(p.marks === undefined ? null : (p.guess.playerId ?? p.viewerKey), p.phone),
   };
   if (p.phone && comment !== null) {
     return (

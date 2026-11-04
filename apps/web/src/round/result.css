@@ -225,8 +225,19 @@
   border-bottom: 1px solid var(--color-border);
 }
 
-/* A phone fits all four columns with the small text size and narrower number
-   columns, so the player column keeps room for a name ("took part" wraps whole). */
+/* A shared round's place is a number or "–" (took part, its words for a screen reader):
+   a narrow column, so the name has the room (T211). */
+.round-table[data-mode='shared'] .round-col-place {
+  width: 3rem;
+}
+
+/* A word a phone shows short ("Pts" for "Points"); the long one stays for a screen reader. */
+.round-short {
+  display: none;
+}
+
+/* A phone fits all four columns on one line a row with the small text size: "Guesses" and
+   "Pts" with room between them, the name the rest (T211). */
 @media (max-width: 480px) {
   .round-table {
     font-size: var(--font-size-small);
@@ -236,13 +247,30 @@
     width: 3.25rem;
   }
 
-  .round-col-num {
-    width: 3.75rem;
+  .round-table[data-mode='shared'] .round-col-place {
+    width: 2rem;
   }
 
-  /* The last column ("Points", "Wins") needs less than "Guesses". */
+  .round-col-num {
+    width: 4.25rem;
+  }
+
+  /* The last column ("Pts", "Wins") needs less than "Guesses". */
   .round-col-num:last-child {
     width: 3.25rem;
+  }
+
+  .round-long {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .round-short {
+    display: inline;
   }
 
   /* The icon, the name and "(you)" closer: "dev-host (you)" whole at 390 px (night 8). */

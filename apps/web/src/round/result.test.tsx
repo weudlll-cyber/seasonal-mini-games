@@ -13,7 +13,7 @@
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/09-testing-strategy.md §2
  */
 import { GAME_SCREENS } from '@smg-game/registry/web';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { ended } from './fakes.js';
@@ -37,7 +37,15 @@ describe('the result screen', () => {
     const rows = [...screen.getByTestId('placings').querySelectorAll('tbody tr')].map(
       (tr) => tr.textContent,
     );
-    expect(rows).toEqual(['1 Walter910', 'took part Anna (you)40']);
+    expect(rows).toEqual(['1 Walter910', '– Anna (you)40']);
+    // "–" is "took part" for a screen reader; "Pts" on a phone is "Points" (T211).
+    expect(screen.getByLabelText('took part').textContent).toBe('–');
+    const points = within(screen.getByTestId('placings')).getByRole('columnheader', {
+      name: 'Points',
+    });
+    expect(points.querySelector('.round-long')?.textContent).toBe('Points');
+    expect(points.querySelector('.round-short')?.getAttribute('aria-hidden')).toBe('true');
+    expect(points.querySelector('.round-short')?.textContent).toBe('Pts');
     expect(screen.getByTestId('team-result').textContent).toContain(
       'Autumn: 1 team point — the winner’s team',
     );

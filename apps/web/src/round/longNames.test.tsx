@@ -33,6 +33,16 @@ const LONG = 'Maximilian_Wolfgang_Oberhuber1';
 // and its import.meta.url is no file URL).
 const HERE = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
 const nameCss = readFileSync(path.join(HERE, 'playerName.css'), 'utf8');
+const listCss = {
+  waiting: readFileSync(path.join(HERE, '..', 'match', 'match.css'), 'utf8'),
+  players: readFileSync(path.join(HERE, 'players.css'), 'utf8'),
+};
+// The declarations of the rule for exactly `selector` (the text up to its closing brace).
+const ruleOf = (css: string, selector: string): string => {
+  const at = css.indexOf(`
+${selector} {`);
+  return at < 0 ? '' : css.slice(at, css.indexOf('}', at));
+};
 
 afterEach(() => {
   cleanup();
@@ -57,7 +67,23 @@ describe('a 30-character name', () => {
     expect(rule).toMatch(/white-space:\s*nowrap/);
     expect(rule).toMatch(/overflow:\s*hidden/);
   });
+});
 
+describe('the player lists (T210)', () => {
+  it('give the name every width the team and status columns leave', () => {
+    // The list holds the columns, the rows take them: the team and the status as wide as
+    // their widest entry, the same on every row; the name all the rest.
+    for (const [css, list, cols] of [
+      [listCss.waiting, '.match-players', 'minmax(0, 1fr) max-content max-content'],
+      [listCss.players, '.round-player-list', 'auto minmax(0, 1fr) max-content max-content'],
+    ] as const) {
+      expect(ruleOf(css, list)).toContain(`grid-template-columns: ${cols}`);
+      expect(ruleOf(css, `${list} li`)).toMatch(/grid-template-columns:\s*subgrid/);
+    }
+  });
+});
+
+describe('a 30-character name, in its cells', () => {
   it('in the placings and the match standings, with "(you)" apart from it', () => {
     const standings = [{ rank: 1, playerKey: 'w', name: LONG, points: 20, wins: 2 }];
     render(<ResultScreen state={state} game={null} viewerKey="w" standings={standings} />);

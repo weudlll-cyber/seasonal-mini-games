@@ -8,7 +8,8 @@
  *                 list's rows, the Players panel and the game's own board (`marks`); none for
  *                 the other games, whose rows keep their dot.
  * Depends on:     @smg/contracts, @smg/game-sdk (marksOf), @smg-game/registry/web (types)
- * Used by:        ./RoundLog, ./InputRow, ./InfoParts, ./RoundScreen (the Players panel)
+ * Used by:        ./RoundLog, ./InputRow, ./InfoParts, ./RoundScreen (the Players panel),
+ *                 ./ResultScreen (the placings, the game's result)
  * Spec:           docs/spec/02d-game-seasonal-target.md §11
  */
 import type { GameWeb } from '@smg-game/registry/web';

@@ -34,33 +34,35 @@
 }
 
 /* The Players panel's rows: dot, name, team, guesses; the viewer's on the season's tint.
-   The team (icon and name) and the guesses have columns of one width on every row, so each
-   starts at the same place ("Team Autumn" with its icon, 105 px; "99 guesses"); without
-   teams the team column goes (T202). */
+   The team (icon and name) and the guesses start at the same place on every row; without
+   teams the team column goes (T202, T210). */
 .round-players {
   display: grid;
   gap: var(--space-2);
 }
 
+/* The list holds the columns and every row takes them (subgrid): the marker, the name taking
+   all the room the team and the guesses (each as wide as its widest entry) leave (T210). */
 .round-player-list {
   margin: 0;
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 0.15rem;
+  grid-template-columns: auto minmax(0, 1fr) max-content max-content;
+  gap: 0.15rem 0.5rem;
 }
 
 .round-player-list li {
+  grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) 7rem 4.25rem;
+  grid-template-columns: subgrid;
   align-items: center;
-  gap: 0.5rem;
   padding: 0.2rem 0.5rem;
   border-radius: var(--radius);
 }
 
-.round-player-list[data-teams='false'] li {
-  grid-template-columns: auto minmax(0, 1fr) 4.25rem;
+.round-player-list[data-teams='false'] {
+  grid-template-columns: auto minmax(0, 1fr) max-content;
 }
 
 .round-player-list li[data-own='true'] {

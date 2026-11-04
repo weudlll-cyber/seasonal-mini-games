@@ -160,23 +160,24 @@
   margin: 0;
 }
 
-/* One row per player: name, team, connection; the name gives way with an ellipsis
-   (../round/PlayerName). The team and the connection have columns of one width on every
-   row, so each starts at the same place: the widest team ("Team Winter" with its icon,
-   120 px) and the widest connection ("online" with its dot, 54 px) fit (T202). */
+/* One row per player: name, team, connection. The list holds the columns and every row
+   takes them (subgrid), so the team and the connection are as wide as their widest entry
+   and start at the same place on every row, and the name takes all the rest; it gives way
+   with an ellipsis only where the row is too narrow (../round/PlayerName, T202, T210). */
 .match-players {
   margin: 0;
   padding: 0;
   list-style: none;
   display: grid;
-  gap: var(--space-1);
+  grid-template-columns: minmax(0, 1fr) max-content max-content;
+  gap: var(--space-1) var(--space-2);
 }
 
 .match-players li {
+  grid-column: 1 / -1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 7.75rem 4rem;
+  grid-template-columns: subgrid;
   align-items: center;
-  gap: var(--space-2);
 }
 
 .match-player-team,
@@ -186,8 +187,8 @@
 }
 
 /* A match without teams (O34): the name and the connection only. */
-.match-players[data-teams='false'] li {
-  grid-template-columns: minmax(0, 1fr) 4rem;
+.match-players[data-teams='false'] {
+  grid-template-columns: minmax(0, 1fr) max-content;
 }
 
 /* Online: a filled dot; away: a hollow one. The word says it too. */

@@ -11,10 +11,10 @@ Branch `feat/guess-games` from `f17d9d4`. Owner decision O64 (2026-11-04: tests 
 | Piece                                     | State | Commit    |
 | ----------------------------------------- | ----- | --------- |
 | 0. O64 recorded (DECISIONS, CLAUDE.md)    | done  | `c107ce6` |
-| 1. Heatwave in every round setup          | done  |           |
-| 2. The next-round form keeps the season   | done  |           |
-| 3. Player lists: the name gets the space  | open  |           |
-| 4. Seasonal Target's result               | open  |           |
+| 1. Heatwave in every round setup          | done  | `bfcbeec` |
+| 2. The next-round form keeps the season   | done  | `bfcbeec` |
+| 3. Player lists: the name gets the space  | done  |           |
+| 4. Seasonal Target's result               | done  |           |
 | 5. Checks (O64), re-shoot (O55), handover | open  |           |
 
 ### Pieces 1–2 — Heatwave in every round setup, the season kept (T208, T209)
@@ -22,6 +22,12 @@ Branch `feat/guess-games` from `f17d9d4`. Owner decision O64 (2026-11-04: tests 
 - The Quick Test form shows Heatwave's two fields for summer through `HostFields` (reused; its `doc` now optional, `set` by key) and sends them; a normal match's first round uses the host menu's form, which had them. One zod shape for both requests (`heatwaveSettings`, `heatwaveBody.ts`, extracted from `rounds.ts`).
 - The next-round form starts from the kept season choice and halving (`SEASON_CHOICE`, `useSeasonChoice(last)`), or the last round's own (MatchPage, after a Quick Test round).
 - Tests (the touched packages only, O64): `quickTest.test.tsx` (new: fields only for summer, defaults and bounds; the body with and without them), `roundBody.test.ts` (the Quick Test's contract), `heatwave.test.tsx` (the season kept, In Season's fallback).
+
+### Pieces 3–4 — the name gets the space, Seasonal Target's result (T210, T211)
+
+- The waiting area's list and the Players panel hold their columns on the list (subgrid): team and status as wide as their widest entry, the name the rest (`match.css`, `players.css`); the fixed 7.75rem/7rem team columns are gone. Test: `longNames.test.tsx` (the rules).
+- The result: T205's narrower phone grid removed (`st.css`); the placings' place `PlaceCell` ("–", named "took part") and `Shortened` ("Pts" on a phone, "Points" for a screen reader) in `ResultParts.tsx`; the place column narrow for a shared round (`data-mode`), the phone's number columns 4.25rem; a board game's placings 21rem on a desktop (`resultBoard.css`, its 6rem place column removed). The placings rows show the round's markers and take part in the highlight: `useHighlightRow` (@smg/ui) extracted from GuessLine's own and used by both; the result's game panel gets `marks` from `roundMarks`.
+- Tests: `result.test.tsx` ("–" and its name, "Pts" and "Points"), `tags.test.tsx` in web/round (the placings' markers and highlight) and in Target (the result grid's tags and highlight).
 
 ## Clean state before the next play-test (2026-11-04)
 

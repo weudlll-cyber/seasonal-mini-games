@@ -11,26 +11,52 @@
  *                 round (+1 team point)", "No team wins this round."); the team result below,
  *                 each team's team points named as such, so they read apart from player points.
  *                 Moved out of ./ResultScreen to keep each file under the size limit.
- * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), ../season/*, ./PlayerName
+ * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), @smg/ui (marker,
+ *                 highlight), ../season/*, ../useMediaQuery, ./PlayerName
  * Used by:        ./ResultScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/03-seasonal-specials.md §5
  */
 import type { RoundStateView } from '@smg/contracts';
-import { formatNumber } from '@smg/game-sdk';
+import { formatNumber, type PlayerMark } from '@smg/game-sdk';
+import { PlayerMark as PlayerMarkView, useHighlightRow } from '@smg/ui';
 import { useState, type ReactElement } from 'react';
 
 import { SeasonIcon } from '../season/SeasonIcon.js';
 import { teamName } from '../season/season.js';
+import { useMediaQuery } from '../useMediaQuery.js';
 import { PlayerName } from './PlayerName.js';
 
 // The first part's placings: the top three.
 const TOP = 3;
 
+// A phone's width, where the table's long words give way to short ones (./result.css).
+const NARROW = '(max-width: 480px)';
+
 type Result = NonNullable<RoundStateView['results']>[number];
 
-function placeText(state: RoundStateView, place: number | null): string {
-  if (place !== null) return formatNumber(place);
-  return state.secretMode === 'shared' ? 'took part' : 'not solved';
+// A word that a phone shows short (`round-short`, ./result.css), the long one for a screen
+// reader there; elsewhere the long one only.
+function Shortened(p: { readonly long: string; readonly short: string }): ReactElement {
+  return (
+    <>
+      <span className="round-long">{p.long}</span>
+      <span className="round-short" aria-hidden="true">
+        {p.short}
+      </span>
+    </>
+  );
+}
+
+// The place, or "–" for a player who took part (its words for a screen reader, T211); "not
+// solved" in individual mode.
+function PlaceCell(p: { readonly state: RoundStateView; readonly place: number | null }) {
+  if (p.place !== null) return <>{formatNumber(p.place)}</>;
+  if (p.state.secretMode !== 'shared') return <>not solved</>;
+  return (
+    <span aria-label="took part" title="took part">
+      <span aria-hidden="true">–</span>
+    </span>
+  );
 }
 
 // By the server's place; the players without one after them, more guesses first (a stable
@@ -50,13 +76,21 @@ function PlacingRow(p: {
   readonly state: RoundStateView;
   readonly r: Result;
   readonly you: boolean;
+  readonly marks: Readonly<Record<string, PlayerMark>> | undefined;
+  readonly phone: boolean;
 }): ReactElement {
   const { r } = p;
+  const mark = p.marks?.[r.playerId];
+  // A game with player tags: the row's marker and tag, and its part in the highlight (T211).
+  const row = useHighlightRow(mark === undefined ? null : r.playerId, p.phone);
   return (
-    <tr className={p.you ? 'round-you' : undefined}>
-      <td>{placeText(p.state, r.place)}</td>
+    <tr className={p.you ? 'round-you' : undefined} {...row}>
+      <td>
+        <PlaceCell state={p.state} place={r.place} />
+      </td>
       <td>
         <span className="round-player">
+          {mark === undefined ? null : <PlayerMarkView mark={mark} />}
           {p.state.teamsOn ? (
             <span className="round-team-slot">
               {r.team === null ? null : <SeasonIcon season={r.team} size="1rem" />}
@@ -75,14 +109,17 @@ function PlacingRow(p: {
 export function Placings(p: {
   readonly state: RoundStateView;
   readonly viewerKey: string | null;
+  // A game with player tags: every player's marker and tag (O62).
+  readonly marks?: Readonly<Record<string, PlayerMark>> | undefined;
 }): ReactElement {
+  const phone = useMediaQuery(NARROW);
   const [all, setAll] = useState(false);
   const rows = byPlace(p.state.results ?? []);
   const shown = all ? rows : rows.slice(0, TOP);
   return (
     <div className="round-placings">
       <div className="round-table-wrap">
-        <table className="round-table" data-testid="placings">
+        <table className="round-table" data-mode={p.state.secretMode} data-testid="placings">
           <caption className="smg-visually-hidden">Placings</caption>
           <thead>
             <tr>
@@ -94,13 +131,20 @@ export function Placings(p: {
                 Guesses
               </th>
               <th scope="col" className="round-col-num">
-                Points
+                <Shortened long="Points" short="Pts" />
               </th>
             </tr>
           </thead>
           <tbody>
             {shown.map((r) => (
-              <PlacingRow key={r.playerId} state={p.state} r={r} you={r.playerId === p.viewerKey} />
+              <PlacingRow
+                key={r.playerId}
+                state={p.state}
+                r={r}
+                you={r.playerId === p.viewerKey}
+                marks={p.marks}
+                phone={phone}
+              />
             ))}
           </tbody>
         </table>

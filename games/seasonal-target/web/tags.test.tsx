@@ -8,7 +8,7 @@
  *                 24 distinct colour-shape markers; tiles under 20 px leave the tag out, the
  *                 loupe still shows it; a highlighted player's tiles stay bright and the other
  *                 guessed tiles fade, empty tiles untouched; hovering a tile highlights its
- *                 first guesser, leaving clears it.
+ *                 first guesser, leaving clears it; the result's grid the same (T211).
  * Depends on:     vitest, @testing-library/react, @smg/game-sdk (marksOf), @smg/ui (highlight),
  *                 ./fixtures
  * Spec:           docs/spec/02d-game-seasonal-target.md §11
@@ -19,6 +19,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { other, own, playerView, plainScreen, props, screenOf } from './fixtures.js';
+import { ResultPanel } from './ResultPanel.js';
 import { TargetInput } from './TargetInput.js';
 
 // jsdom draws the 400 tiles of a 20 × 20 grid with 22 players' tags: up to 2 s a test alone on
@@ -110,5 +111,38 @@ describe('the highlighted player', () => {
     expect(seen).toBe('bot-04');
     fireEvent.mouseLeave(screen.getByTestId('tile-grid'));
     expect(seen).toBeNull();
+  });
+});
+
+describe('the result grid (T211)', () => {
+  it("carries the round's tags and lights the highlighted player's tiles", () => {
+    const guesses = {
+      'bot-01': [{ value: { x: 3, y: 3 }, feedback: close }],
+      p1: [{ value: { x: 5, y: 5 }, feedback: close }],
+    };
+    render(
+      <ResultPanel
+        view={{
+          map: { width: 20, height: 20 },
+          target: { x: 9, y: 9 },
+          targets: null,
+          guesses,
+          fallen: [],
+          closestMiss: null,
+        }}
+        names={{ p1: 'dev-host', 'bot-01': 'bot-01' }}
+        colors={{ p1: 'var(--color-spring)', 'bot-01': 'var(--color-winter)' }}
+        marks={marksOf(['p1', 'bot-01'], 'p1')}
+        viewerKey="p1"
+        part="reveal"
+      />,
+    );
+    expect(tagOn(3, 3)).toBe('b1');
+    expect(tagOn(5, 5)).toBe('you');
+    act(() => {
+      setHighlight('bot-01');
+    });
+    expect(tile(3, 3).dataset['hl']).toBe('on');
+    expect(tile(5, 5).dataset['hl']).toBe('off');
   });
 });

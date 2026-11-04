@@ -19,5 +19,5 @@ export const PACKAGE_NAME = '@smg/ui';
 export { flipSign, SignToggle } from './SignToggle.js';
 export { useDisclosure, type Disclosure } from './useDisclosure.js';
 export { fitCount, useFit } from './useFit.js';
-export { flashHighlight, lit, setHighlight, useHighlight } from './highlight.js';
+export { flashHighlight, lit, setHighlight, useHighlight, useHighlightRow } from './highlight.js';
 export { PlayerMark, type MarkView } from './PlayerMark.js';
