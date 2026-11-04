@@ -136,12 +136,24 @@ function Value({ guess }: { readonly guess: GuessRow }): ReactElement {
   return <span className="round-value">{text}</span>;
 }
 
+// The row's name: in a game with player tags the viewer's own row says "you" once, by its
+// tag, and "You" stays for a screen reader (T204).
+function Name(p: { readonly name: string; readonly tagged: boolean; readonly own: boolean }) {
+  if (p.tagged && p.own) return <span className="smg-visually-hidden">You</span>;
+  return (
+    <span className="round-who" title={p.name}>
+      {p.name}
+    </span>
+  );
+}
+
 // The player's dot and name; none where every row is the viewer's or only the guess shows.
 function Who(p: RowProps): ReactElement | null {
   if (p.solo || p.bare) return null;
   // The viewer's own rows come without a player: they are "You" (a solved player too, O25).
+  const own = p.guess.playerId === null;
   const key = p.guess.playerId ?? p.viewerKey;
-  const name = p.guess.playerId === null ? 'You' : (p.state.names[key ?? ''] ?? key ?? '');
+  const name = own ? 'You' : (p.state.names[key ?? ''] ?? key ?? '');
   const mark = key === null ? undefined : p.marks?.[key];
   return (
     <>
@@ -150,14 +162,7 @@ function Who(p: RowProps): ReactElement | null {
       ) : (
         <PlayerMark mark={mark} />
       )}
-      {mark !== undefined && p.guess.playerId === null ? (
-        // The "you" tag says it once; "You" stays for a screen reader (T204).
-        <span className="smg-visually-hidden">You</span>
-      ) : (
-        <span className="round-who" title={name}>
-          {name}
-        </span>
-      )}
+      <Name name={name} tagged={mark !== undefined} own={own} />
     </>
   );
 }

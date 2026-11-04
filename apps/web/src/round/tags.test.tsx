@@ -67,7 +67,7 @@ function show(tags: boolean, phone = false): HTMLElement[] {
 }
 
 describe('rows of a game with player tags (O62)', () => {
-  it("start with the player's marker and tag; other games keep the dot", () => {
+  it("start with the player's marker and tag, the viewer's row with its tag only", () => {
     const [mine, w] = show(true).reverse();
     expect(mine?.querySelector('.smg-mark-tag')?.textContent).toBe('you');
     // The viewer's row says "you" once; "You" only for a screen reader (T204).
@@ -76,7 +76,9 @@ describe('rows of a game with player tags (O62)', () => {
     expect(w?.querySelector('.round-who')?.textContent).toBe('Walter');
     expect(w?.querySelector('.smg-mark-tag')?.textContent).toBe('w');
     expect(w?.querySelector('.round-dot')).toBeNull();
-    cleanup();
+  });
+
+  it('are kept with their dot in the other games', () => {
     const plain = show(false);
     expect(plain[0]?.querySelector('.round-dot')).not.toBeNull();
     expect(plain[0]?.querySelector('.smg-mark')).toBeNull();

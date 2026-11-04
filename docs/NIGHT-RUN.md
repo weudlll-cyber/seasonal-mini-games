@@ -12,7 +12,7 @@ Branch `feat/guess-games` from `d2656f9`. Owner decision O63 (2026-11-04: Heatwa
 | ----------------------------------- | ----- | --------- |
 | 0. O63 recorded; CI's coverage gate | done  | `fbb3214` |
 | 1. Heatwave in the host menu (O63)  | done  | `886b203` |
-| 2. Two display fixes                | done  |           |
+| 2. Two display fixes                | done  | `280dbbb` |
 | 3. A reliably green test suite      | open  |           |
 | 4. Re-shoot (O55), handover         | open  |           |
 
@@ -28,7 +28,7 @@ Branch `feat/guess-games` from `d2656f9`. Owner decision O63 (2026-11-04: Heatwa
 
 ### Piece 2 — two display fixes (T204, T205)
 
-- Seasonal Target's own rows: the "you" tag once, "You" for a screen reader only (`GuessLine`'s `Who`); the other rows keep tag and name. Test: `tags.test.tsx`.
+- Seasonal Target's own rows: the "you" tag once, "You" for a screen reader only (`GuessLine`'s `Name`, split from `Who` for its complexity in a follow-up commit, after lint flagged it past the commit); the other rows keep tag and name. Test: `tags.test.tsx`.
 - Seasonal Target's phone result: measured in the browser with the viewer in the table: the cell 121 px held "dev-host" at 43 of 64 px; narrower cell padding reached 49 px, the table's own place column (3.25rem, "took part" wrapping) 64 of 64, but then the first part was 876 of 844 px with the 309 px grid; a 244 px grid (`min(100 %, 100dvh − 37.5rem)`) gives 811–835 of 844 px with the name whole. Chosen: narrow the grid (the placings are below it on a phone already); the one-line "took part" rule removed from `resultBoard.css`.
 
 ## Play-test fixes (2026-11-04)
