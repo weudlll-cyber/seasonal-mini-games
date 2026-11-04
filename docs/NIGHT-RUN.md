@@ -13,9 +13,9 @@ Branch `feat/guess-games` from `f17d9d4`. Owner decision O64 (2026-11-04: tests 
 | 0. O64 recorded (DECISIONS, CLAUDE.md)    | done  | `c107ce6` |
 | 1. Heatwave in every round setup          | done  | `bfcbeec` |
 | 2. The next-round form keeps the season   | done  | `bfcbeec` |
-| 3. Player lists: the name gets the space  | done  |           |
-| 4. Seasonal Target's result               | done  |           |
-| 5. Checks (O64), re-shoot (O55), handover | open  |           |
+| 3. Player lists: the name gets the space  | done  | `f0ccb8d` |
+| 4. Seasonal Target's result               | done  | `b67b76b` |
+| 5. Checks (O64), re-shoot (O55), handover | done  |           |
 
 ### Pieces 1–2 — Heatwave in every round setup, the season kept (T208, T209)
 
@@ -28,6 +28,22 @@ Branch `feat/guess-games` from `f17d9d4`. Owner decision O64 (2026-11-04: tests 
 - The waiting area's list and the Players panel hold their columns on the list (subgrid): team and status as wide as their widest entry, the name the rest (`match.css`, `players.css`); the fixed 7.75rem/7rem team columns are gone. Test: `longNames.test.tsx` (the rules).
 - The result: T205's narrower phone grid removed (`st.css`); the placings' place `PlaceCell` ("–", named "took part") and `Shortened` ("Pts" and "#" on a phone, "Points" and "Place" for a screen reader) in `ResultParts.tsx`; the place column narrow for a shared round (`data-mode`), the phone's number columns 4.25rem; a board game's placings 21rem on a desktop (`resultBoard.css`, its 6rem place column removed). The placings rows take part in the highlight, without markers (the shoot's probe: a marker left "dev-host" 17 of 73 px at 1280 × 720; without it and with 0.25rem cell sides, 73 of 73, and 64 of 64 on a phone): `useHighlightRow` (@smg/ui) extracted from GuessLine's own and used by both; the result's game panel gets `marks` from `roundMarks`.
 - Tests: `result.test.tsx` ("–" and its name, "Pts" and "Points"), `tags.test.tsx` in web/round (the placings' markers and highlight) and in Target (the result grid's tags and highlight).
+
+### Needs the owner
+
+Nothing blocks. To decide after play (OPEN.md, "Round 2, to confirm"): T209 (the kept season), T210 (the list columns), T211 ("–", "#" and "Pts" in every game's placings; Seasonal Target's result grid with tags and the highlight, its placings without markers). Delete the branch `shots/playtest-1` after the review.
+
+### Handover
+
+- Branch `feat/guess-games` at the final commit, piece 5's (the handover message names its SHA); dev servers restarted on it: API 3910, web 5410, admin 5411.
+- Quick Test: <http://127.0.0.1:5410/#/quick-test>. Seasonal Target, Seed `acorn`, Season summer (the Heatwave fields in the form), Tile size 20, Bots 19, **Fast specials** on, **Start from the lobby** on; after the round, Host: the next round's form keeps summer.
+
+### Piece 5 — checks (O64), re-shoot (O55), handover
+
+- e2e once, Chromium, the touched journeys: 23 (the game choice and Quick Test start), 28 (the four result pages), 34 (Target with 20 bots), the lobby's two (the host menu): all pass.
+- The shoot: `tmp/r2shoot.mjs` (git-ignored), 14 images on `shots/playtest-1` under `round-2/`: the Quick Test form in summer, the next-round form keeping summer after a summer round, "Next round" → Players with a 24-character name (85 and 104 px of 192: the row is too narrow, the ellipsis right), Target's result with 19 bots (443 px grid, 20 px tiles, every tag; a hovered row), its phone result (309 px, one line a row, "#", "–", "Pts", the first part 813–837 of 844 px). Review fixes: the placings' markers cut "dev-host (you)" (gone; cells 0.25rem), "Place" ran into "Player" on a phone ("#").
+- `pnpm verify`, the one run (O64): 565 s, format, lint and types green, five tests in three files past 5 s (Target's leafFall and specials properties, the admin's webhooks screen, whose timed-out first test ran into the next two). Their cause as T206's: CPU-bound files, 1.1–1.8 s alone, three to four times slower in the full run; the five files get T206's 20 s file timeout with the measured reason, and the run was done once more (below).
+- `pnpm verify` once more: green in 1 050 s (every project but the server's 114 files and 627 tests in 173 s, the server's unit tests 15 files and 70 tests in 5 s, its integration tests 19 files and 119 tests in 296 s). CI on the final push is the second proof (O64).
 
 ## Clean state before the next play-test (2026-11-04)
 

@@ -17,7 +17,7 @@
 import { roundRng } from '@smg/game-sdk/crypto';
 import { allSecrets, secretOf } from '@smg/guess-engine';
 import fc from 'fast-check';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { input, Table } from './fakes.js';
 import {
@@ -35,6 +35,10 @@ import {
 import { candidatesOf } from './leafFall.js';
 import { seasonalTarget } from './module.js';
 import { cellOf } from './secrets.js';
+
+// fast-check rounds on the 20 × 20 grid: up to 1.1 s a test alone on the development laptop,
+// past 5 s in a full run's parallel files (DECISIONS T206).
+vi.setConfig({ testTimeout: 20_000 });
 
 const PLAYERS = ['a', 'b', 'c'];
 const cell = fc.record({ x: fc.integer({ min: 1, max: 20 }), y: fc.integer({ min: 1, max: 20 }) });

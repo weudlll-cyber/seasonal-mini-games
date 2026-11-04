@@ -19,6 +19,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { click, confirm, fakeServer, flush, type, writes } from './fakeServer.js';
 import { OriginsPanel } from './OriginsPanel.js';
 
+// Each test renders the screen and walks its forms: up to 1.5 s alone on the development
+// laptop, past 5 s in a full run's parallel files (DECISIONS T206).
+vi.setConfig({ testTimeout: 20_000 });
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();

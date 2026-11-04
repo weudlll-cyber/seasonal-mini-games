@@ -31,6 +31,11 @@ import {
 } from './fakeServer.js';
 import { WebhooksPanel } from './WebhooksPanel.js';
 
+// Each test renders the screen with the step-up dialog and walks it: up to 1.8 s alone on the
+// development laptop, past 5 s in a full run's parallel files; a test past its time keeps
+// running into the next one (DECISIONS T206).
+vi.setConfig({ testTimeout: 20_000 });
+
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
