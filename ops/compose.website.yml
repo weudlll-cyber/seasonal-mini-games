@@ -2,14 +2,16 @@
 # @module ops
 # @brief  Website installs: the app joins the Seasonal Entertainment website's network.
 #
-# Responsibility: on top of ops/compose.yml, without the Caddy profile: the app publishes no
-#                 host port and joins the website's Docker network (chosen by ops/install.sh:
-#                 the website project's <project>_default network of the container
-#                 seasonal-site-caddy-1, or --website-network, asking when it is ambiguous;
-#                 written to SMG_WEBSITE_NETWORK) under the name smg-mini-games-<env>,
-#                 so the website's Caddy forwards /games/mini-games/* (HTTP and WebSocket) to it.
+# Responsibility: on top of ops/compose.yml, without the Caddy profile: the app joins the
+#                 website's Docker network (chosen by ops/install.sh: the website project's
+#                 seasonal-site_default network, or --website-network, asking when it is
+#                 ambiguous; written to SMG_WEBSITE_NETWORK) under the name
+#                 smg-mini-games-<env>. There the website's Caddy forwards /games/mini-games/*
+#                 (HTTP and WebSocket) to it, and in both modes the app reads the website's
+#                 account-changes feed at http://site:3800 (SMG_WEBSITE_LOCAL_URL). Behind host
+#                 nginx, ops/compose.website-nginx.yml adds the loopback port.
 # Used by:        ops/install.sh, ops/smg (copied to /opt/smg/compose.website.yml)
-# Spec:           docs/spec/10-repository-structure.md §6; Bingo 09 §1, §8
+# Spec:           docs/spec/10-repository-structure.md §6; Bingo ops/compose.website.yml
 services:
   app:
     networks:

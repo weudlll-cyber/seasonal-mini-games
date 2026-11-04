@@ -3,26 +3,33 @@
 # @module ops
 # @brief  One-command install of Seasonal Mini Games on Ubuntu 24.04: standalone or inside the website.
 #
-# Responsibility: ask (or take from flags) the install type — standalone with its own domain
-#                 and HTTPS, or integrated into the Seasonal Entertainment website on this
-#                 server behind its proxy at /games/mini-games — and the environment, address,
-#                 admin e-mail and the operator's age public key; check the
-#                 system; install Docker when missing; build the app image from a git ref (no
-#                 release image exists yet); write /etc/smg/<env>.env with fresh secrets;
-#                 start the stack (the app migrates the database on start) and wait for
-#                 /readyz; install the backup timer; print the next steps. Re-running keeps
+# Responsibility: ask (or take from flags) the install type first — standalone with its own
+#                 domain and HTTPS, or integrated into the Seasonal Entertainment website on
+#                 this server behind its proxy at /games/mini-games (O67) — then only what that
+#                 type needs: the environment and the operator's age public key, standalone also
+#                 the address and admin e-mail; a website install finds the rest itself
+#                 (lib/website.sh) and stops plainly when the website does not serve Mini Games
+#                 yet. Check the system; install Docker when missing; build the app image from a
+#                 git ref (no release image exists yet); write /etc/smg/<env>.env with fresh
+#                 secrets; start the stack (the app migrates the database on start) and wait
+#                 for /readyz; website installs: the game's route file in the website's proxy,
+#                 checked and reloaded, sign-in only through the website (O66), and a check
+#                 through the website at the end (lib/website-route.sh), with no manual step;
+#                 install the backup timer; print the next steps. Re-running keeps
 #                 the earlier answers (read back from /etc/smg/<env>.env, also with --yes),
 #                 changes only what changed and never switches the type without confirmation.
 #                 It installs beside Seasonal Bingo Royale on one server: every name, path,
 #                 port, network alias, group and timer is its own (smg-*, /opt/smg, 3100).
 #                 Adapted from Bingo's ops/install.sh; Bingo's SMTP questions are left out
 #                 because this server sends no e-mail yet.
-# Depends on:     ops/lib/*.sh, ops/compose.yml, ops/compose.website.yml, ops/Caddyfile, ops/smg
+# Depends on:     ops/lib/*.sh, ops/compose.yml, ops/compose.website.yml,
+#                 ops/compose.website-nginx.yml, ops/Caddyfile, ops/smg
 # Spec:           docs/spec/10-repository-structure.md §6; Bingo 09 §1–§3, §6, §8
 #
 # Usage: sudo bash ops/install.sh [--type standalone|website] [--env prod|staging]
 #          [--address <domain or IP>] [--email <admin e-mail>] [--age-key <age1…>]
-#          [--website-domain <domain>] [--website-network <name>] [--repo <git url or path>] [--ref <git ref>]
+#          [--website-domain <domain>] [--website-network <name>] [--website-login-path </login?next=>]
+#          [--app-port <3920>] [--edge-subnet <cidr>] [--repo <git url or path>] [--ref <git ref>]
 #          [--yes] [--change-type] [--dry-run] [--any-os]
 set -euo pipefail
 # Errors inside $(…) stop the script too (Bingo audit O1).
@@ -35,6 +42,8 @@ source "$OPS/lib/common.sh"
 source "$OPS/lib/host.sh"
 # shellcheck source=lib/website.sh
 source "$OPS/lib/website.sh"
+# shellcheck source=lib/website-route.sh
+source "$OPS/lib/website-route.sh"
 # shellcheck source=lib/config.sh
 source "$OPS/lib/config.sh"
 # shellcheck source=lib/backup.sh
@@ -52,6 +61,9 @@ parse_flags() {
       --age-key) SMG_AGE_RECIPIENT=$2; shift ;;
       --website-domain) SMG_WEBSITE_DOMAIN=$2; shift ;;
       --website-network) SMG_WEBSITE_NETWORK=$2; shift ;;
+      --website-login-path) SMG_WEBSITE_LOGIN_PATH=$2; shift ;;
+      --app-port) SMG_APP_PORT=$2; shift ;;
+      --edge-subnet) SMG_EDGE_SUBNET=$2; shift ;;
       --repo) SMG_REPO=$2; shift ;;
       --ref) SMG_REF=$2; shift ;;
       --yes) SMG_YES=1 ;;
@@ -88,7 +100,9 @@ ask_common() {
   fi
   # A re-run keeps what the last run wrote, unless a flag says otherwise (Bingo audit O4).
   read_saved_answers "$SMG_ENV"
-  ask SMG_ADMIN_EMAIL "Admin e-mail (certificates and notices)"
+  # Inside the website there is no certificate of its own and the website's admins are the
+  # game's admins (O66): no e-mail to ask.
+  [[ $SMG_TYPE == website ]] || ask SMG_ADMIN_EMAIL "Admin e-mail (certificates and notices)"
   ask SMG_AGE_RECIPIENT "Your age public key for backups (age1…)"
   [[ $SMG_AGE_RECIPIENT == age1* ]] || die "an age public key starts with age1 (age-keygen prints it)"
 }
@@ -108,14 +122,15 @@ default_source() {
 next_steps() {
   info ""
   info "Done ($SMG_CHANGES change(s)). Next steps:"
-  info "  1. Create the first admin:  sudo smg admin create-super"
   if [[ $SMG_TYPE == standalone ]]; then
+    info "  1. Create the first admin:  sudo smg admin create-super"
     info "  2. Open https://$SMG_ADDRESS/"
     [[ $SMG_ADDRESS =~ ^[0-9.]+$|: ]] && warn "with an IP address the certificate comes from Caddy's own CA: browsers warn until you point a domain here and re-run with --address <domain>"
     info "  3. Firewall: allow 22, 80 and 443 only (docs/operator-guide.md)."
   else
-    info "  2. $(snippet_steps)"
-    info "  3. Players use this platform's own accounts for now (the shared website login comes later)."
+    info "  1. Open https://$SMG_WEBSITE_DOMAIN/games/mini-games/ and sign in with your website account:"
+    info "     the website's admins are the game's admins, members it lets start games may host (O66)."
+    info "  Nothing else to do: the website's $SMG_WEBSITE_MODE already serves the route ($SMG_WEBSITE_ROUTE_FILE)."
   fi
   info "  Backups run every night at 03:30 into $SMG_BACKUPS/$SMG_ENV/; pull them to your PC with ops/pull-backups.ps1."
   info "  Status: sudo smg status"
@@ -131,7 +146,7 @@ main() {
     RECORDED_TYPE=$(env_value "$SMG_ETC/install.conf" SMG_TYPE)
     recorded_env=$(env_value "$SMG_ETC/install.conf" SMG_ENV)
     # One environment per server for now (Bingo 09 §7): a second one would take over the
-    # record, the website snippet or ports 80/443 of the first.
+    # record, the website route or ports 80/443 of the first.
     if [[ -n ${SMG_ENV:-} && $SMG_ENV != "$recorded_env" ]]; then
       die "this server runs $recorded_env; staging and prod need separate servers for now (docs/operator-guide.md §8)"
     fi
@@ -153,15 +168,18 @@ main() {
   write_env "$SMG_ENV"
   write_record
   install_files "$OPS"
-  [[ $SMG_TYPE == website ]] && write_snippet "$SMG_ENV"
   info "Starting the stack"
   run compose "$SMG_ENV" up -d --remove-orphans
   [[ $SMG_DRY_RUN == 1 ]] || wait_ready "$SMG_ENV"
   # A changed Caddyfile takes effect without a restart; an unchanged one changes nothing.
   if [[ $SMG_TYPE == standalone ]]; then
     run compose "$SMG_ENV" exec -T caddy caddy reload --config /etc/caddy/Caddyfile
+  else
+    # Once the app answers, so the website's proxy never forwards to nothing.
+    install_route "$SMG_ENV"
   fi
   install_backup_units "$SMG_ENV"
+  [[ $SMG_TYPE == standalone ]] || verify_website
   next_steps
 }
 

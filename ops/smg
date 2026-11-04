@@ -5,7 +5,9 @@
 #
 # Responsibility: one command per task of Bingo 09 §4 for the environment of the install record
 #                 (or --env): status (type, address, image, containers, health, last
-#                 backup, timer, maintenance, rounds running); update <git ref> [--now]
+#                 backup, timer, maintenance, rounds running; website installs also the
+#                 sign-in mode, whether the website's authorize endpoint answers, the account
+#                 feed's last success and the trusted proxy ranges); update <git ref> [--now]
 #                 (waits up to 10 minutes for running rounds to end unless --now; then
 #                 backup, plain pre-update dump for a rollback, image built from the ref,
 #                 restart, the app migrates on start, app images no environment uses
@@ -79,21 +81,7 @@ cmd_status() {
   else
     info "maintenance: off"
   fi
-  if [[ $(env_value "$file" SMG_INSTALL_TYPE) == website ]]; then check_proxy "$env"; fi
-}
-
-# Website installs trust the website network's range; it holds while that network exists.
-check_proxy() {
-  local env=$1 network now trusted
-  [[ -n $(website_caddy) ]] || { warn "the website's Caddy is not running"; return 0; }
-  network=$(env_value "$SMG_ETC/$env.env" SMG_WEBSITE_NETWORK)
-  now=$(network_subnet "$network")
-  trusted=$(env_value "$SMG_ETC/$env.env" SMG_TRUSTED_PROXIES)
-  if [[ $now == "$trusted" ]]; then
-    info "proxy:       the website's network $network ($now)"
-  else
-    warn "the website's network is now $now, the app trusts $trusted: run the installer again to update it"
-  fi
+  if [[ $(env_value "$file" SMG_INSTALL_TYPE) == website ]]; then website_status "$env"; else info "sign-in:     local"; fi
 }
 
 migrations() { compose "$1" exec -T postgres psql -U smg -d smg -tA -c 'SELECT count(*) FROM smg.schema_migrations'; }

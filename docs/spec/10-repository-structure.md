@@ -42,8 +42,8 @@ seasonal-mini-games/
 │  ├─ admin/  embed-loader/                                  as Bingo
 ├─ e2e/                    Playwright specs (journeys of 09 §4)
 ├─ load/                   guessStorm.mjs (09 §5)
-├─ ops/                    install.sh, smg, lib/, compose.yml, compose.website.yml, compose.dev.yml, Caddyfile,
-│                          pull-backups.sh/.ps1, examples/ (as Bingo, renamed)
+├─ ops/                    install.sh, smg, lib/, compose.yml, compose.website.yml, compose.website-nginx.yml,
+│                          compose.dev.yml, Caddyfile, pull-backups.sh/.ps1, examples/, test/ (as Bingo, renamed)
 └─ docs/
    ├─ spec/                this specification
    ├─ BACKLOG.md  OPEN.md  DECISIONS.md  GAME-IDEAS.md
@@ -108,8 +108,17 @@ Bingo 09 applies with the names of [04](04-software-architecture.md) §2.2: sing
 
 Differences:
 
-- **Website install type:** the website's Caddy forwards `/games/mini-games/*` (HTTP and WebSocket) to the app's port 3100 on the website's Docker network. The installer writes the route snippet to `/opt/smg/website-mini-games.caddy`. `SMG_BASE_PATH=/games/mini-games/`.
-- **Next to Bingo on one server:** both can be installed as the website type on the same server. They keep separate databases, containers, volumes, env files and backup timers. Two **standalone** installs cannot share a server, because both need ports 80 and 443. The installer's port check refuses, as Bingo's does (Bingo `ops/lib/host.sh`).
+- **One installer for both types (O67):** `sudo bash ops/install.sh` asks the type first, then only what that type needs. Standalone asks the environment, the address, the admin e-mail and the age key. Website asks the environment and the age key; it finds everything else on the server. A re-run keeps the earlier answers and, when nothing changed, changes nothing.
+- **Website install type (O66):** players sign in only through the website's login, as in Bingo (`SMG_AUTH_MODE=website`). `SMG_BASE_PATH=/games/mini-games/`. The installer does the whole setup and never edits a website file (DECISIONS T230–T234):
+  - It detects the website's mode: its own Caddy (compose project `seasonal-site`) or host nginx in front of the site container. It reads what the website's installer prepared: the routes folder (`/etc/seasonal/routes/` for nginx; for Caddy, the host folder mounted at `/etc/caddy/routes` in the website's Caddy container), the site's local port (`/etc/seasonal/site-local-port`, nginx) and the sync token (`/etc/seasonal/games-sync-token`).
+  - It probes `/api/games/mini-games/authorize` from the server. A 404, or a missing token, means the website has Mini Games switched off: the installer stops and names the website's command, `cd <website checkout> && sudo ./deploy/install.sh --update --mini-games`.
+  - It writes the game's own route file, mode 0600 because it holds the proxy secret: `/etc/seasonal/routes/mini-games.conf` (nginx) or `mini-games.caddy` in the website's Caddy routes folder. The route sends `/games/mini-games/` (HTTP and WebSocket) to the app and clears client-sent `X-Acting-User*`, `X-Acting-Guest` and `X-Smg-Proxy-Secret` on every path. Only the sign-in route `/games/mini-games/auth/website` asks the website's authorize endpoint (`auth_request` / `forward_auth`, with `X-Original-Method`) and passes its identity headers. The secret is added only after that call. A refusal goes to `/games/mini-games/auth/website/login` with the same query, and `/games/mini-games/metrics` answers 404.
+  - It checks the proxy's configuration (`nginx -t`, `caddy validate`). On a failure it puts the earlier file back and stops; otherwise it reloads the proxy.
+  - It ends with a check through the website: `/games/mini-games/` answers, the sign-in route without a session ends at the website's `/login?next=…`, and `/embed/chat?room=mini-games` answers.
+  - The app joins the website's Docker network as `smg-mini-games-<env>:3100` in both modes. It reads the account-changes feed there (`SMG_WEBSITE_LOCAL_URL=http://site:3800`). Behind host nginx it also publishes `127.0.0.1:3920` on its own edge network `172.30.250.0/24`.
+  - The env file gets `SMG_AUTH_MODE`, `SMG_TRUSTED_PROXIES`, `SMG_WEBSITE_PROXY_SECRET` (made once, kept), `SMG_WEBSITE_LOGIN_PATH` (`/login?next=`), `SMG_WEBSITE_LOCAL_URL`, `SMG_WEBSITE_SYNC_TOKEN` and `SMG_CHAT_PROVIDER=hostEmbed`.
+  - `smg status` reports the sign-in mode, whether the authorize endpoint answers, and the account feed's last success.
+- **Next to Bingo on one server:** both can be installed as the website type on the same server. They keep separate databases, containers, volumes, env files, route files, loopback ports (3920 and Bingo's 3900), edge subnets (`172.30.250.0/24` and Bingo's `172.30.249.0/24`) and backup timers. Two **standalone** installs cannot share a server, because both need ports 80 and 443. The installer's port check refuses, as Bingo's does (Bingo `ops/lib/host.sh`).
 - **Maintenance:** `smg maintenance on` stops new matches and new rounds (503 `MAINTENANCE` for opening a match, creating a round and the Quick Test). Running rounds finish (DECISIONS T95).
 - **Updates during play:** `smg update` waits up to 10 minutes for open rounds to end, or with `--now` restarts at once. Open rounds then resume from their event log ([04](04-software-architecture.md) §5.3); cooldowns and Frost-held answers are rebuilt.
 - **Secrets generated at install:** `SMG_ROUND_KEY` (32 random bytes) in addition to Bingo's set.
