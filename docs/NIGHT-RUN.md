@@ -15,7 +15,7 @@ Branch `feat/guess-games` from `60821a6`. Owner decision O55 (2026-11-04: screen
 | 2. Seasonal Target: review fixes              | done    |           |
 | 3. Safecracker and Bomb Defusal: review fixes | done    |           |
 | 4. Player account deletion screen             | done    | `d253ee6` |
-| 5. Admin screens: providers, origins, hooks   | done    |           |
+| 5. Admin screens: providers, origins, hooks   | done    | `3822148` |
 | 6. Admin app Trusted Types                    | open    |           |
 | 7. The "opens in 0 s" intro                   | running |           |
 | 8. Load scenarios L1 specials and halving     | done    |           |
