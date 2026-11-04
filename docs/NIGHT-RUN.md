@@ -8,18 +8,18 @@ Branch `feat/guess-games` from `60821a6`. Owner decision O55 (2026-11-04: screen
 
 ### Status
 
-| Piece                                         | State   | Commit    |
-| --------------------------------------------- | ------- | --------- |
-| 0. O55 recorded                               | done    |           |
-| 1. All games: review fixes                    | done    |           |
-| 2. Seasonal Target: review fixes              | done    |           |
-| 3. Safecracker and Bomb Defusal: review fixes | done    |           |
-| 4. Player account deletion screen             | done    | `d253ee6` |
-| 5. Admin screens: providers, origins, hooks   | done    | `3822148` |
-| 6. Admin app Trusted Types                    | open    |           |
-| 7. The "opens in 0 s" intro                   | running |           |
-| 8. Load scenarios L1 specials and halving     | done    |           |
-| 9. Re-shoot (O55), self-review, handover      | open    |           |
+| Piece                                         | State | Commit    |
+| --------------------------------------------- | ----- | --------- |
+| 0. O55 recorded                               | done  |           |
+| 1. All games: review fixes                    | done  |           |
+| 2. Seasonal Target: review fixes              | done  |           |
+| 3. Safecracker and Bomb Defusal: review fixes | done  |           |
+| 4. Player account deletion screen             | done  | `d253ee6` |
+| 5. Admin screens: providers, origins, hooks   | done  | `3822148` |
+| 6. Admin app Trusted Types                    | open  |           |
+| 7. The "opens in 0 s" intro                   | done  |           |
+| 8. Load scenarios L1 specials and halving     | done  |           |
+| 9. Re-shoot (O55), self-review, handover      | open  |           |
 
 ### Needs the owner
 
@@ -77,6 +77,17 @@ Nothing so far.
 - Reused: `useConfirm`/`ConfirmDialog`, `StepUp` through `http.ts`, `TextInput`, `failureText`, the moderation tabs' markup, the contract schemas (`IdentityProviderBody`, `EmbedOriginBody`, `WebhookEndpointBody`).
 - Tests: `providers.test.tsx`, `origins.test.tsx`, `webhooks.test.tsx` (step-up retry included; helper `fakeServer.ts`), the areas test in `admin.test.tsx`; e2e journeys 30–32 (`e2e/integration.spec.ts`, TIMING) pass in Chromium. `pnpm verify`: lint, typecheck and 772 tests green; format check failed only in `apps/web/src/live/useMatch.ts` and `useRound.ts` (another piece's files, half-way).
 - Noticed, left alone: the server's `MAPPABLE_ROLES` set in `integration/providers.ts` could use the contract's `MAPPED_ROLES`.
+
+### Piece 7 — the "opens in 0 s" intro (T185, T186)
+
+- Method: a throwaway Playwright script (scratchpad, not in the repo) signed in as `dev-player-1` against the running dev stack (web 5410, API 3910), under the heavy lock. Each attempt starts a Quick Test (lobby off, so the round counts down at once) straight after the previous one, its round still running, records the round's `opensAt` from `GET /rounds/:id/state`, when the intro shows "Opens in 0 s" and when it goes (a MutationObserver in the page), every intent with its answer and every `events` frame (`page.on('websocket')`), and every API answer of 400 or more. The intro leaving 300–400 ms after `opensAt` is the frame's path (the frame plus the 250 ms reload delay), 750 ms or more T127's reload.
+- Same tab, in-app Quick Test page started again (`location.hash`, same socket): 30 attempts, the intro left 314–355 ms after `opensAt` every time, the frame arrived 45–60 ms after it, no intent refused (`match.watch` ok every time).
+- `page.goto` to the next match's address (same document, same socket; the Quick Test started through `POST /dev/quicktest`, as journey `direct` does): 23 + 30 + 30 attempts (the first run's 24th attempt timed out, the script then kept going): intro left 305–363 ms after `opensAt` in every attempt that showed it, no intent refused. In 2 of 30 in each of the last two runs the intro never showed: the round's first state load was answered 429 (the session's 120 requests a minute, spent by the page and the script's own requests together) and not tried again, so the page showed nothing of the round until the next frame 3 s later.
+- So the coordinator's hypothesis (`match.watch` refused by the intent limit or the room limit) did not hold in 113 switches. The stall comes from the HTTP rate limit: with the session's budget spent just before the opening (130 `GET /session` 150 ms before `opensAt`, 5 attempts), the frame came 93–207 ms after `opensAt`, its load was answered 429, and the intro stayed at "Opens in 0 s" for 4.6 s and 4.4 s (T127's load refused too, rescued only by the next bot frame) and 0.65 s twice (T127's load passed). Reproduced in 4 of 5.
+- Fix (T185): `apps/web/src/live/retry.ts` (new, 48 lines: `retryable`, `useRetry`); `useRound.ts` 158 → 194 (the state load in `useStateLoad`, retried a second later after a 429, a server error or no answer, cancelled when the round changes); `useMatch.ts` 54 → 73 (the match load retried, a `match.watch` answered `RATE_LIMITED` sent again). T127's reload kept as the safety net for a frame that never comes (T186). After the fix, the same drained run: 1.48 s at worst (two refusals in a row), 0.78–0.79 s otherwise; 10 + 10 normal attempts in each mode 312–349 ms, none stalled.
+- Tests: `retry.test.tsx` (new, 3 tests: a refused round load tried again a second later until it passes, a 404 not tried again, the match load and a refused watch sent again). No e2e spec added: draining a session's API budget at the right moment is a timing test against the shared server; the probe above is its record. Journeys 1 and 2 (`rounds.spec.ts`, Chromium timing) pass.
+- Noticed, left alone: the probe's teardown aborts were refused with 429 as well (the 44 matches were aborted afterwards, throttled); a round page may load its state four times a second, twice the session's budget over a minute, which a long busy round can spend (for the owner: the budget is a default, not changed).
+- Checks: scoped eslint, prettier, typecheck and vitest green; `pnpm verify`: format, lint and typecheck green, tests 770 passed, one file failing outside this piece (`apps/server/test/webhooks.integration.test.ts`, "asn1 encoding routines::illegal padding" in its setup).
 
 ## Night 7 (2026-11-03)
 

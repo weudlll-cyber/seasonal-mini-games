@@ -12,9 +12,12 @@
  *                 `late` brings Frost's held events; in a Frost round one more load follows
  *                 each frame or reconnect after the delay, so an answer released while the
  *                 page was away still shows; a round counting down loads again just after it
- *                 opens, frame or not (T127). An answer for a round the page no longer shows is
- *                 dropped (T81). The client renders; the server decides.
- * Depends on:     react, @smg/contracts (shapes), ../shell/http, ./socket
+ *                 opens, frame or not (T127). A load the server refused for the moment (the
+ *                 session's API budget spent: 429) is tried again a second later until it
+ *                 passes (T185: the intro stayed at "Opens in 0 s" when the load after the
+ *                 opening's frame was refused). An answer for a round the page no longer shows
+ *                 is dropped (T81). The client renders; the server decides.
+ * Depends on:     react, @smg/contracts (shapes), ../shell/http, ./socket, ./retry
  * Used by:        ../match/MatchPage, ../round/RoundScreen
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1, §4.4, §4.5
  */
@@ -22,6 +25,7 @@ import type { RoundFrameView, RoundStateView } from '@smg/contracts';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { api } from '../shell/http.js';
+import { retryable, useRetry } from './retry.js';
 import { gameSocket } from './socket.js';
 
 export interface FeedItem {
@@ -81,29 +85,49 @@ const itemsOf = (frame: RoundFrameView): FeedItem[] =>
       event: e.event,
     }));
 
+// The round's state from the server, taken if it is still the round shown; the taken state
+// or null. A load refused for the moment (429 when the session's API budget is spent, a server
+// error, no answer) is tried again a second later, one retry pending at a time, until it
+// passes or the round changes (T185).
+function useStateLoad(roundId: string | null, take: (next: RoundStateView) => boolean) {
+  const { later, cancel } = useRetry();
+  const load = useCallback(async (): Promise<RoundStateView | null> => {
+    if (roundId === null) return null;
+    try {
+      const next = await api<RoundStateView>(`/rounds/${roundId}/state`);
+      return take(next) ? next : null;
+    } catch (error) {
+      if (retryable(error)) later(() => void load());
+      return null;
+    }
+  }, [roundId, take, later]);
+  // A retry for the round shown before never runs for the next one.
+  useEffect(() => cancel, [load, cancel]);
+  return load;
+}
+
 export function useRound(roundId: string | null): RoundLive {
   const { state, take, clear } = useShownState(roundId);
   const [feed, setFeed] = useState<readonly FeedItem[]>([]);
   const pending = useRef<number | null>(null);
   const later = useRef<number | null>(null);
+  const load = useStateLoad(roundId, take);
   const reload = useCallback(async () => {
-    if (roundId === null) return;
-    take(await api<RoundStateView>(`/rounds/${roundId}/state`));
-  }, [roundId, take]);
+    await load();
+  }, [load]);
   // Under Frost an answer can be released while the page reconnects and miss its frame;
   // one more load after the delay shows it anyway (03 §2.4). Only after a frame or a
   // connect, never after itself, so it never loops.
   const reloadAndFollow = useCallback(async () => {
-    if (roundId === null) return;
-    const next = await api<RoundStateView>(`/rounds/${roundId}/state`);
-    if (!take(next)) return;
+    const next = await load();
+    if (next === null) return;
     if (next.frostDelayMs === null || next.status !== 'open') return;
     if (later.current !== null) window.clearTimeout(later.current);
     later.current = window.setTimeout(() => {
       later.current = null;
       void reload();
     }, next.frostDelayMs + 250);
-  }, [roundId, reload, take]);
+  }, [load, reload]);
   useEffect(() => {
     clear();
     setFeed([]);
@@ -137,8 +161,10 @@ export function useRound(roundId: string | null): RoundLive {
 }
 
 // A round counting down loads its state again just after it opens, so the intro never stays
-// at "Opens in 0 s" when the frame of the opening was missed (seen in CI in night 4 and once
-// locally in night 5, the server having opened the round on time; T127).
+// at "Opens in 0 s" if the frame of the opening is missed (T127). The stall seen in CI in
+// night 4 and locally in night 5 was a refused load after the frame (T185, retried by
+// useStateLoad); this stays as the only way out of a countdown whose frame never comes (a
+// reconnect at the opening, a watch the server refused), at one load a round.
 function useOpening(state: RoundStateView | null, reload: () => Promise<void>): void {
   const opensAt = state?.status === 'countdown' ? (state.opensAt ?? null) : null;
   useEffect(() => {
