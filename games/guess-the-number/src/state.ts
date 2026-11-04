@@ -33,9 +33,9 @@ import type { GtnConfig } from './settings.js';
 
 export type Guess = EngineGuess<number, Feedback>;
 
-// Spring Herald's hint: odd or even, or which half of the range (03 §2.1).
+// Spring Herald's hint: the secret's last digit (O56), or which half of the range (03 §2.1).
 export type Hint =
-  | { readonly kind: 'parity'; readonly odd: boolean }
+  | { readonly kind: 'lastDigit'; readonly digit: number }
   | { readonly kind: 'half'; readonly low: number; readonly high: number };
 
 export interface PlayerState extends GuessPlayer<number, Feedback> {
@@ -93,8 +93,8 @@ export function createState(input: RoundInput<GtnConfig>): GtnState {
     rangeVisible: c.rangeVisible,
     comments: { ...base.comments, thresholds: c.thresholds },
     specials: {
-      // "Which half" names numbers of the range: a hidden range gets odd or even (T56).
-      hintType: c.rangeVisible ? c.springHintType : 'parity',
+      // "Which half" names numbers of the range: a hidden range gets the last digit (T56).
+      hintType: c.rangeVisible ? c.springHintType : 'lastDigit',
       minRemaining: c.autumnMinRemaining,
       minRangeSize: c.halvingMinRangeSize,
     },

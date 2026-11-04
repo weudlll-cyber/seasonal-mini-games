@@ -60,7 +60,7 @@ export function useLoupe(map: MapSize) {
 
 type LoupeState = ReturnType<typeof useLoupe>;
 
-type GridParts = Pick<TileGridProps, 'map' | 'area' | 'quarter' | 'fallen' | 'tiles'>;
+type GridParts = Pick<TileGridProps, 'map' | 'area' | 'quarters' | 'fallen' | 'tiles'>;
 
 export function Loupe(p: {
   readonly loupe: LoupeState;

@@ -94,8 +94,8 @@ describe('areas, quarters and fallen cells', () => {
     t.fold(seasonalTarget.specials?.halving?.(t.state, t.ctx, 1) ?? []);
     const spec = views.spectator(t.state, ALL) as SpectatorView;
     expect(spec).toMatchObject({ area: null, hint: null, areaSize: { width: 10, height: 20 } });
-    expect(playerView(t, 'a').hint?.name).toBe('north-west');
-    expect(playerView(t, 'b').hint?.name).toBe('south-east');
+    expect(playerView(t, 'a').hint?.map((q) => q.name)).toContain('north-west');
+    expect(playerView(t, 'b').hint?.map((q) => q.name)).toContain('south-east');
     expect(viewSchemas.spectator.safeParse(spec).success).toBe(true);
     // A viewer outside the roster gets the round's area and no hint.
     expect(playerView(t, 'zz')).toMatchObject({ hint: null, area: t.state.area });

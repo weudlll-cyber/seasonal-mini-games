@@ -157,7 +157,7 @@ describe('result, intro and rules', () => {
     );
     expect(stText.intro?.(null, 'shared')).toBeNull();
     expect(stText.specialRule?.('spring')).toBe(
-      'Everyone learns which quarter of the grid hides the target.',
+      'Everyone learns two quarters of the grid; one of them hides the target.',
     );
     expect(stText.specialRule?.('autumn')).toContain('tiles');
     expect(stText.specialRule?.('summer')).toBeNull();

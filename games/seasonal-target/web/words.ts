@@ -3,8 +3,8 @@
  * @module games/seasonal-target/web
  * @brief  How Seasonal Target words a tile, an area, a quarter and an answer.
  *
- * Responsibility: "(12, 34)" and "column 12, row 34", "columns 13–37, rows 1–50", the quarter
- *                 hint, a count of tiles, and an answer long ("9 tiles away, to the north-east",
+ * Responsibility: "(12, 34)" and "column 12, row 34", "columns 13–37, rows 1–50", the two
+ *                 quarters' hint (O61), a count of tiles, and an answer long ("9 tiles away, to the north-east",
  *                 "9 tiles away") and short ("9 away, NE ↗", "9 away"), the tier words of
  *                 `closeness` mode, the grid's size in tiles; the answer's tone and tier for the
  *                 list: only a found target takes the platform's colour, a miss is coloured by
@@ -15,7 +15,7 @@
  *                 ./ResultPanel, ./FallenCells
  * Spec:           docs/spec/02d-game-seasonal-target.md §4, §5, §7, §8.1, §8.4
  */
-import type { Area, Cell, Compass, Feedback, Quarter } from '@smg-game/seasonal-target';
+import type { Area, Cell, Compass, Feedback, QuarterPair } from '@smg-game/seasonal-target';
 import { formatNumber, type GuessAnswer } from '@smg/game-sdk';
 
 const n = formatNumber;
@@ -35,9 +35,21 @@ export const tiles = (k: number): string => `${n(k)} ${k === 1 ? 'tile' : 'tiles
 export const sizeText = (width: number, height: number): string =>
   `${n(width)} × ${n(height)} tiles`;
 
-// The highlighted line for the whole round (02d §8.1).
-export const freeHint = (q: Quarter): string =>
-  `Free hint: the target is in the ${q.name} quarter (${areaText(q)}).`;
+// The highlighted line for the whole round: the two quarters in their fixed order, which
+// never tells which one holds the target (O61, 02d §8.1).
+export const freeHint = ([a, b]: QuarterPair): string =>
+  `Free hint: the target is in one of the two green quarters, ${a.name} (${areaText(a)}) or ${b.name} (${areaText(b)}).`;
+
+const SHORT: Readonly<Record<string, string>> = {
+  'north-west': 'NW',
+  'north-east': 'NE',
+  'south-west': 'SW',
+  'south-east': 'SE',
+};
+
+// The hint in a few words for the phone's info line: "Hint: NW or SE".
+export const shortHint = ([a, b]: QuarterPair): string =>
+  `Hint: ${SHORT[a.name] ?? ''} or ${SHORT[b.name] ?? ''}`;
 
 export const areaLine = (a: Area): string => `Target area: ${areaText(a)}`;
 

@@ -3,15 +3,16 @@
  * @module games/seasonal-target
  * @brief  What Spring Herald, Leaf Fall and halving do in Seasonal Target.
  *
- * Responsibility: Spring Herald names the map quarter of the shared target to the room, or of
- *                 each player's own target to that player with a room line that everyone got
- *                 one (02d §8.1). Leaf Fall removes cells where the target can still be
+ * Responsibility: Spring Herald names two map quarters, the target's and a decoy drawn
+ *                 uniformly from the other three, in the fixed quarter order (O61): for the
+ *                 shared target to the room, or for each player's own target to that player
+ *                 with a room line that everyone got one (02d §8.1). Leaf Fall removes cells where the target can still be
  *                 (./leafFall, O37). Halving replaces each target area by one of about half the
  *                 area — the longer side halved, rounded up, the width on a tie — placed
  *                 uniformly among the positions inside the current area that hold the secret,
  *                 while the area is larger than `minCells` (02d §8.4, 03 §4). Every choice comes
- *                 from the round randomness under `leafFall/<k>` and
- *                 `halving/<k>/<shared|playerId>` (04 §5.4).
+ *                 from the round randomness under `spring/<shared|playerId>`,
+ *                 `leafFall/<k>` and `halving/<k>/<shared|playerId>` (04 §5.4).
  * Depends on:     @smg/game-sdk (hooks, Drbg), @smg/guess-engine (secretOf), ./geometry,
  *                 ./leafFall, ./secrets, ./state
  * Used by:        ./module
@@ -30,7 +31,14 @@ import {
 } from './geometry.js';
 import { fallingCells } from './leafFall.js';
 import type { Secrets } from './secrets.js';
-import type { Quarter, StEvent, StState } from './state.js';
+import {
+  QUARTER_NAMES,
+  type Quarter,
+  type QuarterName,
+  type QuarterPair,
+  type StEvent,
+  type StState,
+} from './state.js';
 
 // The quarter of the map that holds `c`: the west half is columns 1 … ⌈W/2⌉, the north half
 // rows 1 … ⌈H/2⌉ (02d §8.1).
@@ -46,6 +54,24 @@ export function quarterOf(map: MapSize, c: Cell): Quarter {
     top: north ? 1 : midY + 1,
     bottom: north ? midY : map.height,
   };
+}
+
+// A quarter by name: the one that holds its outer corner tile.
+const namedQuarter = (map: MapSize, name: QuarterName): Quarter =>
+  quarterOf(map, {
+    x: name.endsWith('west') ? 1 : map.width,
+    y: name.startsWith('north') ? 1 : map.height,
+  });
+
+// The target's quarter and a decoy drawn uniformly from the other three, in the fixed order
+// of `QUARTER_NAMES` (O61): the order never tells which one is the target's.
+export function quarterPair(map: MapSize, target: Cell, rng: Drbg): QuarterPair {
+  const own = quarterOf(map, target);
+  const others = QUARTER_NAMES.filter((n) => n !== own.name);
+  const decoy = namedQuarter(map, others[rng.intBetween(0, others.length - 1)] ?? own.name);
+  return QUARTER_NAMES.indexOf(own.name) < QUARTER_NAMES.indexOf(decoy.name)
+    ? [own, decoy]
+    : [decoy, own];
 }
 
 // The size after one halving: the longer side halved, rounded up; the width on a tie.
@@ -67,23 +93,27 @@ export function windowIn(area: Area, secret: Cell, rng: Drbg): Area {
   return { left, right: left + size.width - 1, top, bottom: top + size.height - 1 };
 }
 
-function springHerald(state: StState, secrets: Secrets): Emitted<StEvent>[] {
+function springHerald(
+  state: StState,
+  secrets: Secrets,
+  rng: (who: string) => Drbg,
+): Emitted<StEvent>[] {
   if (state.mode === 'shared') {
-    const quarter = quarterOf(state.map, secretOf(secrets, ''));
-    return [{ audience: 'room', event: { type: 'HintGiven', playerId: null, quarter } }];
+    const quarters = quarterPair(state.map, secretOf(secrets, ''), rng('shared'));
+    return [{ audience: 'room', event: { type: 'HintGiven', playerId: null, quarters } }];
   }
   const own = Object.keys(state.players).map((id): Emitted<StEvent> => ({
     audience: `player:${id}`,
     event: {
       type: 'HintGiven',
       playerId: id,
-      quarter: quarterOf(state.map, secretOf(secrets, id)),
+      quarters: quarterPair(state.map, secretOf(secrets, id), rng(id)),
     },
   }));
   // Spectators and the room learn only that everyone got one (03 §2.1).
   return [
     ...own,
-    { audience: 'room', event: { type: 'HintGiven', playerId: null, quarter: null } },
+    { audience: 'room', event: { type: 'HintGiven', playerId: null, quarters: null } },
   ];
 }
 
@@ -115,7 +145,8 @@ function halving(state: StState, secrets: Secrets, rng: (who: string) => Drbg, i
 }
 
 export const stSpecials: SpecialHooks<StState, StEvent, Secrets> = {
-  springHerald: (state, ctx) => springHerald(state, ctx.secrets),
+  springHerald: (state, ctx) =>
+    springHerald(state, ctx.secrets, (who) => ctx.rng.child('spring', who)),
   leafFall: (state, ctx, fall) => {
     const cells = fallingCells(
       state,

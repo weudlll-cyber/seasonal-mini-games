@@ -138,6 +138,13 @@
   text-align: center;
 }
 
+/* Spring Herald's digit, locked in its box from the round's opening (O59). */
+.sc-box--hint {
+  border-color: var(--season, var(--color-accent));
+  background: color-mix(in srgb, var(--season, var(--color-accent)) 22%, var(--color-card));
+  font-weight: var(--font-weight-strong);
+}
+
 .sc-box:focus-visible {
   outline: 3px solid var(--color-accent);
   outline-offset: 1px;

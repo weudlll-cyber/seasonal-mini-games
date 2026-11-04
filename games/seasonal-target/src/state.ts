@@ -6,8 +6,8 @@
  * Responsibility: on top of the guess engine's part (per player the accepted guesses with
  *                 their answers and comments), the map and the feedback mode; per player the
  *                 current target area (their own in individual mode, the shared one copied to
- *                 everyone in shared mode) and their own Spring quarter; the shared area and
- *                 quarter; the fallen cells; where Leaf Fall and halving stop. No secret is
+ *                 everyone in shared mode) and their own Spring quarters; the shared area and
+ *                 quarters; the fallen cells; where Leaf Fall and halving stop. No secret is
  *                 ever part of the state (05 §3), and nothing is narrowed from the answers
  *                 (O17). `evolveGame` folds the hints, falls and halvings.
  * Depends on:     @smg/game-sdk (RoundInput), @smg/guess-engine (state base, events),
@@ -37,16 +37,27 @@ import type { StConfig } from './settings.js';
 
 export type QuarterName = 'north-west' | 'north-east' | 'south-west' | 'south-east';
 
-// Spring Herald's hint: the map quarter that holds the target (02d §8.1).
+// A map quarter, by name and tiles.
 export interface Quarter extends Area {
   readonly name: QuarterName;
 }
 
+// Spring Herald's hint: two quarters, one of which holds the target, always in the fixed
+// order of `QUARTER_NAMES`, so which is the target's never shows (O61, 02d §8.1).
+export type QuarterPair = readonly [Quarter, Quarter];
+
+export const QUARTER_NAMES: readonly QuarterName[] = [
+  'north-west',
+  'north-east',
+  'south-west',
+  'south-east',
+];
+
 export interface StPlayer extends GuessPlayer<Cell, Feedback> {
   // The player's current target area: the whole map until a halving.
   readonly area: Area;
-  // Individual mode: the quarter of the player's own target.
-  readonly hint: Quarter | null;
+  // Individual mode: the quarters about the player's own target.
+  readonly hint: QuarterPair | null;
 }
 
 export interface StState extends GuessBase<Cell, Feedback> {
@@ -59,18 +70,18 @@ export interface StState extends GuessBase<Cell, Feedback> {
   readonly areaSize: { readonly width: number; readonly height: number };
   // Cells no one may guess any more (Leaf Fall), row by row.
   readonly fallen: readonly Cell[];
-  // Shared mode: the one quarter everyone got.
-  readonly hint: Quarter | null;
+  // Shared mode: the one pair of quarters everyone got.
+  readonly hint: QuarterPair | null;
   readonly players: Readonly<Record<string, StPlayer>>;
 }
 
 export type StOwnEvent =
-  // `playerId` null: to the room, with the shared quarter, or (individual) none: "everyone
+  // `playerId` null: to the room, with the shared quarters, or (individual) none: "everyone
   // received a hint".
   | {
       readonly type: 'HintGiven';
       readonly playerId: string | null;
-      readonly quarter: Quarter | null;
+      readonly quarters: QuarterPair | null;
     }
   | { readonly type: 'CellsFell'; readonly index: number; readonly cells: readonly Cell[] }
   // `playerId` null with an area: the shared one; null without: the room's line that every
@@ -111,9 +122,9 @@ export function evolveGame(state: StState, event: StOwnEvent): StState {
   switch (event.type) {
     case 'HintGiven':
       if (event.playerId === null) {
-        return event.quarter === null ? state : { ...state, hint: event.quarter };
+        return event.quarters === null ? state : { ...state, hint: event.quarters };
       }
-      return withPlayer(state, event.playerId, (p) => ({ ...p, hint: event.quarter }));
+      return withPlayer(state, event.playerId, (p) => ({ ...p, hint: event.quarters }));
     case 'CellsFell': {
       const fallen = [...state.fallen, ...event.cells].sort((a, b) => cellKey(a) - cellKey(b));
       return { ...state, fallen };

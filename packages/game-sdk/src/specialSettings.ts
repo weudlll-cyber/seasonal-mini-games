@@ -42,18 +42,25 @@ const seconds = (
 });
 
 export const SPECIAL_SETTINGS: readonly SettingDef[] = [
-  seconds(
-    'summer.stepS',
-    'Heatwave step',
-    'How much the cooldown shrinks at each step.',
-    [1, 1, 10],
-  ),
-  seconds(
-    'summer.stepIntervalS',
-    'Heatwave interval',
-    'Time between two Heatwave steps.',
-    [30, 5, 300],
-  ),
+  // Heatwave's defaults are the owner's: 1 s shorter every 10 s, in every game (O57).
+  {
+    ...seconds(
+      'summer.stepS',
+      'Heatwave step',
+      'How much the cooldown shrinks at each step.',
+      [1, 1, 10],
+    ),
+    decision: 'O57',
+  },
+  {
+    ...seconds(
+      'summer.stepIntervalS',
+      'Heatwave interval',
+      'Time between two Heatwave steps.',
+      [10, 5, 300],
+    ),
+    decision: 'O57',
+  },
   seconds(
     'autumn.intervalS',
     'Leaf Fall interval',

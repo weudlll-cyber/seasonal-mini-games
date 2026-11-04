@@ -8,9 +8,8 @@
  *                 mode (distance and arrow, distance, nothing; the found glyph); the viewer's
  *                 own tiles framed, others' with a corner mark in their list colour; a shared
  *                 tile showing the closest answer and naming every guess in its title and
- *                 label; a pending own answer "…" without a fill; fallen tiles hatched, tiles
- *                 outside the target area dimmed, Spring's quarter tinted with its "Hint" tag in
- *                 the outer corner; numbers drawn from `NUMBER_MIN_PX` (20 px) up only; a corner
+ *                 label; a pending own answer "…" without a fill (fallen tiles, the area and
+ *                 Spring's quarters: ./quarters.test); numbers drawn from `NUMBER_MIN_PX` (20 px) up only; a corner
  *                 dot moving the number. The player panel's legend, hint and area line (no
  *                 grid-size line) and the Fallen tiles in autumn; the spectator's grid and size
  *                 line; the result's target tile, every guess and every player in text.
@@ -18,6 +17,7 @@
  *                 ./ResultPanel
  * Spec:           docs/spec/02d-game-seasonal-target.md §6, §8, §9, §10, §11
  */
+import type { Quarter } from '@smg-game/seasonal-target';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -147,36 +147,11 @@ describe('own, others and shared tiles', () => {
   });
 });
 
-describe('fallen, area and quarter', () => {
-  it('hatches fallen tiles, dims tiles outside the area and tints the quarter', () => {
-    const quarter = { name: 'north-east', left: 11, right: 20, top: 1, bottom: 10 } as const;
-    renderInput(
-      playerView({
-        area: { left: 1, right: 15, top: 1, bottom: 20 },
-        hint: quarter,
-        fallen: [{ x: 3, y: 12 }],
-      }),
-    );
-    // "Hint" once, on the quarter's tile nearest the corner inside the area (T144).
-    const tag = screen.getByTestId('hint-tag');
-    expect(tag.textContent).toBe('Hint');
-    expect(tag.dataset['corner']).toBe('north-east');
-    expect(tag.closest<HTMLElement>('[data-x]')?.dataset['x']).toBe('15');
-    expect(tag.closest<HTMLElement>('[data-x]')?.dataset['y']).toBe('1');
-    expect(tile(3, 12).dataset['fallen']).toBe('true');
-    expect(tile(3, 12).title).toBe('column 3, row 12: fallen');
-    expect(tile(4, 12).dataset['fallen']).toBe('false');
-    expect(tile(16, 1).dataset['out']).toBe('true');
-    expect(tile(16, 1).title).toBe('column 16, row 1: outside the target area');
-    expect(tile(15, 1).dataset['out']).toBe('false');
-    expect(tile(11, 10).dataset['quarter']).toBe('true');
-    expect(tile(10, 10).dataset['quarter']).toBe('false');
-    expect(tile(11, 11).dataset['quarter']).toBe('false');
-  });
-});
-
 describe('panels', () => {
-  const quarter = { name: 'north-west', left: 1, right: 10, top: 1, bottom: 10 } as const;
+  const quarters: [Quarter, Quarter] = [
+    { name: 'north-west', left: 1, right: 10, top: 1, bottom: 10 },
+    { name: 'south-east', left: 11, right: 20, top: 11, bottom: 20 },
+  ];
   const base = {
     act: vi.fn(),
     canAct: false,
@@ -188,7 +163,7 @@ describe('panels', () => {
 
   it('shows the legend, the hint, the area line and the Fallen tiles in autumn', () => {
     const view = playerView({
-      hint: quarter,
+      hint: quarters,
       area: { left: 6, right: 15, top: 1, bottom: 20 },
       fallen: [{ x: 7, y: 2 }],
     });
@@ -198,7 +173,7 @@ describe('panels', () => {
     expect(panel.firstElementChild?.getAttribute('data-testid')).toBe('heat-legend');
     expect(screen.getByTestId('heat-legend').textContent).toBe('ColdHot');
     expect(screen.getByTestId('hint').textContent).toBe(
-      'Free hint: the target is in the north-west quarter (columns 1–10, rows 1–10).',
+      'Free hint: the target is in one of the two green quarters, north-west (columns 1–10, rows 1–10) or south-east (columns 11–20, rows 11–20).',
     );
     expect(screen.getByTestId('area-line').textContent).toBe(
       'Target area: columns 6–15, rows 1–20',

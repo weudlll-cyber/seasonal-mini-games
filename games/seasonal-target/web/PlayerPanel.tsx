@@ -5,8 +5,8 @@
  *
  * Responsibility: the grid's companions for the whole round, top to bottom (O51): the heat
  *                 legend (./HeatLegend); the current target area once a halving has shrunk it
- *                 ("Target area: columns 6–15, rows 1–20", 02d §8.4); Spring Herald's quarter
- *                 as a highlighted "Free hint: …" line (02d §8.1, O35); in a Leaf Fall round the
+ *                 ("Target area: columns 6–15, rows 1–20", 02d §8.4); Spring Herald's two
+ *                 quarters as a highlighted "Free hint: …" line (O61) (02d §8.1, O35); in a Leaf Fall round the
  *                 Fallen tiles panel (./FallenCells, T115). The grid itself, with the selection,
  *                 belongs to the input (./TargetInput), because only the input can act. The
  *                 phone's info line says the halved area or the hint (`InfoLine`, T141).
@@ -15,13 +15,13 @@
  * Used by:        ./index
  * Spec:           docs/spec/02d-game-seasonal-target.md §8, §11
  */
-import type { Area, MapSize, PlayerView, Quarter } from '@smg-game/seasonal-target';
+import type { Area, MapSize, PlayerView, QuarterPair } from '@smg-game/seasonal-target';
 import type { PlayerPanelProps, SpectatorPanelProps } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
 import { FallenCells, leafFallOn } from './FallenCells.js';
 import { HeatLegend } from './HeatLegend.js';
-import { areaLine, freeHint } from './words.js';
+import { areaLine, freeHint, shortHint } from './words.js';
 
 const whole = (a: Area, map: MapSize): boolean =>
   a.left === 1 && a.top === 1 && a.right === map.width && a.bottom === map.height;
@@ -32,7 +32,7 @@ export function GridLines(p: {
   readonly map: MapSize;
   readonly area: Area | null;
   readonly sizeLine: string | null;
-  readonly hint: Quarter | null;
+  readonly hint: QuarterPair | null;
 }): ReactElement {
   const areaText = p.area !== null && !whole(p.area, p.map) ? areaLine(p.area) : p.sizeLine;
   return (
@@ -52,17 +52,23 @@ export function GridLines(p: {
 }
 
 // The phone's info line (T141): the target area once a halving shrank it, else Spring's
-// quarter ("Hint: south-east quarter"), else the heat legend of the round's mode, its words
+// quarters ("Hint: NW or SE", in the season colour), else the heat legend of the round's mode, its words
 // and swatches spaced (T151); a spectator's view in individual mode has no area of its own.
 export function InfoLine(props: SpectatorPanelProps): ReactElement {
   const v = props.view as Pick<PlayerView, 'map' | 'hint' | 'feedbackMode'> & {
     readonly area: Area | null;
   };
   const shrunk = v.area !== null && !whole(v.area, v.map) ? areaLine(v.area) : null;
-  const text = shrunk ?? (v.hint === null ? null : `Hint: ${v.hint.name} quarter`);
+  if (shrunk === null && v.hint !== null) {
+    return (
+      <span className="st-line" data-testid="st-line">
+        <span className="smg-chip smg-hint">{shortHint(v.hint)}</span>
+      </span>
+    );
+  }
   return (
     <span className="st-line" data-testid="st-line">
-      {text === null ? <HeatLegend mode={v.feedbackMode} /> : <strong>{text}</strong>}
+      {shrunk === null ? <HeatLegend mode={v.feedbackMode} /> : <strong>{shrunk}</strong>}
     </span>
   );
 }

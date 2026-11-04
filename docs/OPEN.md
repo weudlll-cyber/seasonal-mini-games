@@ -78,6 +78,10 @@ Built as described in 02 §12 and DECISIONS T128–T132 and T134–T136 (O47–O
 - The light/dark toggle lives in the app header, which focus mode hides; the theme chosen before the round stays, and O46's bar lists no toggle, so none was added. A sixth button would not fit the phone's bar beside Host and Full screen; inside the Players panel it could.
 - Guess The Number's Fallen numbers open from their "Fallen (N)" button as a sheet on a desktop too (T132); since O50 the list is in the main area, so they could stand open in the right column again.
 
+**Play-test fixes, to confirm** (proposals; built on `feat/guess-games` after the owner's play-test of 2026-11-04):
+
+- Spring Herald (T187–T191): Guess The Number keeps the host option `half` beside the new default `lastDigit`; the phone's hint chip in the season colour in every game; Safecracker refuses a paste that changes the locked digit ("Place 2 keeps the hint, 3."); Bomb Defusal's Undo and Clear stay disabled while only the locked hint is in the slots; Seasonal Target's wording "one of the two green quarters, north-west (…) or south-east (…)" and "Hint: NW or SE".
+
 **Night 8, to confirm** (proposals; built on `feat/guess-games`):
 
 - Admin app, Integration area (T177): three tabs for identity providers, embed origins and webhooks; Disable and Remove through the confirm dialog; a webhook's secret shown once; role mappings typed as "host role = platform role" lines; a pinned key is replaced by pasting a new one, never shown or removed in the form.

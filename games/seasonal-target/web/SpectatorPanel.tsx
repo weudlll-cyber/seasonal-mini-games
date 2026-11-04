@@ -44,7 +44,7 @@ export function SpectatorPanel(props: SpectatorPanelProps): ReactElement {
         <TileGrid
           map={v.map}
           area={v.area}
-          quarter={v.hint}
+          quarters={v.hint}
           fallen={v.fallen}
           tiles={tilesOf(shotsOf([], v.log), props)}
           variant="board"

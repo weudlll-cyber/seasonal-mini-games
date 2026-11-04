@@ -39,7 +39,7 @@ export interface GtnConfig extends GuessConfig {
   readonly rangeVisible: boolean;
   // The tiers' thresholds in percent of the range's width (O21).
   readonly thresholds: Thresholds;
-  readonly springHintType: 'parity' | 'half';
+  readonly springHintType: 'lastDigit' | 'half';
   readonly autumnMinRemaining: number;
   readonly halvingMinRangeSize: number;
 }
@@ -122,10 +122,10 @@ const defs: readonly SettingDef[] = [
     key: 'spring.hintType',
     kind: 'enum',
     label: 'Spring Herald hint',
-    help: 'parity: odd or even; half: lower or upper half of the range.',
-    default: 'parity',
-    options: ['parity', 'half'],
-    ...owner('O15'),
+    help: 'lastDigit: the last digit of the number; half: lower or upper half of the range.',
+    default: 'lastDigit',
+    options: ['lastDigit', 'half'],
+    ...owner('O56'),
     ...admin,
   },
   {
@@ -168,7 +168,7 @@ export const gtnSettings: GameSettings<GtnConfig> = {
       warm: values['comments.warmAbove'] as number,
       hot: values['comments.hotAbove'] as number,
     },
-    springHintType: values['spring.hintType'] as 'parity' | 'half',
+    springHintType: values['spring.hintType'] as 'lastDigit' | 'half',
     autumnMinRemaining: values['autumn.minRemaining'] as number,
     halvingMinRangeSize: values['halving.minRangeSize'] as number,
   }),

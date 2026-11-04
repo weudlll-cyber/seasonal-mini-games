@@ -1,15 +1,16 @@
 /*
  * @file   games/bomb-defusal/web/bd.css
  * @module games/bomb-defusal/web
- * @brief  Styles of the Seasonal Bomb Defusal panels: bomb block, slots, wire buttons, result.
+ * @brief  Styles of the Seasonal Bomb Defusal panels: bomb block, slots, wire buttons.
  *
  * Responsibility: text colours only from the design tokens (light and dark); wire colours are
  *                 swatch fills with the wire's name in text beside them (the swatches are
  *                 ./swatch.css); wire buttons, Undo, Clear and Cut at least 44 px
  *                 (`--hit-target`); wires in one row on a desktop (eight too, T143),
- *                 two even rows of up to four on a phone; slots at least 44 px, the hint in
- *                 slot 1 wrapping rather than cut off; the explosion's own styles are
- *                 ./explosion.css. Every class starts with `bd-`. Layouts work down to 390 px.
+ *                 two even rows of up to four on a phone; slots at least 44 px, the hint
+ *                 locked in slot 1 (O60); the explosion's own styles are ./explosion.css, the
+ *                 result's ./result.css. Every class starts with `bd-`. Layouts work down to
+ *                 390 px.
  * Spec:           docs/spec/02c-game-bomb-defusal.md §5.2, §11
  */
 .bd-bomb {
@@ -103,9 +104,6 @@
   min-width: 0;
   min-height: var(--hit-target);
   display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0 0.3rem;
   border-radius: var(--radius);
   border: 1px dashed var(--color-border-strong);
   overflow: hidden;
@@ -115,26 +113,35 @@
   border-style: solid;
 }
 
-/* Slot 1 with Spring Herald's hint: a highlighted outline. */
+/* Slot 1 with Spring Herald's colour, locked: outlined and tinted in the season colour (O60). */
 .bd-slot[data-hint='true'] {
   outline: 3px solid var(--season, var(--color-accent));
   outline-offset: -1px;
+  background: color-mix(in srgb, var(--season, var(--color-accent)) 22%, var(--color-card));
+}
+
+/* A slot's number and wire; a filled slot the player may empty is a button over the slot. */
+.bd-slot-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0 0.3rem;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+}
+
+.bd-slot-take {
+  cursor: pointer;
 }
 
 .bd-slot-number {
   font-weight: var(--font-weight-strong);
   font-variant-numeric: tabular-nums;
-}
-
-/* "hint: red" wraps onto two lines in a narrow slot rather than being cut off. */
-.bd-slot-hint {
-  min-width: 0;
-  display: flex;
-  flex-wrap: wrap;
-  column-gap: 0.25em;
-  font-size: var(--font-size-small);
-  line-height: 1.15;
-  overflow-wrap: anywhere;
 }
 
 .bd-slot .bd-chip {
@@ -209,7 +216,7 @@
 }
 
 /* A phone: two even rows of up to four wires (3 + 3 with six, 4 + 4 with eight, 3 + 2 with
-   five, 4 + 3 with seven, one row with four); the slot with the hint gets more room. */
+   five, 4 + 3 with seven, one row with four). */
 @media (max-width: 899px) {
   .bd-wires {
     --bd-cols: 3;
@@ -220,10 +227,6 @@
     --bd-cols: 4;
   }
 
-  .bd-slot[data-hint='true'] {
-    flex-grow: 1.6;
-  }
-
   .bd-bomb-title {
     font-size: var(--font-size-body);
   }
@@ -231,70 +234,4 @@
   .bd-slot-number {
     font-size: var(--font-size-small);
   }
-}
-
-.bd-result {
-  display: grid;
-  gap: var(--space-2);
-  align-content: start;
-}
-
-.bd-secret {
-  display: grid;
-  gap: var(--space-1);
-  font-size: var(--font-size-lead);
-}
-
-.bd-secret p {
-  margin: 0;
-}
-
-/* The secret on one line on a desktop (night-7 review: the chips wrapped at 1280 × 720). */
-@media (min-width: 900px) {
-  .bd-secret {
-    font-size: inherit;
-  }
-
-  .bd-secret .bd-sequence {
-    flex-wrap: nowrap;
-  }
-
-  /* Each number stays beside its chip. */
-  .bd-secret .bd-sequence li {
-    flex: none;
-    white-space: nowrap;
-  }
-}
-
-/* Every player's sequences in full, below the result's first part (T150). */
-.bd-players {
-  margin: 0;
-  padding-left: 1.25rem;
-  display: grid;
-  gap: var(--space-1);
-}
-
-.bd-players > li {
-  display: grid;
-  gap: 0.2rem;
-}
-
-/* One sequence a line: the round's colour dots, then the answer in words. */
-.bd-cuts {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 0.1rem;
-}
-
-.bd-dots {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  vertical-align: middle;
-}
-
-.bd-you {
-  font-weight: var(--font-weight-strong);
 }

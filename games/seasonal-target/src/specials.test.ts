@@ -1,78 +1,30 @@
 /**
  * @file   games/seasonal-target/src/specials.test.ts
  * @module games/seasonal-target
- * @brief  Spring Herald's quarter and halving's windows.
+ * @brief  Halving's windows (Spring Herald's quarters are ./spring.test).
  *
- * Responsibility: the quarter for even and odd map sizes, shared to the room and individual to
- *                 each player with only a count line to the room; halving as a property: every
+ * Responsibility: halving as a property: every
  *                 window holds its secret, lies inside the previous one, has the longer side
  *                 halved rounded up (the width on a tie), the same size for every player, and
  *                 stops once the area ≤ `halving.minCells`; positions uniform among the legal
  *                 ones (chi-square smoke); the same seed gives the same windows.
  * Depends on:     vitest, fast-check, @smg/game-sdk, @smg/guess-engine, ./fakes, ./geometry,
  *                 ./module, ./specials, ./state
- * Spec:           docs/spec/02d-game-seasonal-target.md §8.1, §8.4; docs/spec/09-testing-strategy.md §4.1
+ * Spec:           docs/spec/02d-game-seasonal-target.md §8.4; docs/spec/09-testing-strategy.md §4.1
  */
 import { roundRng } from '@smg/game-sdk/crypto';
 import { secretOf } from '@smg/guess-engine';
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
-import { input, Table, targets } from './fakes.js';
+import { input, Table } from './fakes.js';
 import { areaCells, areaHeight, areaWidth, inArea, type Area } from './geometry.js';
 import { seasonalTarget } from './module.js';
-import { halvedSize, quarterOf, windowIn } from './specials.js';
+import { halvedSize, windowIn } from './specials.js';
 import type { StState } from './state.js';
 
 const hooks = seasonalTarget.specials;
 const PLAYERS = ['a', 'b', 'c'];
-
-describe('Spring Herald', () => {
-  it('names the quarter, the west and north halves rounded up', () => {
-    const odd = { width: 21, height: 21 };
-    expect(quarterOf(odd, { x: 11, y: 11 })).toEqual({
-      name: 'north-west',
-      left: 1,
-      right: 11,
-      top: 1,
-      bottom: 11,
-    });
-    expect(quarterOf(odd, { x: 12, y: 12 })).toEqual({
-      name: 'south-east',
-      left: 12,
-      right: 21,
-      top: 12,
-      bottom: 21,
-    });
-    const even = { width: 50, height: 20 };
-    expect(quarterOf(even, { x: 26, y: 10 }).name).toBe('north-east');
-    expect(quarterOf(even, { x: 25, y: 11 })).toMatchObject({ name: 'south-west', right: 25 });
-  });
-
-  it('gives the shared quarter to the room', () => {
-    const inp = input('shared', PLAYERS);
-    const t = new Table(targets(inp, [{ x: 15, y: 5 }]), inp);
-    const events = t.fold(hooks?.springHerald?.(t.state, t.ctx) ?? []);
-    expect(events.map((e) => e.audience)).toEqual(['room']);
-    expect(t.state.hint?.name).toBe('north-east');
-  });
-
-  it('gives each player their own quarter, and the room only a line', () => {
-    const inp = input('individual', PLAYERS);
-    const cells = [
-      { x: 1, y: 1 },
-      { x: 20, y: 20 },
-      { x: 1, y: 20 },
-    ];
-    const t = new Table(targets(inp, cells), inp);
-    const events = t.fold(hooks?.springHerald?.(t.state, t.ctx) ?? []);
-    expect(events.map((e) => e.audience)).toEqual(['player:a', 'player:b', 'player:c', 'room']);
-    expect(events[3]?.event).toEqual({ type: 'HintGiven', playerId: null, quarter: null });
-    expect(t.state.hint).toBeNull();
-    expect(t.state.players['b']?.hint?.name).toBe('south-east');
-    expect(t.state.players['c']?.hint?.name).toBe('south-west');
-  });
-});
 
 const round = fc.record({
   mode: fc.constantFrom('shared' as const, 'individual' as const),

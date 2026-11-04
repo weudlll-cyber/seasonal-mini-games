@@ -32,7 +32,7 @@ export { LOG_LIMIT } from '@smg/guess-engine';
 const range = z.object({ low: z.number().int(), high: z.number().int() }).strict();
 const hint = z
   .discriminatedUnion('kind', [
-    z.object({ kind: z.literal('parity'), odd: z.boolean() }).strict(),
+    z.object({ kind: z.literal('lastDigit'), digit: z.number().int().min(0).max(9) }).strict(),
     z.object({ kind: z.literal('half'), low: z.number().int(), high: z.number().int() }).strict(),
   ])
   .nullable();

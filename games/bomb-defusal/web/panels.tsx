@@ -85,7 +85,9 @@ export function InfoLine(props: SpectatorPanelProps): ReactElement {
       {bomb.harmless.length === 0 ? null : (
         <span className="smg-chip bd-line-chip">Harmless {bomb.harmless.length}</span>
       )}
-      {bomb.hint === null ? null : <span className="bd-line-hint">{shortHint(bomb.hint)}</span>}
+      {bomb.hint === null ? null : (
+        <span className="smg-chip smg-hint">{shortHint(bomb.hint)}</span>
+      )}
     </span>
   );
 }

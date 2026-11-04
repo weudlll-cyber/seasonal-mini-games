@@ -128,7 +128,8 @@ function intro(view: unknown, secretMode: 'shared' | 'individual'): string | nul
 
 // The specials that work differently here than the platform's sentence says (T119).
 function specialRule(season: string): string | null {
-  if (season === 'spring') return 'Everyone learns which quarter of the grid hides the target.';
+  if (season === 'spring')
+    return 'Everyone learns two quarters of the grid; one of them hides the target.';
   if (season === 'autumn') return 'Every so often, some tiles without a target fall off the grid.';
   return null;
 }

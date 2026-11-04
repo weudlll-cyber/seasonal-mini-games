@@ -47,6 +47,8 @@ const size = z.object({ width: coord, height: coord }).strict();
 const quarter = area
   .extend({ name: z.enum(['north-west', 'north-east', 'south-west', 'south-east']) })
   .strict();
+// Spring's two quarters, in the fixed order (O61).
+const quarters = z.tuple([quarter, quarter]);
 // Every wrong answer carries its tier: the colour of the guessed tile (O45).
 const tier = z.enum(TIERS).exclude(['correct']);
 const feedback = z.discriminatedUnion('kind', [
@@ -68,7 +70,7 @@ export const viewSchemas = {
       repeatRejected: z.boolean(),
       // The player's own target area: the whole grid until a halving.
       area,
-      hint: quarter.nullable(),
+      hint: quarters.nullable(),
       fallen: z.array(cell),
       guesses: z.array(guesses.own),
       // The other players' guesses, oldest first.
@@ -82,7 +84,7 @@ export const viewSchemas = {
       // Shared mode only; individual mode names just the size of every area.
       area: area.nullable(),
       areaSize: size,
-      hint: quarter.nullable(),
+      hint: quarters.nullable(),
       fallen: z.array(cell),
       log: z.array(guesses.other),
     })
@@ -148,7 +150,7 @@ export const views: GameViews<StState, Secrets> = {
     return {
       map: state.map,
       feedbackMode: state.feedbackMode,
-      // An individual area or quarter is about a player's own target: never a spectator's.
+      // An individual area or quarters are about a player's own target: never a spectator's.
       area: shared ? state.area : null,
       areaSize: state.areaSize,
       hint: shared ? state.hint : null,

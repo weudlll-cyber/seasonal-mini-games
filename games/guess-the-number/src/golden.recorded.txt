@@ -18,8 +18,8 @@
        "type": "HintGiven",
        "playerId": null,
        "hint": {
-        "kind": "parity",
-        "odd": true
+        "kind": "lastDigit",
+        "digit": 1
        }
       }
      }
@@ -912,8 +912,8 @@
       }
      ],
      "hint": {
-      "kind": "parity",
-      "odd": true
+      "kind": "lastDigit",
+      "digit": 1
      }
     },
     "spectator": {
@@ -931,8 +931,8 @@
       903
      ],
      "hint": {
-      "kind": "parity",
-      "odd": true
+      "kind": "lastDigit",
+      "digit": 1
      },
      "log": [
       {
@@ -1190,8 +1190,8 @@
        "type": "HintGiven",
        "playerId": null,
        "hint": {
-        "kind": "parity",
-        "odd": true
+        "kind": "lastDigit",
+        "digit": 1
        }
       }
      }
@@ -1944,8 +1944,8 @@
       }
      ],
      "hint": {
-      "kind": "parity",
-      "odd": true
+      "kind": "lastDigit",
+      "digit": 1
      }
     },
     "spectator": {
@@ -1958,8 +1958,8 @@
       834
      ],
      "hint": {
-      "kind": "parity",
-      "odd": true
+      "kind": "lastDigit",
+      "digit": 1
      },
      "log": [
       {
@@ -2221,8 +2221,8 @@
        "type": "HintGiven",
        "playerId": "p1",
        "hint": {
-        "kind": "parity",
-        "odd": false
+        "kind": "lastDigit",
+        "digit": 8
        }
       }
      },
@@ -2232,8 +2232,8 @@
        "type": "HintGiven",
        "playerId": "p2",
        "hint": {
-        "kind": "parity",
-        "odd": true
+        "kind": "lastDigit",
+        "digit": 7
        }
       }
      },
@@ -2243,8 +2243,8 @@
        "type": "HintGiven",
        "playerId": "p3",
        "hint": {
-        "kind": "parity",
-        "odd": true
+        "kind": "lastDigit",
+        "digit": 7
        }
       }
      }
@@ -3110,8 +3110,8 @@
       }
      ],
      "hint": {
-      "kind": "parity",
-      "odd": false
+      "kind": "lastDigit",
+      "digit": 8
      }
     },
     "spectator": {
@@ -3402,8 +3402,8 @@
        "type": "HintGiven",
        "playerId": "p1",
        "hint": {
-        "kind": "parity",
-        "odd": false
+        "kind": "lastDigit",
+        "digit": 8
        }
       }
      },
@@ -3413,8 +3413,8 @@
        "type": "HintGiven",
        "playerId": "p2",
        "hint": {
-        "kind": "parity",
-        "odd": true
+        "kind": "lastDigit",
+        "digit": 7
        }
       }
      },
@@ -3424,8 +3424,8 @@
        "type": "HintGiven",
        "playerId": "p3",
        "hint": {
-        "kind": "parity",
-        "odd": true
+        "kind": "lastDigit",
+        "digit": 7
        }
       }
      }
@@ -4291,8 +4291,8 @@
       }
      ],
      "hint": {
-      "kind": "parity",
-      "odd": false
+      "kind": "lastDigit",
+      "digit": 8
      }
     },
     "spectator": {
@@ -4579,8 +4579,8 @@
        "type": "HintGiven",
        "playerId": null,
        "hint": {
-        "kind": "parity",
-        "odd": false
+        "kind": "lastDigit",
+        "digit": 6
        }
       }
      }
@@ -5486,8 +5486,8 @@
       }
      ],
      "hint": {
-      "kind": "parity",
-      "odd": false
+      "kind": "lastDigit",
+      "digit": 6
      }
     },
     "spectator": {
@@ -5518,8 +5518,8 @@
       981
      ],
      "hint": {
-      "kind": "parity",
-      "odd": false
+      "kind": "lastDigit",
+      "digit": 6
      },
      "log": [
       {
@@ -5777,8 +5777,8 @@
        "type": "HintGiven",
        "playerId": null,
        "hint": {
-        "kind": "parity",
-        "odd": false
+        "kind": "lastDigit",
+        "digit": 6
        }
       }
      }
@@ -6531,8 +6531,8 @@
       }
      ],
      "hint": {
-      "kind": "parity",
-      "odd": false
+      "kind": "lastDigit",
+      "digit": 6
      }
     },
     "spectator": {
@@ -6545,8 +6545,8 @@
       975
      ],
      "hint": {
-      "kind": "parity",
-      "odd": false
+      "kind": "lastDigit",
+      "digit": 6
      },
      "log": [
       {
@@ -6808,8 +6808,8 @@
        "type": "HintGiven",
        "playerId": "p1",
        "hint": {
-        "kind": "parity",
-        "odd": true
+        "kind": "lastDigit",
+        "digit": 1
        }
       }
      },
@@ -6819,8 +6819,8 @@
        "type": "HintGiven",
        "playerId": "p2",
        "hint": {
-        "kind": "parity",
-        "odd": true
+        "kind": "lastDigit",
+        "digit": 1
        }
       }
      },
@@ -6830,8 +6830,8 @@
        "type": "HintGiven",
        "playerId": "p3",
        "hint": {
-        "kind": "parity",
-        "odd": false
+        "kind": "lastDigit",
+        "digit": 6
        }
       }
      }
@@ -7695,8 +7695,8 @@
       }
      ],
      "hint": {
-      "kind": "parity",
-      "odd": true
+      "kind": "lastDigit",
+      "digit": 1
      }
     },
     "spectator": {
@@ -7987,8 +7987,8 @@
        "type": "HintGiven",
        "playerId": "p1",
        "hint": {
-        "kind": "parity",
-        "odd": true
+        "kind": "lastDigit",
+        "digit": 1
        }
       }
      },
@@ -7998,8 +7998,8 @@
        "type": "HintGiven",
        "playerId": "p2",
        "hint": {
-        "kind": "parity",
-        "odd": true
+        "kind": "lastDigit",
+        "digit": 1
        }
       }
      },
@@ -8009,8 +8009,8 @@
        "type": "HintGiven",
        "playerId": "p3",
        "hint": {
-        "kind": "parity",
-        "odd": false
+        "kind": "lastDigit",
+        "digit": 6
        }
       }
      }
@@ -8874,8 +8874,8 @@
       }
      ],
      "hint": {
-      "kind": "parity",
-      "odd": true
+      "kind": "lastDigit",
+      "digit": 1
      }
     },
     "spectator": {
@@ -9162,8 +9162,8 @@
        "type": "HintGiven",
        "playerId": null,
        "hint": {
-        "kind": "parity",
-        "odd": true
+        "kind": "lastDigit",
+        "digit": 7
        }
       }
      }
@@ -10062,8 +10062,8 @@
       }
      ],
      "hint": {
-      "kind": "parity",
-      "odd": true
+      "kind": "lastDigit",
+      "digit": 7
      }
     },
     "spectator": {
@@ -10087,8 +10087,8 @@
       938
      ],
      "hint": {
-      "kind": "parity",
-      "odd": true
+      "kind": "lastDigit",
+      "digit": 7
      },
      "log": [
       {
@@ -10346,8 +10346,8 @@
        "type": "HintGiven",
        "playerId": null,
        "hint": {
-        "kind": "parity",
-        "odd": true
+        "kind": "lastDigit",
+        "digit": 7
        }
       }
      }
@@ -11099,8 +11099,8 @@
       }
      ],
      "hint": {
-      "kind": "parity",
-      "odd": true
+      "kind": "lastDigit",
+      "digit": 7
      }
     },
     "spectator": {
@@ -11112,8 +11112,8 @@
       928
      ],
      "hint": {
-      "kind": "parity",
-      "odd": true
+      "kind": "lastDigit",
+      "digit": 7
      },
      "log": [
       {
@@ -11375,8 +11375,8 @@
        "type": "HintGiven",
        "playerId": "p1",
        "hint": {
-        "kind": "parity",
-        "odd": true
+        "kind": "lastDigit",
+        "digit": 3
        }
       }
      },
@@ -11386,8 +11386,8 @@
        "type": "HintGiven",
        "playerId": "p2",
        "hint": {
-        "kind": "parity",
-        "odd": true
+        "kind": "lastDigit",
+        "digit": 3
        }
       }
      },
@@ -11397,8 +11397,8 @@
        "type": "HintGiven",
        "playerId": "p3",
        "hint": {
-        "kind": "parity",
-        "odd": true
+        "kind": "lastDigit",
+        "digit": 7
        }
       }
      }
@@ -12256,8 +12256,8 @@
       }
      ],
      "hint": {
-      "kind": "parity",
-      "odd": true
+      "kind": "lastDigit",
+      "digit": 3
      }
     },
     "spectator": {
@@ -12548,8 +12548,8 @@
        "type": "HintGiven",
        "playerId": "p1",
        "hint": {
-        "kind": "parity",
-        "odd": true
+        "kind": "lastDigit",
+        "digit": 3
        }
       }
      },
@@ -12559,8 +12559,8 @@
        "type": "HintGiven",
        "playerId": "p2",
        "hint": {
-        "kind": "parity",
-        "odd": true
+        "kind": "lastDigit",
+        "digit": 3
        }
       }
      },
@@ -12570,8 +12570,8 @@
        "type": "HintGiven",
        "playerId": "p3",
        "hint": {
-        "kind": "parity",
-        "odd": true
+        "kind": "lastDigit",
+        "digit": 7
        }
       }
      }
@@ -13429,8 +13429,8 @@
       }
      ],
      "hint": {
-      "kind": "parity",
-      "odd": true
+      "kind": "lastDigit",
+      "digit": 3
      }
     },
     "spectator": {

@@ -6,8 +6,8 @@
  *
  * Responsibility: one CSS grid of square tiles for the shown tiles (the whole grid, or the
  *                 loupe's 5 × 5 window), always the whole grid: tiles outside the target area
- *                 dimmed, Spring's quarter tinted green with a "Hint" tag in its outer corner
- *                 tile (O51), fallen tiles hatched (a pattern, not colour alone). A guessed
+ *                 dimmed, Spring's two quarters tinted green, each with a "Hint" tag in its
+ *                 outer corner tile (O51, O61), fallen tiles hatched (a pattern, not colour alone). A guessed
  *                 tile is filled by its closest answer's step (./heat, from the server's tier)
  *                 and shows the distance with a small arrow (`direction`), the distance
  *                 (`distance`) or nothing (`closeness`), a target glyph when found; the
@@ -32,6 +32,7 @@ import {
   type Cell,
   type MapSize,
   type Quarter,
+  type QuarterPair,
 } from '@smg-game/seasonal-target';
 import { formatNumber } from '@smg/game-sdk';
 import {
@@ -52,7 +53,8 @@ export interface TileGridProps {
   readonly shown?: Area;
   // The target area; tiles outside it are dimmed. Null: nothing is dimmed.
   readonly area: Area | null;
-  readonly quarter: Quarter | null;
+  // Spring's two quarters, or null.
+  readonly quarters: QuarterPair | null;
   readonly fallen: readonly Cell[];
   readonly tiles: ReadonlyMap<string, Tile>;
   readonly numbers: boolean;
@@ -111,8 +113,7 @@ const clamp = (v: number, low: number, high: number) => Math.min(high, Math.max(
 // The quarter's tile nearest the grid's corner that is still inside the target area: its
 // "Hint" tag hangs there, inward from the edges, so a halving that dims the corner moves the
 // tag instead of hiding it (T144); none when no tile of the quarter is left in the area.
-export function tagTileOf(q: Quarter | null, area: Area | null): Cell | null {
-  if (q === null) return null;
+export function tagTileOf(q: Quarter, area: Area | null): Cell | null {
   const a = area ?? q;
   const left = Math.max(q.left, a.left);
   const right = Math.min(q.right, a.right);
@@ -136,7 +137,8 @@ function factsOf({ c, p, fallen }: TileProps) {
   ].filter((n): n is string => n !== false);
   const t = tile ?? NO_TILE;
   // The tag gives way to a fill, a hatch or a ring; the other tiles keep the tint.
-  const tag = isAt(tagTileOf(p.quarter, p.area), c) && tile === undefined && !isFallen && !target;
+  const free = tile === undefined && !isFallen && !target;
+  const tag = free ? p.quarters?.find((q) => isAt(tagTileOf(q, p.area), c)) : undefined;
   return {
     t,
     guessed: tile !== undefined,
@@ -144,13 +146,14 @@ function factsOf({ c, p, fallen }: TileProps) {
     out,
     target,
     tag,
+    tinted: p.quarters?.some((q) => covers(q, c)) === true,
     label: tileLabel(c, t, notes),
   };
 }
 
 function TileCell(props: TileProps): ReactElement {
   const { c, id, p } = props;
-  const { t, guessed, isFallen, out, target, tag, label } = factsOf(props);
+  const { t, guessed, isFallen, out, target, tag, tinted, label } = factsOf(props);
   return (
     <div
       id={id}
@@ -170,20 +173,20 @@ function TileCell(props: TileProps): ReactElement {
       data-selected={isAt(p.selected, c)}
       data-pending={t.best === null && t.pending}
       data-out={out}
-      data-quarter={covers(p.quarter, c)}
+      data-quarter={tinted}
       data-marked={t.mark !== null}
     >
       <Face tile={t} numbers={p.numbers} />
-      {tag ? (
+      {tag === undefined ? null : (
         <span
           className="st-hint-tag"
           aria-hidden="true"
-          data-corner={p.quarter?.name}
+          data-corner={tag.name}
           data-testid="hint-tag"
         >
           Hint
         </span>
-      ) : null}
+      )}
       {t.mark === null ? null : (
         <span className="st-mark" aria-hidden="true" style={{ background: t.mark }} />
       )}

@@ -9,6 +9,7 @@
  * Depends on:     vitest, @testing-library/react, ./fixtures, ./PlayerPanel
  * Spec:           docs/spec/02d-game-seasonal-target.md §8, §11; docs/spec/09-testing-strategy.md §2
  */
+import type { Quarter } from '@smg-game/seasonal-target';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -19,18 +20,22 @@ afterEach(() => {
   cleanup();
 });
 
-const quarter = { name: 'south-east', left: 11, right: 20, top: 11, bottom: 20 } as const;
+const quarters: [Quarter, Quarter] = [
+  { name: 'north-east', left: 11, right: 20, top: 1, bottom: 10 },
+  { name: 'south-east', left: 11, right: 20, top: 11, bottom: 20 },
+];
 const line = () => screen.getByTestId('st-line');
 
 describe("the phone's info line", () => {
   it('says the halved area first, then the hint, else shows the legend', () => {
     const at = { ...roster, season: 'spring' as const, specialOn: true };
     const halved = { left: 6, right: 15, top: 1, bottom: 20 };
-    render(<InfoLine view={playerView({ area: halved, hint: quarter })} {...at} />);
+    render(<InfoLine view={playerView({ area: halved, hint: quarters })} {...at} />);
     expect(line().textContent).toBe('Target area: columns 6–15, rows 1–20');
     cleanup();
-    render(<InfoLine view={playerView({ hint: quarter })} {...at} />);
-    expect(line().textContent).toBe('Hint: south-east quarter');
+    render(<InfoLine view={playerView({ hint: quarters })} {...at} />);
+    expect(line().textContent).toBe('Hint: NE or SE');
+    expect(line().querySelector('.smg-hint')).not.toBeNull();
     cleanup();
     render(<InfoLine view={playerView()} {...at} />);
     expect(screen.getByTestId('heat-legend')).toBeTruthy();

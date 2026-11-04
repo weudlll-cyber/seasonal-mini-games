@@ -30,6 +30,20 @@ const SECRET: Sequence = ['red', 'blue', 'yellow', 'white'];
 const shared = (value: Sequence = SECRET) => ({ mode: 'shared', value }) as const;
 const table = (config = {}) => new Table(shared(), input('shared', ['a', 'b'], config));
 
+describe('validation after Spring Herald (O60)', () => {
+  it('checks the whole sequence, slot 1 included', () => {
+    const t = table();
+    t.state = { ...t.state, hint: 'red' };
+    // The client locks slot 1 to the hint, but the server trusts nothing it sends.
+    expect(bombDefusal.validate(t.state, 'a', { value: ['red', 'blue', 'yellow'] })).toBe(
+      'SEQUENCE_INVALID',
+    );
+    expect(bombDefusal.validate(t.state, 'a', { value: ['blue', 'red', 'yellow', 'white'] })).toBe(
+      null,
+    );
+  });
+});
+
 describe('validation (02c §4)', () => {
   it('refuses a sequence that is not `cuts` different wires of this round', () => {
     const t = table();

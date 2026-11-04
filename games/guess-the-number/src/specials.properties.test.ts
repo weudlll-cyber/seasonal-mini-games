@@ -27,9 +27,10 @@ const PLAYERS = ['a', 'b', 'c', 'd'];
 const round = fc.record({
   mode: fc.constantFrom('shared' as const, 'individual' as const),
   seed: fc.uint8Array({ minLength: 32, maxLength: 32 }),
-  low: fc.integer({ min: 0, max: 100 }),
+  // Negative lows too: the last digit is the digit as written (O56).
+  low: fc.integer({ min: -100, max: 100 }),
   width: fc.integer({ min: 9, max: 400 }),
-  hintType: fc.constantFrom('parity' as const, 'half' as const),
+  hintType: fc.constantFrom('lastDigit' as const, 'half' as const),
 });
 
 type Round = typeof round extends fc.Arbitrary<infer T> ? T : never;
@@ -57,7 +58,7 @@ function hintHolds(
   hint: Extract<GtnEvent, { type: 'HintGiven' }>['hint'],
   secret: number,
 ): boolean {
-  if (hint.kind === 'parity') return hint.odd === (secret % 2 !== 0);
+  if (hint.kind === 'lastDigit') return hint.digit === Math.abs(secret) % 10;
   return secret >= hint.low && secret <= hint.high;
 }
 
@@ -119,7 +120,7 @@ describe('Leaf Fall (S3)', () => {
       seed: new Uint8Array(32).fill(9),
       low: 1,
       width: 999,
-      hintType: 'parity' as const,
+      hintType: 'lastDigit' as const,
     };
     const one = setUp(r);
     const two = setUp(r);
@@ -136,7 +137,7 @@ describe('Leaf Fall (S3)', () => {
       seed: new Uint8Array(32).fill(4),
       low: 1,
       width: 999_999,
-      hintType: 'parity' as const,
+      hintType: 'lastDigit' as const,
     };
     const { state, secrets, ctx } = setUp(r);
     const events =

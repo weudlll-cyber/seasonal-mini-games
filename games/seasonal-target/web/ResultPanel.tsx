@@ -82,7 +82,7 @@ function Reveal(props: ResultPanelProps): ReactElement {
         <TileGrid
           map={v.map}
           area={null}
-          quarter={null}
+          quarters={null}
           fallen={v.fallen}
           tiles={tilesOf(resultShots(v, viewerKey), props)}
           variant="board"

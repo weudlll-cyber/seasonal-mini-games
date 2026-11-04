@@ -23,5 +23,5 @@ export const view = {
   ],
   // Another player's guess whose answer Frost still holds (`held`, T150).
   log: [{ receiveSeq: 2, receivedAt: 2_000, playerId: 'p2', value: 40, ...held, held: true }],
-  hint: { kind: 'parity' as const, odd: true },
+  hint: { kind: 'lastDigit' as const, digit: 7 },
 };

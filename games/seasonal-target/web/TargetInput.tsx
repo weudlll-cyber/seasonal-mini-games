@@ -191,7 +191,7 @@ export function TargetInput(props: StInputProps): ReactElement {
   const grid = {
     map: view.map,
     area: view.area,
-    quarter: view.hint,
+    quarters: view.hint,
     fallen: view.fallen,
     tiles: tilesOf(shotsOf(view.guesses, view.log), props),
   };

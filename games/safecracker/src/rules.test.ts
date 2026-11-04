@@ -5,7 +5,8 @@
  *
  * Responsibility: `CODE_INVALID` for a wrong length, a non-digit, a digit ≥ `code.digits` and
  *                 an empty string, then `DIGIT_REMOVED`, then `ALREADY_GUESSED` (02b §4), with
- *                 leading zeros kept and the action schema refusing anything not 3–6 digits;
+ *                 leading zeros kept and the action schema refusing anything not 3–6 digits,
+ *                 the whole code checked after a hint (O59);
  *                 the answer to the guesser, the room's line per visibility and `Solved`; the
  *                 setting definitions of 08 §3.1, reading, no cross-key problem, no halving;
  *                 secrets per mode and label, in the code space, the same for the same seed,
@@ -43,6 +44,15 @@ describe('the acceptance checks', () => {
     expect(code(t, '04277')).toBe('CODE_INVALID');
     expect(code(t, '0428')).toBeNull();
     expect(code(t, '0427', 'ghost')).toBe('NOT_IN_ROUND');
+  });
+
+  it('checks the whole code after Spring Herald, hint digit included (O59)', () => {
+    const t = new Table(shared('1123'), input('shared', ['a']));
+    t.state = { ...t.state, hint: { position: 1, digit: 1 } };
+    // The client locks the hint's box, but the server trusts nothing it sends.
+    expect(code(t, '112')).toBe('CODE_INVALID');
+    expect(t.play('a', '0927').ok).toBe(true);
+    expect(t.state.players.a?.guesses[0]?.value).toBe('0927');
   });
 
   it('allows a repeat when the round does not refuse them', () => {

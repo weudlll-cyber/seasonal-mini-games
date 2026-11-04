@@ -31,10 +31,8 @@ describe("the phone's info line", () => {
   });
 
   it('says "Any whole number" while the range is hidden, and gives the hint', () => {
-    const view = { range: null, removed: [], hint: { kind: 'parity', odd: true }, log: [] };
+    const view = { range: null, removed: [], hint: { kind: 'lastDigit', digit: 7 }, log: [] };
     render(<InfoLine view={view} {...at} season="spring" specialOn />);
-    expect(screen.getByTestId('gtn-line').textContent).toMatch(
-      /^Any whole numberHint: (odd|even)$/,
-    );
+    expect(screen.getByTestId('gtn-line').textContent).toMatch('Any whole numberHint: ends in 7');
   });
 });

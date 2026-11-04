@@ -12,12 +12,15 @@
  *                 nothing is sent (T113); the server checks again. Try code is disabled during
  *                 the cooldown, while a guess is on its way and until the code is complete. The
  *                 boxes are emptied only if they still hold the code sent, so nothing typed is
- *                 lost (T76). Typing sends nothing (05 §3.1).
+ *                 lost (T76). Typing sends nothing (05 §3.1). Spring Herald's digit stands in
+ *                 its box from the round's opening, locked and in the season colour: no key,
+ *                 paste or reset changes it, focus steps over it, and its name tells a screen
+ *                 reader "hint: 3 in place 2" (O59); the server still checks the whole code.
  * Depends on:     react, @smg/game-sdk (props, buttonText), @smg-game/safecracker (types), ./text
  * Used by:        ./index
  * Spec:           docs/spec/02b-game-safecracker.md §4, §10
  */
-import type { PlayerView } from '@smg-game/safecracker';
+import type { Hint, PlayerView } from '@smg-game/safecracker';
 import { buttonText, type PlayerPanelProps } from '@smg/game-sdk';
 import {
   useRef,
@@ -38,15 +41,23 @@ function refusal(ch: string, v: PlayerView): string | null {
   return v.fallen.includes(Number(ch)) ? safecrackerText.code('DIGIT_REMOVED') : null;
 }
 
-// Why a pasted text may not fill the boxes, or null when it may.
+// Why a pasted text may not fill the boxes, or null when it may: a full code that keeps the
+// hint's digit in its place.
 function pasteRefusal(code: string, v: PlayerView): string | null {
   if (code.length !== v.length) return invalidCode(v.length, v.digits);
-  return (
+  const own =
     Array.from(code)
       .map((ch) => refusal(ch, v))
-      .find((m) => m !== null) ?? null
-  );
+      .find((m) => m !== null) ?? null;
+  if (own !== null || v.hint === null) return own;
+  return code[v.hint.position] === String(v.hint.digit) ? null : hintKept(v.hint);
 }
+
+// The locked box's words for a screen reader and the refused paste (O59).
+const hintLabel = (h: Hint): string =>
+  `hint: ${String(h.digit)} in place ${String(h.position + 1)}`;
+const hintKept = (h: Hint): string =>
+  `Place ${String(h.position + 1)} keeps the hint, ${String(h.digit)}.`;
 
 // The words for a refused guess: the game's, or null for the platform's own codes.
 const replyWords = (code: string, v: PlayerView): string | null =>
@@ -57,12 +68,20 @@ function useBoxes(v: PlayerView) {
   const [typed, setTyped] = useState<readonly string[]>([]);
   const [message, setMessage] = useState<string | null>(null);
   const refs = useRef<(HTMLInputElement | null)[]>([]);
-  // As many boxes as the round's code has digits.
-  const cells = Array.from({ length: v.length }, (_, i) => typed[i] ?? '');
-  const focus = (i: number): void => {
-    refs.current[Math.max(0, Math.min(v.length - 1, i))]?.focus();
+  const locked = v.hint?.position ?? -1;
+  // As many boxes as the round's code has digits; the hint's box always holds its digit.
+  const cells = Array.from({ length: v.length }, (_, i) =>
+    i === locked ? String(v.hint?.digit ?? '') : (typed[i] ?? ''),
+  );
+  // Focus moves step over the locked box, in the direction of travel (`from` the box left).
+  const focus = (i: number, from = i - 1): void => {
+    const step = i < from ? -1 : 1;
+    const to = i === locked ? i + step : i;
+    const at = to < 0 || to >= v.length ? i - step : to;
+    refs.current[Math.max(0, Math.min(v.length - 1, at))]?.focus();
   };
   const put = (i: number, ch: string): void => {
+    if (i === locked) return;
     setTyped(cells.map((c, k) => (k === i ? ch : c)));
   };
   const type = (i: number, text: string): void => {
@@ -81,7 +100,7 @@ function useBoxes(v: PlayerView) {
     setTyped(Array.from(code));
     focus(v.length - 1);
   };
-  return { cells, setTyped, message, setMessage, refs, focus, put, type, paste };
+  return { cells, locked, setTyped, message, setMessage, refs, focus, put, type, paste };
 }
 
 type Boxes = ReturnType<typeof useBoxes>;
@@ -102,7 +121,7 @@ function useSend(props: CodeInputProps, boxes: Boxes) {
         boxes.setMessage(reply.ok ? null : replyWords(reply.code ?? '', v));
         if (!reply.ok) return;
         boxes.setTyped((now) => (now.join('') === code ? [] : now));
-        boxes.focus(0);
+        boxes.focus(0, -1);
       })
       .finally(() => {
         setSending(false);
@@ -111,33 +130,41 @@ function useSend(props: CodeInputProps, boxes: Boxes) {
   return { sending, complete, submit };
 }
 
-// One digit's box: Backspace in an empty box goes back and clears that one; arrows move.
-function DigitBox(p: { readonly i: number; readonly boxes: Boxes }): ReactElement {
-  const { i, boxes } = p;
+// One digit's box: Backspace in an empty (or the locked) box goes back and clears the box
+// before, past the locked one; arrows move.
+function DigitBox(p: {
+  readonly i: number;
+  readonly boxes: Boxes;
+  readonly hint: Hint | null;
+}): ReactElement {
+  const { i, boxes, hint } = p;
   const n = boxes.cells.length;
+  const isHint = i === boxes.locked;
   const keys = (e: KeyboardEvent<HTMLInputElement>): void => {
-    const back = e.key === 'Backspace' && boxes.cells[i] === '';
+    const back = e.key === 'Backspace' && (boxes.cells[i] === '' || isHint);
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight' && !back) return;
     e.preventDefault();
-    if (back && i > 0) boxes.put(i - 1, '');
-    boxes.focus(e.key === 'ArrowRight' ? i + 1 : i - 1);
+    const before = i - 1 === boxes.locked ? i - 2 : i - 1;
+    if (back && before >= 0) boxes.put(before, '');
+    boxes.focus(e.key === 'ArrowRight' ? i + 1 : i - 1, i);
   };
   return (
     <input
       ref={(el) => {
         boxes.refs.current[i] = el;
       }}
-      className="sc-box"
+      className={isHint ? 'sc-box sc-box--hint' : 'sc-box'}
       inputMode="numeric"
       autoComplete="off"
       enterKeyHint="send"
-      aria-label={`Digit ${String(i + 1)} of ${String(n)}`}
+      readOnly={isHint}
+      aria-label={`Digit ${String(i + 1)} of ${String(n)}${hint !== null && isHint ? `, ${hintLabel(hint)}` : ''}`}
       value={boxes.cells[i] ?? ''}
       onFocus={(e) => {
         e.target.select();
       }}
       onChange={(e) => {
-        boxes.type(i, e.target.value);
+        if (!isHint) boxes.type(i, e.target.value);
       }}
       onKeyDown={keys}
       onPaste={(e) => {
@@ -150,7 +177,8 @@ function DigitBox(p: { readonly i: number; readonly boxes: Boxes }): ReactElemen
 }
 
 export function CodeInput(props: CodeInputProps): ReactElement {
-  const boxes = useBoxes(props.view as PlayerView);
+  const v = props.view as PlayerView;
+  const boxes = useBoxes(v);
   const send = useSend(props, boxes);
   const n = boxes.cells.length;
   return (
@@ -159,7 +187,7 @@ export function CodeInput(props: CodeInputProps): ReactElement {
         {props.ring}
         <div className="sc-boxes" role="group" aria-label={`Your code, ${String(n)} digits`}>
           {boxes.cells.map((_, i) => (
-            <DigitBox key={i} i={i} boxes={boxes} />
+            <DigitBox key={i} i={i} boxes={boxes} hint={v.hint} />
           ))}
         </div>
         <button

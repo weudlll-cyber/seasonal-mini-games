@@ -11,7 +11,7 @@
  *                 once, and the slots empty only if they still hold it (T76); the game's
  *                 refusal in words; a wire marked harmless while in the slots says "take it
  *                 out" and is refused without sending; keys 1–8, Backspace, Escape and Enter;
- *                 the hint in slot 1; the explosion shows for about 1 s when a wrong first
+ *                 the hint's colour in slot 1; the explosion shows for about 1 s when a wrong first
  *                 cut's answer arrives, and not for answers already there.
  * Depends on:     vitest, @testing-library/react, ./WireInput
  * Spec:           docs/spec/02c-game-bomb-defusal.md §5.2, §11
@@ -136,7 +136,7 @@ describe('sending a sequence', () => {
 describe('the specials in the input row', () => {
   it('shows the hint in slot 1 and harmless wires crossed and disabled', () => {
     render(<WireInput {...props({ view: { ...view, hint: 'red', harmless: ['black'] } })} />);
-    expect(slots()).toBe('1hint: red234');
+    expect(slots()).toBe('1red234');
     const black = screen.getByTestId<HTMLButtonElement>('wire-black');
     expect(black.disabled).toBe(true);
     // A crossed swatch and the label, not the word inside the button (O42 display).

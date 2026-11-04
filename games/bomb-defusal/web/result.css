@@ -1,0 +1,74 @@
+/*
+ * @file   games/bomb-defusal/web/result.css
+ * @module games/bomb-defusal/web
+ * @brief  Styles of Seasonal Bomb Defusal's result panel: the secret, every player's cuts.
+ *
+ * Responsibility: the revealed sequence and the players' sequences in colour dots (T150),
+ *                 from the design tokens only, light and dark. Every class starts with `bd-`.
+ * Spec:           docs/spec/02c-game-bomb-defusal.md §9
+ */
+.bd-result {
+  display: grid;
+  gap: var(--space-2);
+  align-content: start;
+}
+
+.bd-secret {
+  display: grid;
+  gap: var(--space-1);
+  font-size: var(--font-size-lead);
+}
+
+.bd-secret p {
+  margin: 0;
+}
+
+/* The secret on one line on a desktop (night-7 review: the chips wrapped at 1280 × 720). */
+@media (min-width: 900px) {
+  .bd-secret {
+    font-size: inherit;
+  }
+
+  .bd-secret .bd-sequence {
+    flex-wrap: nowrap;
+  }
+
+  /* Each number stays beside its chip. */
+  .bd-secret .bd-sequence li {
+    flex: none;
+    white-space: nowrap;
+  }
+}
+
+/* Every player's sequences in full, below the result's first part (T150). */
+.bd-players {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: var(--space-1);
+}
+
+.bd-players > li {
+  display: grid;
+  gap: 0.2rem;
+}
+
+/* One sequence a line: the round's colour dots, then the answer in words. */
+.bd-cuts {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.1rem;
+}
+
+.bd-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  vertical-align: middle;
+}
+
+.bd-you {
+  font-weight: var(--font-weight-strong);
+}

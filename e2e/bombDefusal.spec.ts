@@ -4,11 +4,12 @@
  * @brief  Journey 21: Seasonal Bomb Defusal through the lobby, shared and individual, with its specials.
  *
  * Responsibility: a shared spring round from the Quick Test form through the lobby: the intro
- *                 names the bomb, Spring's free hint names the first cut; tapping wires builds
- *                 the sequence, Undo takes the last one back and Clear empties it; a sequence
- *                 that does not start with the hinted wire is cut: the explosion shows, the row
- *                 says "Boom!", and the cooldown ring counts the round's cooldown plus the
- *                 explosion's 5 s (O40); then an individual autumn round started at once: a wire
+ *                 names the bomb, Spring's free hint names the first cut, whose colour stands
+ *                 locked in slot 1 (O60); tapping wires builds the rest, Undo takes the last one
+ *                 back and Clear empties it, the hint staying; a shared summer round: a cut,
+ *                 and if its first wire was right one with another first wire, so a wrong
+ *                 first cut is made: the row says "Boom!", and the cooldown ring counts the
+ *                 round's cooldown plus the explosion's 5 s (O40); an individual autumn round: a wire
  *                 is marked harmless (its button "red, harmless", from the round's state: a fall
  *                 before the page loaded has no live row). Each round view fits 1280 × 720 and
  *                 390 × 844. The
@@ -25,6 +26,27 @@ const WIRES = ['red', 'blue', 'yellow', 'green', 'white', 'black', 'orange', 'pu
 
 const tap = (page: Page, wire: string) => page.getByTestId(`wire-${wire}`).click();
 
+// A shared summer round with eight wires and six cuts: no hint, and the bot is no quick winner.
+const SUMMER = { mode: 'shared', season: 'summer', settings: { 'bomb.wires': 8, 'bomb.cuts': 6 } };
+
+// Cuts six wires in palette order; if the first was right, cuts again with another first wire,
+// which then is wrong: the row says "Boom!".
+async function wrongFirstCut(page: Page): Promise<void> {
+  const cut = async (order: readonly string[]) => {
+    for (const w of order) await tap(page, w);
+    // Enabled once the sequence is full and the cooldown is over.
+    await expect(page.getByTestId('cut-button')).toBeEnabled({ timeout: 10_000 });
+    await page.getByTestId('cut-button').click();
+    const answer = ownRows(page).first().locator('.round-answer');
+    await expect(answer).not.toHaveText('', { timeout: 10_000 });
+    return (await answer.textContent()) ?? '';
+  };
+  const order = WIRES.slice(0, 6);
+  if ((await cut(order)).includes('Boom!')) return;
+  await cut([order[1] ?? '', order[0] ?? '', ...order.slice(2)]);
+  await expect(ownRows(page).first().locator('.round-answer')).toContainText('Boom!');
+}
+
 test('journey 21: Seasonal Bomb Defusal, shared through the lobby and individual', async ({
   browser,
 }) => {
@@ -40,26 +62,26 @@ test('journey 21: Seasonal Bomb Defusal, shared through the lobby and individual
     const hint = await p.page.getByTestId('hint').textContent();
     const first = WIRES.find((w) => hint?.includes(w)) ?? '';
     expect(first, 'the hint names a wire').not.toBe('');
-    // Build, take back, clear.
+    // The hint's colour stands locked in slot 1 (O60). Build, take back, clear: it stays.
     const slots = p.page.getByTestId('slots');
-    await tap(p.page, 'red');
-    await tap(p.page, 'blue');
+    await expect(p.page.getByLabel(`hint: ${first} in place 1`)).toBeVisible();
+    const [one = '', two = ''] = WIRES.filter((w) => w !== first);
+    await tap(p.page, one);
+    await tap(p.page, two);
     await p.page.getByRole('button', { name: 'Undo' }).click();
-    await expect(slots).not.toContainText('blue');
+    await expect(slots).not.toContainText(two);
     await p.page.getByRole('button', { name: 'Clear' }).click();
-    await expect(slots).not.toContainText('red');
-    // A wrong first cut: six wires, the hinted first one not first.
-    const order = WIRES.filter((w) => w !== first).slice(0, 6);
-    for (const w of order) await tap(p.page, w);
-    await p.page.getByTestId('cut-button').click();
-    await expect(ownRows(p.page).first().locator('.round-answer')).toContainText('Boom!', {
-      timeout: 10_000,
-    });
-    // The form's cooldown of 5 s plus the explosion's 5 s.
+    await expect(slots).not.toContainText(one);
+    await expect(slots).toContainText(first);
+    await fitsBoth(p.page);
+
+    codes.push((await direct(p, { ...SUMMER, gameId: 'bomb-defusal' })).matchCode);
+    await wrongFirstCut(p.page);
+    // The round's cooldown of 3 s plus the explosion's 5 s.
     const left = Number(
       /\d+/.exec((await p.page.getByTestId('cooldown').textContent()) ?? '')?.[0],
     );
-    expect(left).toBeGreaterThan(5);
+    expect(left).toBeGreaterThan(3);
     await fitsBoth(p.page);
 
     // Individual, autumn: a wire is marked harmless.

@@ -19,10 +19,21 @@ import { expect, test, type Page } from '@playwright/test';
 import { direct, fitsBoth, fromLobby, WIDE } from './guessGames.js';
 import { abortMatch, closeAll, ownRows, person, roundOpen } from './play.js';
 
-// Types a code into the boxes, starting at the first; the focus moves on by itself.
-async function typeCode(page: Page, code: string): Promise<void> {
-  await page.getByTestId('code-box-0').click();
-  await page.keyboard.type(code);
+// Types a code into the boxes from the first open one; the focus moves on by itself and steps
+// over Spring's locked hint box (O59), which keeps its digit. Returns the code that stands.
+async function typeCode(page: Page, code: string): Promise<string> {
+  const locked = page.locator('.sc-box--hint');
+  const testId = (await locked.count()) === 0 ? null : await locked.getAttribute('data-testid');
+  const at = testId === null ? -1 : Number(testId.replace('code-box-', ''));
+  const sent =
+    at < 0 ? code : `${code.slice(0, at)}${await locked.inputValue()}${code.slice(at + 1)}`;
+  await page.getByTestId(`code-box-${at === 0 ? '1' : '0'}`).click();
+  await page.keyboard.type(
+    Array.from(sent)
+      .filter((_, i) => i !== at)
+      .join(''),
+  );
+  return sent;
 }
 
 test('journey 20: Seasonal Safecracker, shared through the lobby and individual', async ({
@@ -36,11 +47,16 @@ test('journey 20: Seasonal Safecracker, shared through the lobby and individual'
     await expect(p.page.getByTestId('intro-secret')).toHaveText('Shared 4-digit code, digits 0–9');
     await roundOpen(p.page);
     await expect(p.page.getByTestId('hint')).toHaveText(/^Free hint: the \w+ digit is \d\.$/);
-    await typeCode(p.page, '0123');
-    await expect(p.page.getByTestId('code-box-3')).toHaveValue('3');
+    // The hint's digit stands locked in its box, named for a screen reader (O59).
+    await expect(p.page.locator('.sc-box--hint')).toHaveAttribute(
+      'aria-label',
+      /^Digit \d of 4, hint: \d in place \d$/,
+    );
+    const sent = await typeCode(p.page, '0123');
+    await expect(p.page.getByTestId('code-box-3')).toHaveValue(sent.slice(3));
     await p.page.getByTestId('guess-button').click();
     const own = ownRows(p.page).first();
-    await expect(own.locator('.round-value')).toHaveText('0123');
+    await expect(own.locator('.round-value')).toHaveText(sent);
     await expect(own.locator('.round-answer')).toHaveText(
       /^(\d right( · \d wrong places?)?|\d wrong places?|no digit right|correct — the safe is open)$/,
       { timeout: 10_000 },

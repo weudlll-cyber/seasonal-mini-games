@@ -6,7 +6,7 @@
  * Responsibility: with the whole grid in play the tag is on the quarter's outer corner tile;
  *                 when a halving leaves that tile outside the target area, on the first tile
  *                 of the quarter that is still inside, nearest the corner; none when no tile of
- *                 the quarter is left in the area, or without a hint.
+ *                 the quarter is left in the area.
  * Depends on:     vitest, ./TileGrid
  * Spec:           docs/spec/02d-game-seasonal-target.md §8.1, §8.4; docs/spec/09-testing-strategy.md §2
  */
@@ -35,8 +35,7 @@ describe('the Hint tag', () => {
     });
   });
 
-  it('is left out when no tile of the quarter is in the area, or without a hint', () => {
+  it('is left out when no tile of the quarter is in the area', () => {
     expect(tagTileOf(southEast, { left: 1, right: 10, top: 1, bottom: 20 })).toBeNull();
-    expect(tagTileOf(null, whole)).toBeNull();
   });
 });

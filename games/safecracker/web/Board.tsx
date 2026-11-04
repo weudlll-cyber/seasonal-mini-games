@@ -100,7 +100,7 @@ export function InfoLine(props: SpectatorPanelProps): ReactElement {
   return (
     <span className="sc-line" data-testid="sc-line">
       <DigitStrip digits={v.digits} fallen={v.fallen} compact />
-      {v.hint === null ? null : <span className="sc-line-hint">{shortHint(v.hint)}</span>}
+      {v.hint === null ? null : <span className="smg-chip smg-hint">{shortHint(v.hint)}</span>}
     </span>
   );
 }

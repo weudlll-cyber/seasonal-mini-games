@@ -11,7 +11,7 @@ Branch `feat/guess-games` from `606eecf`. The owner's decisions after playing al
 | Piece                                    | State | Commit |
 | ---------------------------------------- | ----- | ------ |
 | 0. O56–O62 recorded                      | done  |        |
-| 1. Specials (O56, O57, O59–O61)          | open  |        |
+| 1. Specials (O56, O57, O59–O61)          | done  |        |
 | 2. Guess The Number: fallen numbers      | open  |        |
 | 3. Bomb Defusal: result, help, slot tap  | open  |        |
 | 4. Seasonal Target: messages, tags, grid | open  |        |
@@ -21,6 +21,16 @@ Branch `feat/guess-games` from `606eecf`. The owner's decisions after playing al
 ### Needs the owner
 
 Nothing so far.
+
+### Piece 1 — the specials (O56, O57, O59–O61; T187–T191)
+
+- O56, Guess The Number: the hint `{ kind: 'lastDigit', digit }` ("Free hint: the number ends in 7.", "Hint: ends in 7"), the default of `spring.hintType` (options `lastDigit`, `half`; a stored `parity` falls back to the default, T187); a hidden range gets the last digit (T56 amended). Shown from `opensAt` as before; the phone's chip now in the season colour (`.smg-hint`, T188, all four games). The golden run re-recorded: it changes only in the hint.
+- O57: `summer.stepIntervalS` default 30 → 10 s (`summer.stepS` 1 s), both marked O57; the 3 s floor unchanged.
+- O59, Safecracker: the hint's digit locked in its box (T189). O60, Bomb Defusal: the hint's colour locked in slot 1; the slots now hold a wire or nothing, so a tapped slot empties just that one (piece 3's slot tap, built here with the model, T190).
+- O61, Seasonal Target: two quarters, the decoy from `spring/<shared|playerId>`, a tuple in the fixed order (`QUARTER_NAMES`, `quarterPair`); both tinted and tagged; the old single-quarter path is gone (T191).
+- Tests: the last digit as a property (negative ranges too; individual hints only to their own player, one room event in shared mode); Heatwave's defaults (`roundSettings.test.ts`); the locked box (`hint.test.tsx`, new) and slots (`slots.test.tsx`, new); the server checks the whole code and sequence after a hint (`rules.test.ts` of both games); the two quarters (`spring.test.ts`, new: fixed order, the target's first about a third of the time for a south-west target, every other quarter drawn as the decoy, deterministic, from the `spring` label) and on the grid (`quarters.test.tsx`, split from `panels.test.tsx`, 300 → 275 lines).
+- e2e: journey 20 types round the locked box and checks its name; journey 21 checks the locked slot, and makes its wrong first cut in a summer round (cut, and if the first wire was right, cut again with another first wire), since a spring round's first cut can no longer be wrong; journey 22 two "Hint" tags; journeys 3 and 17 the new hint text.
+- Removed: the `parity` hint (state, view schema, settings, text), `.bd-slot-hint` and the phone's wider hint slot, the single-quarter `quarter` prop and event field, `tagTileOf`'s null case.
 
 ## Night 8 (2026-11-04)
 

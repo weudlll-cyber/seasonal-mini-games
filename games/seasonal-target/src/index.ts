@@ -28,5 +28,6 @@ export { seasonalTarget } from './module.js';
 export type { GuessAction, StCode } from './rules.js';
 export type { Secrets } from './secrets.js';
 export { stSettings, type StConfig } from './settings.js';
-export type { Quarter, StEvent, StState } from './state.js';
+export { QUARTER_NAMES } from './state.js';
+export type { Quarter, QuarterPair, StEvent, StState } from './state.js';
 export type { PlayerView, ResultView, SpectatorView } from './views.js';

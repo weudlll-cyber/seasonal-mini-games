@@ -37,7 +37,7 @@ export const gtnConformance: ConformanceKit<GuessAction, GtnConfig, Secrets> = {
       thresholds: { wayOff: 50, cold: 25, cool: 10, warm: 3, hot: 1 },
       trendPercent: 33,
       repeatGuessRejected: true,
-      springHintType: 'parity',
+      springHintType: 'lastDigit',
       autumnMinRemaining: 10,
       halvingMinRangeSize: 8,
     },

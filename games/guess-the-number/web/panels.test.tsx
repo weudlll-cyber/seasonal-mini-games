@@ -83,7 +83,7 @@ describe('the player panel', () => {
       now: () => 6_000,
     };
     render(<PlayerPanel {...props} season="winter" specialOn />);
-    expect(screen.getByTestId('hint').textContent).toBe('Free hint: the number is odd.');
+    expect(screen.getByTestId('hint').textContent).toBe('Free hint: the number ends in 7.');
     expect(screen.getByTestId('range')).toBeTruthy();
     cleanup();
     render(<GuessInput {...props} season="winter" specialOn ring={<span data-testid="ring" />} />);
@@ -144,7 +144,7 @@ describe('the words', () => {
     const lines = [
       { type: 'NumbersRemoved', index: 1, numbers: [1, 2, 3] },
       { type: 'HintGiven', playerId: null, hint: { kind: 'half', low: 1, high: 500 } },
-      { type: 'HintGiven', playerId: 'p1', hint: { kind: 'parity', odd: false } },
+      { type: 'HintGiven', playerId: 'p1', hint: { kind: 'lastDigit', digit: 4 } },
       { type: 'RangeHalved', index: 1, playerId: null, range: { low: 1, high: 500 }, size: 500 },
       { type: 'RangeHalved', index: 1, playerId: null, range: null, size: 250 },
       { type: 'GuessFed', playerId: 'p1', guesses: 1 },
@@ -201,8 +201,8 @@ describe('the banners (O35)', () => {
     expect(banner({ ...halved, playerId: null, range: null })).toBe(
       'Range halved: every range is now 51 numbers.',
     );
-    expect(banner({ type: 'HintGiven', playerId: null, hint: { kind: 'parity', odd: true } })).toBe(
-      null,
-    );
+    expect(
+      banner({ type: 'HintGiven', playerId: null, hint: { kind: 'lastDigit', digit: 7 } }),
+    ).toBe(null);
   });
 });

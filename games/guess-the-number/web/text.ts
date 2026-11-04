@@ -4,7 +4,7 @@
  * @brief  Every sentence Guess The Number puts on a screen, in plain English.
  *
  * Responsibility: the game's refusals, the Spring Herald hint (and its highlighted "Free
- *                 hint: the number is even." in the range block, O35), one line per room event for
+ *                 hint: the number ends in 7." in the range block, O35), one line per room event for
  *                 the round's list (02 §12; 03 §2): Leaf Fall with the fallen numbers named and
  *                 halving (the hint shows once, in the range block, O47), and the shorter banner when Leaf Fall or
  *                 halving strikes ("Leaf Fall: 10 numbers fell.", O35); the list's guess rows from the player or
@@ -33,23 +33,23 @@ import {
 } from '@smg/game-sdk';
 
 export type HintView =
-  | { readonly kind: 'parity'; readonly odd: boolean }
+  | { readonly kind: 'lastDigit'; readonly digit: number }
   | { readonly kind: 'half'; readonly low: number; readonly high: number };
 
-// The hint's words after a lead-in: "the number is even."
+// The hint's words after a lead-in: "the number ends in 7."
 function hintBody(hint: HintView): string {
-  if (hint.kind === 'parity') return `the number is ${hint.odd ? 'odd' : 'even'}.`;
+  if (hint.kind === 'lastDigit') return `the number ends in ${String(hint.digit)}.`;
   return `the number is between ${formatNumber(hint.low)} and ${formatNumber(hint.high)}.`;
 }
 
 // The range block's highlighted line for the whole round (O35).
 export const freeHint = (hint: HintView): string => `Free hint: ${hintBody(hint)}`;
 
-// The hint in a few words for the phone's info line, never cut there (T150): "Hint: odd",
+// The hint in a few words for the phone's info line, never cut there (T150): "Hint: ends in 7",
 // "Hint: 1–500,000"; the sheet has the sentence.
 export const shortHint = (hint: HintView): string =>
-  hint.kind === 'parity'
-    ? `Hint: ${hint.odd ? 'odd' : 'even'}`
+  hint.kind === 'lastDigit'
+    ? `Hint: ends in ${String(hint.digit)}`
     : `Hint: ${formatNumber(hint.low)}–${formatNumber(hint.high)}`;
 
 const CODES: Readonly<Record<string, string>> = {

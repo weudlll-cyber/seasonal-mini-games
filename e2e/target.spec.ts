@@ -4,9 +4,9 @@
  * @brief  Journey 22: Seasonal Target through the lobby on its tile grid, two answer modes, one screen.
  *
  * Responsibility: a shared spring round from the Quick Test form through the lobby on the
- *                 20 × 20 tile grid (O45): the intro names the grid, Spring's quarter is tinted
- *                 on the grid with its "Hint" tag; a click selects a tile, an arrow button
- *                 behind "Type coordinates" (O51, in the loupe on a touch screen) and an
+ *                 20 × 20 tile grid (O45): the intro names the grid, Spring's two quarters are
+ *                 tinted on the grid, each with its "Hint" tag (O61); a click selects a tile, an
+ *                 arrow button behind "Type coordinates" (O51, in the loupe on a touch screen) and an
  *                 arrow key move the selection, its coordinates show as text, Guess sends and
  *                 the own tile and row appear with warm/cold only, the default (O53): no
  *                 distance in the row, the tile filled in its closeness colour and framed as
@@ -65,7 +65,8 @@ test('journey 22: Seasonal Target, warm/cold only (the default) and distance onl
     await expect(p.page.getByTestId('intro-secret')).toHaveText('Shared target on a 20 × 20 grid');
     await roundOpen(p.page);
     await expect(p.page.locator('[data-testid="tile"][data-quarter="true"]').first()).toBeVisible();
-    await expect(p.page.getByTestId('hint-tag')).toHaveText('Hint');
+    // Two quarters, the target's and a decoy, each with its tag (O61).
+    await expect(p.page.getByTestId('hint-tag')).toHaveText(['Hint', 'Hint']);
     // The grid on the left of the list (the board layout).
     const grid = await p.page.getByTestId('tile-grid').boundingBox();
     const list = await p.page.locator('.round-log').boundingBox();

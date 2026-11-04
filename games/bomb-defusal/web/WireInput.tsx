@@ -3,9 +3,9 @@
  * @module games/bomb-defusal/web
  * @brief  The input row: sequence slots, wire buttons, and the ring with Undo, Clear and Cut.
  *
- * Responsibility: `cuts` numbered slots, a filled one with swatch and name, slot 1 outlined
- *                 with "hint: red" (wrapping, never cut off) when Spring Herald named the first
- *                 cut; one button per wire in palette order (swatch and name, at least 44 px),
+ * Responsibility: `cuts` numbered slots, a filled one with swatch and name, a button that
+ *                 empties just that slot; Spring Herald's colour locked in slot 1, outlined in
+ *                 the season colour and named "hint: red in place 1" (O60); one button per wire in palette order (swatch and name, at least 44 px),
  *                 disabled with its slot number once in the slots, with a crossed swatch, a
  *                 struck name and the label "red, harmless" once Leaf Fall marked it; a
  *                 slot holding a wire marked harmless afterwards stays, marked, with "take it
@@ -25,28 +25,62 @@ import type { ReactElement, ReactNode } from 'react';
 
 import { Explosion, useExplosion } from './Explosion.js';
 import { takeOutText } from './text.js';
-import { useSequence } from './useSequence.js';
+import { useSequence, type Slot } from './useSequence.js';
 import { Swatch, WireChip } from './WireChip.js';
 
-function Slots(p: { readonly slots: readonly Wire[]; readonly view: PlayerView }): ReactElement {
-  const { slots, view } = p;
+// One slot's content: its number and wire; a filled slot the player may empty is a button.
+function SlotBody(p: {
+  readonly i: number;
+  readonly wire: Slot;
+  readonly hint: boolean;
+  readonly view: PlayerView;
+  readonly onEmpty: (i: number) => void;
+}): ReactElement {
+  const place = String(p.i + 1);
+  const body = (
+    <>
+      <span className="bd-slot-number">{place}</span>
+      {p.wire === null ? null : (
+        <WireChip wire={p.wire} harmless={p.view.harmless.includes(p.wire)} />
+      )}
+    </>
+  );
+  if (p.hint) {
+    return (
+      <span className="bd-slot-body" aria-label={`hint: ${p.wire ?? ''} in place ${place}`}>
+        {body}
+      </span>
+    );
+  }
+  if (p.wire === null) return <span className="bd-slot-body">{body}</span>;
+  return (
+    <button
+      type="button"
+      className="bd-slot-body bd-slot-take"
+      aria-label={`${p.wire} in place ${place}, take it out`}
+      onClick={() => {
+        p.onEmpty(p.i);
+      }}
+      data-testid={`slot-${String(p.i)}`}
+    >
+      {body}
+    </button>
+  );
+}
+
+function Slots(p: {
+  readonly slots: readonly Slot[];
+  readonly locked: boolean;
+  readonly view: PlayerView;
+  readonly onEmpty: (i: number) => void;
+}): ReactElement {
   return (
     <ol className="bd-slots" aria-label="Your cutting order" data-testid="slots">
-      {Array.from({ length: view.cuts }, (_, i) => {
-        const wire = slots[i];
-        const hint = i === 0 && view.hint !== null;
+      {p.slots.map((wire, i) => {
+        const hint = p.locked && i === 0;
         return (
-          <li key={i} className="bd-slot" data-hint={hint} data-filled={wire !== undefined}>
-            <span className="bd-slot-number">{i + 1}</span>
-            {wire === undefined ? (
-              hint && (
-                <span className="bd-slot-hint">
-                  <span>hint:</span> <span>{view.hint}</span>
-                </span>
-              )
-            ) : (
-              <WireChip wire={wire} harmless={view.harmless.includes(wire)} />
-            )}
+          <li key={i} className="bd-slot" data-hint={hint} data-filled={wire !== null}>
+            <SlotBody i={i} wire={wire} hint={hint} view={p.view} onEmpty={p.onEmpty} />
           </li>
         );
       })}
@@ -85,10 +119,10 @@ export function WireInput(props: PlayerPanelProps & { readonly ring?: ReactNode 
   const view = props.view as PlayerView;
   const s = useSequence(view, props.act, props.canAct);
   const boom = useExplosion(view.guesses);
-  const stale = s.slots.find((w) => view.harmless.includes(w));
+  const stale = s.slots.find((w): w is Wire => w !== null && view.harmless.includes(w));
   return (
     <div className="bd-input" onKeyDown={s.onKey} data-testid="bd-input">
-      <Slots slots={s.slots} view={view} />
+      <Slots slots={s.slots} locked={s.locked} view={view} onEmpty={s.empty} />
       <div className="bd-wires" data-count={view.wires.length}>
         {view.wires.map((w) => (
           <WireButton
@@ -107,7 +141,7 @@ export function WireInput(props: PlayerPanelProps & { readonly ring?: ReactNode 
           type="button"
           className="smg-btn bd-action"
           onClick={s.undo}
-          disabled={s.slots.length === 0}
+          disabled={!s.removable}
         >
           Undo
         </button>
@@ -115,7 +149,7 @@ export function WireInput(props: PlayerPanelProps & { readonly ring?: ReactNode 
           type="button"
           className="smg-btn bd-action"
           onClick={s.clear}
-          disabled={s.slots.length === 0}
+          disabled={!s.removable}
         >
           Clear
         </button>

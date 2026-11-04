@@ -223,6 +223,13 @@ a {
   font-weight: var(--font-weight-strong);
 }
 
+/* Spring Herald's hint in a game's short lines: the round's season colour (`--season`, set by
+   the round screen) as tint and border, the text in the normal ink (O56). */
+.smg-hint {
+  border-color: var(--season, var(--color-accent));
+  background: color-mix(in srgb, var(--season, var(--color-accent)) 22%, var(--color-card));
+}
+
 .smg-badge-live {
   padding: 0.15rem 0.55rem;
   border-radius: var(--radius-pill);

@@ -56,12 +56,9 @@ test('journey 3: each season special shows itself', async ({ browser }) => {
   const codes: string[] = [];
   try {
     codes.push(await quickRound(p, { season: 'spring' }));
-    await expect(p.page.getByTestId('hint')).toContainText(
-      /Free hint: the number is (odd|even)\./,
-      {
-        timeout: 10_000,
-      },
-    );
+    await expect(p.page.getByTestId('hint')).toContainText(/Free hint: the number ends in \d\./, {
+      timeout: 10_000,
+    });
 
     codes.push(await quickRound(p, { season: 'summer', cooldownS: 8 }));
     // The banner says Heatwave's first step and leaves 5 s later by itself (T150).

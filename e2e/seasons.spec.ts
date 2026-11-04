@@ -143,9 +143,7 @@ for (const s of SEASONS) {
       // A desktop's info column says the special's sentence on its line (T141).
       await expect(p.page.getByTestId('special-line')).toHaveText(`${s.special}: ${s.rule}`);
       if (s.season === 'spring') {
-        await expect(p.page.getByTestId('hint')).toHaveText(
-          /^Free hint: the number is (odd|even)\.$/,
-        );
+        await expect(p.page.getByTestId('hint')).toHaveText(/^Free hint: the number ends in \d\.$/);
       }
       await fitsScreen(p.page);
       await p.page.setViewportSize(PHONE);

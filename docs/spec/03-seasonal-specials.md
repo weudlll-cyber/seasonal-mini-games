@@ -30,12 +30,12 @@ This section words Spring Herald, Leaf Fall and halving for Guess The Number. Th
 ### 2.1 Spring — Spring Herald
 
 - **Trigger:** `opensAt`, once.
-- **Effect:** every roster player receives one hint about the secret, free (no cooldown, not counted as a guess). The hint type is the setting `spring.hintType` (default `parity`):
+- **Effect:** every roster player receives one hint about the secret, free (no cooldown, not counted as a guess). The hint type is the setting `spring.hintType` (default `lastDigit`, owner decision 56):
 
 | Type | Hint |
 |---|---|
-| `parity` | "The number is odd." / "The number is even." |
-| `half` | "The number is in the lower half (1–500)." / "… upper half (501–1 000)." The lower half runs from the low end to `floor((low + high) / 2)`. With the range hidden ([02](02-game-guess-the-number.md) §3) the hint is `parity`, because a half names numbers of the range (DECISIONS T56). |
+| `lastDigit` | "Free hint: the number ends in 7." The digit as written, so −27 ends in 7. Shown from `opensAt` in the game panel and the phone's info line ("Hint: ends in 7"), highlighted in the season colour (owner decision 56). The odd/even hint is removed. |
+| `half` | "The number is in the lower half (1–500)." / "… upper half (501–1 000)." The lower half runs from the low end to `floor((low + high) / 2)`. With the range hidden ([02](02-game-guess-the-number.md) §3) the hint is `lastDigit`, because a half names numbers of the range (DECISIONS T56). |
 
 - **Shared mode:** one hint, the same text for everyone. It is shown to spectators too.
 - **Individual mode:** every player gets a hint of the same type about **their own** number. Spectators see only "Spring Herald: everyone received a hint".
@@ -43,7 +43,7 @@ This section words Spring Herald, Leaf Fall and halving for Guess The Number. Th
 
 ### 2.2 Summer — Heatwave
 
-- **Trigger:** every `summer.stepIntervalS` (default 30 s) after `opensAt`.
+- **Trigger:** every `summer.stepIntervalS` (default 10 s, owner decision 57) after `opensAt`.
 - **Effect:** the round's cooldown becomes `max(3 s, cooldown − summer.stepS)` (step default 1 s). The floor of 3 s is the owner's ("never below 3 s") and is not a setting. When the floor is reached, the timer stops. A round that starts with a 3 s cooldown gets no steps, and the host form says so.
 - **Running cooldowns:** a cooldown that is already running keeps its end time. The new value applies to every guess received from the step on ([02](02-game-guess-the-number.md) §7).
 - **Equality:** one cooldown value for all at any instant. Heatwave is announced once per round, at its first step ("Heatwave: waiting time is now 7 s and keeps getting shorter.", banner and one list row); the later steps show only on each player's cooldown ring and the button at the input (owner decision 47, DECISIONS T134).

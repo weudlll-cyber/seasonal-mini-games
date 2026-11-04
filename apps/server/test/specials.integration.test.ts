@@ -111,7 +111,7 @@ describe('specials in the fast test profile', () => {
     const spring = await quick('spring');
     const opensAt = (await state(spring.roundId)).opensAt;
     await sleep(Math.max(0, opensAt - Date.now()) + 300);
-    expect((await state(spring.roundId)).game.hint).toMatchObject({ kind: 'parity' });
+    expect((await state(spring.roundId)).game.hint).toMatchObject({ kind: 'lastDigit' });
   }, 20_000);
 
   it('Frost delivers an answer after the delay and shows nothing of it before', async () => {

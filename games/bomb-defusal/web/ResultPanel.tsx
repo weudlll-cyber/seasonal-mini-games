@@ -11,7 +11,7 @@
  *                 platform shows placings, points, margin or closest miss, teams and the
  *                 fairness proof around it.
  * Depends on:     react, @smg/game-sdk (props), @smg-game/bomb-defusal (types, wording),
- *                 ./text, ./WireChip
+ *                 ./text, ./WireChip, ./result.css
  * Used by:        ./index
  * Spec:           docs/spec/02c-game-bomb-defusal.md §9
  */
@@ -21,6 +21,7 @@ import type { ReactElement } from 'react';
 
 import { answerText } from './text.js';
 import { SequenceChips, SequenceDots } from './WireChip.js';
+import './result.css';
 
 export function ResultPanel({ view, names, viewerKey, part }: ResultPanelProps): ReactElement {
   const v = view as ResultView;
