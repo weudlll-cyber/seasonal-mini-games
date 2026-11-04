@@ -98,11 +98,15 @@
   line-height: 1.25;
 }
 
-/* A guess on one line: dot, name, guess, answer and, on a desktop, the comment. */
+/* A guess on one line: dot, name, guess, answer and, on a desktop, the comment. A part that
+   has no room left goes whole to a second line, so an answer is never cut (night-8 review:
+   Safecracker's six-digit rows on a phone, a held answer in Target's 340 px column, T150);
+   the comment, sized from 0, only takes room that is left. */
 .round-row-line {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: 0.5rem;
+  gap: 0 0.5rem;
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
@@ -263,7 +267,7 @@ button.round-row-line {
   }
 
   .round-row-line {
-    gap: 0.35rem;
+    gap: 0 0.35rem;
   }
 
   .round-who {

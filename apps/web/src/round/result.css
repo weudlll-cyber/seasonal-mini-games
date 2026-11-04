@@ -216,36 +216,38 @@
   overflow-wrap: anywhere;
 }
 
+/* Close cells: the player column keeps the room for an icon, a name and "(you)" whole
+   (night-8 review: "dev-h… (you)" at 1280 × 720, T150). */
 .round-table th,
 .round-table td {
   text-align: left;
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-1);
   border-bottom: 1px solid var(--color-border);
 }
 
-/* A phone fits all four columns with the small text size, tighter cells and narrower number
+/* A phone fits all four columns with the small text size and narrower number
    columns, so the player column keeps room for a name ("took part" wraps whole). */
 @media (max-width: 480px) {
   .round-table {
     font-size: var(--font-size-small);
   }
 
-  .round-table th,
-  .round-table td {
-    padding: var(--space-1);
-  }
-
   .round-col-place {
-    width: 3.5rem;
+    width: 3.25rem;
   }
 
   .round-col-num {
-    width: 4.25rem;
+    width: 3.75rem;
   }
 
   /* The last column ("Points", "Wins") needs less than "Guesses". */
   .round-col-num:last-child {
-    width: 3.5rem;
+    width: 3.25rem;
+  }
+
+  /* The icon, the name and "(you)" closer: "dev-host (you)" whole at 390 px (night 8). */
+  .round-player {
+    gap: 0.25rem;
   }
 }
 

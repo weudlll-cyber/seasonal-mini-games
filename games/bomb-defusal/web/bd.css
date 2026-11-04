@@ -258,6 +258,12 @@
   .bd-secret .bd-sequence {
     flex-wrap: nowrap;
   }
+
+  /* Each number stays beside its chip. */
+  .bd-secret .bd-sequence li {
+    flex: none;
+    white-space: nowrap;
+  }
 }
 
 /* Every player's sequences in full, below the result's first part (T150). */

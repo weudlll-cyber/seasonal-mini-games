@@ -41,6 +41,8 @@ const body = z
     // Short for scripted callers; the Quick Test form sends the round setting's default, so
     // the intro screen shows as long as in a normal round (O36).
     countdownS: z.number().int().min(3).max(30).default(3),
+    // Bots wait this much longer after each guess (T154): a busy round with no early winner.
+    botDelayS: z.number().int().min(0).max(120).default(0),
     seedText: z.string().trim().min(1).max(64).optional(),
     season: z.enum(['spring', 'summer', 'autumn', 'winter']).optional(),
     // The chosen game's own round settings (O41); each is checked against the game's

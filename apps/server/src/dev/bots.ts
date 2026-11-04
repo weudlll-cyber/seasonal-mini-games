@@ -8,7 +8,9 @@
  *                 in for): wait until the round is open and the bot's cooldown is over, add a
  *                 pause of 200–1 500 ms (09 §5), ask the game's bot for its next action from
  *                 the bot's own player view, and send it through the round's queue like any
- *                 guess. A bot stops when it has nothing to do or the round is over.
+ *                 guess; `delayMs` more after each guess slows the bots below the round's
+ *                 cooldown (a busy round for the screenshots, T154). A bot stops when it has
+ *                 nothing to do or the round is over.
  * Depends on:     node:crypto, @smg/game-sdk (DevBot), ../round/liveRound
  * Used by:        ./quickTest
  * Spec:           docs/spec/09-testing-strategy.md §5; docs/spec/11-roadmap.md (Quick Test)
@@ -21,7 +23,12 @@ import type { LiveRound } from '../round/liveRound.js';
 
 const pause = () => 200 + randomInt(1_301);
 
-export function runBots(round: LiveRound, keys: readonly string[], bot: DevBot<unknown>): void {
+export function runBots(
+  round: LiveRound,
+  keys: readonly string[],
+  bot: DevBot<unknown>,
+  delayMs = 0,
+): void {
   // A bot never keeps the process alive; after shutdown its round refuses it anyway.
   const later = (key: string, ms: number): void => {
     setTimeout(() => {
@@ -45,7 +52,7 @@ export function runBots(round: LiveRound, keys: readonly string[], bot: DevBot<u
     const action = bot(view, (n) => randomInt(n));
     if (action === null) return;
     void round.guess(key, action).then(() => {
-      later(key, pause());
+      later(key, delayMs + pause());
     });
   };
   for (const key of keys) later(key, pause());

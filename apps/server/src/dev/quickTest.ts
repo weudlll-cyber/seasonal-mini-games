@@ -54,6 +54,8 @@ export interface QuickTestInput {
   readonly teamMatch: boolean;
   // The round's countdown, the intro screen (O36).
   readonly countdownS: number;
+  // Seconds a bot waits after each guess beyond its cooldown (T154); 0 plays at the cooldown.
+  readonly botDelayS: number;
   readonly seedText?: string | undefined;
   readonly season?: Season | undefined;
   // The chosen game's own round settings by key (O41); the settings layer checks them.
@@ -101,7 +103,7 @@ export interface QuickTests {
 
 // One per server: it remembers the Quick Test matches and sets their bots to every new round.
 export function quickTests(play: Play, pool: Parameters<typeof openMatch>[0]): QuickTests {
-  const botsOf = new Map<string, readonly string[]>();
+  const botsOf = new Map<string, { readonly keys: readonly string[]; readonly delayMs: number }>();
   const played = new Set<string>();
   // Every round created in a Quick Test match gets its bots; they wait for it to open.
   play.onMatchChanged((matchId) => {
@@ -113,7 +115,7 @@ export function quickTests(play: Play, pool: Parameters<typeof openMatch>[0]): Q
       played.add(id);
       const round = await play.rounds.get(id);
       const bot = round === null ? null : play.rounds.devBot(round.gameId);
-      if (round !== null && bot !== null) runBots(round, bots, bot);
+      if (round !== null && bot !== null) runBots(round, bots.keys, bot, bots.delayMs);
     })().catch(() => undefined);
   });
 
@@ -134,7 +136,7 @@ export function quickTests(play: Play, pool: Parameters<typeof openMatch>[0]): Q
       { length: input.bots },
       (_, i) => `bot-${String(i + 1).padStart(2, '0')}`,
     );
-    botsOf.set(match.id, bots);
+    botsOf.set(match.id, { keys: bots, delayMs: input.botDelayS * 1_000 });
     await play.join(match, { key: input.playerId, accountId: input.playerId });
     if (!input.lobby) for (const key of bots) await joinBot(play, match, key, null);
     const round = await play.createRound(match, input.playerId, {
