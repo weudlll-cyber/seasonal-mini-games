@@ -5,7 +5,8 @@
  *
  * Responsibility: a shared spring round from the Quick Test form through the lobby on the
  *                 20 × 20 tile grid (O45): the intro names the grid, Spring's two quarters are
- *                 tinted on the grid, each with its "Hint" tag (O61); a click selects a tile, an
+ *                 tinted on the grid, each with its "Hint" tag (O61; a bot's guess on a tag's
+ *                 tile takes its place, T144); a click selects a tile, an
  *                 arrow button behind "Type coordinates" (O51, in the loupe on a touch screen) and an
  *                 arrow key move the selection, its coordinates show as text, Guess sends and
  *                 the own tile and row appear with warm/cold only, the default (O53): no
@@ -53,6 +54,21 @@ async function standingSelected(page: Page): Promise<void> {
   await expect(fallen).toHaveCount(0);
 }
 
+// Two quarters, the target's and a decoy, each with its tag (O61). The bot guesses at random
+// from the start: a guess on a tag's tile takes the tag's place (T144), as CI saw once on
+// Firefox, so one tag with a guessed tile in a quarter also holds.
+async function twoHints(page: Page): Promise<void> {
+  const tags = page.getByTestId('hint-tag');
+  const inQuarter = page.locator('[data-testid="tile"][data-quarter="true"][data-who]');
+  await expect
+    .poll(async () => {
+      const n = await tags.count();
+      return n === 2 || (n === 1 && (await inQuarter.count()) > 0);
+    })
+    .toBe(true);
+  await expect(tags.first()).toHaveText('Hint');
+}
+
 test('journey 22: Seasonal Target, warm/cold only (the default) and distance only', async ({
   browser,
 }) => {
@@ -65,8 +81,7 @@ test('journey 22: Seasonal Target, warm/cold only (the default) and distance onl
     await expect(p.page.getByTestId('intro-secret')).toHaveText('Shared target on a 20 × 20 grid');
     await roundOpen(p.page);
     await expect(p.page.locator('[data-testid="tile"][data-quarter="true"]').first()).toBeVisible();
-    // Two quarters, the target's and a decoy, each with its tag (O61).
-    await expect(p.page.getByTestId('hint-tag')).toHaveText(['Hint', 'Hint']);
+    await twoHints(p.page);
     // The grid on the left of the list (the board layout).
     const grid = await p.page.getByTestId('tile-grid').boundingBox();
     const list = await p.page.locator('.round-log').boundingBox();

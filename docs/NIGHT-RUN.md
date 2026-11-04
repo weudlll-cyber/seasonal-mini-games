@@ -30,6 +30,7 @@ Branch `feat/guess-games` from `6260b84`, merged into `master` by this task (the
 
 - One `pnpm verify` on `396fa3f`: green (148 test files, 816 tests). PR #1 into `master`.
 - CI on `396fa3f` (push) failed journeys 5 and 12: their checks still read the team as text in the player list. The PR's first run failed journey 34 on Firefox (a bot's random first guess won the round at once) and the Trusted Types check on webkit-mobile (the copied CSP's `upgrade-insecure-requests`); CodeQL flagged the harness's proxy (js/request-forgery). All four fixed (T213), each check run once in its browser.
+- The PR's second run (`fa66cea`): 101 passed; journey 22 failed on firefox-timing with one "Hint" tag, the other's tile filled by the bot's random guess (T144). Journey 22 now accepts that (T213); run once on Firefox, passed.
 
 ## Play-test round 2 (2026-11-04)
 
