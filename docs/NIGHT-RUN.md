@@ -8,15 +8,15 @@ Branch `feat/guess-games` from `606eecf`. The owner's decisions after playing al
 
 ### Status
 
-| Piece                                    | State | Commit |
-| ---------------------------------------- | ----- | ------ |
-| 0. O56–O62 recorded                      | done  |        |
-| 1. Specials (O56, O57, O59–O61)          | done  |        |
-| 2. Guess The Number: fallen numbers      | open  |        |
-| 3. Bomb Defusal: result, help, slot tap  | open  |        |
-| 4. Seasonal Target: messages, tags, grid | open  |        |
-| 5. All games and leftovers               | open  |        |
-| 6. Re-shoot (O55), self-review, handover | open  |        |
+| Piece                                    | State | Commit    |
+| ---------------------------------------- | ----- | --------- |
+| 0. O56–O62 recorded                      | done  |           |
+| 1. Specials (O56, O57, O59–O61)          | done  | `587eee2` |
+| 2. Guess The Number: fallen numbers      | done  |           |
+| 3. Bomb Defusal: result, help, slot tap  | done  |           |
+| 4. Seasonal Target: messages, tags, grid | done  |           |
+| 5. All games and leftovers               | open  |           |
+| 6. Re-shoot (O55), self-review, handover | open  |           |
 
 ### Needs the owner
 
@@ -31,6 +31,31 @@ Nothing so far.
 - Tests: the last digit as a property (negative ranges too; individual hints only to their own player, one room event in shared mode); Heatwave's defaults (`roundSettings.test.ts`); the locked box (`hint.test.tsx`, new) and slots (`slots.test.tsx`, new); the server checks the whole code and sequence after a hint (`rules.test.ts` of both games); the two quarters (`spring.test.ts`, new: fixed order, the target's first about a third of the time for a south-west target, every other quarter drawn as the decoy, deterministic, from the `spring` label) and on the grid (`quarters.test.tsx`, split from `panels.test.tsx`, 300 → 275 lines).
 - e2e: journey 20 types round the locked box and checks its name; journey 21 checks the locked slot, and makes its wrong first cut in a summer round (cut, and if the first wire was right, cut again with another first wire), since a spring round's first cut can no longer be wrong; journey 22 two "Hint" tags; journeys 3 and 17 the new hint text.
 - Removed: the `parity` hint (state, view schema, settings, text), `.bd-slot-hint` and the phone's wider hint slot, the single-quarter `quarter` prop and event field, `tagTileOf`'s null case.
+
+### Piece 2 — Guess The Number's fallen numbers (O58, T192)
+
+- The panel lists the fallen numbers under the range block, plain chips, ascending, with "Fallen numbers (N)": three rows on a desktop, then "+N more" opening the full list; every one in the phone's sheet. The phone's line: "Fallen 12: 902, 77, 431" (the view's new `newest`, newest first).
+- Reused: `useDisclosure` (the "+N more" sheet, as the old button's), `formatNumber`, `.smg-chip`, `leafFallOn`. New and shared: `useFit`/`fitCount` in @smg/ui (how many items of a clipped list show whole).
+- Removed: the bar's gaps and their merging (`segmentsOf`, `MERGE_PERCENT`, `.gtn-range-gap`, `--merged`), the "Fallen (N)" button and its grid placement beside the bar (`.gtn-fallen-toggle`, the `:has(.gtn-fallen)` rules), `RangeBar`'s `removed` prop, the gap tests.
+- Tests: `fallen.test.tsx` rewritten (the list in view and plain, no button; "+8 more" of 20 with a laid-out list, the full sheet and Escape; "None yet."; the phone's line with the newest three and "Fallen 0"); `line.test.tsx`; the golden run re-recorded (it gains only `newest`). e2e journey 18: the list in view without opening, "+N more" when shown, the phone's line with the newest three and its sheet with all.
+
+### Pieces 2–4 — one commit
+
+- Pieces 2, 3 and 4 share files (the sheet, DECISIONS, `@smg/ui`'s index, the platform's round styles) and went into one commit; no hunk staging (interactive git is not available). `pnpm verify`: format, lint and types green; tests 800 of 803 with the other three passing on their own (two 5 s timeouts on the busy machine, one socket timing); Target's keyboard-selection test now has 15 s (ten moves redraw 400 tiles, 3.4 s alone).
+
+### Piece 3 — Bomb Defusal: the result, the help line, the slot tap (T193)
+
+- The help line above the picker; the slot tap and the locked slot came with piece 1's slot model (T190). The revealed sequence wraps as whole chips; the probe found no element wider than the page at 1280 × 720 and 1920 × 1080, and at 390 × 844 the result bar 3 px too wide ("Seasonal Bomb Defusal", the code, Host, Play): the bar's buttons got slimmer sides (`match.css`, after piece 5's commit).
+- Extracted: `WireButtons` (WireInput, 61 → 60-line function), `useSlots` (useSequence), `pickerHelp` (text). Removed: the desktop's one-line rule for the revealed sequence.
+- Tests: `slots.test.tsx` (the help line); e2e journey 33 new (`bombPicker.spec.ts`: help line one line / at most two, locked slot, slot tap, a cut, the result without sideways scroll at the three sizes); journey 26's desktop rows 18 → 17 (the help line's row; the spec asks 14).
+
+### Piece 4 — Seasonal Target: messages, tags, the grid (O62, T194–T196)
+
+- The info column widens beside the square grid (T195): measured 652 px grid and 556 px column at 1280 × 720, 1 012 px and 836 px at 1920 × 1080, the phone's grid 374 px; no page scroll, no list comment cut (scrollWidth ≤ clientWidth) at any size. Comments wrap to a second line in a board game's list, the banner wraps everywhere (T194).
+- Players by tag (T196): `marksOf`, `MARK_COLORS`, `MARK_SHAPES`, `tagOf` (game-sdk), `PlayerMark`, `marks.css`, the `--mark-*` tokens and the shared highlight (`setHighlight`, `flashHighlight`, `useHighlight`, `lit`, @smg/ui); `GameWeb.playerTags`; the platform's `roundMarks` for rows (GuessLine `useRowHighlight`), the Players panel (`Marker` in RoundSide, via FocusShell) and the game's props (`marks`, `viewerKey`); Target's `marksFor`, `tileHighlight.ts` (split from TileGrid, 297 → 261 lines), `heat.ts` `who` in place of `mark`.
+- Result grid (T195): 331 → 427 px at 1280 × 720 (placings 22rem; the part's free height 476 px), 211 → 309 px on a phone (a full-width square, the part as tall as its content).
+- Removed: the colour-only corner dot (`.st-mark`, `markOf`, `NEUTRAL`), the banner's ellipsis. The stale sentence above `sameAnswer` corrected to T151's rule.
+- Tests: `marks.test.ts` (tags; 24 distinct combinations, none repeated before the 25th, colours first; join order), `tags.test.tsx` in Target (22 players' tags and 22 distinct markers, no tag under 20 px, the highlight on and off, hovering a tile) and in web/round (rows' marker and tag, other games keep the dot, hover, focus and a phone's 3 s tap, the Players panel); the tile tests read the tile's face (`faceOf`). e2e journey 34 new (`targetTags.spec.ts`); journeys 22 and 27 pass.
 
 ### Piece 5 — all games and leftovers (T200–T202)
 

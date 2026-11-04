@@ -4,8 +4,8 @@
  * @module games/bomb-defusal/web
  * @brief  The slots: tapping a filled one empties it; Spring Herald's colour locked in slot 1.
  *
- * Responsibility: a tapped slot empties just that slot and the next wire fills the first empty
- *                 one; the hint's colour stands in slot 1 from the start, named "hint: red in
+ * Responsibility: the help line names how the slots fill; a tapped slot empties just that
+ *                 slot and the next wire fills the first empty one; the hint's colour stands in slot 1 from the start, named "hint: red in
  *                 place 1", and no tap, Undo, Clear or Backspace empties it (O60); Cut sends
  *                 the whole sequence with it.
  * Depends on:     vitest, @testing-library/react, ./WireInput
@@ -54,6 +54,18 @@ const tap = (wire: string) => {
 };
 const slots = () => screen.getByTestId('slots').textContent;
 const button = (name: string) => screen.getByRole<HTMLButtonElement>('button', { name });
+
+describe('the help line above the picker', () => {
+  it('says how the slots fill, from slot 2 when the hint holds slot 1', () => {
+    setup(null);
+    expect(screen.getByTestId('bd-help').textContent).toBe(
+      'Tap colours in cutting order: they fill 1 → 4. Tap a filled box to empty it; Clear starts over.',
+    );
+    cleanup();
+    setup('red');
+    expect(screen.getByTestId('bd-help').textContent).toContain('they fill 2 → 4.');
+  });
+});
 
 describe('tapping a filled slot', () => {
   it('empties just that slot, and the next wire fills the first empty one', () => {

@@ -175,7 +175,8 @@ export function answerOf(g: Cell, s: Cell, rule: AnswerRule): Feedback {
 }
 
 // Whether two answers say the same thing (Leaf Fall's candidate test, O37). The tier counts in
-// every mode: it is shown as the tile's colour, and one rounded distance can span two tiers.
+// every mode, as the tile's colour; in `distance` and `direction` mode it follows the shown
+// rounded distance (T151), so there two answers with one distance always share their tier.
 export function sameAnswer(a: Feedback, b: Feedback): boolean {
   if (a.kind === 'correct' || b.kind === 'correct') return a.kind === b.kind;
   if (a.kind !== b.kind || a.tier !== b.tier) return false;

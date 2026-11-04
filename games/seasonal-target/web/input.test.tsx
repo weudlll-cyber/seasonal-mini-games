@@ -25,7 +25,16 @@
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ne, own, plainScreen, playerView, props, renderInput, screenOf } from './fixtures.js';
+import {
+  faceOf,
+  ne,
+  own,
+  plainScreen,
+  playerView,
+  props,
+  renderInput,
+  screenOf,
+} from './fixtures.js';
 import { TargetInput } from './TargetInput.js';
 
 afterEach(() => {
@@ -93,7 +102,8 @@ describe('selecting', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Move west' }));
     expect(selected()).toBe('Selected: column 6, row 3');
     expect(screen.getByTestId('ring')).toBeTruthy();
-  });
+    // Ten moves, each drawing the 400 tiles again: over 5 s on a busy machine.
+  }, 15_000);
 
   it('selects the clicked tile, never one outside the area', () => {
     renderInput(playerView({ area: { left: 6, right: 15, top: 1, bottom: 20 } }));
@@ -183,8 +193,8 @@ describe('the loupe on a phone', () => {
     expect([tiles[0]?.dataset['x'], tiles[0]?.dataset['y']]).toEqual(['6', '6']);
     // The same fill and number as on the grid, though the grid's tiles are too small for it.
     expect(tile(9, 9, 'loupe-tile')?.dataset['step']).toBe('1');
-    expect(tile(9, 9, 'loupe-tile')?.textContent).toBe('9↗');
-    expect(tile(9, 9)?.textContent).toBe('');
+    expect(faceOf(tile(9, 9, 'loupe-tile'))).toBe('9↗');
+    expect(faceOf(tile(9, 9))).toBe('');
     fireEvent.click(tile(10, 7, 'loupe-tile') as HTMLElement);
     expect(selected()).toBe('Selected: column 10, row 7');
     // The window stays put while the selection is inside it.

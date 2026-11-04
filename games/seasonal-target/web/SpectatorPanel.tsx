@@ -27,6 +27,7 @@ import { readable, useTileSize } from './measure.js';
 import { GridLines } from './PlayerPanel.js';
 import { TileGrid } from './TileGrid.js';
 import { sizeText } from './words.js';
+import { marksFor } from './players.js';
 
 export function SpectatorPanel(props: SpectatorPanelProps): ReactElement {
   const v = props.view as SpectatorView;
@@ -47,8 +48,10 @@ export function SpectatorPanel(props: SpectatorPanelProps): ReactElement {
           quarters={v.hint}
           fallen={v.fallen}
           tiles={tilesOf(shotsOf([], v.log), props)}
+          marks={marksFor(props)}
           variant="board"
           numbers={readable(size.px)}
+          tags={readable(size.px)}
           gridRef={size.ref}
           label="The grid with the players' guesses."
         />

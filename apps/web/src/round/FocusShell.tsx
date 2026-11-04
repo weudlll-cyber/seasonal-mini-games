@@ -19,6 +19,7 @@
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/07-integration.md §2
  */
+import type { PlayerMark } from '@smg/game-sdk';
 import type { RoundStateView, TeamName } from '@smg/contracts';
 import {
   useCallback,
@@ -46,6 +47,8 @@ export interface FocusShellProps {
   readonly style: CSSProperties;
   readonly layout: string;
   readonly viewerKey: string | null;
+  // A game with player tags: every player's marker and tag (O62).
+  readonly marks?: Readonly<Record<string, PlayerMark>> | undefined;
   readonly teamPoints: readonly { readonly team: TeamName; readonly points: number }[];
   // The match chat, or null without one (the provider `none`).
   readonly chat: ReactNode;
@@ -92,7 +95,12 @@ function BarPanels(p: FocusShellProps & { readonly panels: Panels }): ReactEleme
         onClose={panels.close}
         testId="players-drawer"
       >
-        <PlayersPanelBody state={p.state} points={p.teamPoints} viewerKey={p.viewerKey} />
+        <PlayersPanelBody
+          state={p.state}
+          points={p.teamPoints}
+          viewerKey={p.viewerKey}
+          marks={p.marks}
+        />
       </FocusPanel>
       {p.host === null ? null : (
         <FocusPanel title="Host" open={opened('host')} onClose={panels.close} testId="host-drawer">

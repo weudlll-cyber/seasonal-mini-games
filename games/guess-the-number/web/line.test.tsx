@@ -22,9 +22,15 @@ const at = { names: {}, colors: {} };
 
 describe("the phone's info line", () => {
   it('names the range and, in a Leaf Fall round, the fallen count', () => {
-    const view = { range: { low: 1, high: 1_000 }, removed: [3, 9], hint: null, log: [] };
+    const view = {
+      range: { low: 1, high: 1_000 },
+      removed: [3, 9],
+      newest: [9, 3],
+      hint: null,
+      log: [],
+    };
     render(<InfoLine view={view} {...at} season="autumn" specialOn />);
-    expect(screen.getByTestId('gtn-line').textContent).toBe('1–1,000Fallen 2');
+    expect(screen.getByTestId('gtn-line').textContent).toBe('1–1,000Fallen 2: 3, 9');
     cleanup();
     render(<InfoLine view={view} {...at} season="summer" specialOn />);
     expect(screen.getByTestId('gtn-line').textContent).toBe('1–1,000');

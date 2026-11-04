@@ -132,8 +132,10 @@
     white-space: nowrap;
   }
 
+  /* Slimmer sides, so the longest game's name, the code and both buttons fit 390 px. */
   .result-bar-link {
     min-height: var(--hit-target);
+    padding-inline: 0.75rem;
   }
 }
 

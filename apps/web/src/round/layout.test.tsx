@@ -37,6 +37,7 @@ const open: RoundStateView = {
   game: {
     range: { low: 1, high: 100 },
     removed: [],
+    newest: [],
     hint: null,
     guesses: [
       {

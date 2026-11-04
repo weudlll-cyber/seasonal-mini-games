@@ -10,14 +10,16 @@
  *                 only when teams play (03 §5), each named "Team Spring" (O52). The focus
  *                 mode's Players panel (O46) holds the tiles and the round's players with
  *                 colour, name (cut with an ellipsis, ./PlayerName), team (icon and name in a
- *                 column of one width, T202) and number of guesses.
+ *                 column of one width, T202) and number of guesses; in a game with player
+ *                 tags the player's marker and tag in place of the dot (O62).
  * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), ../season/* (teamName),
  *                 ./PlayerName, ./players.css
  * Used by:        ./RoundScreen, ./RoundLog
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §5
  */
 import type { RoundStateView, TeamName } from '@smg/contracts';
-import { formatNumber } from '@smg/game-sdk';
+import { formatNumber, type PlayerMark } from '@smg/game-sdk';
+import { PlayerMark as PlayerMarkView } from '@smg/ui';
 import type { CSSProperties, ReactElement } from 'react';
 
 import { SeasonIcon } from '../season/SeasonIcon.js';
@@ -37,12 +39,30 @@ export function playerColor(state: RoundStateView, key: string): string {
 export const colorsOf = (state: RoundStateView): Readonly<Record<string, string>> =>
   Object.fromEntries(state.roster.map((r) => [r.playerKey, playerColor(state, r.playerKey)]));
 
+// A player's dot in their list colour, or their marker and tag in a game with player tags.
+function Marker(p: {
+  readonly state: RoundStateView;
+  readonly playerKey: string;
+  readonly mark: PlayerMark | undefined;
+}): ReactElement {
+  if (p.mark !== undefined) return <PlayerMarkView mark={p.mark} />;
+  return (
+    <span
+      className="round-dot"
+      aria-hidden="true"
+      style={{ '--dot': playerColor(p.state, p.playerKey) } as CSSProperties}
+    />
+  );
+}
+
 // The Players panel (O46): the team tiles with their match points when teams play, then every
 // player of the round with their colour, team and guesses, the viewer first as "You".
 export function PlayersPanelBody(p: {
   readonly state: RoundStateView;
   readonly points: readonly { readonly team: TeamName; readonly points: number }[];
   readonly viewerKey: string | null;
+  // A game with player tags: each player's marker and tag in place of the dot (O62).
+  readonly marks?: Readonly<Record<string, PlayerMark>> | undefined;
 }): ReactElement {
   const { state } = p;
   const rows = [...state.roster].sort(
@@ -58,11 +78,7 @@ export function PlayersPanelBody(p: {
       >
         {rows.map((r) => (
           <li key={r.playerKey} data-own={r.playerKey === p.viewerKey}>
-            <span
-              className="round-dot"
-              aria-hidden="true"
-              style={{ '--dot': playerColor(state, r.playerKey) } as CSSProperties}
-            />
+            <Marker state={state} playerKey={r.playerKey} mark={p.marks?.[r.playerKey]} />
             <PlayerName
               name={r.playerKey === p.viewerKey ? 'You' : (state.names[r.playerKey] ?? r.playerKey)}
             />

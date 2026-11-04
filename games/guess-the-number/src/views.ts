@@ -43,6 +43,7 @@ export const viewSchemas = {
     .object({
       range: range.nullable(),
       removed: z.array(z.number().int()),
+      newest: z.array(z.number().int()).max(3),
       guesses: z.array(guesses.own),
       // The other players' guesses, oldest first.
       log: z.array(guesses.other),
@@ -53,6 +54,7 @@ export const viewSchemas = {
     .object({
       range: range.nullable(),
       removed: z.array(z.number().int()),
+      newest: z.array(z.number().int()).max(3),
       hint,
       log: z.array(guesses.other),
     })
@@ -93,6 +95,7 @@ export const views: GameViews<GtnState, Secrets> = {
     return {
       range: shownRange(state, playerRange),
       removed: within(state.removed, playerRange),
+      newest: within(state.newest, playerRange),
       guesses: ownGuesses(state, playerId, ctx),
       log: othersGuesses(state, ctx, playerId),
       hint: state.mode === 'shared' ? state.hint : (state.players[playerId]?.hint ?? null),
@@ -101,6 +104,7 @@ export const views: GameViews<GtnState, Secrets> = {
   spectator: (state, ctx) => ({
     range: shownRange(state, state.range),
     removed: within(state.removed, state.range),
+    newest: within(state.newest, state.range),
     // An individual hint is about a player's own number: spectators never see it (02 §11).
     hint: state.mode === 'shared' ? state.hint : null,
     log: othersGuesses(state, ctx, null),

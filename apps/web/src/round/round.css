@@ -7,7 +7,8 @@
  *                 and never scrolls the page (only the lists scroll, inside themselves), in one
  *                 of two layouts set on the container (`data-view`, ./useRoundView). A desktop:
  *                 the slim bar (./focus.css) over the stage on the left (a list game's guesses
- *                 with the action dock at its bottom, a board game's board) and the 340 px info
+ *                 with the action dock at its bottom, a board game's board, square, the column
+ *                 beside it taking the rest) and the 340 px info
  *                 column on the right (the special line, the game's compact panel, then "Your
  *                 guesses" or a board game's list with the dock); an open panel on demand is a
  *                 third column that pushes the game aside (O48). A phone: the bar, the info line
@@ -26,6 +27,8 @@
 
 /* The match page while a round runs: the whole screen under the hidden app header. */
 .match-live {
+  /* A size container: a board game's columns follow its height (below). */
+  container-type: size;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -56,6 +59,24 @@
   grid-template-areas:
     'bar bar bar'
     'stage info panel';
+}
+
+/* A board game on a desktop: the stage is as wide as it is tall, so the square board keeps its
+   full height and size, and the info column takes all the room beside it (at least 340 px),
+   so the list's rows have room for their comments (O62's review: messages readable). The bar
+   row is its fixed 44 px, which the stage's height is reckoned from. */
+.round-live[data-view='desktop'][data-layout='board'] {
+  --board-side: min(calc(100cqh - 44px - var(--space-1)), calc(100cqw - 340px - var(--space-1)));
+  grid-template-columns: var(--board-side) minmax(340px, 1fr);
+  grid-template-rows: 44px minmax(0, 1fr);
+}
+
+.round-live[data-view='desktop'][data-layout='board'][data-panel] {
+  --board-side: min(
+    calc(100cqh - 44px - var(--space-1)),
+    calc(100cqw - 700px - 2 * var(--space-1))
+  );
+  grid-template-columns: var(--board-side) minmax(340px, 1fr) 360px;
 }
 
 /* A phone: bar, info line, the round's guesses filling the height, the dock at the bottom. A

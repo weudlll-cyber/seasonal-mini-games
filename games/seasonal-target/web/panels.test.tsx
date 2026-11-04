@@ -6,7 +6,7 @@
  *
  * Responsibility: a guessed tile's colour step from the server's tier and its face by answer
  *                 mode (distance and arrow, distance, nothing; the found glyph); the viewer's
- *                 own tiles framed, others' with a corner mark in their list colour; a shared
+ *                 own tiles framed, the first guesser's tag in the corner (O62); a shared
  *                 tile showing the closest answer and naming every guess in its title and
  *                 label; a pending own answer "…" without a fill (fallen tiles, the area and
  *                 Spring's quarters: ./quarters.test); numbers drawn from `NUMBER_MIN_PX` (20 px) up only; a corner
@@ -30,6 +30,7 @@ import {
   renderInput,
   roster,
   screenOf,
+  faceOf,
 } from './fixtures.js';
 import { NUMBER_MIN_PX } from './measure.js';
 import { PlayerPanel } from './PlayerPanel.js';
@@ -68,10 +69,10 @@ describe('tiles by answer mode', () => {
       'k7',
       'correct',
     ]);
-    expect(tile(2, 2).textContent).toBe('9↗');
-    expect(tile(3, 3).textContent).toBe('4');
-    expect(tile(4, 4).textContent).toBe('');
-    expect(tile(6, 6).textContent).toBe('◎');
+    expect(faceOf(tile(2, 2))).toBe('9↗');
+    expect(faceOf(tile(3, 3))).toBe('4');
+    expect(faceOf(tile(4, 4))).toBe('');
+    expect(faceOf(tile(6, 6))).toBe('◎');
     expect(tile(7, 7).dataset['step']).toBeUndefined();
     expect(tile(4, 4).title).toBe('column 4, row 4: You — Hot');
   });
@@ -81,12 +82,12 @@ describe('tiles by answer mode', () => {
     // 20 tiles of 20 px and 19 gaps of 2 px: 438 px of content.
     screenOf(438, false);
     renderInput(playerView({ guesses: [own(1, 2, 2, ne)] }));
-    expect(tile(2, 2).textContent).toBe('9↗');
+    expect(faceOf(tile(2, 2))).toBe('9↗');
     cleanup();
     // One pixel less: just under 20 px a tile, colour and marks only.
     screenOf(437, false);
     renderInput(playerView({ guesses: [own(1, 2, 2, ne)] }));
-    expect(tile(2, 2).textContent).toBe('');
+    expect(faceOf(tile(2, 2))).toBe('');
     expect(tile(2, 2).dataset['step']).toBe('1');
     expect(tile(2, 2).title).toBe('column 2, row 2: You — 9 tiles away, to the north-east');
   });
@@ -108,22 +109,22 @@ describe('own, others and shared tiles', () => {
     expect(tile(9, 9).dataset['own']).toBe('false');
     expect(tile(2, 2).dataset['pending']).toBe('true');
     expect(tile(2, 2).dataset['step']).toBeUndefined();
-    expect(tile(2, 2).textContent).toBe('…');
+    expect(faceOf(tile(2, 2))).toBe('…');
     expect(tile(2, 2).title).toBe('column 2, row 2: You — answer arriving');
-    const mark = tile(9, 9).querySelector<HTMLElement>('.st-mark');
-    expect(mark?.style.background).toBe('var(--color-winter)');
-    // The dot's tile moves its number clear of it.
+    // The first guesser's tag in the corner, "you" on the own tile (O62); the number moves
+    // clear of it.
+    expect(tile(9, 9).querySelector('.smg-mark-tag')?.textContent).toBe('b');
     expect(tile(9, 9).dataset['marked']).toBe('true');
-    expect(tile(1, 1).dataset['marked']).toBe('false');
+    expect(tile(1, 1).querySelector('.smg-mark-tag')?.textContent).toBe('you');
     expect(tile(9, 9).getAttribute('aria-label')).toBe(
       'column 9, row 9: Anna — 9 tiles away, to the north-east',
     );
     // A guess under `numbers`: the tile and the player, no answer, no fill.
     expect(tile(4, 4).title).toBe('column 4, row 4: Anna guessed');
     expect(tile(4, 4).dataset['step']).toBeUndefined();
-    // A player the list has no colour for still gets a mark, named by key.
+    // A player the list does not know is still named, without a tag of theirs.
     expect(tile(3, 3).title).toBe('column 3, row 3: c guessed');
-    expect(tile(1, 1).querySelector('.st-mark')).toBeNull();
+    expect(tile(3, 3).dataset['marked']).toBe('false');
   });
 
   it('shows the closest answer on a tile several players guessed, and names them all', () => {
@@ -136,14 +137,14 @@ describe('own, others and shared tiles', () => {
     );
     const t = tile(5, 5);
     expect(t.dataset['step']).toBe('3');
-    expect(t.textContent).toBe('4↓');
+    expect(faceOf(t)).toBe('4↓');
     expect(t.dataset['own']).toBe('true');
     expect(t.title).toBe(
       'column 5, row 5: You — 9 tiles away, to the north-east; ' +
         'Anna — 4 tiles away, to the south; Walter — 9 tiles away, to the north-east',
     );
-    // The first other player's mark.
-    expect(t.querySelector<HTMLElement>('.st-mark')?.style.background).toBe('var(--color-winter)');
+    // The first guesser's tag: the viewer's own guess came first.
+    expect(t.querySelector('.smg-mark-tag')?.textContent).toBe('you');
   });
 });
 
@@ -235,9 +236,7 @@ describe('result panel, shared', () => {
     ]);
     expect(target?.title).toBe('column 12, row 10: the target; Walter — Target found!');
     expect(tile(4, 14).dataset['own']).toBe('true');
-    expect(tile(12, 10).querySelector<HTMLElement>('.st-mark')?.style.background).toBe(
-      'var(--color-summer)',
-    );
+    expect(tile(12, 10).querySelector('.smg-mark-tag')?.textContent).toBe('a');
     expect(tile(1, 1).dataset['fallen']).toBe('true');
   });
 });

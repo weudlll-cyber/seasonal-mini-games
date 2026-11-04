@@ -129,7 +129,7 @@ export function PlayerPanel(props: PlayerPanelProps): ReactElement {
   const view = props.view as PlayerView;
   return (
     <div className="gtn-player" data-testid="gtn-player">
-      <RangeBar range={view.range} removed={view.removed} />
+      <RangeBar range={view.range} />
       {view.hint === null ? null : (
         <p className="gtn-hint" data-testid="hint">
           {freeHint(view.hint)}

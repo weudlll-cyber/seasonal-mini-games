@@ -34,6 +34,15 @@ export type {
   ViewCtx,
 } from './module.js';
 export { formatNumber } from './format.js';
+export {
+  MARK_COLORS,
+  MARK_SHAPES,
+  markAt,
+  marksOf,
+  tagOf,
+  type MarkShape,
+  type PlayerMark,
+} from './marks.js';
 export { sentinelViews } from './sentinel.js';
 export { buttonText, closestLabel, NO_GUESSES } from './web.js';
 export { inRange, rangeSize, type Range } from './range.js';

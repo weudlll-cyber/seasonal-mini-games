@@ -16,6 +16,17 @@
  */
 
 :root {
+  /* Player markers (./PlayerMark, O62), the same in both themes, each with an ink outline:
+     green, violet, neutral and brown, light and dark, so no hue of a game's heat scale
+     (slate, blue, teal, ochre, orange, red, magenta) is taken by a player. */
+  --mark-1: #2e7d32;
+  --mark-2: #5e35b1;
+  --mark-3: #1b1b1b;
+  --mark-4: #6d4c41;
+  --mark-5: #a5d66f;
+  --mark-6: #c5b3f0;
+  --mark-7: #ffffff;
+  --mark-8: #c8b4a6;
   /* Token colours, exactly these wherever a token is shown, in both themes */
   --color-spring: #afb84e;
   --color-summer: #e06e22;

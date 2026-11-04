@@ -91,6 +91,14 @@
   gap: var(--space-1);
 }
 
+/* The picker's help line: small, one line on a desktop, at most two on a phone. */
+.bd-help {
+  margin: 0;
+  font-size: var(--font-size-small);
+  line-height: 1.25;
+  color: var(--color-text-muted);
+}
+
 .bd-slots {
   margin: 0;
   padding: 0;

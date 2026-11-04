@@ -156,6 +156,7 @@ describe('a solved player in individual mode (O25)', () => {
     const view = {
       range: { low: 1, high: 100 },
       removed: [],
+      newest: [],
       guesses: [
         {
           receiveSeq: 1,

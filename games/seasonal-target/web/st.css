@@ -39,6 +39,14 @@
   flex: none;
 }
 
+/* A phone: the result's grid as wide as the card, a square under the target's line (T195). */
+@media (max-width: 899px) {
+  .st-result > .st-board {
+    flex: none;
+    aspect-ratio: 1;
+  }
+}
+
 .st-area,
 .st-note {
   margin: 0;

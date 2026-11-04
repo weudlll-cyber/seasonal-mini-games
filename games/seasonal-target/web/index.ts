@@ -34,4 +34,6 @@ export const seasonalTargetWeb = {
   // The grid is the input: the platform's board layout hands the input its stage, the left
   // column at full height, to draw the grid into (T123, O51).
   layout: 'board' as const,
+  // 20 players or more: the list, the Players panel and the grid name each by tag (O62).
+  playerTags: true as const,
 };

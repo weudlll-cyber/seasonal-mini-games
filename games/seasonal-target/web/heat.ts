@@ -76,19 +76,22 @@ export interface Tile {
   readonly own: boolean;
   // An own answer is on its way (Frost): with no answer to colour the tile, it shows "…".
   readonly pending: boolean;
-  // Another player's list colour for the corner mark, or null.
-  readonly mark: string | null;
+  // Who guessed the tile, by player key in the order of their guesses (the viewer's own as
+  // `viewerKey`): the first one's tag is the tile's corner mark, and a highlighted player's
+  // tiles stay bright (O62).
+  readonly who: readonly string[];
   // Every guess on the tile in words, for the tooltip and the screen reader.
   readonly words: readonly string[];
 }
 
 interface Players {
   readonly names: Readonly<Record<string, string>>;
-  readonly colors: Readonly<Record<string, string>>;
+  // The viewer's own key, so their tiles are theirs under a highlight too; null: a spectator.
+  readonly viewerKey?: string | null | undefined;
 }
 
-// A player the list has no colour for (none expected): a neutral mark, still named.
-const NEUTRAL = 'var(--color-text-muted)';
+// The key an own guess goes under: the viewer's, or a stand-in without one.
+export const OWN = 'you';
 
 export const tileKey = (c: Cell): string => `${String(c.x)},${String(c.y)}`;
 
@@ -108,22 +111,22 @@ function shotWords(s: Shot, players: Players): string {
 }
 
 // A tile no guess is on.
-export const NO_TILE: Tile = { best: null, own: false, pending: false, mark: null, words: [] };
+export const NO_TILE: Tile = { best: null, own: false, pending: false, who: [], words: [] };
 
 // The closer of the tile's answer so far and a new one (null: not delivered yet).
 const better = (best: Feedback | null, f: Feedback | null): Feedback | null =>
   f === null || (best !== null && !closer(f, best)) ? best : f;
 
-// The tile's corner mark: the first other player's list colour.
-const markOf = (tile: Tile, s: Shot, players: Players): string | null =>
-  tile.mark ?? (s.own ? null : (players.colors[s.playerId ?? ''] ?? NEUTRAL));
+// The player key of a shot: the viewer's own under their key.
+const keyOf = (s: Shot, players: Players): string =>
+  s.own ? (players.viewerKey ?? OWN) : (s.playerId ?? '');
 
 function add(tile: Tile, s: Shot, players: Players): Tile {
   return {
     best: better(tile.best, s.feedback),
     own: tile.own || s.own,
     pending: tile.pending || (s.own && s.feedback === null),
-    mark: markOf(tile, s, players),
+    who: tile.who.includes(keyOf(s, players)) ? tile.who : [...tile.who, keyOf(s, players)],
     words: [...tile.words, shotWords(s, players)],
   };
 }

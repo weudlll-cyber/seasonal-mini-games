@@ -19,14 +19,27 @@
  *                 "answer arriving…" with the seconds left in a small badge. An event (Spring Herald,
  *                 Heatwave, halving, solves, the round opening and ending) is a quieter row; a
  *                 special's own row (Leaf Fall) stands out on the season's tint with its icon
- *                 (T115). Moved out of ./RoundLog to keep each file under the size limit.
- * Depends on:     react, @smg/contracts, @smg/game-sdk (rows, formatNumber), ../season/SeasonIcon,
- *                 ./RoundSide (colours), ./roundMarks.css
+ *                 (T115). With `marks` (a game with player tags, O62) a row starts with the
+ *                 player's marker and tag in place of the dot ("you" for the viewer), and
+ *                 hovering, focusing or (phone) tapping it highlights the player on the
+ *                 game's board, a tap for 3 s; a row of the highlighted player stands out,
+ *                 the others fade. Moved out of ./RoundLog to keep each file under the size
+ *                 limit.
+ * Depends on:     react, @smg/contracts, @smg/game-sdk (rows, formatNumber, marks), @smg/ui
+ *                 (PlayerMark, highlight), ../season/SeasonIcon, ./RoundSide (colours),
+ *                 ./roundMarks.css
  * Used by:        ./RoundLog
  * Spec:           docs/spec/02-game-guess-the-number.md §6.2, §6.3, §12; docs/spec/03-seasonal-specials.md §2.4
  */
 import type { RoundStateView } from '@smg/contracts';
-import { formatNumber, type FeedLine, type GuessRow, type GuessSwatch } from '@smg/game-sdk';
+import {
+  formatNumber,
+  type FeedLine,
+  type GuessRow,
+  type GuessSwatch,
+  type PlayerMark as Mark,
+} from '@smg/game-sdk';
+import { flashHighlight, lit, PlayerMark, setHighlight, useHighlight } from '@smg/ui';
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 
 import { SeasonIcon } from '../season/SeasonIcon.js';
@@ -51,6 +64,8 @@ export interface RowProps {
   readonly bare: boolean;
   readonly open: boolean;
   readonly toggle: () => void;
+  // Every player's tag and marker when the game identifies players by tag (O62), else null.
+  readonly marks: Readonly<Record<string, Mark>> | undefined;
 }
 
 // Pegs before an answer's words (T119): filled for a hit, ringed for a near one, hollow for a
@@ -126,14 +141,49 @@ function Who(p: RowProps): ReactElement | null {
   // The viewer's own rows come without a player: they are "You" (a solved player too, O25).
   const key = p.guess.playerId ?? p.viewerKey;
   const name = p.guess.playerId === null ? 'You' : (p.state.names[key ?? ''] ?? key ?? '');
+  const mark = key === null ? undefined : p.marks?.[key];
   return (
     <>
-      <span className="round-dot" aria-hidden="true" style={dot(p.state, key)} />
+      {mark === undefined ? (
+        <span className="round-dot" aria-hidden="true" style={dot(p.state, key)} />
+      ) : (
+        <PlayerMark mark={mark} />
+      )}
       <span className="round-who" title={name}>
         {name}
       </span>
     </>
   );
+}
+
+// A tagged row's part in the highlight (O62): hover and focus highlight its player while
+// they last, a tap on a phone for 3 s; `data-hl` says whether the row is the highlighted
+// player's ('on') or another's ('off').
+function useRowHighlight(p: RowProps) {
+  const highlighted = useHighlight();
+  const key = p.guess.playerId ?? p.viewerKey;
+  if (p.marks === undefined || key === null) return {};
+  const off = (): void => {
+    setHighlight(null);
+  };
+  return {
+    'data-hl': lit(highlighted, [key]),
+    // Reachable by keyboard on a desktop; a phone's row is a tap target already.
+    tabIndex: p.phone ? undefined : 0,
+    onMouseEnter: () => {
+      setHighlight(key);
+    },
+    onMouseLeave: off,
+    onFocus: () => {
+      setHighlight(key);
+    },
+    onBlur: off,
+    onClick: p.phone
+      ? () => {
+          flashHighlight(key);
+        }
+      : undefined,
+  };
 }
 
 export function GuessLine(p: RowProps): ReactElement {
@@ -153,6 +203,7 @@ export function GuessLine(p: RowProps): ReactElement {
     'data-own': guess.playerId === null,
     'data-solo': p.solo || undefined,
     'data-tier': guess.tier ?? undefined,
+    ...useRowHighlight(p),
   };
   if (p.phone && comment !== null) {
     return (

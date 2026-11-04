@@ -160,6 +160,14 @@ button.round-row-line {
   font-size: var(--font-size-small);
 }
 
+/* A board game's list (the column beside the grid): a comment without room beside the answer
+   goes whole to a second line in its smaller size, wrapping, never cut (T194). */
+.round-live[data-layout='board'] .round-row-line .round-comment {
+  flex: 1 1 14rem;
+  white-space: normal;
+  overflow: visible;
+}
+
 /* A phone's open comment: a second line under the name, past the dot. */
 .round-row > .round-comment {
   display: block;

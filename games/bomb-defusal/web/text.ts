@@ -60,6 +60,11 @@ const harmlessText = (wires: readonly Wire[]): string =>
 
 export const hintText = (wire: Wire): string => `Free hint: cut ${wire} first.`;
 
+// The picker's help line, always in view: the slots fill from the first one the hint leaves
+// free ("they fill 2 → 6" with Spring's colour locked in slot 1, O60).
+export const pickerHelp = (cuts: number, hinted: boolean): string =>
+  `Tap colours in cutting order: they fill ${hinted ? '2' : '1'} → ${String(cuts)}. Tap a filled box to empty it; Clear starts over.`;
+
 // The hint in a few words for the phone's info line (T150): "Hint: red first".
 export const shortHint = (wire: Wire): string => `Hint: ${wire} first`;
 

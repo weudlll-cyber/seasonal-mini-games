@@ -31,6 +31,7 @@ import { useState, type ReactElement } from 'react';
 
 import type { FeedItem } from '../live/useRound.js';
 import { EventLine, GuessLine } from './GuessLine.js';
+import { roundMarks } from './playerMarks.js';
 import { SpecialBanner } from './SpecialBanner.js';
 import { platformLine } from './roundText.js';
 import './roundLog.css';
@@ -148,6 +149,8 @@ export function RoundLog(p: LogProps): ReactElement {
   const newest = rows.find((r) => r.kind === 'guess')?.key ?? null;
   const solo = p.state.secretMode === 'individual';
   const others = p.kind === 'main' && solo ? othersLine(p.state, p.viewerKey) : null;
+  // A game with player tags: every row names its player by tag and marker (O62).
+  const marks = roundMarks(p.state, p.game, p.viewerKey);
   return (
     <section className="round-log" aria-label={p.kind === 'own' ? 'Your guesses' : 'Guesses'}>
       {p.kind === 'all' ? null : (
@@ -173,6 +176,7 @@ export function RoundLog(p: LogProps): ReactElement {
                 phone={p.phone}
                 solo={solo}
                 bare={p.kind === 'own'}
+                marks={marks}
                 open={comments.isOpen(row.key, row.key === newest)}
                 toggle={() => {
                   comments.toggle(row.key);

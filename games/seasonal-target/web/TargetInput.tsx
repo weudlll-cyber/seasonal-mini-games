@@ -41,6 +41,7 @@ import { TypedSteer } from './Steer.js';
 import { CODES } from './text.js';
 import { TileGrid } from './TileGrid.js';
 import { cellWords } from './words.js';
+import { marksFor } from './players.js';
 
 // The platform's cooldown ring for the row, and the round's stage the board is drawn into (O51).
 export type StInputProps = PlayerPanelProps & {
@@ -194,6 +195,7 @@ export function TargetInput(props: StInputProps): ReactElement {
     quarters: view.hint,
     fallen: view.fallen,
     tiles: tilesOf(shotsOf(view.guesses, view.log), props),
+    marks: marksFor(props),
   };
   return (
     <>
@@ -202,6 +204,7 @@ export function TargetInput(props: StInputProps): ReactElement {
           {...grid}
           variant="board"
           numbers={readable(size.px)}
+          tags={readable(size.px)}
           selected={t.selected}
           gridRef={size.ref}
           label="The grid. Arrow keys move the selection, Enter guesses."

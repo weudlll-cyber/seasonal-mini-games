@@ -3,8 +3,9 @@
  * @module games/bomb-defusal/web
  * @brief  Styles of Seasonal Bomb Defusal's result panel: the secret, every player's cuts.
  *
- * Responsibility: the revealed sequence and the players' sequences in colour dots (T150),
- *                 from the design tokens only, light and dark. Every class starts with `bd-`.
+ * Responsibility: the revealed sequence as compact chips that wrap as wholes, never sideways
+ *                 or cut, and the players' sequences in colour dots (T150), from the design
+ *                 tokens only, light and dark. Every class starts with `bd-`.
  * Spec:           docs/spec/02c-game-bomb-defusal.md §9
  */
 .bd-result {
@@ -23,21 +24,22 @@
   margin: 0;
 }
 
-/* The secret on one line on a desktop (night-7 review: the chips wrapped at 1280 × 720). */
+/* The secret on a desktop in the body's size. The chips wrap as wholes, each number beside its
+   chip, so the sequence never scrolls sideways or cuts a colour at any width. */
 @media (min-width: 900px) {
   .bd-secret {
     font-size: inherit;
   }
+}
 
-  .bd-secret .bd-sequence {
-    flex-wrap: nowrap;
-  }
+.bd-secret .bd-sequence {
+  min-width: 0;
+}
 
-  /* Each number stays beside its chip. */
-  .bd-secret .bd-sequence li {
-    flex: none;
-    white-space: nowrap;
-  }
+.bd-secret .bd-sequence li {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
 }
 
 /* Every player's sequences in full, below the result's first part (T150). */

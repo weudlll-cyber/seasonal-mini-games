@@ -25,6 +25,7 @@ import { intent, serverNow } from '../live/socket.js';
 import { CooldownRing } from './CooldownRing.js';
 import { colorsOf } from './RoundSide.js';
 import { codeText, solvedText } from './roundText.js';
+import { roundMarks } from './playerMarks.js';
 
 interface PlayProps {
   readonly state: RoundStateView;
@@ -90,6 +91,8 @@ export function InputRow({
         waitS={waitOf(state, me.cooldownEndsAt, now)}
         names={state.names}
         colors={colorsOf(state)}
+        marks={roundMarks(state, game, viewerKey)}
+        viewerKey={viewerKey}
         ring={ring}
         stage={stage}
       />

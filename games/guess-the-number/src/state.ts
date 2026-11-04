@@ -59,6 +59,8 @@ export interface GtnState extends GuessBase<number, Feedback> {
   readonly range: Range;
   // Numbers no one may guess any more (Leaf Fall), ascending.
   readonly removed: readonly number[];
+  // The last three numbers to fall, in the order they fell (the phone's line, O58).
+  readonly newest: readonly number[];
   readonly players: Readonly<Record<string, PlayerState>>;
   // Shared mode: the one hint everyone got.
   readonly hint: Hint | null;
@@ -101,6 +103,7 @@ export function createState(input: RoundInput<GtnConfig>): GtnState {
     initial,
     range: initial,
     removed: [],
+    newest: [],
     players,
     hint: null,
   };
@@ -113,7 +116,11 @@ export function evolveGame(state: GtnState, event: GtnOwnEvent): GtnState {
         ? { ...state, hint: event.hint }
         : withPlayer(state, event.playerId, (p) => ({ ...p, hint: event.hint }));
     case 'NumbersRemoved':
-      return { ...state, removed: [...state.removed, ...event.numbers].sort((a, b) => a - b) };
+      return {
+        ...state,
+        removed: [...state.removed, ...event.numbers].sort((a, b) => a - b),
+        newest: [...state.newest, ...event.numbers].slice(-3),
+      };
     case 'RangeHalved':
       return halved(state, event);
   }

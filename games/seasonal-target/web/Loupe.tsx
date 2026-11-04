@@ -60,7 +60,7 @@ export function useLoupe(map: MapSize) {
 
 type LoupeState = ReturnType<typeof useLoupe>;
 
-type GridParts = Pick<TileGridProps, 'map' | 'area' | 'quarters' | 'fallen' | 'tiles'>;
+type GridParts = Pick<TileGridProps, 'map' | 'area' | 'quarters' | 'fallen' | 'tiles' | 'marks'>;
 
 export function Loupe(p: {
   readonly loupe: LoupeState;
@@ -84,6 +84,8 @@ export function Loupe(p: {
         shown={shown}
         variant="loupe"
         numbers
+        // The loupe's large tiles always carry the tags (O62).
+        tags
         selected={p.selected}
         label="Tiles around your tap"
         onTile={p.pick}

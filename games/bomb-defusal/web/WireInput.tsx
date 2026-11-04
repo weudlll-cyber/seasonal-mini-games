@@ -3,7 +3,9 @@
  * @module games/bomb-defusal/web
  * @brief  The input row: sequence slots, wire buttons, and the ring with Undo, Clear and Cut.
  *
- * Responsibility: `cuts` numbered slots, a filled one with swatch and name, a button that
+ * Responsibility: one help line above the picker, always in view ("Tap colours in cutting
+ *                 order: they fill 1 → 6. …"); `cuts` numbered slots, a filled one with
+ *                 swatch and name, a button that
  *                 empties just that slot; Spring Herald's colour locked in slot 1, outlined in
  *                 the season colour and named "hint: red in place 1" (O60); one button per wire in palette order (swatch and name, at least 44 px),
  *                 disabled with its slot number once in the slots, with a crossed swatch, a
@@ -24,7 +26,7 @@ import { buttonText, type PlayerPanelProps } from '@smg/game-sdk';
 import type { ReactElement, ReactNode } from 'react';
 
 import { Explosion, useExplosion } from './Explosion.js';
-import { takeOutText } from './text.js';
+import { pickerHelp, takeOutText } from './text.js';
 import { useSequence, type Slot } from './useSequence.js';
 import { Swatch, WireChip } from './WireChip.js';
 
@@ -115,6 +117,28 @@ function WireButton(p: {
   );
 }
 
+// One button per wire in palette order, each showing its slot once it is in one.
+function WireButtons(p: {
+  readonly view: PlayerView;
+  readonly seq: ReturnType<typeof useSequence>;
+}): ReactElement {
+  const { view, seq } = p;
+  return (
+    <div className="bd-wires" data-count={view.wires.length}>
+      {view.wires.map((w) => (
+        <WireButton
+          key={w}
+          wire={w}
+          slot={seq.slots.indexOf(w)}
+          harmless={view.harmless.includes(w)}
+          full={seq.full}
+          onAdd={seq.add}
+        />
+      ))}
+    </div>
+  );
+}
+
 export function WireInput(props: PlayerPanelProps & { readonly ring?: ReactNode }): ReactElement {
   const view = props.view as PlayerView;
   const s = useSequence(view, props.act, props.canAct);
@@ -122,19 +146,11 @@ export function WireInput(props: PlayerPanelProps & { readonly ring?: ReactNode 
   const stale = s.slots.find((w): w is Wire => w !== null && view.harmless.includes(w));
   return (
     <div className="bd-input" onKeyDown={s.onKey} data-testid="bd-input">
+      <p className="bd-help" data-testid="bd-help">
+        {pickerHelp(view.cuts, s.locked)}
+      </p>
       <Slots slots={s.slots} locked={s.locked} view={view} onEmpty={s.empty} />
-      <div className="bd-wires" data-count={view.wires.length}>
-        {view.wires.map((w) => (
-          <WireButton
-            key={w}
-            wire={w}
-            slot={s.slots.indexOf(w)}
-            harmless={view.harmless.includes(w)}
-            full={s.full}
-            onAdd={s.add}
-          />
-        ))}
-      </div>
+      <WireButtons view={view} seq={s} />
       <div className="bd-actions">
         {props.ring}
         <button

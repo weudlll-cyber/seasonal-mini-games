@@ -26,6 +26,7 @@ import { SPECIALS } from '../season/season.js';
 import { FocusPanel } from './FocusPanel.js';
 import { colorsOf } from './RoundSide.js';
 import type { Panels } from './usePanels.js';
+import { roundMarks } from './playerMarks.js';
 
 // The game's panel: a roster player's (it only shows; guesses go through the dock), or the
 // spectator's.
@@ -41,6 +42,8 @@ export function GamePart(p: {
     view: state.game,
     names: state.names,
     colors: colorsOf(state),
+    marks: roundMarks(state, game, state.you ?? null),
+    viewerKey: state.you ?? null,
     season: state.season,
     specialOn: state.specialOn,
   };

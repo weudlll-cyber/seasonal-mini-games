@@ -54,6 +54,7 @@ describe('player view', () => {
     expect(open).toEqual({
       range: { low: 1, high: 1_000 },
       removed: [],
+      newest: [],
       guesses: [
         {
           receiveSeq: 1,

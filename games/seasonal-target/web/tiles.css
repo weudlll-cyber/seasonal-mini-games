@@ -10,11 +10,12 @@
  *                 (`.st-board` is a size container that takes the free height; the grid is the
  *                 smaller of its width and height), in the loupe at least 44 px a tile (the
  *                 loupe's box in ./loupe.css). Empty tiles outside the target area dimmed, Spring's
- *                 quarter a fixed green with a "Hint" tag (O51), fallen tiles hatched (a
+ *                 two quarters a fixed green with a "Hint" tag (O51, O61), fallen tiles hatched (a
  *                 pattern, not colour alone), the viewer's
- *                 own tiles framed inside, an ink ring around the viewer's own colour, others'
- *                 with a corner dot ringed in the empty tile's colour, the number moved clear
- *                 of it, the selection outlined outside the tile in the text colour, the
+ *                 own tiles framed inside, an ink ring around the viewer's own colour, the
+ *                 first guesser's tag and marker in the corner (O62), the number moved clear
+ *                 of it, a highlighted player's tiles ringed and the other guessed ones
+ *                 faded, the selection outlined outside the tile in the text colour, the
  *                 result's target ringed. Numbers scale with their tile (container units).
  *                 Classes are prefixed `st-`.
  * Spec:           docs/spec/02d-game-seasonal-target.md §6, §8, §9, §11
@@ -124,7 +125,7 @@
   color: var(--st-on-quarter);
 }
 
-/* A corner dot: the number moves down, clear of it. */
+/* A corner tag: the number moves down, clear of it. */
 .st-tile[data-marked='true'] .st-face {
   translate: 0 12cqh;
 }
@@ -189,16 +190,31 @@
     inset 0 0 0 2.5px var(--st-own);
 }
 
-/* Another player's guess: a small dot in their list colour in the top right corner, ringed
-   2 px in the empty tile's colour so it shows on every fill. */
-.st-mark {
+/* The first guesser's tag with their marker in the top left corner (O62), on a card pill so
+   it reads on every fill; tiles under 20 px leave it out (./TileGrid `tags`). */
+.st-tag {
   position: absolute;
-  top: 8%;
-  right: 8%;
-  width: 22%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  box-shadow: 0 0 0 2px var(--st-empty);
+  z-index: 1;
+  top: 1px;
+  left: 1px;
+  padding: 0 0.12em;
+  border-radius: 2px;
+  background: var(--color-card);
+  color: var(--color-text);
+  font-size: max(0.5rem, 26cqmin);
+  line-height: 1.1;
+}
+
+/* A highlighted player (a hovered row or tile): their tiles bright and ringed, the other
+   guessed tiles faded. */
+.st-tile[data-hl='on'] {
+  z-index: 1;
+  outline: 3px solid var(--color-text);
+  outline-offset: -1px;
+}
+
+.st-tile[data-hl='off'] {
+  opacity: 0.3;
 }
 
 /* The selection: a thick outline outside the tile, unlike the own frame inside it. */

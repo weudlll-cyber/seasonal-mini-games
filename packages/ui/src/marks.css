@@ -1,0 +1,41 @@
+/*
+ * @file   packages/ui/src/marks.css
+ * @module ui
+ * @brief  A player's marker and tag (./PlayerMark): shape, colour and the tag text.
+ *
+ * Responsibility: the marker is 0.75em, drawn in the player's colour (`--mark`) with an ink
+ *                 outline, so it shows on any background (the heat fills of a tile, a light
+ *                 or dark card); a ring is the outline in the colour, a square has small
+ *                 corners. The tag is tabular, bold and never wraps (O62).
+ * Spec:           docs/spec/02d-game-seasonal-target.md §11
+ */
+.smg-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2em;
+  flex: none;
+  white-space: nowrap;
+}
+
+.smg-mark-shape {
+  flex: none;
+  width: 0.75em;
+  height: 0.75em;
+  border-radius: 50%;
+  background: var(--mark);
+  box-shadow: 0 0 0 1px var(--color-text);
+}
+
+.smg-mark-shape[data-shape='ring'] {
+  background: transparent;
+  border: 0.2em solid var(--mark);
+}
+
+.smg-mark-shape[data-shape='square'] {
+  border-radius: 2px;
+}
+
+.smg-mark-tag {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-strong);
+}

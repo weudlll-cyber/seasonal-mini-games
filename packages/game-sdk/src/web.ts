@@ -21,6 +21,7 @@
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/02-game-guess-the-number.md §12
  */
 import type { Season } from './module.js';
+import type { PlayerMark } from './marks.js';
 
 export interface ActReply {
   readonly ok: boolean;
@@ -50,12 +51,18 @@ export interface PlayerPanelProps {
   // a game that draws players elsewhere too (Seasonal Target's dots, T125).
   readonly names: Readonly<Record<string, string>>;
   readonly colors: Readonly<Record<string, string>>;
+  // A game with player tags (O62): every player's tag and marker, as the list shows them, and
+  // the viewer's own key; absent for the other games.
+  readonly marks?: Readonly<Record<string, PlayerMark>> | undefined;
+  readonly viewerKey?: string | null | undefined;
 }
 
 export interface SpectatorPanelProps {
   readonly view: unknown;
   readonly names: Readonly<Record<string, string>>;
   readonly colors: Readonly<Record<string, string>>;
+  readonly marks?: Readonly<Record<string, PlayerMark>> | undefined;
+  readonly viewerKey?: string | null | undefined;
   readonly season: Season;
   readonly specialOn: boolean;
 }
@@ -68,6 +75,7 @@ export interface ResultPanelProps {
   readonly names: Readonly<Record<string, string>>;
   readonly colors: Readonly<Record<string, string>>;
   readonly viewerKey: string | null;
+  readonly marks?: Readonly<Record<string, PlayerMark>> | undefined;
   readonly part: 'reveal' | 'history';
 }
 

@@ -1,12 +1,13 @@
 /**
  * @file   apps/web/src/round/roundMarks.css
  * @module web/round
- * @brief  The marks inside a guess row: an answer's pegs and a guess's colour dots.
+ * @brief  The marks inside a guess row: pegs, colour dots, a player's tag; the highlight.
  *
  * Responsibility: pegs before an answer's words (T119: filled for a hit, ringed for a near
  *                 one, hollow for a miss, in the answer's colour) and a guess drawn as colour
  *                 dots in order (T143), each with one grey ring for every colour, as on the wire
- *                 swatches (T139). Moved out of ./roundLog.css to keep each file under the size
+ *                 swatches (T139); a tagged row's highlight (O62): the highlighted player's
+ *                 rows ringed, the others faded. Moved out of ./roundLog.css to keep each file under the size
  *                 limit. Colours only from @smg/ui tokens and the game's own fills.
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/02b-game-safecracker.md §10
  */
@@ -51,4 +52,14 @@
   border-radius: 50%;
   border: 2px solid #7a808c;
   background: var(--swatch);
+}
+
+/* A game with player tags (O62): the highlighted player's rows ringed, the others faded. */
+.round-row[data-hl='on'] {
+  outline: 2px solid var(--color-text);
+  outline-offset: -2px;
+}
+
+.round-row[data-hl='off'] {
+  opacity: 0.45;
 }

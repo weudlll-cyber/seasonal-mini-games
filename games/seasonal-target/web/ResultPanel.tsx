@@ -28,6 +28,7 @@ import { HeatLegend } from './HeatLegend.js';
 import { readable, useTileSize } from './measure.js';
 import { TileGrid } from './TileGrid.js';
 import { cellText, cellWords, shortAnswer } from './words.js';
+import { marksFor } from './players.js';
 
 // The guesses on the grid: everyone's with a shared target, the viewer's own with their own.
 function resultShots(v: ResultView, viewer: string | null): Shot[] {
@@ -85,8 +86,10 @@ function Reveal(props: ResultPanelProps): ReactElement {
           quarters={null}
           fallen={v.fallen}
           tiles={tilesOf(resultShots(v, viewerKey), props)}
+          marks={marksFor(props)}
           variant="board"
           numbers={readable(size.px)}
+          tags={readable(size.px)}
           gridRef={size.ref}
           target={target}
           label="The grid with the target and every guess."

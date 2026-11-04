@@ -79,6 +79,10 @@ export function renderInput(view: PlayerView, canAct = true, waitS: number | nul
   return p.act;
 }
 
+// What a tile says, without its corner tag (O62): the distance, the glyph or "…".
+export const faceOf = (tile: Element | null | undefined): string =>
+  tile?.querySelector('.st-face')?.textContent ?? '';
+
 // A browser whose grids are drawn `px` wide, a phone's or not.
 export function screenOf(px: number, phone: boolean): void {
   vi.stubGlobal(

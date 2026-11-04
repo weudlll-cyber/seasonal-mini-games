@@ -17,6 +17,7 @@ export const held = { feedback: null, tier: null, comment: null };
 export const view = {
   range: { low: 1, high: 1_000 },
   removed: [5, 6],
+  newest: [6, 5],
   guesses: [
     { receiveSeq: 1, receivedAt: 1_000, value: 300, ...answered },
     { receiveSeq: 3, receivedAt: 5_000, value: 700, ...held },

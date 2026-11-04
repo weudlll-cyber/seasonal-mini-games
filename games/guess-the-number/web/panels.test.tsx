@@ -4,12 +4,12 @@
  * @module games/guess-the-number/web
  * @brief  The game's panels and words: range bar, guess field, guess rows, event lines.
  *
- * Responsibility: the range block names the range and the fallen numbers, or "Any whole
- *                 number" while the range is hidden, and nothing narrowed (O17); the player
+ * Responsibility: the range block names the range, or "Any whole number" while the range
+ *                 is hidden, and nothing narrowed (O17); the player
  *                 panel shows the range and the hint, and its input row waits for the cooldown
  *                 ("Wait 6 s", T125; the input row's own tests are ./input.test); the range
- *                 heading keeps its two numbers together and
- *                 dense fallen numbers merge into hatched gaps; the spectator and result
+ *                 heading keeps its two numbers together (the fallen numbers: ./fallen.test);
+ *                 the spectator and result
  *                 panels show what their views hold, the result with the range; the views become the list's guess
  *                 rows, pending while Frost holds them, own and others' alike (O20, O21, T150); every room event
  *                 has its plain line, and guesses none (they are rows); the intro line names
@@ -34,13 +34,13 @@ afterEach(() => {
 });
 
 describe('the range block', () => {
-  it('names the range and the fallen numbers, or that the range is hidden', () => {
-    render(<RangeBar range={{ low: -500, high: 500 }} removed={view.removed} />);
+  it('names the range, or that the range is hidden', () => {
+    render(<RangeBar range={{ low: -500, high: 500 }} />);
     expect(screen.getByTestId('range').textContent).toContain(
       'The number is somewhere between -500 and 500',
     );
     cleanup();
-    render(<RangeBar range={null} removed={[]} />);
+    render(<RangeBar range={null} />);
     expect(screen.getByTestId('range').textContent).toBe(
       'Any whole numberThe range is hidden. Negative numbers are possible.',
     );
@@ -49,26 +49,9 @@ describe('the range block', () => {
 
 describe('the range block on a phone', () => {
   it('keeps the two numbers of the heading on one line together', () => {
-    render(<RangeBar range={{ low: 1, high: 1_000 }} removed={[]} />);
+    render(<RangeBar range={{ low: 1, high: 1_000 }} />);
     const together = screen.getByText('1 and 1,000');
     expect(together.className).toBe('gtn-nowrap');
-  });
-
-  it('merges close fallen numbers into one hatched gap, a run of fallen ones into a solid one', () => {
-    // Every third number up to 300 (15 numbers are 1.5 % of the bar), 500–510, and 900 alone.
-    const thirds = Array.from({ length: 100 }, (_, i) => 1 + 3 * i);
-    const run = Array.from({ length: 11 }, (_, i) => 500 + i);
-    render(<RangeBar range={{ low: 1, high: 1_000 }} removed={[900, ...run, ...thirds]} />);
-    const gaps = screen.getAllByTestId('range-gap');
-    expect(gaps.map((g) => g.className)).toEqual([
-      'gtn-range-gap gtn-range-gap--merged',
-      'gtn-range-gap',
-      'gtn-range-gap',
-    ]);
-    // From 1 to 298: 298 numbers of 1 000, centred on the middle of their share.
-    expect(gaps[0]?.style.left).toBe('14.9%');
-    expect(gaps[0]?.style.getPropertyValue('--gtn-span')).toBe('29.8%');
-    expect(gaps[2]?.style.getPropertyValue('--gtn-span')).toBe('0.1%');
   });
 });
 

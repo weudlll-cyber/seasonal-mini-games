@@ -767,6 +767,7 @@
       902,
       903
      ],
+     "newest": [],
      "guesses": [
       {
        "receiveSeq": 1,
@@ -930,6 +931,7 @@
       902,
       903
      ],
+     "newest": [],
      "hint": {
       "kind": "lastDigit",
       "digit": 1
@@ -1799,6 +1801,9 @@
       830,
       834
      ],
+     "newest": [
+      830
+     ],
      "guesses": [
       {
        "receiveSeq": 1,
@@ -1956,6 +1961,9 @@
      "removed": [
       830,
       834
+     ],
+     "newest": [
+      830
      ],
      "hint": {
       "kind": "lastDigit",
@@ -2965,6 +2973,7 @@
       619,
       645
      ],
+     "newest": [],
      "guesses": [
       {
        "receiveSeq": 1,
@@ -3140,6 +3149,11 @@
       887,
       946,
       956
+     ],
+     "newest": [
+      860,
+      877,
+      887
      ],
      "hint": null,
      "log": [
@@ -4146,6 +4160,7 @@
       619,
       645
      ],
+     "newest": [],
      "guesses": [
       {
        "receiveSeq": 1,
@@ -4321,6 +4336,11 @@
       887,
       946,
       956
+     ],
+     "newest": [
+      860,
+      877,
+      887
      ],
      "hint": null,
      "log": [
@@ -5341,6 +5361,11 @@
       980,
       981
      ],
+     "newest": [
+      962,
+      970,
+      980
+     ],
      "guesses": [
       {
        "receiveSeq": 1,
@@ -5516,6 +5541,11 @@
       971,
       980,
       981
+     ],
+     "newest": [
+      962,
+      970,
+      980
      ],
      "hint": {
       "kind": "lastDigit",
@@ -6386,6 +6416,7 @@
       970,
       975
      ],
+     "newest": [],
      "guesses": [
       {
        "receiveSeq": 1,
@@ -6544,6 +6575,7 @@
       970,
       975
      ],
+     "newest": [],
      "hint": {
       "kind": "lastDigit",
       "digit": 6
@@ -7550,6 +7582,10 @@
       637,
       638
      ],
+     "newest": [
+      578,
+      607
+     ],
      "guesses": [
       {
        "receiveSeq": 1,
@@ -7725,6 +7761,11 @@
       821,
       823,
       859
+     ],
+     "newest": [
+      578,
+      607,
+      823
      ],
      "hint": null,
      "log": [
@@ -8729,6 +8770,10 @@
       637,
       638
      ],
+     "newest": [
+      578,
+      607
+     ],
      "guesses": [
       {
        "receiveSeq": 1,
@@ -8904,6 +8949,11 @@
       821,
       823,
       859
+     ],
+     "newest": [
+      578,
+      607,
+      823
      ],
      "hint": null,
      "log": [
@@ -9917,6 +9967,7 @@
       934,
       938
      ],
+     "newest": [],
      "guesses": [
       {
        "receiveSeq": 1,
@@ -10086,6 +10137,7 @@
       934,
       938
      ],
+     "newest": [],
      "hint": {
       "kind": "lastDigit",
       "digit": 7
@@ -10954,6 +11006,7 @@
      "removed": [
       928
      ],
+     "newest": [],
      "guesses": [
       {
        "receiveSeq": 1,
@@ -11111,6 +11164,7 @@
      "removed": [
       928
      ],
+     "newest": [],
      "hint": {
       "kind": "lastDigit",
       "digit": 7
@@ -12111,6 +12165,7 @@
       "high": 444
      },
      "removed": [],
+     "newest": [],
      "guesses": [
       {
        "receiveSeq": 1,
@@ -12285,6 +12340,11 @@
       873,
       911,
       914,
+      955
+     ],
+     "newest": [
+      734,
+      911,
       955
      ],
      "hint": null,
@@ -13284,6 +13344,7 @@
       "high": 444
      },
      "removed": [],
+     "newest": [],
      "guesses": [
       {
        "receiveSeq": 1,
@@ -13458,6 +13519,11 @@
       873,
       911,
       914,
+      955
+     ],
+     "newest": [
+      734,
+      911,
       955
      ],
      "hint": null,

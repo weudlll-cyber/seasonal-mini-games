@@ -45,6 +45,15 @@
   grid-template-rows: auto auto auto;
 }
 
+/* A phone: a board game's grid is a square as wide as the card (Seasonal Target's st.css), so
+   the part is as tall as its content (T195). */
+@media (max-width: 899px) {
+  .round-result[data-layout='board'] .round-result-first {
+    height: auto;
+    grid-template-rows: auto auto auto;
+  }
+}
+
 /* Every placing shown: the part grows and the page scrolls. */
 .round-result-first:has([data-testid='all-placings'][aria-expanded='true']) {
   height: auto;
@@ -137,6 +146,16 @@
     grid-template-areas:
       'head head'
       'game places';
+  }
+
+  /* A board game's grid takes the part's full free height: the placings keep their narrowest
+     column, so the game's is wide enough for a square of that height (T195). */
+  .round-result[data-layout='board'] .round-result-first {
+    grid-template-columns: minmax(0, 1fr) 22rem;
+  }
+
+  .round-result[data-layout='board'] .round-col-num {
+    width: 4.75rem;
   }
 
   .round-result-head {

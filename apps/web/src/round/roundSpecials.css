@@ -3,8 +3,9 @@
  * @module web/round
  * @brief  The season special in the running round: the banner, the season pill and its note.
  *
- * Responsibility: the banner (./SpecialBanner) is one line in the season colour with the
- *                 text colour made for it, in the list head's place (T142); empty it takes no
+ * Responsibility: the banner (./SpecialBanner) in the season colour with the text colour
+ *                 made for it, in the list head's place (T142), wrapping rather than cut
+ *                 (T194); empty it takes no
  *                 room; it fades in unless the person asked for reduced motion. The season
  *                 pill (./SeasonPill) in its token colour with icon, season, special and the
  *                 halving badge, on a phone smaller and the special's button with a small round
@@ -13,8 +14,8 @@
  *                 @smg/ui tokens.
  * Spec:           docs/spec/03-seasonal-specials.md §6; docs/spec/02-game-guess-the-number.md §12
  */
-/* The banner: one line in the season colour in the list head's place (T142), cut with an
-   ellipsis, never wrapping and never pushing the list down; empty it takes no room. */
+/* The banner: the season colour in the list head's place (T142); a sentence longer than the
+   head wraps, never cut (T194); empty it takes no room. */
 .round-banner {
   flex: 1;
   min-width: 0;
@@ -24,9 +25,8 @@
   background: var(--season);
   color: var(--color-on-season);
   font-weight: var(--font-weight-strong);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
   animation: round-banner-in var(--duration-fast) ease-out;
 }
 

@@ -81,6 +81,10 @@ Built as described in 02 §12 and DECISIONS T128–T132 and T134–T136 (O47–O
 **Play-test fixes, to confirm** (proposals; built on `feat/guess-games` after the owner's play-test of 2026-11-04):
 
 - Spring Herald (T187–T191): Guess The Number keeps the host option `half` beside the new default `lastDigit`; the phone's hint chip in the season colour in every game; Safecracker refuses a paste that changes the locked digit ("Place 2 keeps the hint, 3."); Bomb Defusal's Undo and Clear stay disabled while only the locked hint is in the slots; Seasonal Target's wording "one of the two green quarters, north-west (…) or south-east (…)" and "Hint: NW or SE".
+- Bomb Defusal (T193): the help line's wording above the picker; the chips of the revealed sequence wrap as wholes.
+- Every game (T194): a special's banner wraps instead of being cut; in Seasonal Target's list a comment wraps to a second line.
+- Seasonal Target (T196): the eight marker colours and three shapes; bots' short tags ("b7"); a lit tile shows the highlighted player's tag; the corner tag from 20 px tiles up.
+- Guess The Number's fallen numbers (T192): three rows of chips in the desktop panel before "+N more"; the phone's line lists the newest three newest first ("Fallen 12: 902, 77, 431"); the range bar stays as a plain season-coloured bar.
 - Account page (T201): an account the website made shows no "Change password", only "You sign in through the website, so this account has no password here." and "Delete my account".
 - Long names (T202): every display name on one line with an ellipsis and its full name as the tooltip (round panels, result tables, waiting area, chat, admin tables); the waiting area's and the Players panel's team columns of one width with the team's icon and name, the Players panel newly with the icon.
 

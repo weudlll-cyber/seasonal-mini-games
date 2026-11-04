@@ -192,8 +192,9 @@ test('journey 26: Bomb Defusal in focus mode', async ({ browser }) => {
       for (const wire of order) await page.getByTestId(`wire-${wire}`).click();
       await page.getByTestId('cut-button').click();
     },
-    // Its wire picker is larger: 6 rows on a phone.
-    { targets: { rows: [18, 6] }, round: { settings: { 'bomb.wires': 8, 'bomb.cuts': 6 } } },
+    // Its wire picker is larger: 6 rows on a phone; the picker's help line takes one row on a
+    // desktop (T193), 17 of the spec's 14 or more.
+    { targets: { rows: [17, 6] }, round: { settings: { 'bomb.wires': 8, 'bomb.cuts': 6 } } },
   );
 });
 

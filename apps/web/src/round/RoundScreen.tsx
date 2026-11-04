@@ -19,7 +19,7 @@
  * Spec:           docs/spec/02-game-guess-the-number.md §4, §7, §11, §12; docs/spec/03-seasonal-specials.md §2, §6
  */
 import { GAME_SCREENS } from '@smg-game/registry/web';
-import type { MatchStandingView, TeamName } from '@smg/contracts';
+import type { MatchStandingView, RoundStateView, TeamName } from '@smg/contracts';
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 
 import { serverNow } from '../live/socket.js';
@@ -33,6 +33,7 @@ import { RoundIntro } from './RoundIntro.js';
 import { playerColor } from './RoundSide.js';
 import { ruleOf } from './SeasonPill.js';
 import { useRoundView } from './useRoundView.js';
+import { roundMarks } from './playerMarks.js';
 import './round.css';
 
 interface RoundScreenProps {
@@ -47,6 +48,15 @@ interface RoundScreenProps {
   // The match's chat, a panel from the round bar (./FocusShell), or null without a chat.
   readonly chat: ReactNode;
 }
+
+// The season's colour, and the viewer's own colour as their dot's (their team's, or their
+// roster colour): own rows and a board game's own tiles take it, so the list and the board
+// agree (night 6).
+const screenStyle = (state: RoundStateView, viewerKey: string | null) =>
+  ({
+    '--season': seasonColor(state.season),
+    '--own': viewerKey === null ? undefined : playerColor(state, viewerKey),
+  }) as CSSProperties;
 
 export function RoundScreen(props: RoundScreenProps): ReactElement {
   const { state } = props.live;
@@ -75,16 +85,10 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
       now={now}
       rule={rule}
       view={view}
-      // The viewer's own colour is their dot's (their team's, or their roster colour): own rows
-      // and a board game's own tiles take it, so the list and the board agree (night 6).
-      style={
-        {
-          '--season': seasonColor(state.season),
-          '--own': props.viewerKey === null ? undefined : playerColor(state, props.viewerKey),
-        } as CSSProperties
-      }
+      style={screenStyle(state, props.viewerKey)}
       layout={game?.layout ?? 'list'}
       viewerKey={props.viewerKey}
+      marks={roundMarks(state, game, props.viewerKey)}
       teamPoints={props.teamPoints}
       chat={props.chat}
       host={props.host}

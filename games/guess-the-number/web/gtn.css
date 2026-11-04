@@ -5,11 +5,10 @@
  *
  * Responsibility: colours only from the design tokens (light and dark, Bingo 01 §13); the bar
  *                 takes the round's season colour from `--season`, set by the platform's
- *                 round screen, and fallen numbers are dark gaps in it, at least 4 px wide,
- *                 close ones merged into hatched gaps; the heading keeps its two numbers
- *                 together; Spring Herald's hint is a highlighted line (O35); the Fallen
- *                 numbers panel of a Leaf Fall round as a sheet of wrapping chips behind its
- *                 "Fallen (N)" button (T115); the range block stays compact, so the
+ *                 round screen; the heading keeps its two numbers together; Spring Herald's
+ *                 hint is a highlighted line (O35); the fallen numbers of a Leaf Fall round
+ *                 as plain chips in three rows, the rest behind "+N more" (O58); the range
+ *                 block stays compact, so the
  *                 platform's guess list under it keeps the room (O20, O46); layouts work down
  *                 to 390 px wide.
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §2.3, §6
@@ -43,12 +42,10 @@
 }
 
 .gtn-range-bar {
-  position: relative;
   height: 1.25rem;
   border-radius: var(--radius-pill);
   background: var(--season, var(--color-accent));
   border: 1px solid var(--color-border);
-  overflow: hidden;
 }
 
 /* The two numbers of the heading stay on one line together ("1 and 1,000"). */
@@ -56,70 +53,52 @@
   white-space: nowrap;
 }
 
-/* Fallen numbers: a gap over their share of the bar (`--gtn-span`), at least 4 px wide,
-   centred on them, in the dark colour that stands out on every season colour (O35). */
-.gtn-range-gap {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: max(4px, var(--gtn-span, 0%));
-  transform: translateX(-50%);
-  background: var(--color-on-season);
+/* The fallen numbers in the panel (./FallenNumbers, O58): plain chips, ascending, three rows on
+   a desktop (whole rows, the rest behind "+N more"); every one in the phone's sheet. */
+.gtn-fallen {
+  display: grid;
+  gap: 0.25rem;
+  justify-items: start;
 }
 
-/* Close fallen numbers merged with ones still in play between them (./RangeBar): hatched in
-   the same dark colour, so the bar still reads as a bar with holes. */
-.gtn-range-gap--merged {
-  background: repeating-linear-gradient(135deg, var(--color-on-season) 0 2px, transparent 2px 5px);
+.gtn-fallen-title {
+  margin: 0;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-strong);
 }
 
-/* The Fallen numbers panel (./FallenNumbers): a "Fallen (N)" button beside the range's bar,
-   so the guess list keeps its rows in the round's narrow right column (O46); open, a sheet
-   over the round, opaque as menus are, closed by Close or Escape. The heading keeps the
-   block's whole width: the range's parts join the block's grid, the button beside the bar. */
-.gtn-player:has(.gtn-fallen),
-.gtn-spectator:has(.gtn-fallen) {
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
+.gtn-fallen-list {
+  /* The items' offset parent, so ./useFit can tell which rows show (@smg/ui). */
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  overflow: hidden;
+  max-height: calc(3 * 1.5rem + 2 * 0.25rem);
 }
 
-.gtn-player:has(.gtn-fallen) > .gtn-range,
-.gtn-spectator:has(.gtn-fallen) > .gtn-range {
-  display: contents;
+.gtn-fallen-list li {
+  padding: 0 0.45rem;
+  line-height: calc(1.5rem - 2px);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-border-strong);
+  background: var(--color-card);
+  font-size: var(--font-size-small);
+  font-variant-numeric: tabular-nums;
 }
 
-.gtn-player:has(.gtn-fallen) .gtn-range-title,
-.gtn-spectator:has(.gtn-fallen) .gtn-range-title,
-.gtn-player > .gtn-hint,
-.gtn-spectator > .gtn-hint {
-  grid-column: 1 / -1;
-}
-
-/* The button beside the bar, though the panel comes after the hint in the page. */
-.gtn-player > .gtn-fallen,
-.gtn-spectator > .gtn-fallen {
-  grid-column: 2;
-  grid-row: 2;
-}
-
-.gtn-fallen-toggle {
-  display: inline-flex;
+.gtn-fallen-more,
+.gtn-fallen-close {
   min-height: var(--hit-target);
   padding-inline: var(--space-2);
   white-space: nowrap;
 }
 
-.gtn-fallen-close {
-  display: inline-flex;
-  min-height: var(--hit-target);
-}
-
+/* The full list, from "+N more": at the right edge over the list's column. */
 .gtn-fallen-body {
-  display: none;
-}
-
-/* Open: at the right edge over the list's column on a desktop, across the bottom on a phone. */
-.gtn-fallen[data-open='true'] .gtn-fallen-body {
   display: grid;
   gap: 0.25rem;
   position: fixed;
@@ -135,6 +114,10 @@
   box-shadow: var(--shadow-raised);
 }
 
+.gtn-fallen-body[hidden] {
+  display: none;
+}
+
 .gtn-fallen-head {
   display: flex;
   align-items: center;
@@ -147,23 +130,16 @@
   font-size: var(--font-size-lead);
 }
 
-.gtn-fallen-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.2rem;
+.gtn-fallen-list--all {
+  max-height: none;
   overflow-y: auto;
 }
 
-.gtn-fallen-list li {
-  padding: 0 0.4rem;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--season, var(--color-border));
-  background: color-mix(in srgb, var(--season, var(--color-accent)) 14%, var(--color-card));
-  font-size: var(--font-size-small);
-  font-variant-numeric: tabular-nums;
+/* A phone: the panel is the info line's sheet, where every fallen number shows. */
+@media (max-width: 899px) {
+  .gtn-fallen-list {
+    max-height: none;
+  }
 }
 
 /* Spring Herald's hint for the whole round: a highlighted line in the range block (O35). */
