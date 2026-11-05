@@ -14,7 +14,7 @@ Branch `feat/website-mode` from `master` at `4ab2986`; not merged by this task. 
 | 1. Website auth mode (server)            | done  | `f43dc8d`            |
 | 2. The website's chat in the game        | done  | `787e595`            |
 | 3. The installer for both variants       | done  | `691357a`, `e2d24f3` |
-| 4. Tests: e2e journey, installer, verify | open  |                      |
+| 4. Tests: e2e journey, installer, verify | done  | `5dd81bd`            |
 
 ### Piece 1 — website auth mode (T214–T222)
 
@@ -47,6 +47,18 @@ Branch `feat/website-mode` from `master` at `4ab2986`; not merged by this task. 
   - caddy: the same checks.
   - Both website re-runs make 0 changes. shellcheck is clean.
 - Noticed, left alone: Bingo's Caddy route sends no `X-Original-Method`, so the website refuses it (Bingo bug, reported only); `smg admin create-super` still makes a local account on website installs (the guide says standalone only); a dry run says "reloaded" after "would run".
+
+### Piece 4 — e2e journey 36, verify (T241)
+
+- Journey 36 (`e2e/website.spec.ts`, Chromium only, also in CI's chromium run) runs against a stand-in website: the nginx container `smg-e2e-website` with the installer's route, a node stub for authorize, login, `/embed/chat` and the feed, and a second server in website mode on 3930 with its own database `smg_e2e_website`, so the 3910 dev server never takes its rounds (T4, T13). The steps:
+  - a signed-out visitor watches a match and sees the stub chat in "Chat" (`theme=light`);
+  - "Log in" goes through the website's login and back, signed in;
+  - the member joins with the step "Gold" beside the name and guesses;
+  - the stub feed's `deleted` ends the member's session within one poll, and the roster shows "Deleted player".
+  - It passed once, in 17 s; the two runs before failed on the bug below.
+- Product fix the journey found: a player who joined with the match page's "Join match" showed as "away" and was left out of the roster at countdown until a reload, because presence is recorded only at `match.watch`. `useMatch`'s new `useRewatch` watches again when the player's seat changes; covered by `useMatch.test.tsx`.
+- Reused: `play.ts`'s `call`, `attempt`, `visit`, `playerRow`, `hostRound`, `hostMenu`, `roundOpen`, `ownRows`, `abortMatch`, `closeAll`; `DESKTOP`; `viteBuild`, taken out of `builtAdmin.ts`; `devStack`'s `databaseUrl`; the stub's rules from `ops/test/stub-website.py`.
+- `pnpm verify` at `5dd81bd`, dev servers stopped: format, lint and typecheck clean; 158 test files and 871 tests passed.
 
 ## The team column, the owner's confirmations, the merge (2026-11-04)
 
