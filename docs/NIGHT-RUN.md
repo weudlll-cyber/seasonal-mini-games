@@ -8,13 +8,23 @@ Branch `feat/website-mode` from `master` at `4ab2986`; not merged by this task. 
 
 ### Status
 
-| Piece                                    | State | Commit      |
-| ---------------------------------------- | ----- | ----------- |
-| 0. Owner decisions O66, O67              | done  | this commit |
-| 1. Website auth mode (server)            | open  |             |
-| 2. The website's chat in the game        | open  |             |
-| 3. The installer for both variants       | open  |             |
-| 4. Tests: e2e journey, installer, verify | open  |             |
+| Piece                                    | State | Commit    |
+| ---------------------------------------- | ----- | --------- |
+| 0. Owner decisions O66, O67              | done  | `d6bb733` |
+| 1. Website auth mode (server)            | done  | `f43dc8d` |
+| 2. The website's chat in the game        | open  |           |
+| 3. The installer for both variants       | open  |           |
+| 4. Tests: e2e journey, installer, verify | open  |           |
+
+### Piece 1 — website auth mode (T214–T222)
+
+- `SMG_AUTH_MODE=website`: `GET <base>auth/website` is the only route that reads the identity headers, and only from a peer in `SMG_TRUSTED_PROXIES` with `X-Smg-Proxy-Secret` (constant-time compare). It finds or creates the account by (site origin, numeric user id) with no password or e-mail, makes the name fit (a taken name gets `-2`, T214), maps the roles (admin → game admin, Can-Host → organizer, everyone player; never super or security admin, T219), stores at most three checked steps (T220), rotates the session and follows a safe `next` (else the lobby). A trusted guest gets a 302 to the website login (T215, Bingo D43); `<base>auth/website/login` hops to `SMG_WEBSITE_LOGIN_PATH`. 30 sign-ins and 600 hops a minute per address.
+- Website mode leaves out registration, password login, `me/password` and dev sign-in (404); `/session` adds `authMode` and `signInPath`. Guests watch through a guest session (T221); the matrix runs the anonymous and guest rows against a website-mode server too.
+- The feed poller (T217): a plain `fetch` of `SMG_WEBSITE_LOCAL_URL` with `X-Games-Sync-Token` every 15 s, the cursor in `smg.website_feed` (migration 0014), errors backing off from 30 s to 10 min, logged without the token. `deleted` anonymises the account as "Deleted player" (T216: its rounds keep their points, the boards and profiles skip it), `locked` and `rights` end its sessions. `/readyz` reports `websiteFeed.lastSuccessAt` (T218).
+- Steps travel as optional `steps` in the match, round, board and profile views (`PlayerStepView`); the client shows them in piece 2. The JWT handoff stays for third-party sites; the website's planned handoff endpoint is dropped from OPEN and BACKLOG. Proposal T222 (OPEN (ac)): `antiMulti.requireLinkedChat` cannot work with proxy headers alone.
+- Adopted from Bingo: `trustedPeers`, `identityFrom`, name cleaning, `safeNext`, the constant-time secret compare, the provider upsert, follow-on-sign-in, session rotation, `checkWebsiteMode`, the login hop. Different: the Can-Host and steps headers, the guest redirect, numeric ids, the `-N` suffix, the poller and anonymised deletion (Bingo has no feed).
+- Reused: `nameCandidates`, `applyRoles`, `createLinkedAccount`, `inTransaction`, `RateLimiter`, `findSession`, `SessionEnds`, `readLimited`; `openSession` split out of the handoff's `startSession`; new `revokeAccountSessions`. Tests: the server package (16 unit and 22 integration files) green; three new website suites (23 tests).
+- Noticed, left alone: `DELETE /me` still hard-deletes, website accounts too; an anonymous POST to an unregistered route answers 403 (CSRF) before 404.
 
 ## The team column, the owner's confirmations, the merge (2026-11-04)
 
