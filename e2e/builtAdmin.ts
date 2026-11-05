@@ -10,9 +10,10 @@
  *                 copy); /api goes on to that server, so the page is same-origin with its API
  *                 as behind Caddy. The development server on 5411 cannot carry the header: its
  *                 React refresh preamble is an inline script, and a header there would need a
- *                 restart of the shared dev server (DECISIONS T179).
+ *                 restart of the shared dev server (DECISIONS T179). `viteBuild` builds any of
+ *                 the apps that way (journey 36 builds the player client with it).
  * Depends on:     node:child_process, node:fs, node:http, node:os, node:path, ./devStack
- * Used by:        ./trustedTypes.spec
+ * Used by:        ./trustedTypes.spec, ./websiteStack
  * Spec:           Bingo 03 §7; docs/security-pass.md
  */
 import { spawnSync } from 'node:child_process';
@@ -42,13 +43,14 @@ export interface BuiltAdmin {
   readonly close: () => Promise<void>;
 }
 
-function build(outDir: string): void {
-  const vite = path.join(ADMIN_DIR, 'node_modules/vite/bin/vite.js');
+// A production build of the app in `appDir` (apps/admin, apps/web) into `outDir`.
+export function viteBuild(appDir: string, outDir: string): void {
+  const vite = path.join(appDir, 'node_modules/vite/bin/vite.js');
   const args = [vite, 'build', '--outDir', outDir, '--emptyOutDir', '--logLevel', 'error'];
   // Vite builds in development mode when NODE_ENV says test or development.
   const env = { ...process.env, NODE_ENV: 'production' };
-  const result = spawnSync(process.execPath, args, { cwd: ADMIN_DIR, env, encoding: 'utf8' });
-  if (result.status !== 0) throw new Error(`admin build failed: ${result.stderr}`);
+  const result = spawnSync(process.execPath, args, { cwd: appDir, env, encoding: 'utf8' });
+  if (result.status !== 0) throw new Error(`build of ${appDir} failed: ${result.stderr}`);
 }
 
 // Helmet's `upgrade-insecure-requests` (a default directive) is left out of the copy: this
@@ -99,7 +101,7 @@ function serveFile(
 
 export async function serveBuiltAdmin(): Promise<BuiltAdmin> {
   const dir = mkdtempSync(path.join(tmpdir(), 'smg-admin-'));
-  build(dir);
+  viteBuild(ADMIN_DIR, dir);
   const headers = await serverHeaders();
   const server = createServer((req, res) => {
     const url = req.url ?? '/';
