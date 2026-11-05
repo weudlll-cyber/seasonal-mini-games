@@ -10,13 +10,14 @@
  *                 recent list their last ten rounds of such matches, and staff adjustments are
  *                 shown with their reason (Bingo 03 §11). No e-mail and no account id leave the
  *                 server (Bingo 01 §10).
- * Depends on:     @smg/contracts (view), ../db/pool, ./boards
+ * Depends on:     @smg/contracts (view), ../db/pool, ./boards, ../match/playerSteps
  * Used by:        ../http/routes/leaderboards
  * Spec:           Bingo 01 §10, Bingo 05 §2.2; docs/spec/06-data-model-api-realtime.md §3.1
  */
-import type { PlayerProfileView } from '@smg/contracts';
+import type { PlayerProfileView, PlayerStepView } from '@smg/contracts';
 
 import type { DbPool } from '../db/pool.js';
+import { withSteps } from '../match/playerSteps.js';
 import { periodView } from './boards.js';
 
 const ALL_TIME = `(SELECT id FROM smg.leaderboard_periods WHERE kind = 'all_time')`;
@@ -124,8 +125,13 @@ export async function profile(
   pool: DbPool,
   displayName: string,
 ): Promise<PlayerProfileView | null> {
-  const a = await pool.query<{ id: string; display_name: string; created_at: Date }>(
-    `SELECT id::text, display_name, created_at FROM smg.accounts
+  const a = await pool.query<{
+    id: string;
+    display_name: string;
+    steps: PlayerStepView[];
+    created_at: Date;
+  }>(
+    `SELECT id::text, display_name, steps, created_at FROM smg.accounts
      WHERE display_name_key = $1 AND status <> 'deleted'`,
     [displayName],
   );
@@ -133,6 +139,7 @@ export async function profile(
   if (account === undefined) return null;
   return {
     displayName: account.display_name,
+    ...withSteps(account.steps),
     memberSince: account.created_at.getTime(),
     ...(await totals(pool, account.id)),
     boards: await boards(pool, account.id),

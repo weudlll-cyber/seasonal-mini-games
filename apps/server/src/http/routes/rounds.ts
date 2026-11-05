@@ -19,6 +19,7 @@ import { z } from 'zod';
 
 import { displayNames, findMatch, matchById, type MatchRow } from '../../match/matches.js';
 import { PlayError, type Play } from '../../match/play.js';
+import { playerSteps } from '../../match/playerSteps.js';
 import { forViewer, toPublic } from '../../match/publicIds.js';
 import type { GuessLimits } from '../../round/guessLimits.js';
 import type { LiveRound } from '../../round/liveRound.js';
@@ -150,12 +151,14 @@ function registerReadRoutes(app: FastifyInstance, deps: RoundRouteDeps): void {
     const view = round.view(viewer) as {
       roster: { playerKey: string }[];
     };
-    const names = await displayNames(
-      deps.pool,
-      view.roster.map((r) => r.playerKey),
-    );
+    const keys = view.roster.map((r) => r.playerKey);
+    const names = await displayNames(deps.pool, keys);
+    // A website member's Discord steps beside the name (O66); none in a standalone install.
+    const steps = await playerSteps(deps.pool, keys);
+    const withSteps = Object.keys(steps).length > 0 ? { steps } : {};
     // Players by their number in the match; `you` is the viewer's own (T104).
-    return forViewer({ ...view, names }, await deps.play.numbers.ready(round.matchId), viewer);
+    const numbers = await deps.play.numbers.ready(round.matchId);
+    return forViewer({ ...view, names, ...withSteps }, numbers, viewer);
   });
 
   app.post('/api/v1/rounds/:id/guesses', async (request, reply) => {

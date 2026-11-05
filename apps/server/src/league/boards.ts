@@ -8,7 +8,8 @@
  *                 then solves; equal rows share a rank (SQL `rank()`), and within a rank rows
  *                 are listed by display name so a page is stable. Players are shown by display
  *                 name only; deleted accounts are left out. Pages are offsets of `PAGE` rows.
- * Depends on:     @smg/contracts (views), ../db/pool, ../match/matches (displayNames)
+ * Depends on:     @smg/contracts (views), ../db/pool, ../match/matches (displayNames),
+ *                 ../match/playerSteps (a website member's steps, O66)
  * Used by:        ../http/routes/matches, ../http/routes/leaderboards, ./profiles
  * Spec:           docs/spec/06-data-model-api-realtime.md §2.6, §3.1; Bingo 05 §2.4
  */
@@ -16,12 +17,14 @@ import type {
   LeaderboardPeriodView,
   LeaderboardRowView,
   MatchStandingView,
+  PlayerStepView,
   TeamLeagueRowView,
   TeamName,
 } from '@smg/contracts';
 
 import type { DbPool } from '../db/pool.js';
 import { displayNames } from '../match/matches.js';
+import { playerSteps, withSteps } from '../match/playerSteps.js';
 
 export const PAGE = 50;
 
@@ -30,14 +33,14 @@ export async function matchStandings(pool: DbPool, matchId: string): Promise<Mat
     'SELECT player_key, points, wins, rank FROM smg.match_standings WHERE match_id = $1 ORDER BY rank, player_key',
     [matchId],
   );
-  const names = await displayNames(
-    pool,
-    r.rows.map((x) => x.player_key),
-  );
+  const keys = r.rows.map((x) => x.player_key);
+  const names = await displayNames(pool, keys);
+  const steps = await playerSteps(pool, keys);
   return r.rows.map((x) => ({
     rank: x.rank,
     playerKey: x.player_key,
     name: names[x.player_key] ?? x.player_key,
+    ...withSteps(steps[x.player_key]),
     points: x.points,
     wins: x.wins,
   }));
@@ -87,6 +90,7 @@ interface EntryRow {
   pos: string;
   account_id: string;
   display_name: string;
+  steps: PlayerStepView[];
   points: number;
   wins: number;
   solves: number;
@@ -108,7 +112,7 @@ const entries = (game: string | null): string =>
 const ranked = (game: string | null) =>
   `SELECT rank() OVER (ORDER BY e.points DESC, e.wins DESC, e.solves DESC) AS rank,
     row_number() OVER (ORDER BY e.points DESC, e.wins DESC, e.solves DESC, a.display_name_key) AS pos,
-    e.account_id::text, a.display_name, e.points, e.wins, e.solves, e.matches
+    e.account_id::text, a.display_name, a.steps, e.points, e.wins, e.solves, e.matches
   FROM ${entries(game)} e JOIN smg.accounts a ON a.id = e.account_id
   WHERE e.period_id = $1 AND a.status <> 'deleted'`;
 
@@ -117,6 +121,7 @@ const rowView =
   (e: EntryRow): LeaderboardRowView => ({
     rank: Number(e.rank),
     displayName: e.display_name,
+    ...withSteps(e.steps),
     points: e.points,
     wins: e.wins,
     solves: e.solves,

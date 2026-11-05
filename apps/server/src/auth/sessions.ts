@@ -10,12 +10,14 @@
  *                 refuses revoked, expired and idle-expired sessions. Idle 7 days, absolute
  *                 30 days for players and guests; idle 30 minutes, absolute 8 hours for
  *                 accounts with an admin role. Dead sessions are purged by the retention job.
- * Depends on:     node:crypto, ../db/pool
+ * Depends on:     node:crypto, pg (types), ../db/pool
  * Used by:        ./sessionPlugin, ../http/routes/auth, ../http/routes/devSignIn, ./retention,
- *                 ../http/routes/adminAccounts
+ *                 ../http/routes/adminAccounts, ../integration/accountChanges
  * Spec:           Bingo 03 §3, §8; Bingo 04 §3.1
  */
 import { createHash, randomBytes } from 'node:crypto';
+
+import type pg from 'pg';
 
 import type { DbPool } from '../db/pool.js';
 
@@ -122,6 +124,20 @@ export async function revokeOtherSessions(
     `UPDATE smg.sessions SET revoked_at = now()
      WHERE account_id = $1 AND id <> $2 AND revoked_at IS NULL RETURNING id`,
     [accountId, keepSessionId],
+  );
+  return r.rows.map((row) => row.id);
+}
+
+// Every live session of an account ends (the website locked it, changed its rights or
+// deleted it, O66); their ids, so their sockets close.
+export async function revokeAccountSessions(
+  db: DbPool | pg.PoolClient,
+  accountId: string,
+): Promise<string[]> {
+  const r = await db.query<{ id: string }>(
+    `UPDATE smg.sessions SET revoked_at = now()
+     WHERE account_id = $1 AND revoked_at IS NULL RETURNING id`,
+    [accountId],
   );
   return r.rows.map((row) => row.id);
 }

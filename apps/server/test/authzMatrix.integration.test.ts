@@ -13,11 +13,15 @@
  *                 who is not on the roster watches and may not guess (S10). One write per route
  *                 group is refused without the CSRF token or with another session's. Rows
  *                 beyond permissions (./authzMatchRules): KICKED, the linked-chat rule in a
- *                 standalone install, the minimum account age on a shared roster. Matches
+ *                 standalone install, the minimum account age on a shared roster. A server in
+ *                 website mode (O66) lists the website's sign-in instead of registration,
+ *                 password sign-in and password change, which answer 404 for everyone there, and
+ *                 its guests (no session or a guest session) have the same rows as in local
+ *                 mode: they watch and read, every action asks for a sign-in. Matches
  *                 are aborted and the accounts made here removed at the end.
  *                 Adapted from Bingo's authzMatrix.integration.test.ts.
  * Depends on:     vitest, fastify (inject), ../src/auth/*, ../src/realtime/intents, ./authzRoles,
- *                 ./authzTable, ./authzSetup, ./harness, ./socketKit
+ *                 ./authzTable, ./authzSetup, ./harness, ./socketKit, ./websiteHelpers
  * Spec:           docs/spec/05-security-threat-model.md §1, M13; docs/spec/09-testing-strategy.md §6;
  *                 docs/DECISIONS.md O16, S10; Bingo 03 §3, §8
  */
@@ -40,6 +44,7 @@ import {
   type World,
 } from './authzSetup.js';
 import { buildOn, SUITE_TIMEOUT_MS } from './harness.js';
+import { WEBSITE } from './websiteHelpers.js';
 
 let w: World;
 
@@ -52,7 +57,7 @@ afterAll(async () => {
 }, SUITE_TIMEOUT_MS);
 
 const listed = (keep: (r: RouteCase) => boolean) =>
-  ROUTES.filter(keep)
+  ROUTES.filter((r) => r.mode !== 'website' && keep(r))
     .map((r) => `${r.method} ${r.path}`)
     .sort();
 
@@ -102,7 +107,7 @@ describe('the authorization matrix: HTTP routes', () => {
 
   it('lets through exactly the callers each route allows', async () => {
     const wrong: string[] = [];
-    for (const route of ROUTES.filter((r) => r.web !== true)) {
+    for (const route of ROUTES.filter((r) => r.web !== true && r.mode !== 'website')) {
       for (const role of ROLES) {
         const r = await callAs(w, role, route);
         const refused = r.code !== undefined && REFUSALS[r.code] === r.status;
@@ -222,4 +227,52 @@ describe('CSRF on every route group', () => {
     expect(CSRF_WRITES.length).toBeGreaterThanOrEqual(13);
     expect(wrong).toEqual([]);
   });
+});
+
+describe('the authorization matrix in website mode (O66)', () => {
+  // Without the local sign-in and the development routes; with the website's sign-in.
+  const websiteRoutes = ROUTES.filter(
+    (r) => r.web !== true && r.dev !== true && r.mode !== 'local',
+  );
+  const site = async () =>
+    buildOn(w.kit.harness.pool, w.kit.harness.container.getConnectionUri(), WEBSITE);
+
+  it('lists the website sign-in instead of the local one, which is not there for anyone', async () => {
+    const app = await site();
+    try {
+      const names = websiteRoutes.map((r) => `${r.method} ${r.path}`).sort();
+      expect(registeredRoutes(app.fastify)).toEqual(names);
+      // Without a session a write meets the CSRF check before the missing route.
+      for (const route of ROUTES.filter((r) => r.mode === 'local')) {
+        for (const role of ROLES) {
+          const r = await callAs(w, role, route, { app });
+          const csrf = role === 'anonymous' && r.code === 'CSRF_INVALID';
+          expect([route.path, role, r.status === 404 || csrf]).toEqual([route.path, role, true]);
+        }
+      }
+    } finally {
+      await app.fastify.close();
+    }
+  });
+
+  it('gives guests the rows of local mode: they watch and read, every action needs a sign-in', async () => {
+    const app = await site();
+    const wrong: string[] = [];
+    try {
+      for (const route of websiteRoutes) {
+        for (const role of ['anonymous', 'guest'] as const) {
+          const r = await callAs(w, role, route, { app });
+          const refused = r.code !== undefined && REFUSALS[r.code] === r.status;
+          if (refused === route.allow.includes(role)) {
+            wrong.push(
+              `${route.method} ${route.path} as ${role}: ${String(r.status)} ${String(r.code)}`,
+            );
+          }
+        }
+      }
+    } finally {
+      await app.fastify.close();
+    }
+    expect(wrong).toEqual([]);
+  }, 60_000);
 });

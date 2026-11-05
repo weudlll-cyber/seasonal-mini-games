@@ -12,12 +12,13 @@ The whole of Bingo's security architecture applies, with the names of [04](04-so
 | Local accounts, argon2id, uniform login answers, password reset, TOTP (mandatory for admin roles), guests | Bingo 03 §2 | Guests may watch rounds; they never appear on a roster. |
 | Sessions, cookies, lifetimes, rotation, step-up | Bingo 03 §3 | Cookie names `__Host-smg_session` / `__Secure-smg_session`. |
 | JWT use (embed token, inbound handoff), `jose` rules, key rotation | Bingo 03 §4 | Audience `seasonal-mini-games`. |
+| Integrated mode: header trust, roles from the website, what website mode switches off (owner decision 66) | Bingo 03 §2.2 (D37, D40–D43) | The identity headers (`X-Acting-User-Id`, `X-Acting-User`, `X-Acting-User-Roles`, `X-Acting-User-Email-Verified`, `X-Acting-User-Can-Host`, `X-Acting-User-Steps`, and `X-Acting-Guest`; names configurable) are read on `GET <base>auth/website` only, only in website mode, only from a TCP peer in `SMG_TRUSTED_PROXIES` and only with the proxy secret in `X-Smg-Proxy-Secret` (constant-time compare); anything else is 403 with nobody signed in, and every other route ignores them. The route file the installer writes (0600) clears client-sent `X-Acting-User*`, `X-Acting-Guest` and `X-Smg-Proxy-Secret`, asks the website for that route only and adds the secret after that call. Roles: `admin` → `game_admin`, can-host → `organizer`, never `super_admin` or `security_admin`. Registration, password sign-in, password change and the dev sign-in answer 404. A deleted, locked or changed website account loses its game sessions through the account-changes feed, whose token is never logged ([07](07-integration.md) §7). |
 | RBAC roles and permissions, privilege separation, break-glass CLI | Bingo 03 §5 | `organizer` hosts matches. New permissions: `round.manage` (create, start, end and abort rounds in one's own match), `season.manage` (feed URL, halving days). |
 | Input handling (parameterized SQL, no HTML from users, strict DTOs, JSON limits) | Bingo 03 §6 | None. |
 | Browser security headers, CSP, separate admin CSP | Bingo 03 §7 | None. |
 | CSRF (SameSite plus synchronizer token, WS `Origin` check) | Bingo 03 §8 | None. |
 | Cryptography in transit and at rest, secrets handling | Bingo 03 §9 | Round seeds are encrypted with `SMG_ROUND_KEY` (§3). Bingo's built server uses one `SBR_SEED_KEY` for match seeds, while Bingo 03 §9 and 08 §5 name `SBR_MASTER_KEY`; this repo follows the built pattern for round seeds and adds `SMG_MASTER_KEY` only when TOTP or OIDC secrets are built. |
-| SSRF prevention (`SafeHttpClient`) | Bingo 03 §10 | Also used for the In Season feed ([07](07-integration.md) §5). |
+| SSRF prevention (`SafeHttpClient`) | Bingo 03 §10 | Also used for the In Season feed ([07](07-integration.md) §5). The website's account-changes feed is read from the operator's local address in the env file, not through it ([07](07-integration.md) §7.3, DECISIONS T217). |
 | Anti-cheat principles | Bingo 03 §11 | Replaced for this game by §2–§7. The leaderboard write rules are kept. |
 | Chat safety | Bingo 03 §12 | None. |
 | Rate limiting layers 1–3, soft lockout, abuse score | Bingo 03 §13 | WS intent limits in §5. |
@@ -94,6 +95,8 @@ Bingo's layers apply (Bingo 03 §13). The intent limits differ:
 | `team.choose` | 1 / 5 s | `RATE_LIMITED` |
 | Host round commands (create, start, end, abort) | 1 / 2 s per host | `RATE_LIMITED` |
 | Other intents | 10 / s per socket overall | as Bingo 06 §8 |
+| `GET <base>auth/website` (website mode) per address | 30 / min | 429 |
+| `GET <base>auth/website/login` (website mode) per address | 600 / min | 429 |
 | Sockets per account / per IP | 5 / 10 | as Bingo 06 §8 |
 
 The guess games of [02b](02b-game-safecracker.md)–[02d](02d-game-seasonal-target.md) add no intent: a Safecracker code, a Bomb Defusal sequence and a Seasonal Target cell are each one `guess` with the limits above, validated with the game's zod schema before the round queue. Typing a digit, tapping a wire, and clicking, tapping or arrow-moving the selection on the map change only the client's own selection and send nothing; only "Guess" (the full code, "Cut", the selected cell) sends, so a burst of map clicks costs the server nothing (map-click rate limits).
@@ -154,6 +157,8 @@ Method and Bingo's threats T1–T28 are adopted (Bingo 13 §1–§4; trust bound
 | M11 | 5 | S | Spoofed or wrong In Season feed | 1 | 1 | HTTPS allowlist through `SafeHttpClient`; worst case a wrong season, equal for all; host can always pick by hand |
 | M12 | 1 | T | Fake halving day to run a halving round | 1 | 1 | Server checks the calendar at round creation; list edits audited (§8) |
 | M13 | 1 | E | A spectator or another player receives a player's private frames | 2 | 2 | Per-player rooms, audience routing, authz matrix test ([09](09-testing-strategy.md) §6) |
+| M15 | 1/2 | S | Forged website identity headers: a browser or another local process names a member or an admin | 2 | 3 | Headers read on one route only, only from a trusted proxy peer with the proxy secret (constant time), cleared by the proxy before it adds the website's answer; roles capped at `game_admin`; tests for untrusted peers, a missing or wrong secret and the headers on other routes ([07](07-integration.md) §7.1) |
+| M16 | 1 | S | An open redirect through the sign-in's `next` | 2 | 1 | Only a printable path under the base path without scheme, host, `//` or backslash; anything else goes to the lobby |
 | M14 | 1 | I | Learning more from closeness comments than from higher or lower | 3 | 1 | Accepted by the owner (O21, 2026-10-31); see §10. The tier is computed on the server; the client never gets the secret; the comment rides on the events that carry the answer, so Frost and the visibility rules hide it exactly as they hide the answer (DECISIONS T73); no line holds a digit or names the range; a guess outside a hidden range gets the farthest tier |
 
 ## 10. Residual risks (accepted)

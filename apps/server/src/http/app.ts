@@ -11,8 +11,10 @@
  *                 with staff actions), the match and round
  *                 routes with their runtime, the boards (leaderboards, profiles, adjustments),
  *                 the builtin chat with its moderation, the integration (handoff, embed allowlist,
- *                 public read API, webhooks; ./integrationWiring) and, in development, the Quick Test
- *                 onto a fresh Fastify instance, under the base
+ *                 public read API, webhooks; ./integrationWiring), in website mode the sign-in
+ *                 through the website's proxy (./routes/websiteSignIn, O66; no registration,
+ *                 password sign-in, password change or dev sign-in there) and, in development,
+ *                 the Quick Test onto a fresh Fastify instance, under the base
  *                 path (SMG_BASE_PATH) and behind the trusted proxies. The caller owns the
  *                 lifecycle (listen, close, pool disposal). Adapted from Bingo's app.ts.
  * Depends on:     fastify, @smg/application, @smg/contracts, ../db/pool, ../auth/*, ../chat/*,
@@ -28,11 +30,11 @@ import Fastify, { type FastifyInstance, type FastifyServerOptions } from 'fastif
 import { PgAuditLog } from '../admin/pgAuditLog.js';
 import { PgSettingsStore } from '../admin/pgSettingsStore.js';
 import { SessionEnds } from '../auth/sessionEnds.js';
-import { cookieConfig, registerSessions } from '../auth/sessionPlugin.js';
+import { cookieConfig, registerSessions, type CookieConfig } from '../auth/sessionPlugin.js';
 import { createChat, type Chat } from '../chat/chat.js';
 import { hostChatOrigin } from '../chat/provider.js';
 import type { Env } from '../config/env.js';
-import { featuresFrom } from '../config/features.js';
+import { featuresFrom, type Features } from '../config/features.js';
 import type { DbPool } from '../db/pool.js';
 import { EmbedAllowlist } from '../integration/embedOrigins.js';
 import type { WebhookDelivery } from '../integration/webhookDelivery.js';
@@ -59,6 +61,7 @@ import { registerPasswordChange } from './routes/password.js';
 import { registerPlaceholder } from './routes/placeholder.js';
 import { registerTwoFactor } from './routes/twoFactor.js';
 import { registerWebClient } from './routes/webClient.js';
+import { registerWebsiteSignIn } from './routes/websiteSignIn.js';
 
 interface AppDeps {
   readonly env: Env;
@@ -125,13 +128,32 @@ function registerBasics(fastify: FastifyInstance, deps: AppDeps, metrics: Metric
   // `smg maintenance on`: no new match or round while the flag file exists (10 §6).
   registerMaintenance(fastify, maintenanceFlag(deps.env.SMG_DATA_DIR));
   registerMetrics(fastify, metrics);
-  registerHealth(fastify, deps.pool);
+  registerHealth(fastify, deps.pool, deps.env.SMG_AUTH_MODE === 'website');
   // The built client in the image; the placeholder page in development (Vite serves it).
   if (deps.env.SMG_WEB_DIR === undefined) {
     registerPlaceholder(fastify, { dev: deps.env.SMG_DEV, port: deps.env.SMG_PORT });
   } else {
     registerWebClient(fastify, deps.env.SMG_WEB_DIR, deps.env.SMG_ADMIN_DIR);
   }
+}
+
+// How players sign in: local accounts with passwords (and, in development, the quick
+// sign-in), or in website mode only through the website's proxy (O66, Bingo D37).
+function registerSignIn(
+  fastify: FastifyInstance,
+  deps: AppDeps & { cookie: CookieConfig; features: Features; sessionEnds: SessionEnds },
+): void {
+  const { env, pool, cookie, features, sessionEnds } = deps;
+  const website = env.SMG_AUTH_MODE === 'website';
+  const signInPath = website ? `${env.SMG_BASE_PATH}auth/website` : null;
+  registerAuthRoutes(fastify, { pool, cookie, features, sessionEnds, signInPath });
+  if (website) {
+    registerWebsiteSignIn(fastify, { env, pool, cookie, sessionEnds });
+    return;
+  }
+  registerPasswordChange(fastify, { pool, sessionEnds });
+  // Development only: quick sign-in as host or player (never in a production build).
+  if (env.SMG_DEV) registerDevSignIn(fastify, { pool, cookie, sessionEnds });
 }
 
 export async function buildApp(deps: AppDeps): Promise<App> {
@@ -153,10 +175,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   const sessionEnds = new SessionEnds();
   await registerSessions(fastify, deps.pool, cookie);
   const features = featuresFrom(deps.env);
-  registerAuthRoutes(fastify, { pool: deps.pool, cookie, features, sessionEnds });
-  registerPasswordChange(fastify, { pool: deps.pool, sessionEnds });
-  // Development only: quick sign-in as host or player (never in a production build).
-  if (isDev) registerDevSignIn(fastify, { pool: deps.pool, cookie, sessionEnds });
+  registerSignIn(fastify, { ...deps, cookie, features, sessionEnds });
   registerTwoFactor(fastify, { pool: deps.pool, env: deps.env, features, audit });
   registerAdminSettings(fastify, settings, deps.pool);
   registerAdminAudit(fastify, audit);
