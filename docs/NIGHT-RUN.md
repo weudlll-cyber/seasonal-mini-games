@@ -12,7 +12,7 @@ Branch `feat/website-mode` from `master` at `4ab2986`; not merged by this task. 
 | ---------------------------------------- | ----- | -------------------- |
 | 0. Owner decisions O66, O67              | done  | `d6bb733`            |
 | 1. Website auth mode (server)            | done  | `f43dc8d`            |
-| 2. The website's chat in the game        | open  |                      |
+| 2. The website's chat in the game        | done  | `787e595`            |
 | 3. The installer for both variants       | done  | `691357a`, `e2d24f3` |
 | 4. Tests: e2e journey, installer, verify | open  |                      |
 
@@ -25,6 +25,16 @@ Branch `feat/website-mode` from `master` at `4ab2986`; not merged by this task. 
 - Adopted from Bingo: `trustedPeers`, `identityFrom`, name cleaning, `safeNext`, the constant-time secret compare, the provider upsert, follow-on-sign-in, session rotation, `checkWebsiteMode`, the login hop. Different: the Can-Host and steps headers, the guest redirect, numeric ids, the `-N` suffix, the poller and anonymised deletion (Bingo has no feed).
 - Reused: `nameCandidates`, `applyRoles`, `createLinkedAccount`, `inTransaction`, `RateLimiter`, `findSession`, `SessionEnds`, `readLimited`; `openSession` split out of the handoff's `startSession`; new `revokeAccountSessions`. Tests: the server package (16 unit and 22 integration files) green; three new website suites (23 tests).
 - Noticed, left alone: `DELETE /me` still hard-deletes, website accounts too; an anonymous POST to an unregistered route answers 403 (CSRF) before 404.
+
+### Piece 2 — the website's chat in the game (T236–T240)
+
+- The chat provider: an admin's stored setting wins, then `SMG_CHAT_PROVIDER`; in website mode the default is hostEmbed with `/embed/chat?room=mini-games` on the same origin. CSP `frame-src` in website mode is `<public origin>/embed/chat` only (an admin's own chat by its origin); standalone unchanged (T236, Bingo 07 §6 / D5).
+- The panel (lobby, waiting area, round drawer, phone sheet) frames `…&theme=<light|dark>` following the game's theme (a switch reloads the frame), titled "Chat". A signed-out visitor in website mode also gets "Log in", which goes through `signInPath?next=<page>` so they return signed in (T238, Bingo D43). The game posts nothing into the frame and listens to nothing.
+- Website-mode sign-in UI: every "Sign in" goes to `signInPath?next=…`; no Register, no dev sign-in; `#/sign-in` and `#/register` show a "Sign in" panel. A signed-out visitor who opens a match gets a guest session first (T239). Local mode, Quick Test and dev sign-in unchanged.
+- Steps beside names through `PlayerName`'s new `steps` prop and `PlayerSteps` (roster, Players panel, round list, results, standings, boards, profile); an icon with the step name as its text alternative, or the name as text; markup unchanged without steps.
+- Proposals: T237 (OPEN (ad)): the unread badge is hidden with hostEmbed. The website's EMBED.md does define `visible`/`unread` messages, so the proposal is to adopt them; the game's `Referrer-Policy: no-referrer` keeps the frame silent in Firefox. T240 (OPEN (ae)): the admin's Integrations page shows `builtin` while hostEmbed applies.
+- Reused: `PlayerName`, `SessionView`, `POST /auth/guest`, chatKit's `until`; session.tsx's repeated POST-reset-refresh folded into `changing()`; `hostChatOrigin` replaced by `hostChatSource`/`frameSource`. Tests: web 37 files and 173 tests; server units plus the chat and website integration suites, 20 files and 106 tests.
+- Noticed, left alone: the third-party embed view starts no guest session; a signed-out visitor in local mode still gets none; `RoundLog`'s plain "name: N guesses" strings show no steps.
 
 ### Piece 3 — one installer for both variants (T230–T235)
 
