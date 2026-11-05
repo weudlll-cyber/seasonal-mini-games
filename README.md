@@ -4,7 +4,7 @@ Short multiplayer games built around the four Seasonal Tokens seasons. Everyone 
 
 The first game is **Guess The Number**: the server picks a secret number and players race to find it. Every guess is followed by a short waiting time, and the seasons change the rules for everyone at once.
 
-**Status:** specification in progress. There is no application code yet.
+**Status:** in development; four games are playable, standalone or inside the website.
 
 No prizes of monetary value exist in these games. Players compete for placings and leaderboard rank.
 

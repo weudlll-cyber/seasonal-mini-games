@@ -8,13 +8,13 @@ Branch `feat/website-mode` from `master` at `4ab2986`; not merged by this task. 
 
 ### Status
 
-| Piece                                    | State | Commit    |
-| ---------------------------------------- | ----- | --------- |
-| 0. Owner decisions O66, O67              | done  | `d6bb733` |
-| 1. Website auth mode (server)            | done  | `f43dc8d` |
-| 2. The website's chat in the game        | open  |           |
-| 3. The installer for both variants       | open  |           |
-| 4. Tests: e2e journey, installer, verify | open  |           |
+| Piece                                    | State | Commit               |
+| ---------------------------------------- | ----- | -------------------- |
+| 0. Owner decisions O66, O67              | done  | `d6bb733`            |
+| 1. Website auth mode (server)            | done  | `f43dc8d`            |
+| 2. The website's chat in the game        | open  |                      |
+| 3. The installer for both variants       | done  | `691357a`, `e2d24f3` |
+| 4. Tests: e2e journey, installer, verify | open  |                      |
 
 ### Piece 1 — website auth mode (T214–T222)
 
@@ -25,6 +25,18 @@ Branch `feat/website-mode` from `master` at `4ab2986`; not merged by this task. 
 - Adopted from Bingo: `trustedPeers`, `identityFrom`, name cleaning, `safeNext`, the constant-time secret compare, the provider upsert, follow-on-sign-in, session rotation, `checkWebsiteMode`, the login hop. Different: the Can-Host and steps headers, the guest redirect, numeric ids, the `-N` suffix, the poller and anonymised deletion (Bingo has no feed).
 - Reused: `nameCandidates`, `applyRoles`, `createLinkedAccount`, `inTransaction`, `RateLimiter`, `findSession`, `SessionEnds`, `readLimited`; `openSession` split out of the handoff's `startSession`; new `revokeAccountSessions`. Tests: the server package (16 unit and 22 integration files) green; three new website suites (23 tests).
 - Noticed, left alone: `DELETE /me` still hard-deletes, website accounts too; an anonymous POST to an unregistered route answers 403 (CSRF) before 404.
+
+### Piece 3 — one installer for both variants (T230–T235)
+
+- `sudo bash ops/install.sh` asks the type first. Standalone asks as before (environment, address, admin e-mail, age key). Website asks only the environment and the age key: it finds the website's mode (Caddy of compose project `seasonal-site`, or host nginx), its checkout, domain and network itself (Bingo's `detect_website`, T230). If the website does not serve `/api/games/mini-games/authorize` or there is no sync token, it stops before writing anything and names `sudo ./deploy/install.sh --update --mini-games` in the checkout.
+- It writes the game's own route file (0600): `/etc/seasonal/routes/mini-games.conf` for nginx, or `mini-games.caddy` in the host folder mounted at Caddy's `/etc/caddy/routes`. The file clears the seven identity headers and the secret on every path, asks authorize through `auth_request` / `forward_auth`, and adds the secret only after that call. A refusal goes to `<base>auth/website/login` with the query, and metrics answer 404 (T231). Then `nginx -t` or `caddy validate`, a rollback on failure, the reload and an end check through the website (T232). No website file is edited; the snippet-paste path and its texts are removed.
+- The env file: `SMG_AUTH_MODE=website`, the trusted ranges, a 64-hex secret kept on re-runs, the login path, the sync token, `SMG_BASE_PATH=/games/mini-games/`, `SMG_CHAT_PROVIDER=hostEmbed`. The feed is reached at `http://site:3800` in both modes, because the app joins the website's network and 127.0.0.1 would be the container itself (T233). nginx mode uses its own port 3920 and subnet 172.30.250.0/24, distinct from Bingo. `smg status` shows the sign-in mode, the authorize answer and `feed: last success` from readyz (T234).
+- Installer tests (T235, Ubuntu 24.04 systemd containers with their own Docker, real nginx, Caddy and PostgreSQL; stub website and stub app):
+  - standalone: install, HTTPS, status, backup and restore drill, maintenance, re-run with 0 changes;
+  - nginx: first run with Mini Games off stops with the command and writes nothing; switched on, the run succeeds with 14 checks;
+  - caddy: the same checks.
+  - Both website re-runs make 0 changes. shellcheck is clean.
+- Noticed, left alone: Bingo's Caddy route sends no `X-Original-Method`, so the website refuses it (Bingo bug, reported only); `smg admin create-super` still makes a local account on website installs (the guide says standalone only); a dry run says "reloaded" after "would run".
 
 ## The team column, the owner's confirmations, the merge (2026-11-04)
 
