@@ -8,7 +8,8 @@
  *                 is closed, for the Chat button's unread badge; the builtin room
  *                 (./ChatRoom) calls it for each live message by another player, never for its
  *                 own messages, system lines or the history loaded on joining. A host's
- *                 embedded chat (an iframe, `hostEmbed`) tells nothing, so it shows no count.
+ *                 embedded chat (an iframe, `hostEmbed`) tells nothing, so it shows no count
+ *                 (DECISIONS T237).
  * Depends on:     react
  * Used by:        ./ChatRoom, ../round/FocusShell
  * Spec:           docs/spec/07-integration.md §2

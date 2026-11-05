@@ -8,12 +8,13 @@
  *                 system setting — follow the system setting live while nothing is stored,
  *                 and flip and store the choice on the toggle. Every storage access is in
  *                 try/catch: with storage blocked the system setting applies and the toggle
- *                 still works for the visit.
+ *                 still works for the visit. `useShownTheme` follows <html data-theme> for
+ *                 parts that must match it (the website's chat frame, 07 §2).
  * Depends on:     react
- * Used by:        ./ThemeToggle
+ * Used by:        ./ThemeToggle, ../chat/ChatPanel
  * Spec:           Bingo 01 §13; Seasonal Entertainment docs/DESIGN.md "Theme logic"
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 type Theme = 'light' | 'dark';
 
@@ -70,4 +71,23 @@ export function useTheme(): { readonly theme: Theme; readonly toggle: () => void
     setTheme(next);
   };
   return { theme, toggle };
+}
+
+// The theme the page shows now, as <html data-theme> says (set by the early script and the
+// toggle); 'auto' before either has set it, which the website's chat resolves by the same rule.
+function shownTheme(): Theme | 'auto' {
+  const value = document.documentElement.getAttribute('data-theme');
+  return value === 'light' || value === 'dark' ? value : 'auto';
+}
+
+function onThemeChange(changed: () => void): () => void {
+  const observer = new MutationObserver(changed);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  return () => {
+    observer.disconnect();
+  };
+}
+
+export function useShownTheme(): Theme | 'auto' {
+  return useSyncExternalStore(onThemeChange, shownTheme);
 }

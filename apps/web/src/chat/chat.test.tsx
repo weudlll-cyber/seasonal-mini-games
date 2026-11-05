@@ -107,7 +107,8 @@ describe('the ChatPanel boundary', () => {
     const url = 'https://chat.example/embed/chat?room=mini-games';
     serve({ provider: 'hostEmbed', hostChatUrl: url }, ['chat.send']);
     const frame = await screen.findByTestId('chat-frame');
-    expect(frame.getAttribute('src')).toBe(url);
+    // Without <html data-theme> (jsdom) the frame resolves the theme itself (./hostChat.test).
+    expect(frame.getAttribute('src')).toBe(`${url}&theme=auto`);
     expect(frame.getAttribute('sandbox')).toBe(
       'allow-scripts allow-same-origin allow-forms allow-popups',
     );

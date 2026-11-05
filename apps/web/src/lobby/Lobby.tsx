@@ -9,8 +9,10 @@
  *                 its title, players at most, and whether it is a team match (O34), and in
  *                 development builds the way to the Quick
  *                 Test, and the lobby's chat room (07 §2). Signed-out visitors are asked to
- *                 sign in or register.
- * Depends on:     react, @smg/contracts, ../chat/ChatPanel, ../shell/*, ../components/fields,
+ *                 sign in or register; in website mode only to sign in, through the website
+ *                 (O66, ../account/SignIn SignInLink).
+ * Depends on:     react, @smg/contracts, ../account/SignIn, ../chat/ChatPanel, ../shell/*,
+ *                 ../components/fields,
  *                 ../round/roundText (refusals), ../match/formHelp, ./games
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/02-game-guess-the-number.md §2; docs/spec/06-data-model-api-realtime.md §3.1
@@ -18,6 +20,7 @@
 import type { MatchSummaryView } from '@smg/contracts';
 import { lazy, Suspense, useEffect, useState, type ReactElement, type SyntheticEvent } from 'react';
 
+import { SignInLink } from '../account/SignIn.js';
 import { ChatPanel } from '../chat/ChatPanel.js';
 import { ChoiceField, NumberField, SwitchField, TextField } from '../components/fields.js';
 import { FORM_HELP } from '../match/formHelp.js';
@@ -144,6 +147,21 @@ function ByCode(): ReactElement {
   );
 }
 
+// Signed out: how to play. The website has its own registration, so website mode asks only
+// for the sign-in.
+function SignInLine({ website }: { readonly website: boolean }): ReactElement {
+  return website ? (
+    <p>
+      <SignInLink>Sign in</SignInLink> to play. You can watch any match.
+    </p>
+  ) : (
+    <p>
+      <SignInLink>Sign in</SignInLink> or <a href={hrefOf({ name: 'register' })}>register</a> to
+      play. You can watch any match.
+    </p>
+  );
+}
+
 export function Lobby({ dev }: { readonly dev: boolean }): ReactElement {
   const { session, can } = useSession();
   const games = useGames();
@@ -163,10 +181,7 @@ export function Lobby({ dev }: { readonly dev: boolean }): ReactElement {
       <section className="smg-panel smg-stack">
         <h1>Seasonal Mini Games</h1>
         {name === null ? (
-          <p>
-            <a href={hrefOf({ name: 'signIn' })}>Sign in</a> or{' '}
-            <a href={hrefOf({ name: 'register' })}>register</a> to play. You can watch any match.
-          </p>
+          <SignInLine website={session?.authMode === 'website'} />
         ) : (
           <p>Welcome, {name}. Join a match below, or open one.</p>
         )}

@@ -10,7 +10,8 @@
  *                 document and their history, audit log, accounts, abuse signals, live rounds
  *                 with staff actions), the match and round
  *                 routes with their runtime, the boards (leaderboards, profiles, adjustments),
- *                 the builtin chat with its moderation, the integration (handoff, embed allowlist,
+ *                 the chat (builtin with its moderation, or the deployment default of website
+ *                 mode, ../chat/provider), the integration (handoff, embed allowlist,
  *                 public read API, webhooks; ./integrationWiring), in website mode the sign-in
  *                 through the website's proxy (./routes/websiteSignIn, O66; no registration,
  *                 password sign-in, password change or dev sign-in there) and, in development,
@@ -32,7 +33,7 @@ import { PgSettingsStore } from '../admin/pgSettingsStore.js';
 import { SessionEnds } from '../auth/sessionEnds.js';
 import { cookieConfig, registerSessions, type CookieConfig } from '../auth/sessionPlugin.js';
 import { createChat, type Chat } from '../chat/chat.js';
-import { hostChatOrigin } from '../chat/provider.js';
+import { chatDefault, hostChatSource } from '../chat/provider.js';
 import type { Env } from '../config/env.js';
 import { featuresFrom, type Features } from '../config/features.js';
 import type { DbPool } from '../db/pool.js';
@@ -166,9 +167,14 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   // Loaded before the first request: the CSP's frame-ancestors and the CORS checks read it.
   const embeds = new EmbedAllowlist(deps.pool);
   await embeds.list();
-  // The CSP lets the host's chat room load in a frame while the provider is hostEmbed, and the
-  // allowlisted sites frame the game.
-  await registerSecurityHeaders(fastify, hostChatOrigin(settings), () => embeds.config().origins);
+  // The CSP lets the host's chat room load in a frame while the provider is hostEmbed (in
+  // website mode nothing else, 07 §2), and the allowlisted sites frame the game.
+  const chatFallback = chatDefault(deps.env);
+  await registerSecurityHeaders(fastify, {
+    chat: hostChatSource(settings, chatFallback, deps.env.SMG_PUBLIC_URL),
+    chatOnly: deps.env.SMG_AUTH_MODE === 'website',
+    embedOrigins: () => embeds.config().origins,
+  });
   const metrics = createMetrics();
   registerBasics(fastify, deps, metrics);
   const cookie = cookieConfig(!isDev, deps.env.SMG_BASE_PATH);
@@ -188,7 +194,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   registerSeasonRoutes(fastify, { pool: deps.pool, seasons: runtime.seasons, audit });
   registerLeaderboardRoutes(fastify, { pool: deps.pool, audit });
   registerAdminRounds(fastify, { play, pool: deps.pool, audit, settings });
-  const chat = createChat(deps.pool, settings, runtime.rounds);
+  const chat = createChat(deps.pool, settings, runtime.rounds, chatFallback);
   registerChatRoutes(fastify, { chat, audit });
   const integration = { ...deps, features, embeds, audit, cookie, sessionEnds, runtime };
   const webhooks = registerIntegration(fastify, integration);

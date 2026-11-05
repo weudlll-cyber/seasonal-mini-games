@@ -98,7 +98,10 @@ function PlacingRow(p: {
               {r.team === null ? null : <SeasonIcon season={r.team} size="1rem" />}
             </span>
           ) : null}{' '}
-          <PlayerName name={p.state.names[r.playerId] ?? r.playerId} />
+          <PlayerName
+            name={p.state.names[r.playerId] ?? r.playerId}
+            steps={p.state.steps?.[r.playerId]}
+          />
           {p.you ? <span className="round-you-mark"> (you)</span> : null}
         </span>
       </td>

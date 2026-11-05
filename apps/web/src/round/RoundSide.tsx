@@ -9,7 +9,8 @@
  *                 per season team with its match points and its players in this round, shown
  *                 only when teams play (03 §5), each named "Team Spring" (O52). The focus
  *                 mode's Players panel (O46) holds the tiles and the round's players with
- *                 colour, name (cut with an ellipsis only where too narrow, ./PlayerName),
+ *                 colour, name (cut with an ellipsis only where too narrow, ./PlayerName,
+ *                 with another player's Discord steps, 07 §7),
  *                 team under the heading "Team" as its icon alone (its name the accessible name
  *                 and tooltip, ../season/TeamIcon, T212) and number of guesses; in a game with player
  *                 tags the player's marker and tag in place of the dot (O62).
@@ -87,9 +88,15 @@ export function PlayersPanelBody(p: {
         {rows.map((r) => (
           <li key={r.playerKey} data-own={r.playerKey === p.viewerKey}>
             <Marker state={state} playerKey={r.playerKey} mark={p.marks?.[r.playerKey]} />
-            <PlayerName
-              name={r.playerKey === p.viewerKey ? 'You' : (state.names[r.playerKey] ?? r.playerKey)}
-            />
+            {/* The viewer's own row says "You", without steps; others show theirs (07 §7). */}
+            {r.playerKey === p.viewerKey ? (
+              <PlayerName name="You" />
+            ) : (
+              <PlayerName
+                name={state.names[r.playerKey] ?? r.playerKey}
+                steps={state.steps?.[r.playerKey]}
+              />
+            )}
             {state.teamsOn ? (
               <TeamIcon team={r.team} className="round-player-team" size="0.9rem" />
             ) : null}

@@ -133,3 +133,9 @@
   border: 0;
   border-radius: var(--radius);
 }
+
+/* Website mode, signed out: "Log in" above the website's chat frame (./ChatPanel). */
+.chat-log-in {
+  flex: none;
+  margin: 0 0 0.5rem;
+}

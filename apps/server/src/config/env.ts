@@ -12,8 +12,9 @@
  *                 Website mode (SMG_AUTH_MODE=website, O66) needs the public address, the
  *                 trusted proxies, the proxy secret, the website's local address and its sync
  *                 token, or the server refuses to start (Bingo's checkWebsiteMode, D37).
+ *                 SMG_CHAT_PROVIDER: the chat while the admin has chosen none (07 §2).
  * Depends on:     zod
- * Used by:        ../main.ts, ../http/app.ts, ../cli, ./features, ../index
+ * Used by:        ../main.ts, ../http/app.ts, ../cli, ./features, ../index, ../chat/provider
  * Spec:           docs/spec/10-repository-structure.md §4, §5; docs/spec/07-integration.md §7;
  *                 Bingo 08 §1.1, §5; Bingo 07 §2.3
  */
@@ -114,10 +115,14 @@ const envSchema = z.object({
     .string()
     .regex(/^\/(?![/\\])[\x21-\x7e]*$/, 'a path on the website, e.g. /login?next=')
     .default('/login?next='),
-  // The website's local address (http://127.0.0.1:<port>) for its account-changes feed, and
+  // The website's local address for its account-changes feed (the installer writes
+  // http://site:3800, the website's container on its Docker network, DECISIONS T233), and
   // the token the feed asks for (X-Games-Sync-Token); the installer fills both.
   SMG_WEBSITE_LOCAL_URL: z.url({ protocol: /^https?$/ }).optional(),
   SMG_WEBSITE_SYNC_TOKEN: z.string().min(16).max(256).optional(),
+  // The chat in force while no admin has chosen one (`integrations.chatProvider`, 07 §2); the
+  // installer writes hostEmbed for website mode, which defaults to it anyway (../chat/provider).
+  SMG_CHAT_PROVIDER: z.enum(['none', 'builtin', 'hostEmbed']).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

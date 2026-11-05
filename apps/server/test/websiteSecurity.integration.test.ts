@@ -13,14 +13,17 @@
  *                 backslash goes to the lobby. Registration, password sign-in, the password
  *                 change and the dev sign-in answer 404 in website mode; local mode keeps them
  *                 and reports itself. A guest session watches and reads the boards, every
- *                 action asks for a sign-in. Adapted from Bingo's websiteLogin and websiteRules tests.
- * Depends on:     vitest, ../src/index (types), ./harness, ./websiteHelpers
+ *                 action asks for a sign-in. The chat is the website's room by default and the
+ *                 CSP frames only its /embed/chat; local mode keeps builtin and 'self' (T236).
+ *                 Adapted from Bingo's websiteLogin and websiteRules tests.
+ * Depends on:     vitest, ../src/index (types), ./chatKit, ./harness, ./websiteHelpers
  * Spec:           docs/spec/07-integration.md §7; docs/spec/05-security-threat-model.md §1;
  *                 Bingo 07 §2.3; Bingo 03 §2.2
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import type { App } from '../src/index.js';
+import { until } from './chatKit.js';
 import { buildOn, startHarness, stopHarness, SUITE_TIMEOUT_MS, type Harness } from './harness.js';
 import {
   BASE,
@@ -196,5 +199,29 @@ describe('guests (O66)', () => {
       [401, 'SIGN_IN_REQUIRED'],
       [401, 'SIGN_IN_REQUIRED'],
     ]);
+  });
+});
+
+describe("the website's chat (07 §2)", () => {
+  const configOf = (app: App, url: string) => app.fastify.inject({ method: 'GET', url });
+  const frameSrc = (r: { headers: Record<string, unknown> }) =>
+    String(r.headers['content-security-policy'])
+      .split(';')
+      .find((d) => d.startsWith('frame-src'));
+
+  it('is the website room by default and the only frame; local mode is unchanged', async () => {
+    const url = `${BASE}api/v1/chat/config`;
+    expect((await configOf(website(), url)).json()).toEqual({
+      provider: 'hostEmbed',
+      hostChatUrl: '/embed/chat?room=mini-games',
+    });
+    // The frame source is read in the background: the first answers may still say 'none'.
+    await until(
+      async () =>
+        frameSrc(await configOf(website(), url)) === 'frame-src https://example.org/embed/chat',
+    );
+    const standalone = await configOf(local, '/api/v1/chat/config');
+    expect(standalone.json()).toEqual({ provider: 'builtin', hostChatUrl: null });
+    expect(frameSrc(standalone)).toBe("frame-src 'self'");
   });
 });
