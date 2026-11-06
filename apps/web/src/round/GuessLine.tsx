@@ -24,11 +24,12 @@
  *                 "You" for a screen reader), and
  *                 hovering, focusing or (phone) tapping it highlights the player on the
  *                 game's board, a tap for 3 s; a row of the highlighted player stands out,
- *                 the others fade. Moved out of ./RoundLog to keep each file under the size
+ *                 the others fade. Another player's Discord steps follow the name (website
+ *                 mode, ./PlayerSteps). Moved out of ./RoundLog to keep each file under the size
  *                 limit.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (rows, formatNumber, marks), @smg/ui
  *                 (PlayerMark, highlight), ../season/SeasonIcon, ./RoundSide (colours),
- *                 ./roundMarks.css
+ *                 ./PlayerSteps, ./roundMarks.css
  * Used by:        ./RoundLog
  * Spec:           docs/spec/02-game-guess-the-number.md §6.2, §6.3, §12; docs/spec/03-seasonal-specials.md §2.4
  */
@@ -44,6 +45,7 @@ import { PlayerMark, useHighlightRow } from '@smg/ui';
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 
 import { SeasonIcon } from '../season/SeasonIcon.js';
+import { PlayerSteps } from './PlayerSteps.js';
 import { playerColor } from './RoundSide.js';
 import './roundMarks.css';
 
@@ -147,6 +149,9 @@ function Name(p: { readonly name: string; readonly tagged: boolean; readonly own
   );
 }
 
+const stepsOf = (state: RoundStateView, key: string | null) =>
+  key === null ? undefined : state.steps?.[key];
+
 // The player's dot and name; none where every row is the viewer's or only the guess shows.
 function Who(p: RowProps): ReactElement | null {
   if (p.solo || p.bare) return null;
@@ -163,6 +168,8 @@ function Who(p: RowProps): ReactElement | null {
         <PlayerMark mark={mark} />
       )}
       <Name name={name} tagged={mark !== undefined} own={own} />
+      {/* Another player's Discord steps beside the name (07 §7); "You" shows none. */}
+      {own ? null : <PlayerSteps steps={stepsOf(p.state, key)} />}
     </>
   );
 }

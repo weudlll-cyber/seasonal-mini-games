@@ -7,8 +7,9 @@
  *                 wherever its box has room, an ellipsis only when the box is too narrow,
  *                 until focus or a tap shows it whole. Moved out of ./result.css (T202) since
  *                 every place that shows a name uses it: the round's lists, the Players
- *                 panels, the result tables, the waiting area and the chat.
- * Spec:           docs/spec/02-game-guess-the-number.md §9, §12
+ *                 panels, the result tables, the waiting area and the chat. A website
+ *                 member's Discord steps beside the name (./PlayerSteps, O66).
+ * Spec:           docs/spec/02-game-guess-the-number.md §9, §12; docs/spec/07-integration.md §7
  */
 /* In full wherever its box has room, an ellipsis only when the box is too narrow (T150). */
 .player-name {
@@ -25,4 +26,38 @@
 .player-name[data-full='true'] {
   white-space: normal;
   overflow-wrap: anywhere;
+}
+
+/* A name with its Discord steps (./PlayerSteps): the name gives way, the steps never. */
+.player-named {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-width: 0;
+  vertical-align: bottom;
+}
+
+.player-named > .player-name {
+  min-width: 0;
+}
+
+.player-steps {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.2em;
+  /* Apart from the name before it, without a space in the text. */
+  margin-inline-start: 0.3em;
+  vertical-align: middle;
+}
+
+.player-step-icon {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+.player-step-name {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+  white-space: nowrap;
 }

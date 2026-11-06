@@ -50,10 +50,13 @@ ENV NODE_ENV=production \
     SMG_PORT=3100 \
     SMG_DATA_DIR=/data
 WORKDIR /app
-# The app needs only node: drop the bundled package managers (npm, corepack, yarn) and the
-# vulnerabilities that ship with them, then add the unprivileged app user and its one
-# writable directory (a new named volume takes this ownership).
-RUN rm -rf /usr/local/lib/node_modules /opt/yarn-* \
+# The base's Alpine packages take their security fixes before the next base digest does
+# (zlib CVE-2026-85091 on 2026-11-06, a Trivy HIGH). The app needs only node: drop the
+# bundled package managers (npm, corepack, yarn) and the vulnerabilities that ship with
+# them, then add the unprivileged app user and its one writable directory (a new named
+# volume takes this ownership).
+RUN apk upgrade --no-cache \
+  && rm -rf /usr/local/lib/node_modules /opt/yarn-* \
     /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
     /usr/local/bin/yarn /usr/local/bin/yarnpkg \
   && addgroup -S -g 10001 smg && adduser -S -u 10001 -G smg -H smg \

@@ -31,7 +31,7 @@ import type { DbPool } from '../db/pool.js';
 import type { Rounds } from '../round/rounds.js';
 import type { WordLists } from './filter.js';
 import { sendMessage, type SendResult, type Viewer } from './pipeline.js';
-import { chatConfig, chatRules } from './provider.js';
+import { chatConfig, chatRules, type ChatDefault } from './provider.js';
 import { wordLists } from './reports.js';
 import { postRoundLines } from './roundLines.js';
 import {
@@ -57,13 +57,15 @@ export class Chat {
   constructor(
     readonly pool: DbPool,
     private readonly settings: SettingsService,
+    // The deployment's chat while no admin has chosen one (./provider chatDefault).
+    private readonly fallback: ChatDefault | null,
   ) {
     this.sanctions = new Sanctions(pool);
     this.spam = new SpamGuard();
   }
 
   config(): Promise<ChatConfigView> {
-    return chatConfig(this.settings);
+    return chatConfig(this.settings, this.fallback);
   }
 
   async provider(): Promise<ChatProvider> {
@@ -165,8 +167,13 @@ export class Chat {
 }
 
 // The chat of this server, with a system line in the match room at every round's end.
-export function createChat(pool: DbPool, settings: SettingsService, rounds: Rounds): Chat {
-  const chat = new Chat(pool, settings);
+export function createChat(
+  pool: DbPool,
+  settings: SettingsService,
+  rounds: Rounds,
+  fallback: ChatDefault | null,
+): Chat {
+  const chat = new Chat(pool, settings, fallback);
   postRoundLines(rounds, chat);
   return chat;
 }

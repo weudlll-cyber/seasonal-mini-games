@@ -1,29 +1,29 @@
 #!/usr/bin/env bash
 # @file   ops/test/installer-test.sh
 # @module ops/test
-# @brief  The installer from a fresh Ubuntu 24.04 to a running, backed-up instance, in containers.
+# @brief  The installer from a fresh Ubuntu 24.04 to a running instance, both install types, in containers.
 #
-# Responsibility: two throw-away "servers" (ops/test/Dockerfile: systemd as PID 1, privileged,
+# Responsibility: throw-away "servers" (ops/test/Dockerfile: systemd as PID 1, privileged,
 #                 /var/lib/docker and /var/lib/containerd on anonymous volumes, so the Docker
-#                 they install can build and run images):
-#                 standalone — ops/install.sh on a bare IP installs Docker, builds the app
+#                 in them can build and run images), one per case:
+#                 standalone — ops/install.sh on a bare IP installs Docker, builds the real app
 #                 from a git bundle of the given ref, starts it behind Caddy's internal CA and
 #                 waits for /readyz; then HTTPS answers, `smg status`, a backup encrypted for a
 #                 fresh age key, the restore drill on it, maintenance on (a new match is
-#                 refused) and off, and a re-run
-#                 of the installer that changes nothing. website — a stand-in for the Seasonal
-#                 Entertainment website (compose project seasonal-site, service caddy, with
-#                 the routes import its DEPLOYMENT.md sets up), then this installer and Seasonal
-#                 Bingo Royale's (from its committed tree, read-only) as the website type side
-#                 by side: both answer through the website's Caddy under their paths, with no
-#                 shared container, volume, port, network alias, group or timer. Both servers
-#                 are removed at the end, also after a failure.
-# Depends on:     docker (with privileged containers), git, ops/test/Dockerfile, ops/compose.yml
-# Used by:        the operator or a night run, by hand (it takes 20–40 minutes)
+#                 refused) and off, and a re-run of the installer that changes nothing.
+#                 nginx — the website behind host nginx, with Mini Games first switched off
+#                 there (the installer stops with the website's --mini-games command), then
+#                 switched on (the re-run succeeds), and a re-run keeping every answer.
+#                 caddy — the website behind its own Caddy, the install and a re-run.
+#                 The website cases (./website-cases.sh) use a stand-in website and app; nginx
+#                 and Caddy check the route file for real (nginx -t, caddy validate). Every
+#                 server is removed at the end, also after a failure, and the work images too.
+# Depends on:     docker (with privileged containers), git, ops/test/Dockerfile, ./website-cases.sh
+# Used by:        the operator or a night run, by hand (standalone 20–40 minutes, a website case about 5)
 # Spec:           docs/spec/10-repository-structure.md §6; Bingo 09 §3, §6, §8
 #
-# Usage: bash ops/test/installer-test.sh [standalone|website|all] [git ref, default HEAD's branch]
-#        BINGO_REPO=<path of a Bingo clone> BINGO_COMMIT=<commit> for the website part.
+# Usage: bash ops/test/installer-test.sh [standalone|nginx|caddy|website|all] [git ref, default HEAD's branch]
+#        (website: nginx and caddy; all: every case)
 set -euo pipefail
 shopt -s inherit_errexit
 # Git Bash on Windows rewrites arguments that start with / (such as -v /var/lib/docker) into
@@ -37,11 +37,7 @@ HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 REPO=$(cd "$HERE/../.." && pwd)
 WHICH=${1:-all}
 REF=${2:-$(git -C "$(native "$REPO")" rev-parse --abbrev-ref HEAD)}
-BINGO_REPO=${BINGO_REPO:-$REPO/../seasonal-bingo-royale}
-BINGO_COMMIT=${BINGO_COMMIT:-d294585}
 IMAGE=smg-installer-test
-# The website's Caddy stand-in runs the same pinned Caddy as the standalone stack.
-CADDY_IMAGE=$(sed -n 's/^ *image: *\(caddy:.*\)$/\1/p' "$REPO/ops/compose.yml")
 WORK=$(mktemp -d)
 SERVERS=()
 
@@ -56,6 +52,7 @@ finish() {
     fi
     docker rm -f -v "$name" >/dev/null 2>&1 || true
   done
+  docker image rm "$IMAGE" >/dev/null 2>&1 || true
   rm -rf "$WORK"
 }
 trap finish EXIT
@@ -119,93 +116,22 @@ standalone() {
   grep -q 'Done (0 change(s))' "$WORK/rerun.txt" || fail "the re-run changed something"
 }
 
-# The stand-in for the website: its compose project and Caddy as its DEPLOYMENT.md sets them
-# up (routes imported from deploy/site/routes/), plain HTTP inside the test server.
-fake_website() {
-  local s=$1
-  mkdir -p "$WORK/site/routes"
-  printf '# the routes of the installed games\n' >"$WORK/site/routes/site.caddy"
-  cat >"$WORK/site/Caddyfile" <<'EOF'
-{
-	auto_https off
-}
-:80 {
-	import /etc/caddy/routes/*.caddy
-	respond "the website" 200
-}
-EOF
-  cat >"$WORK/site/docker-compose.yml" <<EOF
-name: seasonal-site
-services:
-  caddy:
-    image: $CADDY_IMAGE
-    environment:
-      SITE_DOMAIN: localhost
-    ports: ['80:80']
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./routes:/etc/caddy/routes:ro
-EOF
-  put "$s" site /root/site
-  on "$s" 'cd /root/site && docker compose up -d --wait'
-}
-
-# Seasonal Bingo Royale beside it, from its committed tree only (never its working tree).
-bingo_beside() {
-  local s=$1 pub=$2
-  git -C "$(native "$BINGO_REPO")" archive --format=tar --prefix=bingo/ "$BINGO_COMMIT" >"$WORK/bingo.tar"
-  put "$s" bingo.tar /root/bingo.tar
-  on "$s" 'cd /root && tar -xf bingo.tar && cd bingo && git init -q -b master && git add -A'
-  on "$s" 'cd /root/bingo && git -c user.email=t@example.org -c user.name=test commit -qm tree'
-  on "$s" "bash /root/bingo/ops/install.sh --type website --env prod --email ops@example.org \
-    --age-key '$pub' --repo /root/bingo --ref master --yes"
-  on "$s" 'cp /opt/sbr/website-bingo.caddy /root/site/routes/bingo.caddy'
-}
-
-website() {
-  local s=smg-itest-website pub
-  step "website: fresh server with Docker and the website"
-  server "$s"
-  pub=$(on "$s" 'cat /root/key.pub')
-  on "$s" 'apt-get install -y -q docker.io docker-compose-v2 >/dev/null'
-  on "$s" 'systemctl enable --now docker >/dev/null'
-  fake_website "$s"
-  step "website: Seasonal Mini Games as the website type"
-  on "$s" "bash /root/smg/ops/install.sh --type website --env prod --email ops@example.org \
-    --age-key '$pub' --repo /root/smg.bundle --ref '$REF' --yes"
-  on "$s" 'cp /opt/smg/website-mini-games.caddy /root/site/routes/mini-games.caddy'
-  step "website: Seasonal Bingo Royale beside it (commit $BINGO_COMMIT)"
-  bingo_beside "$s" "$pub"
-  on "$s" 'docker exec seasonal-site-caddy-1 caddy reload --config /etc/caddy/Caddyfile'
-  step "website: both answer through the website's Caddy"
-  on "$s" 'curl -sf http://localhost/games/mini-games/api/v1/games' | grep -q guess-the-number ||
-    fail "mini games not reachable"
-  on "$s" 'curl -sf http://localhost/games/bingo/readyz' | grep -q . || fail "bingo not reachable"
-  on "$s" 'curl -s http://localhost/' | grep -q 'the website' || fail "the website lost its pages"
-  step "website: nothing shared"
-  on "$s" 'docker ps --format "{{.Names}} {{.Ports}}"' | tee "$WORK/ps.txt"
-  if grep -Eq '^(smg|sbr)-prod-app-1 .*->' "$WORK/ps.txt"; then fail "an app publishes a host port"; fi
-  [[ $(on "$s" 'docker volume ls -q' | grep -c '_pgdata$') == 2 ]] || fail "the databases share a volume"
-  on "$s" 'systemctl is-enabled smg-backup@prod.timer sbr-backup@prod.timer' >/dev/null ||
-    fail "the backup timers are not both there"
-  # A backup of each first: Bingo's `sbr status` (d294585) stops before its first backup,
-  # as `smg status` did (night run 2); both backups also show their files do not collide.
-  on "$s" 'smg backup && sbr backup'
-  [[ $(on "$s" 'ls /var/backups/smg/prod /var/backups/sbr/prod' | grep -c '.tar.age$') == 2 ]] ||
-    fail "the two backups are not both there"
-  on "$s" 'smg status && sbr status' >/dev/null
-}
+# shellcheck source-path=SCRIPTDIR
+source "$HERE/website-cases.sh"
 
 step "test server image and the source bundle of $REF"
 (cd "$HERE" && docker build -q -t "$IMAGE" . >/dev/null)
 git -C "$(native "$REPO")" bundle create "$(native "$WORK")/smg.bundle" "$REF"
+[[ $WHICH == standalone ]] || stub_app_image
 case $WHICH in
   standalone) standalone ;;
-  website) website ;;
-  all)
-    standalone
-    website
+  nginx) website_case nginx off-first ;;
+  caddy) website_case caddy ;;
+  website | all)
+    website_case nginx off-first
+    website_case caddy
+    [[ $WHICH == website ]] || standalone
     ;;
-  *) fail "usage: installer-test.sh [standalone|website|all] [git ref]" ;;
+  *) fail "usage: installer-test.sh [standalone|nginx|caddy|website|all] [git ref]" ;;
 esac
 step "installer test passed ($WHICH, $REF)"

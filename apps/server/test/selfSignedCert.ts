@@ -41,8 +41,10 @@ const TRUE = tlv(0x01, Buffer.from([0xff]));
 
 function tbsCertificate(spki: Buffer): Buffer {
   const name = seq(tlv(0x31, seq(oid('2.5.4.3'), tlv(0x0c, Buffer.from('localhost')))));
+  // A DER INTEGER is minimal and positive: the first byte neither 0x00 (a leading zero
+  // OpenSSL refuses as "illegal padding", one draw in 256 in CI) nor 0x80 and above (negative).
   const serial = randomBytes(8);
-  serial[0] = (serial[0] ?? 0) & 0x7f;
+  serial[0] = ((serial[0] ?? 0) & 0x7f) | 0x40;
   const now = Date.now();
   const altNames = seq(tlv(0x82, Buffer.from('localhost')), tlv(0x87, Buffer.from([127, 0, 0, 1])));
   const extensions = seq(

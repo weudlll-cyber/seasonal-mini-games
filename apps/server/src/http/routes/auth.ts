@@ -4,7 +4,8 @@
  * @brief  Session and local-account routes under /api/v1 (taken over from Bingo).
  *
  * Responsibility: GET /session (account summary with whether it has a password, T201;
- *                 permissions, CSRF token, feature flags),
+ *                 permissions, CSRF token, feature flags, the auth mode and, in website mode,
+ *                 the sign-in route, O66),
  *                 POST /auth/register, /auth/login, /auth/logout, /auth/guest, and DELETE /me
  *                 (the account, after its password is checked, or for an account made by the
  *                 website's handoff, which has none, after its display name is typed). Login answers
@@ -13,11 +14,14 @@
  *                 known account adds one abuse signal for moderators (05 §2). Login and
  *                 registration are rate-limited per IP and per account+IP (03 §13). E-mail
  *                 verification and 2FA are behind feature flags that are off by default;
- *                 when verification is on, unverified accounts cannot sign in.
- * Depends on:     fastify, zod, ../../auth/*, ../../admin/abuse, ../../db/pool, ../../config/features
- * Used by:        ../app, ./handoff (startSession)
+ *                 when verification is on, unverified accounts cannot sign in. In website
+ *                 mode (O66, Bingo D37) registration and password sign-in do not exist (404):
+ *                 players sign in through the website (./websiteSignIn).
+ * Depends on:     fastify, zod, @smg/contracts (SessionView), ../../auth/*, ../../admin/abuse, ../../db/pool, ../../config/features
+ * Used by:        ../app, ./handoff (startSession), ./websiteSignIn (openSession)
  * Spec:           docs/spec/05-security-threat-model.md §1, §2; Bingo 05 §2.1; Bingo 03 §2.1, §2.3, §3, §13
  */
+import type { SessionView } from '@smg/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
@@ -47,6 +51,8 @@ interface AuthDeps {
   readonly features: Features;
   // Ended sessions: the gateway closes their sockets (audit S4).
   readonly sessionEnds: SessionEnds;
+  // Website mode: the sign-in route (`<base>auth/website`); null in local mode.
+  readonly signInPath: string | null;
 }
 
 const registerBody = z.object({
@@ -68,20 +74,7 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AuthDeps): void {
     loginAccountIp: new RateLimiter(RATE_RULES.loginAccountIp),
     guest: new RateLimiter(RATE_RULES.guest),
   };
-  app.get('/api/v1/session', (request) => sessionSummary(request, deps.features));
-  app.post('/api/v1/auth/register', async (request, reply) => {
-    if (!limits.register.take(request.ip).allowed) return tooMany(reply);
-    return register(request, reply, deps);
-  });
-  app.post('/api/v1/auth/login', async (request, reply) => {
-    const parsed = loginBody.safeParse(request.body);
-    if (!parsed.success) return reply.status(400).send(LOGIN_FAILED);
-    const key = `${parsed.data.email.toLowerCase()}|${request.ip}`;
-    if (!limits.loginIp.take(request.ip).allowed || !limits.loginAccountIp.take(key).allowed) {
-      return tooMany(reply);
-    }
-    return login(request, reply, deps, parsed.data);
-  });
+  app.get('/api/v1/session', (request) => sessionSummary(request, deps));
   app.post('/api/v1/auth/logout', async (request, reply) => {
     if (request.session !== null) {
       await revokeSession(deps.pool, request.session.id);
@@ -98,20 +91,38 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AuthDeps): void {
     setSessionCookie(reply, deps.cookie, token);
     return reply.status(201).send({ kind: 'guest' });
   });
+  // Website mode: no registration and no password sign-in (the routes do not exist, 404).
+  if (deps.signInPath !== null) return;
+  app.post('/api/v1/auth/register', async (request, reply) => {
+    if (!limits.register.take(request.ip).allowed) return tooMany(reply);
+    return register(request, reply, deps);
+  });
+  app.post('/api/v1/auth/login', async (request, reply) => {
+    const parsed = loginBody.safeParse(request.body);
+    if (!parsed.success) return reply.status(400).send(LOGIN_FAILED);
+    const key = `${parsed.data.email.toLowerCase()}|${request.ip}`;
+    if (!limits.loginIp.take(request.ip).allowed || !limits.loginAccountIp.take(key).allowed) {
+      return tooMany(reply);
+    }
+    return login(request, reply, deps, parsed.data);
+  });
 }
 
-function sessionSummary(request: FastifyRequest, features: Features) {
+function sessionSummary(request: FastifyRequest, deps: AuthDeps): SessionView {
   const s = request.session;
   return {
     signedIn: s !== null && s.accountId !== null,
     kind: s?.kind ?? null,
     // `hasPassword`: whether the account page offers "Change password" (T201).
-    account: s?.accountId
-      ? { id: s.accountId, displayName: s.displayName, hasPassword: s.hasPassword }
-      : null,
+    account:
+      s?.accountId && s.displayName !== null
+        ? { id: s.accountId, displayName: s.displayName, hasPassword: s.hasPassword }
+        : null,
     permissions: s?.permissions ?? [],
     csrfToken: s?.csrfToken ?? null,
-    features,
+    features: { ...deps.features },
+    authMode: deps.signInPath === null ? 'local' : 'website',
+    signInPath: deps.signInPath,
   };
 }
 
@@ -151,14 +162,16 @@ async function login(
   return startSession(request, reply, deps, { accountId: account.id, status: 200 });
 }
 
-// A new session for the account, answered with its cookie (also after a handoff, ./handoff).
-export async function startSession(
+type SessionDeps = Pick<AuthDeps, 'pool' | 'cookie' | 'sessionEnds'>;
+
+// A new session for the account with its cookie set on the reply; the browser's session
+// before it ends (03 §3: a fresh session id on every sign-in, also through the website).
+export async function openSession(
   request: FastifyRequest,
   reply: FastifyReply,
-  deps: Pick<AuthDeps, 'pool' | 'cookie' | 'sessionEnds'>,
-  { accountId, status }: { readonly accountId: string; readonly status: number },
-) {
-  // A fresh session id on every sign-in (03 §3: rotate on login).
+  deps: SessionDeps,
+  accountId: string,
+): Promise<void> {
   if (request.session !== null) {
     await revokeSession(deps.pool, request.session.id);
     deps.sessionEnds.end([request.session.id]);
@@ -169,6 +182,16 @@ export async function startSession(
     request.headers['user-agent'] ?? null,
   );
   setSessionCookie(reply, deps.cookie, token);
+}
+
+// A new session for the account, answered with its cookie (also after a handoff, ./handoff).
+export async function startSession(
+  request: FastifyRequest,
+  reply: FastifyReply,
+  deps: SessionDeps,
+  { accountId, status }: { readonly accountId: string; readonly status: number },
+) {
+  await openSession(request, reply, deps, accountId);
   return reply.status(status).send({ accountId });
 }
 

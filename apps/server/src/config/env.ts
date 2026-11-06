@@ -9,11 +9,24 @@
  *                 and data directories, 09 §1) and the WebSocket origins derived from them.
  *                 Fail closed: NODE_ENV defaults to production and development features
  *                 need SMG_DEV=1, which is refused for a public (non-localhost) address.
+ *                 Website mode (SMG_AUTH_MODE=website, O66) needs the public address, the
+ *                 trusted proxies, the proxy secret, the website's local address and its sync
+ *                 token, or the server refuses to start (Bingo's checkWebsiteMode, D37).
+ *                 SMG_CHAT_PROVIDER: the chat while the admin has chosen none (07 §2).
  * Depends on:     zod
- * Used by:        ../main.ts, ../http/app.ts, ../cli, ./features, ../index
- * Spec:           docs/spec/10-repository-structure.md §4, §5; Bingo 08 §1.1, §5
+ * Used by:        ../main.ts, ../http/app.ts, ../cli, ./features, ../index, ../chat/provider
+ * Spec:           docs/spec/10-repository-structure.md §4, §5; docs/spec/07-integration.md §7;
+ *                 Bingo 08 §1.1, §5; Bingo 07 §2.3
  */
 import { z } from 'zod';
+
+// An HTTP header name (the identity headers of website mode), lower-cased as Node gives them.
+const headerName = (fallback: string) =>
+  z
+    .string()
+    .regex(/^[A-Za-z0-9-]{1,64}$/, 'a header name')
+    .default(fallback)
+    .transform((v) => v.toLowerCase());
 
 // The port range stays open so test runs can bind to an ephemeral port (0 → kernel picks).
 // Local dev uses the fixed project port 3910 (10 §4).
@@ -82,6 +95,34 @@ const envSchema = z.object({
   // Development only (with SMG_DEV=1): a local In Season feed, plain HTTP allowed, used instead
   // of the `seasons.feedUrl` setting (which takes https addresses only).
   SMG_DEV_FEED_URL: z.url().optional(),
+  // How players sign in (O66, Bingo D37): the game's own accounts (standalone), or only through
+  // the website's login, whose proxy passes the visitor as headers to GET <base>auth/website.
+  SMG_AUTH_MODE: z.enum(['local', 'website']).default('local'),
+  // The identity headers' names (07 §7); the defaults are the website's.
+  SMG_WEBSITE_HEADER_ID: headerName('X-Acting-User-Id'),
+  SMG_WEBSITE_HEADER_NAME: headerName('X-Acting-User'),
+  SMG_WEBSITE_HEADER_ROLES: headerName('X-Acting-User-Roles'),
+  SMG_WEBSITE_HEADER_EMAIL_VERIFIED: headerName('X-Acting-User-Email-Verified'),
+  SMG_WEBSITE_HEADER_CAN_HOST: headerName('X-Acting-User-Can-Host'),
+  SMG_WEBSITE_HEADER_STEPS: headerName('X-Acting-User-Steps'),
+  SMG_WEBSITE_HEADER_GUEST: headerName('X-Acting-Guest'),
+  // The secret the game's proxy route sends in X-Smg-Proxy-Secret with the identity headers
+  // (website mode needs it; the installer generates it). No other process knows it.
+  SMG_WEBSITE_PROXY_SECRET: z.string().min(32).max(256).optional(),
+  // The website's login page; the return path is appended URL-encoded (Bingo D43). A path on
+  // the website's own origin, never another site.
+  SMG_WEBSITE_LOGIN_PATH: z
+    .string()
+    .regex(/^\/(?![/\\])[\x21-\x7e]*$/, 'a path on the website, e.g. /login?next=')
+    .default('/login?next='),
+  // The website's local address for its account-changes feed (the installer writes
+  // http://site:3800, the website's container on its Docker network, DECISIONS T233), and
+  // the token the feed asks for (X-Games-Sync-Token); the installer fills both.
+  SMG_WEBSITE_LOCAL_URL: z.url({ protocol: /^https?$/ }).optional(),
+  SMG_WEBSITE_SYNC_TOKEN: z.string().min(16).max(256).optional(),
+  // The chat in force while no admin has chosen one (`integrations.chatProvider`, 07 §2); the
+  // installer writes hostEmbed for website mode, which defaults to it anyway (../chat/provider).
+  SMG_CHAT_PROVIDER: z.enum(['none', 'builtin', 'hostEmbed']).optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -116,9 +157,25 @@ function checkDevSafe(env: Env): Env {
   return env;
 }
 
+// Website mode without its settings would sign nobody in or trust anyone: refuse to start.
+function checkWebsiteMode(env: Env): Env {
+  if (env.SMG_AUTH_MODE !== 'website') return env;
+  const missing = [
+    env.SMG_PUBLIC_URL === undefined ? 'SMG_PUBLIC_URL' : null,
+    env.SMG_TRUSTED_PROXIES.length === 0 ? 'SMG_TRUSTED_PROXIES' : null,
+    env.SMG_WEBSITE_PROXY_SECRET === undefined ? 'SMG_WEBSITE_PROXY_SECRET' : null,
+    env.SMG_WEBSITE_LOCAL_URL === undefined ? 'SMG_WEBSITE_LOCAL_URL' : null,
+    env.SMG_WEBSITE_SYNC_TOKEN === undefined ? 'SMG_WEBSITE_SYNC_TOKEN' : null,
+  ].filter((name) => name !== null);
+  if (missing.length > 0) {
+    throw new Error(`SMG_AUTH_MODE=website needs ${missing.join(', ')}`);
+  }
+  return env;
+}
+
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
   const parsed = envSchema.safeParse(source);
-  if (parsed.success) return checkDevSafe(parsed.data);
+  if (parsed.success) return checkWebsiteMode(checkDevSafe(parsed.data));
   // Keep the message compact — users running `pnpm dev` without a .env file need the hint,
   // not a wall of zod issues.
   const issues = parsed.error.issues

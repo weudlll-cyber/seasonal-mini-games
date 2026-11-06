@@ -1,0 +1,23 @@
+# @file   ops/compose.website-nginx.yml
+# @module ops
+# @brief  Website installs behind host nginx: the app on one loopback port.
+#
+# Responsibility: on top of ops/compose.yml and ops/compose.website.yml: the app publishes its
+#                 port on 127.0.0.1 only (SMG_APP_PORT, default 3920; Bingo's is 3900), where
+#                 the website's nginx proxies /games/mini-games (the route file written by
+#                 ops/install.sh); the app's own edge network gets a fixed subnet
+#                 (SMG_EDGE_SUBNET, default 172.30.250.0/24; Bingo's is 172.30.249.0/24), so
+#                 the address the published port's connections come from is known in advance
+#                 and trusted (SMG_TRUSTED_PROXIES). Adopted from Bingo's file of the same name.
+# Used by:        ops/install.sh, ops/smg (copied to /opt/smg/compose.website-nginx.yml)
+# Spec:           docs/spec/10-repository-structure.md §6; Bingo ops/compose.website-nginx.yml
+services:
+  app:
+    ports:
+      - '127.0.0.1:${SMG_APP_PORT:?set SMG_APP_PORT in the env file}:3100'
+
+networks:
+  edge:
+    ipam:
+      config:
+        - subnet: ${SMG_EDGE_SUBNET:?set SMG_EDGE_SUBNET in the env file}

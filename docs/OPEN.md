@@ -5,7 +5,7 @@ Full list: [BACKLOG.md](BACKLOG.md). Decisions: [DECISIONS.md](DECISIONS.md).
 - Specification v1 (01–11) merged into `master` on 2026-10-24, with the owner's answers (DECISIONS O8–O15).
 - Merged into `master` on 2026-11-01 (merge `fd8ef34`): the foundation, Guess The Number with its server, client, admin app, e2e journeys 1–19 and a first load check, built on `feat/guess-the-number` and `night/2026-10-27` ([NIGHT-RUN.md](NIGHT-RUN.md)); both branches are deleted.
 - E2E journey 8 (embedded handoff) runs against a local test host page (night run 2, N7); the real website side is a website task.
-- From the website repository: the In Season feed (with halving days), the handoff endpoint for `seasonal-mini-games` with the optional `links` claim, the chat room `mini-games`, and the route import into its Caddy.
+- From the website repository: the In Season feed (with halving days), the authorize endpoint and the account-changes feed for `/games/mini-games` with Bingo's headers and rules (the game signs in through them, spec/07 §7), and the chat room `mini-games` (the route import into its proxy is done by the website, BACKLOG part two). The website accepted this contract unchanged on 2026-11-06 as its task SE-EMBEDDED-GAMES (branch `feat/embedded-games`, not merged yet). The room is created when Mini Games is switched on, with members writing and guests reading; `--mini-games` asks again on a re-run. Its report section "For the Mini Games side" will confirm the exact headers, paths, room and embed URL.
 - Merged into `master` on 2026-11-04 (merge `4b86ba6`, PR #1): Seasonal Safecracker, Seasonal Bomb Defusal and Seasonal Target with focus mode, the night-7 and night-8 work and the play-test fixes, built on `feat/guess-games` ([NIGHT-RUN.md](NIGHT-RUN.md)); the owner played all four games and confirmed every proposal (DECISIONS O65); the branch is deleted.
 
 ## Owner questions
@@ -42,3 +42,13 @@ Resolved by the decision rules (owner decisions first, then the more specific se
 
 1. **`round_results.secret`.** 06 §2.4 has a column for an individual player's secret, written at the end. The server is game-agnostic and the game-module contract has no way to name "the secret of this player", so the column stays NULL; the result view and `/rounds/:id/verify` show every secret. Proposal: drop the column in the next spec change, or add a contract hook if a report needs it.
 2. **The feed's host allowlist.** 07 §5 asks for "host on the allowlist", but no setting holds such a list. Built: the feed address itself (`seasons.feedUrl`, security admin, https only) is the one host allowed, and every address it resolves to must be public. Proposal: keep it so; add a list only if a second outside source comes.
+
+## Needed from the website
+
+Found in the dress rehearsal of 2026-11-06 (website `master` at `82e9e30`, which holds `feat/embedded-games` `468aaca`; Mini Games `feat/website-mode`; nginx mode on a fresh Ubuntu 24.04 machine).
+
+1. **The login does not come back to the game.**
+   - Step: a guest in the game clicks "Sign in" (or the chat's "Log in"), logs in on the website's login page.
+   - Request: `GET /games/mini-games/auth/website?next=%2Fgames%2Fmini-games%2F` → 302 to `/login?next=%2Fgames%2Fmini-games%2Fauth%2Fwebsite%3Fnext%3D%252Fgames%252Fmini-games%252F`; then the login form (`POST /api/auth/login`, 200).
+   - Answer: the website's own app moves to `/games/mini-games/auth/website?next=%2Fgames%2Fmini-games%2F` inside the page (`navigate(safeNext(next))` in `client/src/pages/LoginPage.jsx` `finish`) and shows its "Page not found"; no request reaches the game's sign-in route, so the member is not signed in to the game. A reload of that address signs in at once.
+   - Expected: a full page load of `next` when it is not one of the website's own app routes (for example `window.location.assign(next)` for paths under `/games/`), so the proxy's sign-in route runs and the member lands back on the game page. The same `navigate(safeNext(next))` is in `RegisterPage.jsx` and `DiscordSignupPage.jsx`; the Discord login's server-side redirect (`server/src/discord/routes.js`) is not affected. The same holds for Bingo at `/games/bingo/`.

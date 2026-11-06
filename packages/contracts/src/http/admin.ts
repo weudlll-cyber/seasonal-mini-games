@@ -50,6 +50,14 @@ export interface SettingsDocumentView {
   // Keys this install cannot switch on, each with the one-line reason the form shows
   // (`antiMulti.requireLinkedChat` in a standalone install, 05 §6).
   readonly unavailable?: Readonly<Record<string, string>>;
+  // Keys whose value the server applies differs from `values`, each with that value and why
+  // (the deployment's chat while no admin chose one, DECISIONS T240).
+  readonly inEffect?: Readonly<Record<string, SettingInEffectView>>;
+}
+
+export interface SettingInEffectView {
+  readonly value: SettingValue;
+  readonly reason: string;
 }
 
 export interface AuditEntryView {

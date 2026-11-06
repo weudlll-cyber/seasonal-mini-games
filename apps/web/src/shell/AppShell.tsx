@@ -14,6 +14,11 @@
  *                 button (./shell.css); a running round hides the bar altogether, its focus
  *                 mode has a bar of its own (O46). The navigation has Play and Leaderboard;
  *                 the compact bar keeps Play only.
+ *                 Website mode (O66): signed out, "Sign in" goes to the website's sign-in for
+ *                 the page shown (../account/SignIn SignInLink); no Register, no "Dev sign-in",
+ *                 and the sign-in and register addresses show the website's sign-in; a
+ *                 signed-out visitor who opens a match watches with a guest session
+ *                 (./session useWatchSession, DECISIONS T221).
  *                 Bingo's shell, without its game screens.
  * Depends on:     react, ./router, ./session, ./ThemeToggle, ./DevTools (lazy, development
  *                 only), @smg/ui (useDisclosure), ../lobby/Lobby, ../account/*,
@@ -28,14 +33,14 @@ import emblem from '../../../../assets/brand/emblem.webp';
 import { AccountPage } from '../account/AccountPage.js';
 import { AccountDeleted } from '../account/DeleteAccount.js';
 import { Register } from '../account/Register.js';
-import { SignIn } from '../account/SignIn.js';
+import { SignIn, SignInLink, WebsiteSignIn } from '../account/SignIn.js';
 import { LeaderboardPage } from '../boards/LeaderboardPage.js';
 import { ProfilePage } from '../boards/ProfilePage.js';
 import { VerifyPage } from '../boards/VerifyPage.js';
 import { Lobby } from '../lobby/Lobby.js';
 import { MatchPage } from '../match/MatchPage.js';
 import { hrefOf, useRoute, type Route } from './router.js';
-import { useSession } from './session.js';
+import { useSession, useWatchSession } from './session.js';
 import { ThemeToggle } from './ThemeToggle.js';
 import './shell.css';
 
@@ -128,7 +133,9 @@ function AccountItems(props: {
   readonly dev: boolean;
 }): ReactElement {
   const { session, signOut, can } = useSession();
-  const { dev } = props;
+  const website = session?.authMode === 'website';
+  // The development sign-in does not exist in website mode (07 §7).
+  const dev = props.dev && !website;
   return (
     <div id={props.id} className="shell-account" data-open={props.open} data-testid="account">
       {session?.account ? (
@@ -149,16 +156,14 @@ function AccountItems(props: {
       ) : null}
       {session !== null && session.account === null ? (
         <>
-          <a
-            className="smg-btn smg-btn--primary"
-            href={hrefOf({ name: 'signIn' })}
-            data-testid="open-sign-in"
-          >
+          <SignInLink className="smg-btn smg-btn--primary" testId="open-sign-in">
             Sign in
-          </a>
-          <a className="smg-btn" href={hrefOf({ name: 'register' })} data-testid="open-register">
-            Register
-          </a>
+          </SignInLink>
+          {website ? null : (
+            <a className="smg-btn" href={hrefOf({ name: 'register' })} data-testid="open-register">
+              Register
+            </a>
+          )}
         </>
       ) : null}
       {dev && DevSignIn !== null ? (
@@ -183,7 +188,7 @@ function Screen({
     case 'lobby':
       return <Lobby key={who} dev={dev} />;
     case 'match':
-      return <MatchPage key={`${who}/${route.code}`} code={route.code} />;
+      return <MatchScreen key={`${who}/${route.code}`} code={route.code} />;
     case 'quickTest':
       return dev && QuickTest !== null ? (
         <Suspense fallback={null}>
@@ -205,7 +210,15 @@ type AccountRoute = Extract<Route, { name: 'signIn' | 'register' | 'account' | '
 const ACCOUNT_ROUTES: readonly string[] = ['signIn', 'register', 'account', 'accountDeleted'];
 const isAccountRoute = (r: ShellRoute): r is AccountRoute => ACCOUNT_ROUTES.includes(r.name);
 
+// A match, once it can be watched: in website mode a signed-out visitor gets a guest session
+// first, so the match socket opens with it (./session useWatchSession).
+function MatchScreen({ code }: { readonly code: string }): ReactElement {
+  const ready = useWatchSession();
+  return ready ? <MatchPage code={code} /> : <p className="smg-muted">Loading the match…</p>;
+}
+
 // The account's screens: sign in, register, the own account and the notice after its deletion.
+// In website mode the website signs players in and registers them.
 function AccountScreen({
   who,
   route,
@@ -213,11 +226,12 @@ function AccountScreen({
   readonly who: string;
   readonly route: AccountRoute;
 }): ReactElement {
+  const website = useSession().session?.authMode === 'website';
   switch (route.name) {
     case 'signIn':
-      return <SignIn />;
+      return website ? <WebsiteSignIn /> : <SignIn />;
     case 'register':
-      return <Register />;
+      return website ? <WebsiteSignIn /> : <Register />;
     case 'account':
       return <AccountPage key={who} />;
     case 'accountDeleted':

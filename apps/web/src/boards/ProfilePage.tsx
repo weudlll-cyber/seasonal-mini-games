@@ -9,9 +9,11 @@
  *                 rounds (match with its game and date, place or "took
  *                 part", points, a link to the round's verification page); and every staff
  *                 adjustment with its reason, public by design (Bingo 03 §11). An unknown
- *                 name says "No player with that name."
+ *                 name says "No player with that name." A website member's Discord steps
+ *                 follow the name in the heading (../round/PlayerSteps, 07 §7).
  * Depends on:     react, @smg/contracts (PlayerProfileView), ../components/fields,
- *                 ../lobby/games, ../shell/router, ./useApi, ./boardsText, ./boards.css,
+ *                 ../lobby/games, ../round/PlayerSteps, ../shell/router, ./useApi,
+ *                 ./boardsText, ./boards.css,
  *                 ../round/result.css
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/06-data-model-api-realtime.md §3.1
@@ -21,6 +23,7 @@ import type { ReactElement } from 'react';
 
 import { Problem } from '../components/fields.js';
 import { gameName, useGames } from '../lobby/games.js';
+import { PlayerSteps } from '../round/PlayerSteps.js';
 import { hrefOf } from '../shell/router.js';
 import { dateText, deltaText, placeText, pointsText, refusalText } from './boardsText.js';
 import { useApi } from './useApi.js';
@@ -144,7 +147,10 @@ export function ProfilePage({ displayName }: { readonly displayName: string }): 
   return (
     <div className="smg-stack boards-page" data-testid="profile">
       <header className="smg-panel smg-stack">
-        <h1>{data.displayName}</h1>
+        <h1>
+          {data.displayName}
+          <PlayerSteps steps={data.steps} />
+        </h1>
         <p className="smg-muted">Member since {dateText(data.memberSince)}</p>
         <Facts p={data} />
       </header>

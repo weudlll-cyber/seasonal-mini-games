@@ -11,7 +11,7 @@
  *                 Keys idle for a whole window are pruned, so the maps stay small.
  * Depends on:     nothing
  * Used by:        ./sessionPlugin, ../http/routes/auth, ../http/routes/twoFactor,
- *                 ../http/routes/handoff, ../realtime/intents
+ *                 ../http/routes/handoff, ../http/routes/websiteSignIn, ../realtime/intents
  * Spec:           Bingo 03 §13
  */
 
@@ -81,4 +81,8 @@ export const RATE_RULES = {
   handoff: { limit: 30, windowMs: 60_000 },
   // Per account: two-factor codes (confirm, step-up, disable), right or wrong.
   twoFactor: { limit: 10, windowMs: 15 * 60_000 },
+  // Per IP, website mode (Bingo 03 §13): sign-ins through the website's proxy, and the hop
+  // on to the website's login.
+  websiteSignIn: { limit: 30, windowMs: 60_000 },
+  websiteLogin: { limit: 600, windowMs: 60_000 },
 } as const satisfies Record<string, RateRule>;

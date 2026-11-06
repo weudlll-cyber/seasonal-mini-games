@@ -7,7 +7,8 @@
  *                 (whether a key is pinned, never the key itself) and as the handoff's policy
  *                 (issuer, audience `seasonal-mini-games`, algorithms, key source, role mapping);
  *                 a mapping to security_admin or super_admin is refused on save and ignored on use;
- *                 a change without a key keeps the pinned one.
+ *                 a change without a key keeps the pinned one. The website's own `proxy_header`
+ *                 provider (website mode, O66) is neither listed nor changed here.
  * Depends on:     @smg/contracts (views, body), ../db/pool, ./keys (types)
  * Used by:        ./handoff, ../http/routes/adminIntegration
  * Spec:           docs/spec/07-integration.md §1; Bingo 07 §2.1, §2.2; Bingo 04 §3.1
@@ -61,7 +62,9 @@ const view = (r: Row): IdentityProviderView => ({
 });
 
 export async function listProviders(pool: DbPool): Promise<IdentityProviderView[]> {
-  const r = await pool.query<Row>(`SELECT ${COLUMNS} FROM smg.identity_providers ORDER BY name`);
+  const r = await pool.query<Row>(
+    `SELECT ${COLUMNS} FROM smg.identity_providers WHERE kind = 'jwt_handoff' ORDER BY name`,
+  );
   return r.rows.map(view);
 }
 
@@ -124,14 +127,14 @@ export async function updateProvider(
       `UPDATE smg.identity_providers SET name = $2, issuer = $3, allowed_algs = $4, jwks_url = $5,
          pinned_public_key = CASE WHEN $9::boolean THEN pinned_public_key ELSE $6 END,
          role_mapping = $7, enabled = $8, updated_at = now()
-       WHERE id = $1 RETURNING ${COLUMNS}`,
+       WHERE id = $1 AND kind = 'jwt_handoff' RETURNING ${COLUMNS}`,
       [id, ...values(b), b.pinnedPublicKey === undefined],
     );
     return r.rows[0] === undefined ? null : view(r.rows[0]);
   } catch (error) {
     const code = (error as { code?: string }).code;
     if (code === '23505') return null;
-    // The table's check: a JWKS address or a pinned key (migration 0009).
+    // The table's check: a JWKS address or a pinned key (migrations 0009, 0014).
     if (code === '23514') return 'NO_KEY';
     throw error;
   }
@@ -139,6 +142,9 @@ export async function updateProvider(
 
 // Removing a provider removes its links (cascade); the accounts stay.
 export async function deleteProvider(pool: DbPool, id: string): Promise<boolean> {
-  const r = await pool.query('DELETE FROM smg.identity_providers WHERE id = $1', [id]);
+  const r = await pool.query(
+    "DELETE FROM smg.identity_providers WHERE id = $1 AND kind = 'jwt_handoff'",
+    [id],
+  );
   return (r.rowCount ?? 0) > 0;
 }

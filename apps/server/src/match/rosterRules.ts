@@ -12,9 +12,12 @@
  *                 That fact exists only in a website install, one with a JWT handoff provider
  *                 (DECISIONS T103): a standalone install cannot switch the rule on (the admin
  *                 form says why, the server refuses the setting), and a rule left on after the
- *                 last provider went is not applied, so no roster is emptied by it.
+ *                 last provider went is not applied, so no roster is emptied by it. In website
+ *                 mode (O66) the rule has no effect at all, a JWT provider or not: the proxy
+ *                 headers carry no links, and the admin app does not show it (DECISIONS T222).
+ *                 `rosterAdmission` binds the rules to the install for the match use cases.
  * Depends on:     @smg/application (SettingsService), @smg/game-sdk (RosterPlayer), ../db/pool
- * Used by:        ./play, ../http/routes/adminSettings
+ * Used by:        ./play, ../round/runtime, ../http/routes/adminSettings
  * Spec:           docs/spec/05-security-threat-model.md §6; docs/spec/07-integration.md §4
  */
 import type { SettingsService } from '@smg/application';
@@ -57,20 +60,22 @@ async function linked(pool: DbPool, keys: readonly string[]): Promise<Set<string
   return new Set(r.rows.map((row) => row.account_id));
 }
 
-// The players of the roster the rules admit (all of them while both are off).
-export async function admitted(
+// The players of the roster the rules admit (all of them while both are off). `website`:
+// website mode, where the linked-chat rule is ignored (T222).
+async function admitted(
   pool: DbPool,
   settings: SettingsService,
-  roundId: string,
+  round: { readonly id: string; readonly website: boolean },
   players: readonly RosterPlayer[],
 ): Promise<readonly RosterPlayer[]> {
   const rules = await settings.values('security');
   const minAge = rules['antiMulti.minAccountAgeH'] as number;
-  const needLink = rules[LINKED_CHAT] === true && (await linkedChatAvailable(pool));
+  const needLink =
+    !round.website && rules[LINKED_CHAT] === true && (await linkedChatAvailable(pool));
   if (minAge <= 0 && !needLink) return players;
   const mode = await pool.query<{ secret_mode: string }>(
     'SELECT secret_mode FROM smg.rounds WHERE id = $1',
-    [roundId],
+    [round.id],
   );
   if (mode.rows[0]?.secret_mode !== 'shared') return players;
   const keys = accounts(players);
@@ -81,4 +86,18 @@ export async function admitted(
       p.playerId.startsWith('bot-') ||
       ((old === null || old.has(p.playerId)) && (tied === null || tied.has(p.playerId))),
   );
+}
+
+// The roster of a shared round as this install admits it (./play).
+export type Admission = (
+  roundId: string,
+  players: readonly RosterPlayer[],
+) => Promise<readonly RosterPlayer[]>;
+
+export function rosterAdmission(
+  pool: DbPool,
+  settings: SettingsService,
+  website: boolean,
+): Admission {
+  return (id, players) => admitted(pool, settings, { id, website }, players);
 }

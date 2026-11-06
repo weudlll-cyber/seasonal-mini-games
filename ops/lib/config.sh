@@ -9,12 +9,16 @@
 #                 openssl rand and kept on every later run, the public URL, base path and
 #                 trusted proxy for the install type, admin e-mail, the operator's age key
 #                 (the round key SMG_ROUND_KEY seals round seeds at rest, 05 §3: made once,
-#                 never changed, or running rounds could not be recovered); write the install
+#                 never changed, or running rounds could not be recovered); the sign-in mode
+#                 (SMG_AUTH_MODE: local standalone, website inside the website, O66) and for
+#                 website installs the website's settings (lib/website.sh), the proxy secret
+#                 (made once, kept) and the chat provider hostEmbed; write the install
 #                 record /etc/smg/install.conf; copy the compose files, Caddyfile, the smg CLI and its
 #                 library to /opt/smg;
 #                 build the app image on the server from a git ref (until a signed release
-#                 image exists), skipping it when the image of that commit is there, and
-#                 drop app images older than the current and the previous one.
+#                 image exists; by default the installer checkout's own branch, checkout_ref),
+#                 skipping it when the image of that commit is there, and drop app images
+#                 older than the current and the previous one.
 # Depends on:     ./common.sh (put_file, run, env_value), git, docker, openssl
 # Used by:        ops/install.sh, ops/smg (update)
 # Spec:           docs/spec/10-repository-structure.md §6; Bingo 09 §2, §3
@@ -31,7 +35,7 @@ secret() {
 # Answers of an earlier run, unless a flag gave a new one (Bingo audit O4).
 read_saved_answers() {
   local file="$SMG_ETC/$1.env" key
-  for key in SMG_ADMIN_EMAIL SMG_AGE_RECIPIENT SMG_WEBSITE_NETWORK; do
+  for key in SMG_ADMIN_EMAIL SMG_AGE_RECIPIENT SMG_WEBSITE_NETWORK SMG_WEBSITE_LOGIN_PATH     SMG_APP_PORT SMG_EDGE_SUBNET; do
     [[ -n ${!key:-} ]] || printf -v "$key" '%s' "$(env_value "$file" "$key")"
   done
 }
@@ -40,6 +44,20 @@ read_saved_answers() {
 quoted() {
   [[ $2 != *"'"* ]] || die "$1 must not contain a single quote (')"
   printf "%s='%s'\n" "$1" "$2"
+}
+
+# The website's settings of a website install (lib/website.sh), only the ones with a value:
+# the app refuses an empty URL or login path. The proxy secret is made once and kept.
+# shellcheck disable=SC2034 # the keys are read by name
+website_env() {
+  local file=$1 key
+  SMG_WEBSITE_PROXY_SECRET=$(env_value "$file" SMG_WEBSITE_PROXY_SECRET)
+  [[ -n $SMG_WEBSITE_PROXY_SECRET ]] || SMG_WEBSITE_PROXY_SECRET=$(secret 32)
+  # In the website the chat is the website's own room mini-games (07 §2); admins may change it.
+  SMG_CHAT_PROVIDER=hostEmbed
+  for key in SMG_WEBSITE_MODE SMG_WEBSITE_UPSTREAM SMG_WEBSITE_ROUTE_FILE SMG_WEBSITE_LOCAL_URL     SMG_WEBSITE_LOGIN_PATH SMG_WEBSITE_SYNC_TOKEN SMG_WEBSITE_PROXY_SECRET SMG_APP_PORT     SMG_EDGE_SUBNET SMG_CHAT_PROVIDER; do
+    [[ -z ${!key:-} ]] || quoted "$key" "${!key}"
+  done
 }
 
 # write_env <env>: from the answers in SMG_* variables; secrets survive a re-run.
@@ -75,6 +93,13 @@ write_env() {
       quoted "$key" "${!key:-}"
     done
     quoted SMG_LOG_LEVEL info
+    # O66, as Bingo D37: inside the website players sign in only through its login.
+    if [[ $SMG_TYPE == website ]]; then
+      quoted SMG_AUTH_MODE website
+      website_env "$file"
+    else
+      quoted SMG_AUTH_MODE local
+    fi
   } | put_file "$file" 0600
 }
 
@@ -93,7 +118,7 @@ EOF
 # install_files <source dir of ops/>: the stack files and the CLI into /opt/smg.
 install_files() {
   local from=$1 name
-  for name in compose.yml compose.website.yml; do
+  for name in compose.yml compose.website.yml compose.website-nginx.yml; do
     put_file "$SMG_ROOT/$name" 0644 <"$from/$name"
   done
   put_file "$SMG_ROOT/caddy/Caddyfile" 0644 <"$from/Caddyfile"
@@ -102,6 +127,12 @@ install_files() {
   done
   put_file "$SMG_ROOT/smg" 0755 <"$from/smg"
   [[ -L /usr/local/bin/smg ]] || run ln -sf "$SMG_ROOT/smg" /usr/local/bin/smg
+}
+
+# checkout_ref <dir>: the branch the checkout holding <dir> is on, its commit when detached,
+# nothing outside a checkout: the code the operator cloned is the code that gets built.
+checkout_ref() {
+  git -C "$1" symbolic-ref --quiet --short HEAD 2>/dev/null || git -C "$1" rev-parse --quiet --verify HEAD 2>/dev/null || true
 }
 
 # build_image <repo> <ref>: sets SMG_IMAGE=smg-app:<commit> and builds it when missing.

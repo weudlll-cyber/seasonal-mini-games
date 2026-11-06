@@ -15,18 +15,26 @@
  *                 A key this install cannot switch on is named in the view (`unavailable`, with
  *                 its reason) and a version switching it on is refused with 422
  *                 SETTING_UNAVAILABLE: `antiMulti.requireLinkedChat` without a handoff provider
- *                 (05 §6, T103).
+ *                 (05 §6, T103). In website mode that key is left out of the view instead
+ *                 (its stored override stays and has no effect, T222). The integrations view
+ *                 names the chat in effect where the deployment's default supplies it
+ *                 (`inEffect`, with its reason, T240).
  * Depends on:     fastify, @smg/application (SettingsService), @smg/contracts,
- *                 ../../admin/settingsVersions, ../../db/pool, ../../match/rosterRules,
- *                 ./adminGuard
+ *                 ../../admin/settingsVersions, ../../chat/provider, ../../db/pool,
+ *                 ../../match/rosterRules, ./adminGuard
  * Used by:        ../app
  * Spec:           docs/spec/08-admin-settings.md §1, §2; docs/spec/06-data-model-api-realtime.md §3.2
  */
 import { SettingsError, type SettingsService } from '@smg/application';
-import { SettingsRollbackBody, SettingsUpdateBody } from '@smg/contracts';
+import {
+  SettingsRollbackBody,
+  SettingsUpdateBody,
+  type SettingsDocumentView,
+} from '@smg/contracts';
 import type { FastifyInstance, FastifyReply } from 'fastify';
 
 import { settingsVersions, versionOverrides } from '../../admin/settingsVersions.js';
+import { chatInEffect, type ChatDefault } from '../../chat/provider.js';
 import type { DbPool } from '../../db/pool.js';
 import {
   LINKED_CHAT,
@@ -42,19 +50,28 @@ const STATUS = {
   CONFIG_VERSION_CONFLICT: 409,
 };
 
-// The keys this install cannot switch on, with the reason the admin form shows (05 §6, T103).
-async function unavailable(pool: DbPool, id: string): Promise<Record<string, string>> {
-  if (id !== 'security' || (await linkedChatAvailable(pool))) return {};
+// The install the settings are read for: website mode (O66) and the chat's default.
+export interface SettingsInstall {
+  readonly settings: SettingsService;
+  readonly pool: DbPool;
+  readonly website: boolean;
+  readonly chat: ChatDefault | null;
+}
+
+// The keys this install cannot switch on, with the reason the admin form shows (05 §6, T103);
+// in website mode none: the linked-chat rule is hidden there (T222).
+async function unavailable(install: SettingsInstall, id: string): Promise<Record<string, string>> {
+  if (id !== 'security' || install.website || (await linkedChatAvailable(install.pool))) return {};
   return { [LINKED_CHAT]: LINKED_CHAT_UNAVAILABLE };
 }
 
 // A new version that switches on a key this install cannot use is refused.
 async function refusedKey(
-  pool: DbPool,
+  install: SettingsInstall,
   id: string,
   overrides: Readonly<Record<string, { value?: unknown }>>,
 ): Promise<string | null> {
-  const blocked = await unavailable(pool, id);
+  const blocked = await unavailable(install, id);
   return Object.keys(blocked).find((k) => overrides[k]?.value === true) ?? null;
 }
 
@@ -62,11 +79,36 @@ function unavailableReply(reply: FastifyReply, key: string): FastifyReply {
   return reply.status(422).send({ code: 'SETTING_UNAVAILABLE', detail: key });
 }
 
-export function registerAdminSettings(
-  app: FastifyInstance,
-  settings: SettingsService,
-  pool: DbPool,
-): void {
+// The view without one key's row (its stored override stays, so a save keeps it).
+function withoutKey(view: SettingsDocumentView, key: string): SettingsDocumentView {
+  const values = Object.fromEntries(Object.entries(view.values).filter(([k]) => k !== key));
+  return {
+    ...view,
+    defs: view.defs.filter((d) => d.key !== key),
+    values,
+    editable: view.editable.filter((k) => k !== key),
+  };
+}
+
+// A document as this install shows it: the linked-chat rule hidden in website mode (T222),
+// else named when unavailable (T103); the chat in effect on the integrations page (T240).
+async function viewFor(
+  install: SettingsInstall,
+  id: string,
+  permissions: readonly string[],
+): Promise<SettingsDocumentView> {
+  const view = await install.settings.view(id, permissions);
+  if (id === 'security' && install.website) return withoutKey(view, LINKED_CHAT);
+  if (id === 'integrations') {
+    const inEffect = await chatInEffect(install.settings, install.chat);
+    return Object.keys(inEffect).length === 0 ? view : { ...view, inEffect };
+  }
+  const blocked = await unavailable(install, id);
+  return Object.keys(blocked).length === 0 ? view : { ...view, unavailable: blocked };
+}
+
+export function registerAdminSettings(app: FastifyInstance, install: SettingsInstall): void {
+  const { settings } = install;
   app.get('/api/v1/admin/settings', async (request, reply) => {
     if ((await permitted(request, reply, 'admin.view')) === null) return reply;
     return { ids: settings.ids() };
@@ -75,13 +117,7 @@ export function registerAdminSettings(
     const actor = await permitted(request, reply, 'admin.view');
     if (actor === null) return reply;
     const { id } = request.params as { id: string };
-    try {
-      const view = await settings.view(id, actor.permissions);
-      const blocked = await unavailable(pool, id);
-      return Object.keys(blocked).length === 0 ? view : { ...view, unavailable: blocked };
-    } catch (e) {
-      return failed(reply, e);
-    }
+    return viewFor(install, id, actor.permissions).catch((e: unknown) => failed(reply, e));
   });
   app.put('/api/v1/admin/settings/:id', async (request, reply) => {
     const actor = await permitted(request, reply, 'admin.view');
@@ -89,14 +125,15 @@ export function registerAdminSettings(
     const parsed = SettingsUpdateBody.safeParse(request.body);
     if (!parsed.success) return reply.status(400).send({ code: 'VALIDATION_FAILED' });
     const { id } = request.params as { id: string };
-    const key = await refusedKey(pool, id, parsed.data.overrides);
+    const key = await refusedKey(install, id, parsed.data.overrides);
     if (key !== null) return unavailableReply(reply, key);
     return settings.update(id, parsed.data, actor).catch((e: unknown) => failed(reply, e));
   });
-  registerHistory(app, settings, pool);
+  registerHistory(app, install);
 }
 
-function registerHistory(app: FastifyInstance, settings: SettingsService, pool: DbPool): void {
+function registerHistory(app: FastifyInstance, install: SettingsInstall): void {
+  const { settings, pool } = install;
   app.get('/api/v1/admin/settings/:id/versions', async (request, reply) => {
     if ((await permitted(request, reply, 'admin.view')) === null) return reply;
     const { id } = request.params as { id: string };
@@ -114,7 +151,7 @@ function registerHistory(app: FastifyInstance, settings: SettingsService, pool: 
     const stored = await versionOverrides(pool, id, toVersion);
     if (stored === null) return reply.status(404).send({ code: 'VERSION_NOT_FOUND' });
     const overrides = settings.known(id, stored);
-    const key = await refusedKey(pool, id, overrides);
+    const key = await refusedKey(install, id, overrides);
     if (key !== null) return unavailableReply(reply, key);
     const change = {
       version,

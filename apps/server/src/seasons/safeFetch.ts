@@ -9,7 +9,8 @@
  *                 no redirects, a 5 s timeout and a 64 KiB limit on the answer. Development
  *                 builds may allow plain HTTP and private addresses, for a local test feed.
  * Depends on:     node:dns/promises, node:net
- * Used by:        ./feed
+ * Used by:        ./seasons, ../integration/safePost, ../http/integrationWiring,
+ *                 ../integration/accountFeed (readLimited)
  * Spec:           docs/spec/07-integration.md §5; docs/spec/09-testing-strategy.md §6 (feed)
  */
 import { lookup } from 'node:dns/promises';
@@ -69,13 +70,16 @@ async function checkTarget(url: URL, options: SafeFetchOptions): Promise<void> {
   }
 }
 
-async function readLimited(response: Response): Promise<string> {
+// An answer's body as text, refused past `limit` bytes (also the website's account feed).
+export async function readLimited(response: Response, limit = LIMIT_BYTES): Promise<string> {
   if (response.body === null) return '';
   const chunks: Uint8Array[] = [];
   let size = 0;
   for await (const chunk of response.body as AsyncIterable<Uint8Array>) {
     size += chunk.byteLength;
-    if (size > LIMIT_BYTES) throw new FetchRefused('the feed answer is larger than 64 KiB');
+    if (size > limit) {
+      throw new FetchRefused(`the answer is larger than ${String(limit / 1024)} KiB`);
+    }
     chunks.push(chunk);
   }
   return Buffer.concat(chunks).toString('utf8');

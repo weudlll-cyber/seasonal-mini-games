@@ -8,7 +8,8 @@
 #                 only showing it (--dry-run); writing a file only when its content changed
 #                 (so a second install run changes nothing), atomically; reading a value of
 #                 an env file or replacing one value in it; removing work files and throw-away containers on exit; and
-#                 running Docker Compose for one environment with the right files.
+#                 running Docker Compose for one environment with the right files (website
+#                 installs: compose.website.yml, behind host nginx also compose.website-nginx.yml).
 # Used by:        ops/install.sh, ops/smg
 # Spec:           docs/spec/10-repository-structure.md §6; Bingo 09 §2–§4
 
@@ -110,6 +111,7 @@ compose() {
   type=$(env_value "$SMG_ETC/$env.env" SMG_INSTALL_TYPE)
   if [[ $type == website ]]; then
     files+=(-f "$SMG_ROOT/compose.website.yml")
+    [[ $(env_value "$SMG_ETC/$env.env" SMG_WEBSITE_MODE) != nginx ]] || files+=(-f "$SMG_ROOT/compose.website-nginx.yml")
   else
     files+=(--profile standalone)
   fi
