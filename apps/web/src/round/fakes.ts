@@ -26,6 +26,8 @@ export const ended: RoundStateView = {
   endsAt: 600_000,
   endedAt: 9_000,
   cooldownMs: 3_000,
+  inactivityLimitMs: 60_000,
+  inactivityWarnMs: 30_000,
   endReason: 'solved',
   abortReason: null,
   winner: 'w',
@@ -39,7 +41,6 @@ export const ended: RoundStateView = {
       place: 1,
       solved: true,
       timedOut: false,
-      inactivity: null,
     },
     {
       playerKey: 'a',
@@ -49,7 +50,6 @@ export const ended: RoundStateView = {
       place: null,
       solved: false,
       timedOut: false,
-      inactivity: null,
     },
   ],
   seq: 30,
@@ -83,6 +83,7 @@ export const ended: RoundStateView = {
   ],
   seed: 'cd'.repeat(32),
   names: { w: 'Walter', a: 'Anna' },
+  ownInactivity: null,
 };
 
 // The window's size for the round's layout (./useRoundView): jsdom starts at 1024 × 768, a

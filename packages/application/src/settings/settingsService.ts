@@ -9,7 +9,8 @@
  *                 over the document's resulting values (the inactivity warning below the
  *                 limit, O71, so no saved default makes every round refused), refuses a stale
  *                 version, writes a new version and one audit entry with the before/after
- *                 diff (./diff); a
+ *                 diff (./diff); a SETTING_INVALID names the setting it belongs to (`field`)
+ *                 with the field's sentence (O74); a
  *                 rollback is such an update with an earlier version's overrides, audited as
  *                 `settings.rollback`. A stored override of a setting that no longer exists
  *                 is left out of the view and of a rollback (`known`), so the next save drops
@@ -23,10 +24,11 @@
 import type { SettingsDocumentView, SettingsUpdate } from '@smg/contracts';
 import {
   boundsProblem,
-  inactivityProblem,
+  inactivityIssue,
   resolveSettings,
-  settingProblem,
+  settingIssue,
   type SettingDef,
+  type SettingIssue,
   type SettingOverride,
   type SettingValue,
 } from '@smg/game-sdk';
@@ -35,10 +37,12 @@ import type { AuditActor, AuditLog } from '../audit/ports.js';
 import { overrideChanges } from './diff.js';
 import type { SettingsStore, StoredDocument } from './ports.js';
 
+// `field`: for SETTING_INVALID the setting the sentence belongs to (O74), else null.
 export class SettingsError extends Error {
   constructor(
     readonly code: 'NOT_FOUND' | 'FORBIDDEN' | 'SETTING_INVALID' | 'CONFIG_VERSION_CONFLICT',
     readonly detail: string = code,
+    readonly field: string | null = null,
   ) {
     super(detail);
   }
@@ -95,8 +99,8 @@ export class SettingsService {
     if (before.version !== change.version) throw new SettingsError('CONFIG_VERSION_CONFLICT');
     const next = this.checked(defs, before.overrides, change.overrides, actor.permissions);
     // The defaults a round starts from must pass the round's own cross-key rule (O71).
-    const pair = inactivityProblem(resolveSettings(defs, next));
-    if (pair !== null) throw new SettingsError('SETTING_INVALID', pair);
+    const pair = inactivityIssue(resolveSettings(defs, next));
+    if (pair !== null) throw new SettingsError('SETTING_INVALID', pair.message, pair.key);
     const saved = await this.store.save(id, {
       expectedVersion: before.version,
       overrides: next,
@@ -130,10 +134,12 @@ export class SettingsService {
     const next: Record<string, SettingOverride> = {};
     for (const [key, o] of Object.entries(proposed)) {
       const def = byKey.get(key);
-      if (def === undefined) throw new SettingsError('SETTING_INVALID', `${key}: unknown setting`);
+      if (def === undefined) {
+        throw new SettingsError('SETTING_INVALID', `${key} is not a setting here.`, key);
+      }
       if (JSON.stringify(before[key] ?? {}) !== JSON.stringify(o)) mayEdit(def, permissions);
-      const problem = boundsProblem(def, o) ?? valueProblem(def, o);
-      if (problem !== null) throw new SettingsError('SETTING_INVALID', `${def.label}: ${problem}`);
+      const issue = boundsIssue(def, o) ?? valueIssue(def, o);
+      if (issue !== null) throw new SettingsError('SETTING_INVALID', issue.message, key);
       if (Object.keys(o).length > 0) next[key] = o;
     }
     // A key left out of the proposal goes back to its definition only with the permission.
@@ -152,8 +158,15 @@ function mayEdit(def: SettingDef, permissions: readonly string[]): void {
 }
 
 // The stored default (or, without one, the definition's) must fit the narrowed bounds.
-function valueProblem(def: SettingDef, o: SettingOverride): string | null {
-  return settingProblem(def, o.value ?? def.default, o);
+function valueIssue(def: SettingDef, o: SettingOverride): SettingIssue | null {
+  return settingIssue(def, o.value ?? def.default, o);
+}
+
+// A narrowed range that is not allowed, as the field's issue in the same form (O74).
+function boundsIssue(def: SettingDef, o: SettingOverride): SettingIssue | null {
+  const problem = boundsProblem(def, o);
+  if (problem === null) return null;
+  return { key: def.key, message: `Bounds: ${problem}.` };
 }
 
 function emptyDocument(): StoredDocument {

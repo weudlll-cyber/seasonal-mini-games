@@ -13,7 +13,7 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { inactivityProblem, PLATFORM_ROUND_SETTINGS, readPlatformRound } from './roundSettings.js';
+import { inactivityIssue, PLATFORM_ROUND_SETTINGS, readPlatformRound } from './roundSettings.js';
 import { resolveSettings, settingProblem } from './settings.js';
 
 describe('platform round settings', () => {
@@ -56,10 +56,14 @@ describe('platform round settings', () => {
     for (const ok of [0, 20, 600]) expect(settingProblem(limit, ok), String(ok)).toBeNull();
     for (const bad of [1, 19, 601]) expect(settingProblem(limit, bad), String(bad)).not.toBeNull();
     const pair = (l: number, w: number) =>
-      inactivityProblem({ 'round.inactivityLimitS': l, 'round.inactivityWarnS': w });
+      inactivityIssue({ 'round.inactivityLimitS': l, 'round.inactivityWarnS': w });
     expect(pair(60, 30)).toBeNull();
     expect(pair(0, 590)).toBeNull();
-    expect(pair(60, 60)).toBe('Inactivity warning: must be below the inactivity limit');
+    // The warning field's issue in the words every form shows (O74).
+    expect(pair(60, 60)).toEqual({
+      key: 'round.inactivityWarnS',
+      message: 'The warning must be shorter than the limit.',
+    });
     expect(pair(20, 25)).not.toBeNull();
   });
 });

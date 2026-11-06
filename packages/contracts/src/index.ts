@@ -99,6 +99,7 @@ export type {
   RoundStateView,
   SeasonName,
   SeasonsCurrentView,
+  SettingRefusalView,
   TeamName,
 } from './http/play.js';
 export {

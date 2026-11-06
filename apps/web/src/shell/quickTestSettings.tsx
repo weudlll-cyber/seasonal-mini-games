@@ -4,11 +4,13 @@
  * @brief  The Quick Test's settings: which it offers for the chosen game, and the request body.
  *
  * Responsibility: the round settings every game's Quick Test shows and its starting values,
- *                 the chosen game's own host settings after them (O41), their fields through
- *                 the host form's own `Field`, and the body of `POST /dev/quicktest` with the
- *                 game's settings by key (DECISIONS T121) and, for a summer round, Heatwave's
- *                 step and interval (O63, T208). Development builds only, with
- *                 ./QuickTest.
+ *                 the inactivity limit and warning as in every round setup (O75), the chosen
+ *                 game's own host settings after them (O41), their fields through the host
+ *                 form's own `Field` (with the server's sentence under a refused one, O74),
+ *                 the keys the form shows, and the body of `POST /dev/quicktest` with the
+ *                 game's settings and the inactivity pair by key (DECISIONS T121) and, for a
+ *                 summer round, Heatwave's step and interval (O63, T208). Development builds
+ *                 only, with ./QuickTest.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (definitions), @smg-game/registry/web,
  *                 ../match/roundFields
  * Used by:        ./QuickTest
@@ -19,7 +21,7 @@ import type { SeasonName } from '@smg/contracts';
 import { PLATFORM_ROUND_SETTINGS, type SettingDef, type SettingValue } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
-import { Field, seasonalDefs } from '../match/roundFields.js';
+import { Field, seasonalDefs, type FormProblems } from '../match/roundFields.js';
 
 // The round settings the Quick Test offers for every game, in the form's order; the chosen
 // game's own host settings follow (O41). Its own starting values where they differ.
@@ -38,6 +40,10 @@ export const START: Readonly<Record<string, SettingValue>> = {
   'round.rangeVisible': true,
   'round.comments': true,
 };
+// The inactivity limit and its warning, offered wherever a round is set up (O75); the form
+// sends them by key, starting from the definitions' defaults.
+export const INACTIVITY_KEYS = ['round.inactivityLimitS', 'round.inactivityWarnS'] as const;
+
 // The definitions of a game's round: the platform's keys, then the game's own.
 export const defsOf = (gameId: string): readonly SettingDef[] => [
   ...PLATFORM_ROUND_SETTINGS,
@@ -62,11 +68,20 @@ export interface Extra {
 
 export type Values = Readonly<Record<string, SettingValue>>;
 
+// Every setting the form shows for this game and season, for a refusal's field (O74).
+export const shownKeysOf = (extra: Extra): readonly string[] => [
+  ...KEYS,
+  ...INACTIVITY_KEYS,
+  ...gameKeysOf(extra.gameId),
+  ...(extra.season === 'summer' ? seasonalDefs(defsOf(extra.gameId)).map((d) => d.key) : []),
+];
+
 export function SettingFields(p: {
   readonly keys: readonly string[];
   readonly defs: readonly SettingDef[];
   readonly values: Values;
   readonly set: (key: string, v: SettingValue) => void;
+  readonly problems: FormProblems['fields'];
 }): ReactElement {
   return (
     <>
@@ -77,6 +92,7 @@ export function SettingFields(p: {
             key={key}
             def={def}
             value={p.values[key] ?? def.default}
+            problem={p.problems[key]}
             set={(v) => {
               p.set(key, v);
             }}
@@ -101,6 +117,8 @@ export function bodyOf(values: Values, extra: Extra) {
     countdownS: valueOf('round.countdownS'),
     settings: {
       ...Object.fromEntries(gameKeysOf(extra.gameId).map((key) => [key, valueOf(key)])),
+      // The inactivity limit and warning, the round's own (O75).
+      ...Object.fromEntries(INACTIVITY_KEYS.map((key) => [key, valueOf(key)])),
       // Heatwave's step and interval for a summer round (O63, T208).
       ...(extra.season === 'summer'
         ? Object.fromEntries(seasonalDefs(defs).map((d) => [d.key, valueOf(d.key)]))

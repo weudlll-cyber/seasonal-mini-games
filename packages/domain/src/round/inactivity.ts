@@ -7,8 +7,10 @@
  *                 and after each accepted guess from the later of its cooldown end (a Bomb
  *                 penalty included, T120) and the time Frost delivers its answer, so no wait
  *                 the round imposes counts against them (DECISIONS T267). The warning and the
- *                 limit are measured from that time; the earliest limit before the round's
- *                 end is the next timeout, a tie going to roster order. Who is left: a timed-
+ *                 limit are measured from that time; the server takes a player out only a
+ *                 grace after the limit, so a guess delayed on the network still counts
+ *                 (O72); the earliest such time before the round's end is the next timeout,
+ *                 a tie going to roster order. Who is left: a timed-
  *                 out player no longer blocks the end, and a round with nobody left ends.
  *                 Pure: times come from the state, so a replay or a late timer gives the same
  *                 deadlines and the same log.
@@ -24,6 +26,11 @@ export interface InactivityDeadline {
   readonly warnAt: number;
   readonly outAt: number;
 }
+
+// The grace after a player's limit (O72): a guess received up to this long after it still
+// counts, for network delay; the server times the player out only then. The deadlines the
+// player sees stay the limit itself, so the grace is the server's alone.
+export const INACTIVITY_GRACE_MS = 2_000;
 
 // When the clock starts again after a guess received at `receivedAt`: once its cooldown is
 // over and, under Frost, once its answer has arrived.
@@ -49,7 +56,8 @@ export function inactivityDeadline<S, Cfg>(
   return { warnAt: entry.readyAt + inactivityWarnMs, outAt: entry.readyAt + inactivityLimitMs };
 }
 
-// The next player to time out before the round's end, or null.
+// The next player to time out before the round's end, or null: `at` is their limit plus the
+// grace (O72), the time the server takes them out and the stamp of the log's PlayerTimedOut.
 export function nextTimeout<S, Cfg>(
   state: RoundState<S, Cfg>,
 ): { readonly playerId: string; readonly at: number } | null {
@@ -57,7 +65,8 @@ export function nextTimeout<S, Cfg>(
   let next: { playerId: string; at: number } | null = null;
   // Roster order: the earlier entry keeps a tie.
   for (const [playerId, entry] of Object.entries(state.roster)) {
-    const at = inactivityDeadline(state, entry)?.outAt;
+    const outAt = inactivityDeadline(state, entry)?.outAt;
+    const at = outAt === undefined ? undefined : outAt + INACTIVITY_GRACE_MS;
     if (at !== undefined && at < endsAt && (next === null || at < next.at)) next = { playerId, at };
   }
   return next;

@@ -4,8 +4,9 @@
  * @module web/match
  * @brief  Every field of the Quick Test and of the host's round form has a one-line help.
  *
- * Responsibility: the Quick Test offers Start from the lobby, Seed, Secret, Season, What others see, Bots,
- *                 Cooldown, Lowest number, Highest number, Show range and Fast specials, each
+ * Responsibility: the Quick Test offers Start from the lobby, Seed, Secret, Season, What others
+ *                 see, Bots, Cooldown, the inactivity limit and warning (O75), Lowest number,
+ *                 Highest number, Show range and Fast specials, each
  *                 with a help line under it that its control names in aria-describedby (so it
  *                 is visible without hover); the host form's setting fields do the same with
  *                 the same words as the Quick Test for the same setting.
@@ -52,6 +53,8 @@ describe('the forms', () => {
       'Bots',
       'Cooldown',
       'Countdown before opening',
+      'Inactivity limit',
+      'Inactivity warning',
       'Lowest number',
       'Highest number',
       'Show range',

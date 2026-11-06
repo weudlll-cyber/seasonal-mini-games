@@ -95,7 +95,7 @@ export function InputRow({
     ) : null;
   return (
     <div className="round-input">
-      <InactivityLine inactivity={me.inactivity} now={now} />
+      <InactivityLine inactivity={state.ownInactivity} now={now} />
       <game.Input
         view={state.game}
         act={act}

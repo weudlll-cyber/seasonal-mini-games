@@ -170,7 +170,9 @@ describe('SettingsService and the inactivity pair (O71)', () => {
     const settings = round();
     await expect(settings.update('game.test', pair(40, 40), editor)).rejects.toMatchObject({
       code: 'SETTING_INVALID',
-      detail: 'Inactivity warning: must be below the inactivity limit',
+      // The warning field's sentence, for under that field in the admin table (O74).
+      field: 'round.inactivityWarnS',
+      detail: 'The warning must be shorter than the limit.',
     });
     // A warning above the default limit alone is refused as well.
     await expect(
@@ -179,7 +181,18 @@ describe('SettingsService and the inactivity pair (O71)', () => {
         { version: 1, overrides: { 'round.inactivityWarnS': { value: 90 } } },
         editor,
       ),
-    ).rejects.toMatchObject({ code: 'SETTING_INVALID' });
+    ).rejects.toMatchObject({ code: 'SETTING_INVALID', field: 'round.inactivityWarnS' });
+    // A value outside its bounds names its own field with the bounds sentence.
+    await expect(
+      settings.update(
+        'game.test',
+        { version: 1, overrides: { 'round.inactivityLimitS': { value: 10 } } },
+        editor,
+      ),
+    ).rejects.toMatchObject({
+      field: 'round.inactivityLimitS',
+      detail: 'Must be between 20 and 600, or 0 for off.',
+    });
     expect((await settings.view('game.test', [])).version).toBe(1);
   });
 

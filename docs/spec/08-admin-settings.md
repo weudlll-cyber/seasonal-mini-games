@@ -60,7 +60,7 @@
 | `fairness.commitReveal` | true | — | — | owner (O9) | game admin | frozen |
 | Team points per round win | 1 | — | — | owner (O12, not a setting) | — | — |
 
-The host form shows each host-chosen value with its default preselected and refuses values outside the bounds with a plain sentence. The server validates again (`ROUND_SETTINGS_INVALID`).
+The host form shows each host-chosen value with its default preselected and refuses values outside the bounds with a plain sentence. The server validates again (`ROUND_SETTINGS_INVALID`). The sentence comes from the setting's own check, one wording for the host form, the Quick Test, the admin's settings table and the server's answers, and stands under the field it belongs to; a refused pair names the warning ("The warning must be shorter than the limit.", owner decision 74; DECISIONS T276). The inactivity limit and warning are offered wherever a round is set up, the Quick Test included (owner decision 75).
 
 ### 3.1 Seasonal Safecracker (document `game.safecracker`, [02b](02b-game-safecracker.md))
 

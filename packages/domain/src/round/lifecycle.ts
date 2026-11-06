@@ -9,8 +9,8 @@
  *                 opens a round whose `opensAt` has passed (Spring Herald with it), fires the
  *                 specials that are due and ends a round whose time is up, before any command
  *                 runs, so a late timer never lets a guess in early or late (T32); with the
- *                 specials it times out the players whose inactivity limit has passed, in
- *                 time order, which may end the round (O71). `nextDue` names the next of
+ *                 specials it times out the players whose inactivity limit and its grace
+ *                 have passed, in time order, which may end the round (O71, O72). `nextDue` names the next of
  *                 these times for the round actor's timer.
  * Depends on:     @smg/game-sdk (types), ./builder, ./evolve, ./inactivity, ./results, ./specials,
  *                 ./types
@@ -57,8 +57,8 @@ export function catchUp<S, A, E, Cfg, Sec>(step: Step<S, A, E, Cfg, Sec>, at: nu
 }
 
 // Every special and every inactivity timeout due by `at`, in time order; at one instant the
-// specials first. A timeout is stamped with its deadline, and the round ends there when it
-// leaves nobody, or in individual mode only solvers (O71).
+// specials first. A timeout is stamped with its deadline plus the grace (O72), and the round
+// ends there when it leaves nobody, or in individual mode only solvers (O71).
 function runDue<S, A, E, Cfg, Sec>(step: Step<S, A, E, Cfg, Sec>, at: number): void {
   for (;;) {
     const out = nextTimeout(step.state);

@@ -2,19 +2,22 @@
  * @file   apps/server/test/inactivity.integration.test.ts
  * @module server/test
  * @brief  The inactivity limit (O71) in a real round: the actor's timer, the refusal, the
- *         log, recovery on a second server and the round's end.
+ *         log, the views' deadlines, recovery on a second server and the round's end.
  *
- * Responsibility: with a 20 s limit and a 5 s warning, the state gives each roster player
- *                 their deadlines from the open (server times, as the cooldown end); idle
- *                 players are timed out by the round's own timer with no command arriving,
- *                 the log's PlayerTimedOut carries the deadline; a timed-out player's guess is
+ * Responsibility: with a 20 s limit and a 5 s warning, a roster player's state gives them
+ *                 their own deadlines from the open (server times, as the cooldown end) and
+ *                 no other player's, a spectator's none (O73); idle players are timed out by
+ *                 the round's own timer 2 s after the limit (the grace, O72) with no command
+ *                 arriving, the log's PlayerTimedOut carries that time; a timed-out player's guess is
  *                 TIMED_OUT; a second server on the same database replays the same state; the
  *                 one player left times out too and the shared round ends without a winner
  *                 ("no players left"), each of them "timed out" in the results.
- * Depends on:     vitest, socket.io-client (types), ../src/match/publicIds, ./harness, ./socketKit
+ * Depends on:     vitest, @smg/domain (the grace), socket.io-client (types), ../src/match/publicIds,
+ *                 ./harness, ./socketKit
  * Spec:           docs/spec/02-game-guess-the-number.md §5.3, §8; docs/spec/04-software-architecture.md §5.2;
  *                 docs/spec/06-data-model-api-realtime.md §2.3
  */
+import { INACTIVITY_GRACE_MS } from '@smg/domain';
 import type { Socket } from 'socket.io-client';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -38,7 +41,10 @@ afterAll(async () => {
 interface Row {
   readonly playerKey: string;
   readonly timedOut: boolean;
-  readonly inactivity: { readonly warnAt: number; readonly outAt: number } | null;
+}
+interface Deadlines {
+  readonly warnAt: number;
+  readonly outAt: number;
 }
 interface State {
   readonly status: string;
@@ -46,13 +52,22 @@ interface State {
   readonly endReason: string | null;
   readonly winner: string | null;
   readonly roster: readonly Row[];
+  readonly ownInactivity: Deadlines | null;
   readonly results?: readonly { playerId: string; place: number | null; timedOut: boolean }[];
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-async function stateOf(id: string): Promise<State> {
-  return (await kit.clients['player-1'].get(`/api/v1/rounds/${id}/state`)).json<State>();
+async function stateOf(id: string, who: Who = 'player-1'): Promise<State> {
+  return (await kit.clients[who].get(`/api/v1/rounds/${id}/state`)).json<State>();
+}
+
+// A view carries no deadline of another player (O73): neither as a field nor as a number.
+async function noDeadlinesOf(id: string, who: Who, other: Deadlines): Promise<void> {
+  const body = JSON.stringify(await stateOf(id, who));
+  expect(body).not.toContain('"inactivity"');
+  expect(body).not.toContain(String(other.warnAt));
+  expect(body).not.toContain(String(other.outAt));
 }
 
 // Reads the state every 200 ms until `done` holds (a timer on a busy machine runs late).
@@ -102,12 +117,11 @@ describe('the inactivity limit in a real round (O71)', () => {
     const s = await watching(code, ['host', 'player-1', 'player-2']);
     const id = await idleRound(code, s);
     const open = await stateOf(id);
-    for (const row of open.roster) {
-      expect(row).toMatchObject({
-        timedOut: false,
-        inactivity: { warnAt: open.opensAt + 5_000, outAt: open.opensAt + 20_000 },
-      });
-    }
+    const idle = { warnAt: open.opensAt + 5_000, outAt: open.opensAt + 20_000 };
+    expect(open.ownInactivity).toEqual(idle);
+    for (const row of open.roster) expect(row.timedOut).toBe(false);
+    // A spectator (not in the match) gets no deadlines at all (O73).
+    expect((await stateOf(id, 'player-3')).ownInactivity).toBeNull();
     // Player 1 guesses after 10 s: their clock starts again when the 3 s cooldown is over.
     await sleep(10_000);
     const secrets = await kit.secretsOf(id);
@@ -116,18 +130,26 @@ describe('the inactivity limit in a real round (O71)', () => {
     const guess = await kit.send(p1, 'guess', { roundId: id, value: wrong });
     expect(guess.ok).toBe(true);
     const p1Key = await kit.numberOf(code, 'player-1');
-    const p1Row = (await stateOf(id)).roster.find((r) => r.playerKey === p1Key);
-    expect(p1Row?.inactivity?.outAt).toBe((guess.cooldownEndsAt ?? 0) + 20_000);
+    const own = (await stateOf(id)).ownInactivity;
+    if (own === null) throw new Error('player 1 has deadlines');
+    expect(own.outAt).toBe((guess.cooldownEndsAt ?? 0) + 20_000);
+    // Player 1 sees only their own deadlines; the other players (the host plays too) and a
+    // spectator never player 1's (O73).
+    await noDeadlinesOf(id, 'player-1', idle);
+    await noDeadlinesOf(id, 'player-2', own);
+    await noDeadlinesOf(id, 'host', own);
+    await noDeadlinesOf(id, 'player-3', own);
 
-    // Nobody sends anything: the round's own timer times the other two out at their limit.
+    // Nobody sends anything: the round's own timer times the other two out 2 s after their
+    // limit (O72).
     const out = await until(id, (st) => st.roster.filter((r) => r.timedOut).length === 2);
     expect(out.status).toBe('open');
     expect(out.roster.filter((r) => r.timedOut).map((r) => r.playerKey)).not.toContain(p1Key);
     const log = await kit.harness.built.runtime.store.log(id);
     const timedOut = log.filter((e) => e.type === 'PlayerTimedOut');
     expect(timedOut.map((e) => (e.event as { at: number }).at)).toEqual([
-      open.opensAt + 20_000,
-      open.opensAt + 20_000,
+      idle.outAt + INACTIVITY_GRACE_MS,
+      idle.outAt + INACTIVITY_GRACE_MS,
     ]);
     const late = await kit.send(s['player-2'] as Socket, 'guess', { roundId: id, value: wrong });
     expect(late).toMatchObject({ ok: false, code: 'TIMED_OUT' });

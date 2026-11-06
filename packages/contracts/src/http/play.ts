@@ -11,7 +11,9 @@
  *                 player key or id in any of them is the player's number in the match (`p3`),
  *                 never an account id (DECISIONS T104). A website member's Discord steps go
  *                 beside the name (`steps`, website mode only, O66; absent without any). The
- *                 roster carries each player's inactivity deadlines and "timed out" (O71).
+ *                 roster carries each player's "timed out" (O71); the inactivity deadlines are
+ *                 the viewer's own only (`ownInactivity`, O73), no other player's. A refused
+ *                 setting names its field with the sentence for under it (O74).
  * Depends on:     ./admin (settings document view), ./boards (match standings), ./session (steps)
  * Used by:        ../index, apps/server (routes), apps/web
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1, §4.4
@@ -83,8 +85,9 @@ export interface MatchDetailsView extends MatchSummaryView {
 }
 
 // A player's inactivity deadlines (O71), absolute server times like `cooldownEndsAt`: the
-// warning shows from `warnAt`, the player is out at `outAt`. While a cooldown runs or an
-// answer is held they lie further ahead (the clock starts once the next guess may be sent).
+// warning shows from `warnAt`, the player is out at `outAt` (the limit itself; the server's
+// 2 s grace for a late guess is not part of it, O72). While a cooldown runs or an answer is
+// held they lie further ahead (the clock starts once the next guess may be sent).
 export interface InactivityView {
   readonly warnAt: number;
   readonly outAt: number;
@@ -99,8 +102,6 @@ export interface RosterRowView {
   readonly solved: boolean;
   // Out of this round for inactivity (O71): shown as "timed out".
   readonly timedOut: boolean;
-  // Null while the limit cannot run out: off, the round not open, solved or timed out.
-  readonly inactivity: InactivityView | null;
 }
 
 export interface PlayerResultView {
@@ -131,6 +132,10 @@ export interface RoundStateView {
   readonly endsAt: number | null;
   readonly endedAt: number | null;
   readonly cooldownMs: number;
+  // The round's inactivity limit and warning (O71), 0 = the limit off: the next round's form
+  // starts from them (O75). Settings only; no player's deadline (O73).
+  readonly inactivityLimitMs: number;
+  readonly inactivityWarnMs: number;
   readonly endReason: 'solved' | 'allSolved' | 'timeUp' | 'host' | 'noPlayers' | 'game' | null;
   readonly abortReason: string | null;
   readonly winner: string | null;
@@ -154,6 +159,10 @@ export interface RoundStateView {
   readonly steps?: Readonly<Record<string, readonly PlayerStepView[]>>;
   // The viewer's number in the match, or null for a spectator who never joined (T104).
   readonly you?: string | null;
+  // The viewer's own inactivity deadlines (O71), in the player view only: no viewer learns
+  // another player's (O73). Null for spectators and results, and while the limit cannot
+  // run out for the viewer: off, the round not open, solved or timed out.
+  readonly ownInactivity: InactivityView | null;
 }
 
 // One committed event in a frame; `null` where the event is not for this room (06 §4.4).
@@ -168,6 +177,16 @@ export interface RoundFrameView {
   readonly s?: number;
   readonly late?: boolean;
   readonly events: readonly FrameEventView[];
+}
+
+// A refused setting (O74): 422 ROUND_SETTINGS_INVALID from the round setup and the Quick
+// Test, SETTING_INVALID from the admin save. `detail` is the sentence to show under the field
+// `field` names (from the setting's own check, @smg/game-sdk `settingIssue`); `field` is null
+// for a rule that belongs to no one field (a game's own cross-key rule).
+export interface SettingRefusalView {
+  readonly code: 'ROUND_SETTINGS_INVALID' | 'SETTING_INVALID';
+  readonly detail: string;
+  readonly field: string | null;
 }
 
 export interface QuickTestStartedView {

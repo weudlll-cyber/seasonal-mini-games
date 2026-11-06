@@ -9,7 +9,9 @@
  *                 them as a new version with a comment (`PUT /admin/settings/:id` with the
  *                 version it was read at; a newer version answers "changed meanwhile", 08
  *                 §1); a change of the security document goes through the confirm dialog
- *                 first (Bingo 11 §1). Refusals come back with the setting and the reason in plain words.
+ *                 first (Bingo 11 §1). Refusals come back with the setting and the reason in
+ *                 plain words: a refused value's sentence under its setting's editor, from
+ *                 the setting's own check (O74), the rest under the table.
  *                 Below the table the document's history with diffs and rollback (./History).
  * Depends on:     react, @smg/contracts, @smg/game-sdk (types), ../ConfirmDialog, ../http,
  *                 ../TextInput, ./History, ./SettingRow, ./settingText
@@ -40,6 +42,17 @@ const COLUMNS = [
   'Change',
 ];
 
+// A refused value's setting and sentence (O74), shown in that setting's row.
+interface RowProblem {
+  readonly key: string;
+  readonly text: string;
+}
+
+const rowProblemOf = (error: unknown): RowProblem | null =>
+  error instanceof ApiError && error.code === 'SETTING_INVALID' && error.field !== null
+    ? { key: error.field, text: error.detail ?? 'This value is not allowed.' }
+    : null;
+
 function problemText(error: unknown): string {
   if (!(error instanceof ApiError)) return 'Saving failed.';
   if (error.code === 'CONFIG_VERSION_CONFLICT') {
@@ -53,10 +66,12 @@ function Table({
   doc,
   draft,
   setDraft,
+  problem,
 }: {
   readonly doc: SettingsDocumentView;
   readonly draft: Draft;
   readonly setDraft: (d: (old: Draft) => Draft) => void;
+  readonly problem: RowProblem | null;
 }): ReactElement {
   // The keys this account may change (the server named them from its permissions).
   const editable = new Set(doc.editable);
@@ -82,6 +97,7 @@ function Table({
               editable={editable.has(def.key)}
               unavailable={doc.unavailable?.[def.key]}
               inEffect={doc.inEffect?.[def.key]}
+              problem={problem?.key === def.key ? problem.text : undefined}
               change={(o) => {
                 setDraft((d) => ({ ...d, [def.key]: o }));
               }}
@@ -139,7 +155,8 @@ function Document({ id }: { readonly id: string }): ReactElement {
   const [doc, setDoc] = useState<SettingsDocumentView | null>(null);
   const [draft, setDraft] = useState<Draft>({});
   const [comment, setComment] = useState('');
-  const [message, setMessage] = useState<string | null>(null);
+  // The save's line under the table, and a refused value's sentence for its row (O74).
+  const [message, setMessage] = useState<{ text: string; row: RowProblem | null } | null>(null);
   const load = useCallback(async () => {
     const d = await api<SettingsDocumentView>(`/admin/settings/${id}`);
     setDoc(d);
@@ -159,7 +176,7 @@ function Document({ id }: { readonly id: string }): ReactElement {
         ...(comment === '' ? {} : { comment }),
       },
     }).then(() => {
-      setMessage('Saved as a new version.');
+      setMessage({ text: 'Saved as a new version.', row: null });
       setComment('');
       return load();
     });
@@ -170,7 +187,7 @@ function Document({ id }: { readonly id: string }): ReactElement {
       return;
     }
     put().catch((error: unknown) => {
-      setMessage(problemText(error));
+      setMessage({ text: problemText(error), row: rowProblemOf(error) });
       if (error instanceof ApiError && error.code === 'CONFIG_VERSION_CONFLICT') void load();
     });
   };
@@ -179,11 +196,11 @@ function Document({ id }: { readonly id: string }): ReactElement {
       <h2>
         {documentName(id)} <small className="smg-muted">version {doc.version}</small>
       </h2>
-      <Table doc={doc} draft={draft} setDraft={setDraft} />
+      <Table doc={doc} draft={draft} setDraft={setDraft} problem={message?.row ?? null} />
       {doc.editable.length === 0 ? null : (
         <SaveBar comment={comment} setComment={setComment} save={save} />
       )}
-      {message === null ? null : <p role="status">{message}</p>}
+      {message === null ? null : <p role="status">{message.text}</p>}
       <History
         id={id}
         current={doc.version}

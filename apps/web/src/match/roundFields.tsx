@@ -6,37 +6,74 @@
  * Responsibility: a setting definition becomes a switch, a choice or a number field with its
  *                 label and one-line help and the bounds in force (the document's narrowed
  *                 bounds, never wider than the catalogue, 08 §1; an off value beside them, the
- *                 inactivity limit's 0, O71); the Quick Test uses the same
+ *                 inactivity limit's 0, O71), checked while typing with the setting's own check
+ *                 and its sentence under the field, where a refused round setup's sentence for
+ *                 that field shows too (O74, `problemsOf`); the Quick Test uses the same
  *                 fields. The season choice offers In Season only while it is usable, and the
- *                 halving switch only on a halving day (03 §3, §4). `HostFields` shows the
+ *                 halving switch only on a halving day (03 §3, §4); the next round starts from
+ *                 the last round's season, halving and inactivity pair (`keptOf`, T209, O75).
+ *                 `HostFields` shows the
  *                 host's fields of the round's season (`formSeason`): Heatwave's step and
  *                 interval only for summer (`forSeason`, O63).
- * Depends on:     react, @smg/contracts, @smg/game-sdk (bounds), ../components/fields,
- *                 ./formHelp, ../season/season, ../shell/http
+ * Depends on:     react, @smg/contracts, @smg/game-sdk (bounds, check), ../components/fields,
+ *                 ./formHelp, ../round/roundText, ../season/season, ../shell/http
  * Used by:        ./HostMenu, ../shell/QuickTest
  * Spec:           docs/spec/08-admin-settings.md §1, §3; docs/spec/03-seasonal-specials.md §3, §4
  */
-import type { MatchDetailsView, SeasonName, SeasonsCurrentView } from '@smg/contracts';
-import { effectiveBounds, type SettingDef, type SettingValue } from '@smg/game-sdk';
+import type {
+  MatchDetailsView,
+  RoundStateView,
+  SeasonName,
+  SeasonsCurrentView,
+} from '@smg/contracts';
+import { effectiveBounds, settingIssue, type SettingDef, type SettingValue } from '@smg/game-sdk';
 import { useEffect, useState, type ReactElement } from 'react';
 
 import { ChoiceField, NumberField, plain, SwitchField } from '../components/fields.js';
+import { codeText } from '../round/roundText.js';
 import { SEASON_NAMES, SEASONS } from '../season/season.js';
 import { FORM_HELP } from './formHelp.js';
-import { api } from '../shell/http.js';
+import { api, ApiError } from '../shell/http.js';
 
 type Doc = NonNullable<MatchDetailsView['nextRoundDefaults']>;
 
+// A form's problems after a refused round setup (O74): the server's sentence under the field
+// it names while the form shows that field, else one line for the whole form.
+export interface FormProblems {
+  readonly fields: Readonly<Record<string, string>>;
+  readonly form: string | null;
+}
+
+export const NO_PROBLEMS: FormProblems = { fields: {}, form: null };
+
+export function problemsOf(error: unknown, shown: readonly string[], other: string): FormProblems {
+  const refusal = error instanceof ApiError ? error.refusal : null;
+  if (refusal === null) return { fields: {}, form: other };
+  if (!shown.includes(refusal.field)) return { fields: {}, form: refusal.detail };
+  return { fields: { [refusal.field]: refusal.detail }, form: null };
+}
+
+// The host form's problems: any other refusal's code in plain words.
+export const setupProblems = (error: unknown, shown: readonly string[]): FormProblems =>
+  problemsOf(
+    error,
+    shown,
+    error instanceof ApiError ? codeText(error.code) : 'The round could not be created.',
+  );
+
 // One setting as a field, its label and help from the definition (the same words wherever it is
-// shown); the bounds are the document's when there is one, else the definition's.
+// shown); the bounds are the document's when there is one, else the definition's. A number
+// is checked with the setting's own check, its sentence under the field (O74); `problem` is
+// the server's for this field.
 export function Field(p: {
   def: SettingDef;
   doc?: Doc;
   value: SettingValue;
   set: (v: SettingValue) => void;
+  problem?: string | undefined;
 }): ReactElement | null {
   const { def } = p;
-  const common = { label: def.label, help: def.help };
+  const common = { label: def.label, help: def.help, problem: p.problem };
   if (def.kind === 'bool')
     return <SwitchField {...common} checked={p.value === true} onChange={p.set} />;
   if (def.kind === 'enum')
@@ -49,7 +86,8 @@ export function Field(p: {
       />
     );
   if (def.kind !== 'int' && def.kind !== 'number') return null;
-  const b = effectiveBounds(def, p.doc?.overrides[def.key]);
+  const override = p.doc?.overrides[def.key];
+  const b = effectiveBounds(def, override);
   const step = def.kind === 'number' ? def.step : 1;
   return (
     <NumberField
@@ -60,6 +98,7 @@ export function Field(p: {
       step={step}
       // The inactivity limit's 0 switches it off (O71).
       off={def.kind === 'int' ? def.off : undefined}
+      check={(v) => settingIssue(def, v, override)?.message ?? null}
       onChange={p.set}
     />
   );
@@ -125,6 +164,21 @@ export const seasonalDefs = (defs: readonly SettingDef[]): SettingDef[] =>
 // halving switch's own key (T209).
 export const SEASON_CHOICE = 'round.seasonChoice';
 
+// The last round's values the next round's form starts from when the host's form did not
+// make it (a Quick Test's first round, the page loaded again): its season and halving (T209)
+// and its inactivity limit and warning (O75), the round view's own; a round made before O71
+// has no warning and leaves the pair to the document's values.
+export function keptOf(state: RoundStateView): Record<string, SettingValue> {
+  const inactivity =
+    state.inactivityWarnMs > 0
+      ? {
+          'round.inactivityLimitS': state.inactivityLimitMs / 1_000,
+          'round.inactivityWarnS': state.inactivityWarnMs / 1_000,
+        }
+      : {};
+  return { [SEASON_CHOICE]: state.season, 'round.halving': state.halving, ...inactivity };
+}
+
 const choiceOf = (v: SettingValue | undefined): SeasonName | 'inSeason' | null =>
   v === 'inSeason' || SEASONS.includes(v as SeasonName) ? (v as SeasonName | 'inSeason') : null;
 
@@ -157,6 +211,8 @@ export function HostFields(p: {
   readonly season: SeasonName | null;
   readonly values: Readonly<Record<string, SettingValue>>;
   readonly set: (key: string, v: SettingValue) => void;
+  // The server's sentence per field after a refused round setup (O74).
+  readonly problems?: FormProblems['fields'];
 }): ReactElement {
   return (
     <>
@@ -168,6 +224,7 @@ export function HostFields(p: {
             def={d}
             {...(p.doc === undefined ? {} : { doc: p.doc })}
             value={p.values[d.key] ?? d.default}
+            problem={p.problems?.[d.key]}
             set={(v) => {
               p.set(d.key, v);
             }}

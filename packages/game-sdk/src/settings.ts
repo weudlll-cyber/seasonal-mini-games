@@ -8,6 +8,8 @@
  *                 settings; pure checks of a value against its definition (an int may name
  *                 one value outside its bounds that switches it off) and against the
  *                 narrowed bounds a game admin may set (never wider than the definition);
+ *                 the same check as a form field's issue, its key with a sentence to show
+ *                 under it (O74: the one wording of every form and every refusal);
  *                 resolving a document's stored overrides into effective values.
  * Depends on:     nothing
  * Used by:        ./index, packages/contracts, games/*, apps/server (settings routes), apps/admin
@@ -104,7 +106,7 @@ export function effectiveBounds(def: IntDef | NumberDef | IntListDef, o?: Settin
 
 // Names the off value beside the bounds, so "5" for a limit says that 0 switches it off.
 const offNote = (def: IntDef | NumberDef) =>
-  def.kind === 'int' && def.off !== undefined ? ` (or ${String(def.off)}: off)` : '';
+  def.kind === 'int' && def.off !== undefined ? `, or ${String(def.off)} for off` : '';
 
 function numberProblem(def: IntDef | NumberDef, value: unknown, b: Bounds): string | null {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 'must be a number';
@@ -148,6 +150,25 @@ export function settingProblem(
     case 'text':
       return textProblem(def, value);
   }
+}
+
+// A problem with one setting, for the form field it belongs to (O74): the setting's key and
+// a sentence to show under the field. Forms, the server's refusals and the admin save all
+// word it from here, so every place says the same.
+export interface SettingIssue {
+  readonly key: string;
+  readonly message: string;
+}
+
+// `settingProblem` as a field's issue: "Must be between 20 and 600, or 0 for off."
+export function settingIssue(
+  def: SettingDef,
+  value: unknown,
+  o?: SettingOverride,
+): SettingIssue | null {
+  const problem = settingProblem(def, value, o);
+  if (problem === null) return null;
+  return { key: def.key, message: `${problem.charAt(0).toUpperCase()}${problem.slice(1)}.` };
 }
 
 function enumProblem(def: EnumDef, value: unknown): string | null {

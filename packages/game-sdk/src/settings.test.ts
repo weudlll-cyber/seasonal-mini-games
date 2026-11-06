@@ -15,6 +15,7 @@ import { describe, expect, it } from 'vitest';
 import {
   boundsProblem,
   resolveSettings,
+  settingIssue,
   settingProblem,
   type IntDef,
   type NumberDef,
@@ -82,8 +83,18 @@ describe('settingProblem', () => {
     const limit: IntDef = { ...cooldown, min: 20, max: 600, off: 0 };
     expect(settingProblem(limit, 0)).toBeNull();
     expect(settingProblem(limit, 0, { min: 30 })).toBeNull();
-    expect(settingProblem(limit, 5)).toBe('must be between 20 and 600 (or 0: off)');
+    expect(settingProblem(limit, 5)).toBe('must be between 20 and 600, or 0 for off');
     expect(settingProblem(limit, 601)).not.toBeNull();
+  });
+
+  it("words a field's issue as a sentence with the setting's key (O74)", () => {
+    const limit: IntDef = { ...cooldown, key: 'round.inactivityLimitS', min: 20, max: 600, off: 0 };
+    expect(settingIssue(limit, 5)).toEqual({
+      key: 'round.inactivityLimitS',
+      message: 'Must be between 20 and 600, or 0 for off.',
+    });
+    expect(settingIssue(limit, 0)).toBeNull();
+    expect(settingIssue(cooldown, 4, { min: 5 })?.message).toBe('Must be between 5 and 60.');
   });
 });
 

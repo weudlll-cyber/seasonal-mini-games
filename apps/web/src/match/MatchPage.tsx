@@ -18,7 +18,8 @@
  *                 also while the next round is only set up. A player who joins during a round
  *                 watches it and plays from the next one. The host's last round settings are
  *                 kept here, so the next round's form is prefilled whichever layout made them;
- *                 without them, the last round's season and halving (T209).
+ *                 without them, the last round's season and halving (T209) and its inactivity
+ *                 limit and warning (O75, `keptOf`).
  *                 A closed or aborted match shows its summary (./MatchSummary, O27).
  * Depends on:     react, @smg/contracts, ../chat/*, ../live/*, ../shell/*, ./HostMenu,
  *                 ./MatchSummary, ./ResultBar, ./WaitingArea, ../round/RoundChat, ../round/RoundScreen,
@@ -43,7 +44,7 @@ import { HostConsole, HostMenu, hosts, type Values } from './HostMenu.js';
 import { MatchSummary } from './MatchSummary.js';
 import { ResultBar } from './ResultBar.js';
 import { WaitingArea } from './WaitingArea.js';
-import { SEASON_CHOICE } from './roundFields.js';
+import { keptOf } from './roundFields.js';
 import './match.css';
 
 function JoinLeave({
@@ -153,12 +154,8 @@ function MatchView(p: {
   const status = live.state?.status ?? null;
   const chat = useMatchChat(match.code);
   // Before the host's form made a round here (a Quick Test's first round), the next round
-  // still starts from the last round's season and halving (T209).
-  const kept =
-    last ??
-    (live.state === null
-      ? null
-      : { [SEASON_CHOICE]: live.state.season, 'round.halving': live.state.halving });
+  // still starts from the last round's values (T209, O75).
+  const kept = last ?? (live.state === null ? null : keptOf(live.state));
   const menu = { match, roundStatus: status, reload: refresh, last: kept, setLast };
   const hostMenu = <HostMenu {...menu} />;
   const phase = phaseOf(match, status);

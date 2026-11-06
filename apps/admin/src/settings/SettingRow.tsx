@@ -13,7 +13,8 @@
  *                 its editor disabled with the reason under it. Where the server applies
  *                 another value than the document's (the deployment's chat while no admin
  *                 chose one, T240), the "In force" column shows that value with the reason
- *                 under it. The server checks everything again.
+ *                 under it. A value the server refused shows its sentence under the editor
+ *                 (O74). The server checks everything again.
  * Depends on:     react, @smg/contracts (SettingInEffectView), @smg/game-sdk (definitions,
  *                 bounds), ./settingText
  * Used by:        ./SettingsPage
@@ -39,6 +40,8 @@ interface SettingRowProps {
   readonly unavailable?: string | undefined;
   // The value the server applies instead of `value`, with why, if so (T240).
   readonly inEffect?: SettingInEffectView | undefined;
+  // The server's sentence for this setting after a refused save (O74), if so.
+  readonly problem?: string | undefined;
   readonly change: (next: SettingOverride) => void;
 }
 
@@ -162,6 +165,7 @@ export function SettingRow({
   editable,
   unavailable,
   inEffect,
+  problem,
   change,
 }: SettingRowProps): ReactElement {
   const b = numeric(def) ? effectiveBounds(def, override) : null;
@@ -193,6 +197,15 @@ export function SettingRow({
             {unavailable === undefined ? null : (
               <small className="smg-muted" data-testid="setting-unavailable">
                 {unavailable}
+              </small>
+            )}
+            {problem === undefined ? null : (
+              <small
+                role="alert"
+                className="smg-muted smg-field-help--error"
+                data-testid="setting-problem"
+              >
+                {problem}
               </small>
             )}
           </>

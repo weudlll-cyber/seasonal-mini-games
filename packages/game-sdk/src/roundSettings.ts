@@ -8,14 +8,15 @@
  *                 round, winning margin, season source and toggles, points, fairness proof,
  *                 and the specials' timing from ./specialSettings), how their frozen values
  *                 become the platform's round config in milliseconds, and the one cross-key
- *                 rule (the warning below the limit, O71). A game's document is these keys
+ *                 rule (the warning below the limit, O71, as the warning field's issue, O74).
+ *                 A game's document is these keys
  *                 followed by the game's own (GameSettings.defs).
  * Depends on:     ./settings, ./module, ./specialSettings
  * Used by:        ./index, packages/domain (round config), packages/application, games/*
  * Spec:           docs/spec/08-admin-settings.md §3, docs/spec/02-game-guess-the-number.md §3, §5.3, §9
  */
 import type { SecretMode } from './module.js';
-import type { SettingDef, SettingValue } from './settings.js';
+import type { SettingDef, SettingIssue, SettingValue } from './settings.js';
 import { readSpecialTiming, SPECIAL_SETTINGS, type SpecialTiming } from './specialSettings.js';
 
 const GAME_ADMIN = 'settings.game.edit';
@@ -50,7 +51,7 @@ const ROUND_SETTINGS: readonly SettingDef[] = [
     ...host,
   },
   // The inactivity limit (O71): out of the round after this long without a guess, warned
-  // before; 0 switches it off. The warning must come before the limit (inactivityProblem).
+  // before; 0 switches it off. The warning must come before the limit (inactivityIssue).
   {
     key: 'round.inactivityLimitS',
     kind: 'int',
@@ -259,10 +260,14 @@ export function readPlatformRound(
 }
 
 // The platform's one cross-key rule (O71): with the limit on, the warning comes before it.
-// Each key's own bounds are checked first (settingProblem); null when the values fit.
-export function inactivityProblem(values: Readonly<Record<string, SettingValue>>): string | null {
+// Each key's own bounds are checked first (settingIssue); null when the values fit, else the
+// warning field's issue in the one wording every form and refusal shows (O74).
+export function inactivityIssue(
+  values: Readonly<Record<string, SettingValue>>,
+): SettingIssue | null {
   const limit = values['round.inactivityLimitS'];
   const warn = values['round.inactivityWarnS'];
   if (typeof limit !== 'number' || typeof warn !== 'number' || limit === 0) return null;
-  return warn < limit ? null : 'Inactivity warning: must be below the inactivity limit';
+  if (warn < limit) return null;
+  return { key: 'round.inactivityWarnS', message: 'The warning must be shorter than the limit.' };
 }

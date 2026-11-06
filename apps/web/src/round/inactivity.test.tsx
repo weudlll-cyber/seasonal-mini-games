@@ -47,15 +47,17 @@ const view = {
 const me = (over: Partial<RosterRowView> = {}): RosterRowView => ({
   ...(ended.roster[1] as RosterRowView),
   cooldownEndsAt: 0,
-  inactivity: { warnAt: WARN_AT, outAt: OUT_AT },
   ...over,
 });
-const open = (row: RosterRowView): RoundStateView => ({
+// The viewer's own deadlines come beside the roster, never in it (O73).
+const OWN = { warnAt: WARN_AT, outAt: OUT_AT };
+const open = (row: RosterRowView, own: RoundStateView['ownInactivity'] = OWN): RoundStateView => ({
   ...ended,
   status: 'open',
   role: 'player',
   game: view,
   roster: [row],
+  ownInactivity: own,
 });
 
 function inputRow(state: RoundStateView, now: number) {
@@ -99,12 +101,12 @@ describe('the countdown at the input row', () => {
   });
 
   it('has no line while the limit cannot run out (off, solved, a running cooldown)', () => {
-    render(inputRow(open(me({ inactivity: null })), WARN_AT + 5_000));
+    render(inputRow(open(me(), null), WARN_AT + 5_000));
     expect(screen.queryByTestId('inactivity-warning')).toBeNull();
   });
 
   it('replaces the input row with the notice once the player is out of time', () => {
-    render(inputRow(open(me({ timedOut: true, inactivity: null })), OUT_AT));
+    render(inputRow(open(me({ timedOut: true }), null), OUT_AT));
     expect(screen.getByTestId('timed-out-notice').textContent).toBe(
       'Out of time this round. You can play the next round.',
     );
@@ -114,12 +116,12 @@ describe('the countdown at the input row', () => {
 
 describe('"timed out" for the others and in the result', () => {
   const roster = [
-    me({ playerKey: 'v', inactivity: null }),
-    me({ playerKey: 'b1', guesses: 8, inactivity: null }),
-    me({ playerKey: 'b2', guesses: 0, timedOut: true, inactivity: null }),
+    me({ playerKey: 'v' }),
+    me({ playerKey: 'b1', guesses: 8 }),
+    me({ playerKey: 'b2', guesses: 0, timedOut: true }),
   ];
   const state: RoundStateView = {
-    ...open(roster[0] as RosterRowView),
+    ...open(roster[0] as RosterRowView, null),
     secretMode: 'individual',
     roster,
     names: { v: 'Me', b1: 'bot-01', b2: 'bot-02' },
@@ -172,7 +174,10 @@ describe('the host form', () => {
     expect(screen.getByText(/Must be below the limit/)).toBeTruthy();
     fireEvent.change(field, { target: { value: '10' } });
     expect(set).toEqual([]);
-    expect(screen.getByText(/Allowed: 20 to 600, or 0 for off\./)).toBeTruthy();
+    // The setting's own sentence (O74), the same the server answers with.
+    expect(screen.getByTestId('field-problem').textContent).toBe(
+      'Must be between 20 and 600, or 0 for off.',
+    );
     fireEvent.change(field, { target: { value: '0' } });
     expect(set).toEqual([0]);
   });

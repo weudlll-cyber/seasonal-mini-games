@@ -125,11 +125,11 @@ Every public answer and frame names a player by their number in the match, `p1`,
 | GET | `/games` | — | anyone: registered games with name and supported modes |
 | GET | `/matches?status=&game=` | — | anyone: public matches in the lobby or open, and those ended in the last day |
 | POST | `/matches` | `{ gameId, title, visibility, maxPlayers, countsForLeaderboard?, teamMatch? }` (`teamMatch` default true, owner decision 34; `gameId` one of `GET /games`, chosen in the create-match form, owner decision 41: every round of the match is that game) | `match.create`; the host joins as the match's first player (owner decision 16); 422 `GAME_UNKNOWN` |
-| POST | `/dev/quicktest` (development builds only) | `{ gameId?, mode?, bots?, cooldownS?, visibility?, …, settings? }`: the Guess The Number fields `rangeLow`, `rangeHigh`, `rangeVisible`, `comments` reach only a game that has those keys; `settings` holds the chosen game's own round settings by key (at most 40), checked like the host's (DECISIONS T121) | signed in; 422 `GAME_UNKNOWN`, 422 `ROUND_SETTINGS_INVALID` |
+| POST | `/dev/quicktest` (development builds only) | `{ gameId?, mode?, bots?, cooldownS?, visibility?, …, settings? }`: the Guess The Number fields `rangeLow`, `rangeHigh`, `rangeVisible`, `comments` reach only a game that has those keys; `settings` holds the chosen game's own round settings by key (at most 40), checked like the host's (DECISIONS T121), and the inactivity limit and warning (owner decision 75) | signed in; 422 `GAME_UNKNOWN`, 422 `ROUND_SETTINGS_INVALID` (as for `/matches/:code/rounds`) |
 | GET | `/matches/:code` | — | anyone: summary (`youHost`, `teamLocked` for the viewer, player count, current round summary, `teamStandings`, `nextRoundDefaults` for the host, `standings`, and `ended` once the match is closed or aborted: rounds played and how it ended, the summary taking the players' totals from `standings` and the teams from `teamStandings`; DECISIONS T85) |
 | POST | `/matches/:code/join` · `/leave` | `{}` | `match.join`; a player staff removed from the match is refused with 409 `KICKED` |
 | POST | `/matches/:code/team` | `{ team }` | a match player, once per match: refused with `TEAM_LOCKED` once the player was on a started round's roster (owner decision 26), and with `TEAMS_LOCKED` during a countdown or open round; in a match without teams always with `TEAMS_OFF` (owner decision 34) |
-| POST | `/matches/:code/rounds` | `{ settings, startNow? }` (platform round settings of [02](02-game-guess-the-number.md) §3 and the game's settings) | the host (`round.manage`); 422 `ROUND_SETTINGS_INVALID`, 409 `ROUND_RUNNING`, 409 `NOT_A_HALVING_DAY`, 409 `IN_SEASON_UNAVAILABLE` |
+| POST | `/matches/:code/rounds` | `{ settings, startNow? }` (platform round settings of [02](02-game-guess-the-number.md) §3 and the game's settings) | the host (`round.manage`); 422 `ROUND_SETTINGS_INVALID` with `field` (the refused setting's key, or null for a game's own cross-key rule) and `detail` (the sentence to show under that field, from the setting's own check; owner decision 74, DECISIONS T276), 409 `ROUND_RUNNING`, 409 `NOT_A_HALVING_DAY`, 409 `IN_SEASON_UNAVAILABLE` |
 | POST | `/rounds/:id/start` · `/end` · `/abort` | `{}` · `{}` · `{ reason }` | the host |
 | GET | `/rounds/:id/state?since=` | — | anyone allowed to watch: the caller's view (player, spectator or result) and the event seq; `since` gives a delta |
 | POST | `/rounds/:id/guesses` | `{ value }` | a roster player: the HTTP fallback, same queue and checks |
@@ -148,14 +148,14 @@ As Bingo 05 §3 for dashboard, settings, integrations, accounts, moderation, upl
 | Matches and rounds | `GET /matches`, `GET /rounds/:id`, `POST /rounds/:id/abort`, `POST /matches/:id/kick`, `POST /rounds/:id/results/:playerKey/remove` (reason required) | `match.abort` / `match.manage` / `leaderboard.adjust` |
 | Seasons | `GET /seasons/feed`, `POST /seasons/feed/refresh`, `GET/POST/DELETE /halving-days` | `season.manage` |
 | Leaderboards | `POST /leaderboard-adjustments` (`{ periodId, displayName, delta, reason }`, reason required, audited, public on the profile) | `leaderboard.adjust` |
-| Game settings | `GET/PUT /settings/game.<gameId>` with versions and rollback as Bingo | `settings.game.edit` |
+| Game settings | `GET/PUT /settings/game.<gameId>` with versions and rollback as Bingo; a refused value is 422 `SETTING_INVALID` with `field` and `detail` as for `ROUND_SETTINGS_INVALID` (owner decision 74) | `settings.game.edit` |
 
 ## 4. Realtime
 
 ### 4.1 Connection and clock offset
 
 - Handshake as Bingo 06 §2.
-- After connecting, the client sends `time.sync` three times. The server answers with its clock each time. The client keeps the offset of the reply with the shortest round trip. Every server time (`opensAt`, `cooldownEndsAt`, a roster row's `inactivity.warnAt` and `inactivity.outAt` (owner decision 71, [02](02-game-guess-the-number.md) §5.3), special due times) is shown corrected by it. The offset is used for display only and never sent back.
+- After connecting, the client sends `time.sync` three times. The server answers with its clock each time. The client keeps the offset of the reply with the shortest round trip. Every server time (`opensAt`, `cooldownEndsAt`, the viewer's own `ownInactivity.warnAt` and `ownInactivity.outAt` (owner decisions 71, 73, [02](02-game-guess-the-number.md) §5.3), special due times) is shown corrected by it. The offset is used for display only and never sent back.
 
 ### 4.2 Rooms
 

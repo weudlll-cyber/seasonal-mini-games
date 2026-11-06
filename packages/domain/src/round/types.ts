@@ -170,7 +170,8 @@ export type RoundEvent<E, A, Cfg> =
     }
   | { readonly type: 'MarginNoted'; readonly playerId: string; readonly ms: number }
   // The player made no guess for the round's inactivity limit (O71); `at` is the deadline
-  // itself, not the time the server noticed, so a replay or a late timer gives the same log.
+  // plus the grace (O72), not the time the server noticed, so a replay or a late timer gives
+  // the same log.
   | { readonly type: 'PlayerTimedOut'; readonly playerId: string; readonly at: number }
   // Frost: every held event up to this log seq has reached its audience (06 §2.7). Written by
   // the round actor, which numbers the log; it changes no state.

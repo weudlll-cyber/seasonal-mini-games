@@ -6,7 +6,8 @@
  * Responsibility: JSON in and out under `api/v1` of the server's base path (the page's own,
  *                 or its parent when the server serves the app under `admin/`); the CSRF
  *                 token of the session on every write (Bingo 03 §8); a refusal becomes an
- *                 ApiError with the server's code and detail. A write answered
+ *                 ApiError with the server's code and detail, and for a refused setting the
+ *                 setting's key (`field`, O74). A write answered
  *                 AUTH_STEP_UP_REQUIRED asks the step-up handler (./StepUp) for a fresh
  *                 two-factor check and is sent once more when it succeeded (Bingo 11 §1).
  *                 `failureText` puts a refusal in plain words. The same contract as the
@@ -25,6 +26,8 @@ export class ApiError extends Error {
     readonly status: number,
     readonly code: string,
     readonly detail: string | null = null,
+    // The setting a SETTING_INVALID belongs to (O74), else null.
+    readonly field: string | null = null,
   ) {
     super(`${String(status)} ${code}`);
   }
@@ -71,8 +74,15 @@ async function send<T>(path: string, options: Options): Promise<T> {
     ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
   });
   if (response.status === 204) return undefined as T;
-  const body = (await response.json().catch(() => ({}))) as { code?: string; detail?: string };
-  if (!response.ok) throw new ApiError(response.status, body.code ?? 'ERROR', body.detail ?? null);
+  const body = (await response.json().catch(() => ({}))) as {
+    code?: string;
+    detail?: string;
+    field?: string | null;
+  };
+  if (!response.ok) {
+    const { code, detail, field } = body;
+    throw new ApiError(response.status, code ?? 'ERROR', detail ?? null, field ?? null);
+  }
   return body as T;
 }
 

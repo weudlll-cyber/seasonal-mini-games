@@ -98,15 +98,22 @@ describe('the inactivity limit per round (O71)', () => {
   });
 
   it('refuses a warning not below the limit, also against the admin default', () => {
+    const pair = 'The warning must be shorter than the limit.';
+    const range = 'Must be between 20 and 600, or 0 for off.';
+    // Each refusal names the field it belongs to, with its sentence (O74).
     const refused = [
-      [{}, { 'round.inactivityLimitS': 30, 'round.inactivityWarnS': 30 }],
-      [{}, { 'round.inactivityLimitS': 25 }],
-      [{ 'round.inactivityWarnS': { value: 50 } }, { 'round.inactivityLimitS': 40 }],
-      [{}, { 'round.inactivityLimitS': 10 }],
+      [{}, { 'round.inactivityLimitS': 30, 'round.inactivityWarnS': 30 }, 'Warn', pair],
+      [{}, { 'round.inactivityLimitS': 25 }, 'Warn', pair],
+      [{ 'round.inactivityWarnS': { value: 50 } }, { 'round.inactivityLimitS': 40 }, 'Warn', pair],
+      [{}, { 'round.inactivityLimitS': 10 }, 'Limit', range],
     ] as const;
-    for (const [overrides, choices] of refused) {
+    for (const [overrides, choices, field, message] of refused) {
       expect(() => chooseRoundSettings(findGame, overrides, choices)).toThrow(
-        expect.objectContaining({ code: 'ROUND_SETTINGS_INVALID' }),
+        expect.objectContaining({
+          code: 'ROUND_SETTINGS_INVALID',
+          field: `round.inactivity${field}S`,
+          message,
+        }),
       );
     }
   });

@@ -120,7 +120,6 @@ describe('the individual-mode summary line', () => {
         place: null,
         solved: false,
         timedOut: false,
-        inactivity: null,
       },
       {
         playerKey: 'b1',
@@ -130,7 +129,6 @@ describe('the individual-mode summary line', () => {
         place: null,
         solved: false,
         timedOut: false,
-        inactivity: null,
       },
       {
         playerKey: 'b2',
@@ -140,7 +138,6 @@ describe('the individual-mode summary line', () => {
         place: null,
         solved: false,
         timedOut: false,
-        inactivity: null,
       },
     ];
     const state = { ...open, roster, names: { me: 'Me', b1: 'bot-01', b2: 'bot-02' } };

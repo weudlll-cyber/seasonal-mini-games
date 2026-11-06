@@ -5,9 +5,11 @@
  *
  * Responsibility: the clock starts at the open and starts again once the next guess may be
  *                 sent: after the cooldown, after a Frost-held answer, after a Bomb-style
- *                 penalty (`extraCooldownMs`), never while a guess waits for its answer; at the
- *                 limit a PlayerTimedOut stamped with the deadline, the same however late the
- *                 timer, and the same state again from the log; TIMED_OUT for a late guess;
+ *                 penalty (`extraCooldownMs`), never while a guess waits for its answer; a
+ *                 guess inside the 2 s grace after the limit counts and restarts the clock
+ *                 (O72); at the limit plus the grace a PlayerTimedOut stamped with that time,
+ *                 the same however late the timer, and the same state again from the log;
+ *                 TIMED_OUT for a later guess;
  *                 "timed out" in the results without place or points; individual rounds end
  *                 once everyone still in has solved, shared rounds once nobody is left;
  *                 the limit off (0) times nobody out; the round's next due time names the
@@ -19,11 +21,13 @@ import { describe, expect, it } from 'vitest';
 
 import { replayRound } from './evolve.js';
 import { config, pickGame, PickDriver } from './fakes.js';
-import { inactivityDeadline } from './inactivity.js';
+import { INACTIVITY_GRACE_MS, inactivityDeadline } from './inactivity.js';
 import { nextDue } from './lifecycle.js';
 
-// Out after 60 s, warned after 30 s (the defaults); cooldown 10 s.
+// Out after 60 s, warned after 30 s (the defaults); cooldown 10 s. The server takes a player
+// out 2 s after the limit (O72): OUT is the limit plus that grace.
 const LIMIT = { inactivityLimitMs: 60_000, inactivityWarnMs: 30_000 };
+const OUT = 60_000 + INACTIVITY_GRACE_MS;
 
 const tick = (d: PickDriver, at: number) => d.run({ type: 'tick', at });
 const timeouts = (d: PickDriver) => d.log.filter((e) => e.type === 'PlayerTimedOut');
@@ -34,18 +38,19 @@ const deadline = (d: PickDriver, id: string) => {
 const ended = (d: PickDriver) => d.log.find((e) => e.type === 'RoundEnded');
 
 describe('the inactivity clock (O71)', () => {
-  it('starts at the open and times an idle player out at the limit', () => {
+  it('starts at the open and times an idle player out at the limit plus the grace', () => {
     const d = new PickDriver(LIMIT);
     const t = d.start(['a', 'b']);
     tick(d, t);
+    // The player's deadlines show the limit itself; the timer fires 2 s later (O72).
     expect(deadline(d, 'a')).toEqual({ warnAt: t + 30_000, outAt: t + 60_000 });
-    expect(nextDue(d.state, pickGame)).toBe(t + 60_000);
-    tick(d, t + 59_999);
+    expect(nextDue(d.state, pickGame)).toBe(t + OUT);
+    tick(d, t + OUT - 1);
     expect(timeouts(d)).toEqual([]);
-    tick(d, t + 60_000);
+    tick(d, t + OUT);
     expect(timeouts(d)).toEqual([
-      { type: 'PlayerTimedOut', playerId: 'a', at: t + 60_000 },
-      { type: 'PlayerTimedOut', playerId: 'b', at: t + 60_000 },
+      { type: 'PlayerTimedOut', playerId: 'a', at: t + OUT },
+      { type: 'PlayerTimedOut', playerId: 'b', at: t + OUT },
     ]);
     expect(deadline(d, 'a')).toBeNull();
   });
@@ -56,9 +61,9 @@ describe('the inactivity clock (O71)', () => {
     d.guess('a', 1, t + 50_000);
     // Cooldown 10 s: the clock runs again from t + 60 s.
     expect(deadline(d, 'a')).toEqual({ warnAt: t + 90_000, outAt: t + 120_000 });
-    tick(d, t + 119_999);
+    tick(d, t + 60_000 + OUT - 1);
     expect(timeouts(d).map((e) => e.playerId)).toEqual(['b']);
-    tick(d, t + 120_000);
+    tick(d, t + 60_000 + OUT);
     expect(timeouts(d).map((e) => e.playerId)).toEqual(['b', 'a']);
   });
 
@@ -95,8 +100,25 @@ describe('the inactivity limit (O71)', () => {
     const d = new PickDriver(LIMIT);
     const t = d.start(['a']);
     expect(d.guess('a', 1, t + 59_999)).toMatchObject({ ok: true });
-    tick(d, t + 60_000);
+    tick(d, t + OUT);
     expect(timeouts(d)).toEqual([]);
+  });
+
+  it('counts a guess received inside the grace after the limit and restarts the clock', () => {
+    const d = new PickDriver(LIMIT);
+    const t = d.start(['a']);
+    expect(d.guess('a', 1, t + OUT - 1)).toMatchObject({ ok: true });
+    expect(timeouts(d)).toEqual([]);
+    // Cooldown 10 s after the guess, then the full limit again.
+    expect(deadline(d, 'a')?.outAt).toBe(t + OUT - 1 + 10_000 + 60_000);
+  });
+
+  it('refuses a guess received at the end of the grace', () => {
+    const d = new PickDriver(LIMIT);
+    const t = d.start(['a', 'b']);
+    d.guess('b', 1, t + 55_000);
+    expect(d.guess('a', 1, t + OUT)).toEqual({ ok: false, code: 'TIMED_OUT' });
+    expect(timeouts(d).map((e) => e.playerId)).toEqual(['a']);
   });
 
   it('times nobody out with the limit off', () => {
@@ -118,13 +140,13 @@ describe('the inactivity limit (O71)', () => {
 });
 
 describe('a timed-out player (O71)', () => {
-  it('is refused with TIMED_OUT, also for a guess that arrives after the limit', () => {
+  it('is refused with TIMED_OUT, also for a guess that arrives after the grace', () => {
     const d = new PickDriver(LIMIT);
     const t = d.start(['a', 'b']);
     d.guess('b', 1, t + 55_000);
-    // No timer ran: the guess itself finds the limit passed and times the player out first.
-    expect(d.guess('a', 7, t + 60_000)).toEqual({ ok: false, code: 'TIMED_OUT' });
-    expect(timeouts(d)).toEqual([{ type: 'PlayerTimedOut', playerId: 'a', at: t + 60_000 }]);
+    // No timer ran: the guess itself finds the grace passed and times the player out first.
+    expect(d.guess('a', 7, t + OUT)).toEqual({ ok: false, code: 'TIMED_OUT' });
+    expect(timeouts(d)).toEqual([{ type: 'PlayerTimedOut', playerId: 'a', at: t + OUT }]);
     expect(d.guess('a', 7, t + 90_000)).toEqual({ ok: false, code: 'TIMED_OUT' });
   });
 
@@ -133,7 +155,7 @@ describe('a timed-out player (O71)', () => {
     const t = d.start(['a', 'b', 'c']);
     d.guess('a', 7, t + 1_000);
     d.guess('c', 1, t + 50_000);
-    tick(d, t + 60_000);
+    tick(d, t + OUT);
     d.guess('c', 7, t + 100_000);
     const end = ended(d);
     if (end?.type !== 'RoundEnded') throw new Error('the round ended');
@@ -151,7 +173,7 @@ describe('the round end with timeouts (O71)', () => {
     const t = d.start(['a', 'b']);
     d.guess('a', 7, t + 1_000);
     tick(d, t + 70_000);
-    expect(ended(d)).toMatchObject({ reason: 'allSolved', at: t + 60_000 });
+    expect(ended(d)).toMatchObject({ reason: 'allSolved', at: t + OUT });
     expect(d.state.status).toBe('ended');
   });
 
@@ -168,8 +190,8 @@ describe('the round end with timeouts (O71)', () => {
   it('individual: ends with nobody left when everyone timed out', () => {
     const d = new PickDriver({ ...LIMIT, secretMode: 'individual' });
     const t = d.start(['a', 'b']);
-    tick(d, t + 60_000);
-    expect(ended(d)).toMatchObject({ reason: 'noPlayers', at: t + 60_000 });
+    tick(d, t + OUT);
+    expect(ended(d)).toMatchObject({ reason: 'noPlayers', at: t + OUT });
   });
 
   it('shared: plays on while someone is in, ends without a winner when nobody is', () => {
@@ -178,8 +200,8 @@ describe('the round end with timeouts (O71)', () => {
     d.guess('b', 1, t + 30_000);
     tick(d, t + 60_000);
     expect(d.state.status).toBe('open');
-    tick(d, t + 100_000);
-    expect(ended(d)).toMatchObject({ reason: 'noPlayers', at: t + 100_000 });
+    tick(d, t + 40_000 + OUT);
+    expect(ended(d)).toMatchObject({ reason: 'noPlayers', at: t + 40_000 + OUT });
     expect(d.state.winner).toBeNull();
   });
 });
@@ -194,15 +216,15 @@ describe('the timeout in the log (O71)', () => {
       for (const at of ticks) tick(d, t + at);
       return d;
     };
-    const onTime = run([60_000, 90_000]);
+    const onTime = run([OUT, 30_000 + OUT]);
     const late = run([200_000]);
     expect(late.log).toEqual(onTime.log);
     const t = onTime.state.opensAt ?? 0;
     expect(timeouts(onTime).map((e) => [e.playerId, e.at])).toEqual([
-      ['c', t + 60_000],
-      ['a', t + 90_000],
+      ['c', t + OUT],
+      ['a', t + 30_000 + OUT],
     ]);
-    expect(ended(onTime)).toMatchObject({ reason: 'allSolved', at: t + 90_000 });
+    expect(ended(onTime)).toMatchObject({ reason: 'allSolved', at: t + 30_000 + OUT });
     expect(replayRound(pickGame, late.log)).toEqual(late.state);
   });
 });

@@ -25,7 +25,11 @@ export {
   rosterPlayers,
 } from './round/evolve.js';
 export { createRound, nextDue, type NewRound } from './round/lifecycle.js';
-export { inactivityDeadline, type InactivityDeadline } from './round/inactivity.js';
+export {
+  INACTIVITY_GRACE_MS,
+  inactivityDeadline,
+  type InactivityDeadline,
+} from './round/inactivity.js';
 export {
   playerResults,
   scoredPlayers,
