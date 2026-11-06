@@ -80,7 +80,7 @@
 
 ### 2.4 `round_results`
 
-`round_id`, `player_key` (account id, or `bot-NN` in development), `place int NULL` (NULL = took part / not solved), `solved bool`, `solve_receive_seq bigint NULL`, `solve_at timestamptz NULL`, `guesses int`, `team text NULL`, `points int`, `secret int NULL` (individual mode, written at the end only). PK `(round_id, player_key)`. UNIQUE `(round_id, place)` WHERE `place IS NOT NULL`, so two players can never share a place. Written in the transaction that appends `RoundEnded`.
+`round_id`, `player_key` (account id, or `bot-NN` in development), `place int NULL` (NULL = took part / not solved), `solved bool`, `solve_receive_seq bigint NULL`, `solve_at timestamptz NULL`, `guesses int`, `team text NULL`, `points int`. No secret column: the result view and `/rounds/:id/verify` derive every player's secret from the sealed seed, as everything else does ([05](05-security-threat-model.md) §3; DECISIONS T265). PK `(round_id, player_key)`. UNIQUE `(round_id, place)` WHERE `place IS NOT NULL`, so two players can never share a place. Written in the transaction that appends `RoundEnded`.
 
 **round_team_results** — `round_id`, `team`, `members int`, `points int`, `won bool`. PK `(round_id, team)`.
 
