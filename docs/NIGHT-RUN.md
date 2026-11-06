@@ -8,12 +8,32 @@ This branch carries pieces 1–2. Pieces 3–4 (round polish, spec gaps) are on 
 
 ### Status
 
-| Piece                                    | State   | Commit |
-| ---------------------------------------- | ------- | ------ |
-| 1. The three accepted proposals          | running |        |
-| 2. Website mode's loose ends             | open    |        |
-| 3. Round polish (on `feat/round-polish`) | running |        |
-| 4. Spec gaps (on `feat/round-polish`)    | open    |        |
+| Piece                                    | State   | Commit    |
+| ---------------------------------------- | ------- | --------- |
+| 1. The three accepted proposals          | done    | `7dcfc1b` |
+| 2. Website mode's loose ends             | running |           |
+| 3. Round polish (on `feat/round-polish`) | running |           |
+| 4. Spec gaps (on `feat/round-polish`)    | open    |           |
+
+### Piece 1 — the accepted proposals (O68; T222, T237, T240, T242)
+
+- O68 is in DECISIONS §1. T222, T237 and T240 now have DECISIONS rows marked accepted, and OPEN (ac)–(ae) are closed in BACKLOG part two, as `396fa3f` did for confirmed items. The website's optional link fact is dropped from "needed from the website".
+- T237, the unread badge: new `useHostChatFrame`. While the round bar's Chat panel opens or closes, it posts EMBED.md's `{source:'seasonal-chat-host', type:'visible', visible}` to the frame, and again on every `ready`.
+  - It accepts `unread` only when all hold: the origin is the frame address's origin, `event.source` is the frame's window, `source` is `seasonal-chat`, and the count is a whole number ≥ 0. The count shows on `chat-unread`.
+  - The lobby and waiting area send and listen to nothing.
+  - T242: the frame carries `referrerpolicy="strict-origin"`, because EMBED.md finds the parent through the referrer in Firefox. The page-wide `no-referrer` stays.
+  - Nothing is needed from the website: EMBED.md (identical on its master) has every message.
+- T222: in website mode, the admin's security settings leave out `antiMulti.requireLinkedChat`, and the roster rules ignore it (`rosterAdmission`), even with a JWT provider. Standalone is unchanged (T103).
+- T240: the integrations settings answer an optional `inEffect` field (`SettingInEffectView`) for keys that take the deployment default, with the value and why. The admin's "In force" column shows them, e.g. hostEmbed with "This install runs inside the website; its chat is used until an admin chooses another." No new route: one more field on an existing GET, whose matrix row stands.
+- Tests:
+  - web and admin: 43 files, 197 tests pass, among them foreign origin, foreign window, wrong `source` and a bad count, all ignored;
+  - server: 8 files, 60 tests pass, among them the website-mode admin cases;
+  - journey 36 in Chromium passed once (52 s): the frame is told hidden, two messages show "2 unread", opening clears the badge and tells it visible, and closing tells it hidden.
+- Reused: `chatArrivals.ts` (a new `HostChatSight` context), `FocusShell`'s `useUnread`, and a shared `resolve` in `provider.ts` for `chatConfig` and the new `chatInEffect`.
+- Noticed, left alone:
+  - T239's reason for reloading the frame on a theme switch is outdated, since EMBED.md has a `theme` message.
+  - EMBED.md's `resize` is unused.
+  - The phone waiting area's chat button has no badge.
 
 ## Website mode (2026-11-05)
 
