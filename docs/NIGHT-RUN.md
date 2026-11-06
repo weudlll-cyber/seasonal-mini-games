@@ -53,6 +53,12 @@ This branch carries pieces 1–2. Pieces 3–4 (round polish, spec gaps) are on 
 - Reused: `addRole`, `revokeAccountSessions`, `PlayerName`. Extracted: cli.ts's `withPool` and command table, RoundLog's `othersOf`.
 - Noticed, left alone: a CLI role grant writes no audit-log entry, as `create-super` never did.
 
+### Verify (end of this branch)
+
+- First `pnpm verify` at `f629b4a`: format, lint and typecheck clean, but 3 failures in `websiteFeed.integration.test.ts`. Its first test (five sign-ins, a match, a league row) ran past vitest's 20 s default under the full parallel run and left the cursor unsaved, which failed the next two. Alone the file passes (4 tests, 32 s).
+- Fix `a873ae0`: 60 s for that test and the two that wait on polls, as the other heavy integration tests have.
+- Second `pnpm verify` at `a873ae0`: all green, 160 test files and 885 tests.
+
 ## Website mode (2026-11-05)
 
 Branch `feat/website-mode` from `master` at `4ab2986`; not merged by this task. Owner decisions O66 (website sign-in, guests, steps, deleted and locked accounts, the website's chat) and O67 (one installer for both variants). Reference: Seasonal Bingo Royale's website mode (its 07 §2.3, 03 §2.2, D37, D40–D43; `websiteIdentity.ts`, `websiteAccounts.ts`, `websiteSignIn.ts`, `ops/lib/website.sh`) and the website's contract (its `server/src/bingo/routes.js`, docs/AUTH.md "Seasonal Bingo Royale"), generalised there for `/games/mini-games`.
