@@ -66,6 +66,11 @@ All four answers are technical, and the code already behaved as decided. What ch
   - `safeFetch.ts` checks the DNS answer and then lets `fetch` resolve again, which leaves a rebinding window;
   - its blocklist lacks 198.18.0.0/15 and 240.0.0.0/4.
 
+### Verify (end of this branch)
+
+- First `pnpm verify` at `9d86c51`: format, lint, typecheck and all 821 tests passed. It still exited 1 because testcontainers' teardown of `rounds.integration.test.ts` hit Docker's 409 "container is running", an infrastructure race with no failed test.
+- Second `pnpm verify` at `9d86c51`: all green, 148 test files and 821 tests.
+
 ### Needs the owner
 
 - **Nothing from piece 4:** all four items were technical.
