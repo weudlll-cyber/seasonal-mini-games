@@ -127,8 +127,8 @@ export class PickDriver {
   ) {
     const created = createRound<PickState, Pick, PickEvent, null>({
       roundId: 'r1',
-      // Specials only where a test asks for them.
-      config: config({ specialOn: false, ...change }),
+      // Specials and the inactivity limit (O71) only where a test asks for them.
+      config: config({ specialOn: false, inactivityLimitMs: 0, ...change }),
       gameConfig: null,
       season,
       commitment: 'c0ffee',

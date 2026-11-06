@@ -22,6 +22,7 @@ const CODES: Readonly<Record<string, string>> = {
   ROUND_OVER: 'The round is over.',
   NOT_IN_ROUND: 'You are watching this round. You can play from the next one.',
   ALREADY_SOLVED: 'You found your number already.',
+  TIMED_OUT: 'Out of time this round. You can play the next round.',
   RATE_LIMITED: 'Slow down a little — too many guesses at once.',
   ROUND_BUSY: 'The round is very busy. Try again in a moment.',
   NO_ANSWER: 'No answer from the server. Check your connection and try again.',

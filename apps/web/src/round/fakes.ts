@@ -31,7 +31,16 @@ export const ended: RoundStateView = {
   winner: 'w',
   margin: { playerId: 'a', ms: 400 },
   roster: [
-    { playerKey: 'w', team: 'autumn', guesses: 9, cooldownEndsAt: 0, place: 1, solved: true },
+    {
+      playerKey: 'w',
+      team: 'autumn',
+      guesses: 9,
+      cooldownEndsAt: 0,
+      place: 1,
+      solved: true,
+      timedOut: false,
+      inactivity: null,
+    },
     {
       playerKey: 'a',
       team: 'winter',
@@ -39,6 +48,8 @@ export const ended: RoundStateView = {
       cooldownEndsAt: 20_000,
       place: null,
       solved: false,
+      timedOut: false,
+      inactivity: null,
     },
   ],
   seq: 30,
@@ -53,6 +64,7 @@ export const ended: RoundStateView = {
       guesses: 9,
       team: 'autumn',
       points: 10,
+      timedOut: false,
     },
     {
       playerId: 'a',
@@ -62,6 +74,7 @@ export const ended: RoundStateView = {
       guesses: 4,
       team: 'winter',
       points: 0,
+      timedOut: false,
     },
   ],
   teams: [

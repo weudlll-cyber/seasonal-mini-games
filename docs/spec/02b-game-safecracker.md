@@ -13,7 +13,7 @@ A match is always one game, which the host chooses when creating it (owner, deci
 
 ## 3. Round settings
 
-Secret mode, cooldown, season, season special, season teams, feedback visibility, closeness comments, countdown and longest round are as in [02](02-game-guess-the-number.md) §3. Range, show range and halving round do not exist in this game (§8). Its own settings, chosen by the host per round inside the admin's bounds ([08](08-admin-settings.md) §3, document `game.safecracker`):
+Secret mode, cooldown, inactivity limit and warning (owner, decision 71; [02](02-game-guess-the-number.md) §5.3), season, season special, season teams, feedback visibility, closeness comments, countdown and longest round are as in [02](02-game-guess-the-number.md) §3. Range, show range and halving round do not exist in this game (§8). Its own settings, chosen by the host per round inside the admin's bounds ([08](08-admin-settings.md) §3, document `game.safecracker`):
 
 | Setting | Values | Default | Source |
 |---|---|---|---|
@@ -29,7 +29,7 @@ The action is `{ value: "0427" }`: a string of digits, so leading zeros are kept
 | # | Check | Code | Words on screen |
 |---|---|---|---|
 | 1 | The round is open | `ROUND_NOT_OPEN` / `ROUND_OVER` | as [02](02-game-guess-the-number.md) §5.1 |
-| 2 | The guesser is on the roster | `NOT_IN_ROUND` | as 02 |
+| 2 | The guesser is on the roster and not timed out for inactivity | `NOT_IN_ROUND` / `TIMED_OUT` | as 02 §5.1, §5.3 |
 | 3 | Individual mode: not solved yet | `ALREADY_SOLVED` | as 02 |
 | 4 | Exactly `code.length` characters, each a digit below `code.digits` *(proposal)* | `CODE_INVALID` | "Enter 4 digits, each from 0 to 9." |
 | 5 | No digit of the guess has fallen in Leaf Fall (§7.3) *(proposal)* | `DIGIT_REMOVED` | "That digit has fallen." |

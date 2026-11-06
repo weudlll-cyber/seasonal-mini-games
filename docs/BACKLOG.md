@@ -12,6 +12,7 @@ The authoritative list. `OPEN.md` is the short page over it and is aligned after
 
 - Phase 7 — Integration, still open: the In Season feed from the website and the run on the Seasonal Entertainment website itself (website tasks, see below)
 - Phase 8 — Production readiness, still open: the security pass on the VPS (a ZAP baseline against a production install behind Caddy; the scans that need no server are done, see part two and [security-pass.md](security-pass.md)), the load gate on the reference VPS (the driver is built; a plain shared round at 500 and at 1 000 players ran once on the development machine, and L1's special and halving rounds are built and ran once there with 200 players, see [OPEN.md](OPEN.md) (r); open: the reference VPS, L2 and L3), and v1.0.0
+- Owner decision O71, the inactivity limit (branch `feat/inactivity`): the rules, the two round settings and the round state's fields are built (DECISIONS T267–T269); still open: the views (the countdown line at the input row and above the phone's action dock, the timed-out notice, "timed out" in the Others panel and the result, the host form's two fields), the e2e journey and the merge
 
 ### Needed from the website repository
 

@@ -4,7 +4,8 @@
  * @brief  Setting checks: types, bounds, narrowing that never widens, resolving overrides.
  *
  * Responsibility: each kind accepts its values and refuses the rest with a sentence;
- *                 narrowed bounds apply and cannot widen; a stored value that no longer
+ *                 narrowed bounds apply and cannot widen; an int's off value passes outside
+ *                 its bounds (O71); a stored value that no longer
  *                 fits falls back to the definition's default.
  * Depends on:     vitest, ./settings
  * Spec:           docs/spec/08-admin-settings.md §2
@@ -75,6 +76,14 @@ describe('settingProblem', () => {
 
   it('applies narrowed bounds', () => {
     expect(settingProblem(cooldown, 4, { min: 5 })).toBe('must be between 5 and 60');
+  });
+
+  it('takes the off value outside the bounds, and names it when refusing (O71)', () => {
+    const limit: IntDef = { ...cooldown, min: 20, max: 600, off: 0 };
+    expect(settingProblem(limit, 0)).toBeNull();
+    expect(settingProblem(limit, 0, { min: 30 })).toBeNull();
+    expect(settingProblem(limit, 5)).toBe('must be between 20 and 600 (or 0: off)');
+    expect(settingProblem(limit, 601)).not.toBeNull();
   });
 });
 

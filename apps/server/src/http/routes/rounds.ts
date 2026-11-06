@@ -9,7 +9,7 @@
  *                 the result and the proof only after the end. Every answer names players by
  *                 their number in the match, never by account id; the state adds `you`, the
  *                 viewer's own number (T104). Codes map to 409 / 422 / 429.
- * Depends on:     fastify, zod, ./heatwaveBody, ../../match/*, ../../round/*
+ * Depends on:     fastify, zod, ./heatwaveBody, ./inactivityBody, ../../match/*, ../../round/*
  * Used by:        ../app
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1, §4.3; docs/spec/02-game-guess-the-number.md §4, §10, §11
  */
@@ -25,13 +25,19 @@ import type { GuessLimits } from '../../round/guessLimits.js';
 import type { LiveRound } from '../../round/liveRound.js';
 import type { PgRoundStore } from '../../round/pgRoundStore.js';
 import { heatwaveSettings } from './heatwaveBody.js';
+import { inactivitySettings, warnBelowLimit } from './inactivityBody.js';
 
 const SEASONS = ['spring', 'summer', 'autumn', 'winter'] as const;
 
 export const createRoundBody = z
   .object({
-    // Heatwave's two in range (O63, ./heatwaveBody); the rest pass to the per-setting check.
-    settings: z.object(heatwaveSettings).catchall(z.unknown()).default({}),
+    // Heatwave's two in range (O63, ./heatwaveBody) and the inactivity limit with its warning
+    // (O71, ./inactivityBody); the rest pass to the per-setting check.
+    settings: z
+      .object({ ...heatwaveSettings, ...inactivitySettings })
+      .catchall(z.unknown())
+      .superRefine(warnBelowLimit)
+      .default({}),
     season: z.enum(SEASONS).optional(),
     startNow: z.boolean().default(false),
   })

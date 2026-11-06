@@ -88,6 +88,7 @@ export {
 export type {
   FrameEventView,
   GameInfoView,
+  InactivityView,
   MatchDetailsView,
   MatchEndView,
   MatchSummaryView,

@@ -34,6 +34,7 @@ const result = (playerId: string, place: number | null, guesses: number) => ({
   guesses,
   team: null,
   points: place === null ? 0 : 10 - place,
+  timedOut: false,
 });
 
 // Five players; the server lists the viewer (v, unplaced, no guesses) first.

@@ -10,7 +10,8 @@
  *                 server's routes return these types; the client never guesses a shape. A
  *                 player key or id in any of them is the player's number in the match (`p3`),
  *                 never an account id (DECISIONS T104). A website member's Discord steps go
- *                 beside the name (`steps`, website mode only, O66; absent without any).
+ *                 beside the name (`steps`, website mode only, O66; absent without any). The
+ *                 roster carries each player's inactivity deadlines and "timed out" (O71).
  * Depends on:     ./admin (settings document view), ./boards (match standings), ./session (steps)
  * Used by:        ../index, apps/server (routes), apps/web
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1, §4.4
@@ -81,6 +82,14 @@ export interface MatchDetailsView extends MatchSummaryView {
   readonly ended: MatchEndView | null;
 }
 
+// A player's inactivity deadlines (O71), absolute server times like `cooldownEndsAt`: the
+// warning shows from `warnAt`, the player is out at `outAt`. While a cooldown runs or an
+// answer is held they lie further ahead (the clock starts once the next guess may be sent).
+export interface InactivityView {
+  readonly warnAt: number;
+  readonly outAt: number;
+}
+
 export interface RosterRowView {
   readonly playerKey: string;
   readonly team: TeamName | null;
@@ -88,6 +97,10 @@ export interface RosterRowView {
   readonly cooldownEndsAt: number;
   readonly place: number | null;
   readonly solved: boolean;
+  // Out of this round for inactivity (O71): shown as "timed out".
+  readonly timedOut: boolean;
+  // Null while the limit cannot run out: off, the round not open, solved or timed out.
+  readonly inactivity: InactivityView | null;
 }
 
 export interface PlayerResultView {
@@ -98,6 +111,8 @@ export interface PlayerResultView {
   readonly guesses: number;
   readonly team: TeamName | null;
   readonly points: number;
+  // Listed as "timed out", without a place and without points (O71).
+  readonly timedOut: boolean;
 }
 
 export interface RoundStateView {

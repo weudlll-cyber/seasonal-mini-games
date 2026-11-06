@@ -3,22 +3,26 @@
  * @module domain/round
  * @brief  One player action: the acceptance checks in order, the cooldown, solves and winning.
  *
- * Responsibility: checks 1–7 of 02 §5.1 in that order (platform 1–3, the game's own 4–6 via
+ * Responsibility: checks 1–7 of 02 §5.1 in that order (platform 1–3 with TIMED_OUT for a
+ *                 player out for inactivity after check 2 (O71), the game's own 4–6 via
  *                 `validate`, the cooldown 7), then the game's decide. An accepted action
  *                 gets the next receive number and starts the cooldown from its receive time,
  *                 longer by the game's `extraCooldownMs` when it gives one (T120).
  *                 `Solved` signals become placings: in shared mode the first ends the round,
- *                 in individual mode solve order is place order (O4, O5). After a shared
+ *                 in individual mode solve order is place order (O4, O5), and the round
+ *                 ends once every player still in it solved. After a shared
  *                 win, a would-be correct guess inside the margin window sets the winning
  *                 margin (O13) and is still answered ROUND_OVER. A rejection emits nothing.
- * Depends on:     @smg/game-sdk (types), ./builder, ./lifecycle, ./specials (Frost), ./types
+ * Depends on:     @smg/game-sdk (types), ./builder, ./inactivity, ./lifecycle, ./specials (Frost),
+ *                 ./types
  * Used by:        ./step
- * Spec:           docs/spec/02-game-guess-the-number.md §5, §7, §8, §9;
+ * Spec:           docs/spec/02-game-guess-the-number.md §5 (§5.3 inactivity), §7, §8, §9;
  *                 docs/spec/04-software-architecture.md §4.2, §5.2, §5.5
  */
 import type { Decision, PlayerAction } from '@smg/game-sdk';
 
 import { fail, type Step } from './builder.js';
+import { leftEnd } from './inactivity.js';
 import { catchUp, endRound } from './lifecycle.js';
 import { frostDelay } from './specials.js';
 import type { Reply, RoundState } from './types.js';
@@ -61,6 +65,18 @@ function attempt<S, A, E, Cfg, Sec>(
   return { ok: true, act, decision };
 }
 
+// Checks 2–3 of an open round (the roster, inactivity, the solve), null when they pass.
+function notPlaying<S, Cfg>(s: RoundState<S, Cfg>, playerId: string): Reply | null {
+  const entry = s.roster[playerId];
+  if (entry === undefined) return fail('NOT_IN_ROUND');
+  // Out of this round for inactivity (O71): catchUp has timed out a late guesser first.
+  if (entry.timedOut) return fail('TIMED_OUT');
+  if (s.config.secretMode === 'individual' && entry.solvedSeq !== null) {
+    return fail('ALREADY_SOLVED');
+  }
+  return null;
+}
+
 export function guess<S, A, E, Cfg, Sec>(step: Step<S, A, E, Cfg, Sec>, cmd: GuessCmd<A>): Reply {
   catchUp(step, cmd.receivedAt);
   const s = step.state;
@@ -69,11 +85,8 @@ export function guess<S, A, E, Cfg, Sec>(step: Step<S, A, E, Cfg, Sec>, cmd: Gue
     noteMargin(step, cmd);
     return fail('ROUND_OVER');
   }
-  const entry = s.roster[cmd.playerId];
-  if (entry === undefined) return fail('NOT_IN_ROUND');
-  if (s.config.secretMode === 'individual' && entry.solvedSeq !== null) {
-    return fail('ALREADY_SOLVED');
-  }
+  const refused = notPlaying(s, cmd.playerId);
+  if (refused !== null) return refused;
   const tried = attempt(step, s, cmd);
   if (!tried.ok) return tried.reply;
   const receiveSeq = tried.act.receiveSeq;
@@ -120,9 +133,8 @@ function applySignals<S, A, E, Cfg, Sec>(
       deliverAt,
     });
     if (shared) endRound(step, at, 'solved', deliverAt);
-    else if (step.state.solvedCount === Object.keys(s.roster).length) {
-      endRound(step, at, 'allSolved', deliverAt);
-    }
+    // Individual: every player still in the round has solved; timed-out ones do not block.
+    else if (leftEnd(step.state) === 'allSolved') endRound(step, at, 'allSolved', deliverAt);
   }
 }
 
@@ -133,7 +145,9 @@ function noteMargin<S, A, E, Cfg, Sec>(step: Step<S, A, E, Cfg, Sec>, cmd: Guess
   if (s.status !== 'ended' || s.winner === null || s.winnerAt === null || s.margin !== null) return;
   const ms = cmd.receivedAt - s.winnerAt;
   if (ms > s.config.marginWindowMs || cmd.playerId === s.winner) return;
-  if (s.roster[cmd.playerId] === undefined) return;
+  // A player out for inactivity (O71) no longer counts for the margin either.
+  const entry = s.roster[cmd.playerId];
+  if (entry === undefined || entry.timedOut) return;
   const tried = attempt(step, s, cmd);
   const solves = tried.ok && tried.decision.signals.some((x) => x.type === 'Solved');
   if (solves) step.emit({ type: 'MarginNoted', playerId: cmd.playerId, ms });

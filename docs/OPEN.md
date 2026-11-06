@@ -9,6 +9,7 @@ Full list: [BACKLOG.md](BACKLOG.md). Decisions: [DECISIONS.md](DECISIONS.md).
 - Merged into `master` on 2026-11-04 (merge `4b86ba6`, PR #1): Seasonal Safecracker, Seasonal Bomb Defusal and Seasonal Target with focus mode, the night-7 and night-8 work and the play-test fixes, built on `feat/guess-games` ([NIGHT-RUN.md](NIGHT-RUN.md)); the owner played all four games and confirmed every proposal (DECISIONS O65); the branch is deleted.
 - Merged into `master` on 2026-11-06 (merge `ff0af7f`, PR #2): website mode (O66–O68: sign-in through the website, the account-changes feed, the website's chat, Discord steps), the one installer for both variants (O67), the dress rehearsal's installer fix (T244), and the owner decisions O69 and O70, built on `feat/website-mode`.
 - Merged into `master` on 2026-11-06 (merge `66e2828`, PR #3): the Others panel and the dark own row (T260, T261, confirmed), and OPEN's spec conflicts and gaps resolved (T263–T266), built on `feat/round-polish`.
+- On `feat/inactivity`, not merged: the inactivity limit (owner decision O71, 2026-11-06), its rules, settings and round-state fields (DECISIONS T267–T269); the views follow on the same branch (BACKLOG part one).
 
 ## Owner questions
 

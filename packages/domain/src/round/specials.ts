@@ -14,7 +14,7 @@
  *                 Everything is a step in the round's one queue, so a guess before a firing
  *                 sees the old state and one after it the new state, for everyone alike.
  * Depends on:     @smg/game-sdk (hooks, floor), ./builder, ./types
- * Used by:        ./lifecycle, ./guess, ../index
+ * Used by:        ./lifecycle, ./guess, ./inactivity, ../index
  * Spec:           docs/spec/03-seasonal-specials.md §1, §2, §4; docs/spec/04-software-architecture.md §4.4
  */
 import { HEATWAVE_FLOOR_MS, type Emitted, type SpecialHooks } from '@smg/game-sdk';
@@ -72,11 +72,9 @@ function nextFiring<S, Cfg>(state: RoundState<S, Cfg>, module: Module) {
   return next;
 }
 
-// The next time this round needs to run without any player action: open, a special, the end.
-export function nextDue<S, Cfg>(state: RoundState<S, Cfg>, module: Module): number | null {
-  if (state.status === 'countdown') return state.opensAt;
-  if (state.status !== 'open') return null;
-  return nextFiring(state, module)?.at ?? state.endsAt;
+// The next interval special's time before the round's end, or null (./lifecycle nextDue).
+export function nextSpecialAt<S, Cfg>(state: RoundState<S, Cfg>, module: Module): number | null {
+  return nextFiring(state, module)?.at ?? null;
 }
 
 export function springHerald<S, A, E, Cfg, Sec>(step: Step<S, A, E, Cfg, Sec>, at: number): void {

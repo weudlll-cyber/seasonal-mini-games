@@ -6,7 +6,7 @@
  * Responsibility: start the socket kit; make the staff accounts (another host, a moderator, a
  *                 game admin and a staff-only security admin); open the host's match with a
  *                 player and a spare match; run one round to its abort and start a second that
- *                 stays open; call a route of the tables as any kind of caller with a fresh
+ *                 stays open (the inactivity limit off, O71); call a route of the tables as any kind of caller with a fresh
  *                 session and an address of its own; list the routes Fastify registered; abort
  *                 the matches and remove the accounts at the end. Adapted from Bingo's matrix.
  * Depends on:     fastify, socket.io-client (types), ../src/auth/*, ./authzRoles, ./authzTable, ./session,
@@ -63,7 +63,13 @@ async function staffAccounts(kit: SocketKit): Promise<Record<keyof typeof STAFF,
 // A round of the match, started with the host and the player watching.
 async function startedRound(kit: SocketKit, code: string): Promise<string> {
   const r = await kit.clients.host.post(`/api/v1/matches/${code}/rounds`, {
-    settings: { 'round.cooldownS': 3, 'round.countdownS': 3, 'round.specialOn': false },
+    // The limit off (O71): the matrix keeps this round open for minutes without guesses.
+    settings: {
+      'round.cooldownS': 3,
+      'round.countdownS': 3,
+      'round.specialOn': false,
+      'round.inactivityLimitS': 0,
+    },
     season: 'spring',
     startNow: true,
   });

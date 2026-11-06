@@ -4,7 +4,8 @@
  * @brief  What a viewer gets of a round, over HTTP and as realtime frames.
  *
  * Responsibility: the round view: the platform part (status, times, cooldown, roster with
- *                 guess counts, cooldown ends and places, winner, margin, results, the seed
+ *                 guess counts, cooldown ends, places, inactivity deadlines and "timed out"
+ *                 (O71), winner, margin, results, the seed
  *                 once revealed) and the game's view for this viewer: the player view for a
  *                 roster player, the spectator view for everyone else, the result view (the
  *                 only one with secrets) after the end (02 §11). Frames: every committed event
@@ -12,7 +13,7 @@
  *                 room line), a player's own events to that player's room, host events to the
  *                 host room (06 §4.2, §4.4). Under Frost a view shows nothing that was not
  *                 announced yet, and frames hold such events back (09 §6 "Frost early read").
- * Depends on:     @smg/application (RoundSession), @smg/domain (results, types),
+ * Depends on:     @smg/application (RoundSession), @smg/domain (results, inactivity, types),
  *                 @smg/game-sdk (GameViews), ./pgRoundStore (types)
  * Used by:        ./rounds, ../realtime/gateway, ../http/routes/rounds
  * Spec:           docs/spec/02-game-guess-the-number.md §11; docs/spec/06-data-model-api-realtime.md §4.2, §4.4
@@ -20,6 +21,7 @@
 import type { RoundSession } from '@smg/application';
 import {
   frostDelay,
+  inactivityDeadline,
   playerResults,
   teamResults,
   type RoundEvent,
@@ -62,6 +64,9 @@ function platformPart<S, Cfg>(state: RoundState<S, Cfg>, cut: number) {
       cooldownEndsAt: e.cooldownEndsAt,
       place: shown(e.solvedAt, cut) ? e.place : null,
       solved: shown(e.solvedAt, cut),
+      // The inactivity limit (O71): out, or the deadlines the client counts down to.
+      timedOut: e.timedOut,
+      inactivity: inactivityDeadline(state, e),
     })),
   };
 }

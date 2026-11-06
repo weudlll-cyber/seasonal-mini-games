@@ -5,7 +5,8 @@
  *
  * Responsibility: one typed shape for every entry of the settings catalogue, used by the
  *                 platform's documents (packages/contracts) and by each game's own
- *                 settings; pure checks of a value against its definition and against the
+ *                 settings; pure checks of a value against its definition (an int may name
+ *                 one value outside its bounds that switches it off) and against the
  *                 narrowed bounds a game admin may set (never wider than the definition);
  *                 resolving a document's stored overrides into effective values.
  * Depends on:     nothing
@@ -39,6 +40,8 @@ export interface IntDef extends BaseDef {
   readonly min: number;
   readonly max: number;
   readonly unit: string;
+  // A value outside min–max that switches the feature off (the inactivity limit's 0, O71).
+  readonly off?: number;
 }
 
 // A number with a step, e.g. 0.5 s for the winning-margin window.
@@ -99,15 +102,20 @@ export function effectiveBounds(def: IntDef | NumberDef | IntListDef, o?: Settin
   return { min, max };
 }
 
+// Names the off value beside the bounds, so "5" for a limit says that 0 switches it off.
+const offNote = (def: IntDef | NumberDef) =>
+  def.kind === 'int' && def.off !== undefined ? ` (or ${String(def.off)}: off)` : '';
+
 function numberProblem(def: IntDef | NumberDef, value: unknown, b: Bounds): string | null {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 'must be a number';
   if (def.kind === 'int' && !Number.isInteger(value)) return 'must be a whole number';
+  if (def.kind === 'int' && def.off === value) return null;
   const steps = value / (def.kind === 'number' ? def.step : 1);
   if (def.kind === 'number' && Math.abs(steps - Math.round(steps)) > 1e-9) {
     return `must be a multiple of ${String(def.step)}`;
   }
   if (value < b.min || value > b.max) {
-    return `must be between ${String(b.min)} and ${String(b.max)}`;
+    return `must be between ${String(b.min)} and ${String(b.max)}${offNote(def)}`;
   }
   return null;
 }
