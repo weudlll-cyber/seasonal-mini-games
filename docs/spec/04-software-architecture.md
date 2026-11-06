@@ -158,7 +158,7 @@ The registry lists each game as one entry `{ module, conformance, devBot }`, whe
 
 ### 4.3 Timing classes
 
-- `cooldown`: the platform enforces the per-player cooldown of owner decision 3 (range 3–60 s, the same for all, no global tick) before a `PlayerAction` reaches the game. Heatwave and Frost apply automatically.
+- `cooldown`: the platform enforces the per-player cooldown of owner decision 3 (range 3–60 s, the same for all, no global tick) after the game's `validate` and before a `PlayerAction` reaches its `decide` (§4.2; a guess out of range during a cooldown is answered `OUT_OF_RANGE`, DECISIONS T29, T263). Heatwave and Frost apply automatically.
 - `own`: for games designed as long-running (owner, decision 3). The game will declare its timers (`ownTimers`), and the platform schedules them. There is no cooldown, Heatwave or Frost. No v1 game uses this class, so it joins the contract with the first long-running game, as a contract change of its own (§4.6).
 
 ### 4.4 Specials
@@ -213,7 +213,7 @@ Platform commands on a round: `createRound`, `startCountdown`, `openRound`, `sub
 
 - Every round in `countdown` or `open` has one **round actor** on exactly one server instance. The actor holds the round state in memory and a FIFO queue.
 - The WebSocket gateway validates the message shape and rate limit, then appends the intent to the round's queue **synchronously, in the order the process reads it from the sockets**. No `await` comes between reading and appending, so no reordering can happen inside the process. Scheduler firings (specials, round end) enter the same queue.
-- The actor takes one item at a time. It assigns `receiveSeq` and `receivedAt` when it takes an item, runs the platform checks and then the game's `decide`, and folds the events. Because the queue is FIFO and the actor is single, the receive order is the queue order, and two guesses can never share a position (owner, decision 4).
+- The actor takes one item at a time. It sets `receivedAt` when it takes an item, runs the checks in the order of [02](02-game-guess-the-number.md) §5.1 (the platform's state, roster and solved checks, the game's `validate`, the cooldown last; §4.2), gives an action that passed them the next `receiveSeq`, then runs the game's `decide` and folds the events. Because the queue is FIFO and the actor is single, the receive order is the queue order, and two guesses can never share a position (owner, decision 4).
 - HTTP fallback guesses (`POST …/guesses`) enter the same queue.
 
 ### 5.3 Persistence: group commit

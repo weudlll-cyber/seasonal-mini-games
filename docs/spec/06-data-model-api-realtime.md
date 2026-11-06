@@ -198,8 +198,9 @@ On the wire, committed events arrive as `events` frames (Bingo 06 §4, as built;
 
 ```
 client `guess` ─► gateway: schema, socket seq, rate limit ─► append to round queue (synchronous)
-   round actor (one at a time): assign receiveSeq + receivedAt
-     ─► platform checks (02 §5.1, cooldown last) ─► game.decide ─► events + signals
+   round actor (one at a time): assign receivedAt
+     ─► checks in 02 §5.1 order (platform, game.validate, cooldown last)
+     ─► assign receiveSeq ─► game.decide ─► events + signals
      ─► platform: Solved? → placing / winner / end; cooldownEndsAt = receivedAt + cooldown
      ─► add events to current batch
    batch commit (≤ 20 ms) ─► ack to sender ─► `guess.result` to player room (or held for Frost)
