@@ -10,7 +10,9 @@
  *                 its points stay stored, and ends its sessions; `locked` and `rights` end the
  *                 sessions; `unlocked` and an unknown id change nothing; the cursor is stored
  *                 and sent as `since`; GET /readyz names the last success (local mode does not).
- *                 A failing feed is logged without the token and retried later.
+ *                 A failing feed is logged without the token and retried later. After a member
+ *                 deleted their own account (DELETE /me, a hard delete), every change for that
+ *                 website user id is a no-op: no error, nothing logged, the cursor moves on.
  * Depends on:     vitest, node:http, ../src/integration/accountFeed, ./harness, ./websiteHelpers
  * Spec:           docs/spec/07-integration.md §7; docs/spec/06-data-model-api-realtime.md §2.9
  */
@@ -175,5 +177,31 @@ describe('the feed later (O66)', () => {
       'SELECT cursor, last_failure_at IS NOT NULL AS failed FROM smg.website_feed',
     );
     expect(state.rows).toEqual([{ cursor: '5', failed: true }]);
+  });
+});
+
+describe('changes for an account its member deleted (DELETE /me)', () => {
+  it('are no-ops: no error, no warning, the cursor moves on', async () => {
+    const gone = await signedIn(harness.built, { id: '55', name: 'Selfie' });
+    const deleted = await harness.built.fastify.inject({
+      method: 'DELETE',
+      url: `${BASE}api/v1/me`,
+      headers: { cookie: gone.cookie ?? '', 'x-csrf-token': gone.session.csrfToken ?? '' },
+      payload: { confirm: gone.session.account?.displayName },
+    });
+    expect(deleted.statusCode).toBe(204);
+    const changes = ['deleted', 'locked', 'unlocked', 'rights'].map((kind) => ({ id: 55, kind }));
+    pages = { '5': { body: { changes, next: '9' } } };
+    lines.length = 0;
+    const stop = startAccountFeed(feed());
+    await expect.poll(() => lines.length, { timeout: 15_000 }).toBeGreaterThan(0);
+    stop();
+    expect(lines).toEqual([
+      JSON.stringify({ details: { applied: 4 }, message: 'website account changes applied' }),
+    ]);
+    const state = await harness.pool.query<{ cursor: string }>(
+      'SELECT cursor FROM smg.website_feed',
+    );
+    expect(state.rows).toEqual([{ cursor: '9' }]);
   });
 });

@@ -14,23 +14,27 @@
  *                 events); in individual mode only the viewer's rows, without "You" and the
  *                 own colour, and the others' counts in a row of their own above the list
  *                 ("Others: bot-01: 8 guesses · bot-02: 5", each player has their own
- *                 secret), which a banner never replaces; `own`, "Your guesses", the
+ *                 secret; each name through ./PlayerName with its Discord steps, 07 §7),
+ *                 which a banner never replaces; `own`, "Your guesses", the
  *                 viewer's guesses and answers only; `all`, the guesses with every event,
  *                 where each special's line always stays (the Log panel). Rows are one line
  *                 (./GuessLine); on a phone the newest row's comment shows under it and a tap
  *                 on a row shows or hides its own.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (rows), @smg-game/registry/web (types),
- *                 ../live/useRound, ./GuessLine, ./SpecialBanner, ./roundText, ./roundLog.css
+ *                 ../live/useRound, ./GuessLine, ./PlayerName, ./SpecialBanner, ./roundText,
+ *                 ./roundLog.css
  * Used by:        ./RoundBody
- * Spec:           docs/spec/02-game-guess-the-number.md §6.2, §6.3, §12; docs/spec/03-seasonal-specials.md §2.4
+ * Spec:           docs/spec/02-game-guess-the-number.md §6.2, §6.3, §12; docs/spec/03-seasonal-specials.md §2.4;
+ *                 docs/spec/07-integration.md §7
  */
 import type { GameWeb } from '@smg-game/registry/web';
 import type { RoundStateView } from '@smg/contracts';
 import type { FeedLine, GuessRow } from '@smg/game-sdk';
-import { useState, type ReactElement } from 'react';
+import { Fragment, useState, type ReactElement } from 'react';
 
 import type { FeedItem } from '../live/useRound.js';
 import { EventLine, GuessLine } from './GuessLine.js';
+import { PlayerName } from './PlayerName.js';
 import { roundMarks } from './playerMarks.js';
 import { SpecialBanner } from './SpecialBanner.js';
 import { platformLine } from './roundText.js';
@@ -88,16 +92,41 @@ const LIST_IDS = { main: 'guess-list', own: 'own-list', all: 'all-list' } as con
 
 const guesses = (n: number): string => `${String(n)} ${n === 1 ? 'guess' : 'guesses'}`;
 
-// Individual mode: the other players' guesses as counts, "Others: bot-01: 8 guesses ·
-// bot-02: 5"; null when the viewer plays alone.
+// Individual mode: the other players and their guess counts, the first with its unit
+// ("8 guesses", then "5"); empty when the viewer plays alone.
+function othersOf(state: RoundStateView, viewerKey: string | null) {
+  return state.roster
+    .filter((r) => r.playerKey !== viewerKey)
+    .map((r, i) => ({
+      key: r.playerKey,
+      name: state.names[r.playerKey] ?? r.playerKey,
+      count: i === 0 ? guesses(r.guesses) : String(r.guesses),
+    }));
+}
+
+// The others' line as text, "Others: bot-01: 8 guesses · bot-02: 5" (its title); null alone.
 export function othersLine(state: RoundStateView, viewerKey: string | null): string | null {
-  const others = state.roster.filter((r) => r.playerKey !== viewerKey);
+  const others = othersOf(state, viewerKey);
   if (others.length === 0) return null;
-  const counts = others.map((r, i) => {
-    const name = state.names[r.playerKey] ?? r.playerKey;
-    return `${name}: ${i === 0 ? guesses(r.guesses) : String(r.guesses)}`;
-  });
-  return `Others: ${counts.join(' · ')}`;
+  return `Others: ${others.map((o) => `${o.name}: ${o.count}`).join(' · ')}`;
+}
+
+// The others' line: each name as everywhere else, with the player's Discord steps (07 §7).
+function OthersLine(p: { readonly state: RoundStateView; readonly viewerKey: string | null }) {
+  const title = othersLine(p.state, p.viewerKey);
+  if (title === null) return null;
+  return (
+    <p className="round-log-others" data-testid="others-line" title={title}>
+      Others:{' '}
+      {othersOf(p.state, p.viewerKey).map((o, i) => (
+        <Fragment key={o.key}>
+          {i === 0 ? null : ' · '}
+          <PlayerName name={o.name} steps={p.state.steps?.[o.key]} />
+          {`: ${o.count}`}
+        </Fragment>
+      ))}
+    </p>
+  );
 }
 
 // The one-line head: what the list holds, the banner in its place while one shows, "Log".
@@ -148,7 +177,6 @@ export function RoundLog(p: LogProps): ReactElement {
   const rows = (p.kind === 'all' ? [...shown, ...events] : shown).sort((a, b) => b.at - a.at);
   const newest = rows.find((r) => r.kind === 'guess')?.key ?? null;
   const solo = p.state.secretMode === 'individual';
-  const others = p.kind === 'main' && solo ? othersLine(p.state, p.viewerKey) : null;
   // A game with player tags: every row names its player by tag and marker (O62).
   const marks = roundMarks(p.state, p.game, p.viewerKey);
   return (
@@ -156,11 +184,7 @@ export function RoundLog(p: LogProps): ReactElement {
       {p.kind === 'all' ? null : (
         <Head {...p} count={shown.length} all={shown.length + events.length} />
       )}
-      {others === null ? null : (
-        <p className="round-log-others" data-testid="others-line" title={others}>
-          {others}
-        </p>
-      )}
+      {p.kind === 'main' && solo ? <OthersLine state={p.state} viewerKey={p.viewerKey} /> : null}
       {rows.length === 0 ? (
         <p className="smg-muted round-log-empty">No guesses yet.</p>
       ) : (

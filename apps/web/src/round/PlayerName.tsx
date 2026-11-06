@@ -9,7 +9,8 @@
  *                 A website member's Discord steps follow it (./PlayerSteps); name and steps
  *                 are then one element, so a grid's columns stay as they are.
  * Depends on:     react, @smg/contracts (PlayerStepView), ./PlayerSteps, ./playerName.css
- * Used by:        ./ResultParts, ./MatchStandings, ./RoundSide (the Players panel), ./GuessLine
+ * Used by:        ./ResultParts, ./MatchStandings, ./RoundSide (the Players panel), ./RoundLog
+ *                 (the others' line), ./GuessLine
  *                 (the round's list and "Your guesses"), ../match/WaitingArea, ../chat/ChatRoom
  * Spec:           docs/spec/02-game-guess-the-number.md §9, §12; docs/spec/07-integration.md §7
  */

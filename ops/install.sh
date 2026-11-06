@@ -130,7 +130,9 @@ next_steps() {
   else
     info "  1. Open https://$SMG_WEBSITE_DOMAIN/games/mini-games/ and sign in with your website account:"
     info "     the website's admins are the game's admins, members it lets start games may host (O66)."
-    info "  Nothing else to do: the website's $SMG_WEBSITE_MODE already serves the route ($SMG_WEBSITE_ROUTE_FILE)."
+    info "  2. Become super admin (after that first sign-in):  sudo smg admin promote-super --name <your website name>"
+    info "     (or --website-id <your website user id>; a name two members share is refused)."
+    info "  The website's $SMG_WEBSITE_MODE already serves the route ($SMG_WEBSITE_ROUTE_FILE)."
   fi
   info "  Backups run every night at 03:30 into $SMG_BACKUPS/$SMG_ENV/; pull them to your PC with ops/pull-backups.ps1."
   info "  Status: sudo smg status"

@@ -22,6 +22,8 @@ The installer asks the type first, then only what that type needs:
 - **standalone** (own domain, own HTTPS, the game's own accounts and chat): the environment (`prod`), the domain or the server's IP address, the admin e-mail and your age public key for the encrypted backups.
 - **website** (inside the Seasonal Entertainment website on the same server, at `/games/mini-games`, sign-in through the website's login and its chat): the environment (`prod`) and your age public key. It finds the website, its domain and its proxy (its own Caddy or nginx) itself, writes the game's route into the website's proxy, reloads it and checks the result. The website must have Mini Games switched on first, in its checkout: `sudo ./deploy/install.sh --update --mini-games`. The installer stops and names this command when it is missing.
 
+The first admin: on a standalone install `sudo smg admin create-super` (e-mail, name, password). A website install has no local accounts (`create-super` refuses there): sign in once through the website, then make that account the super admin with `sudo smg admin promote-super --name <your website name>` (or `--website-id <your website user id>`).
+
 A re-run keeps every earlier answer. Every answer can also be given as a flag, with `--yes` for an unattended run (the top of `ops/install.sh`). The full guide is [docs/operator-guide.md](docs/operator-guide.md).
 
 ## License

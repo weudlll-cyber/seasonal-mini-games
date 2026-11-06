@@ -18,7 +18,10 @@
 #                 since the update is then lost); backup; restore <file> and restore --drill
 #                 <file> (--identity <age key file> for encrypted backups, --force-env for
 #                 another environment's backup); logs [service]; admin create-super (the
-#                 first admin, password asked inside the app, never echoed); maintenance
+#                 first admin of a standalone install, password asked inside the app, never
+#                 echoed; refused on a website install); admin promote-super --website-id <id>
+#                 | --name <name> (website installs: a member who signed in once through the
+#                 website becomes super admin, DECISIONS T243); maintenance
 #                 on|off (a flag file the app reads: no new matches and no new rounds, running
 #                 rounds finish). --yes skips the confirmations. Adapted from Bingo's ops/sbr.
 # Depends on:     /opt/smg/lib/*.sh, Docker Compose, age
@@ -53,7 +56,10 @@ usage: smg [--env prod|staging] [--yes] <command>
           [--force-env]          --force-env: the backup is of another environment)
   restore --drill <file> [...]   restore into a throw-away database and check it
   logs [service]                 follow the logs (app, postgres, caddy)
-  admin create-super             create the first admin account
+  admin create-super             create the first admin account (standalone installs)
+  admin promote-super --website-id <id> | --name <name>
+                                 website installs: make a website member, after their
+                                 first sign-in, the super admin
   maintenance on|off             no new matches or rounds while on; running rounds finish
 EOF
 }
@@ -196,15 +202,41 @@ cmd_restore() {
   if ((drill)); then do_drill "$file" "$identity"; else do_restore "$env" "$file" "$identity" "$force_env"; fi
 }
 
-cmd_admin() {
+# admin_create_super <env>: a local account with a password; a website install has none that
+# could sign in, so it is refused there before anything is asked (the app refuses too).
+admin_create_super() {
   local env=$1 email name tty=()
-  [[ ${2:-} == create-super ]] || die "usage: smg admin create-super"
+  if [[ $(env_value "$SMG_ETC/$env.env" SMG_AUTH_MODE) == website ]]; then
+    die "this is a website install: players sign in only through the website, so a local admin account could never sign in. Sign in once through the website, then run: sudo smg admin promote-super --website-id <your website user id> (or --name <your display name>)"
+  fi
   email=${SMG_ADMIN_EMAIL_FLAG:-}
   name=${SMG_ADMIN_NAME_FLAG:-}
   ask email "Admin e-mail" "$(env_value "$SMG_ETC/$env.env" SMG_ADMIN_EMAIL)"
   ask name "Admin display name (3–24 letters or digits)" admin
   [[ -t 0 ]] || tty=(-T)
   compose "$env" exec "${tty[@]}" app node dist/cli.js create-super --email "$email" --name "$name"
+}
+
+# admin_promote_super <env>: the website member by user id or name becomes super admin; the
+# app finds the account, refuses an unknown or shared name and says what it did.
+admin_promote_super() {
+  local env=$1 target=()
+  if [[ -n ${SMG_ADMIN_WEBSITE_ID_FLAG:-} ]]; then
+    target=(--website-id "$SMG_ADMIN_WEBSITE_ID_FLAG")
+  elif [[ -n ${SMG_ADMIN_NAME_FLAG:-} ]]; then
+    target=(--name "$SMG_ADMIN_NAME_FLAG")
+  else
+    die "usage: smg admin promote-super --website-id <website user id> | --name <display name>"
+  fi
+  compose "$env" exec -T app node dist/cli.js promote-super "${target[@]}"
+}
+
+cmd_admin() {
+  case ${2:-} in
+    create-super) admin_create_super "$1" ;;
+    promote-super) admin_promote_super "$1" ;;
+    *) die "usage: smg admin create-super | smg admin promote-super --website-id <id> | --name <name>" ;;
+  esac
 }
 
 cmd_maintenance() {
@@ -223,6 +255,7 @@ main() {
       --env) env=$2; shift ;;
       --email) SMG_ADMIN_EMAIL_FLAG=$2; shift ;;
       --name) SMG_ADMIN_NAME_FLAG=$2; shift ;;
+      --website-id) SMG_ADMIN_WEBSITE_ID_FLAG=$2; shift ;;
       --yes) SMG_YES=1 ;;
       *) args+=("$1") ;;
     esac

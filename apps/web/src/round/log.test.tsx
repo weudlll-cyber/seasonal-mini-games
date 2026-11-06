@@ -7,7 +7,8 @@
  * Responsibility: the main list holds this round's guesses only, under a head with their
  *                 count and "Log (M)" counting guesses and events (T150); in individual mode
  *                 the others' guesses get no rows and a row of their own counts them ("Others:
- *                 Walter: 9 guesses"); "Your guesses" holds the viewer's own only; the banner takes the head's place
+ *                 Walter: 9 guesses", each name with its Discord steps); "Your guesses" holds
+ *                 the viewer's own only; the banner takes the head's place
  *                 on one line while its event stays in the All list; a desktop row carries its
  *                 comment on its line with the whole text as tooltip, a phone shows the newest
  *                 row's comment and a tap toggles a row's own; a guess's colour dots carry
@@ -78,6 +79,17 @@ describe('the main list', () => {
     expect(values('guess-list')).toEqual(['30', '10']);
     expect(screen.getByTestId('list-title').textContent).toBe('2 guesses');
     expect(screen.getByTestId('others-line').textContent).toBe('Others: Walter: 9 guesses');
+  });
+
+  it('shows each other player’s Discord steps beside their name in that row (07 §7)', () => {
+    const steps = {
+      w: [{ ladder: 'holder' as const, name: 'Diamond Hands', icon: '/media/s.webp' }],
+    };
+    show({ state: { ...open, secretMode: 'individual', steps } });
+    const line = screen.getByTestId('others-line');
+    const walter = within(line).getByTitle('Walter').closest('.player-named');
+    expect(walter?.querySelector('img')?.getAttribute('alt')).toBe('Diamond Hands');
+    expect(line.getAttribute('title')).toBe('Others: Walter: 9 guesses');
   });
 
   it('gives the banner the head’s place on one line; its event stays in the All list', () => {

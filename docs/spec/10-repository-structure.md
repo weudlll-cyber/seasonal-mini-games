@@ -104,7 +104,7 @@ No CI exists until the first code work package (decision 7: specification first)
 
 ## 6. Deployment (adopted, with differences)
 
-Bingo 09 applies with the names of [04](04-software-architecture.md) §2.2: single VPS with Docker Compose (§1), files on the server (§2), the one-command installer with both install types and every answer as a flag (§3), the `smg` CLI with `status`, `update`, `confirm`, `rollback`, `backup`, `restore`, `logs`, `admin create-super`, `maintenance` (§4), bootstrap (§5), age-encrypted backups pulled to the operator's machine (§6), one environment per server (§7), variants (§8), and the hardening checklist (§9).
+Bingo 09 applies with the names of [04](04-software-architecture.md) §2.2: single VPS with Docker Compose (§1), files on the server (§2), the one-command installer with both install types and every answer as a flag (§3), the `smg` CLI with `status`, `update`, `confirm`, `rollback`, `backup`, `restore`, `logs`, `admin create-super` (standalone; a website install promotes a website account with `admin promote-super`, DECISIONS T243), `maintenance` (§4), bootstrap (§5), age-encrypted backups pulled to the operator's machine (§6), one environment per server (§7), variants (§8), and the hardening checklist (§9).
 
 Differences:
 

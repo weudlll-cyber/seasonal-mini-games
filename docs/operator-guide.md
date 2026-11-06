@@ -54,15 +54,30 @@ Seasonal Mini Games can run **next to Seasonal Bingo Royale on the same server**
 4. Answer the questions: **website**; environment **prod**; your **age public key** (`age1…`). Nothing else is asked: the installer finds the website (its own Caddy or nginx), its domain, its network and what the website prepared. It asks for the domain or the network only if it cannot tell.
 5. Wait until it says **Done**. It installs Docker if needed, builds and starts the app, and writes the game's route into the website's proxy: `/etc/seasonal/routes/mini-games.conf` for nginx, `mini-games.caddy` in the website's Caddy routes folder for Caddy (0600, it holds the proxy secret). It checks the website's configuration (`nginx -t` or `caddy validate`), reloads it and checks through the website that the games, the sign-in and the chat room `mini-games` answer. You edit no file of the website, and there is no step afterwards.
 6. If the installer stops with "the website does not serve Mini Games yet", step 2 is missing: run the command it prints, then the installer again (it keeps your answers).
-7. Open `https://<website domain>/games/mini-games/` and sign in with your website account. Players sign in only through the website. Its admins are the game's admins, and members it lets start games may host. Guests can watch matches and leaderboards. The chat is the website's room `mini-games`. Section 4 is for standalone installs only.
+7. Open `https://<website domain>/games/mini-games/` and sign in with your website account. Players sign in only through the website. Its admins are the game's admins, and members it lets start games may host. Guests can watch matches and leaderboards. The chat is the website's room `mini-games`.
+8. Make yourself the super admin (section 4, "On a website install") after that first sign-in.
 
 ## 4. Create the first admin
+
+**On a standalone install:**
 
 ```
 sudo smg admin create-super
 ```
 
 It asks for e-mail, display name (3–24 letters or digits) and a password of at least 12 characters (not shown while you type). This account can host matches and open the admin app.
+
+**On a website install** players sign in only through the website, so a local account could never sign in: `create-super` refuses there and names the command below. Instead, your website account becomes the super admin:
+
+1. Open `https://<website domain>/games/mini-games/` and sign in once with your website account (that makes its game account).
+2. On the server:
+   ```
+   sudo smg admin promote-super --name <your website name>
+   ```
+   or, by your website user id, `sudo smg admin promote-super --website-id <id>`. The name is your website name or the name the games show (a number is added when another player has it); upper and lower case do not matter.
+3. Reload the games page: you are signed in again, now with the admin app.
+
+It says what it did, or why not: nobody with that id or name has signed in to the games yet (sign in first), several members have that name (use `--website-id`; it lists their ids), or the account is suspended. The super admin role stays at every later sign-in: the website's roles only decide game admin and host rights. Running it again only says that the account is super admin already.
 
 ## 5. Backups to your Windows PC
 

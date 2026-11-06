@@ -167,7 +167,12 @@ install_route() {
     die "the website's $SMG_WEBSITE_MODE refused the route file (see above); the earlier state is back, nothing was reloaded"
   fi
   run proxy_reload
-  info "  route: $file, the website's $SMG_WEBSITE_MODE reloaded"
+  # A dry run only printed the reload above; it must not claim it happened.
+  if [[ $SMG_DRY_RUN == 1 ]]; then
+    info "  route: $file, the website's $SMG_WEBSITE_MODE would be reloaded"
+  else
+    info "  route: $file, the website's $SMG_WEBSITE_MODE reloaded"
+  fi
 }
 
 # site_fetch <path> [curl args…]: "<status> <last URL>" of one request to the website through

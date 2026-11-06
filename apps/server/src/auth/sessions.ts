@@ -12,7 +12,7 @@
  *                 accounts with an admin role. Dead sessions are purged by the retention job.
  * Depends on:     node:crypto, pg (types), ../db/pool
  * Used by:        ./sessionPlugin, ../http/routes/auth, ../http/routes/devSignIn, ./retention,
- *                 ../http/routes/adminAccounts, ../integration/accountChanges
+ *                 ../http/routes/adminAccounts, ../integration/accountChanges, ./superPromotion
  * Spec:           Bingo 03 §3, §8; Bingo 04 §3.1
  */
 import { createHash, randomBytes } from 'node:crypto';
