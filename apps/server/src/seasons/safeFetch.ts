@@ -3,8 +3,9 @@
  * @module server/seasons
  * @brief  Fetch a small JSON document from an outside address without opening a door inward.
  *
- * Responsibility: what 07 §5 asks of `SafeHttpClient` (Bingo 03 §10): HTTPS only, every
- *                 address the host resolves to must be public (no loopback, private,
+ * Responsibility: what 07 §5 asks of `SafeHttpClient` (Bingo 03 §10): HTTPS only, the
+ *                 configured address's host is the one host allowed (T266), every
+ *                 address it resolves to must be public (no loopback, private,
  *                 link-local, carrier-grade NAT or unique-local range, IPv4-mapped included),
  *                 no redirects, a 5 s timeout and a 64 KiB limit on the answer. Development
  *                 builds may allow plain HTTP and private addresses, for a local test feed.

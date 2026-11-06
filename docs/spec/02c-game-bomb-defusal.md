@@ -135,4 +135,4 @@ Inherited from 02 §12: intro card, top bar, banner above the list, the one list
 - Under `own`, other players' rows read "cut a sequence".
 - The explosion overlay covers the whole screen for its moment and lets taps through; the row says "Boom!" with the icon in text.
 - Cut stays enabled with a harmless wire in the slots: pressing it refuses locally with the sentence of §11 and sends nothing; wire buttons are disabled once every slot is filled.
-- `bomb.explosionPenaltyS` is a host round setting like every other: owner decision 40 says the host chooses it, the round form keeps the last choice (OPEN, spec conflicts).
+- `bomb.explosionPenaltyS` is a host round setting like every other: owner decision 40 says the host chooses it, the round form keeps the last choice (O40 as amended by O65).

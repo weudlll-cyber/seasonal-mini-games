@@ -6,9 +6,10 @@
  *
  * Responsibility: the main list holds this round's guesses only, under a head with their
  *                 count and "Log (M)" counting guesses and events (T150); in individual mode
- *                 the others' guesses get no rows and a row of their own counts them ("Others:
- *                 Walter: 9 guesses", each name with its Discord steps); "Your guesses" holds
- *                 the viewer's own only; the banner takes the head's place
+ *                 the others' guesses get no rows and, on a phone, a row of their own counts
+ *                 them ("Others: Walter: 9 guesses", each name with its Discord steps; a
+ *                 desktop's column has them, T260); "Your guesses" holds the viewer's own
+ *                 only; the banner takes the head's place
  *                 on one line while its event stays in the All list; a desktop row carries its
  *                 comment on its line with the whole text as tooltip, a phone shows the newest
  *                 row's comment and a tap toggles a row's own; a guess's colour dots carry
@@ -75,17 +76,21 @@ describe('the main list', () => {
   });
 
   it('in individual mode leaves the others out and counts them in a row of their own', () => {
-    show({ state: { ...open, secretMode: 'individual' } });
+    show({ state: { ...open, secretMode: 'individual' }, phone: true });
     expect(values('guess-list')).toEqual(['30', '10']);
     expect(screen.getByTestId('list-title').textContent).toBe('2 guesses');
     expect(screen.getByTestId('others-line').textContent).toBe('Others: Walter: 9 guesses');
+    cleanup();
+    // A desktop has the info column's Others panel instead (T260).
+    show({ state: { ...open, secretMode: 'individual' } });
+    expect(screen.queryByTestId('others-line')).toBeNull();
   });
 
   it('shows each other player’s Discord steps beside their name in that row (07 §7)', () => {
     const steps = {
       w: [{ ladder: 'holder' as const, name: 'Diamond Hands', icon: '/media/s.webp' }],
     };
-    show({ state: { ...open, secretMode: 'individual', steps } });
+    show({ state: { ...open, secretMode: 'individual', steps }, phone: true });
     const line = screen.getByTestId('others-line');
     const walter = within(line).getByTitle('Walter').closest('.player-named');
     expect(walter?.querySelector('img')?.getAttribute('alt')).toBe('Diamond Hands');

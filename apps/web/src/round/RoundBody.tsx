@@ -10,14 +10,18 @@
  *                 info column on the right, top to bottom the special line, the game's compact
  *                 panel, then for a list game "Your guesses" (in shared mode; in individual mode
  *                 the stage already holds only the viewer's guesses, T141), for a board game
- *                 the round's guesses and the dock. A phone: the info line under the bar (its
+ *                 the round's guesses and the dock; in individual mode the Others panel
+ *                 under the game's panel (the other players' guesses and who solved,
+ *                 ./RoundSide, T260). A phone: the info line under the bar (its
  *                 sheet holds the game's panel), a board game's board, the round's guesses
- *                 filling the height that is left, and the dock at the bottom (./InputRow: the
+ *                 filling the height that is left (in individual mode under the "Others"
+ *                 line, ./RoundLog), and the dock at the bottom (./InputRow: the
  *                 game's input with the cooldown ring, or the solved notice). "All (N)" opens
  *                 the whole list with the events as a panel on demand (O48): a third column on
  *                 a desktop, a sheet on a phone that ends above the dock.
  * Depends on:     react, @smg/contracts, @smg-game/registry/web, ../live/useRound, ./FocusPanel,
- *                 ./InfoParts, ./InputRow, ./RoundLog, ./SpecialBanner, ./usePanels
+ *                 ./InfoParts, ./InputRow, ./playerMarks, ./RoundLog, ./RoundSide,
+ *                 ./SpecialBanner, ./usePanels
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §7, §11, §12; docs/spec/03-seasonal-specials.md §6
  */
@@ -29,7 +33,9 @@ import type { RoundLive } from '../live/useRound.js';
 import { FocusPanel } from './FocusPanel.js';
 import { GamePart, PhoneLine, SpecialLine } from './InfoParts.js';
 import { InputRow } from './InputRow.js';
+import { roundMarks } from './playerMarks.js';
 import { RoundLog } from './RoundLog.js';
+import { OthersPanel } from './RoundSide.js';
 import { bannerOf, eventBanner } from './SpecialBanner.js';
 import type { Panels } from './usePanels.js';
 
@@ -111,6 +117,13 @@ function useParts(p: BodyProps) {
   return { board, panel, stageBox, dock, all, main, own };
 }
 
+// Individual mode: the other players in the column, a desktop's place for the phone's line.
+function Others(p: BodyProps): ReactElement | null {
+  if (p.state.secretMode !== 'individual') return null;
+  const marks = roundMarks(p.state, p.game, p.viewerKey);
+  return <OthersPanel state={p.state} viewerKey={p.viewerKey} marks={marks} />;
+}
+
 export function RoundBody(p: BodyProps): ReactElement {
   const { board, panel, stageBox, dock, all, main, own } = useParts(p);
   const mainBox = (
@@ -140,6 +153,7 @@ export function RoundBody(p: BodyProps): ReactElement {
       <aside className="round-column" aria-label="About this round">
         <SpecialLine state={p.state} rule={p.rule} />
         {panel === null ? null : <div className="smg-panel round-panel">{panel}</div>}
+        <Others {...p} />
         {board ? (
           <>
             {mainBox}

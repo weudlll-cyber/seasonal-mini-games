@@ -39,7 +39,9 @@ The website's real installer and ours ran together on a fresh systemd Ubuntu 24.
   - `RegisterPage.jsx` and `DiscordSignupPage.jsx` have the same call. Bingo is affected too.
 - **Not checked:** Discord steps (the website offers no test path to give an account a step), signing in again as a locked member, and the four games in Caddy mode (one round there, as asked).
 
-This branch carries pieces 1–2. Pieces 3–4 (round polish, spec gaps) are on `feat/round-polish` from `master`, with its own copy of this section. Neither branch is merged. Owner decision O68: proposals T237, T222 and T240 are accepted.
+## Night 9 (2026-11-06), pieces 1–2 on `feat/website-mode`
+
+This branch carried pieces 1–2. Pieces 3–4 (round polish, spec gaps) are on `feat/round-polish` from `master`, with its own copy of this section. Neither branch is merged. Owner decision O68: proposals T237, T222 and T240 are accepted.
 
 ### Status
 
@@ -156,6 +158,83 @@ Branch `feat/website-mode` from `master` at `4ab2986`; not merged by this task. 
 
 - The website accepted the contract unchanged as its task SE-EMBEDDED-GAMES (branch `feat/embedded-games`). It matches what this branch builds: the authorize headers, the feed with its own cursor per game, the files in `/etc/seasonal/`, the routes folder, `/login?next=`, `/embed/chat?room=mini-games&theme=…`, and `--mini-games`, which the installer's stop message names.
 - Added on the website's side: Bingo gets its room `bingo` the same way; each room is created once when its game is switched on (members write, guests read) and kept afterwards; no live install has embedded games yet. Its report section "For the Mini Games side" will be checked against spec 07 §7 when it arrives, and that section wins where it differs.
+
+## Night 9 (2026-11-06), pieces 3–4 on `feat/round-polish`
+
+This branch, from `master` at `4ab2986`, carries pieces 3–4. Pieces 1–2 (website mode) are on `feat/website-mode`, with its own copy of this section. Neither branch is merged.
+
+### Status
+
+| Piece                                                 | State | Commit                     |
+| ----------------------------------------------------- | ----- | -------------------------- |
+| 1. Accepted proposals (on `feat/website-mode`)        | done  | `7dcfc1b` there            |
+| 2. Loose ends (on `feat/website-mode`)                | done  | `d8b5065` there            |
+| 3. Round polish: the others' column, the dark own row | done  | `5b1a036`; shots `9dab603` |
+| 4. Spec gaps and conflicts                            | done  | `d426200`…`a9982ce`        |
+
+### Piece 3 — round polish (T260, T261 proposals; T262)
+
+- T260 (proposal, OPEN): in individual mode on a desktop, the column under the game's panel lists the round's other players, one row each: marker (the tag in Seasonal Target), name through `PlayerName`, "N guesses" and "solved". All four games; in Seasonal Target it sits above the list. The data is the roster the client already has (`guesses`, `solved`), so the server is unchanged. On a desktop the list drops its "Others:" line; the phone keeps it. After a merge with `feat/website-mode` the panel's `PlayerName` needs `steps={state.steps?.[r.playerKey]}` (written into T260).
+- T261 (proposal, OPEN, amends T147): the own row in dark mode is 30 % of the viewer's colour mixed into black, through two new `@smg/ui` tokens `--own-tint` and `--color-own-base`. Before, it was 22 % into the night-blue card, which turned warm colours grey: Spring rgb(51 60 68) → rgb(53 55 23). Light is unchanged. It covers the round lists, "Your guesses" and the Players panel.
+- Contrast on the dark tint, lowest over the four season colours, computed from the CSS:
+
+  | Text colour           | Lowest ratio                    |
+  | --------------------- | ------------------------------- |
+  | body text             | 10.80                           |
+  | muted                 | 6.24                            |
+  | Frost's winter text   | 4.59 (was 4.31–4.47, below 4.5) |
+  | success               | 5.78                            |
+  | danger                | 5.21                            |
+  | the colour dot's ring | 3.00 (needs 3:1)                |
+
+  Light stays at 4.88 or more. `designTokens.test` checks both themes; e2e's pixel check passed in dark for all four games.
+
+- T262: master's migrator ignores the website branch's applied migration 0014, so the shared dev database is used unchanged.
+- Tests:
+  - web: 34 files, 165 tests pass;
+  - `@smg/ui`, lint, typecheck and format are clean;
+  - journeys 2, 20, 21 and 22 passed in Chromium once (3.3 min). Journey 2 now checks the Others panel.
+  - The first e2e run had reused two stale dev clients from the other checkout, so it is void. The valid run used ports 5450/5451, and the stale clients are stopped.
+- Shots: 21 images on the orphan branch `shots/night-9`, all looked at. For each game:
+  - the Others column at 1280 × 720, light and dark;
+  - the own rows at 1280 × 720 light and dark, and at 390 × 844 dark;
+  - Guess The Number also has the Players panel in dark.
+- Removed: RoundLog's own `guesses()` and the Players panel's inline wording. Extracted: `guessCount` (one wording for every list), `othersOf`, the `Others` component. Reused: `Marker`, `PlayerName`, `roundMarks`, the `.round-player-list` subgrid, the contrast helpers.
+- Noticed, left alone:
+  - the game hint panels use the same 22 %-into-card mix in dark;
+  - the Bomb Defusal dark shot caught "Boom!" mid-animation;
+  - RoundSide.tsx will conflict a little with `feat/website-mode` at a merge.
+
+### Piece 4 — OPEN's spec conflicts 1–2 and gaps 1–2 (T263–T266)
+
+All four answers are technical, and the code already behaved as decided. What changed is spec wording, an unused column and stale references. OPEN's "Spec conflicts" and "Spec gaps" sections are gone, with four rows in BACKLOG part two.
+
+- **Conflict 1, a guess's check order (T263):** `guess.ts` follows 02 §5.1: the platform's checks, then the game's `validate`, then the cooldown, with the receive number given after them. 04 §4.3, 04 §5.2 and 06 §4.5 now say the same. The existing `guess.test.ts` case is the proof.
+- **Conflict 2, team placement (T264):** a player without a team goes to the smallest team, ties broken by a hash (`teams.ts`, O26/T82). 04 §5.4 now says the seed label `teams/tiebreak` is only the round engine's fallback for a roster without teams, and `lifecycle.ts`'s comments say so too. 02c's dead "(OPEN, spec conflicts)" pointer now names O40 as amended by O65.
+- **Gap 1, `round_results.secret` (T265):** nothing ever wrote it, an `int` cannot hold Safecracker's or Seasonal Target's secrets, and 05 §3 says no table has a secret column.
+  - Migration `0015_drop_result_secret.sql` drops it; 0014 is `feat/website-mode`'s, and either merge order gives the same schema.
+  - A new schema test finds no `smg` column named for a secret that is not bytea.
+- **Gap 2, the feed's host allowlist (T266):** the host of `seasons.feedUrl`, which only a security admin can set, is the one host allowed. The address must be https, every address it resolves to must be public, and no redirect is followed, as `safeFetch.ts` already does. 05 M11, 07 §5 and 08 §5 now say so.
+- Tests:
+  - domain: 45 pass;
+  - server: 70 unit and 120 integration tests pass;
+  - no journey changed, so no e2e ran.
+- Noticed, left alone:
+  - `safeFetch.ts` checks the DNS answer and then lets `fetch` resolve again, which leaves a rebinding window;
+  - its blocklist lacks 198.18.0.0/15 and 240.0.0.0/4.
+
+### Verify (end of this branch)
+
+- First `pnpm verify` at `9d86c51`: format, lint, typecheck and all 821 tests passed. It still exited 1 because testcontainers' teardown of `rounds.integration.test.ts` hit Docker's 409 "container is running", an infrastructure race with no failed test.
+- Second `pnpm verify` at `9d86c51`: all green, 148 test files and 821 tests.
+
+### Needs the owner
+
+- **Nothing from piece 4:** all four items were technical.
+- **After play, T260 and T261** (OPEN, proposals): the Others column and the dark own row.
+- Quick Test settings to try them:
+  - Guess The Number, seed `acorn`, individual mode, Bots 3, Fast specials on, "Start from the lobby" on;
+  - then the same in dark mode.
 
 ## The team column, the owner's confirmations, the merge (2026-11-04)
 

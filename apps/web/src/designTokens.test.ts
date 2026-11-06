@@ -8,7 +8,9 @@
  *                 cards — composited over the base colour and over each of the four token
  *                 glows, as the website measures — and on the top bar's gradient stops; the
  *                 solid pill keeps 4.5:1, and so do text and the pressed team button's icon on
- *                 the season colours in both themes (O26 asks 3:1 of the icon); the board ink
+ *                 the season colours in both themes (O26 asks 3:1 of the icon); every text
+ *                 colour of a row keeps 4.5:1 on the viewer's own-row tint of each season
+ *                 colour (`--own-tint` into `--color-own-base`, T261); the board ink
  *                 keeps 7:1 (the hero element); and the motion file turns every animation off under
  *                 prefers-reduced-motion.
  * Depends on:     vitest, @smg/ui/tokens.css, @smg/ui/motion.css (raw)
@@ -154,6 +156,45 @@ describe('token contrast (WCAG AA), light and dark', () => {
             contrast(parse(set[status] ?? ''), parse(set[bg] ?? '')),
             `${theme}: ${status} on ${bg}`,
           ).toBeGreaterThanOrEqual(4.5);
+        }
+      }
+    },
+  );
+});
+
+// CSS color-mix(in srgb, top pct, base): premultiplied by alpha, as the browser mixes.
+function mixed(top: Rgba, base: Rgba, pct: number): Rgba {
+  const a = top[3] * pct + base[3] * (1 - pct);
+  const rgb = [0, 1, 2].map(
+    (i) => ((top[i] ?? 0) * top[3] * pct + (base[i] ?? 0) * base[3] * (1 - pct)) / a,
+  );
+  return [...rgb, a] as unknown as Rgba;
+}
+
+describe('the own-row tint (T261)', () => {
+  // The text of a row: names and comments, Frost's held answer, "higher", "lower" and "Boom!".
+  const ROW_TEXT = [
+    'color-text',
+    'color-text-muted',
+    'color-winter-text',
+    'color-success-text',
+    'color-danger',
+  ];
+
+  it.each(['light', 'dark'] as const)(
+    '%s: a row’s text keeps 4.5:1 on every own colour',
+    (theme) => {
+      const set = THEMES[theme].set;
+      const c = (name: string) => parse(resolved(set, name));
+      const pct = Number(/--own-tint: (\d+)%;/.exec(blockText(THEMES[theme].selector))?.[1]) / 100;
+      for (const season of ['spring', 'summer', 'autumn', 'winter']) {
+        const tint = mixed(c(`color-${season}`), c('color-own-base'), pct);
+        // A translucent tint lies on the panel's card over the page (T75's base in light).
+        const bg = over(tint, over(c('color-card'), c('color-background')));
+        for (const text of ROW_TEXT) {
+          expect(contrast(c(text), bg), `${theme}: ${text} on ${season}`).toBeGreaterThanOrEqual(
+            4.5,
+          );
         }
       }
     },

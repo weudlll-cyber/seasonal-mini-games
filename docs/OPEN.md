@@ -26,23 +26,6 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 
 **(ab) The countdown before a round (2026-11-01).** The countdown is now the round's intro screen (owner decision 36): the season, its special and what it does, the secret and its range, the cooldown and the seconds left. Proposal: `round.countdownS` 10 s instead of 5 s, so the screen can be read; the range stays 3–30 s (02 §3, 08 §3; DECISIONS T109).
 
-**Points of look for the owner** (from the Night-6 screenshot review; the other items of that review are fixed, BACKLOG part two):
-
-- In individual mode the desktop's info column is empty under the game's panel (T141 leaves "Your guesses" out, the stage holds the same rows).
-- In dark mode an own row's tint of a muted dot (olive, Team Spring) reads greyish; a stronger tint cost the colour dots and answers their contrast (T147), so it stays at 22 %.
-
-## Spec conflicts
-
-Resolved by the decision rules (owner decisions first, then the more specific section); the spec text is to follow in its next change.
-
-1. **Check order of a guess.** 04 §4.1–§4.2 said the platform checks the cooldown before a game sees an action; 02 §5.1 puts the cooldown last, after range, removed numbers and repeats, and 06 §4.5 agrees. Built as 02 §5.1 (the more specific section): a game's own checks are a pure `validate` before the cooldown check (DECISIONS T29); 04 §4 now says so. Effect: a guess out of range during a cooldown is answered `OUT_OF_RANGE`, not `COOLDOWN_ACTIVE`.
-2. **Switching teams and the tie-break (2026-11-01).** 03 §5 let a player switch teams between rounds and broke ties between the smallest teams with the round seed; owner decision 26 fixes the team for the whole match. Built as O26 (owner decisions first): the team is chosen once and locked from the player's first round (`TEAM_LOCKED`), and a player without one is placed in the match's smallest team when their first round starts; the tie-break uses a hash of the round id and the player key, because the match layer does not hold the sealed seed (DECISIONS T82). 03 §5 now says so.
-
-## Spec gaps
-
-1. **`round_results.secret`.** 06 §2.4 has a column for an individual player's secret, written at the end. The server is game-agnostic and the game-module contract has no way to name "the secret of this player", so the column stays NULL; the result view and `/rounds/:id/verify` show every secret. Proposal: drop the column in the next spec change, or add a contract hook if a report needs it.
-2. **The feed's host allowlist.** 07 §5 asks for "host on the allowlist", but no setting holds such a list. Built: the feed address itself (`seasons.feedUrl`, security admin, https only) is the one host allowed, and every address it resolves to must be public. Proposal: keep it so; add a list only if a second outside source comes.
-
 ## Needed from the website
 
 Found in the dress rehearsal of 2026-11-06 (website `master` at `82e9e30`, which holds `feat/embedded-games` `468aaca`; Mini Games `feat/website-mode`; nginx mode on a fresh Ubuntu 24.04 machine).

@@ -82,7 +82,7 @@ The In Season season ([03](03-seasonal-specials.md) §3) and, where available, t
 }
 ```
 
-- **Fetching:** the server polls the URL in `seasons.feedUrl` every `inSeason.pollS` through `SafeHttpClient` (Bingo 03 §10): HTTPS only, host on the allowlist, 5 s timeout, 64 KiB limit. The answer is validated with a zod schema, and unknown fields are ignored.
+- **Fetching:** the server polls the URL in `seasons.feedUrl` every `inSeason.pollS` through `SafeHttpClient` (Bingo 03 §10): HTTPS only; the host of `seasons.feedUrl`, which only a security admin sets, is the one host allowed, and every address it resolves to must be public (no loopback, private, link-local or unique-local range); no redirects, 5 s timeout, 64 KiB limit (DECISIONS T266; a list of hosts joins only with a second outside source). The answer is validated with a zod schema, and unknown fields are ignored.
 - **Keeping:** a valid answer replaces `season_feed_state` ([06](06-data-model-api-realtime.md) §2.6). Halving days from the feed are merged into `halving_days` with `source = feed`. Admin entries (`source = admin`) are never overwritten.
 - **Failing:** an invalid or missing answer keeps the last good one and records the error. The admin dashboard shows the feed's age. When the age passes `inSeason.staleAfterH`, In Season is no longer offered ([03](03-seasonal-specials.md) §3).
 - **Standalone installs** without a feed URL: In Season is not offered. Halving days come from the admin list only.

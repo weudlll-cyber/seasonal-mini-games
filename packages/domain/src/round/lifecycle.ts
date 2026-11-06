@@ -4,7 +4,8 @@
  * @brief  Round lifecycle: create, countdown with the frozen roster, open, end, abort.
  *
  * Responsibility: the state machine of 02 §4. The countdown freezes the roster and puts
- *                 players without a season team into the smallest team (03 §5). `catchUp`
+ *                 players given without a season team into the smallest team (in a match the
+ *                 server has placed them already, 03 §5, T82). `catchUp`
  *                 opens a round whose `opensAt` has passed (Spring Herald with it), fires the
  *                 specials that are due and ends a round whose time is up, before any command
  *                 runs, so a late timer never lets a guess in early or late (T32).
@@ -97,8 +98,10 @@ export function startCountdown<S, A, E, Cfg, Sec>(
 
 const TEAMS = ['spring', 'summer', 'autumn', 'winter'] as const;
 
-// A roster player without a season team joins the smallest team; ties are broken with the
-// round seed (label teams/tiebreak), so anyone can recompute it (03 §5).
+// A roster player given without a season team joins the round's smallest team; ties are
+// broken with the round seed (label teams/tiebreak, 04 §5.4). The server places such players
+// in the match's smallest team before the round starts (03 §5, T82), so this is the engine's
+// own fallback for rosters handed over without teams (T264).
 function withTeams(roster: readonly RosterPlayer[], rng: RoundRng): RosterPlayer[] {
   const isTeam = (t: string | null): t is (typeof TEAMS)[number] => TEAMS.some((x) => x === t);
   const size = new Map<string, number>(TEAMS.map((t) => [t, 0]));

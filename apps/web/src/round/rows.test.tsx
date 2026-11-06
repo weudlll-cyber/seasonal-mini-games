@@ -6,7 +6,7 @@
  *
  * Responsibility: "Your guesses" shows the guess and the answer only; in individual mode no
  *                 row says "You" or carries the own colour, and the others' counts stay in
- *                 their own row while a banner shows; every held Frost answer, the viewer's
+ *                 their own row while a banner shows (a phone's row, T260); every held Frost answer, the viewer's
  *                 and another player's, has the same "answer arriving…" marker; the list's
  *                 styles give way in the order comment, name, never the guess or the answer
  *                 (jsdom has no layout: the rule itself is checked); the ring's ready state is
@@ -82,7 +82,7 @@ describe('individual mode', () => {
   });
 
   it('keeps the others’ counts in their own row while a banner shows', () => {
-    show({ state: individual, banner: 'Leaf Fall: 10 numbers fell.' });
+    show({ state: individual, banner: 'Leaf Fall: 10 numbers fell.', phone: true });
     expect(screen.getByTestId('special-banner').textContent).toBe('Leaf Fall: 10 numbers fell.');
     expect(screen.getByTestId('others-line').textContent).toBe('Others: Walter: 9 guesses');
   });

@@ -13,10 +13,15 @@
  *                 with another player's Discord steps, 07 §7),
  *                 team under the heading "Team" as its icon alone (its name the accessible name
  *                 and tooltip, ../season/TeamIcon, T212) and number of guesses; in a game with player
- *                 tags the player's marker and tag in place of the dot (O62).
+ *                 tags the player's marker and tag in place of the dot (O62). In individual
+ *                 mode on a desktop the info column's Others panel (T260): the round's other
+ *                 players, one row each with marker, name, guesses and "solved" once they
+ *                 found their own secret, all from the roster the server sends (O54: this
+ *                 round only); a phone keeps the one "Others" line (./RoundLog).
  * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), ../season/* (teamName, TeamIcon),
  *                 ./PlayerName, ./players.css
- * Used by:        ./RoundScreen, ./RoundLog
+ * Used by:        ./RoundScreen, ./RoundBody, ./FocusShell, ./GuessLine, ./InfoParts,
+ *                 ./InputRow, ./RoundLog, ./ResultScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §5
  */
 import type { RoundStateView, TeamName } from '@smg/contracts';
@@ -41,6 +46,9 @@ export function playerColor(state: RoundStateView, key: string): string {
 // Every roster player's colour by key, for a game that draws players beyond the list (T125).
 export const colorsOf = (state: RoundStateView): Readonly<Record<string, string>> =>
   Object.fromEntries(state.roster.map((r) => [r.playerKey, playerColor(state, r.playerKey)]));
+
+// "1 guess", "8 guesses": the Players panel, the Others panel and the round's lists.
+export const guessCount = (n: number): string => `${String(n)} ${n === 1 ? 'guess' : 'guesses'}`;
 
 // A player's dot in their list colour, or their marker and tag in a game with player tags.
 function Marker(p: {
@@ -100,13 +108,43 @@ export function PlayersPanelBody(p: {
             {state.teamsOn ? (
               <TeamIcon team={r.team} className="round-player-team" size="0.9rem" />
             ) : null}
-            <span className="round-player-guesses">
-              {r.guesses} {r.guesses === 1 ? 'guess' : 'guesses'}
-            </span>
+            <span className="round-player-guesses">{guessCount(r.guesses)}</span>
           </li>
         ))}
       </ul>
     </div>
+  );
+}
+
+// Individual mode on a desktop (T260): the other players of this round in the info column,
+// in roster order; null when the viewer plays alone. Each name with its Discord steps through
+// ./PlayerName, as in the Players panel (07 §7).
+export function OthersPanel(p: {
+  readonly state: RoundStateView;
+  readonly viewerKey: string | null;
+  readonly marks?: Readonly<Record<string, PlayerMark>> | undefined;
+}): ReactElement | null {
+  const { state } = p;
+  const others = state.roster.filter((r) => r.playerKey !== p.viewerKey);
+  if (others.length === 0) return null;
+  return (
+    <section className="smg-panel round-others" aria-label="Other players">
+      <h2 className="round-others-title">Other players</h2>
+      <ul className="round-player-list" data-testid="others-panel">
+        {others.map((r) => (
+          <li key={r.playerKey}>
+            <Marker state={state} playerKey={r.playerKey} mark={p.marks?.[r.playerKey]} />
+            <PlayerName
+              name={state.names[r.playerKey] ?? r.playerKey}
+              steps={state.steps?.[r.playerKey]}
+            />
+            <span className="round-player-guesses">{guessCount(r.guesses)}</span>
+            {/* The server's word that this player found their secret (the roster's flag). */}
+            <span className="round-player-solved">{r.solved ? 'solved' : null}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
 

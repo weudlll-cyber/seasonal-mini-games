@@ -6,9 +6,11 @@
  * Responsibility: start a real PostgreSQL 17 in Docker, run every migration, boot the
  *                 Fastify app, and check that /healthz, /readyz, /metrics, the placeholder
  *                 page and a 404 all behave as the specification says — including the
- *                 security headers (03 §13, 12 §6) and the problem+json content type.
+ *                 security headers (03 §13, 12 §6) and the problem+json content type;
+ *                 the migrated schema holds no plain secret column (05 §3, T265).
  * Depends on:     vitest, ./harness, ../src/index, fastify
- * Spec:           docs/spec/09-testing-strategy.md §1; Bingo 12 §2
+ * Spec:           docs/spec/09-testing-strategy.md §1; docs/spec/05-security-threat-model.md §3;
+ *                 Bingo 12 §2
  */
 import type { FastifyInstance } from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -119,5 +121,17 @@ describe('database bootstrap', () => {
       'security_admin',
       'super_admin',
     ]);
+  });
+
+  // 05 §3: round secrets are derived from the sealed seed, never stored (T265); the only
+  // secret columns are the sealed TOTP and webhook secrets, which are bytea ciphertext
+  // (`rounds.secret_mode` names the mode, shared or individual, and holds no secret).
+  it('has no plain secret column in any table', async () => {
+    const result = await pool().query<{ column: string }>(
+      `SELECT table_name || '.' || column_name AS column FROM information_schema.columns
+       WHERE table_schema = 'smg' AND column_name LIKE '%secret%' AND data_type <> 'bytea'
+         AND column_name <> 'secret_mode'`,
+    );
+    expect(result.rows).toEqual([]);
   });
 });

@@ -62,6 +62,10 @@
   /* Light controls on a card (secondary buttons, the theme toggle) */
   --color-glass: rgb(255 255 255 / 60%);
   --color-active-bg: rgb(20 23 28 / 6%);
+  /* The viewer's own rows (the round's lists, "Your guesses", the Players panel): their own
+     colour mixed into this base at this strength; light keeps the tint over the card (T75) */
+  --own-tint: 22%;
+  --color-own-base: var(--color-card);
   --color-text: #14171c;
   --color-text-muted: #4f5663;
   --color-border: rgb(20 23 28 / 10%);
@@ -143,6 +147,10 @@
   --color-surface-2: #17224f;
   --color-glass: rgb(255 255 255 / 6%);
   --color-active-bg: rgb(255 255 255 / 10%);
+  /* Dark: 30 % into black, not into the night-blue card, where a warm colour turned grey;
+     every text colour of a row keeps 4.5:1 on it (DECISIONS T261, designTokens.test) */
+  --own-tint: 30%;
+  --color-own-base: #000000;
   --color-text: #f1f4fa;
   --color-text-muted: #b3bcd0;
   --color-border: rgb(255 255 255 / 12%);

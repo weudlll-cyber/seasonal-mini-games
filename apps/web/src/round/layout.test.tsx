@@ -7,8 +7,9 @@
  * Responsibility: the layout follows the viewport (a landscape screen of 900 px or more is a
  *                 desktop, anything else a phone) and changes with it; a desktop has the stage
  *                 with the round's guesses and the dock, and the info column with the special
- *                 line, the game's panel and "Your guesses" (shared mode only); a phone has the
- *                 game's info line, whose tap opens the game's panel as a sheet, the list and
+ *                 line, the game's panel and "Your guesses" (shared mode only), in individual
+ *                 mode the Others panel with each other player's guesses and "solved" (T260);
+ *                 a phone has the game's info line, whose tap opens the game's panel as a sheet, the list and
  *                 the dock; no round view shows team points, team tiles, match standings or an
  *                 earlier round, which stay in the Players panel and the result (O54).
  * Depends on:     vitest, @testing-library/react, @smg/contracts, @smg-game/registry/web, ./fakes,
@@ -104,6 +105,24 @@ describe('the desktop', () => {
   it('leaves "Your guesses" out in individual mode: the stage holds the same rows', () => {
     show({ ...open, secretMode: 'individual' });
     expect(screen.queryByTestId('own-list')).toBeNull();
+  });
+
+  it('lists the other players in individual mode under the panel, the phone in one line', () => {
+    show({ ...open, secretMode: 'individual' });
+    const rows = [...screen.getByTestId('others-panel').querySelectorAll('li')];
+    // Walter only (the viewer is Anna), with the server's count and its solved flag.
+    expect(rows.map((r) => r.textContent)).toEqual(['Walter9 guessessolved']);
+    expect(screen.queryByTestId('others-line')).toBeNull();
+    act(() => {
+      viewport(390, 844);
+    });
+    expect(screen.queryByTestId('others-panel')).toBeNull();
+    expect(screen.getByTestId('others-line').textContent).toBe('Others: Walter: 9 guesses');
+  });
+
+  it('has no Others panel in shared mode', () => {
+    show();
+    expect(screen.queryByTestId('others-panel')).toBeNull();
   });
 });
 
