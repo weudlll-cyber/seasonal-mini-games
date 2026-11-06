@@ -2,6 +2,19 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Night 9 (2026-11-06)
+
+This branch carries pieces 1–2. Pieces 3–4 (round polish, spec gaps) are on `feat/round-polish` from `master`, with its own copy of this section. Neither branch is merged. Owner decision O68: proposals T237, T222 and T240 are accepted.
+
+### Status
+
+| Piece                                    | State   | Commit |
+| ---------------------------------------- | ------- | ------ |
+| 1. The three accepted proposals          | running |        |
+| 2. Website mode's loose ends             | open    |        |
+| 3. Round polish (on `feat/round-polish`) | running |        |
+| 4. Spec gaps (on `feat/round-polish`)    | open    |        |
+
 ## Website mode (2026-11-05)
 
 Branch `feat/website-mode` from `master` at `4ab2986`; not merged by this task. Owner decisions O66 (website sign-in, guests, steps, deleted and locked accounts, the website's chat) and O67 (one installer for both variants). Reference: Seasonal Bingo Royale's website mode (its 07 §2.3, 03 §2.2, D37, D40–D43; `websiteIdentity.ts`, `websiteAccounts.ts`, `websiteSignIn.ts`, `ops/lib/website.sh`) and the website's contract (its `server/src/bingo/routes.js`, docs/AUTH.md "Seasonal Bingo Royale"), generalised there for `/games/mini-games`.
