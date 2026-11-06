@@ -5,8 +5,8 @@
 # Responsibility: run what "pnpm verify" runs and the domain/application coverage, the
 #                 dependency/secret scans, the license check of the production
 #                 dependencies, the markdown link check and the Playwright suite on every
-#                 push: in three browsers on master and on pull requests to master, in
-#                 Chromium only on other branches (CI time on feature branches, DECISIONS
+#                 push: in three browsers on master, in Chromium only on pull requests and
+#                 other branches (the merge gate is verify plus Chromium, DECISIONS O69,
 #                 T149); on the way to master also the image build, scan and size check. The
 #                 screenshot branches (`shots/**`, T146) run nothing. Any red job blocks merge.
 # Depends on:     .github/actions/setup, Dockerfile, osv-scanner.toml, e2e/
@@ -102,11 +102,11 @@ jobs:
   e2e:
     # On every push and pull request: a branch learns of a red browser test before it
     # reaches master (MERGE-AUDIT-1: master went red four times on tests no branch had run).
-    # All three browsers on master and on pull requests to master; Chromium only on the
-    # other branches, where the run took about 35 minutes (DECISIONS T149).
+    # All three browsers on master pushes, after the merge; Chromium only on pull requests to
+    # master (the merge gate, O69) and on other branches (T149).
     runs-on: ubuntu-latest
     env:
-      ALL_BROWSERS: ${{ github.ref == 'refs/heads/master' || github.event_name == 'pull_request' }}
+      ALL_BROWSERS: ${{ github.ref == 'refs/heads/master' && github.event_name == 'push' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
