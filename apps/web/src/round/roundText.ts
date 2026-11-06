@@ -4,14 +4,16 @@
  * @brief  The platform's sentences for a round: refusals, end reasons, feed lines, the margin.
  *
  * Responsibility: every platform code a player can meet in plain English (02 §12), the
- *                 solved player's notice (O25), the result's headline ("Walter found it first
- *                 — after 9 guesses", 02 §9), the winning margin, and one event row of the
- *                 round's list per platform event (a solve, Heatwave's announcement at its
- *                 first step only (O47), Spring Herald, the round opening and ending), and the
- *                 banner of a platform special (Heatwave, Spring Herald, O35); a game's own
- *                 rows and banners come from the game's text.
+ *                 solved player's notice (O25), the inactivity countdown line (O71), the
+ *                 result's headline ("Walter found it first — after 9 guesses", 02 §9), the
+ *                 winning margin, and one event row of the round's list per platform event (a
+ *                 solve, a timeout, Heatwave's announcement at its first step only (O47),
+ *                 Spring Herald, the round opening and ending), and the banner of a platform
+ *                 special (Heatwave, Spring Herald, O35); a game's own rows and banners come
+ *                 from the game's text.
  * Depends on:     @smg/contracts (shapes), @smg/game-sdk (FeedLine, formatNumber)
- * Used by:        ./RoundScreen, ./ResultScreen, ./RoundLog, ./SpecialBanner, ../match/HostMenu
+ * Used by:        ./RoundScreen, ./ResultScreen, ./RoundLog, ./SpecialBanner, ./InputRow,
+ *                 ./InactivityLine, ../match/HostMenu
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §12; docs/spec/03-seasonal-specials.md §2
  */
 import type { RoundStateView } from '@smg/contracts';
@@ -64,6 +66,12 @@ export function seconds(ms: number): string {
   return `${s < 10 ? s.toFixed(1) : String(Math.round(s))} s`;
 }
 
+// Players out of time are out of the round (O71): the solvers are everyone left in it.
+const allSolvedText = (state: RoundStateView): string =>
+  state.results?.some((r) => r.timedOut) === true
+    ? 'Everyone still in the round found their number.'
+    : 'Everyone found their number.';
+
 export function endHeadline(state: RoundStateView): string {
   const names = state.names;
   const winner = state.winner === null ? null : nameOf(names, state.winner);
@@ -72,7 +80,7 @@ export function endHeadline(state: RoundStateView): string {
     case 'solved':
       return `${winner ?? 'Someone'} found it first — after ${formatNumber(guesses)} ${guesses === 1 ? 'guess' : 'guesses'}.`;
     case 'allSolved':
-      return 'Everyone found their number.';
+      return allSolvedText(state);
     case 'timeUp':
       return 'Time is up.';
     case 'host':
@@ -88,6 +96,13 @@ export function endHeadline(state: RoundStateView): string {
 export function solvedText(place: number | null): string {
   const at = place === null ? '' : ` — place ${formatNumber(place)}`;
   return `You found your number${at}. Your guesses stay here while the others play on.`;
+}
+
+// The inactivity countdown at the input row (O71): the whole seconds the server's deadline
+// leaves, never below 0.
+export function inactivityText(outAt: number, now: number): string {
+  const left = Math.max(0, Math.ceil((outAt - now) / 1_000));
+  return `${String(left)} s left for your next guess`;
 }
 
 // The winning margin when a second correct guess came within the window (O13), else null:
@@ -128,6 +143,10 @@ export function platformLine(event: unknown, names: Names): FeedLine | null {
       const who = String(e['playerId']);
       const text = `${nameOf(names, who)} found ${e['place'] === 1 ? 'it' : 'their number'} — place ${formatNumber(Number(e['place']))}.`;
       return { text, playerId: who };
+    }
+    case 'PlayerTimedOut': {
+      const who = String(e['playerId']);
+      return { text: `${nameOf(names, who)} is out of time.`, playerId: who };
     }
     case 'RoundOpened':
       return roundLine('The round is open — guess!');

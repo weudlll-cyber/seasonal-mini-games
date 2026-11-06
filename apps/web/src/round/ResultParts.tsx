@@ -4,12 +4,13 @@
  * @brief  The result's placings (the top three, "All placings"), its team line and team result.
  *
  * Responsibility: the placings table in place order as the server gave the places, every
- *                 player without a place after them, more guesses first (the viewer by place like everyone else,
- *                 never first for being the viewer, T145), the top three until "All placings
- *                 (N)" shows every one; a name cut with an ellipsis at its end only, "(you)"
- *                 beside it never cut; one team line in the first part ("Team Spring wins the
- *                 round (+1 team point)", "No team wins this round."); the team result below,
- *                 each team's team points named as such, so they read apart from player points.
+ *                 player without a place after them, more guesses first (the viewer by place
+ *                 like everyone else, never first for being the viewer, T145; a player out of
+ *                 time "timed out", O71), the top three until "All placings (N)" shows every
+ *                 one; a name cut with an ellipsis at its end only, "(you)" beside it never
+ *                 cut; one team line in the first part ("Team Spring wins the round (+1 team
+ *                 point)", "No team wins this round."); the team result below, each team's
+ *                 team points named as such, so they read apart from player points.
  *                 Moved out of ./ResultScreen to keep each file under the size limit.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), @smg/ui (highlight),
  *                 ../season/*, ../useMediaQuery, ./PlayerName
@@ -47,10 +48,11 @@ function Shortened(p: { readonly long: string; readonly short: string }): ReactE
   );
 }
 
-// The place, or "–" for a player who took part (its words for a screen reader, T211); "not
-// solved" in individual mode.
-function PlaceCell(p: { readonly state: RoundStateView; readonly place: number | null }) {
-  if (p.place !== null) return <>{formatNumber(p.place)}</>;
+// The place, or "timed out" for a player out of the round for inactivity (O71), or "–" for a
+// player who took part (its words for a screen reader, T211); "not solved" in individual mode.
+function PlaceCell(p: { readonly state: RoundStateView; readonly r: Result }) {
+  if (p.r.place !== null) return <>{formatNumber(p.r.place)}</>;
+  if (p.r.timedOut) return <>timed out</>;
   if (p.state.secretMode !== 'shared') return <>not solved</>;
   // The words as text for a screen reader (an aria-label on a plain span is not allowed,
   // axe's aria-prohibited-attr), the dash for the eye, the words again as its tooltip.
@@ -89,7 +91,7 @@ function PlacingRow(p: {
   return (
     <tr className={p.you ? 'round-you' : undefined} {...row}>
       <td>
-        <PlaceCell state={p.state} place={r.place} />
+        <PlaceCell state={p.state} r={r} />
       </td>
       <td>
         <span className="round-player">

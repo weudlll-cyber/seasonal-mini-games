@@ -5,8 +5,11 @@
  *
  * Responsibility: a document's view (definitions, stored overrides, effective values, the
  *                 keys the viewer may edit); an update that checks every key against its
- *                 definition and the editor's permissions, refuses a stale version, writes a
- *                 new version and one audit entry with the before/after diff (./diff); a
+ *                 definition and the editor's permissions, then the platform's cross-key rule
+ *                 over the document's resulting values (the inactivity warning below the
+ *                 limit, O71, so no saved default makes every round refused), refuses a stale
+ *                 version, writes a new version and one audit entry with the before/after
+ *                 diff (./diff); a
  *                 rollback is such an update with an earlier version's overrides, audited as
  *                 `settings.rollback`. A stored override of a setting that no longer exists
  *                 is left out of the view and of a rollback (`known`), so the next save drops
@@ -20,6 +23,7 @@
 import type { SettingsDocumentView, SettingsUpdate } from '@smg/contracts';
 import {
   boundsProblem,
+  inactivityProblem,
   resolveSettings,
   settingProblem,
   type SettingDef,
@@ -90,6 +94,9 @@ export class SettingsService {
     const before = (await this.store.load(id)) ?? emptyDocument();
     if (before.version !== change.version) throw new SettingsError('CONFIG_VERSION_CONFLICT');
     const next = this.checked(defs, before.overrides, change.overrides, actor.permissions);
+    // The defaults a round starts from must pass the round's own cross-key rule (O71).
+    const pair = inactivityProblem(resolveSettings(defs, next));
+    if (pair !== null) throw new SettingsError('SETTING_INVALID', pair);
     const saved = await this.store.save(id, {
       expectedVersion: before.version,
       overrides: next,

@@ -5,7 +5,8 @@
  *
  * Responsibility: a setting definition becomes a switch, a choice or a number field with its
  *                 label and one-line help and the bounds in force (the document's narrowed
- *                 bounds, never wider than the catalogue, 08 §1); the Quick Test uses the same
+ *                 bounds, never wider than the catalogue, 08 §1; an off value beside them, the
+ *                 inactivity limit's 0, O71); the Quick Test uses the same
  *                 fields. The season choice offers In Season only while it is usable, and the
  *                 halving switch only on a halving day (03 §3, §4). `HostFields` shows the
  *                 host's fields of the round's season (`formSeason`): Heatwave's step and
@@ -57,6 +58,8 @@ export function Field(p: {
       min={b.min}
       max={b.max}
       step={step}
+      // The inactivity limit's 0 switches it off (O71).
+      off={def.kind === 'int' ? def.off : undefined}
       onChange={p.set}
     />
   );

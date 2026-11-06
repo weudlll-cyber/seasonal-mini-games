@@ -14,7 +14,8 @@
  *                 events); in individual mode only the viewer's rows, without "You" and the
  *                 own colour, and on a phone the others' counts in a row of their own above
  *                 the list ("Others: bot-01: 8 guesses · bot-02: 5", each player has their
- *                 own secret; each name through ./PlayerName with its Discord steps, 07 §7),
+ *                 own secret; "timed out" beside a player out of time, O71; each name through
+ *                 ./PlayerName with its Discord steps, 07 §7),
  *                 which a banner never replaces (a desktop has the info column's Others panel
  *                 instead, ./RoundSide, T260); `own`, "Your guesses", the
  *                 viewer's guesses and answers only; `all`, the guesses with every event,
@@ -93,14 +94,15 @@ function eventsOf(p: LogProps): Row[] {
 const LIST_IDS = { main: 'guess-list', own: 'own-list', all: 'all-list' } as const;
 
 // Individual mode: the other players and their guess counts, the first with its unit
-// ("8 guesses", then "5"); empty when the viewer plays alone.
+// ("8 guesses", then "5"), and "timed out" for a player out of the round (O71); empty when
+// the viewer plays alone.
 function othersOf(state: RoundStateView, viewerKey: string | null) {
   return state.roster
     .filter((r) => r.playerKey !== viewerKey)
     .map((r, i) => ({
       key: r.playerKey,
       name: state.names[r.playerKey] ?? r.playerKey,
-      count: i === 0 ? guessCount(r.guesses) : String(r.guesses),
+      count: `${i === 0 ? guessCount(r.guesses) : String(r.guesses)}${r.timedOut ? ', timed out' : ''}`,
     }));
 }
 

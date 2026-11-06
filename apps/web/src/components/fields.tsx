@@ -11,7 +11,10 @@
  *                 outside them, and clamps into them on blur (back to the form's value when the
  *                 text is no number); the bounds stay attributes too, so the browser refuses to
  *                 submit an out-of-range value, and the server checks again. Where negative
- *                 numbers are allowed it has the shared ± button (T57). Same pattern as
+ *                 numbers are allowed it has the shared ± button (T57). A setting's off value
+ *                 outside the bounds (the inactivity limit's 0, O71) counts as within them and
+ *                 is named in the bounds line; the browser's lower bound is then the off value,
+ *                 so between it and the bounds only the server refuses. Same pattern as
  *                 ../account/formParts AccountField.
  * Depends on:     react, @smg/ui (sign toggle)
  * Used by:        ../lobby/Lobby, ../match/HostMenu, ../shell/QuickTest
@@ -86,6 +89,8 @@ type NumberProps = Base & {
   readonly min: number;
   readonly max: number;
   readonly step?: number;
+  // A value outside min–max that switches the setting off (the inactivity limit's 0, O71).
+  readonly off?: number | undefined;
   readonly onChange: (v: number) => void;
 };
 
@@ -108,22 +113,24 @@ function useDraft(p: NumberProps) {
     if (numberOf(text) !== p.value) setText(String(p.value));
   }
   const n = numberOf(text);
+  const fits = (v: number): boolean => v === p.off || (v >= p.min && v <= p.max);
   const edit = (next: string): void => {
     setText(next);
     const v = numberOf(next);
-    if (v !== null && v >= p.min && v <= p.max) p.onChange(v);
+    if (v !== null && fits(v)) p.onChange(v);
   };
   const settle = (): void => {
-    const kept = n === null ? p.value : Math.min(p.max, Math.max(p.min, n));
+    const kept = n === null ? p.value : fits(n) ? n : Math.min(p.max, Math.max(p.min, n));
     setText(String(kept));
     if (kept !== p.value) p.onChange(kept);
   };
-  return { text, outside: n !== null && (n < p.min || n > p.max), edit, settle };
+  return { text, outside: n !== null && !fits(n), edit, settle };
 }
 
 export function NumberField(p: NumberProps): ReactElement {
   const { text, outside, edit, settle } = useDraft(p);
-  const bounds = `Allowed: ${String(p.min)} to ${String(p.max)}.`;
+  const off = p.off === undefined ? '' : `, or ${String(p.off)} for off`;
+  const bounds = `Allowed: ${String(p.min)} to ${String(p.max)}${off}.`;
   const help = outside ? [p.help, bounds].filter(Boolean).join(' ') : p.help;
   const sign =
     p.min < 0 ? (
@@ -139,7 +146,8 @@ export function NumberField(p: NumberProps): ReactElement {
       <input
         className="smg-input"
         type="number"
-        min={p.min}
+        // The off value lies below the bounds (0 under 20): the browser must let it through.
+        min={p.off === undefined ? p.min : Math.min(p.min, p.off)}
         max={p.max}
         step={p.step ?? 1}
         value={text}
