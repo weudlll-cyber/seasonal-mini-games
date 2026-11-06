@@ -34,6 +34,7 @@ import {
 } from '../../match/matches.js';
 import { matchStandings } from '../../league/boards.js';
 import { PlayError, type Play } from '../../match/play.js';
+import { playerSteps, withSteps } from '../../match/playerSteps.js';
 import { forViewer } from '../../match/publicIds.js';
 import { matchEnd } from '../../match/summary.js';
 import { teamLocked } from '../../match/teams.js';
@@ -137,6 +138,11 @@ async function matchDetails(
     ...players.map((p) => p.playerKey),
     match.hostId ?? '',
   ]);
+  // A website member's Discord steps beside the name (O66).
+  const steps = await playerSteps(
+    deps.pool,
+    players.map((p) => p.playerKey),
+  );
   // The latest round, running or ended, so the page can show its result too.
   const roundId = await currentRoundId(deps.pool, match.id);
   const round = roundId === null ? null : await deps.play.rounds.get(roundId);
@@ -152,6 +158,7 @@ async function matchDetails(
       playerKey: p.playerKey,
       name: names[p.playerKey] ?? p.playerKey,
       team: p.team,
+      ...withSteps(steps[p.playerKey]),
     })),
     connected: [...deps.play.presence.connected(match.id)],
     round: round === null ? null : { id: round.id, status: round.status() },

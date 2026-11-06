@@ -98,7 +98,7 @@ function Players({ match }: { readonly match: MatchDetailsView }): ReactElement 
           // The spaces between the parts keep them apart for screen readers; the grid
           // does not render them.
           <li key={p.playerKey}>
-            <PlayerName name={p.name} />{' '}
+            <PlayerName name={p.name} steps={p.steps} />{' '}
             {match.teamMatch ? (
               <>
                 <TeamIcon team={p.team} className="match-player-team" />{' '}

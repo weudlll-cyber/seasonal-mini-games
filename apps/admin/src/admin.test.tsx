@@ -6,7 +6,8 @@
  *
  * Responsibility: a setting row shows the catalogue default, the value in force, the bounds
  *                 narrowed by the document, who may change it and when it applies, and offers
- *                 an editor only when the viewer may edit; the words for roles, effects and
+ *                 an editor only when the viewer may edit; a value the server applies instead
+ *                 shows in "In force" with its reason (T240); the words for roles, effects and
  *                 sources follow 08 §2; the app opens only the areas the account's
  *                 permissions allow (and Two-factor for every account), and asks to sign in
  *                 without an account.
@@ -62,6 +63,32 @@ describe('a setting row', () => {
       'owner (O15)',
       'view only',
     ]);
+  });
+
+  it('shows the value the server applies instead, with why (T240)', () => {
+    const chat = (PLATFORM_SETTINGS.integrations ?? []).find(
+      (d) => d.key === 'integrations.chatProvider',
+    );
+    if (chat === undefined) throw new Error('no integrations.chatProvider');
+    const reason =
+      'This install runs inside the website; its chat is used until an admin chooses another.';
+    render(
+      <table>
+        <tbody>
+          <SettingRow
+            def={chat}
+            value="builtin"
+            override={{}}
+            editable
+            inEffect={{ value: 'hostEmbed', reason }}
+            change={() => undefined}
+          />
+        </tbody>
+      </table>,
+    );
+    const inForce = screen.getByTestId('setting-integrations.chatProvider').querySelectorAll('td');
+    expect(inForce[2]?.textContent).toBe(`hostEmbed${reason}`);
+    expect(screen.getByTestId('setting-in-effect').textContent).toBe(reason);
   });
 
   it('offers an editor for the value and both bounds when the viewer may edit', () => {

@@ -5,7 +5,8 @@
  *
  * Responsibility: without NODE_ENV and SMG_DEV the settings say production and no
  *                 development features; SMG_DEV=1 is refused for a public address and
- *                 accepted for localhost; the round key is required in production.
+ *                 accepted for localhost; the round key is required in production; website
+ *                 mode refuses to start without its settings, local mode is the default (O66).
  * Depends on:     vitest, ./env, ./roundKey
  * Spec:           Bingo 03 §3; Bingo 09 §1
  */
@@ -38,5 +39,32 @@ describe('the round key', () => {
     expect(roundKeyFrom(loadEnv({ ...DB, SMG_ROUND_KEY: key })).toString('hex')).toBe(key);
     expect(roundKeyFrom(loadEnv({ ...DB, SMG_DEV: '1' }))).toHaveLength(32);
     expect(() => loadEnv({ ...DB, SMG_ROUND_KEY: 'short' })).toThrow(/64 hex characters/);
+  });
+});
+
+describe('website mode (O66)', () => {
+  const WEBSITE = {
+    ...DB,
+    SMG_AUTH_MODE: 'website',
+    SMG_PUBLIC_URL: 'https://example.org/games/mini-games/',
+    SMG_TRUSTED_PROXIES: '127.0.0.1',
+    SMG_WEBSITE_PROXY_SECRET: '5e'.repeat(32),
+    SMG_WEBSITE_LOCAL_URL: 'http://127.0.0.1:3800',
+    SMG_WEBSITE_SYNC_TOKEN: 'a'.repeat(32),
+  };
+
+  it('is off by default', () => {
+    expect(loadEnv(DB).SMG_AUTH_MODE).toBe('local');
+  });
+
+  it('refuses to start without its settings and names the missing ones', () => {
+    expect(loadEnv(WEBSITE).SMG_WEBSITE_HEADER_ID).toBe('x-acting-user-id');
+    const { SMG_TRUSTED_PROXIES: _p, SMG_WEBSITE_SYNC_TOKEN: _t, ...partial } = WEBSITE;
+    expect(() => loadEnv(partial)).toThrow(/needs SMG_TRUSTED_PROXIES, SMG_WEBSITE_SYNC_TOKEN/);
+  });
+
+  it('takes only a path on the website as its login', () => {
+    expect(() => loadEnv({ ...WEBSITE, SMG_WEBSITE_LOGIN_PATH: '//evil.example/' })).toThrow();
+    expect(() => loadEnv({ ...WEBSITE, SMG_WEBSITE_LOGIN_PATH: 'https://evil/' })).toThrow();
   });
 });

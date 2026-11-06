@@ -8,7 +8,7 @@
  *                 the 7-day abuse score; status changes; role changes. The routes check
  *                 permissions, the separation rules and write the audit entries.
  * Depends on:     @smg/contracts (AccountView), ../db/pool, ./abuse (score window)
- * Used by:        ../http/routes/adminAccounts
+ * Used by:        ../http/routes/adminAccounts, ../auth/superPromotion (addRole)
  * Spec:           docs/spec/05-security-threat-model.md §1; Bingo 03 §5.3, Bingo 11 §3.6
  */
 import type { AccountView } from '@smg/contracts';

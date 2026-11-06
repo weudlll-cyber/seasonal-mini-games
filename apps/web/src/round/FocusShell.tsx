@@ -10,8 +10,10 @@
  *                 for the host, the host's controls are panels on demand, one at a time
  *                 (./usePanels, ./FocusPanel). The chat's unread badge counts the messages of
  *                 others that arrive while the chat panel is closed (../chat/chatArrivals) and
- *                 clears when it opens. Full screen applies to this container, so the bar and
- *                 the panels stay inside it (./useFullscreen). The content gets the panels too,
+ *                 clears when it opens; a host's embedded chat is told whether its panel is
+ *                 open and gives its own count instead (`HostChatSight`, DECISIONS T237).
+ *                 Full screen applies to this container, so the bar and the panels stay
+ *                 inside it (./useFullscreen). The content gets the panels too,
  *                 for the whole list and the phone's game panel. The container carries the
  *                 layout, desktop or phone (`data-view`, T141).
  * Depends on:     react, @smg/contracts, ../chat/chatArrivals, ./FocusBar, ./FocusPanel,
@@ -23,6 +25,7 @@ import type { PlayerMark } from '@smg/game-sdk';
 import type { RoundStateView, TeamName } from '@smg/contracts';
 import {
   useCallback,
+  useMemo,
   useRef,
   useState,
   type CSSProperties,
@@ -30,7 +33,7 @@ import {
   type ReactNode,
 } from 'react';
 
-import { ChatArrivals } from '../chat/chatArrivals.js';
+import { ChatArrivals, HostChatSight } from '../chat/chatArrivals.js';
 import { FocusBar } from './FocusBar.js';
 import { FocusPanel } from './FocusPanel.js';
 import { PlayersPanelBody } from './RoundSide.js';
@@ -57,7 +60,8 @@ export interface FocusShellProps {
   readonly children: (panels: Panels) => ReactNode;
 }
 
-// The unread count of the chat: counted while its panel is closed, cleared on opening it.
+// The unread count of the chat: counted while its panel is closed, cleared on opening it; a
+// host's embedded chat counts itself and is told whether its panel is open (`sight`).
 function useUnread(panels: Panels) {
   const [unread, setUnread] = useState(0);
   const open = useRef(panels.open);
@@ -65,11 +69,13 @@ function useUnread(panels: Panels) {
   const arrived = useCallback(() => {
     if (open.current !== 'chat') setUnread((n) => n + 1);
   }, []);
+  const visible = panels.open === 'chat';
+  const sight = useMemo(() => ({ visible, unread: setUnread }), [visible]);
   const toggle = (id: PanelId): void => {
     if (id === 'chat') setUnread(0);
     panels.toggle(id);
   };
-  return { unread, arrived, panels: { ...panels, toggle } };
+  return { unread, arrived, sight, panels: { ...panels, toggle } };
 }
 
 // The three panels of the bar: the chat kept mounted, the players, the host's controls.
@@ -114,39 +120,41 @@ function BarPanels(p: FocusShellProps & { readonly panels: Panels }): ReactEleme
 export function FocusShell(p: FocusShellProps): ReactElement {
   const box = useRef<HTMLDivElement>(null);
   const fullscreen = useFullscreen(box);
-  const { unread, arrived, panels } = useUnread(usePanels());
+  const { unread, arrived, sight, panels } = useUnread(usePanels());
   return (
     <ChatArrivals.Provider value={arrived}>
-      <div
-        ref={box}
-        className="round-live"
-        style={p.style}
-        data-testid="round-view"
-        data-layout={p.layout}
-        // Desktop or phone (./useRoundView, T141): ./round.css lays the round out by it.
-        data-view={p.view}
-        data-status={p.state.status}
-        // The open panel: on a desktop its column pushes the game aside (./round.css, O48).
-        data-panel={panels.open ?? undefined}
-        onKeyDown={(e) => {
-          // Escape from the bar closes the open panel too, not only from inside it.
-          if (e.key === 'Escape' && panels.open !== null) panels.close();
-        }}
-      >
-        <FocusBar
-          state={p.state}
-          now={p.now}
-          rule={p.rule}
-          phone={p.view === 'phone'}
-          panels={panels}
-          chat={p.chat !== null}
-          unread={unread}
-          host={p.host !== null}
-          fullscreen={fullscreen}
-        />
-        {p.children(panels)}
-        <BarPanels {...p} panels={panels} />
-      </div>
+      <HostChatSight.Provider value={sight}>
+        <div
+          ref={box}
+          className="round-live"
+          style={p.style}
+          data-testid="round-view"
+          data-layout={p.layout}
+          // Desktop or phone (./useRoundView, T141): ./round.css lays the round out by it.
+          data-view={p.view}
+          data-status={p.state.status}
+          // The open panel: on a desktop its column pushes the game aside (./round.css, O48).
+          data-panel={panels.open ?? undefined}
+          onKeyDown={(e) => {
+            // Escape from the bar closes the open panel too, not only from inside it.
+            if (e.key === 'Escape' && panels.open !== null) panels.close();
+          }}
+        >
+          <FocusBar
+            state={p.state}
+            now={p.now}
+            rule={p.rule}
+            phone={p.view === 'phone'}
+            panels={panels}
+            chat={p.chat !== null}
+            unread={unread}
+            host={p.host !== null}
+            fullscreen={fullscreen}
+          />
+          {p.children(panels)}
+          <BarPanels {...p} panels={panels} />
+        </div>
+      </HostChatSight.Provider>
     </ChatArrivals.Provider>
   );
 }

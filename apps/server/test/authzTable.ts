@@ -8,7 +8,8 @@
  *                 kinds of caller (./authzRoles) that get through. Every body is
  *                 chosen so a call that gets through changes as little as possible: invalid
  *                 after the permission check, a round that has ended, a match kept for
- *                 closing, a target that does not exist. Adapted from Bingo's matrix tables.
+ *                 closing, a target that does not exist. Routes of one auth mode say so (O66).
+ *                 Adapted from Bingo's matrix tables.
  * Depends on:     ./authzRoles
  * Used by:        ./authzMatrix.integration.test, ./authzSetup
  * Spec:           docs/spec/05-security-threat-model.md §1; docs/spec/09-testing-strategy.md §6;
@@ -51,6 +52,8 @@ export interface RouteCase {
   readonly web?: true;
   // Only in a development build (SMG_DEV=1).
   readonly dev?: true;
+  // Only in one auth mode (O66): the local accounts, or the website's sign-in.
+  readonly mode?: 'local' | 'website';
 }
 
 const NO_ONE = '00000000-0000-4000-8000-000000000000';
@@ -69,13 +72,18 @@ export const ROUTES: readonly RouteCase[] = [
   { method: 'GET', path: '/metrics', allow: ALL },
   { method: 'GET', path: '/api/v1/session', allow: ALL },
   // Session starters take no CSRF token; the bodies are refused before anything is made.
-  { method: 'POST', path: '/api/v1/auth/register', body: {}, allow: ALL },
+  { method: 'POST', path: '/api/v1/auth/register', body: {}, allow: ALL, mode: 'local' },
   {
     method: 'POST',
     path: '/api/v1/auth/login',
     body: { email: 'x@example.com', password: 'x' },
     allow: ALL,
+    mode: 'local',
   },
+  // Website mode: the sign-in reads the headers of the website's proxy only (403 for anyone
+  // else); the hop to the website's login lets everyone through.
+  { method: 'GET', path: '/auth/website', allow: [], mode: 'website' },
+  { method: 'GET', path: '/auth/website/login', allow: ALL, mode: 'website' },
   { method: 'POST', path: '/api/v1/auth/guest', body: {}, allow: ALL },
   // The handoff (07 §1): an empty body is refused; the preflight without an Origin too.
   { method: 'POST', path: '/api/v1/auth/handoff', body: {}, allow: ALL },
@@ -89,6 +97,7 @@ export const ROUTES: readonly RouteCase[] = [
     path: '/api/v1/me/password',
     body: { current: 'x', next: 'y' },
     allow: ACCOUNTS,
+    mode: 'local',
   },
   { method: 'GET', path: '/api/v1/me/matches', allow: ACCOUNTS },
   { method: 'POST', path: '/api/v1/dev/sign-in', body: { as: 'nobody' }, allow: ALL, dev: true },
@@ -264,6 +273,7 @@ export const REFUSALS: Readonly<Record<string, number>> = {
   NOT_THE_HOST: 403,
   CSRF_INVALID: 403,
   NOT_IN_ROUND: 409,
+  UNTRUSTED_PROXY: 403,
 };
 
 // One write of each route group, refused without the session's CSRF token or with another's.

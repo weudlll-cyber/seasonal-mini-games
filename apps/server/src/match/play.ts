@@ -51,7 +51,7 @@ import {
   type PlayerRow,
   type Team,
 } from './matches.js';
-import { admitted } from './rosterRules.js';
+import type { Admission } from './rosterRules.js';
 import type { Seasons } from '../seasons/seasons.js';
 import type { Presence } from './presence.js';
 import { PlayerNumbers } from './publicIds.js';
@@ -99,15 +99,18 @@ export class Play {
   // Per-match player numbers for every public answer and frame (./publicIds, T104).
   readonly numbers: PlayerNumbers;
   private readonly seasons: Seasons;
+  // The anti-multi rules of this install (./rosterRules).
+  private readonly admit: Admission;
 
   constructor(
     private readonly pool: DbPool,
     readonly rounds: Rounds,
     private readonly settings: SettingsService,
-    live: { readonly presence: Presence; readonly seasons: Seasons },
+    live: { readonly presence: Presence; readonly seasons: Seasons; readonly admit: Admission },
   ) {
     this.presence = live.presence;
     this.seasons = live.seasons;
+    this.admit = live.admit;
     this.numbers = new PlayerNumbers(pool);
   }
 
@@ -219,8 +222,7 @@ export class Play {
     // Every roster player has a number before the round's first frame goes out.
     await this.numbers.load(match.id);
     // A given roster (the Quick Test) is taken as it is; others pass the anti-multi rules (05 §6).
-    const chosen =
-      roster ?? (await admitted(this.pool, this.settings, round.id, this.present(match, players)));
+    const chosen = roster ?? (await this.admit(round.id, this.present(match, players)));
     const teams = teamRoster(match, chosen, players, round.id);
     const values = await this.settings.values('matchmaking');
     const minPlayers = values['match.minPlayersPerRound'] as number;

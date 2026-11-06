@@ -6,7 +6,9 @@
  * Responsibility: hard-set the headers of 03 §7 for every response: CSP (self scripts
  *                 and styles), frame and referrer rules, nosniff and a Permissions-Policy
  *                 that denies camera, microphone, geolocation and payment; `frame-src` admits
- *                 the host chat's origin while the chat provider is hostEmbed; `frame-ancestors`
+ *                 the host chat while the chat provider is hostEmbed, else 'self'; in website
+ *                 mode only the website's own `/embed/chat` (by path, 07 §2), else 'none';
+ *                 `frame-ancestors`
  *                 admits the embed allowlist (07 §1, Bingo 07 §3.4), and X-Frame-Options is
  *                 dropped where it would contradict it; the admin app is framed by nobody
  *                 (`frame-ancestors 'none'`, X-Frame-Options DENY) and requires Trusted Types
@@ -15,7 +17,7 @@
  *                 HSTS comes from the TLS proxy.
  * Depends on:     @fastify/helmet
  * Used by:        ../app.ts
- * Spec:           Bingo 03 §7, Bingo 05 §1; Bingo 07 §3.4
+ * Spec:           Bingo 03 §7, Bingo 05 §1; Bingo 07 §3.4, §6; docs/spec/07-integration.md §2
  */
 import type { IncomingMessage } from 'node:http';
 
@@ -28,14 +30,22 @@ const isAdminPath = (url: string | undefined) => ADMIN.test(url ?? '');
 // Only a plain origin reaches the header, so no stored value can add a directive.
 const PLAIN_ORIGIN = /^https?:\/\/[A-Za-z0-9.-]+(:\d{1,5})?$/;
 
-// `frameOrigin`: an extra origin pages may frame (the host's chat room with the provider
-// hostEmbed, 07 §2), read per response; '' for none. `embedOrigins`: the sites that may frame
-// the game (the embed allowlist), read per response.
+export interface FrameRules {
+  // The host's chat room pages may frame with the provider hostEmbed (07 §2), read per
+  // response: an origin, or the website's room as origin and path; '' for none.
+  readonly chat: () => string;
+  // Website mode: nothing but that chat room may be framed, not even this origin (O66).
+  readonly chatOnly: boolean;
+  // The sites that may frame the game (the embed allowlist), read per response.
+  readonly embedOrigins: () => readonly string[];
+}
+
 export async function registerSecurityHeaders(
   app: FastifyInstance,
-  frameOrigin: () => string,
-  embedOrigins: () => readonly string[],
+  frames: FrameRules,
 ): Promise<void> {
+  const { embedOrigins } = frames;
+  const noChat = frames.chatOnly ? "'none'" : "'self'";
   const ancestors = (req: IncomingMessage) =>
     isAdminPath(req.url)
       ? "'none'"
@@ -56,7 +66,7 @@ export async function registerSecurityHeaders(
         'style-src': ["'self'", "'unsafe-inline'"],
         'script-src': ["'self'"],
         'connect-src': ["'self'"],
-        'frame-src': [() => frameOrigin() || "'self'"],
+        'frame-src': [() => frames.chat() || noChat],
       },
     },
     // HSTS is only meaningful behind TLS: the standalone Caddy sends it (ops/Caddyfile).

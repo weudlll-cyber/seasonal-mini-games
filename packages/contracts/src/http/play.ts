@@ -9,13 +9,15 @@
  *                 plus the game's own view, unknown here), frames, Quick Test and seasons. The
  *                 server's routes return these types; the client never guesses a shape. A
  *                 player key or id in any of them is the player's number in the match (`p3`),
- *                 never an account id (DECISIONS T104).
- * Depends on:     ./admin (settings document view), ./boards (match standings)
+ *                 never an account id (DECISIONS T104). A website member's Discord steps go
+ *                 beside the name (`steps`, website mode only, O66; absent without any).
+ * Depends on:     ./admin (settings document view), ./boards (match standings), ./session (steps)
  * Used by:        ../index, apps/server (routes), apps/web
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1, §4.4
  */
 import type { SettingsDocumentView } from './admin.js';
 import type { MatchStandingView } from './boards.js';
+import type { PlayerStepView } from './session.js';
 
 export type SeasonName = 'spring' | 'summer' | 'autumn' | 'winter';
 export type TeamName = SeasonName;
@@ -64,6 +66,8 @@ export interface MatchDetailsView extends MatchSummaryView {
     readonly playerKey: string;
     readonly name: string;
     readonly team: TeamName | null;
+    // The member's Discord steps (website mode, O66); absent without any.
+    readonly steps?: readonly PlayerStepView[];
   }[];
   readonly connected: readonly string[];
   readonly round: { readonly id: string; readonly status: string } | null;
@@ -130,6 +134,9 @@ export interface RoundStateView {
   }[];
   readonly seed?: string | null;
   readonly names: Readonly<Record<string, string>>;
+  // Discord steps by player key, for the players that have any (website mode, O66); the
+  // roster's and the results' names show them. Absent when no player has steps.
+  readonly steps?: Readonly<Record<string, readonly PlayerStepView[]>>;
   // The viewer's number in the match, or null for a spectator who never joined (T104).
   readonly you?: string | null;
 }

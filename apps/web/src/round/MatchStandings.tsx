@@ -52,7 +52,7 @@ export function MatchStandings({
                 <td>{formatNumber(s.rank)}</td>
                 <td>
                   <span className="round-player">
-                    <PlayerName name={s.name} />
+                    <PlayerName name={s.name} steps={s.steps} />
                     {s.playerKey === viewerKey ? (
                       <span className="round-you-mark"> (you)</span>
                     ) : null}

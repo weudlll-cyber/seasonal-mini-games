@@ -8,13 +8,17 @@
  *                 again when the room says the match changed (joins, teams, a new round, a
  *                 round's end with the new standings). A load or a watch refused for the
  *                 moment (the session's API budget spent, the socket's 10 intents a second)
- *                 is tried again a second later (T185). Leaves the room when the page goes.
+ *                 is tried again a second later (T185). The server takes the viewer's place in
+ *                 the match at the watch, so once the viewer joins (or leaves) the room is
+ *                 watched afresh: a player who joined on this page counts as connected for the
+ *                 roster (02 §4; before, they showed "away" until a reload, journey 36).
+ *                 Leaves the room when the page goes.
  * Depends on:     react, @smg/contracts (shapes), ../shell/http, ./retry, ./socket
  * Used by:        ../match/MatchPage
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1, §4.2, §4.3
  */
 import type { MatchDetailsView } from '@smg/contracts';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { api, ApiError } from '../shell/http.js';
 import { retryable, useRetry } from './retry.js';
@@ -63,5 +67,17 @@ export function useMatch(code: string): MatchState {
       void intent('match.unwatch', { code });
     };
   }, [code, reload, watchRetry, cancel]);
+  useRewatch(code, match?.youPlayer);
   return { match, missing, reload };
+}
+
+// A change of `youPlayer` after the first load (a join or a leave): unwatch, then watch again.
+function useRewatch(code: string, player: boolean | undefined): void {
+  const seen = useRef(player);
+  useEffect(() => {
+    const before = seen.current;
+    seen.current = player;
+    if (before === undefined || player === undefined || before === player) return;
+    void intent('match.unwatch', { code }).then(() => intent('match.watch', { code }));
+  }, [code, player]);
 }

@@ -10,12 +10,16 @@
  *                 value and, for numbers, its narrowed bounds; a cleared field means "as the
  *                 catalogue". A key this install cannot switch on (the server names it with
  *                 its reason, e.g. the linked-chat rule in a standalone install, 05 §6) keeps
- *                 its editor disabled with the reason under it. The server checks everything
- *                 again.
- * Depends on:     react, @smg/game-sdk (definitions, bounds), ./settingText
+ *                 its editor disabled with the reason under it. Where the server applies
+ *                 another value than the document's (the deployment's chat while no admin
+ *                 chose one, T240), the "In force" column shows that value with the reason
+ *                 under it. The server checks everything again.
+ * Depends on:     react, @smg/contracts (SettingInEffectView), @smg/game-sdk (definitions,
+ *                 bounds), ./settingText
  * Used by:        ./SettingsPage
  * Spec:           docs/spec/08-admin-settings.md §1–§6
  */
+import type { SettingInEffectView } from '@smg/contracts';
 import {
   effectiveBounds,
   type SettingDef,
@@ -33,6 +37,8 @@ interface SettingRowProps {
   readonly editable: boolean;
   // Why this install cannot switch the key on (the editor is then disabled), if so.
   readonly unavailable?: string | undefined;
+  // The value the server applies instead of `value`, with why, if so (T240).
+  readonly inEffect?: SettingInEffectView | undefined;
   readonly change: (next: SettingOverride) => void;
 }
 
@@ -121,6 +127,20 @@ function BoundEditor({
   );
 }
 
+// The value in force: the document's, or the one the server applies instead with its reason.
+function InForce(p: Pick<SettingRowProps, 'def' | 'value' | 'inEffect'>): ReactElement {
+  if (p.inEffect === undefined) return <td>{valueText(p.value, p.def)}</td>;
+  return (
+    <td>
+      {valueText(p.inEffect.value, p.def)}
+      <br />
+      <small className="smg-muted" data-testid="setting-in-effect">
+        {p.inEffect.reason}
+      </small>
+    </td>
+  );
+}
+
 function Editor(p: EditorProps): ReactElement {
   return (
     <div className="admin-editor">
@@ -141,6 +161,7 @@ export function SettingRow({
   override,
   editable,
   unavailable,
+  inEffect,
   change,
 }: SettingRowProps): ReactElement {
   const b = numeric(def) ? effectiveBounds(def, override) : null;
@@ -154,7 +175,7 @@ export function SettingRow({
         <small className="smg-muted">{def.help}</small>
       </td>
       <td>{valueText(def.default, def)}</td>
-      <td>{valueText(value, def)}</td>
+      <InForce def={def} value={value} inEffect={inEffect} />
       <td>{b === null ? '—' : String(b.min)}</td>
       <td>{b === null ? '—' : String(b.max)}</td>
       <td>{whoText(def)}</td>

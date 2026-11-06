@@ -9,8 +9,9 @@
  *                 success the page says that every other device was signed out. An account
  *                 the website's handoff made has no password: no form, one line saying it
  *                 signs in through the website. Below either "Delete my account"
- *                 (./DeleteAccount). Signed out, the page points to Sign in.
- * Depends on:     react, ../shell/http, ../shell/router, ../shell/session, ./formParts,
+ *                 (./DeleteAccount). Signed out, the page points to Sign in (./SignIn
+ *                 SignInLink: the website's sign-in in website mode).
+ * Depends on:     react, ../shell/http, ../shell/session, ./formParts, ./SignIn,
  *                 ./accountText, ./DeleteAccount, ./account.css
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/05-security-threat-model.md §1; Bingo 03 §2.1; DECISIONS T105, T201
@@ -18,11 +19,11 @@
 import { useState, type ReactElement, type SyntheticEvent } from 'react';
 
 import { api } from '../shell/http.js';
-import { hrefOf } from '../shell/router.js';
 import { useSession } from '../shell/session.js';
 import { accountError, passwordText } from './accountText.js';
 import { DeleteAccount } from './DeleteAccount.js';
 import { AccountField, FormError } from './formParts.js';
+import { SignInLink } from './SignIn.js';
 import './account.css';
 
 interface Passwords {
@@ -44,7 +45,7 @@ export function AccountPage(): ReactElement {
   if (account === null) {
     return (
       <p className="smg-panel">
-        <a href={hrefOf({ name: 'signIn' })}>Sign in</a> to see your account.
+        <SignInLink>Sign in</SignInLink> to see your account.
       </p>
     );
   }

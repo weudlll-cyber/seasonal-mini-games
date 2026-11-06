@@ -26,6 +26,7 @@ import type { DbPool } from '../db/pool.js';
 import { IdleClose } from '../match/idleClose.js';
 import { Play } from '../match/play.js';
 import { Presence } from '../match/presence.js';
+import { rosterAdmission } from '../match/rosterRules.js';
 import { leagueRules } from '../league/rules.js';
 import { GuessLimits } from './guessLimits.js';
 import type { RoundObserver } from './actor.js';
@@ -68,7 +69,9 @@ export function createRoundRuntime(
   });
   const devFeed = env.SMG_DEV ? (env.SMG_DEV_FEED_URL ?? null) : null;
   const seasons = new Seasons(pool, settings, devFeed);
-  const play = new Play(pool, rounds, settings, { presence: new Presence(), seasons });
+  // Website mode ignores the linked-chat rule (DECISIONS T222).
+  const admit = rosterAdmission(pool, settings, env.SMG_AUTH_MODE === 'website');
+  const play = new Play(pool, rounds, settings, { presence: new Presence(), seasons, admit });
   const scheduler = new RoundScheduler(pool, rounds, env.SMG_SCHEDULER_POLL_MS);
   const idle = new IdleClose(pool, play, settings);
   return {

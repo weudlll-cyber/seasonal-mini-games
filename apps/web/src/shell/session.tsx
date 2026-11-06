@@ -9,11 +9,15 @@
  *                 deletion of the own account (DELETE /me, which ends every session).
  *                 Only the newest refresh sets the session (an older answer arriving late
  *                 never undoes a sign-in). Screens read it through `useSession`.
- * Depends on:     react, ./http
+ *                 Website mode (O66): the sign-in address with the page shown now as `next`
+ *                 (`websiteSignInHref`), and a guest session for a signed-out visitor who
+ *                 watches a match (`useWatchSession`, POST /auth/guest, DECISIONS T221).
+ * Depends on:     react, @smg/contracts (SessionView), ./http, ../live/socket
  * Used by:        ./AppShell and every screen that needs the account, ../account/*,
  *                 ../lobby/Lobby, ../main, ./DevTools
- * Spec:           Bingo 05 §2.1; Bingo 03 §3, §8
+ * Spec:           Bingo 05 §2.1; Bingo 03 §3, §8; docs/spec/07-integration.md §7
  */
+import type { SessionView } from '@smg/contracts';
 import {
   createContext,
   useCallback,
@@ -29,17 +33,22 @@ import {
 import { resetSocket } from '../live/socket.js';
 import { api, setCsrfToken } from './http.js';
 
-interface SessionInfo {
-  readonly signedIn: boolean;
-  // `hasPassword`: false for an account the website's handoff made (T201).
-  readonly account: {
-    readonly id: string;
-    readonly displayName: string;
-    readonly hasPassword: boolean;
-  } | null;
-  readonly permissions: readonly string[];
-  readonly csrfToken: string | null;
-}
+// `hasPassword`: false for an account the website made (T201). `kind` null: no session at
+// all, not even a guest's. `authMode`, `signInPath`: how players sign in here (O66).
+type SessionInfo = Pick<
+  SessionView,
+  'signedIn' | 'kind' | 'account' | 'permissions' | 'csrfToken' | 'authMode' | 'signInPath'
+>;
+
+const SIGNED_OUT: SessionInfo = {
+  signedIn: false,
+  kind: null,
+  account: null,
+  permissions: [],
+  csrfToken: null,
+  authMode: 'local',
+  signInPath: null,
+};
 
 export type DevIdentity = 'host' | 'admin' | 'player-1' | 'player-2' | 'player-3';
 
@@ -53,6 +62,8 @@ interface SessionContextValue {
   readonly register: (account: NewAccount) => Promise<void>;
   // A host-signed token exchanged for a session (Bingo 07 §2.2).
   readonly handoff: (token: string) => Promise<void>;
+  // A guest session, to watch a match (website mode, DECISIONS T221).
+  readonly startGuest: () => Promise<void>;
   // DELETE /me: the display name typed, and the password for an account that has one
   // (DECISIONS T105); throws ApiError on refusal.
   readonly deleteAccount: (confirm: DeleteConfirm) => Promise<void>;
@@ -88,45 +99,28 @@ export function SessionProvider({ children }: { children: ReactNode }): ReactEle
   useEffect(() => {
     // A failed first load shows "signed out", unless a newer refresh has answered meanwhile.
     refresh().catch(() => {
-      setSession(
-        (now) => now ?? { signedIn: false, account: null, permissions: [], csrfToken: null },
-      );
+      setSession((now) => now ?? SIGNED_OUT);
     });
   }, [refresh]);
   const value = useMemo<SessionContextValue>(() => {
-    // A new session: the game socket reconnects with the new cookie (06 §2).
-    const changed = async (): Promise<void> => {
+    // A call that changes the session: then the game socket reconnects with the new cookie
+    // (06 §2) and the session is read again.
+    const changing = async (path: string, body: unknown, method = 'POST'): Promise<void> => {
+      await api(path, { method, body });
       resetSocket();
       await refresh();
     };
     return {
       session,
       refresh,
-      devSignIn: async (as) => {
-        await api('/dev/sign-in', { method: 'POST', body: { as } });
-        await changed();
-      },
-      signOut: async () => {
-        await api('/auth/logout', { method: 'POST', body: {} });
-        await changed();
-      },
-      signIn: async (email, password) => {
-        await api('/auth/login', { method: 'POST', body: { email, password } });
-        await changed();
-      },
-      register: async (account) => {
-        await api('/auth/register', { method: 'POST', body: account });
-        await changed();
-      },
-      handoff: async (token) => {
-        await api('/auth/handoff', { method: 'POST', body: { token } });
-        await changed();
-      },
+      devSignIn: (as) => changing('/dev/sign-in', { as }),
+      signOut: () => changing('/auth/logout', {}),
+      signIn: (email, password) => changing('/auth/login', { email, password }),
+      register: (account) => changing('/auth/register', account),
+      handoff: (token) => changing('/auth/handoff', { token }),
+      startGuest: () => changing('/auth/guest', {}),
       // The server has ended the sessions and cleared the cookie: no logout call follows.
-      deleteAccount: async (confirm) => {
-        await api('/me', { method: 'DELETE', body: confirm });
-        await changed();
-      },
+      deleteAccount: (confirm) => changing('/me', confirm, 'DELETE'),
       can: (permission) => session?.permissions.includes(permission) === true,
     };
   }, [session, refresh]);
@@ -137,4 +131,30 @@ export function useSession(): SessionContextValue {
   const value = useContext(SessionContext);
   if (value === null) throw new Error('useSession outside SessionProvider');
   return value;
+}
+
+// Website mode: the sign-in route with the page shown now as `next` (07 §7, Bingo D43); a
+// visitor the website does not know goes on to its login and comes back here signed in.
+export function websiteSignInHref(signInPath: string): string {
+  const { pathname, search, hash } = window.location;
+  return `${signInPath}?next=${encodeURIComponent(`${pathname}${search}${hash}`)}`;
+}
+
+// True once a match can be watched: in website mode a signed-out visitor first gets a guest
+// session (the match socket needs one, T221); if that is refused, the match opens anyway with
+// what needs no session. Local mode is unchanged: nothing is started.
+export function useWatchSession(): boolean {
+  const { session, startGuest } = useSession();
+  const [refused, setRefused] = useState(false);
+  // One request per page, also when React runs the effect twice (development's strict mode).
+  const started = useRef(false);
+  const needed = session?.authMode === 'website' && session.kind === null && !refused;
+  useEffect(() => {
+    if (!needed || started.current) return;
+    started.current = true;
+    startGuest().catch(() => {
+      setRefused(true);
+    });
+  }, [needed, startGuest]);
+  return session !== null && !needed;
 }

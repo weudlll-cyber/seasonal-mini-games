@@ -8,9 +8,10 @@
  *                 "(you)" as on the result screen), pages of 50 added by "Show more", and,
  *                 for a signed-in viewer who is not among the rows shown, the rows around
  *                 the viewer from `/me`. An empty board says so in one sentence. Ranks come
- *                 from the server (shared on equal points, wins and solves).
+ *                 from the server (shared on equal points, wins and solves). A website
+ *                 member's Discord steps follow the name (../round/PlayerSteps, 07 §7).
  * Depends on:     react, @smg/contracts (shapes), ../shell/http, ../shell/router,
- *                 ../shell/session, ./useApi, ./boardsText
+ *                 ../shell/session, ../round/PlayerSteps, ./useApi, ./boardsText
  * Used by:        ./LeaderboardPage
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/06-data-model-api-realtime.md §2.6, §3.1
  */
@@ -22,6 +23,7 @@ import type {
 import { useEffect, useState, type ReactElement } from 'react';
 
 import { Problem } from '../components/fields.js';
+import { PlayerSteps } from '../round/PlayerSteps.js';
 import { api } from '../shell/http.js';
 import { hrefOf } from '../shell/router.js';
 import { useSession } from '../shell/session.js';
@@ -59,6 +61,7 @@ export function BoardTable(p: {
                 >
                   {r.displayName}
                 </a>
+                <PlayerSteps steps={r.steps} />
                 {r.you ? ' (you)' : ''}
               </td>
               <td>{r.points}</td>

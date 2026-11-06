@@ -7,9 +7,10 @@
 #                 memory and one writable volume for uploads and the maintenance flag;
 #                 PostgreSQL sits on an internal network without a published port.
 #                 Standalone installs add Caddy (profile "standalone") with automatic HTTPS
-#                 on 80/443. Website installs (ops/compose.website.yml on top) publish no
-#                 port: the app joins the website's network and its Caddy forwards
-#                 /games/mini-games to it. Logs go to Docker's compressed `local` driver, 5 × 20 MB
+#                 on 80/443. Website installs (ops/compose.website.yml on top): the app joins
+#                 the website's network, where the website's Caddy forwards /games/mini-games
+#                 to it; behind host nginx it also publishes one loopback port
+#                 (ops/compose.website-nginx.yml). Logs go to Docker's compressed `local` driver, 5 × 20 MB
 #                 per service; CPU and memory caps per Bingo 08 §4 (app 1 CPU / 768 MiB,
 #                 PostgreSQL 1 CPU / 1 GiB, Caddy 0.25 CPU / 128 MiB).
 # Depends on:     /etc/smg/<env>.env (written by ops/install.sh), ops/Caddyfile (as caddy/Caddyfile)

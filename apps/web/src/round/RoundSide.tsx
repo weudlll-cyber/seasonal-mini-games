@@ -9,7 +9,8 @@
  *                 per season team with its match points and its players in this round, shown
  *                 only when teams play (03 §5), each named "Team Spring" (O52). The focus
  *                 mode's Players panel (O46) holds the tiles and the round's players with
- *                 colour, name (cut with an ellipsis only where too narrow, ./PlayerName),
+ *                 colour, name (cut with an ellipsis only where too narrow, ./PlayerName,
+ *                 with another player's Discord steps, 07 §7),
  *                 team under the heading "Team" as its icon alone (its name the accessible name
  *                 and tooltip, ../season/TeamIcon, T212) and number of guesses; in a game with player
  *                 tags the player's marker and tag in place of the dot (O62). In individual
@@ -95,9 +96,15 @@ export function PlayersPanelBody(p: {
         {rows.map((r) => (
           <li key={r.playerKey} data-own={r.playerKey === p.viewerKey}>
             <Marker state={state} playerKey={r.playerKey} mark={p.marks?.[r.playerKey]} />
-            <PlayerName
-              name={r.playerKey === p.viewerKey ? 'You' : (state.names[r.playerKey] ?? r.playerKey)}
-            />
+            {/* The viewer's own row says "You", without steps; others show theirs (07 §7). */}
+            {r.playerKey === p.viewerKey ? (
+              <PlayerName name="You" />
+            ) : (
+              <PlayerName
+                name={state.names[r.playerKey] ?? r.playerKey}
+                steps={state.steps?.[r.playerKey]}
+              />
+            )}
             {state.teamsOn ? (
               <TeamIcon team={r.team} className="round-player-team" size="0.9rem" />
             ) : null}
@@ -110,8 +117,8 @@ export function PlayersPanelBody(p: {
 }
 
 // Individual mode on a desktop (T260): the other players of this round in the info column,
-// in roster order; null when the viewer plays alone. The name goes through ./PlayerName, so a
-// website member's Discord steps can join it like in the Players panel.
+// in roster order; null when the viewer plays alone. Each name with its Discord steps through
+// ./PlayerName, as in the Players panel (07 §7).
 export function OthersPanel(p: {
   readonly state: RoundStateView;
   readonly viewerKey: string | null;
@@ -127,7 +134,10 @@ export function OthersPanel(p: {
         {others.map((r) => (
           <li key={r.playerKey}>
             <Marker state={state} playerKey={r.playerKey} mark={p.marks?.[r.playerKey]} />
-            <PlayerName name={state.names[r.playerKey] ?? r.playerKey} />
+            <PlayerName
+              name={state.names[r.playerKey] ?? r.playerKey}
+              steps={state.steps?.[r.playerKey]}
+            />
             <span className="round-player-guesses">{guessCount(r.guesses)}</span>
             {/* The server's word that this player found their secret (the roster's flag). */}
             <span className="round-player-solved">{r.solved ? 'solved' : null}</span>

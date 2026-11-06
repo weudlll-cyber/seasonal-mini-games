@@ -9,7 +9,7 @@
  *                 unique display name from `name`; `last_claims` keeps `name` and `links` (07 §4)
  *                 and mapped roles are recomputed, never security_admin or super_admin (Bingo 07 §2.1).
  * Depends on:     pg, ../db/pool, ../auth/accounts, ./jwt, ./keys, ./providers
- * Used by:        ../http/routes/handoff
+ * Used by:        ../http/routes/handoff, ../auth/websiteAccounts (nameCandidates, applyRoles)
  * Spec:           docs/spec/07-integration.md §1, §4; Bingo 07 §2.1, §2.2; Bingo 03 §4
  */
 import { randomBytes } from 'node:crypto';
@@ -109,7 +109,11 @@ async function linkedAccount(
 }
 
 // Mapped roles are recomputed at every login; roles given by hand stay (Bingo 07 §2.1).
-async function applyRoles(c: pg.PoolClient, accountId: string, roles: readonly string[]) {
+export async function applyRoles(
+  c: pg.PoolClient,
+  accountId: string,
+  roles: readonly string[],
+): Promise<void> {
   await c.query(
     "DELETE FROM smg.role_assignments WHERE account_id = $1 AND source = 'idp_mapping'",
     [accountId],

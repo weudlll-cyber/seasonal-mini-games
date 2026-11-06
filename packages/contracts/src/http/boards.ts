@@ -7,13 +7,15 @@
  *                 `/teams`), `/players/:displayName` and the match standings answer, and the
  *                 body of a leaderboard adjustment. Players appear by display name only, never
  *                 by e-mail (Bingo 01 §10). Ranks are shared on equal points, wins and solves.
- * Depends on:     zod, ./play (TeamName)
+ *                 A website member's Discord steps go beside the name (`steps`, O66).
+ * Depends on:     zod, ./play (TeamName), ./session (steps)
  * Used by:        ../index, apps/server, apps/web, apps/admin
  * Spec:           docs/spec/06-data-model-api-realtime.md §2.6, §3.1; Bingo 05 §2.2, §2.4
  */
 import { z } from 'zod';
 
 import type { TeamName } from './play.js';
+import type { PlayerStepView } from './session.js';
 
 export interface LeaderboardPeriodView {
   readonly id: string;
@@ -27,6 +29,8 @@ export interface LeaderboardPeriodView {
 export interface LeaderboardRowView {
   readonly rank: number;
   readonly displayName: string;
+  // The member's Discord steps (website mode, O66); absent without any.
+  readonly steps?: readonly PlayerStepView[];
   readonly points: number;
   readonly wins: number;
   readonly solves: number;
@@ -54,12 +58,16 @@ export interface MatchStandingView {
   readonly rank: number;
   readonly playerKey: string;
   readonly name: string;
+  // The member's Discord steps (website mode, O66); absent without any.
+  readonly steps?: readonly PlayerStepView[];
   readonly points: number;
   readonly wins: number;
 }
 
 export interface PlayerProfileView {
   readonly displayName: string;
+  // The member's Discord steps (website mode, O66); absent without any.
+  readonly steps?: readonly PlayerStepView[];
   readonly memberSince: number;
   // Over every match that counts for the leaderboard and was not taken back.
   readonly matchesPlayed: number;

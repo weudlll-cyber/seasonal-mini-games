@@ -7,7 +7,7 @@
 | Topic | Bingo reference | Difference here |
 |---|---|---|
 | Conventions: PostgreSQL 17, UUIDv7 keys, `timestamptz` UTC, snake_case, `text` + `CHECK` instead of enums, `jsonb` only for documents and event payloads, **no monetary columns**, DB roles | Bingo 04 §1 | Schema `smg`, roles `smg_*`. |
-| Identity and access tables (`accounts`, `sessions`, `identity_providers`, `external_identities`, `roles`, `role_permissions`, `role_assignments`, `totp_factors`, `recovery_codes`, token tables, `player_profiles`, badges) | Bingo 04 §3.1 | No profile counters: a public profile is computed from the league awards, so it always agrees with the boards (DECISIONS T87). |
+| Identity and access tables (`accounts`, `sessions`, `identity_providers`, `external_identities`, `roles`, `role_permissions`, `role_assignments`, `totp_factors`, `recovery_codes`, token tables, `player_profiles`, badges) | Bingo 04 §3.1 | No profile counters: a public profile is computed from the league awards, so it always agrees with the boards (DECISIONS T87). `identity_providers.kind` is `jwt_handoff` or `proxy_header` (the website, owner decision 66); `accounts.steps` holds a website member's Discord steps (a JSON array, at most three, `[]` standalone). |
 | Configuration tables (`settings_documents`, `settings_versions`, `embed_origins`) | Bingo 04 §3.2 | No `rulesets`, `ruleset_versions` or `patterns`. Per-game settings are settings documents with id `game.<gameId>` ([08](08-admin-settings.md)). |
 | Leaderboard tables (`leaderboard_periods`, `league_entries`, `league_awards`, `leaderboard_adjustments`) | Bingo 04 §3.4 | `league_entries` counts `wins` and `solves` instead of `season_completes`. `league_awards` hold a match's standing per board and account (replaced as its rounds end); `leaderboard_adjustments` are append-only. Adds `team_league_awards` and `team_league_entries` (§2.6). |
 | Chat and moderation tables | Bingo 04 §3.5 | None. |
@@ -16,8 +16,8 @@
 | Integrity rule: event logs, published versions and the audit log are immutable by trigger | Bingo 04 §4 | Applies to `round_events`. |
 | Migrations: hand-written SQL, checksummed own migrator, applied on start; seed on first install | Bingo 04 §6 | The seed has no rulesets. It holds the settings documents from defaults and the `game.guess-the-number` document. |
 | API conventions: `/api/v1`, zod contracts, OpenAPI generation, RFC 9457 problems, cursor pagination, `Idempotency-Key`, session cookie plus CSRF or bearer embed token, rate-limit headers | Bingo 05 §1 | None. |
-| Session, auth and profile routes | Bingo 05 §2.1, §2.2 | `POST /dev/sign-in` as Bingo (development builds only). |
-| Leaderboard, chat, notification and misc routes (`/config/public`, `/assets`, `/healthz`, `/readyz`, `/metrics` internal only) | Bingo 05 §2.4, §2.5 | Leaderboards add `GET /leaderboards/:periodId/teams`; pages are `?offset=` steps of 50. The public profile is `GET /players/:displayName` (Bingo 05 §2.2); its last rounds carry their match's `gameId`. A board shows the period's total over every game; `?game=<id>` on `GET /leaderboards/:periodId`, `…/me` and `…/teams` shows one game's board instead, summed from the awards of that game's matches (owner decision 44; staff adjustments count in the total only; DECISIONS T126). An award belongs to a match, and the match names its game (T121). |
+| Session, auth and profile routes | Bingo 05 §2.1, §2.2 | `POST /dev/sign-in` as Bingo (development builds only). `GET /session` adds `authMode` (`local` or `website`) and `signInPath` (`<base>auth/website` in website mode, else null). In website mode (owner decision 66) `POST /auth/register`, `POST /auth/login`, `POST /me/password` and `POST /dev/sign-in` do not exist; the sign-in is `GET <base>auth/website` and `GET <base>auth/website/login`, outside `/api` ([07](07-integration.md) §7). |
+| Leaderboard, chat, notification and misc routes (`/config/public`, `/assets`, `/healthz`, `/readyz`, `/metrics` internal only) | Bingo 05 §2.4, §2.5 | In website mode `/readyz` also answers `websiteFeed.lastSuccessAt` ([07](07-integration.md) §7.3). Leaderboards add `GET /leaderboards/:periodId/teams`; pages are `?offset=` steps of 50. The public profile is `GET /players/:displayName` (Bingo 05 §2.2); its last rounds carry their match's `gameId`. A board shows the period's total over every game; `?game=<id>` on `GET /leaderboards/:periodId`, `…/me` and `…/teams` shows one game's board instead, summed from the awards of that game's matches (owner decision 44; staff adjustments count in the total only; DECISIONS T126). An award belongs to a match, and the match names its game (T121). |
 | Admin route layout, permissions per route, audit on every write, step-up | Bingo 05 §3 | Rulesets, patterns and the simulator are replaced by settings documents and `halving-days` (§3.2). |
 | Realtime transport (Socket.IO over WebSocket only, `/ws`, namespaces `/play` and `/admin`, connection state recovery, frame limits) | Bingo 06 §1 | None. |
 | Handshake and auth, session revocation push | Bingo 06 §2 | A socket may be in at most 3 match rooms. |
@@ -109,6 +109,10 @@ Rejected guesses are **not** events. They are counted in metrics and in the abus
 ### 2.8 Sizing
 
 A shared round with 500 players, 10 s cooldown, lasting 5 minutes: at most 15 000 accepted guesses, about 45 000 events (`GuessAccepted`, `FeedbackGiven`, `GuessFed` per guess), about 9 MB. At 50 such rounds a day that is under 10 GB a month before compaction. The events of rounds older than 90 days are compacted: `round_results` stay, `round_events` of type `GuessAccepted`, `FeedbackGiven` and `GuessFed` move to a compressed archive table, and the hash of the moved rows stays in place so that the log remains verifiable.
+
+### 2.9 Website mode (owner decision 66)
+
+- **website_feed** — single row: `cursor text` (the website's account-changes cursor, `'0'` at first), `last_success_at timestamptz NULL`, `last_failure_at timestamptz NULL` ([07](07-integration.md) §7.3).
 
 ## 3. HTTP API
 

@@ -2,7 +2,164 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
-## Night 9 (2026-11-06)
+## Dress rehearsal of the live install (2026-11-06)
+
+The website's real installer and ours ran together on a fresh systemd Ubuntu 24.04 container with its own Docker (`smg-rehearsal-*`). The machine had a test DNS for `example.org` and the website's own test ACME server (Pebble). It ran in nginx mode first, then on a reset machine in the website's own-Caddy mode. The browser was Chromium with `--host-resolver-rules`, so the origin was exactly `https://example.org`. The machine and every test account are deleted. The screenshots are on the orphan branch `shots/rehearsal`: 35 images and `play-through.txt`.
+
+- **The website used:** its `master` at `82e9e30`. `feat/embedded-games` was merged there (PR #45, which contains `468aaca`) and deleted, so that branch no longer exists.
+- **The website installer asked:**
+  - the domain, the www redirect, the call service's domain, the Let's Encrypt e-mail;
+  - the price bot's and event bot's files;
+  - the backup age key, the CoinGecko key and the Discord client id;
+  - Bingo embedded? (`no`); Mini Games embedded? (`yes`);
+  - in nginx mode, the event bot's admin page;
+  - the first admin's name, e-mail and password.
+
+  It picks the mode itself: nginx when nginx holds 80/443, otherwise its own Caddy. Both runs exited 0.
+
+- **Our installer asked** only three questions in both modes: the type (`website`), the environment (`prod`) and the age key. Both runs ended "Done (14 change(s))" with every end check passing.
+- **Defect on our side, fixed** (`03eb748`, T244):
+  - Run from a clone of `feat/website-mode`, the installer built `master`. It now builds the checkout's own branch, or its commit when detached, and `master` only outside a checkout.
+  - New test `ops/test/checkout-ref.test.sh` fails without the fix; shellcheck is clean. README and the operator guide are updated.
+  - Full `pnpm verify` green (160 files, 885 tests); CI green on `fbcaa04`.
+- **Piece 3, nginx mode,** all passed except the way back after login:
+  - the guest lobby, plus the light and dark pair;
+  - the guest chat: the website's room, read-only, with "Log in";
+  - the website's login reached;
+  - a member allowed to host hosted one round of each of the four games, with a second member in another profile;
+  - chat written, and "1 unread" on the other profile's badge;
+  - the deleted member's session ended after 7 s, and they show as "Deleted player";
+  - the locked member's session ended after 5 s;
+  - `smg admin promote-super --name alice` worked;
+  - `smg status` showed website, authorize 204 and the feed's last success.
+- **Own-Caddy mode:** sign-in, one Guess The Number round, chat and the badge, promote-super and status all passed.
+- **Defect on the website's side (OPEN, "Needed from the website"):**
+  - After the website's login, `LoginPage.jsx` moves to `next` inside its own app with `navigate(safeNext(next))` and shows "Page not found"; the game's sign-in route is never requested. A reload signs the member in.
+  - Expected: a full page load for paths under `/games/`.
+  - `RegisterPage.jsx` and `DiscordSignupPage.jsx` have the same call. Bingo is affected too.
+- **Not checked:** Discord steps (the website offers no test path to give an account a step), signing in again as a locked member, and the four games in Caddy mode (one round there, as asked).
+
+## Night 9 (2026-11-06), pieces 1–2 on `feat/website-mode`
+
+This branch carried pieces 1–2. Pieces 3–4 (round polish, spec gaps) are on `feat/round-polish` from `master`, with its own copy of this section. Neither branch is merged. Owner decision O68: proposals T237, T222 and T240 are accepted.
+
+### Status
+
+| Piece                                    | State   | Commit          |
+| ---------------------------------------- | ------- | --------------- |
+| 1. The three accepted proposals          | done    | `7dcfc1b`       |
+| 2. Website mode's loose ends             | done    | `d8b5065`       |
+| 3. Round polish (on `feat/round-polish`) | done    | `5b1a036` there |
+| 4. Spec gaps (on `feat/round-polish`)    | running |                 |
+
+### Piece 1 — the accepted proposals (O68; T222, T237, T240, T242)
+
+- O68 is in DECISIONS §1. T222, T237 and T240 now have DECISIONS rows marked accepted, and OPEN (ac)–(ae) are closed in BACKLOG part two, as `396fa3f` did for confirmed items. The website's optional link fact is dropped from "needed from the website".
+- T237, the unread badge: new `useHostChatFrame`. While the round bar's Chat panel opens or closes, it posts EMBED.md's `{source:'seasonal-chat-host', type:'visible', visible}` to the frame, and again on every `ready`.
+  - It accepts `unread` only when all hold: the origin is the frame address's origin, `event.source` is the frame's window, `source` is `seasonal-chat`, and the count is a whole number ≥ 0. The count shows on `chat-unread`.
+  - The lobby and waiting area send and listen to nothing.
+  - T242: the frame carries `referrerpolicy="strict-origin"`, because EMBED.md finds the parent through the referrer in Firefox. The page-wide `no-referrer` stays.
+  - Nothing is needed from the website: EMBED.md (identical on its master) has every message.
+- T222: in website mode, the admin's security settings leave out `antiMulti.requireLinkedChat`, and the roster rules ignore it (`rosterAdmission`), even with a JWT provider. Standalone is unchanged (T103).
+- T240: the integrations settings answer an optional `inEffect` field (`SettingInEffectView`) for keys that take the deployment default, with the value and why. The admin's "In force" column shows them, e.g. hostEmbed with "This install runs inside the website; its chat is used until an admin chooses another." No new route: one more field on an existing GET, whose matrix row stands.
+- Tests:
+  - web and admin: 43 files, 197 tests pass, among them foreign origin, foreign window, wrong `source` and a bad count, all ignored;
+  - server: 8 files, 60 tests pass, among them the website-mode admin cases;
+  - journey 36 in Chromium passed once (52 s): the frame is told hidden, two messages show "2 unread", opening clears the badge and tells it visible, and closing tells it hidden.
+- Reused: `chatArrivals.ts` (a new `HostChatSight` context), `FocusShell`'s `useUnread`, and a shared `resolve` in `provider.ts` for `chatConfig` and the new `chatInEffect`.
+- Noticed, left alone:
+  - T239's reason for reloading the frame on a theme switch is outdated, since EMBED.md has a `theme` message.
+  - EMBED.md's `resize` is unused.
+  - The phone waiting area's chat button has no badge.
+
+### Piece 2 — website mode's loose ends (T243)
+
+- The first admin on a website install (T243):
+  - `smg admin create-super` refuses there, before any question, in `ops/smg` and in the app's CLI, and names the new `smg admin promote-super --name NAME | --website-id N`.
+  - That command promotes a website account that has signed in once. `--name` matches the game name or the website name, ignoring case.
+  - Several matches are listed with their website ids; an unknown, suspended or deleted account is refused; an account that is already super admin exits 0.
+  - The role is stored with source `manual` through `addRole`, so the next sign-in's mapping (`idp_mapping` rows only) and a `rights` change keep it; a `deleted` change still removes every role. The account's sessions end, so its next sign-in is an admin session.
+  - `promote-super` refuses on a standalone install. README, the operator guide (§3 step 8, §4 split by install type), spec 10 §6 and the installer's next steps say this.
+- The installer's dry run now says "would be reloaded" (`install_route`).
+- The "Others:" line renders each name through `PlayerName` with its steps (`othersOf`, shared with the line's tooltip text).
+- `DELETE /me` stays a hard delete. The website link goes with the account (cascade), so later `deleted`, `locked`, `unlocked` and `rights` entries for that id do nothing, log only the usual info line, and move the cursor on. This already worked; a new test proves it.
+- Tests:
+  - server: 22 files, 99 tests pass, including the real CLI run through tsx in both modes;
+  - web: 38 files, 177 tests pass;
+  - shellcheck is clean.
+- Reused: `addRole`, `revokeAccountSessions`, `PlayerName`. Extracted: cli.ts's `withPool` and command table, RoundLog's `othersOf`.
+- Noticed, left alone: a CLI role grant writes no audit-log entry, as `create-super` never did.
+
+### Verify (end of this branch)
+
+- First `pnpm verify` at `f629b4a`: format, lint and typecheck clean, but 3 failures in `websiteFeed.integration.test.ts`. Its first test (five sign-ins, a match, a league row) ran past vitest's 20 s default under the full parallel run and left the cursor unsaved, which failed the next two. Alone the file passes (4 tests, 32 s).
+- Fix `a873ae0`: 60 s for that test and the two that wait on polls, as the other heavy integration tests have.
+- Second `pnpm verify` at `a873ae0`: all green, 160 test files and 885 tests.
+
+## Website mode (2026-11-05)
+
+Branch `feat/website-mode` from `master` at `4ab2986`; not merged by this task. Owner decisions O66 (website sign-in, guests, steps, deleted and locked accounts, the website's chat) and O67 (one installer for both variants). Reference: Seasonal Bingo Royale's website mode (its 07 §2.3, 03 §2.2, D37, D40–D43; `websiteIdentity.ts`, `websiteAccounts.ts`, `websiteSignIn.ts`, `ops/lib/website.sh`) and the website's contract (its `server/src/bingo/routes.js`, docs/AUTH.md "Seasonal Bingo Royale"), generalised there for `/games/mini-games`.
+
+### Status
+
+| Piece                                    | State | Commit               |
+| ---------------------------------------- | ----- | -------------------- |
+| 0. Owner decisions O66, O67              | done  | `d6bb733`            |
+| 1. Website auth mode (server)            | done  | `f43dc8d`            |
+| 2. The website's chat in the game        | done  | `787e595`            |
+| 3. The installer for both variants       | done  | `691357a`, `e2d24f3` |
+| 4. Tests: e2e journey, installer, verify | done  | `5dd81bd`            |
+
+### Piece 1 — website auth mode (T214–T222)
+
+- `SMG_AUTH_MODE=website`: `GET <base>auth/website` is the only route that reads the identity headers, and only from a peer in `SMG_TRUSTED_PROXIES` with `X-Smg-Proxy-Secret` (constant-time compare). It finds or creates the account by (site origin, numeric user id) with no password or e-mail, makes the name fit (a taken name gets `-2`, T214), maps the roles (admin → game admin, Can-Host → organizer, everyone player; never super or security admin, T219), stores at most three checked steps (T220), rotates the session and follows a safe `next` (else the lobby). A trusted guest gets a 302 to the website login (T215, Bingo D43); `<base>auth/website/login` hops to `SMG_WEBSITE_LOGIN_PATH`. 30 sign-ins and 600 hops a minute per address.
+- Website mode leaves out registration, password login, `me/password` and dev sign-in (404); `/session` adds `authMode` and `signInPath`. Guests watch through a guest session (T221); the matrix runs the anonymous and guest rows against a website-mode server too.
+- The feed poller (T217): a plain `fetch` of `SMG_WEBSITE_LOCAL_URL` with `X-Games-Sync-Token` every 15 s, the cursor in `smg.website_feed` (migration 0014), errors backing off from 30 s to 10 min, logged without the token. `deleted` anonymises the account as "Deleted player" (T216: its rounds keep their points, the boards and profiles skip it), `locked` and `rights` end its sessions. `/readyz` reports `websiteFeed.lastSuccessAt` (T218).
+- Steps travel as optional `steps` in the match, round, board and profile views (`PlayerStepView`); the client shows them in piece 2. The JWT handoff stays for third-party sites; the website's planned handoff endpoint is dropped from OPEN and BACKLOG. Proposal T222 (OPEN (ac)): `antiMulti.requireLinkedChat` cannot work with proxy headers alone.
+- Adopted from Bingo: `trustedPeers`, `identityFrom`, name cleaning, `safeNext`, the constant-time secret compare, the provider upsert, follow-on-sign-in, session rotation, `checkWebsiteMode`, the login hop. Different: the Can-Host and steps headers, the guest redirect, numeric ids, the `-N` suffix, the poller and anonymised deletion (Bingo has no feed).
+- Reused: `nameCandidates`, `applyRoles`, `createLinkedAccount`, `inTransaction`, `RateLimiter`, `findSession`, `SessionEnds`, `readLimited`; `openSession` split out of the handoff's `startSession`; new `revokeAccountSessions`. Tests: the server package (16 unit and 22 integration files) green; three new website suites (23 tests).
+- Noticed, left alone: `DELETE /me` still hard-deletes, website accounts too; an anonymous POST to an unregistered route answers 403 (CSRF) before 404.
+
+### Piece 2 — the website's chat in the game (T236–T240)
+
+- The chat provider: an admin's stored setting wins, then `SMG_CHAT_PROVIDER`; in website mode the default is hostEmbed with `/embed/chat?room=mini-games` on the same origin. CSP `frame-src` in website mode is `<public origin>/embed/chat` only (an admin's own chat by its origin); standalone unchanged (T236, Bingo 07 §6 / D5).
+- The panel (lobby, waiting area, round drawer, phone sheet) frames `…&theme=<light|dark>` following the game's theme (a switch reloads the frame), titled "Chat". A signed-out visitor in website mode also gets "Log in", which goes through `signInPath?next=<page>` so they return signed in (T238, Bingo D43). The game posts nothing into the frame and listens to nothing.
+- Website-mode sign-in UI: every "Sign in" goes to `signInPath?next=…`; no Register, no dev sign-in; `#/sign-in` and `#/register` show a "Sign in" panel. A signed-out visitor who opens a match gets a guest session first (T239). Local mode, Quick Test and dev sign-in unchanged.
+- Steps beside names through `PlayerName`'s new `steps` prop and `PlayerSteps` (roster, Players panel, round list, results, standings, boards, profile); an icon with the step name as its text alternative, or the name as text; markup unchanged without steps.
+- Proposals: T237 (OPEN (ad)): the unread badge is hidden with hostEmbed. The website's EMBED.md does define `visible`/`unread` messages, so the proposal is to adopt them; the game's `Referrer-Policy: no-referrer` keeps the frame silent in Firefox. T240 (OPEN (ae)): the admin's Integrations page shows `builtin` while hostEmbed applies.
+- Reused: `PlayerName`, `SessionView`, `POST /auth/guest`, chatKit's `until`; session.tsx's repeated POST-reset-refresh folded into `changing()`; `hostChatOrigin` replaced by `hostChatSource`/`frameSource`. Tests: web 37 files and 173 tests; server units plus the chat and website integration suites, 20 files and 106 tests.
+- Noticed, left alone: the third-party embed view starts no guest session; a signed-out visitor in local mode still gets none; `RoundLog`'s plain "name: N guesses" strings show no steps.
+
+### Piece 3 — one installer for both variants (T230–T235)
+
+- `sudo bash ops/install.sh` asks the type first. Standalone asks as before (environment, address, admin e-mail, age key). Website asks only the environment and the age key: it finds the website's mode (Caddy of compose project `seasonal-site`, or host nginx), its checkout, domain and network itself (Bingo's `detect_website`, T230). If the website does not serve `/api/games/mini-games/authorize` or there is no sync token, it stops before writing anything and names `sudo ./deploy/install.sh --update --mini-games` in the checkout.
+- It writes the game's own route file (0600): `/etc/seasonal/routes/mini-games.conf` for nginx, or `mini-games.caddy` in the host folder mounted at Caddy's `/etc/caddy/routes`. The file clears the seven identity headers and the secret on every path, asks authorize through `auth_request` / `forward_auth`, and adds the secret only after that call. A refusal goes to `<base>auth/website/login` with the query, and metrics answer 404 (T231). Then `nginx -t` or `caddy validate`, a rollback on failure, the reload and an end check through the website (T232). No website file is edited; the snippet-paste path and its texts are removed.
+- The env file: `SMG_AUTH_MODE=website`, the trusted ranges, a 64-hex secret kept on re-runs, the login path, the sync token, `SMG_BASE_PATH=/games/mini-games/`, `SMG_CHAT_PROVIDER=hostEmbed`. The feed is reached at `http://site:3800` in both modes, because the app joins the website's network and 127.0.0.1 would be the container itself (T233). nginx mode uses its own port 3920 and subnet 172.30.250.0/24, distinct from Bingo. `smg status` shows the sign-in mode, the authorize answer and `feed: last success` from readyz (T234).
+- Installer tests (T235, Ubuntu 24.04 systemd containers with their own Docker, real nginx, Caddy and PostgreSQL; stub website and stub app):
+  - standalone: install, HTTPS, status, backup and restore drill, maintenance, re-run with 0 changes;
+  - nginx: first run with Mini Games off stops with the command and writes nothing; switched on, the run succeeds with 14 checks;
+  - caddy: the same checks.
+  - Both website re-runs make 0 changes. shellcheck is clean.
+- Noticed, left alone: Bingo's Caddy route sends no `X-Original-Method`, so the website refuses it (Bingo bug, reported only); `smg admin create-super` still makes a local account on website installs (the guide says standalone only); a dry run says "reloaded" after "would run".
+
+### Piece 4 — e2e journey 36, verify (T241)
+
+- Journey 36 (`e2e/website.spec.ts`, Chromium only, also in CI's chromium run) runs against a stand-in website: the nginx container `smg-e2e-website` with the installer's route, a node stub for authorize, login, `/embed/chat` and the feed, and a second server in website mode on 3930 with its own database `smg_e2e_website`, so the 3910 dev server never takes its rounds (T4, T13). The steps:
+  - a signed-out visitor watches a match and sees the stub chat in "Chat" (`theme=light`);
+  - "Log in" goes through the website's login and back, signed in;
+  - the member joins with the step "Gold" beside the name and guesses;
+  - the stub feed's `deleted` ends the member's session within one poll, and the roster shows "Deleted player".
+  - It passed once, in 17 s; the two runs before failed on the bug below.
+- Product fix the journey found: a player who joined with the match page's "Join match" showed as "away" and was left out of the roster at countdown until a reload, because presence is recorded only at `match.watch`. `useMatch`'s new `useRewatch` watches again when the player's seat changes; covered by `useMatch.test.tsx`.
+- Reused: `play.ts`'s `call`, `attempt`, `visit`, `playerRow`, `hostRound`, `hostMenu`, `roundOpen`, `ownRows`, `abortMatch`, `closeAll`; `DESKTOP`; `viteBuild`, taken out of `builtAdmin.ts`; `devStack`'s `databaseUrl`; the stub's rules from `ops/test/stub-website.py`.
+- `pnpm verify` at `5dd81bd`, dev servers stopped: format, lint and typecheck clean; 158 test files and 871 tests passed. CI on `63cb0e4`: green.
+
+### The website's answer (2026-11-06)
+
+- The website accepted the contract unchanged as its task SE-EMBEDDED-GAMES (branch `feat/embedded-games`). It matches what this branch builds: the authorize headers, the feed with its own cursor per game, the files in `/etc/seasonal/`, the routes folder, `/login?next=`, `/embed/chat?room=mini-games&theme=…`, and `--mini-games`, which the installer's stop message names.
+- Added on the website's side: Bingo gets its room `bingo` the same way; each room is created once when its game is switched on (members write, guests read) and kept afterwards; no live install has embedded games yet. Its report section "For the Mini Games side" will be checked against spec 07 §7 when it arrives, and that section wins where it differs.
+
+## Night 9 (2026-11-06), pieces 3–4 on `feat/round-polish`
 
 This branch, from `master` at `4ab2986`, carries pieces 3–4. Pieces 1–2 (website mode) are on `feat/website-mode`, with its own copy of this section. Neither branch is merged.
 

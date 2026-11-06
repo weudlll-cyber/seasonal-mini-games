@@ -116,15 +116,15 @@ Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.co
 | `inSeason.staleAfterH` | 24 | 1 | 168 | owner (O15) | season admin | next: read at round creation |
 | `halving.timeZone` | `UTC` | — | — (IANA zone) | owner (O15) | season admin | next: read at round creation |
 | `halving.days` | empty | — | — (list of date + token) | owner (real halving days) | season admin | next: read at round creation |
-| `integrations.chatProvider` | `builtin` | — | — (`none`, `builtin`, `hostEmbed`) | technical ([07](07-integration.md) §2) | security admin | immediate (clients reload the panel) |
-| `integrations.hostChatUrl` | empty | — | — | adopted | security admin | immediate |
+| `integrations.chatProvider` | `builtin` (while unset: `SMG_CHAT_PROVIDER`, website mode `hostEmbed`, DECISIONS T236; the page shows the one in effect and why, T240) | — | — (`none`, `builtin`, `hostEmbed`) | technical ([07](07-integration.md) §2) | security admin | immediate (clients reload the panel) |
+| `integrations.hostChatUrl` | empty (website mode: the website's `/embed/chat?room=mini-games`) | — | — | adopted | security admin | immediate |
 
 ## 6. Security and limits (documents `security`, `rate_limits`)
 
 | Key | Default | Min | Max | Status | Who | Running rounds |
 |---|---|---|---|---|---|---|
 | `antiMulti.minAccountAgeH` | 0 (off) | 0 | 720 | owner (O10); a younger account is left off a shared roster (DECISIONS T103) | security admin | next: read when a roster freezes |
-| `antiMulti.requireLinkedChat` | false | — | — | owner (O10); website installs only: without a JWT handoff provider the form disables it with its reason and the server refuses it (DECISIONS T103) | security admin | next: read when a roster freezes |
+| `antiMulti.requireLinkedChat` | false | — | — | owner (O10); website installs only: without a JWT handoff provider the form disables it with its reason and the server refuses it (DECISIONS T103); in website mode (§7 of 07) not shown and without effect (O68, T222) | security admin | next: read when a roster freezes |
 | `rate.guessPerAccountPerS` | 4 / s | 1 / s | 10 / s | technical | security admin | immediate |
 | `rate.httpGuessPerSessionPerMin` | 60 / min | 12 / min | 240 / min | technical | security admin | immediate |
 | `rate.teamChoosePerMin` | 12 / min | 1 / min | 60 / min | technical | security admin | immediate |

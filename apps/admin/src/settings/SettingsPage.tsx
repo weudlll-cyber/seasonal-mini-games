@@ -4,11 +4,12 @@
  * @brief  The settings area: every document, every key with default, bounds, who and when.
  *
  * Responsibility: pick a document (platform documents and one per game, 08 §1); show every
- *                 key in a table (./SettingRow); collect the viewer's changes and save them as
- *                 a new version with a comment (`PUT /admin/settings/:id` with the version it
- *                 was read at; a newer version answers "changed meanwhile", 08 §1); a change
- *                 of the security document goes through the confirm dialog first (Bingo 11
- *                 §1). Refusals come back with the setting and the reason in plain words.
+ *                 key in a table (./SettingRow, with the value the server applies where it
+ *                 differs from the document's, T240); collect the viewer's changes and save
+ *                 them as a new version with a comment (`PUT /admin/settings/:id` with the
+ *                 version it was read at; a newer version answers "changed meanwhile", 08
+ *                 §1); a change of the security document goes through the confirm dialog
+ *                 first (Bingo 11 §1). Refusals come back with the setting and the reason in plain words.
  *                 Below the table the document's history with diffs and rollback (./History).
  * Depends on:     react, @smg/contracts, @smg/game-sdk (types), ../ConfirmDialog, ../http,
  *                 ../TextInput, ./History, ./SettingRow, ./settingText
@@ -80,6 +81,7 @@ function Table({
               override={draft[def.key] ?? {}}
               editable={editable.has(def.key)}
               unavailable={doc.unavailable?.[def.key]}
+              inEffect={doc.inEffect?.[def.key]}
               change={(o) => {
                 setDraft((d) => ({ ...d, [def.key]: o }));
               }}
