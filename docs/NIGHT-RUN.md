@@ -2,6 +2,19 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Night 9 (2026-11-06)
+
+This branch, from `master` at `4ab2986`, carries pieces 3–4. Pieces 1–2 (website mode) are on `feat/website-mode`, with its own copy of this section. Neither branch is merged.
+
+### Status
+
+| Piece                                                 | State   | Commit |
+| ----------------------------------------------------- | ------- | ------ |
+| 1. Accepted proposals (on `feat/website-mode`)        | running |        |
+| 2. Loose ends (on `feat/website-mode`)                | open    |        |
+| 3. Round polish: the others' column, the dark own row | running |        |
+| 4. Spec gaps and conflicts                            | open    |        |
+
 ## The team column, the owner's confirmations, the merge (2026-11-04)
 
 Branch `feat/guess-games` from `6260b84`, merged into `master` by this task (the owner's approval of 2026-11-04). Technical decisions from T212.
