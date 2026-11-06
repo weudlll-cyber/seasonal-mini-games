@@ -8,12 +8,12 @@ This branch, from `master` at `4ab2986`, carries pieces 3–4. Pieces 1–2 (web
 
 ### Status
 
-| Piece                                                 | State   | Commit                     |
-| ----------------------------------------------------- | ------- | -------------------------- |
-| 1. Accepted proposals (on `feat/website-mode`)        | done    | `7dcfc1b` there            |
-| 2. Loose ends (on `feat/website-mode`)                | running |                            |
-| 3. Round polish: the others' column, the dark own row | done    | `5b1a036`; shots `9dab603` |
-| 4. Spec gaps and conflicts                            | running |                            |
+| Piece                                                 | State | Commit                     |
+| ----------------------------------------------------- | ----- | -------------------------- |
+| 1. Accepted proposals (on `feat/website-mode`)        | done  | `7dcfc1b` there            |
+| 2. Loose ends (on `feat/website-mode`)                | done  | `d8b5065` there            |
+| 3. Round polish: the others' column, the dark own row | done  | `5b1a036`; shots `9dab603` |
+| 4. Spec gaps and conflicts                            | done  | `d426200`…`a9982ce`        |
 
 ### Piece 3 — round polish (T260, T261 proposals; T262)
 
@@ -47,6 +47,32 @@ This branch, from `master` at `4ab2986`, carries pieces 3–4. Pieces 1–2 (web
   - the game hint panels use the same 22 %-into-card mix in dark;
   - the Bomb Defusal dark shot caught "Boom!" mid-animation;
   - RoundSide.tsx will conflict a little with `feat/website-mode` at a merge.
+
+### Piece 4 — OPEN's spec conflicts 1–2 and gaps 1–2 (T263–T266)
+
+All four answers are technical, and the code already behaved as decided. What changed is spec wording, an unused column and stale references. OPEN's "Spec conflicts" and "Spec gaps" sections are gone, with four rows in BACKLOG part two.
+
+- **Conflict 1, a guess's check order (T263):** `guess.ts` follows 02 §5.1: the platform's checks, then the game's `validate`, then the cooldown, with the receive number given after them. 04 §4.3, 04 §5.2 and 06 §4.5 now say the same. The existing `guess.test.ts` case is the proof.
+- **Conflict 2, team placement (T264):** a player without a team goes to the smallest team, ties broken by a hash (`teams.ts`, O26/T82). 04 §5.4 now says the seed label `teams/tiebreak` is only the round engine's fallback for a roster without teams, and `lifecycle.ts`'s comments say so too. 02c's dead "(OPEN, spec conflicts)" pointer now names O40 as amended by O65.
+- **Gap 1, `round_results.secret` (T265):** nothing ever wrote it, an `int` cannot hold Safecracker's or Seasonal Target's secrets, and 05 §3 says no table has a secret column.
+  - Migration `0015_drop_result_secret.sql` drops it; 0014 is `feat/website-mode`'s, and either merge order gives the same schema.
+  - A new schema test finds no `smg` column named for a secret that is not bytea.
+- **Gap 2, the feed's host allowlist (T266):** the host of `seasons.feedUrl`, which only a security admin can set, is the one host allowed. The address must be https, every address it resolves to must be public, and no redirect is followed, as `safeFetch.ts` already does. 05 M11, 07 §5 and 08 §5 now say so.
+- Tests:
+  - domain: 45 pass;
+  - server: 70 unit and 120 integration tests pass;
+  - no journey changed, so no e2e ran.
+- Noticed, left alone:
+  - `safeFetch.ts` checks the DNS answer and then lets `fetch` resolve again, which leaves a rebinding window;
+  - its blocklist lacks 198.18.0.0/15 and 240.0.0.0/4.
+
+### Needs the owner
+
+- **Nothing from piece 4:** all four items were technical.
+- **After play, T260 and T261** (OPEN, proposals): the Others column and the dark own row.
+- Quick Test settings to try them:
+  - Guess The Number, seed `acorn`, individual mode, Bots 3, Fast specials on, "Start from the lobby" on;
+  - then the same in dark mode.
 
 ## The team column, the owner's confirmations, the merge (2026-11-04)
 
