@@ -31,6 +31,7 @@ export {
   type AccountView,
   type AuditEntryView,
   type LiveRoundView,
+  type SettingInEffectView,
   type SettingsDocumentView,
   type SettingsUpdate,
   type SettingsVersionView,

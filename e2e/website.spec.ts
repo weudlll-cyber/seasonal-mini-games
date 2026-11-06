@@ -12,14 +12,17 @@
  *                 game's theme, the stand-in's page in it) with "Log in", which goes through the
  *                 sign-in route to the website's login and back to the match, signed in as the
  *                 member the website names; the member joins, shows its Discord step beside its
- *                 name, plays a guess in a round the host starts and ends; the website deletes
+ *                 name, plays a guess in a round the host starts and ends, during which the round
+ *                 bar's closed Chat panel tells the website's chat it is hidden, the chat's two
+ *                 `unread` messages show "2" on the Chat badge, and opening the panel tells it
+ *                 visible and clears the badge (T237); the website deletes
  *                 the member, the server's next poll of the account feed ends its session, and
  *                 the host's page shows "Deleted player" in its place. The match is aborted and
  *                 the host's account deleted (DELETE /me), also when a step fails; so is the
  *                 member's when the feed did not. Chromium only (playwright.config, T241).
  * Depends on:     @playwright/test, ./devStack, ./play, ./screens, ./websiteStack, ./websiteStub
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 36); docs/spec/07-integration.md
- *                 §2, §7; DECISIONS T221, T236–T239, T241
+ *                 §2, §7; DECISIONS T221, T236–T239, T241; Seasonal Entertainment docs/EMBED.md
  */
 import { expect, test, type Browser, type BrowserContext } from '@playwright/test';
 
@@ -115,10 +118,31 @@ async function signInFromChat(guest: Person, site: WebsiteStack['site'], code: s
   expect((await sessionOf(guest.ctx)).account?.displayName).toBe(PLAYER.name);
 }
 
+// The website's chat behind the round bar (T237): told hidden while its panel is closed, its
+// unread count on the Chat badge, told visible (and the badge gone) once the panel opens.
+async function chatBadge(player: Person): Promise<void> {
+  const page = player.page;
+  const chat = page.frameLocator('[data-testid="chat-drawer"] [data-testid="chat-frame"]');
+  const sight = chat.getByTestId('stub-chat-sight');
+  await expect(sight).toHaveText('hidden');
+  for (let i = 0; i < 2; i += 1) {
+    await sight.evaluate(() => {
+      (window as unknown as { arrive: () => void }).arrive();
+    });
+  }
+  await expect(page.getByTestId('chat-unread')).toHaveText('2 unread');
+  await page.getByTestId('focus-chat').click();
+  await expect(sight).toHaveText('visible');
+  await expect(page.getByTestId('chat-unread')).toHaveCount(0);
+  await page.getByTestId('focus-chat').click();
+  await expect(sight).toHaveText('hidden');
+}
+
 // A shared round the host starts; the member's one guess comes back; the host ends the round.
 async function playOneGuess(host: Person, player: Person): Promise<void> {
   await hostRound(host, { 'Countdown before opening': '3', Secret: 'shared' });
   await roundOpen(player.page);
+  await chatBadge(player);
   await player.page.getByTestId('guess-input').fill('500');
   await player.page.getByTestId('guess-button').click();
   // 500 may be the secret: then the round is over at once.

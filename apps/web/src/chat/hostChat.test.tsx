@@ -2,13 +2,17 @@
 /**
  * @file   apps/web/src/chat/hostChat.test.tsx
  * @module web/chat
- * @brief  The website's chat in the panel (hostEmbed, O66): its frame, its theme, "Log in", no badge.
+ * @brief  The website's chat in the panel (hostEmbed, O66): its frame, theme, "Log in" and badge.
  *
  * Responsibility: the panel frames `/embed/chat?room=mini-games` with `theme` following the
  *                 page's light/dark theme, also after a switch, under the title "Chat"; a
  *                 visitor who is not signed in gets "Log in" to the website's sign-in for this
- *                 page in website mode, a member none, and local mode none; whatever the frame
- *                 posts, the round bar's Chat button shows no unread badge (DECISIONS T237).
+ *                 page in website mode, a member none, and local mode none. Behind the round
+ *                 bar's Chat button the frame is told `visible` false or true as the panel
+ *                 closes or opens (again on `ready`), and its `unread` count shows on the
+ *                 badge, only from the frame's own window at the chat's origin with `source`
+ *                 `seasonal-chat` (DECISIONS T237); the frame asks for an origin-only
+ *                 referrer (T242).
  * Depends on:     vitest, @testing-library/react, @smg/contracts (views), ../shell/session,
  *                 ../round/fakes, ../round/RoundScreen, ./ChatPanel
  * Spec:           docs/spec/07-integration.md §2; Seasonal Entertainment docs/EMBED.md
@@ -107,32 +111,79 @@ describe('"Log in" for guests', () => {
   });
 });
 
-describe('the unread badge', () => {
-  it('shows none in the round bar, whatever the frame posts', () => {
-    serve(true);
-    const open: RoundStateView = { ...ended, status: 'open', role: 'player', game: {} };
-    render(
-      <SessionProvider>
-        <RoundScreen
-          live={{ state: open, feed: [], reload: () => Promise.resolve() }}
-          gameId="none"
-          viewerKey="a"
-          host={null}
-          teamPoints={[]}
-          standings={[]}
-          chat={<ChatPanel target={{ kind: 'match', code: 'ABC234' }} config={WEBSITE_CHAT} bare />}
-        />
-      </SessionProvider>,
+// The round bar with the website's chat behind its Chat button; the chat frame's window.
+function roundWithChat(): Window {
+  serve(true);
+  const open: RoundStateView = { ...ended, status: 'open', role: 'player', game: {} };
+  render(
+    <SessionProvider>
+      <RoundScreen
+        live={{ state: open, feed: [], reload: () => Promise.resolve() }}
+        gameId="none"
+        viewerKey="a"
+        host={null}
+        teamPoints={[]}
+        standings={[]}
+        chat={<ChatPanel target={{ kind: 'match', code: 'ABC234' }} config={WEBSITE_CHAT} bare />}
+      />
+    </SessionProvider>,
+  );
+  const own = screen.getByTestId<HTMLIFrameElement>('chat-frame').contentWindow;
+  if (own === null) throw new Error('no frame window');
+  return own;
+}
+
+// A message as the chat frame (or a stranger) posts it to the game's page.
+function post(data: object, from: { origin?: string; source?: Window | null } = {}): void {
+  act(() => {
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        origin: from.origin ?? window.location.origin,
+        source: from.source ?? null,
+        data,
+      }),
     );
-    expect(screen.getByTestId('focus-chat')).toBeTruthy();
+  });
+}
+
+const unread = (count: number) => ({ source: 'seasonal-chat', type: 'unread', room: 'x', count });
+const visible = (shown: boolean) => ({
+  source: 'seasonal-chat-host',
+  type: 'visible',
+  visible: shown,
+});
+
+describe("the website chat's unread badge (T237)", () => {
+  it('tells the frame its panel is hidden or shown and shows its count on the badge', () => {
+    const own = roundWithChat();
+    const told = vi.spyOn(own, 'postMessage');
+    post(
+      { source: 'seasonal-chat', type: 'ready', room: 'mini-games', signedIn: true },
+      { source: own },
+    );
+    expect(told).toHaveBeenLastCalledWith(visible(false), window.location.origin);
+    post(unread(3), { source: own });
+    expect(screen.getByTestId('chat-unread').textContent).toBe('3 unread');
     act(() => {
-      window.dispatchEvent(
-        new MessageEvent('message', {
-          origin: window.location.origin,
-          data: { source: 'seasonal-chat', type: 'unread', room: 'mini-games', count: 3 },
-        }),
-      );
+      screen.getByTestId('focus-chat').click();
     });
+    expect(told).toHaveBeenLastCalledWith(visible(true), window.location.origin);
     expect(screen.queryByTestId('chat-unread')).toBeNull();
+  });
+
+  it('ignores another origin, another window, another source and a malformed count', () => {
+    const own = roundWithChat();
+    post(unread(2), { origin: 'https://evil.example', source: own });
+    post(unread(2), { source: window });
+    post(unread(2));
+    post({ ...unread(2), source: 'seasonal-chat-host' }, { source: own });
+    post(unread(-1), { source: own });
+    post({ ...unread(2), count: '2' }, { source: own });
+    expect(screen.queryByTestId('chat-unread')).toBeNull();
+  });
+
+  it('asks the browser for a referrer with the origin only', () => {
+    roundWithChat();
+    expect(screen.getByTestId('chat-frame').getAttribute('referrerpolicy')).toBe('strict-origin');
   });
 });

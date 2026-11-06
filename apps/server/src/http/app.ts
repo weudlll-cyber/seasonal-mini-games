@@ -170,9 +170,10 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   // The CSP lets the host's chat room load in a frame while the provider is hostEmbed (in
   // website mode nothing else, 07 §2), and the allowlisted sites frame the game.
   const chatFallback = chatDefault(deps.env);
+  const website = deps.env.SMG_AUTH_MODE === 'website';
   await registerSecurityHeaders(fastify, {
     chat: hostChatSource(settings, chatFallback, deps.env.SMG_PUBLIC_URL),
-    chatOnly: deps.env.SMG_AUTH_MODE === 'website',
+    chatOnly: website,
     embedOrigins: () => embeds.config().origins,
   });
   const metrics = createMetrics();
@@ -183,7 +184,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   const features = featuresFrom(deps.env);
   registerSignIn(fastify, { ...deps, cookie, features, sessionEnds });
   registerTwoFactor(fastify, { pool: deps.pool, env: deps.env, features, audit });
-  registerAdminSettings(fastify, settings, deps.pool);
+  registerAdminSettings(fastify, { settings, pool: deps.pool, website, chat: chatFallback });
   registerAdminAudit(fastify, audit);
   registerAdminAccounts(fastify, { pool: deps.pool, audit, sessionEnds });
   const runtime = createRoundRuntime(deps.env, deps.pool, settings, metrics.rounds);

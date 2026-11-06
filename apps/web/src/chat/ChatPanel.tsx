@@ -8,9 +8,12 @@
  *                 room in a sandboxed frame titled "Chat" from the host chat's address (the
  *                 server's CSP admits it as frame-src; in website mode by default the
  *                 website's `/embed/chat?room=mini-games`, O66) with `theme=light|dark`
- *                 following the game's theme (a change reloads the frame); the game posts
- *                 nothing into it and listens to nothing from it, so it gives no unread count
- *                 (DECISIONS T237). In website mode a visitor who is not signed in also gets
+ *                 following the game's theme (a change reloads the frame); behind the round
+ *                 bar's Chat button the frame is told whether it is in sight and its unread
+ *                 count goes to the badge (./useHostChatFrame, DECISIONS T237). The frame's
+ *                 request carries this site's origin as its referrer (`strict-origin`; the
+ *                 page itself sends none), which the embed needs in Firefox to know its
+ *                 parent (T242). In website mode a visitor who is not signed in also gets
  *                 "Log in": the website's sign-in for this page (../account/SignIn,
  *                 DECISIONS T238); the frame shows the website's own guest view. `bare` drops
  *                 the panel's frame and heading
@@ -19,18 +22,19 @@
  *                 (the lobby) it is a panel of its own height.
  *                 A screen that already loaded the config passes it, else the panel loads it.
  * Depends on:     react, @smg/contracts (ChatConfigView), ../account/SignIn, ../shell/session,
- *                 ../shell/theme, ./ChatRoom, ./useChat, ./chat.css
+ *                 ../shell/theme, ./ChatRoom, ./useChat, ./useHostChatFrame, ./chat.css
  * Used by:        ../lobby/Lobby, ../match/MatchPage
  * Spec:           docs/spec/07-integration.md §2; Bingo 07 §6; Seasonal Entertainment docs/EMBED.md
  */
 import type { ChatConfigView } from '@smg/contracts';
-import type { ReactElement } from 'react';
+import { useRef, type ReactElement } from 'react';
 
 import { SignInLink } from '../account/SignIn.js';
 import { useSession } from '../shell/session.js';
 import { useShownTheme } from '../shell/theme.js';
 import { ChatRoom } from './ChatRoom.js';
 import { useChatConfig, type ChatTarget } from './useChat.js';
+import { useHostChatFrame } from './useHostChatFrame.js';
 import './chat.css';
 
 interface ChatPanelProps {
@@ -63,6 +67,8 @@ function HostChat({ url }: { readonly url: string }): ReactElement {
   const theme = useShownTheme();
   const session = useSession().session;
   const guest = session?.authMode === 'website' && session.account === null;
+  const frame = useRef<HTMLIFrameElement>(null);
+  useHostChatFrame(frame, url);
   return (
     <>
       {guest ? (
@@ -72,10 +78,12 @@ function HostChat({ url }: { readonly url: string }): ReactElement {
         </p>
       ) : null}
       <iframe
+        ref={frame}
         className="chat-frame"
         title="Chat"
         src={withTheme(url, theme)}
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        referrerPolicy="strict-origin"
         data-testid="chat-frame"
       />
     </>

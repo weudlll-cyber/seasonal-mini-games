@@ -10,7 +10,8 @@
  *                 reach the website), with the cookie `stub_user` of a known member 204 and the
  *                 identity headers, anyone else 204 with X-Acting-Guest alone (never 401);
  *                 GET /login?next= signs the member the test chose in (that cookie) and goes back
- *                 to `next`; GET /embed/chat the chat room's page with its room and theme;
+ *                 to `next`; GET /embed/chat the chat room's page with its room and theme, which
+ *                 speaks the embed's postMessage protocol (docs/EMBED.md, `chatScript`);
  *                 GET /api/games/mini-games/account-changes the changes the test queued (`remove`)
  *                 with the sync token, else 401. Its cursors carry the run's id, so a cursor an
  *                 earlier run left in the database starts this run from its beginning.
@@ -102,10 +103,44 @@ function login(site: StubSite, url: URL, res: ServerResponse): void {
   send(res, 302, { location: back, ...cookie });
 }
 
+// The embed's side of EMBED.md's postMessage API: it finds its parent (ancestorOrigins, else
+// the referrer), talks only to this site (the website's check, simplified), posts `ready`, and
+// on `visible` shows "hidden" or "visible"; `arrive()` (called by the journey) is a message
+// from someone else, counted and posted as `unread` while it is out of sight, 0 again when
+// shown.
+function chatScript(room: string): string {
+  return `const room = ${JSON.stringify(room)};
+const parent = location.ancestorOrigins?.[0] ?? (document.referrer ? new URL(document.referrer).origin : '');
+let hidden = false;
+let count = 0;
+const say = (m) => {
+  if (parent === location.origin) window.parent.postMessage({ source: 'seasonal-chat', ...m }, parent);
+};
+const sight = document.querySelector('[data-testid="stub-chat-sight"]');
+window.addEventListener('message', (e) => {
+  if (e.origin !== parent || e.source !== window.parent) return;
+  if (e.data?.source !== 'seasonal-chat-host' || e.data.type !== 'visible') return;
+  hidden = e.data.visible === false;
+  sight.textContent = hidden ? 'hidden' : 'visible';
+  if (hidden || count === 0) return;
+  count = 0;
+  say({ type: 'unread', room, count });
+});
+window.arrive = () => {
+  if (hidden) say({ type: 'unread', room, count: ++count });
+};
+say({ type: 'ready', room, signedIn: false });`;
+}
+
 function chatPage(url: URL, res: ServerResponse): void {
   const room = (url.searchParams.get('room') ?? '').replace(/[^\w-]/g, '');
   const theme = (url.searchParams.get('theme') ?? '').replace(/[^\w-]/g, '');
-  const body = `<!doctype html><title>Chat</title><p data-testid="stub-chat">Stub chat: room ${room}, theme ${theme}</p>`;
+  const body = [
+    '<!doctype html><title>Chat</title>',
+    `<p data-testid="stub-chat">Stub chat: room ${room}, theme ${theme}</p>`,
+    '<p data-testid="stub-chat-sight">visible</p>',
+    `<script>${chatScript(room)}</script>`,
+  ].join('');
   send(res, 200, { 'content-type': 'text/html; charset=utf-8' }, body);
 }
 

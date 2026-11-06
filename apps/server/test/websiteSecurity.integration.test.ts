@@ -15,11 +15,16 @@
  *                 and reports itself. A guest session watches and reads the boards, every
  *                 action asks for a sign-in. The chat is the website's room by default and the
  *                 CSP frames only its /embed/chat; local mode keeps builtin and 'self' (T236).
+ *                 The admin app's settings: the security document leaves the linked-chat rule
+ *                 out (T222); the integrations document names the website's chat in effect and
+ *                 why while no admin chose one (T240).
  *                 Adapted from Bingo's websiteLogin and websiteRules tests.
- * Depends on:     vitest, ../src/index (types), ./chatKit, ./harness, ./websiteHelpers
+ * Depends on:     vitest, @smg/contracts (types), ../src/index (types), ./chatKit, ./harness,
+ *                 ./websiteHelpers
  * Spec:           docs/spec/07-integration.md §7; docs/spec/05-security-threat-model.md §1;
  *                 Bingo 07 §2.3; Bingo 03 §2.2
  */
+import type { SettingsDocumentView } from '@smg/contracts';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import type { App } from '../src/index.js';
@@ -31,6 +36,7 @@ import {
   cookieOf,
   headersOf,
   sessionOf,
+  signedIn,
   viaProxy,
   WEBSITE,
 } from './websiteHelpers.js';
@@ -223,5 +229,37 @@ describe("the website's chat (07 §2)", () => {
     const standalone = await configOf(local, '/api/v1/chat/config');
     expect(standalone.json()).toEqual({ provider: 'builtin', hostChatUrl: null });
     expect(frameSrc(standalone)).toBe("frame-src 'self'");
+  });
+});
+
+describe('the admin app in website mode (T222, T240)', () => {
+  const documentOf = async (id: string) => {
+    const admin = await signedIn(website(), { id: '9', name: 'Ada', roles: 'admin' });
+    return (await callWith(website(), admin, `admin/settings/${id}`)).json<SettingsDocumentView>();
+  };
+
+  it('leaves the linked-chat rule out of the security document', async () => {
+    const doc = await documentOf('security');
+    const keys = doc.defs.map((d) => d.key);
+    expect(keys).toContain('antiMulti.minAccountAgeH');
+    expect(keys).not.toContain('antiMulti.requireLinkedChat');
+    expect(doc.values).not.toHaveProperty(['antiMulti.requireLinkedChat']);
+    expect(doc.unavailable).toBeUndefined();
+  });
+
+  it("names the website's chat in effect and why while no admin chose one", async () => {
+    const doc = await documentOf('integrations');
+    expect(doc.values['integrations.chatProvider']).toBe('builtin');
+    expect(doc.inEffect).toEqual({
+      'integrations.chatProvider': {
+        value: 'hostEmbed',
+        reason:
+          'This install runs inside the website; its chat is used until an admin chooses another.',
+      },
+      'integrations.hostChatUrl': {
+        value: '/embed/chat?room=mini-games',
+        reason: "The website's own room on this site, used until an admin sets another address.",
+      },
+    });
   });
 });

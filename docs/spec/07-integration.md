@@ -30,10 +30,10 @@ The chat UI sits behind a `ChatPanel` component boundary, as in Bingo 07 §6. Th
 | `builtin` | The platform's own chat (Bingo 06 §7, 03 §12): one room per match plus the lobby room | Standalone installs |
 | `hostEmbed` | One dedicated room of the host's chat, embedded by URL (`integrations.hostChatUrl`). On the Seasonal Entertainment website: room slug `mini-games` through the website's `/embed/chat?room=mini-games` | Website installs |
 
-- **Which provider applies:** the admin's stored `integrations.chatProvider`; while none is stored, `SMG_CHAT_PROVIDER` (`none`, `builtin`, `hostEmbed`), and in website mode (§7) `hostEmbed` even without it. An empty `integrations.hostChatUrl` then means the website's own room, `/embed/chat?room=mini-games` on the game's origin (DECISIONS T236).
+- **Which provider applies:** the admin's stored `integrations.chatProvider`; while none is stored, `SMG_CHAT_PROVIDER` (`none`, `builtin`, `hostEmbed`), and in website mode (§7) `hostEmbed` even without it. An empty `integrations.hostChatUrl` then means the website's own room, `/embed/chat?room=mini-games` on the game's origin (DECISIONS T236). The admin app's Integrations page shows the provider and address in effect with the reason (owner decision 68, T240).
 - **The website's room in the game** (website mode, owner decision 66; the website's docs/EMBED.md): the chat panel (the desktop drawer and the phone's sheet of the round bar, the panel between rounds and in the lobby) frames `/embed/chat?room=mini-games&theme=<light|dark>`, titled "Chat"; `theme` follows the game's light/dark theme and a switch reloads the frame. The website's session cookie applies, so the frame shows the member or the website's own guest view; for a visitor not signed in to the game the panel also shows "Log in", the game's sign-in route for the page shown (§7; it passes through the website's `/login?next=`, DECISIONS T238).
 - **CSP:** in website mode `frame-src` admits only `<site>/embed/chat` (by path; an admin's own host chat by its origin; `'none'` without a host chat). Standalone installs keep the host chat's origin with `hostEmbed`, else `'self'` (DECISIONS T91, T236).
-- **No unread badge with `hostEmbed`:** the game listens to nothing from the frame, so the round bar's Chat button shows no count (proposal in [OPEN](../OPEN.md) (ad), T237).
+- **The unread badge with `hostEmbed`** (owner decision 68): behind the round bar's Chat button the game tells the frame whether the panel is in sight (`visible`, again on each `ready`) and shows the frame's `unread` count on the badge, as the website's docs/EMBED.md defines; it acts only on messages from the frame's own window at the chat's origin with `source` `seasonal-chat` (DECISIONS T237). The frame's request carries the page's origin as its referrer (`referrerpolicy="strict-origin"`; the page itself sends none), which the embed needs in Firefox (T242). The lobby and the waiting area tell the frame nothing.
 - With `none` and `hostEmbed`, the platform posts nothing into any chat. Winners, solves and specials appear in the announcement strip only.
 - With `builtin`, the platform writes one system line per round end that names the number (owner, decision 32): "Round 4: Walter found it first — the number was 731", in individual mode "— their number was 731" (the winner's), and "Round 4 ended: nobody found it — the number was 731" (without a number in individual mode). The game words the number through its optional `reveal` hook (04 §4; DECISIONS T90).
 - A chat mute applies to the whole chat (owner, decision 32): the moderator's inline mute and the admin API's mute both cover every room; only a ban may be kept to one room.
@@ -65,7 +65,7 @@ Webhook events (Bingo 07 §5 mechanics): `match.opened`, `round.countdown` (with
 - Standalone installs have no such claim, so the rule cannot be switched on there: the admin form disables it with its reason, and the server refuses it (`SETTING_UNAVAILABLE`). An install counts as a website install when it has an enabled JWT handoff provider (DECISIONS T103).
 - An account the handoff created has no password: `DELETE /me` asks it to type its display name instead (`{ confirm }`, DECISIONS T105), and `GET /session` says so (`account.hasPassword: false`), so the account page offers no "Change password" (T201).
 - Adding the claim is a website task (BACKLOG, "Needed from the website repository").
-- The website's proxy headers (§7) carry no such fact, so in website mode the rule stays unavailable unless an enabled JWT handoff provider exists as well (proposal in [OPEN](../OPEN.md), DECISIONS T222).
+- The website's proxy headers (§7) carry no such fact, so in website mode the rule is not shown in the admin app and has no effect, a JWT handoff provider or not (owner decision 68, DECISIONS T222).
 
 ## 5. The In Season feed (new)
 
@@ -100,7 +100,7 @@ The In Season season ([03](03-seasonal-specials.md) §3) and, where available, t
 | Chat | `builtin` | `hostEmbed`, room `mini-games` |
 | In Season | Only with a configured feed | From the website feed |
 | Halving days | Admin list | Website feed plus admin list |
-| Multi-account rule `requireLinkedChat` | Not available | Only with an enabled JWT handoff provider (§4; the proxy headers carry no links, DECISIONS T222) |
+| Multi-account rule `requireLinkedChat` | Not available | Not shown and without effect (§4; the proxy headers carry no links, DECISIONS T222) |
 | Game rules, cooldowns, specials, ordering | Identical | Identical |
 
 ## 7. Website mode: proxy headers and the account-changes feed (new)
