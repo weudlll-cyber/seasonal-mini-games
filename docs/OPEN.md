@@ -26,10 +26,10 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 
 **(ab) The countdown before a round (2026-11-01).** The countdown is now the round's intro screen (owner decision 36): the season, its special and what it does, the secret and its range, the cooldown and the seconds left. Proposal: `round.countdownS` 10 s instead of 5 s, so the screen can be read; the range stays 3–30 s (02 §3, 08 §3; DECISIONS T109).
 
-**Points of look for the owner** (from the Night-6 screenshot review; the other items of that review are fixed, BACKLOG part two):
+**Proposals to look at after play** (night 9, `feat/round-polish`, from the Night-6 screenshot review's two open points; the other items of that review are fixed, BACKLOG part two). Quick Test: Guess The Number, seed `acorn`, individual mode, Bots 3, Fast specials on, "Start from the lobby" on; then the same in dark mode. Shots: branch `shots/night-9`.
 
-- In individual mode the desktop's info column is empty under the game's panel (T141 leaves "Your guesses" out, the stage holds the same rows).
-- In dark mode an own row's tint of a muted dot (olive, Team Spring) reads greyish; a stronger tint cost the colour dots and answers their contrast (T147), so it stays at 22 %.
+- **T260 (proposal) The Others panel.** In individual mode the desktop's info column was empty under the game's panel. Built: an "Other players" panel there in all four games, one row per other player of this round with name, number of guesses and "solved" once they found their own number (O54: this round only); on a phone the "Others: …" line above the list stays as it was. Keep it, or go back to the line on a desktop too.
+- **T261 (proposal) The own row in dark mode.** The tint of a warm own colour (olive Team Spring, Autumn) read grey on the night blue. Built: in dark mode the row is 30 % of the viewer's colour mixed into black instead of 22 % over the blue card, so each season colour keeps its hue (Spring dark olive, Summer brown, Autumn amber, Winter deep blue); every text colour of a row keeps at least 4.5:1 (lowest: Frost's blue on Autumn, 4.59:1), and the colour dots' ring 3.0:1. Light mode is unchanged. Applies to the round's lists, "Your guesses" and the Players panel. Keep it, or ask for another strength.
 
 ## Spec conflicts
 

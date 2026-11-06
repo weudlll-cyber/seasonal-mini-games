@@ -6,16 +6,18 @@
  * Responsibility: a list fills the box it gets (the stage, the info column, the phone's main
  *                 row) and scrolls inside itself, newest at the top (O20), in larger text on a
  *                 large screen. Its head is one line: the count, the banner in its place,
- *                 "Log (M)" at its end (T142, T150); in individual mode the others' counts in
- *                 a row of their own under it. A guess row is one line on both layouts: dot,
- *                 name, the guess, the answer and on a desktop the comment in small text;
- *                 where the line is short the comment gives way first, then the name (with an
- *                 ellipsis), the guess and the answer never (T150); on a phone the
- *                 row is a button and an open comment a second line under the name. The
- *                 viewer's own rows on a tint of their own dot's colour (`--own`, T75); Frost's held answer with its seconds in a small
- *                 badge; an event is one quieter line, a special's own row (Leaf Fall) on the
- *                 season's outline with its icon in bold (T115). The pegs and colour dots are
- *                 ./roundMarks.css. Colours only from @smg/ui tokens.
+ *                 "Log (M)" at its end (T142, T150); in individual mode on a phone the
+ *                 others' counts in a row of their own under it (T260). A guess row is one
+ *                 line on both layouts: dot, name, the guess, the answer and on a desktop the
+ *                 comment in small text; where the line is short the comment gives way first,
+ *                 then the name (with an ellipsis), the guess and the answer never (T150); on
+ *                 a phone the row is a button and an open comment a second line under the
+ *                 name. The viewer's own rows on a tint of their own dot's colour (`--own`,
+ *                 T75), its strength and base the theme's (`--own-tint`, T261); Frost's held
+ *                 answer with its seconds in a small badge; an event is one quieter line, a
+ *                 special's own row (Leaf Fall) on the season's outline with its icon in bold
+ *                 (T115). The pegs and colour dots are ./roundMarks.css. Colours only from
+ *                 @smg/ui tokens.
  * Spec:           docs/spec/02-game-guess-the-number.md §6.3, §12
  */
 .round-log {
@@ -60,8 +62,8 @@
   margin: 0;
 }
 
-/* Individual mode: the others' counts, a row of its own that no banner replaces (T150); a
-   long roster wraps to a second line. */
+/* Individual mode on a phone: the others' counts, a row of its own that no banner replaces
+   (T150); a long roster wraps to a second line. */
 .round-log-others {
   flex: none;
   margin: 0;
@@ -125,8 +127,8 @@ button.round-row-line {
 }
 
 .round-row[data-own='true']:not([data-solo]) {
-  /* The viewer's own colour, their dot's (`--own`, ./RoundScreen). */
-  background: color-mix(in srgb, var(--own, var(--season)) 22%, var(--color-card));
+  /* The viewer's own colour, their dot's (`--own`, ./RoundScreen), at the theme's strength. */
+  background: color-mix(in srgb, var(--own, var(--season)) var(--own-tint), var(--color-own-base));
   box-shadow: inset 4px 0 0 var(--own, var(--season));
 }
 

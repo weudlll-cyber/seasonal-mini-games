@@ -8,7 +8,8 @@
  *                 screen shows, one wins, both see the result with the revealed secret; one
  *                 player plays on a 390 × 844 screen. Journey 2 — an individual round: placings
  *                 follow the solve order, a solved player can guess no more and keeps their own
- *                 rows with a notice and their place (O25), the round ends with
+ *                 rows with a notice and their place (O25), the others are rows of the info
+ *                 column's Others panel with their guesses and "solved" (T260), the round ends with
  *                 "time is up" and a "not solved" row for the player who did not play.
  * Depends on:     @playwright/test, ./play, ./screens
  * Spec:           docs/spec/09-testing-strategy.md §4 (journeys 1, 2); docs/spec/02-game-guess-the-number.md §4–§9
@@ -129,8 +130,10 @@ test('journey 2: an individual round places solvers in order and ends with time 
     await expect(solvedRow.locator('.round-comment')).not.toBeEmpty();
     await search(two);
     // Individual mode: player 2's guesses get no rows on player 1's list, only their count in
-    // the others' row above it (T142, T150).
-    await expect(one.page.getByTestId('others-line')).toContainText(/dev-player-2: [1-9]/);
+    // the info column's Others panel (T142, T260), with "solved" once they found theirs.
+    const others = one.page.getByTestId('others-panel').getByRole('listitem');
+    await expect(others.filter({ hasText: 'dev-player-2' })).toContainText(/[1-9] guess.*solved/);
+    await expect(others.filter({ hasText: 'dev-player-3' })).toHaveText(/0 guesses$/);
     await expect(one.page.locator('[data-testid="guess-list"] li[data-own="false"]')).toHaveCount(
       0,
     );
