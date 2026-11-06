@@ -31,12 +31,6 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 - **T260 (proposal) The Others panel.** In individual mode the desktop's info column was empty under the game's panel. Built: an "Other players" panel there in all four games, one row per other player of this round with name, number of guesses and "solved" once they found their own number (O54: this round only); on a phone the "Others: …" line above the list stays as it was. Keep it, or go back to the line on a desktop too.
 - **T261 (proposal) The own row in dark mode.** The tint of a warm own colour (olive Team Spring, Autumn) read grey on the night blue. Built: in dark mode the row is 30 % of the viewer's colour mixed into black instead of 22 % over the blue card, so each season colour keeps its hue (Spring dark olive, Summer brown, Autumn amber, Winter deep blue); every text colour of a row keeps at least 4.5:1 (lowest: Frost's blue on Autumn, 4.59:1), and the colour dots' ring 3.0:1. Light mode is unchanged. Applies to the round's lists, "Your guesses" and the Players panel. Keep it, or ask for another strength.
 
-## Spec conflicts
-
-Resolved by the decision rules (owner decisions first, then the more specific section); the spec text is to follow in its next change.
-
-2. **Switching teams and the tie-break (2026-11-01).** 03 §5 let a player switch teams between rounds and broke ties between the smallest teams with the round seed; owner decision 26 fixes the team for the whole match. Built as O26 (owner decisions first): the team is chosen once and locked from the player's first round (`TEAM_LOCKED`), and a player without one is placed in the match's smallest team when their first round starts; the tie-break uses a hash of the round id and the player key, because the match layer does not hold the sealed seed (DECISIONS T82). 03 §5 now says so.
-
 ## Spec gaps
 
 1. **`round_results.secret`.** 06 §2.4 has a column for an individual player's secret, written at the end. The server is game-agnostic and the game-module contract has no way to name "the secret of this player", so the column stays NULL; the result view and `/rounds/:id/verify` show every secret. Proposal: drop the column in the next spec change, or add a contract hook if a report needs it.
