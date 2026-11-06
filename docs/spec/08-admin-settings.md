@@ -111,7 +111,7 @@ Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.co
 
 | Key | Default | Min | Max | Status | Who | Running rounds |
 |---|---|---|---|---|---|---|
-| `seasons.feedUrl` | empty (In Season off) | — | — (HTTPS, host on the allowlist) | technical | security admin | next poll |
+| `seasons.feedUrl` | empty (In Season off) | — | — (HTTPS; its host is the one the feed may reach, every address public, 07 §5) | technical | security admin | next poll |
 | `inSeason.pollS` | 300 | 60 | 3 600 | technical | season admin | immediate |
 | `inSeason.staleAfterH` | 24 | 1 | 168 | owner (O15) | season admin | next: read at round creation |
 | `halving.timeZone` | `UTC` | — | — (IANA zone) | owner (O15) | season admin | next: read at round creation |
