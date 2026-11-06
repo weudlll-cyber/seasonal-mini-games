@@ -58,7 +58,12 @@ Branch `feat/website-mode` from `master` at `4ab2986`; not merged by this task. 
   - It passed once, in 17 s; the two runs before failed on the bug below.
 - Product fix the journey found: a player who joined with the match page's "Join match" showed as "away" and was left out of the roster at countdown until a reload, because presence is recorded only at `match.watch`. `useMatch`'s new `useRewatch` watches again when the player's seat changes; covered by `useMatch.test.tsx`.
 - Reused: `play.ts`'s `call`, `attempt`, `visit`, `playerRow`, `hostRound`, `hostMenu`, `roundOpen`, `ownRows`, `abortMatch`, `closeAll`; `DESKTOP`; `viteBuild`, taken out of `builtAdmin.ts`; `devStack`'s `databaseUrl`; the stub's rules from `ops/test/stub-website.py`.
-- `pnpm verify` at `5dd81bd`, dev servers stopped: format, lint and typecheck clean; 158 test files and 871 tests passed.
+- `pnpm verify` at `5dd81bd`, dev servers stopped: format, lint and typecheck clean; 158 test files and 871 tests passed. CI on `63cb0e4`: green.
+
+### The website's answer (2026-11-06)
+
+- The website accepted the contract unchanged as its task SE-EMBEDDED-GAMES (branch `feat/embedded-games`). It matches what this branch builds: the authorize headers, the feed with its own cursor per game, the files in `/etc/seasonal/`, the routes folder, `/login?next=`, `/embed/chat?room=mini-games&theme=…`, and `--mini-games`, which the installer's stop message names.
+- Added on the website's side: Bingo gets its room `bingo` the same way; each room is created once when its game is switched on (members write, guests read) and kept afterwards; no live install has embedded games yet. Its report section "For the Mini Games side" will be checked against spec 07 §7 when it arrives, and that section wins where it differs.
 
 ## The team column, the owner's confirmations, the merge (2026-11-04)
 
