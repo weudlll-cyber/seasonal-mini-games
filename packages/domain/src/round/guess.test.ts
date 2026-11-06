@@ -8,7 +8,8 @@
  *                 nothing; the shared winner ends the round and later guesses are ROUND_OVER;
  *                 a correct guess inside the margin window sets the margin; individual
  *                 solvers are placed in solve order and cannot guess again; the game can
- *                 end the round and can refuse late.
+ *                 end the round and can refuse late; a solve signal for someone outside the
+ *                 roster and any signal after the round's end change nothing.
  * Depends on:     vitest, ./fakes
  * Spec:           docs/spec/02-game-guess-the-number.md §5, §7, §8, §9
  */
@@ -159,5 +160,26 @@ describe('game signals', () => {
     const t = d.start(['a']);
     expect(d.guess('a', 20, t)).toMatchObject({ ok: true });
     expect(d.state).toMatchObject({ status: 'ended', endReason: 'game' });
+  });
+
+  it('ignore a solve outside the roster and anything after the round has ended', () => {
+    // The pick game signalling, on a hit, a stranger's solve, the guesser's, then an end.
+    const noisy: typeof pickGame = {
+      ...pickGame,
+      decide: (s, act, ctx) => {
+        const d = pickGame.decide(s, act, ctx);
+        if (!d.ok || d.signals.length === 0) return d;
+        const solved = (playerId: string) => ({ type: 'Solved', playerId }) as const;
+        const end = { type: 'RoundShouldEnd', reason: 'late' } as const;
+        return { ...d, signals: [solved('ghost'), solved(act.playerId), end] };
+      },
+    };
+    const d = new PickDriver({}, undefined, undefined, noisy);
+    const t = d.start(['a', 'b']);
+    expect(d.guess('a', 7, t)).toMatchObject({ ok: true });
+    const solves = d.log.filter((e) => e.type === 'PlayerSolved').map((e) => e.playerId);
+    expect(solves).toEqual(['a']);
+    expect(d.log.filter((e) => e.type === 'RoundEnded')).toHaveLength(1);
+    expect(d.state).toMatchObject({ status: 'ended', endReason: 'solved', winner: 'a' });
   });
 });

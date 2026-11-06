@@ -80,6 +80,8 @@ async function refreshStandings(c: pg.PoolClient, matchId: string) {
     guesses: 0,
     team: null,
     points: r.points,
+    // Only points and wins count for the standings; a timed-out row has neither (O71).
+    timedOut: false,
   }));
   await c.query('DELETE FROM smg.match_standings WHERE match_id = $1', [matchId]);
   for (const s of standings(scoredPlayers(results))) {

@@ -3,8 +3,8 @@
  * @module application/round
  * @brief  Round settings, a round session from creation to result, recovery and the proof.
  *
- * Responsibility: host choices are taken only for host keys inside their bounds and the
- *                 game's own rule; a session commits to its seed, derives secrets once the
+ * Responsibility: host choices are taken only for host keys inside their bounds, the
+ *                 inactivity warning below the limit (O71) and the game's own rule; a session commits to its seed, derives secrets once the
  *                 roster is frozen, shows a result only after the end and reveals the seed
  *                 there; recovery from the log continues where the live session was; the
  *                 fairness proof checks out, and a wrong seed or a round without proof fails.
@@ -78,6 +78,42 @@ describe("Heatwave's numbers per round (O63)", () => {
     for (const choices of [{ 'summer.stepS': 11 }, { 'summer.stepIntervalS': 4 }]) {
       expect(() => chooseRoundSettings(findGame, {}, choices)).toThrow(
         expect.objectContaining({ code: 'ROUND_SETTINGS_INVALID' }),
+      );
+    }
+  });
+});
+
+describe('the inactivity limit per round (O71)', () => {
+  it("takes the host's limit and warning over the admin's defaults, and 0 as off", () => {
+    const defaults = chooseRoundSettings(findGame, {}, {}).platform;
+    expect([defaults.inactivityLimitMs, defaults.inactivityWarnMs]).toEqual([60_000, 30_000]);
+    const chosen = chooseRoundSettings(
+      findGame,
+      { 'round.inactivityLimitS': { value: 120 } },
+      { 'round.inactivityWarnS': 90 },
+    ).platform;
+    expect([chosen.inactivityLimitMs, chosen.inactivityWarnMs]).toEqual([120_000, 90_000]);
+    const off = chooseRoundSettings(findGame, {}, { 'round.inactivityLimitS': 0 }).platform;
+    expect(off.inactivityLimitMs).toBe(0);
+  });
+
+  it('refuses a warning not below the limit, also against the admin default', () => {
+    const pair = 'The warning must be shorter than the limit.';
+    const range = 'Must be between 20 and 600, or 0 for off.';
+    // Each refusal names the field it belongs to, with its sentence (O74).
+    const refused = [
+      [{}, { 'round.inactivityLimitS': 30, 'round.inactivityWarnS': 30 }, 'Warn', pair],
+      [{}, { 'round.inactivityLimitS': 25 }, 'Warn', pair],
+      [{ 'round.inactivityWarnS': { value: 50 } }, { 'round.inactivityLimitS': 40 }, 'Warn', pair],
+      [{}, { 'round.inactivityLimitS': 10 }, 'Limit', range],
+    ] as const;
+    for (const [overrides, choices, field, message] of refused) {
+      expect(() => chooseRoundSettings(findGame, overrides, choices)).toThrow(
+        expect.objectContaining({
+          code: 'ROUND_SETTINGS_INVALID',
+          field: `round.inactivity${field}S`,
+          message,
+        }),
       );
     }
   });

@@ -92,7 +92,9 @@ describe('NumberField bounds and sign', () => {
     expect(input.getAttribute('aria-invalid')).toBe('true');
     const help = screen.getByText(/Allowed: -1000000 to 1000000\./);
     expect(help.className).toContain('smg-field-help--error');
-    expect(input.getAttribute('aria-describedby')).toBe(help.id);
+    // Its own problem while typing is not an alert; the help line describes the field too.
+    expect(help.getAttribute('role')).toBeNull();
+    expect(input.getAttribute('aria-describedby')?.split(' ')).toContain(help.id);
     fireEvent.blur(input);
     expect(input.value).toBe('-1000000');
     expect(seen).toHaveBeenLastCalledWith(-1_000_000);

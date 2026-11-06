@@ -8,11 +8,13 @@
  *                 unknown keys, wrong values, widened bounds, missing permissions and stale
  *                 versions are refused without a write; resetting a key needs the same
  *                 permission; a lost save race is a version conflict; a removed setting's
- *                 override is left out of the view and dropped by the next save.
- * Depends on:     vitest, ./settingsService, ../fakes, @smg/contracts
+ *                 override is left out of the view and dropped by the next save; a default
+ *                 inactivity warning not below the limit is refused unless the limit is off (O71).
+ * Depends on:     vitest, ./settingsService, ../fakes, @smg/contracts, @smg/game-sdk
  * Spec:           docs/spec/08-admin-settings.md §1, §2
  */
 import { PLATFORM_SETTINGS } from '@smg/contracts';
+import { PLATFORM_ROUND_SETTINGS } from '@smg/game-sdk';
 import { describe, expect, it } from 'vitest';
 
 import type { AuditActor } from '../audit/ports.js';
@@ -145,5 +147,62 @@ describe('SettingsService and a removed setting', () => {
     expect(store.docs.get('matchmaking')?.overrides).toEqual({
       'match.maxPlayers': { value: 300 },
     });
+  });
+});
+
+describe('SettingsService and the inactivity pair (O71)', () => {
+  const editor = actor(['settings.game.edit']);
+  const round = () =>
+    new SettingsService(
+      { 'game.test': PLATFORM_ROUND_SETTINGS },
+      new MemorySettingsStore(),
+      new MemoryAuditLog(),
+    );
+  const pair = (limit: number, warn: number) => ({
+    version: 1,
+    overrides: {
+      'round.inactivityLimitS': { value: limit },
+      'round.inactivityWarnS': { value: warn },
+    },
+  });
+
+  it('refuses a default warning that is not below the limit, without a write', async () => {
+    const settings = round();
+    await expect(settings.update('game.test', pair(40, 40), editor)).rejects.toMatchObject({
+      code: 'SETTING_INVALID',
+      // The warning field's sentence, for under that field in the admin table (O74).
+      field: 'round.inactivityWarnS',
+      detail: 'The warning must be shorter than the limit.',
+    });
+    // A warning above the default limit alone is refused as well.
+    await expect(
+      settings.update(
+        'game.test',
+        { version: 1, overrides: { 'round.inactivityWarnS': { value: 90 } } },
+        editor,
+      ),
+    ).rejects.toMatchObject({ code: 'SETTING_INVALID', field: 'round.inactivityWarnS' });
+    // A value outside its bounds names its own field with the bounds sentence.
+    await expect(
+      settings.update(
+        'game.test',
+        { version: 1, overrides: { 'round.inactivityLimitS': { value: 10 } } },
+        editor,
+      ),
+    ).rejects.toMatchObject({
+      field: 'round.inactivityLimitS',
+      detail: 'Must be between 20 and 600, or 0 for off.',
+    });
+    expect((await settings.view('game.test', [])).version).toBe(1);
+  });
+
+  it('saves a warning below the limit, and any warning with the limit off', async () => {
+    const settings = round();
+    await expect(settings.update('game.test', pair(40, 20), editor)).resolves.toMatchObject({
+      version: 2,
+    });
+    const off = { ...pair(0, 90), version: 2 };
+    const view = await settings.update('game.test', off, editor);
+    expect(view.values['round.inactivityLimitS']).toBe(0);
   });
 });

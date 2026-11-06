@@ -166,5 +166,8 @@ function registerHistory(app: FastifyInstance, install: SettingsInstall): void {
 
 function failed(reply: FastifyReply, error: unknown): FastifyReply {
   if (!(error instanceof SettingsError)) throw error;
-  return reply.status(STATUS[error.code]).send({ code: error.code, detail: error.detail });
+  // A refused value names its setting (`field`) for the admin table (O74).
+  return reply
+    .status(STATUS[error.code])
+    .send({ code: error.code, detail: error.detail, field: error.field });
 }

@@ -111,7 +111,7 @@ export class RoundSession<S, A, E, Cfg, Sec> {
     return this.module.views.result(game, this.secrets);
   }
 
-  // When the round next has to run without any player action (open, special, end).
+  // When the round next has to run without any player action (open, special, timeout, end).
   nextDue(): number | null {
     return nextDue(this.current, this.module);
   }

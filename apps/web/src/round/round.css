@@ -15,8 +15,9 @@
  *                 (at most 48 px, the game's panel behind it as a sheet), a board game's board
  *                 as wide as the screen, the round's guesses filling the height that is left,
  *                 at least four rows under a board, and the dock at the bottom, which no sheet
- *                 covers. The season pill in its token colour (./SeasonPill); a solved player's
- *                 notice in the dock (O25); the platform's refusal line. The Players panel is
+ *                 covers. The season pill in its token colour (./SeasonPill); a solved or timed-out
+ *                 player's notice in the dock (O25, O71) and the inactivity countdown line;
+ *                 the platform's refusal line. The Players panel is
  *                 ./players.css, the list's rows ./roundLog.css, the banner ./roundSpecials.css,
  *                 the intro ./roundIntro.css, the cooldown ring ./cooldownRing.css. Colours only
  *                 from @smg/ui tokens, so light and dark both work (Bingo 01 §13). The result is
@@ -232,13 +233,26 @@
   gap: var(--space-1);
 }
 
-/* Solved (individual mode): a short notice where the input row was, in the season's frame. */
+/* Solved (individual mode) or out of time (O71): a short notice where the input row was, in
+   the season's frame. */
 .round-solved {
   margin: 0;
   padding: var(--space-2) var(--space-3);
   border: 2px solid var(--season);
   border-radius: var(--radius);
   background: var(--color-surface);
+  font-weight: var(--font-weight-strong);
+}
+
+/* The inactivity countdown above the input (O71): the warning surface with the text colour,
+   over 4.5:1 in both themes, edged in the danger colour so it stands out on a light card. */
+.round-inactivity {
+  margin: 0;
+  padding: var(--space-1) var(--space-2);
+  border-left: 4px solid var(--color-danger);
+  border-radius: var(--radius);
+  background: var(--color-warning-surface);
+  color: var(--color-text);
   font-weight: var(--font-weight-strong);
 }
 

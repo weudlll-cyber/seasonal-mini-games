@@ -11,7 +11,7 @@ The server hides a target in one tile of a square grid of 20 × 20 tiles (owner,
 ## 2. Matches and rounds
 
 - A match is always one game, chosen by the host when creating the match (owner, decision 41). A Seasonal Target match runs only Seasonal Target rounds.
-- Everything else is [02](02-game-guess-the-number.md) §2 (lobby, waiting area, teams, Quick Test, end of a match, match summary), §4 (round lifecycle), §7 (cooldown), §10 (fairness proof: the secret tiles, the quarter hint, the fallen tiles and the halving windows are recomputed from the seed) and §8 (winning and round end; the host plays along, owner decision 16).
+- Everything else is [02](02-game-guess-the-number.md) §2 (lobby, waiting area, teams, Quick Test, end of a match, match summary), §4 (round lifecycle), §5.3 (the inactivity limit, owner decision 71), §7 (cooldown), §10 (fairness proof: the secret tiles, the quarter hint, the fallen tiles and the halving windows are recomputed from the seed) and §8 (winning and round end; the host plays along, owner decision 16).
 - **Intro line** (owner, decision 36; DECISIONS T109): "Shared target on a 20 × 20 grid" / "Everyone has their own target on a 20 × 20 grid".
 
 ## 3. Round settings
@@ -29,7 +29,7 @@ The stops of Leaf Fall (`autumn.minCellsLeft`, default 10, 2–50) and halving (
 
 A guess is one tile, action `{ value: { x, y } }`: whole numbers 1–30, 1-based, `x` the column from the west edge, `y` the row from the top; row 1 is the north edge. Coordinates are shown as "column 12, row 7", short "(12, 7)". Anything that is not two whole numbers fails the action schema like any malformed intent ([06](06-data-model-api-realtime.md) §4.3). Checks in [02](02-game-guess-the-number.md) §5.1 order, the game's own replacing check 4 and 5 *(proposal)*:
 
-1. `ROUND_NOT_OPEN` / `ROUND_OVER`, 2. `NOT_IN_ROUND`, 3. `ALREADY_SOLVED` — as 02 §5.1.
+1. `ROUND_NOT_OPEN` / `ROUND_OVER`, 2. `NOT_IN_ROUND` / `TIMED_OUT` (02 §5.3), 3. `ALREADY_SOLVED` — as 02 §5.1.
 4. `OUT_OF_MAP`: the tile lies outside the grid — "That tile is not on the grid." — or outside the round's current halving window (§8.4) — "That tile is outside the target area."
 5. `CELL_REMOVED`: the tile has fallen in Leaf Fall (§8.3) — "That tile has fallen."
 6. `ALREADY_GUESSED` (`round.repeatGuessRejected`): "You already tried that tile." A malformed action reads "Pick a tile on the grid."

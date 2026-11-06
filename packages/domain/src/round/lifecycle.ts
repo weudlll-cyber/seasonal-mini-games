@@ -8,17 +8,22 @@
  *                 server has placed them already, 03 §5, T82). `catchUp`
  *                 opens a round whose `opensAt` has passed (Spring Herald with it), fires the
  *                 specials that are due and ends a round whose time is up, before any command
- *                 runs, so a late timer never lets a guess in early or late (T32).
- * Depends on:     @smg/game-sdk (types), ./builder, ./evolve, ./results, ./specials, ./types
+ *                 runs, so a late timer never lets a guess in early or late (T32); with the
+ *                 specials it times out the players whose inactivity limit and its grace
+ *                 have passed, in time order, which may end the round (O71, O72). `nextDue` names the next of
+ *                 these times for the round actor's timer.
+ * Depends on:     @smg/game-sdk (types), ./builder, ./evolve, ./inactivity, ./results, ./specials,
+ *                 ./types
  * Used by:        ./guess, ./step, ../index
- * Spec:           docs/spec/02-game-guess-the-number.md §4, §8; docs/spec/04-software-architecture.md §5.1
+ * Spec:           docs/spec/02-game-guess-the-number.md §4, §5.3, §8; docs/spec/04-software-architecture.md §5.1
  */
 import type { PlatformRoundConfig, RosterPlayer, RoundRng, Season } from '@smg/game-sdk';
 
 import { fail, Step } from './builder.js';
 import { initialRound } from './evolve.js';
+import { heldEnd, leftEnd, nextTimeout } from './inactivity.js';
 import { playerResults, teamResults } from './results.js';
-import { fireDue, springHerald } from './specials.js';
+import { fireDue, nextSpecialAt, springHerald } from './specials.js';
 import type { EndReason, Reply, RoundEvent, RoundState } from './types.js';
 
 export interface NewRound<Cfg> {
@@ -43,12 +48,45 @@ export function catchUp<S, A, E, Cfg, Sec>(step: Step<S, A, E, Cfg, Sec>, at: nu
     step.emit({ type: 'RoundOpened', at: opensAt });
     springHerald(step, opensAt);
   }
-  // Specials due before the end fire first, in their order (03 §1).
-  if (step.state.status === 'open') fireDue(step, at);
+  // Specials and timeouts due before the end happen first, in time order (03 §1, O71).
+  if (step.state.status === 'open') runDue(step, at);
   const { endsAt } = step.state;
   if (step.state.status === 'open' && endsAt !== null && at >= endsAt) {
     endRound(step, endsAt, 'timeUp');
   }
+}
+
+// Every special and every inactivity timeout due by `at`, in time order; at one instant the
+// specials first. A timeout is stamped with its deadline plus the grace (O72), and the round
+// ends there when it leaves nobody, or in individual mode only solvers (O71).
+function runDue<S, A, E, Cfg, Sec>(step: Step<S, A, E, Cfg, Sec>, at: number): void {
+  for (;;) {
+    const out = nextTimeout(step.state);
+    if (out === null || out.at > at) {
+      fireDue(step, at);
+      return;
+    }
+    fireDue(step, out.at);
+    step.emit({ type: 'PlayerTimedOut', playerId: out.playerId, at: out.at });
+    const end = leftEnd(step.state);
+    if (end !== null) {
+      endRound(step, out.at, end, end === 'allSolved' ? heldEnd(step.state, out.at) : null);
+      return;
+    }
+  }
+}
+
+// The next time this round must run without any player action: the open, a special, a
+// timeout or the end (the round actor's one timer, 04 §5.2).
+export function nextDue<S, Cfg>(
+  state: RoundState<S, Cfg>,
+  module: Parameters<typeof nextSpecialAt>[1],
+): number | null {
+  if (state.status === 'countdown') return state.opensAt;
+  if (state.status !== 'open') return null;
+  const times = [nextSpecialAt(state, module), nextTimeout(state)?.at, state.endsAt];
+  const due = times.filter((t): t is number => typeof t === 'number');
+  return due.length === 0 ? null : Math.min(...due);
 }
 
 export function endRound<S, A, E, Cfg, Sec>(

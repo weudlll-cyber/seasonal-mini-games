@@ -112,9 +112,33 @@ describe('the main list', () => {
 describe('the individual-mode summary line', () => {
   it('reads "Others: bot-01: 8 guesses · bot-02: 5" without the viewer', () => {
     const roster = [
-      { playerKey: 'me', team: null, guesses: 3, cooldownEndsAt: 0, place: null, solved: false },
-      { playerKey: 'b1', team: null, guesses: 8, cooldownEndsAt: 0, place: null, solved: false },
-      { playerKey: 'b2', team: null, guesses: 5, cooldownEndsAt: 0, place: null, solved: false },
+      {
+        playerKey: 'me',
+        team: null,
+        guesses: 3,
+        cooldownEndsAt: 0,
+        place: null,
+        solved: false,
+        timedOut: false,
+      },
+      {
+        playerKey: 'b1',
+        team: null,
+        guesses: 8,
+        cooldownEndsAt: 0,
+        place: null,
+        solved: false,
+        timedOut: false,
+      },
+      {
+        playerKey: 'b2',
+        team: null,
+        guesses: 5,
+        cooldownEndsAt: 0,
+        place: null,
+        solved: false,
+        timedOut: false,
+      },
     ];
     const state = { ...open, roster, names: { me: 'Me', b1: 'bot-01', b2: 'bot-02' } };
     expect(othersLine(state, 'me')).toBe('Others: bot-01: 8 guesses · bot-02: 5');

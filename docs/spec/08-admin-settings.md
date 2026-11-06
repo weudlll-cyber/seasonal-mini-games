@@ -23,6 +23,8 @@
 |---|---|---|---|---|---|---|
 | `round.secretMode` | `shared` | — | — (`shared`, `individual`) | modes: owner; default: owner (O15) | host | frozen |
 | `round.cooldownS` | 10 | 3 | 60 | bounds: owner; default: owner (O15) | host | frozen (changed only by Heatwave) |
+| `round.inactivityLimitS` | 60 | 20 (or 0 = off) | 600 | owner (O71): out of the round after this long without a guess (02 §5.3); 0 switches it off, 1–19 are refused | host | frozen |
+| `round.inactivityWarnS` | 30 | 5 | 590 | owner (O71): the countdown to the limit shows from then on; must be below `round.inactivityLimitS` while the limit is on (checked in the round-setup request and again when the round is made, DECISIONS T267) | host | frozen |
 | `round.rangeLow` | 1 | −1 000 000 | 1 000 000 | owner (O18); `rangeHigh` ≥ `rangeLow` + 9 | host | frozen |
 | `round.rangeHigh` | 1 000 | −1 000 000 | 1 000 000 | owner (O18); `rangeHigh` ≥ `rangeLow` + 9 | host | frozen |
 | `round.rangeVisible` | true | — | — | owner (O19): off hides the range until the end (02 §3) | host | frozen |
@@ -58,11 +60,11 @@
 | `fairness.commitReveal` | true | — | — | owner (O9) | game admin | frozen |
 | Team points per round win | 1 | — | — | owner (O12, not a setting) | — | — |
 
-The host form shows each host-chosen value with its default preselected and refuses values outside the bounds with a plain sentence. The server validates again (`ROUND_SETTINGS_INVALID`).
+The host form shows each host-chosen value with its default preselected and refuses values outside the bounds with a plain sentence. The server validates again (`ROUND_SETTINGS_INVALID`). The sentence comes from the setting's own check, one wording for the host form, the Quick Test, the admin's settings table and the server's answers, and stands under the field it belongs to; a refused pair names the warning ("The warning must be shorter than the limit.", owner decision 74; DECISIONS T276). The inactivity limit and warning are offered wherever a round is set up, the Quick Test included (owner decision 75).
 
 ### 3.1 Seasonal Safecracker (document `game.safecracker`, [02b](02b-game-safecracker.md))
 
-Platform round keys (`round.secretMode`, `round.cooldownS`, `round.countdownS`, `round.maxDurationMin`, `round.marginWindowS`, `round.seasonSource`, `round.specialOn`, `round.teamsOn`, `points.*`, `fairness.commitReveal`) and the special timings (`summer.*`, `autumn.intervalS`, `winter.delayS`) as in §3. Shared guess keys as in 08 §3 (`round.feedbackVisibility`, `round.comments`, `comments.trendPercent`, `round.repeatGuessRejected`). Not used by this game: `round.rangeLow`, `round.rangeHigh`, `round.rangeVisible`, `comments.*Above`, `spring.hintType`, `autumn.count`, `autumn.minRemaining`, `round.halving` and `halving.*` (`halvingAllowed` off, 02b §7.4).
+Platform round keys (`round.secretMode`, `round.cooldownS`, `round.inactivityLimitS`, `round.inactivityWarnS`, `round.countdownS`, `round.maxDurationMin`, `round.marginWindowS`, `round.seasonSource`, `round.specialOn`, `round.teamsOn`, `points.*`, `fairness.commitReveal`) and the special timings (`summer.*`, `autumn.intervalS`, `winter.delayS`) as in §3. Shared guess keys as in 08 §3 (`round.feedbackVisibility`, `round.comments`, `comments.trendPercent`, `round.repeatGuessRejected`). Not used by this game: `round.rangeLow`, `round.rangeHigh`, `round.rangeVisible`, `comments.*Above`, `spring.hintType`, `autumn.count`, `autumn.minRemaining`, `round.halving` and `halving.*` (`halvingAllowed` off, 02b §7.4).
 
 | Key | Default | Min | Max | Status | Who | Running rounds |
 |---|---|---|---|---|---|---|
@@ -73,7 +75,7 @@ Platform round keys (`round.secretMode`, `round.cooldownS`, `round.countdownS`, 
 
 ### 3.2 Seasonal Bomb Defusal (document `game.bomb-defusal`, [02c](02c-game-bomb-defusal.md))
 
-Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.countdownS`, `round.maxDurationMin`, `round.feedbackVisibility`, `round.comments`, `comments.trendPercent`, `round.marginWindowS`, `round.seasonSource`, `round.specialOn`, `round.teamsOn`, `round.repeatGuessRejected`, `summer.*`, `autumn.intervalS`, `winter.delayS`, `points.*`, `fairness.commitReveal`). Not used by this game: `round.rangeLow`, `round.rangeHigh`, `round.rangeVisible`, `round.halving`, `halving.*`, `spring.hintType`, `autumn.count`, `autumn.minRemaining`, the `comments.*Above` thresholds.
+Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.inactivityLimitS`, `round.inactivityWarnS`, `round.countdownS`, `round.maxDurationMin`, `round.feedbackVisibility`, `round.comments`, `comments.trendPercent`, `round.marginWindowS`, `round.seasonSource`, `round.specialOn`, `round.teamsOn`, `round.repeatGuessRejected`, `summer.*`, `autumn.intervalS`, `winter.delayS`, `points.*`, `fairness.commitReveal`). Not used by this game: `round.rangeLow`, `round.rangeHigh`, `round.rangeVisible`, `round.halving`, `halving.*`, `spring.hintType`, `autumn.count`, `autumn.minRemaining`, the `comments.*Above` thresholds.
 
 | Key | Default | Min | Max | Status | Who | Running rounds |
 |---|---|---|---|---|---|---|
@@ -85,7 +87,7 @@ Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.co
 
 ### 3.3 Seasonal Target (document `game.seasonal-target`, [02d](02d-game-seasonal-target.md))
 
-Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.countdownS`, `round.maxDurationMin`, `round.feedbackVisibility`, `round.comments`, `comments.trendPercent`, `round.marginWindowS`, `round.seasonSource`, `round.specialOn`, `round.teamsOn`, `round.halving`, `round.repeatGuessRejected`, `summer.*`, `autumn.intervalS`, `autumn.count`, `winter.delayS`, `halving.intervalS`, `points.*`, `fairness.commitReveal`). Not used: `round.rangeLow`, `round.rangeHigh`, `round.rangeVisible`, `comments.*Above`, `spring.hintType`, `halving.minRangeSize`.
+Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.inactivityLimitS`, `round.inactivityWarnS`, `round.countdownS`, `round.maxDurationMin`, `round.feedbackVisibility`, `round.comments`, `comments.trendPercent`, `round.marginWindowS`, `round.seasonSource`, `round.specialOn`, `round.teamsOn`, `round.halving`, `round.repeatGuessRejected`, `summer.*`, `autumn.intervalS`, `autumn.count`, `winter.delayS`, `halving.intervalS`, `points.*`, `fairness.commitReveal`). Not used: `round.rangeLow`, `round.rangeHigh`, `round.rangeVisible`, `comments.*Above`, `spring.hintType`, `halving.minRangeSize`.
 
 | Key | Default | Min | Max | Status | Who | Running rounds |
 |---|---|---|---|---|---|---|

@@ -5,13 +5,15 @@
  *
  * Responsibility: every key's default fits its own definition, and the defaults read as
  *                 the round config of 02 §3 and 02 §9 (10 s cooldown, 5 s countdown,
- *                 10 min, 2 s margin window, points 10 / 10-7-5-3 / 1, proof on).
+ *                 10 min, 2 s margin window, points 10 / 10-7-5-3 / 1, proof on); the
+ *                 inactivity limit takes 0 (off) or 20–600 s and the warning only below it
+ *                 (O71).
  * Depends on:     vitest, ./roundSettings, ./settings
  * Spec:           docs/spec/08-admin-settings.md §3
  */
 import { describe, expect, it } from 'vitest';
 
-import { PLATFORM_ROUND_SETTINGS, readPlatformRound } from './roundSettings.js';
+import { inactivityIssue, PLATFORM_ROUND_SETTINGS, readPlatformRound } from './roundSettings.js';
 import { resolveSettings, settingProblem } from './settings.js';
 
 describe('platform round settings', () => {
@@ -26,6 +28,9 @@ describe('platform round settings', () => {
     expect(config).toEqual({
       secretMode: 'shared',
       cooldownMs: 10_000,
+      // Out after 60 s without a guess, warned after 30 s (O71).
+      inactivityLimitMs: 60_000,
+      inactivityWarnMs: 30_000,
       countdownMs: 10_000,
       maxDurationMs: 600_000,
       marginWindowMs: 2_000,
@@ -42,5 +47,23 @@ describe('platform round settings', () => {
         halvingIntervalMs: 60_000,
       },
     });
+  });
+
+  it('take the inactivity limit 0 (off) or 20–600 s and the warning below it (O71)', () => {
+    const def = (key: string) => PLATFORM_ROUND_SETTINGS.find((d) => d.key === key);
+    const limit = def('round.inactivityLimitS');
+    if (limit === undefined) throw new Error('the limit is defined');
+    for (const ok of [0, 20, 600]) expect(settingProblem(limit, ok), String(ok)).toBeNull();
+    for (const bad of [1, 19, 601]) expect(settingProblem(limit, bad), String(bad)).not.toBeNull();
+    const pair = (l: number, w: number) =>
+      inactivityIssue({ 'round.inactivityLimitS': l, 'round.inactivityWarnS': w });
+    expect(pair(60, 30)).toBeNull();
+    expect(pair(0, 590)).toBeNull();
+    // The warning field's issue in the words every form shows (O74).
+    expect(pair(60, 60)).toEqual({
+      key: 'round.inactivityWarnS',
+      message: 'The warning must be shorter than the limit.',
+    });
+    expect(pair(20, 25)).not.toBeNull();
   });
 });

@@ -152,9 +152,9 @@ The registry lists each game as one entry `{ module, conformance, devBot }`, whe
 - `signals` tell the platform about outcomes without the platform knowing the game:
   - `Solved { playerId }`: this action solved the player's secret.
   - `RoundShouldEnd { reason }`: for game-specific end conditions.
-- Rejections come in the order of [02](02-game-guess-the-number.md) §5.1: the platform's codes for state, roster and solved (`ROUND_NOT_OPEN`, `ROUND_OVER`, `NOT_IN_ROUND`, `ALREADY_SOLVED`), then the game's `validate` (for example `OUT_OF_RANGE`, `NUMBER_REMOVED`), then the platform's `COOLDOWN_ACTIVE`. `validate` is pure and gives no event. `decide` runs only for an action that passed all of them.
+- Rejections come in the order of [02](02-game-guess-the-number.md) §5.1: the platform's codes for state, roster and solved (`ROUND_NOT_OPEN`, `ROUND_OVER`, `NOT_IN_ROUND`, `TIMED_OUT`, `ALREADY_SOLVED`), then the game's `validate` (for example `OUT_OF_RANGE`, `NUMBER_REMOVED`), then the platform's `COOLDOWN_ACTIVE`. `validate` is pure and gives no event. `decide` runs only for an action that passed all of them.
 
-**Winning stays in the platform.** From the `Solved` signals and their receive order, the platform applies the owner's rules: in shared mode the first `Solved` wins and ends the round, and in individual mode solve order is placing order (owner, decisions 4 and 5). Every later game with these modes inherits the rules unchanged.
+**Winning stays in the platform.** From the `Solved` signals and their receive order, the platform applies the owner's rules: in shared mode the first `Solved` wins and ends the round, and in individual mode solve order is placing order (owner, decisions 4 and 5). The inactivity limit is the platform's too: it times out a roster player without a guess, and a round ends once nobody is left or, in individual mode, once everyone still in has solved (owner, decision 71; [02](02-game-guess-the-number.md) §5.3). Every later game with these modes inherits the rules unchanged.
 
 ### 4.3 Timing classes
 
@@ -236,6 +236,7 @@ Platform commands on a round: `createRound`, `startCountdown`, `openRound`, `sub
 
 - **Cooldown has no timer.** The actor stores `cooldownEndsAt` per player and compares it with `receivedAt` (§5.1 check 7 of [02](02-game-guess-the-number.md)). With 500 players there are no 500 timers. That is the "no global tick" of owner decision 3 in code.
 - **Scheduled:** round open (`opensAt`), each special's due times, longest round time. These are `scheduled_actions` rows, so they are restart-safe.
+- **Inactivity has no timer per player either** (owner, decision 71). Each roster player's limit is a time computed from the state (the open, or their last accepted guess's cooldown end and Frost delivery, [02](02-game-guess-the-number.md) §5.3). The actor's one timer for the round's next due time (`nextDue`: the open, a special, the next limit, the end) runs a tick through the queue; that tick, or any earlier command, first catches the round up, logging each limit whose 2 s grace has passed (owner decision 72) as `PlayerTimedOut` with the limit plus the grace as its time, in time order with the specials (DECISIONS T274). A late timer or a restart therefore writes the same events (DECISIONS T267).
 - **Frost deliveries** are in-memory timers on the actor (due `receivedAt + delay`). After a restart, every held event that was not delivered is recomputed from the log and sent at its due time, or at once if that time has passed.
 - All times are server-clock milliseconds from the `Clock` port. The client shows times corrected by its measured offset ([06](06-data-model-api-realtime.md) §4.1).
 

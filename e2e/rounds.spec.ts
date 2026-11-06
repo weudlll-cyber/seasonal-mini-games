@@ -10,7 +10,8 @@
  *                 follow the solve order, a solved player can guess no more and keeps their own
  *                 rows with a notice and their place (O25), the others are rows of the info
  *                 column's Others panel with their guesses and "solved" (T260), the round ends with
- *                 "time is up" and a "not solved" row for the player who did not play.
+ *                 "time is up" and a "not solved" row for the player who did not play (the
+ *                 inactivity limit set to 0, off, in the host form, O71).
  * Depends on:     @playwright/test, ./play, ./screens
  * Spec:           docs/spec/09-testing-strategy.md §4 (journeys 1, 2); docs/spec/02-game-guess-the-number.md §4–§9
  */
@@ -113,6 +114,10 @@ test('journey 2: an individual round places solvers in order and ends with time 
       'Countdown before opening': '3',
       'Longest round': '1',
       'Highest number': '20',
+      // The host and player 3 stay idle for the whole minute: with the inactivity limit off
+      // they stay in the round without a countdown (O71; the default 60 s, as long as the
+      // round, would not apply either, 02 §5.3). The form takes the 0.
+      'Inactivity limit': '0',
     });
     const [one, two, idle] = players;
     if (one === undefined || two === undefined || idle === undefined)

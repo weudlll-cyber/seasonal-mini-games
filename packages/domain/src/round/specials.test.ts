@@ -17,7 +17,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { config, fixedRng, pickGame, PickDriver } from './fakes.js';
-import { nextDue } from './specials.js';
+import { nextDue } from './lifecycle.js';
 
 const base = config().specials;
 const fired = (d: PickDriver) =>

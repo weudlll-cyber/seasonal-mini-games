@@ -74,6 +74,7 @@ export class PlayError extends Error {
   constructor(
     readonly code: PlayCode,
     readonly detail: string = code,
+    readonly field: string | null = null, // ROUND_SETTINGS_INVALID: the refused setting (O74)
   ) {
     super(detail);
   }
@@ -198,7 +199,7 @@ export class Play {
       return round;
     } catch (error) {
       if (error instanceof RoundSettingsError)
-        throw new PlayError('ROUND_SETTINGS_INVALID', error.message);
+        throw new PlayError('ROUND_SETTINGS_INVALID', error.message, error.field);
       throw error;
     }
   }

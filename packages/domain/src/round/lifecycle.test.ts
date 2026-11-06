@@ -7,13 +7,15 @@
  *                 play) and refuses too few players; the round opens exactly at `opensAt`
  *                 and ends at `opensAt + longest round`, however late the firing comes;
  *                 host end and abort work only while a round runs; the seed is revealed
- *                 at the end only with the fairness proof on.
- * Depends on:     vitest, ./fakes
+ *                 at the end only with the fairness proof on; recovery refuses a log that
+ *                 does not start with RoundCreated.
+ * Depends on:     vitest, ./evolve, ./fakes
  * Spec:           docs/spec/02-game-guess-the-number.md §4, §8.3; docs/spec/04-software-architecture.md §5.5
  */
 import { describe, expect, it } from 'vitest';
 
-import { fixedRng, PickDriver } from './fakes.js';
+import { replayRound } from './evolve.js';
+import { fixedRng, pickGame, PickDriver } from './fakes.js';
 
 describe('the countdown', () => {
   it('freezes each player once, in order, with teams only in shared rounds with teams on', () => {
@@ -122,5 +124,14 @@ describe('host end and abort', () => {
     d.run({ type: 'end', at: 1, reason: 'host' });
     const late = d.run({ type: 'abort', at: 2, reason: 'late', by: 'host' });
     expect(late.reply).toMatchObject({ code: 'ROUND_STATE_INVALID' });
+  });
+});
+
+describe('recovery', () => {
+  it('refuses a log that does not start with RoundCreated', () => {
+    const d = new PickDriver();
+    d.start(['a']);
+    expect(() => replayRound(pickGame, d.log.slice(1))).toThrow(/starts with RoundCreated/);
+    expect(() => replayRound(pickGame, [])).toThrow(/starts with RoundCreated/);
   });
 });

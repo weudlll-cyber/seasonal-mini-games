@@ -6,7 +6,7 @@
  * Responsibility: one fetch wrapper for the real game, relative to where the client is
  *                 served (BASE_PATH): same-origin credentials (the dev server proxies /api), the session's CSRF token on every state-changing
  *                 call (03 §8), JSON in and out, and an ApiError carrying the server's
- *                 error code.
+ *                 error code and, for a refused setting, its key and sentence (O74).
  * Depends on:     nothing
  * Used by:        ./session, ../game/*, ../host/*, ../account/accountText, ../api
  * Spec:           Bingo 05 §1; Bingo 03 §8
@@ -26,6 +26,8 @@ export class ApiError extends Error {
     readonly code: string,
     // The server's detail when it gives one (e.g. PASSWORD_WEAK: tooShort, tooCommon).
     readonly reason: string | null = null,
+    // A refused setting (SettingRefusalView, O74): the field's key and its sentence.
+    readonly refusal: { readonly field: string; readonly detail: string } | null = null,
   ) {
     super(`${String(status)} ${code}`);
   }
@@ -36,6 +38,17 @@ let csrfToken: string | null = null;
 export function setCsrfToken(token: string | null): void {
   csrfToken = token;
 }
+
+interface Refused {
+  readonly code?: string;
+  readonly reason?: string;
+  readonly field?: string | null;
+  readonly detail?: string;
+}
+
+// A refused setting's key and sentence (SettingRefusalView, O74), else null.
+const refusalOf = ({ field, detail }: Refused) =>
+  typeof field === 'string' && detail !== undefined ? { field, detail } : null;
 
 export async function api<T>(
   path: string,
@@ -52,7 +65,9 @@ export async function api<T>(
     ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
   });
   if (response.status === 204) return undefined as T;
-  const body = (await response.json().catch(() => ({}))) as { code?: string; reason?: string };
-  if (!response.ok) throw new ApiError(response.status, body.code ?? 'ERROR', body.reason ?? null);
+  const body = (await response.json().catch(() => ({}))) as Refused;
+  if (!response.ok) {
+    throw new ApiError(response.status, body.code ?? 'ERROR', body.reason ?? null, refusalOf(body));
+  }
   return body as T;
 }

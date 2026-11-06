@@ -76,7 +76,7 @@ const emptyBatch = <S, Cfg>(): Batch<S, Cfg> => ({
 export class RoundActor<S, A, E, Cfg, Sec> {
   private open: Batch<S, Cfg> = emptyBatch();
   private timer: NodeJS.Timeout | null = null;
-  // The next time the round must run by itself (a special, the open, the end).
+  // The next time the round must run by itself (a special, the open, a timeout, the end).
   private due: { at: number; timer: NodeJS.Timeout } | null = null;
   private readonly frost: FrostHold;
   private chain: Promise<void> = Promise.resolve();

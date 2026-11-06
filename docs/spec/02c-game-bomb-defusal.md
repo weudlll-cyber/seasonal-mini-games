@@ -15,7 +15,7 @@ A bomb has a few wires of different colours. The server picks a secret **order**
 
 ## 3. Round settings
 
-Inherited unchanged from 02 §3: secret mode, cooldown, season, season special, season teams, feedback visibility, closeness comments, countdown, longest round. Range, show range and halving do not exist in this game (§8.5). Its own:
+Inherited unchanged from 02 §3: secret mode, cooldown, inactivity limit and warning (owner, decision 71; 02 §5.3: the explosion penalty never counts against the player, the clock starts again when it is over), season, season special, season teams, feedback visibility, closeness comments, countdown, longest round. Range, show range and halving do not exist in this game (§8.5). Its own:
 
 | Setting | Values | Default | Source |
 |---|---|---|---|
@@ -32,7 +32,7 @@ The action is the shared guess intent with `{ value: ["red", "blue", "green", "w
 | # | Check | Code | The player reads |
 |---|---|---|---|
 | 1 | The round is open | `ROUND_NOT_OPEN` / `ROUND_OVER` | as 02 §5.1 |
-| 2 | On the roster | `NOT_IN_ROUND` | as 02 §5.1 |
+| 2 | On the roster and not timed out for inactivity | `NOT_IN_ROUND` / `TIMED_OUT` | as 02 §5.1, §5.3 |
 | 3 | Individual mode: not solved yet | `ALREADY_SOLVED` | as 02 §5.1 |
 | 4 | Exactly `cuts` entries, each a wire of this round, none twice | `SEQUENCE_INVALID` | "Choose 4 different wires of this bomb." |
 | 5 | No wire Leaf Fall marked harmless (§8.3) | `WIRE_HARMLESS` | "That wire is harmless — it is not part of the sequence." |

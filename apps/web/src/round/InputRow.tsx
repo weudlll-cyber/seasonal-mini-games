@@ -7,22 +7,26 @@
  *                 start and the platform's refusals under it in plain words; a guess counts as
  *                 answered once the view holds the new cooldown (T76); the whole seconds left
  *                 of the cooldown go to the game, so its button reads "Wait 6 s" (T125). A
- *                 board game also gets the stage, the box it draws its board into (O51). Once
- *                 the player solved (individual mode), a short notice with their place
- *                 instead (O25). Moved out of ./RoundScreen to keep each file under the size
- *                 limit.
+ *                 board game also gets the stage, the box it draws its board into (O51). From
+ *                 the inactivity warning point the countdown line above the input
+ *                 (./InactivityLine, O71). Once the player solved (individual mode), a short
+ *                 notice with their place instead (O25); once out of time, the notice that
+ *                 they play the next round (O71), while they keep watching. Moved out of
+ *                 ./RoundScreen to keep each file under the size limit.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (ActReply), @smg-game/registry/web
- *                 (types), ../live/socket, ./CooldownRing, ./RoundSide (colours), ./roundText
+ *                 (types), ../live/socket, ./CooldownRing, ./InactivityLine, ./RoundSide
+ *                 (colours), ./roundText
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §7, §12
  */
 import type { GameWeb } from '@smg-game/registry/web';
-import type { RoundStateView } from '@smg/contracts';
+import type { RosterRowView, RoundStateView } from '@smg/contracts';
 import type { ActReply } from '@smg/game-sdk';
 import { useState, type ReactElement } from 'react';
 
 import { intent, serverNow } from '../live/socket.js';
 import { CooldownRing } from './CooldownRing.js';
+import { InactivityLine } from './InactivityLine.js';
 import { colorsOf } from './RoundSide.js';
 import { codeText, solvedText } from './roundText.js';
 import { roundMarks } from './playerMarks.js';
@@ -43,8 +47,24 @@ function waitOf(state: RoundStateView, endsAt: number, now: number): number | nu
   return Math.ceil((endsAt - now) / 1_000);
 }
 
+// The notice in place of the input row, or null while the player plays: solved (individual
+// mode) with their place (O25), or out of time for this round (O71).
+function noticeOf(me: RosterRowView): ReactElement | null {
+  if (!me.solved && !me.timedOut) return null;
+  return (
+    <p
+      className="round-input round-solved"
+      role="status"
+      data-testid={me.solved ? 'solved-notice' : 'timed-out-notice'}
+    >
+      {me.solved ? solvedText(me.place) : codeText('TIMED_OUT')}
+    </p>
+  );
+}
+
 // A roster player's input row with the ring, and the platform's refusals under it; once the
-// player solved (individual mode), a short notice with their place instead (O25).
+// player solved (individual mode), a short notice with their place instead (O25); once out
+// of time, the timeout's notice (O71).
 export function InputRow({
   state,
   game,
@@ -56,13 +76,8 @@ export function InputRow({
   const [refusal, setRefusal] = useState<string | null>(null);
   const me = state.roster.find((r) => r.playerKey === viewerKey) ?? null;
   if (me === null || state.game === null) return null;
-  if (me.solved) {
-    return (
-      <p className="round-input round-solved" role="status" data-testid="solved-notice">
-        {solvedText(me.place)}
-      </p>
-    );
-  }
+  const notice = noticeOf(me);
+  if (notice !== null) return notice;
   const act = async (action: unknown): Promise<ActReply> => {
     const reply = await intent('guess', { roundId: state.roundId, ...(action as object) });
     // The game words its own refusals; the platform's are worded here.
@@ -80,6 +95,7 @@ export function InputRow({
     ) : null;
   return (
     <div className="round-input">
+      <InactivityLine inactivity={state.ownInactivity} now={now} />
       <game.Input
         view={state.game}
         act={act}

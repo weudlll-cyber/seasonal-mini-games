@@ -5,7 +5,8 @@
  *
  * Responsibility: the owner's rules for what a round gives (O11, O12): shared mode places only
  *                 the winner, individual mode places solvers in solve order and lists the
- *                 rest as "not solved"; points from the frozen table; 1 team point to the
+ *                 rest as "not solved"; a player out for inactivity is listed as "timed out",
+ *                 never placed, without points (O71); points from the frozen table; 1 team point to the
  *                 winner's team. Match standings sum the points, ties ordered by wins and
  *                 then by the earliest win.
  * Depends on:     @smg/game-sdk (points table), ./types
@@ -34,6 +35,7 @@ export function playerResults<S, Cfg>(state: RoundState<S, Cfg>): PlayerResult[]
     guesses: e.guesses,
     team: e.team,
     points: pointsFor(e.place, shared, state.config.points),
+    timedOut: e.timedOut,
   }));
   const placed = rows
     .filter((r) => r.place !== null)

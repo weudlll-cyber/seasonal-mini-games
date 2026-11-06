@@ -17,7 +17,7 @@
  *                 usable, or one by hand), the halving round only on a halving day; then
  *                 Start round, End round and Abort round with a reason (02 §4, §9, §11). Last,
  *                 always: End match with its confirm sentence (./EndMatch, O27). Refusals in
- *                 plain words. The host plays the round like every player; the menu holds no
+ *                 plain words; a refused setting's sentence under its field (O74). The host plays the round like every player; the menu holds no
  *                 secret.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (types), ../components/*, ../shell/http,
  *                 ../live/socket, ../round/roundText, ./EndMatch, ./roundFields
@@ -32,14 +32,18 @@ import { useDisclosure } from '@smg/ui';
 import { ActionButton, Problem } from '../components/fields.js';
 import { intent } from '../live/socket.js';
 import { codeText } from '../round/roundText.js';
-import { api, ApiError } from '../shell/http.js';
+import { api } from '../shell/http.js';
 import { EndMatch } from './EndMatch.js';
 import {
   formSeason,
+  forSeason,
   HostFields,
+  NO_PROBLEMS,
   SEASON_CHOICE,
   SeasonControls,
+  setupProblems,
   useSeasonChoice,
+  type FormProblems,
 } from './roundFields.js';
 
 // Season and halving have their own controls below the generic fields.
@@ -67,7 +71,7 @@ function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
   );
   const choice = useSeasonChoice(last);
   const { season, halving } = choice;
-  const [problem, setProblem] = useState<string | null>(null);
+  const [problems, setProblems] = useState<FormProblems>(NO_PROBLEMS);
   const create = (startNow: boolean): void => {
     const body = {
       settings: { ...values, 'round.halving': halving },
@@ -76,14 +80,13 @@ function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
     };
     api(`/matches/${match.code}/rounds`, { method: 'POST', body })
       .then(() => {
-        setProblem(null);
         // The season choice and halving are kept with the settings for the next round (T209).
         done({ ...values, 'round.halving': halving, [SEASON_CHOICE]: season });
       })
       .catch((error: unknown) => {
-        setProblem(
-          error instanceof ApiError ? codeText(error.code) : 'The round could not be created.',
-        );
+        // A refused setting's sentence goes under its field while the form shows it (O74).
+        const keys = fields.filter((d) => forSeason(d.key, formSeason(choice))).map((d) => d.key);
+        setProblems(setupProblems(error, keys));
       });
   };
   const submit = (e: SyntheticEvent): void => {
@@ -99,12 +102,14 @@ function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
           doc={doc}
           season={formSeason(choice)}
           values={values}
+          problems={problems.fields}
           set={(key, v) => {
             setValues((was) => ({ ...was, [key]: v }));
+            setProblems(NO_PROBLEMS);
           }}
         />
       </div>
-      <Problem text={problem} />
+      <Problem text={problems.form} />
       <div className="smg-row">
         <button type="submit" className="smg-btn smg-btn--primary" data-testid="create-start">
           Create and start round

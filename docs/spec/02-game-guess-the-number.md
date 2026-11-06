@@ -25,6 +25,8 @@ The server picks a secret whole number in a range (default 1–1 000). Players t
 |---|---|---|---|
 | Secret mode | `shared` or `individual` | `shared` | Owner, decision 5: chosen per round |
 | Cooldown | 3 s – 60 s, whole seconds, the same for every player | 10 s | Owner, decision 3: range 3–60 s |
+| Inactivity limit | 0 (off) or 20 s – 600 s, whole seconds: a player without a guess for this long is out of the round (§5.3) | 60 s | Owner, decision 71 |
+| Inactivity warning | 5 s – 590 s, whole seconds, below the limit: from then on the player sees the countdown to the limit (§5.3) | 30 s | Owner, decision 71 |
 | Range | lowest and highest number, both inclusive, each from −1 000 000 to 1 000 000, at least 10 numbers; negative numbers are allowed | 1–1 000 | Owner, decision 18 |
 | Show range | shown or hidden: a hidden range reaches no client until the end (§5.1, §12) | shown | Owner, decision 19 |
 | Season | `inSeason` (follow the website) or one of the four seasons | `inSeason` when the feed is available, otherwise the host must pick | Owner, decision 6 ([03](03-seasonal-specials.md) §3) |
@@ -63,7 +65,7 @@ A round is recovered from its event log after a server restart, as Bingo matches
 A guess is accepted only if all of these hold, checked in this order. The first one that fails decides the rejection code ([06](06-data-model-api-realtime.md) §4.3):
 
 1. The round is `open` (`ROUND_NOT_OPEN` before `opensAt`, `ROUND_OVER` after the end).
-2. The guesser is on the round's roster (`NOT_IN_ROUND`).
+2. The guesser is on the round's roster (`NOT_IN_ROUND`) and not out of it for inactivity (`TIMED_OUT`, §5.3).
 3. In individual mode, the guesser has not solved their number yet (`ALREADY_SOLVED`).
 4. The value is a whole number inside the round's **current** range ([03](03-seasonal-specials.md) §4 can shrink it) (`OUT_OF_RANGE`). With the range hidden (owner, decision 19) this check does not apply: any whole number from −1 000 000 000 to 1 000 000 000 is accepted and answered `higher` or `lower`, and starts the cooldown, because `OUT_OF_RANGE` would tell where the range is (DECISIONS T53). The input takes whole numbers in that span in both cases.
 5. The value has not been removed by Leaf Fall (`NUMBER_REMOVED`).
@@ -75,6 +77,17 @@ A rejected guess does not start a cooldown, is not counted, and is not shown to 
 ### 5.2 Receive order
 
 The server puts every guess of a round into **one queue for that round**, in the order it takes the messages in. It processes them one at a time in that order ([04](04-software-architecture.md) §5.2). Each accepted guess gets the next **receive number** (`receiveSeq`, 1, 2, 3 …) and its **receive time** from the server clock. The client's clock and any time the client sends are ignored.
+
+### 5.3 Inactivity (owner, decisions 71–75)
+
+A player who makes no guess for the round's inactivity limit is out of that round. It applies in shared and individual mode, in every game, the host included; spectators and players not on the roster are not affected. Being out applies to that round only: the player plays the next round normally.
+
+- **The clock** runs only while the player may guess. It starts when the round opens, and starts again once their next guess may be sent: when the cooldown of their last accepted guess is over (a game's longer wait included, such as Bomb Defusal's explosion penalty, [02c](02c-game-bomb-defusal.md) §5.2) and, under Frost, once its answer has arrived ([03](03-seasonal-specials.md) §2.4), whichever is later. While an accepted guess waits for its cooldown or its answer the clock stands still, so Heatwave, Frost and penalties never count against the player. Only accepted guesses count; a rejected one changes nothing (§5.1). The roster is frozen at the countdown (§4), so nobody joins a running round's clock later.
+- **The warning:** from `round.inactivityWarnS` after the clock's start the player sees how long is left for their next guess, counting down. **The limit:** at `round.inactivityLimitS` after it the player's countdown ends. A guess the server receives up to 2 s after the limit still counts, for network delay, and starts the clock again like any accepted guess; one received later is refused (owner decision 72). So the server marks the player "timed out" for the round at the limit plus those 2 s (`PlayerTimedOut` in the round's log, with that time as its time, so a replay or a restart gives the same log; DECISIONS T267, T274). The grace is the server's alone: the countdown the player sees ends at the limit itself. A limit whose grace ends at or after the round's longest time does not apply: the round ends with "time is up" first. With the limit 0 nobody is timed out.
+- **A late guess** from a timed-out player is refused with `TIMED_OUT` ("Out of time this round. You can play the next round."). The player keeps watching the round with their own guesses.
+- Only the affected player sees their own countdown; the others see "timed out" once it happened (owner decision 73). The server sends a roster player their own deadlines only (`ownInactivity.warnAt`, `ownInactivity.outAt`, absolute server times, in the player view), never another player's, and a spectator or guest none; every roster row carries `timedOut`, and the round state the round's limit and warning as settings (DECISIONS T275). It sends them as it sends `cooldownEndsAt` ([06](06-data-model-api-realtime.md) §3.1); the client only shows them.
+- **Placings and end:** a timed-out player is listed as "timed out", without a place and without points; they no longer hold up the end (§8).
+- **On the screen** (§12, DECISIONS T270): from the warning point one line at the input row (on a phone at the top of the action dock), "30 s left for your next guess", counting down every second in the warning colour, announced once to a screen reader at the warning point; once timed out, the input row gives way to "Out of time this round. You can play the next round." while the player keeps watching; the Others panel, the phone's Others line, the round's list ("bot-02 is out of time.") and the placings say "timed out"; an individual round that ends because everyone still in it solved says "Everyone still in the round found their number." The host's round form shows both settings with their help lines, the limit taking 0 for off (DECISIONS T271); so does every other place a round is set up, the Quick Test form included, and the next round's form starts from the last round's limit and warning, like the kept season (owner decision 75; DECISIONS T209, T277). A value or pair a form or the server refuses is named under its field in one clear sentence, the same in the host form, the Quick Test and the admin's settings, such as "The warning must be shorter than the limit." or "Must be between 20 and 600, or 0 for off." (owner decision 74; DECISIONS T276).
 
 ## 6. Feedback
 
@@ -129,14 +142,15 @@ Every accepted guess gets a short English comment on how close it came, when the
 
 - The winner is the player whose correct guess has the lowest receive number. Ties cannot happen: receive numbers are unique per round.
 - The round ends at that guess. Guesses behind it in the queue are answered `ROUND_OVER`, as are guesses received later.
-- **Placings:** the winner is 1st. Everyone else on the roster is listed below as "took part", with their number of guesses and without a place. A round without a correct guess has no winner.
+- **Placings:** the winner is 1st. Everyone else on the roster is listed below as "took part", with their number of guesses and without a place; a player out for inactivity as "timed out" (§5.3). A round without a correct guess has no winner.
+- When every roster player has timed out (§5.3), the round ends without a winner, reason "no players left".
 
 ### 8.2 Individual secret (owner, decision 5)
 
 - A player who guesses their own number has **solved** it. Their placing is the order of their correct guess in the round's receive order: the first solver is 1st, the next 2nd, and so on. Ties cannot happen.
 - A solved player cannot guess again in the round. For the rest of the round they keep the player view with their own guesses, answers and comments; the input row is replaced by a short notice with their place ("You found your number — place 2."). Other players' guesses still follow the visibility setting (§6.2), so a solved player learns nothing new about anyone else's number (owner, decision 25).
-- The round ends when every roster player has solved, when the longest round time is reached, or when the host ends it.
-- **Players who did not solve:** listed after the placed players as "not solved", without a place.
+- The round ends when every roster player still in the round has solved (a player timed out for inactivity, §5.3, no longer holds it up; when every player timed out, with reason "no players left"), when the longest round time is reached, or when the host ends it.
+- **Players who did not solve:** listed after the placed players as "not solved", without a place; a player out for inactivity as "timed out", without a place and without points (§5.3).
 
 ### 8.3 Other end conditions (both modes)
 
@@ -146,6 +160,7 @@ Every accepted guess gets a short English comment on how close it came, when the
 | Host presses **End round** | `ended`, reason "ended by the host". Placings as far as reached. |
 | Host presses **Abort round** (with a reason) | `aborted`: no placings, no points (§4). |
 | Every roster player left the match | `ended`, reason "no players left". |
+| Every roster player timed out for inactivity (§5.3) | `ended`, reason "no players left"; no winner. |
 
 ## 9. After the round
 
@@ -186,6 +201,7 @@ The whole round view fits the screen without a page scrollbar (desktop 1280 × 7
 - **Result page** (DECISIONS T145): under the slim result bar in place of the app header (the match's title, game and code, Host, "Play"), a first part on one screen at 1280 × 720 and 390 × 844: the headline in at most two lines, the margin or closest miss, the game's reveal (the secret, a board game's grid), the top three placings with "All placings" for every one, and one team line ("Team Spring wins the round (+1 team point)"); below it every player's guesses in full ("did not guess" without one), the team result and the match standings, where the page scrolls (DECISIONS T150); the next round's box and the chat beside the result on a desktop, under it on a phone. The viewer is placed like everyone else; a name takes its column's room and is cut at its end only where the column is too narrow, "(you)" never. On a phone the bar leaves the match's title out, so the game's name and the code are whole (DECISIONS T150).
 - Lobby, setup and the rest of the result page may scroll (the match summary does not, §2); the result's placings table (and the match summary's) fits a 390 px phone with all four columns and no sideways scrolling, names ending in an ellipsis without breaking inside a word (DECISIONS T85).
 - **Numbers** of 1,000 and more are written with thousands separators, en-US style ("1,000,000"), everywhere a number is shown: range, guesses, the list, fallen numbers, intro, result, summary and the chat's round-end line. One formatter does it (`formatNumber` of `@smg/game-sdk`, DECISIONS T114); input fields take what the player types, unformatted.
+- **Inactivity** (owner decisions 71–75): the countdown line at the input row, the player's own only, and the timed-out notice in place of it; refused values named under their field; as in §5.3.
 - Every line is plain English, as in Bingo 01 §13 ("Your cooldown is now 7 s — Heatwave"). Server codes reach the screen as sentences. All animations respect `prefers-reduced-motion`. Sounds are off by default. Accessibility target WCAG 2.2 AA, with full keyboard play (type, Enter).
 
 ## 13. Out of scope for v1

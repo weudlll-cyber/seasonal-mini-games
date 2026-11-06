@@ -8,8 +8,10 @@
  *                 queue and checks as the socket (the HTTP fallback, with its own rate limit);
  *                 the result and the proof only after the end. Every answer names players by
  *                 their number in the match, never by account id; the state adds `you`, the
- *                 viewer's own number (T104). Codes map to 409 / 422 / 429.
- * Depends on:     fastify, zod, ./heatwaveBody, ../../match/*, ../../round/*
+ *                 viewer's own number (T104). Codes map to 409 / 422 / 429; a refused setting
+ *                 answers 422 ROUND_SETTINGS_INVALID with its key and sentence (O74).
+ * Depends on:     fastify, zod, ./heatwaveBody, ./inactivityBody, ./settingsBody, ../../match/*,
+ *                 ../../round/*
  * Used by:        ../app
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1, §4.3; docs/spec/02-game-guess-the-number.md §4, §10, §11
  */
@@ -25,13 +27,20 @@ import type { GuessLimits } from '../../round/guessLimits.js';
 import type { LiveRound } from '../../round/liveRound.js';
 import type { PgRoundStore } from '../../round/pgRoundStore.js';
 import { heatwaveSettings } from './heatwaveBody.js';
+import { inactivitySettings, warnBelowLimit } from './inactivityBody.js';
+import { settingsRefusal } from './settingsBody.js';
 
 const SEASONS = ['spring', 'summer', 'autumn', 'winter'] as const;
 
 export const createRoundBody = z
   .object({
-    // Heatwave's two in range (O63, ./heatwaveBody); the rest pass to the per-setting check.
-    settings: z.object(heatwaveSettings).catchall(z.unknown()).default({}),
+    // Heatwave's two in range (O63, ./heatwaveBody) and the inactivity limit with its warning
+    // (O71, ./inactivityBody); the rest pass to the per-setting check.
+    settings: z
+      .object({ ...heatwaveSettings, ...inactivitySettings })
+      .catchall(z.unknown())
+      .superRefine(warnBelowLimit)
+      .default({}),
     season: z.enum(SEASONS).optional(),
     startNow: z.boolean().default(false),
   })
@@ -97,7 +106,12 @@ export function registerRoundRoutes(app: FastifyInstance, deps: RoundRouteDeps):
 function registerHostRoutes(app: FastifyInstance, deps: RoundRouteDeps): void {
   app.post('/api/v1/matches/:code/rounds', async (request, reply) => {
     const body = createRoundBody.safeParse(request.body);
-    if (!body.success) return reply.status(400).send({ code: 'VALIDATION_FAILED' });
+    if (!body.success) {
+      // A setting out of its bounds or the pair rule: the field's sentence (O74).
+      const refusal = settingsRefusal(body.error);
+      if (refusal !== null) return reply.status(422).send(refusal);
+      return reply.status(400).send({ code: 'VALIDATION_FAILED' });
+    }
     const match = await findMatch(deps.pool, (request.params as { code: string }).code);
     const actor = await hostOf(request, reply, match);
     if (actor === null || match === null) return reply;
@@ -112,7 +126,7 @@ function registerHostRoutes(app: FastifyInstance, deps: RoundRouteDeps): void {
       if (!(error instanceof PlayError)) throw error;
       return reply
         .status(STATUS[error.code] ?? 409)
-        .send({ code: error.code, detail: error.detail });
+        .send({ code: error.code, detail: error.detail, field: error.field });
     }
   });
 

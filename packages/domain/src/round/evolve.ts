@@ -6,12 +6,13 @@
  * Responsibility: the only place the round state changes. Live steps and recovery after a
  *                 restart both fold through here, so replaying the log gives the live state
  *                 (invariant P5). Game events go to the module's own evolve.
- * Depends on:     @smg/game-sdk (module, round input), ./types
+ * Depends on:     @smg/game-sdk (module, round input), ./inactivity (clock restart), ./types
  * Used by:        ./step, ../index, packages/application (recovery)
  * Spec:           docs/spec/04-software-architecture.md §5.1, §5.3; docs/spec/09-testing-strategy.md §3 P5
  */
 import type { GameModule, RosterPlayer, RoundInput } from '@smg/game-sdk';
 
+import { readyAfter } from './inactivity.js';
 import type { RosterEntry, RoundEvent, RoundState, SpecialName } from './types.js';
 
 // The input a game gets once the roster is frozen (04 §4.1).
@@ -44,8 +45,18 @@ function withEntry<S, Cfg>(
   return { ...state, roster: { ...state.roster, [playerId]: { ...entry, ...change } } };
 }
 
-function freshEntry(team: string | null): RosterEntry {
-  return { team, guesses: 0, cooldownEndsAt: 0, solvedSeq: null, solvedAt: null, place: null };
+// The inactivity clock starts at the open (O71).
+function freshEntry(team: string | null, opensAt: number): RosterEntry {
+  return {
+    team,
+    guesses: 0,
+    cooldownEndsAt: 0,
+    readyAt: opensAt,
+    timedOut: false,
+    solvedSeq: null,
+    solvedAt: null,
+    place: null,
+  };
 }
 
 export function evolveRound<S, A, E, Cfg, Sec>(
@@ -91,6 +102,8 @@ function lifecycle<S, A, E, Cfg>(
       return { ...state, status: 'aborted', endedAt: event.at, abortReason: event.reason };
     case 'MarginNoted':
       return { ...state, margin: { playerId: event.playerId, ms: event.ms } };
+    case 'PlayerTimedOut':
+      return withEntry(state, event.playerId, { timedOut: true });
     case 'CooldownChanged':
       return { ...state, cooldownMs: event.cooldownMs };
   }
@@ -106,13 +119,16 @@ function fired<S, Cfg>(
   return { ...state, specialIndex, specialsOver };
 }
 
-// One more guess for the player, their cooldown from its receive time, the last number used.
+// One more guess for the player, their cooldown from its receive time, their inactivity
+// clock stopped until the cooldown is over and the answer has arrived, the last number used.
 function accepted<S, Cfg>(
   state: RoundState<S, Cfg>,
-  e: { playerId: string; receiveSeq: number; cooldownEndsAt: number },
+  e: { playerId: string; receiveSeq: number; receivedAt: number; cooldownEndsAt: number },
 ): RoundState<S, Cfg> {
   const guesses = (state.roster[e.playerId]?.guesses ?? 0) + 1;
-  const next = withEntry(state, e.playerId, { guesses, cooldownEndsAt: e.cooldownEndsAt });
+  const { cooldownEndsAt } = e;
+  const readyAt = readyAfter(state, e.receivedAt, cooldownEndsAt);
+  const next = withEntry(state, e.playerId, { guesses, cooldownEndsAt, readyAt });
   return { ...next, lastSeq: e.receiveSeq };
 }
 
@@ -122,7 +138,9 @@ function countdown<S, A, E, Cfg, Sec>(
   state: RoundState<S, Cfg>,
   event: Extract<RoundEvent<E, A, Cfg>, { type: 'CountdownStarted' }>,
 ): RoundState<S, Cfg> {
-  const roster = Object.fromEntries(event.roster.map((p) => [p.playerId, freshEntry(p.team)]));
+  const roster = Object.fromEntries(
+    event.roster.map((p) => [p.playerId, freshEntry(p.team, event.opensAt)]),
+  );
   const next = { ...state, status: 'countdown' as const, roster };
   const game = module.createRound(roundInput(next, event.roster));
   return { ...next, opensAt: event.opensAt, endsAt: event.endsAt, game };

@@ -88,6 +88,7 @@ export {
 export type {
   FrameEventView,
   GameInfoView,
+  InactivityView,
   MatchDetailsView,
   MatchEndView,
   MatchSummaryView,
@@ -98,6 +99,7 @@ export type {
   RoundStateView,
   SeasonName,
   SeasonsCurrentView,
+  SettingRefusalView,
   TeamName,
 } from './http/play.js';
 export {

@@ -8,7 +8,7 @@
  *                 in RoundDeps (05 §3). Game state and game events are opaque here.
  * Depends on:     @smg/game-sdk (contract types, round config)
  * Used by:        ./*, ../index, packages/application (round session)
- * Spec:           docs/spec/02-game-guess-the-number.md §4–§9, docs/spec/04-software-architecture.md §5,
+ * Spec:           docs/spec/02-game-guess-the-number.md §4–§9 (§5.3 inactivity), docs/spec/04-software-architecture.md §5,
  *                 docs/spec/06-data-model-api-realtime.md §2.7
  */
 import type {
@@ -22,8 +22,9 @@ import type {
 
 export type RoundStatus = 'created' | 'countdown' | 'open' | 'ended' | 'aborted';
 
-// solved: the shared winner; allSolved: every individual player solved; game: the game's
-// own end signal (RoundShouldEnd).
+// solved: the shared winner; allSolved: every individual player still in the round solved;
+// noPlayers: none left (every roster player left the match, or timed out, O71); game: the
+// game's own end signal (RoundShouldEnd).
 export type EndReason = 'solved' | 'allSolved' | 'timeUp' | 'host' | 'noPlayers' | 'game';
 
 export interface RosterEntry {
@@ -31,6 +32,11 @@ export interface RosterEntry {
   readonly guesses: number;
   // Server time from which the next guess passes the cooldown check; 0 before the first.
   readonly cooldownEndsAt: number;
+  // Server time from which the inactivity clock runs (O71): the open, then after each
+  // accepted guess the later of its cooldown end and its Frost-held answer (./inactivity).
+  readonly readyAt: number;
+  // Out of this round for inactivity (O71): no more guesses, no place, no points.
+  readonly timedOut: boolean;
   readonly solvedSeq: number | null;
   readonly solvedAt: number | null;
   readonly place: number | null;
@@ -84,6 +90,8 @@ export interface PlayerResult {
   readonly guesses: number;
   readonly team: string | null;
   readonly points: number;
+  // Listed as "timed out", never placed (O71).
+  readonly timedOut: boolean;
 }
 
 export interface TeamResult {
@@ -161,6 +169,10 @@ export type RoundEvent<E, A, Cfg> =
       readonly by: string;
     }
   | { readonly type: 'MarginNoted'; readonly playerId: string; readonly ms: number }
+  // The player made no guess for the round's inactivity limit (O71); `at` is the deadline
+  // plus the grace (O72), not the time the server noticed, so a replay or a late timer gives
+  // the same log.
+  | { readonly type: 'PlayerTimedOut'; readonly playerId: string; readonly at: number }
   // Frost: every held event up to this log seq has reached its audience (06 §2.7). Written by
   // the round actor, which numbers the log; it changes no state.
   | { readonly type: 'HeldDelivered'; readonly upTo: number; readonly at: number };
@@ -190,6 +202,7 @@ export type RoundCode =
   | 'ROUND_NOT_OPEN'
   | 'ROUND_OVER'
   | 'NOT_IN_ROUND'
+  | 'TIMED_OUT'
   | 'ALREADY_SOLVED'
   | 'COOLDOWN_ACTIVE'
   | 'NOT_ENOUGH_PLAYERS'

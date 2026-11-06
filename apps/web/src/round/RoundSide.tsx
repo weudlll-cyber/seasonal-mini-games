@@ -16,7 +16,8 @@
  *                 tags the player's marker and tag in place of the dot (O62). In individual
  *                 mode on a desktop the info column's Others panel (T260): the round's other
  *                 players, one row each with marker, name, guesses and "solved" once they
- *                 found their own secret, all from the roster the server sends (O54: this
+ *                 found their own secret or "timed out" once out of the round for inactivity
+ *                 (O71), all from the roster the server sends (O54: this
  *                 round only); a phone keeps the one "Others" line (./RoundLog).
  * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), ../season/* (teamName, TeamIcon),
  *                 ./PlayerName, ./players.css
@@ -139,8 +140,11 @@ export function OthersPanel(p: {
               steps={state.steps?.[r.playerKey]}
             />
             <span className="round-player-guesses">{guessCount(r.guesses)}</span>
-            {/* The server's word that this player found their secret (the roster's flag). */}
-            <span className="round-player-solved">{r.solved ? 'solved' : null}</span>
+            {/* The server's word that this player found their secret or is out of time (the
+                roster's flags, O71). */}
+            <span className="round-player-solved">
+              {r.solved ? 'solved' : r.timedOut ? 'timed out' : null}
+            </span>
           </li>
         ))}
       </ul>

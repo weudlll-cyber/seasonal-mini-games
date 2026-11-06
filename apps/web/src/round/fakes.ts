@@ -26,12 +26,22 @@ export const ended: RoundStateView = {
   endsAt: 600_000,
   endedAt: 9_000,
   cooldownMs: 3_000,
+  inactivityLimitMs: 60_000,
+  inactivityWarnMs: 30_000,
   endReason: 'solved',
   abortReason: null,
   winner: 'w',
   margin: { playerId: 'a', ms: 400 },
   roster: [
-    { playerKey: 'w', team: 'autumn', guesses: 9, cooldownEndsAt: 0, place: 1, solved: true },
+    {
+      playerKey: 'w',
+      team: 'autumn',
+      guesses: 9,
+      cooldownEndsAt: 0,
+      place: 1,
+      solved: true,
+      timedOut: false,
+    },
     {
       playerKey: 'a',
       team: 'winter',
@@ -39,6 +49,7 @@ export const ended: RoundStateView = {
       cooldownEndsAt: 20_000,
       place: null,
       solved: false,
+      timedOut: false,
     },
   ],
   seq: 30,
@@ -53,6 +64,7 @@ export const ended: RoundStateView = {
       guesses: 9,
       team: 'autumn',
       points: 10,
+      timedOut: false,
     },
     {
       playerId: 'a',
@@ -62,6 +74,7 @@ export const ended: RoundStateView = {
       guesses: 4,
       team: 'winter',
       points: 0,
+      timedOut: false,
     },
   ],
   teams: [
@@ -70,6 +83,7 @@ export const ended: RoundStateView = {
   ],
   seed: 'cd'.repeat(32),
   names: { w: 'Walter', a: 'Anna' },
+  ownInactivity: null,
 };
 
 // The window's size for the round's layout (./useRoundView): jsdom starts at 1024 × 768, a

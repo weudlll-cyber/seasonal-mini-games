@@ -7,7 +7,8 @@
  *                 (on by default, O24), the seed text (the same text gives the same secret and
  *                 season), the secret mode, the season (or the seed's), what others see, the
  *                 bots, the cooldown, the countdown with the round's intro screen (O36), the
- *                 chosen game's own host settings and only those (Guess The Number: lowest and
+ *                 inactivity limit and warning (O75), the chosen game's own host settings and
+ *                 only those (Guess The Number: lowest and
  *                 highest number, whether the range is shown, the closeness comments, O21),
  *                 the fast test profile and whether it is a team match (O34); start it
  *                 (`POST /dev/quicktest`, the game's settings by key, T121) and go to the
@@ -16,7 +17,8 @@
  *                 counting down at once. Every field has
  *                 its one-line help under it: the settings with the words and bounds of their
  *                 definitions through the host form's own `Field`, the rest from FORM_HELP, so
- *                 both forms say the same. Development builds only: the shell loads this module
+ *                 both forms say the same; a refused setting's sentence under its field (O74).
+ *                 Development builds only: the shell loads this module
  *                 on demand and a production build leaves it out.
  * Depends on:     react, @smg/contracts, @smg-game/registry/web, ./quickTestSettings,
  *                 ./http, ./router, ../season/season, ../components/fields, ../lobby/games,
@@ -32,15 +34,23 @@ import { useState, type ReactElement, type SyntheticEvent } from 'react';
 import { ChoiceField, NumberField, Problem, SwitchField, TextField } from '../components/fields.js';
 import { useGames } from '../lobby/games.js';
 import { FORM_HELP } from '../match/formHelp.js';
-import { HostFields, seasonalDefs } from '../match/roundFields.js';
+import {
+  HostFields,
+  NO_PROBLEMS,
+  problemsOf,
+  seasonalDefs,
+  type FormProblems,
+} from '../match/roundFields.js';
 import { SEASON_NAMES, SEASONS } from '../season/season.js';
 import { api } from './http.js';
 import {
   bodyOf,
   defsOf,
   gameKeysOf,
+  INACTIVITY_KEYS,
   KEYS,
   SettingFields,
+  shownKeysOf,
   START,
   type Extra,
   type Values,
@@ -159,11 +169,12 @@ function QuickTestFields(p: {
   readonly values: Values;
   readonly set: (key: string, v: SettingValue) => void;
   readonly more: ReturnType<typeof extraFields>;
+  readonly problems: FormProblems['fields'];
 }): ReactElement {
-  const { extra, values, set, more } = p;
+  const { extra, values, set, more, problems } = p;
   const defs = defsOf(extra.gameId);
   const fields = (keys: readonly string[]) => (
-    <SettingFields keys={keys} defs={defs} values={values} set={set} />
+    <SettingFields keys={keys} defs={defs} values={values} set={set} problems={problems} />
   );
   return (
     <div className="host-form">
@@ -175,13 +186,14 @@ function QuickTestFields(p: {
       {more.season}
       {fields(KEYS.slice(1, 2))}
       {more.bots}
-      {fields([...KEYS.slice(2), ...gameKeysOf(extra.gameId)])}
+      {fields([...KEYS.slice(2), ...INACTIVITY_KEYS, ...gameKeysOf(extra.gameId)])}
       {/* Heatwave's step and interval for a summer round, the host form's own (O63, T208). */}
       <HostFields
         fields={seasonalDefs(defs)}
         season={extra.season === '' ? null : extra.season}
         values={values}
         set={set}
+        problems={problems}
       />
       {more.fast}
     </div>
@@ -201,9 +213,10 @@ export function QuickTest(): ReactElement {
     lobby: true,
     teamMatch: true,
   });
-  const [problem, setProblem] = useState<string | null>(null);
+  const [problems, setProblems] = useState<FormProblems>(NO_PROBLEMS);
   const set = (key: string, v: SettingValue): void => {
     setValues((old) => ({ ...old, [key]: v }));
+    setProblems(NO_PROBLEMS);
   };
   const more = extraFields({
     extra,
@@ -218,10 +231,11 @@ export function QuickTest(): ReactElement {
       .then((started) => {
         navigate({ name: 'match', code: started.matchCode });
       })
-      .catch(() => {
-        setProblem(
-          'The Quick Test could not start. Are you signed in, and do the game’s settings fit together?',
-        );
+      .catch((error: unknown) => {
+        // A refused setting's sentence goes under its field (O74).
+        const other =
+          'The Quick Test could not start. Are you signed in, and do the game’s settings fit together?';
+        setProblems(problemsOf(error, shownKeysOf(extra), other));
       });
   };
   return (
@@ -231,8 +245,14 @@ export function QuickTest(): ReactElement {
         One round against bots, which you host and play: from the lobby, where the bots join and you
         start the round, or at once. The same seed gives the same secret and the same season.
       </p>
-      <QuickTestFields extra={extra} values={values} set={set} more={more} />
-      <Problem text={problem} />
+      <QuickTestFields
+        extra={extra}
+        values={values}
+        set={set}
+        more={more}
+        problems={problems.fields}
+      />
+      <Problem text={problems.form} />
       <button type="submit" className="smg-btn smg-btn--primary" data-testid="start-quick-test">
         Start Quick Test
       </button>
