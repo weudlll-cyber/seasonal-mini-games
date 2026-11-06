@@ -228,10 +228,16 @@ test('journey 27: Seasonal Target in focus mode, the loupe on a phone', async ({
     },
     // 20 × 20 tiles: about 30 px at 1280 × 720 and at least 18 px on a phone (T144). The bot
     // found a 20 × 20 target by its distances within two cooldowns of 20 s (CI); with
-    // warm/cold only and a 30 s cooldown it needs many more of them, so the round stays open.
+    // warm/cold only and a 30 s cooldown it needs many more of them. Its first guess is a
+    // random cell, though, and once in CI it was the target (1 in 400): individual secrets,
+    // so a bot's solve never ends the player's round.
     {
       targets: { tile: [30, 18] },
-      round: { cooldownS: 30, settings: { 'target.size': 20, 'target.feedback': 'closeness' } },
+      round: {
+        mode: 'individual',
+        cooldownS: 30,
+        settings: { 'target.size': 20, 'target.feedback': 'closeness' },
+      },
     },
   );
 });

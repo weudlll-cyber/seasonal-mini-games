@@ -13,7 +13,8 @@
  *                 "timed out" in the results without place or points; individual rounds end
  *                 once everyone still in has solved, shared rounds once nobody is left;
  *                 the limit off (0) times nobody out; the round's next due time names the
- *                 next timeout.
+ *                 next timeout; under Frost a timeout that leaves only solvers ends the
+ *                 round at its own time, announced no earlier than the last solve.
  * Depends on:     vitest, ./evolve, ./fakes, ./inactivity, ./lifecycle
  * Spec:           docs/spec/02-game-guess-the-number.md §5.3, §8; docs/spec/04-software-architecture.md §5.1
  */
@@ -226,5 +227,41 @@ describe('the timeout in the log (O71)', () => {
     ]);
     expect(ended(onTime)).toMatchObject({ reason: 'allSolved', at: t + 30_000 + OUT });
     expect(replayRound(pickGame, late.log)).toEqual(late.state);
+  });
+});
+
+describe('a timeout that leaves only solvers under Frost (O71, 03 §2.4)', () => {
+  // Winter with Frost holding answers 8 s; secrets are 7, so a guess of 7 solves.
+  const frost = () =>
+    new PickDriver(
+      {
+        ...LIMIT,
+        secretMode: 'individual',
+        cooldownMs: 3_000,
+        specialOn: true,
+        specials: { ...config().specials, frostDelayMs: 8_000 },
+      },
+      undefined,
+      'winter',
+    );
+
+  it('holds the end back until the solve it ends on has been announced', () => {
+    const d = frost();
+    const t = d.start(['a', 'b']);
+    // a's solve is shown at t + 67 s, after b's timeout at t + 62 s.
+    d.guess('a', 7, t + 59_000);
+    tick(d, t + 70_000);
+    expect(ended(d)).toMatchObject({ reason: 'allSolved', at: t + OUT, deliverAt: t + 67_000 });
+    // The round actor's delivery marker changes no state: the log still replays to it.
+    const delivered = { type: 'HeldDelivered', upTo: d.log.length, at: t + 67_000 } as const;
+    expect(replayRound(pickGame, [...d.log, delivered])).toEqual(d.state);
+  });
+
+  it('announces the end at once when the solve is already shown', () => {
+    const d = frost();
+    const t = d.start(['a', 'b']);
+    d.guess('a', 7, t + 1_000);
+    tick(d, t + OUT);
+    expect(ended(d)).toMatchObject({ reason: 'allSolved', at: t + OUT, deliverAt: null });
   });
 });
