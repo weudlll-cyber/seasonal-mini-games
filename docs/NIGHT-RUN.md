@@ -8,12 +8,12 @@ This branch carries pieces 1–2. Pieces 3–4 (round polish, spec gaps) are on 
 
 ### Status
 
-| Piece                                    | State   | Commit    |
-| ---------------------------------------- | ------- | --------- |
-| 1. The three accepted proposals          | done    | `7dcfc1b` |
-| 2. Website mode's loose ends             | running |           |
-| 3. Round polish (on `feat/round-polish`) | running |           |
-| 4. Spec gaps (on `feat/round-polish`)    | open    |           |
+| Piece                                    | State   | Commit          |
+| ---------------------------------------- | ------- | --------------- |
+| 1. The three accepted proposals          | done    | `7dcfc1b`       |
+| 2. Website mode's loose ends             | done    | `d8b5065`       |
+| 3. Round polish (on `feat/round-polish`) | done    | `5b1a036` there |
+| 4. Spec gaps (on `feat/round-polish`)    | running |                 |
 
 ### Piece 1 — the accepted proposals (O68; T222, T237, T240, T242)
 
@@ -34,6 +34,24 @@ This branch carries pieces 1–2. Pieces 3–4 (round polish, spec gaps) are on 
   - T239's reason for reloading the frame on a theme switch is outdated, since EMBED.md has a `theme` message.
   - EMBED.md's `resize` is unused.
   - The phone waiting area's chat button has no badge.
+
+### Piece 2 — website mode's loose ends (T243)
+
+- The first admin on a website install (T243):
+  - `smg admin create-super` refuses there, before any question, in `ops/smg` and in the app's CLI, and names the new `smg admin promote-super --name NAME | --website-id N`.
+  - That command promotes a website account that has signed in once. `--name` matches the game name or the website name, ignoring case.
+  - Several matches are listed with their website ids; an unknown, suspended or deleted account is refused; an account that is already super admin exits 0.
+  - The role is stored with source `manual` through `addRole`, so the next sign-in's mapping (`idp_mapping` rows only) and a `rights` change keep it; a `deleted` change still removes every role. The account's sessions end, so its next sign-in is an admin session.
+  - `promote-super` refuses on a standalone install. README, the operator guide (§3 step 8, §4 split by install type), spec 10 §6 and the installer's next steps say this.
+- The installer's dry run now says "would be reloaded" (`install_route`).
+- The "Others:" line renders each name through `PlayerName` with its steps (`othersOf`, shared with the line's tooltip text).
+- `DELETE /me` stays a hard delete. The website link goes with the account (cascade), so later `deleted`, `locked`, `unlocked` and `rights` entries for that id do nothing, log only the usual info line, and move the cursor on. This already worked; a new test proves it.
+- Tests:
+  - server: 22 files, 99 tests pass, including the real CLI run through tsx in both modes;
+  - web: 38 files, 177 tests pass;
+  - shellcheck is clean.
+- Reused: `addRole`, `revokeAccountSessions`, `PlayerName`. Extracted: cli.ts's `withPool` and command table, RoundLog's `othersOf`.
+- Noticed, left alone: a CLI role grant writes no audit-log entry, as `create-super` never did.
 
 ## Website mode (2026-11-05)
 
