@@ -34,7 +34,7 @@ Seasonal Mini Games can run **next to Seasonal Bingo Royale on the same server**
    ```
    git clone https://github.com/weudlll-cyber/seasonal-mini-games.git smg && sudo bash smg/ops/install.sh
    ```
-   (`master` holds the installer once the current work is merged into it; until then add `--ref <branch>` after `install.sh` and clone that branch.)
+   It builds the branch you cloned (`git clone -b <branch> …` for another one; `--ref <branch or tag>` overrides it, and a re-run keeps the ref of the last install, DECISIONS T244).
 3. Answer the questions: **standalone**; environment **prod**; your **domain** (or the IP address); your **e-mail** (for certificates); your **age public key** (`age1…`). For an unattended run every answer is a flag (top of `ops/install.sh`), with `--yes`.
 4. Wait until it says **Done**. It installs Docker if needed, builds the app, starts it and checks that it answers.
 5. Create the first admin (section 4), then open `https://<your domain>/`.

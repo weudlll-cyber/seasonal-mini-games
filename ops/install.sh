@@ -108,13 +108,16 @@ ask_common() {
 }
 
 # Where the source comes from: the flag, the last install, this checkout's origin, else the
-# public repository; the ref: the flag, the last install, else master.
+# public repository; the ref: the flag, the last install, this checkout's branch (or commit,
+# lib/config.sh checkout_ref; a clone of a branch installs that branch, DECISIONS T244), else
+# master.
 default_source() {
   local origin
   origin=$(git -C "$OPS" remote get-url origin 2>/dev/null || true)
   SMG_REPO=${SMG_REPO:-$(env_value "$SMG_ETC/install.conf" SMG_REPO)}
   SMG_REPO=${SMG_REPO:-${origin:-https://github.com/weudlll-cyber/seasonal-mini-games.git}}
   SMG_REF=${SMG_REF:-$(env_value "$SMG_ETC/install.conf" SMG_REF)}
+  SMG_REF=${SMG_REF:-$(checkout_ref "$OPS")}
   SMG_REF=${SMG_REF:-master}
   info "  image source: built on this server from $SMG_REPO at $SMG_REF (no signed release image yet)"
 }

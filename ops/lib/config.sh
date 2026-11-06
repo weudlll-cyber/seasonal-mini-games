@@ -16,8 +16,9 @@
 #                 record /etc/smg/install.conf; copy the compose files, Caddyfile, the smg CLI and its
 #                 library to /opt/smg;
 #                 build the app image on the server from a git ref (until a signed release
-#                 image exists), skipping it when the image of that commit is there, and
-#                 drop app images older than the current and the previous one.
+#                 image exists; by default the installer checkout's own branch, checkout_ref),
+#                 skipping it when the image of that commit is there, and drop app images
+#                 older than the current and the previous one.
 # Depends on:     ./common.sh (put_file, run, env_value), git, docker, openssl
 # Used by:        ops/install.sh, ops/smg (update)
 # Spec:           docs/spec/10-repository-structure.md §6; Bingo 09 §2, §3
@@ -126,6 +127,12 @@ install_files() {
   done
   put_file "$SMG_ROOT/smg" 0755 <"$from/smg"
   [[ -L /usr/local/bin/smg ]] || run ln -sf "$SMG_ROOT/smg" /usr/local/bin/smg
+}
+
+# checkout_ref <dir>: the branch the checkout holding <dir> is on, its commit when detached,
+# nothing outside a checkout: the code the operator cloned is the code that gets built.
+checkout_ref() {
+  git -C "$1" symbolic-ref --quiet --short HEAD 2>/dev/null || git -C "$1" rev-parse --quiet --verify HEAD 2>/dev/null || true
 }
 
 # build_image <repo> <ref>: sets SMG_IMAGE=smg-app:<commit> and builds it when missing.
