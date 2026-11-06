@@ -42,3 +42,13 @@ Resolved by the decision rules (owner decisions first, then the more specific se
 
 1. **`round_results.secret`.** 06 §2.4 has a column for an individual player's secret, written at the end. The server is game-agnostic and the game-module contract has no way to name "the secret of this player", so the column stays NULL; the result view and `/rounds/:id/verify` show every secret. Proposal: drop the column in the next spec change, or add a contract hook if a report needs it.
 2. **The feed's host allowlist.** 07 §5 asks for "host on the allowlist", but no setting holds such a list. Built: the feed address itself (`seasons.feedUrl`, security admin, https only) is the one host allowed, and every address it resolves to must be public. Proposal: keep it so; add a list only if a second outside source comes.
+
+## Needed from the website
+
+Found in the dress rehearsal of 2026-11-06 (website `master` at `82e9e30`, which holds `feat/embedded-games` `468aaca`; Mini Games `feat/website-mode`; nginx mode on a fresh Ubuntu 24.04 machine).
+
+1. **The login does not come back to the game.**
+   - Step: a guest in the game clicks "Sign in" (or the chat's "Log in"), logs in on the website's login page.
+   - Request: `GET /games/mini-games/auth/website?next=%2Fgames%2Fmini-games%2F` → 302 to `/login?next=%2Fgames%2Fmini-games%2Fauth%2Fwebsite%3Fnext%3D%252Fgames%252Fmini-games%252F`; then the login form (`POST /api/auth/login`, 200).
+   - Answer: the website's own app moves to `/games/mini-games/auth/website?next=%2Fgames%2Fmini-games%2F` inside the page (`navigate(safeNext(next))` in `client/src/pages/LoginPage.jsx` `finish`) and shows its "Page not found"; no request reaches the game's sign-in route, so the member is not signed in to the game. A reload of that address signs in at once.
+   - Expected: a full page load of `next` when it is not one of the website's own app routes (for example `window.location.assign(next)` for paths under `/games/`), so the proxy's sign-in route runs and the member lands back on the game page. The same `navigate(safeNext(next))` is in `RegisterPage.jsx` and `DiscordSignupPage.jsx`; the Discord login's server-side redirect (`server/src/discord/routes.js`) is not affected. The same holds for Bingo at `/games/bingo/`.
