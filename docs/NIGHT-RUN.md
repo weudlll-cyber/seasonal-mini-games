@@ -2,7 +2,42 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
-## Night 9 (2026-11-06)
+## Dress rehearsal of the live install (2026-11-06)
+
+The website's real installer and ours ran together on a fresh systemd Ubuntu 24.04 container with its own Docker (`smg-rehearsal-*`). The machine had a test DNS for `example.org` and the website's own test ACME server (Pebble). It ran in nginx mode first, then on a reset machine in the website's own-Caddy mode. The browser was Chromium with `--host-resolver-rules`, so the origin was exactly `https://example.org`. The machine and every test account are deleted. The screenshots are on the orphan branch `shots/rehearsal`: 35 images and `play-through.txt`.
+
+- **The website used:** its `master` at `82e9e30`. `feat/embedded-games` was merged there (PR #45, which contains `468aaca`) and deleted, so that branch no longer exists.
+- **The website installer asked:**
+  - the domain, the www redirect, the call service's domain, the Let's Encrypt e-mail;
+  - the price bot's and event bot's files;
+  - the backup age key, the CoinGecko key and the Discord client id;
+  - Bingo embedded? (`no`); Mini Games embedded? (`yes`);
+  - in nginx mode, the event bot's admin page;
+  - the first admin's name, e-mail and password.
+
+  It picks the mode itself: nginx when nginx holds 80/443, otherwise its own Caddy. Both runs exited 0.
+
+- **Our installer asked** only three questions in both modes: the type (`website`), the environment (`prod`) and the age key. Both runs ended "Done (14 change(s))" with every end check passing.
+- **Defect on our side, fixed** (`03eb748`, T244):
+  - Run from a clone of `feat/website-mode`, the installer built `master`. It now builds the checkout's own branch, or its commit when detached, and `master` only outside a checkout.
+  - New test `ops/test/checkout-ref.test.sh` fails without the fix; shellcheck is clean. README and the operator guide are updated.
+  - Full `pnpm verify` green (160 files, 885 tests); CI green on `fbcaa04`.
+- **Piece 3, nginx mode,** all passed except the way back after login:
+  - the guest lobby, plus the light and dark pair;
+  - the guest chat: the website's room, read-only, with "Log in";
+  - the website's login reached;
+  - a member allowed to host hosted one round of each of the four games, with a second member in another profile;
+  - chat written, and "1 unread" on the other profile's badge;
+  - the deleted member's session ended after 7 s, and they show as "Deleted player";
+  - the locked member's session ended after 5 s;
+  - `smg admin promote-super --name alice` worked;
+  - `smg status` showed website, authorize 204 and the feed's last success.
+- **Own-Caddy mode:** sign-in, one Guess The Number round, chat and the badge, promote-super and status all passed.
+- **Defect on the website's side (OPEN, "Needed from the website"):**
+  - After the website's login, `LoginPage.jsx` moves to `next` inside its own app with `navigate(safeNext(next))` and shows "Page not found"; the game's sign-in route is never requested. A reload signs the member in.
+  - Expected: a full page load for paths under `/games/`.
+  - `RegisterPage.jsx` and `DiscordSignupPage.jsx` have the same call. Bingo is affected too.
+- **Not checked:** Discord steps (the website offers no test path to give an account a step), signing in again as a locked member, and the four games in Caddy mode (one round there, as asked).
 
 This branch carries pieces 1–2. Pieces 3–4 (round polish, spec gaps) are on `feat/round-polish` from `master`, with its own copy of this section. Neither branch is merged. Owner decision O68: proposals T237, T222 and T240 are accepted.
 
