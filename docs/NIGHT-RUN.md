@@ -8,12 +8,45 @@ This branch, from `master` at `4ab2986`, carries pieces 3–4. Pieces 1–2 (web
 
 ### Status
 
-| Piece                                                 | State   | Commit |
-| ----------------------------------------------------- | ------- | ------ |
-| 1. Accepted proposals (on `feat/website-mode`)        | running |        |
-| 2. Loose ends (on `feat/website-mode`)                | open    |        |
-| 3. Round polish: the others' column, the dark own row | running |        |
-| 4. Spec gaps and conflicts                            | open    |        |
+| Piece                                                 | State   | Commit                     |
+| ----------------------------------------------------- | ------- | -------------------------- |
+| 1. Accepted proposals (on `feat/website-mode`)        | done    | `7dcfc1b` there            |
+| 2. Loose ends (on `feat/website-mode`)                | running |                            |
+| 3. Round polish: the others' column, the dark own row | done    | `5b1a036`; shots `9dab603` |
+| 4. Spec gaps and conflicts                            | running |                            |
+
+### Piece 3 — round polish (T260, T261 proposals; T262)
+
+- T260 (proposal, OPEN): in individual mode on a desktop, the column under the game's panel lists the round's other players, one row each: marker (the tag in Seasonal Target), name through `PlayerName`, "N guesses" and "solved". All four games; in Seasonal Target it sits above the list. The data is the roster the client already has (`guesses`, `solved`), so the server is unchanged. On a desktop the list drops its "Others:" line; the phone keeps it. After a merge with `feat/website-mode` the panel's `PlayerName` needs `steps={state.steps?.[r.playerKey]}` (written into T260).
+- T261 (proposal, OPEN, amends T147): the own row in dark mode is 30 % of the viewer's colour mixed into black, through two new `@smg/ui` tokens `--own-tint` and `--color-own-base`. Before, it was 22 % into the night-blue card, which turned warm colours grey: Spring rgb(51 60 68) → rgb(53 55 23). Light is unchanged. It covers the round lists, "Your guesses" and the Players panel.
+- Contrast on the dark tint, lowest over the four season colours, computed from the CSS:
+
+  | Text colour           | Lowest ratio                    |
+  | --------------------- | ------------------------------- |
+  | body text             | 10.80                           |
+  | muted                 | 6.24                            |
+  | Frost's winter text   | 4.59 (was 4.31–4.47, below 4.5) |
+  | success               | 5.78                            |
+  | danger                | 5.21                            |
+  | the colour dot's ring | 3.00 (needs 3:1)                |
+
+  Light stays at 4.88 or more. `designTokens.test` checks both themes; e2e's pixel check passed in dark for all four games.
+
+- T262: master's migrator ignores the website branch's applied migration 0014, so the shared dev database is used unchanged.
+- Tests:
+  - web: 34 files, 165 tests pass;
+  - `@smg/ui`, lint, typecheck and format are clean;
+  - journeys 2, 20, 21 and 22 passed in Chromium once (3.3 min). Journey 2 now checks the Others panel.
+  - The first e2e run had reused two stale dev clients from the other checkout, so it is void. The valid run used ports 5450/5451, and the stale clients are stopped.
+- Shots: 21 images on the orphan branch `shots/night-9`, all looked at. For each game:
+  - the Others column at 1280 × 720, light and dark;
+  - the own rows at 1280 × 720 light and dark, and at 390 × 844 dark;
+  - Guess The Number also has the Players panel in dark.
+- Removed: RoundLog's own `guesses()` and the Players panel's inline wording. Extracted: `guessCount` (one wording for every list), `othersOf`, the `Others` component. Reused: `Marker`, `PlayerName`, `roundMarks`, the `.round-player-list` subgrid, the contrast helpers.
+- Noticed, left alone:
+  - the game hint panels use the same 22 %-into-card mix in dark;
+  - the Bomb Defusal dark shot caught "Boom!" mid-animation;
+  - RoundSide.tsx will conflict a little with `feat/website-mode` at a merge.
 
 ## The team column, the owner's confirmations, the merge (2026-11-04)
 
