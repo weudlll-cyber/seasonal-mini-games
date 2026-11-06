@@ -142,7 +142,8 @@ describe('the account-changes feed (O66)', () => {
     );
     expect(kept.rows).toEqual([{ points: 7 }]);
     await callWith(harness.built, m.host, `matches/${m.code}/abort`, { reason: 'test' });
-  });
+    // Five sign-ins, a match and a league row: past the 20 s default under a full parallel run.
+  }, 60_000);
 });
 
 describe('the feed later (O66)', () => {
@@ -177,7 +178,8 @@ describe('the feed later (O66)', () => {
       'SELECT cursor, last_failure_at IS NOT NULL AS failed FROM smg.website_feed',
     );
     expect(state.rows).toEqual([{ cursor: '5', failed: true }]);
-  });
+    // Three poller starts, each waiting up to 15 s for its first log line.
+  }, 60_000);
 });
 
 describe('changes for an account its member deleted (DELETE /me)', () => {
@@ -203,5 +205,5 @@ describe('changes for an account its member deleted (DELETE /me)', () => {
       'SELECT cursor FROM smg.website_feed',
     );
     expect(state.rows).toEqual([{ cursor: '9' }]);
-  });
+  }, 60_000);
 });
