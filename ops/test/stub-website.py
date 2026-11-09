@@ -7,8 +7,9 @@
 #                 Mini Games path (the website with Mini Games switched off):
 #                 GET /api/games/mini-games/authorize — without X-Original-Method GET/HEAD/OPTIONS
 #                 403 (the website fails closed); carrying X-Smg-Proxy-Secret 500 (the secret
-#                 must never reach the website); with the cookie "stub_user=u-1" 204 and the six
-#                 identity headers; anyone else 204 with X-Acting-Guest: true alone (never 401).
+#                 must never reach the website); with the website's session cookie of the member
+#                 (se.sid=u-1, or __Host-se.sid=u-1) 204 and the six identity headers, so a
+#                 proxy that dropped the browser's Cookie on this call signs nobody in; anyone else 204 with X-Acting-Guest: true alone (never 401).
 #                 GET /api/games/mini-games/account-changes — 200 and an empty page with the token
 #                 of /etc/seasonal/games-sync-token in X-Games-Sync-Token, else 401.
 #                 GET /embed/chat?room=mini-games — 200 (the chat room's page); GET /login 200;
@@ -20,10 +21,13 @@
 import base64
 import json
 import os
+import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 PREFIX = "/api/games/mini-games/"
 READS = {"GET", "HEAD", "OPTIONS"}
+# The website's session cookie (its server/src/http/session.js) naming the stand-in member.
+MEMBER_COOKIE = re.compile(r"(?:^|;\s*)(?:__Host-)?se\.sid=u-1(?:;|$)")
 STEPS = base64.urlsafe_b64encode(json.dumps([{"ladder": "events", "name": "Gold", "icon": None}]).encode()).decode().rstrip("=")
 MEMBER = {
     "X-Acting-User-Id": "u-1",
@@ -62,7 +66,7 @@ class Handler(BaseHTTPRequestHandler):
             return self.answer(500)
         if (self.headers.get("X-Original-Method") or "").upper() not in READS:
             return self.answer(403)
-        member = "stub_user=u-1" in (self.headers.get("Cookie") or "")
+        member = MEMBER_COOKIE.search(self.headers.get("Cookie") or "") is not None
         self.answer(204, MEMBER if member else {"X-Acting-Guest": "true"})
 
     def account_changes(self):

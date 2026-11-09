@@ -11,10 +11,15 @@
 #                 present>, a guest sent to <base>auth/website/login with "next";
 #                 <base>auth/website/login to SMG_WEBSITE_LOGIN_PATH with the sign-in route and
 #                 "next"; <base>api/v1/session the identity and secret headers it was sent (JSON);
-#                 <base>metrics 200 (the proxy must answer it 404). Test only: never part of an install.
+#                 <base>metrics 200 (the proxy must answer it 404); a WebSocket upgrade on any
+#                 path 101. Every answer names the Cookie it was sent in X-Seen-Cookie ("none"
+#                 without one), so the test sees what the proxy passed on (DECISIONS T281).
+#                 Test only: never part of an install.
 # Used by:        ops/test/website-cases.sh (built as the image smg-app:<commit>)
 # Spec:           docs/spec/10-repository-structure.md §6
 
+import base64
+import hashlib
 import hmac
 import json
 import os
@@ -47,6 +52,7 @@ def poll_feed():
 class Handler(BaseHTTPRequestHandler):
     def answer(self, status, headers=None, body=b""):
         self.send_response(status)
+        self.send_header("X-Seen-Cookie", self.headers.get("Cookie", "none"))
         for name, value in (headers or {}).items():
             self.send_header(name, value)
         self.send_header("Content-Length", str(len(body)))
@@ -67,7 +73,20 @@ class Handler(BaseHTTPRequestHandler):
             return self.answer(302, {"Location": nxt, "Set-Cookie": cookie})
         self.answer(302, {"Location": f"{BASE}auth/website/login?next={quote(nxt, safe='')}"})
 
+    # The WebSocket handshake's answer (RFC 6455 §4.2.2); the connection closes after it.
+    def upgrade(self):
+        key = (self.headers.get("Sec-WebSocket-Key") or "") + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+        accept = base64.b64encode(hashlib.sha1(key.encode()).digest()).decode()
+        self.close_connection = True
+        self.send_response(101)
+        self.send_header("X-Seen-Cookie", self.headers.get("Cookie", "none"))
+        for name, value in (("Upgrade", "websocket"), ("Connection", "Upgrade"), ("Sec-WebSocket-Accept", accept)):
+            self.send_header(name, value)
+        self.end_headers()
+
     def do_GET(self):
+        if (self.headers.get("Upgrade") or "").lower() == "websocket":
+            return self.upgrade()
         url = urlsplit(self.path)
         path = "/" + url.path[len(BASE):] if url.path.startswith(BASE) else url.path
         nxt = parse_qs(url.query).get("next", [BASE])[0]

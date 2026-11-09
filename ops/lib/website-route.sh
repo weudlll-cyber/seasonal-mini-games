@@ -14,6 +14,9 @@
 #                 refuses without, fail closed), passes the seven identity headers and only then
 #                 adds the secret (so the website never sees it); a refusal (401/403) goes to
 #                 <base>auth/website/login with the same query; /games/mini-games/metrics 404.
+#                 The website's session cookie (__Host-se.sid, se.sid) never reaches the app (HTTP
+#                 and WebSocket): the authorize call still gets the browser's Cookie, the app the
+#                 same Cookie without those pairs, the game's own cookies kept (DECISIONS T281).
 #                 Then the proxy's own check (nginx -t, caddy validate): a failure puts the
 #                 earlier file back and stops; else a reload. At the end, through the website on
 #                 this server: /games/mini-games/ answers, the sign-in route without a session
@@ -31,6 +34,21 @@ SECRET_HEADER=X-Smg-Proxy-Secret
 IDENTITY_HEADERS=(X-Acting-User-Id X-Acting-User X-Acting-User-Roles X-Acting-User-Email-Verified
   X-Acting-User-Can-Host X-Acting-User-Steps X-Acting-Guest)
 
+# The nginx lines that give the app the browser's Cookie without the website's session cookie
+# (its server/src/http/session.js: "__Host-se.sid", "se.sid" without Secure). nginx has no
+# global replace and no `map` in a server block, so each `if` (only `set` inside, which is safe
+# in a location) removes the first such pair; four cover both names twice. Then a leading "; "
+# goes; an empty Cookie is not sent. The authorize subrequest still sends the browser's own.
+nginx_cookie_lines() {
+  local var=\$smg_mini_games_cookie out _
+  out="    set $var \$http_cookie;"$'\n'
+  for _ in 1 2 3 4; do
+    out+="    if ($var ~ \"^(.*?)\\s*(?:^|;)\\s*(?:__Host-)?se\\.sid=[^;]*(.*)\$\") { set $var \$1\$2; }"$'\n'
+  done
+  out+="    if ($var ~ \"^;\\s*(.*)\$\") { set $var \$1; }"$'\n'
+  printf '%s    proxy_set_header Cookie %s;\n' "$out" "$var"
+}
+
 # The header name as nginx names a response header in a variable: lower case, "-" → "_".
 nginx_var() { printf '%s' "$1" | tr 'A-Z-' 'a-z_'; }
 
@@ -42,8 +60,9 @@ proxy_secret() {
 }
 
 write_nginx_route() {
-  local env=$1 secret h var clear="    proxy_set_header $SECRET_HEADER \"\";"$'\n' set=''
+  local env=$1 secret h var clear="    proxy_set_header $SECRET_HEADER \"\";"$'\n' set='' cookie
   secret=$(proxy_secret "$env")
+  cookie=$(nginx_cookie_lines)
   for h in "${IDENTITY_HEADERS[@]}"; do
     var=smg_$(nginx_var "$h")
     clear+="    proxy_set_header $h \"\";"$'\n'
@@ -58,7 +77,8 @@ write_nginx_route() {
 location = $BASE { return 308 $BASE/; }
 location ^~ $BASE/metrics { return 404; }
 location ^~ $BASE/ {
-${clear}    proxy_set_header Host \$host;
+${clear}${cookie}
+    proxy_set_header Host \$host;
     proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto \$scheme;
     # HTTP and the WebSocket upgrade; the app keeps the $BASE prefix (SMG_BASE_PATH).
@@ -72,6 +92,7 @@ location = $SIGN_IN_ROUTE {
 ${set}    # After the authorize call, which never carries it.
     proxy_set_header $SECRET_HEADER "$secret";
     error_page 401 403 = @smg_mini_games_login;
+${cookie}
     proxy_set_header Host \$host;
     proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto \$scheme;
@@ -126,6 +147,12 @@ $clear		@smg_signin path $SIGN_IN_ROUTE
 		}
 		# After forward_auth, so the website never sees it.
 		request_header @smg_signin $SECRET_HEADER $secret
+		# After forward_auth too, which sends the website the browser's Cookie: the app gets it
+		# without the website's session cookie (__Host-se.sid, se.sid), an empty one not at all.
+		request_header Cookie \`(^|;\\s*)(__Host-)?se\\.sid=[^;]*\` ""
+		request_header Cookie \`^;\\s*\` ""
+		@smg_no_cookie header_regexp Cookie \`^\\s*\$\`
+		request_header @smg_no_cookie -Cookie
 		# HTTP and the WebSocket upgrade; the app keeps the $BASE prefix (SMG_BASE_PATH).
 		reverse_proxy smg-mini-games-$env:3100
 	}

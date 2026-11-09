@@ -19,7 +19,9 @@
 #                 never printed, a website member is signed in with name, host right and steps
 #                 (so the website saw no secret and got X-Original-Method), a visitor without a
 #                 session ends at the website's login, forged identity headers and secrets reach
-#                 the app on no route, nor past the proxy, metrics 404, the app's own ports and
+#                 the app on no route, nor past the proxy, the website's session cookie reaches
+#                 the authorize call but not the app (sign-in, HTTP, WebSocket upgrade) while
+#                 the game's own cookie does, metrics 404, the app's own ports and
 #                 subnet differ from Bingo's, `smg status` names the sign-in mode, the authorize
 #                 endpoint's 204 and the feed's last success; a re-run changes nothing.
 #                 Sourced by installer-test.sh (its on, put, server, step, fail, WORK, REF).
@@ -132,6 +134,19 @@ check() {
   echo "PASS  $what"
 }
 
+# The website's session cookie (__Host-se.sid, se.sid) never reaches the app; the game's does.
+website_cookie_checks() {
+  local s=$1 both='__Host-se.sid=w; smg_game=keep; se.sid=u-1' ws
+  check "the app gets the game's cookie without the website's" \
+    "$(on "$s" "curl -s -o /dev/null -D - $H -b '$both' $URL/")" $'X-Seen-Cookie: smg_game=keep\r'
+  check "... and no Cookie when the website's was the only one" \
+    "$(on "$s" "curl -s -o /dev/null -D - $H -b 'se.sid=u-1' $URL/")" $'X-Seen-Cookie: none\r'
+  ws='-H Connection:Upgrade -H Upgrade:websocket -H Sec-WebSocket-Version:13 -H Sec-WebSocket-Key:dGhlIHNhbXBsZSBub25jZQ=='
+  ws=$(on "$s" "curl -s -o /dev/null -D - -m 5 $H $ws -b '$both' $URL/ws || true")
+  check "a WebSocket upgrade still passes" "$ws" '101 Switching Protocols'
+  check "... with the game's cookie, without the website's" "$ws" $'X-Seen-Cookie: smg_game=keep\r'
+}
+
 website_checks() {
   local s=$1 mode=$2 route=$3 secret page signin status direct forged
   forged='-H X-Acting-User-Id:u-9 -H X-Acting-User:Mallory -H X-Acting-Guest:false -H X-Smg-Proxy-Secret:forged'
@@ -142,9 +157,12 @@ website_checks() {
   check "the installer made a proxy secret" "${#secret}" 64
   check "... and did not print it" "$(on "$s" "grep -c '$secret' /root/install.log || true")" 0
   page='%2Fgames%2Fmini-games%2F%23%2Fmatch%2FABC123'
-  signin=$(on "$s" "curl -s -o /dev/null -D - $H -b stub_user=u-1 -H X-Smg-Proxy-Secret:forged '$URL/auth/website?next=$page'")
+  # The stand-in website knows the member by its session cookie only.
+  signin=$(on "$s" "curl -s -o /dev/null -D - $H -b 'se.sid=u-1; smg_game=keep' -H X-Smg-Proxy-Secret:forged '$URL/auth/website?next=$page'")
   check "a website member is signed in with name, host right and steps" "$signin" 'smg_stub=u-1:Walter:true:steps'
   check "... and sent back to the page" "$signin" 'Location: /games/mini-games/#/match/ABC123'
+  check "... while the app got the game's cookie, not the website's" "$signin" $'X-Seen-Cookie: smg_game=keep\r'
+  website_cookie_checks "$s"
   check "without a session the sign-in route ends at the website's login" \
     "$(on "$s" "curl -s -L -o /dev/null -w '%{url_effective}' $H '$URL/auth/website?next=$page'")" \
     '/login?next=%2Fgames%2Fmini-games%2Fauth%2Fwebsite%3Fnext%3D%252Fgames%252Fmini-games%252F%2523%252Fmatch%252FABC123'
