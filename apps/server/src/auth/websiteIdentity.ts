@@ -133,9 +133,10 @@ export function identityFrom(headers: Headers, env: Env): WebsiteIdentity | null
 }
 
 // The game roles of a website member, recomputed at every sign-in (O66): a website admin is
-// a game admin; a member who may start games (X-Acting-User-Can-Host) has the host right
-// (`organizer`); the role `organiser` alone grants nothing here (unlike Bingo D40). super_admin
-// and security_admin are never mapped: they come from `smg admin promote-super` (T243).
+// a game admin; a member the website lets host Mini Games (X-Acting-User-Can-Host, decided per
+// game by the website, always true for its admins) has the host right (`organizer`); the role
+// `organiser` alone grants nothing (as Bingo D46; T278). super_admin and security_admin are
+// never mapped: they come from `smg admin promote-super` (T243).
 export function mappedRoles(who: Pick<WebsiteIdentity, 'roles' | 'canHost'>): readonly string[] {
   return [
     ...(who.roles.includes('admin') ? ['game_admin'] : []),
