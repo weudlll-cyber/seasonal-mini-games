@@ -192,11 +192,20 @@ test('journey 36: inside the website a guest watches, chats, signs in, plays and
     await expect
       .poll(async () => (await sessionOf(guest.ctx)).account, { timeout: 45_000 })
       .toBeNull();
-    // The host's next page load signs in again through the website, back on the same page,
-    // without a form (T282).
-    await host.page.reload();
+    // The host signs in again through the website, back on the same page, without a form
+    // (T282): the open page may do it on its own (an answer with the ended-session header
+    // sends it through the sign-in route), else its next load does. A reload while that
+    // navigation runs is refused ("Not attached to an active page", CI on b53055e), so it is
+    // tried only while signed out, and its failure waits for the next try.
     await expect
-      .poll(async () => (await sessionOf(host.ctx)).account?.displayName, { timeout: 15_000 })
+      .poll(
+        async () => {
+          const name = (await sessionOf(host.ctx)).account?.displayName;
+          if (name === undefined) await host.page.reload().catch(() => undefined);
+          return name;
+        },
+        { timeout: 30_000, intervals: [2_000] },
+      )
       .toBe(HOST.name);
     await expect(host.page).toHaveURL(new RegExp(`#/match/${code}$`));
     const deleted = host.page.locator('span.player-name[title="Deleted player"]');
