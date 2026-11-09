@@ -8,14 +8,15 @@
  *                 (O66) there is no form: every "Sign in" link goes to the website's sign-in
  *                 route with the page shown as `next` (`SignInLink`), and the sign-in and
  *                 register addresses show that link alone (`WebsiteSignIn`).
- * Depends on:     react, ../shell/session, ../shell/router, ./formParts, ./account.css
+ * Depends on:     react, @smg/ui (websiteSignInHref), ../shell/session, ../shell/router, ./formParts, ./account.css
  * Used by:        ../shell/AppShell, ../lobby/Lobby, ./AccountPage, ../chat/ChatPanel
  * Spec:           Bingo 05 §2.1; Bingo 03 §2.1; docs/spec/07-integration.md §7
  */
+import { websiteSignInHref } from '@smg/ui';
 import { useState, type ReactElement, type ReactNode } from 'react';
 
 import { hrefOf } from '../shell/router.js';
-import { useSession, websiteSignInHref } from '../shell/session.js';
+import { useSession } from '../shell/session.js';
 import { AccountField, FormError, useAccountSubmit } from './formParts.js';
 import './account.css';
 

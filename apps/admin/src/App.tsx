@@ -4,20 +4,22 @@
  * @brief  The admin app's frame: who is signed in, sign-in, and the areas they may open.
  *
  * Responsibility: load the session; without an account a sign-in form (and, in development
- *                 builds, "Sign in as admin"); with one the areas its permissions allow —
+ *                 builds, "Sign in as admin"), in website mode a link to the website's sign-in
+ *                 instead, back to this page (O66, T282); with one the areas its permissions allow —
  *                 Live rounds and Settings (`admin.view`), Accounts (`account.view`), Seasons
  *                 (`season.manage`), Moderation (`chat.moderate`), Abuse (`abuse.view`), Audit
  *                 log (`audit.read`), Integration (`integration.manage`) and Two-factor (every
  *                 account) — chosen with the
  *                 address's hash (08 §1, §2); the step-up dialog (./StepUp) for writes that
  *                 need a fresh two-factor check. The server checks every permission again.
- * Depends on:     react, ./http, ./SignIn, ./StepUp, ./live/LivePage, ./accounts/AccountsPage,
+ * Depends on:     react, @smg/ui (websiteSignInHref), ./http, ./SignIn, ./StepUp, ./live/LivePage, ./accounts/AccountsPage,
  *                 ./settings/SettingsPage, ./seasons/SeasonsPage, ./moderation/ModerationPage,
  *                 ./abuse/AbusePage, ./audit/AuditPage, ./integration/IntegrationPage,
  *                 ./twofactor/TwoFactorPage
  * Used by:        ./main
  * Spec:           docs/spec/08-admin-settings.md §1, §2; Bingo 11 §1, §2
  */
+import { websiteSignInHref } from '@smg/ui';
 import { useCallback, useEffect, useState, type ReactElement } from 'react';
 
 import { AbusePage } from './abuse/AbusePage.js';
@@ -37,6 +39,8 @@ export interface SessionInfo {
   readonly account: { readonly id: string; readonly displayName: string } | null;
   readonly permissions: readonly string[];
   readonly csrfToken: string | null;
+  // Website mode: the sign-in route (players sign in only through the website); else null.
+  readonly signInPath: string | null;
 }
 
 // `null`: every signed-in account (its own two-factor sign-in).
@@ -119,6 +123,15 @@ export function App({ dev }: { readonly dev: boolean }): ReactElement {
     void refresh();
   }, [refresh]);
   if (session === null) return <p className="smg-muted admin-main">Loading…</p>;
+  if (session.account === null && session.signInPath !== null) {
+    return (
+      <main className="admin-main">
+        <p className="smg-panel admin-sign-in">
+          <a href={websiteSignInHref(session.signInPath)}>Sign in through the website</a>
+        </p>
+      </main>
+    );
+  }
   if (session.account === null) return <SignIn dev={dev} done={refresh} />;
   const open = AREAS.filter(
     (a) => a.permission === null || session.permissions.includes(a.permission),

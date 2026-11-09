@@ -10,7 +10,8 @@
  *                 shows in "In force" with its reason (T240); the words for roles, effects and
  *                 sources follow 08 §2; the app opens only the areas the account's
  *                 permissions allow (and Two-factor for every account), and asks to sign in
- *                 without an account.
+ *                 without an account: with the form, in website mode only through a link to
+ *                 the website's sign-in route back to the page (T282).
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./App, ./settings/*
  * Spec:           docs/spec/08-admin-settings.md §1, §2
  */
@@ -113,6 +114,8 @@ describe('the words', () => {
   });
 });
 
+const SIGN_IN = '/games/mini-games/auth/website';
+
 function serve(session: unknown): void {
   vi.stubGlobal(
     'fetch',
@@ -139,10 +142,21 @@ async function renderApp(): Promise<void> {
 
 describe('the app', () => {
   it('asks to sign in without an account', async () => {
-    serve({ account: null, permissions: [], csrfToken: null });
+    serve({ account: null, permissions: [], csrfToken: null, signInPath: null });
     await renderApp();
     expect(await screen.findByRole('heading', { name: 'Admin sign-in' })).toBeTruthy();
     expect(screen.queryByTestId('dev-admin')).toBeNull();
+  });
+
+  it('in website mode links to the website sign-in, back to this page, without a form', async () => {
+    window.history.replaceState(null, '', '/games/mini-games/admin/#/settings');
+    serve({ account: null, permissions: [], csrfToken: null, signInPath: SIGN_IN });
+    await renderApp();
+    const link = await screen.findByRole('link', { name: 'Sign in through the website' });
+    const back = encodeURIComponent('/games/mini-games/admin/#/settings');
+    expect(link.getAttribute('href')).toBe(`${SIGN_IN}?next=${back}`);
+    expect(screen.queryByRole('heading', { name: 'Admin sign-in' })).toBeNull();
+    window.history.replaceState(null, '', '/');
   });
 
   it('opens only the areas the permissions allow', async () => {
@@ -150,6 +164,7 @@ describe('the app', () => {
       account: { id: 'm', displayName: 'mod' },
       permissions: ['admin.view', 'abuse.view', 'integration.manage'],
       csrfToken: 'x',
+      signInPath: null,
     });
     await renderApp();
     const nav = await screen.findByRole('navigation', { name: 'Areas' });

@@ -9,7 +9,8 @@
  *                 assignments; a guest session gets the guest role's permissions) and
  *                 refuses revoked, expired and idle-expired sessions. Idle 7 days, absolute
  *                 30 days for players and guests (7 days in website mode, as Bingo); idle 30
- *                 minutes, absolute 8 hours for accounts with an admin role in either mode. Dead sessions are purged by the retention job.
+ *                 minutes, absolute 8 hours for accounts with an admin role in either mode.
+ *                 `endedAccountSession` tells an ended account session from no session. Dead sessions are purged by the retention job.
  * Depends on:     node:crypto, pg (types), ../db/pool
  * Used by:        ./sessionPlugin, ../http/routes/auth, ../http/routes/devSignIn, ./retention,
  *                 ../http/routes/adminAccounts, ../integration/accountChanges, ./superPromotion
@@ -115,6 +116,18 @@ export async function findSession(pool: DbPool, token: string): Promise<Session 
     roles: row.roles ?? [],
     permissions: row.permissions ?? [],
   };
+}
+
+// After findSession found nothing: whether the token names a session of an active account
+// that has ended (expired, idle or revoked). In website mode the client then signs in again
+// through the website (DECISIONS T282); a guest's, a suspended or a deleted account's: false.
+export async function endedAccountSession(pool: DbPool, token: string): Promise<boolean> {
+  const r = await pool.query(
+    `SELECT 1 FROM smg.sessions s JOIN smg.accounts a ON a.id = s.account_id
+      WHERE s.token_hash = $1 AND a.status = 'active'`,
+    [tokenHash(token)],
+  );
+  return (r.rowCount ?? 0) > 0;
 }
 
 export async function revokeSession(pool: DbPool, sessionId: string): Promise<void> {

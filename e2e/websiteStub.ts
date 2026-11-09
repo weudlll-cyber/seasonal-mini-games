@@ -12,7 +12,8 @@
  *                 GET /login?next= signs the member the test chose in (that cookie) and goes back
  *                 to `next`; GET /embed/chat the chat room's page with its room and theme, which
  *                 speaks the embed's postMessage protocol (docs/EMBED.md, `chatScript`);
- *                 GET /api/games/mini-games/account-changes the changes the test queued (`remove`)
+ *                 GET /api/games/mini-games/account-changes the changes the test queued (`remove`,
+ *                 `rights`)
  *                 with the sync token, else 401. Its cursors carry the run's id, so a cursor an
  *                 earlier run left in the database starts this run from its beginning.
  *                 `nginxConf` is the website's server block with the game's route as
@@ -44,6 +45,8 @@ export interface StubSite {
   loginAs: number | null;
   // Queues a `deleted` change for that member on the account feed.
   readonly remove: (id: number) => void;
+  // Queues a `rights` change (the member's game sessions end; the website still knows them).
+  readonly rights: (id: number) => void;
   readonly close: () => Promise<void>;
 }
 
@@ -187,6 +190,9 @@ export async function startStubSite(): Promise<StubSite> {
     loginAs: null,
     remove: (id) => {
       log.changes.push({ id, kind: 'deleted' });
+    },
+    rights: (id) => {
+      log.changes.push({ id, kind: 'rights' });
     },
     close: () =>
       new Promise((done) => {

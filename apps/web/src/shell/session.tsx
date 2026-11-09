@@ -9,9 +9,9 @@
  *                 deletion of the own account (DELETE /me, which ends every session).
  *                 Only the newest refresh sets the session (an older answer arriving late
  *                 never undoes a sign-in). Screens read it through `useSession`.
- *                 Website mode (O66): the sign-in address with the page shown now as `next`
- *                 (`websiteSignInHref`), and a guest session for a signed-out visitor who
- *                 watches a match (`useWatchSession`, POST /auth/guest, DECISIONS T221).
+ *                 Website mode (O66): a guest session for a signed-out visitor who watches a
+ *                 match (`useWatchSession`, POST /auth/guest, DECISIONS T221); the sign-in
+ *                 address is @smg/ui's `websiteSignInHref`.
  * Depends on:     react, @smg/contracts (SessionView), ./http, ../live/socket
  * Used by:        ./AppShell and every screen that needs the account, ../account/*,
  *                 ../lobby/Lobby, ../main, ./DevTools
@@ -131,13 +131,6 @@ export function useSession(): SessionContextValue {
   const value = useContext(SessionContext);
   if (value === null) throw new Error('useSession outside SessionProvider');
   return value;
-}
-
-// Website mode: the sign-in route with the page shown now as `next` (07 §7, Bingo D43); a
-// visitor the website does not know goes on to its login and comes back here signed in.
-export function websiteSignInHref(signInPath: string): string {
-  const { pathname, search, hash } = window.location;
-  return `${signInPath}?next=${encodeURIComponent(`${pathname}${search}${hash}`)}`;
 }
 
 // True once a match can be watched: in website mode a signed-out visitor first gets a guest

@@ -40,7 +40,12 @@ function serve(): void {
     'fetch',
     vi.fn((url: string, init?: { method?: string }) => {
       const json = (status: number, body: unknown) =>
-        Promise.resolve({ ok: status < 400, status, json: () => Promise.resolve(body) });
+        Promise.resolve({
+          ok: status < 400,
+          status,
+          headers: new Headers(),
+          json: () => Promise.resolve(body),
+        });
       if (init?.method === 'PUT') {
         return json(422, { code: 'SETTING_INVALID', detail: PAIR, field: 'round.inactivityWarnS' });
       }
