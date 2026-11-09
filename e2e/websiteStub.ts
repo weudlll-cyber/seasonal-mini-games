@@ -7,8 +7,8 @@
  *                 as the real one does for Mini Games (its docs/AUTH.md, docs/EMBED.md; the same
  *                 rules as ops/test/stub-website.py): GET /api/games/mini-games/authorize without
  *                 X-Original-Method 403, carrying X-Smg-Proxy-Secret 500 (the secret must never
- *                 reach the website), with the cookie `stub_user` of a known member 204 and the
- *                 identity headers, anyone else 204 with X-Acting-Guest alone (never 401);
+ *                 reach the website), with the website's session cookie `se.sid` of a known member
+ *                 204 and the identity headers, anyone else 204 with X-Acting-Guest alone (never 401);
  *                 GET /login?next= signs the member the test chose in (that cookie) and goes back
  *                 to `next`; GET /embed/chat the chat room's page with its room and theme, which
  *                 speaks the embed's postMessage protocol (docs/EMBED.md, `chatScript`);
@@ -17,7 +17,8 @@
  *                 earlier run left in the database starts this run from its beginning.
  *                 `nginxConf` is the website's server block with the game's route as
  *                 ops/lib/website-route.sh (write_nginx_route) writes it, and every other path to
- *                 this stand-in. Test only: never part of an install.
+ *                 this stand-in, the website's session cookie removed from what the app gets
+ *                 (DECISIONS T281). Test only: never part of an install.
  * Depends on:     node:crypto, node:http, node:net (types)
  * Used by:        ./websiteStack, ./website.spec
  * Spec:           docs/spec/07-integration.md §2, §7; docs/spec/09-testing-strategy.md §4 (journey 36)
@@ -68,7 +69,7 @@ function headersOf(m: StubMember): Record<string, string> {
 }
 
 function cookieUser(req: IncomingMessage): number | null {
-  const match = /(?:^|;\s*)stub_user=(\d+)/.exec(req.headers.cookie ?? '');
+  const match = /(?:^|;\s*)se\.sid=(\d+)/.exec(req.headers.cookie ?? '');
   return match === null ? null : Number(match[1]);
 }
 
@@ -99,7 +100,7 @@ function login(site: StubSite, url: URL, res: ServerResponse): void {
   // Only a path on this site, as the website's own login allows.
   const back = next.startsWith('/') && !next.startsWith('//') ? next : '/';
   const cookie =
-    site.loginAs === null ? {} : { 'set-cookie': `stub_user=${String(site.loginAs)}; Path=/` };
+    site.loginAs === null ? {} : { 'set-cookie': `se.sid=${String(site.loginAs)}; Path=/` };
   send(res, 302, { location: back, ...cookie });
 }
 
@@ -199,6 +200,19 @@ export async function startStubSite(): Promise<StubSite> {
 
 const nginxVar = (h: string): string => h.toLowerCase().replaceAll('-', '_');
 
+// The app's Cookie without the website's session cookie, as write_nginx_route's
+// nginx_cookie_lines writes it.
+const STRIP = String.raw`"^(.*?)\s*(?:^|;)\s*(?:__Host-)?se\.sid=[^;]*(.*)$"`;
+const COOKIE = [
+  '    set $smg_mini_games_cookie $http_cookie;',
+  ...Array.from(
+    { length: 4 },
+    () => `    if ($smg_mini_games_cookie ~ ${STRIP}) { set $smg_mini_games_cookie $1$2; }`,
+  ),
+  String.raw`    if ($smg_mini_games_cookie ~ "^;\s*(.*)$") { set $smg_mini_games_cookie $1; }`,
+  '    proxy_set_header Cookie $smg_mini_games_cookie;',
+];
+
 // The game's route as the installer writes it (ops/lib/website-route.sh, write_nginx_route,
 // DECISIONS T231), inside the website's server block; `app` and `site` are host:port as the
 // container reaches them. One difference: Host keeps the port ($http_host), as this site is
@@ -221,6 +235,7 @@ export function nginxConf(o: { listen: number; app: string; site: string; secret
     '  location ^~ /games/mini-games/metrics { return 404; }',
     '  location ^~ /games/mini-games/ {',
     ...clear,
+    ...COOKIE,
     ...forwarded,
     '    proxy_http_version 1.1;',
     '    proxy_set_header Upgrade $http_upgrade;',
@@ -232,6 +247,7 @@ export function nginxConf(o: { listen: number; app: string; site: string; secret
     ...pass,
     `    proxy_set_header X-Smg-Proxy-Secret "${o.secret}";`,
     '    error_page 401 403 = @smg_mini_games_login;',
+    ...COOKIE,
     ...forwarded,
     `    proxy_pass http://${o.app};`,
     '  }',

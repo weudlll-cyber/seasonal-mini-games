@@ -135,16 +135,19 @@ check() {
 }
 
 # The website's session cookie (__Host-se.sid, se.sid) never reaches the app; the game's does.
+# seen <server> <curl args…>: the answer's headers through the website, without CRs and
+# with "END" after them, so every header line, the last too, ends in a newline.
+seen() { on "$1" "curl -s -o /dev/null -D - -w END -m 5 $H $2 | tr -d '\r'"; }
+
 website_cookie_checks() {
-  local s=$1 both='__Host-se.sid=w; smg_game=keep; se.sid=u-1' ws
-  check "the app gets the game's cookie without the website's" \
-    "$(on "$s" "curl -s -o /dev/null -D - $H -b '$both' $URL/")" $'X-Seen-Cookie: smg_game=keep\r'
+  local s=$1 both='__Host-se.sid=w; smg_game=keep; se.sid=u-1' ws game=$'X-Seen-Cookie: smg_game=keep\n'
+  check "the app gets the game's cookie without the website's" "$(seen "$s" "-b '$both' $URL/")" "$game"
   check "... and no Cookie when the website's was the only one" \
-    "$(on "$s" "curl -s -o /dev/null -D - $H -b 'se.sid=u-1' $URL/")" $'X-Seen-Cookie: none\r'
+    "$(seen "$s" "-b 'se.sid=u-1' $URL/")" $'X-Seen-Cookie: none\n'
   ws='-H Connection:Upgrade -H Upgrade:websocket -H Sec-WebSocket-Version:13 -H Sec-WebSocket-Key:dGhlIHNhbXBsZSBub25jZQ=='
-  ws=$(on "$s" "curl -s -o /dev/null -D - -m 5 $H $ws -b '$both' $URL/ws || true")
+  ws=$(seen "$s" "$ws -b '$both' $URL/ws")
   check "a WebSocket upgrade still passes" "$ws" '101 Switching Protocols'
-  check "... with the game's cookie, without the website's" "$ws" $'X-Seen-Cookie: smg_game=keep\r'
+  check "... with the game's cookie, without the website's" "$ws" "$game"
 }
 
 website_checks() {
@@ -158,10 +161,10 @@ website_checks() {
   check "... and did not print it" "$(on "$s" "grep -c '$secret' /root/install.log || true")" 0
   page='%2Fgames%2Fmini-games%2F%23%2Fmatch%2FABC123'
   # The stand-in website knows the member by its session cookie only.
-  signin=$(on "$s" "curl -s -o /dev/null -D - $H -b 'se.sid=u-1; smg_game=keep' -H X-Smg-Proxy-Secret:forged '$URL/auth/website?next=$page'")
+  signin=$(seen "$s" "-b 'se.sid=u-1; smg_game=keep' -H X-Smg-Proxy-Secret:forged '$URL/auth/website?next=$page'")
   check "a website member is signed in with name, host right and steps" "$signin" 'smg_stub=u-1:Walter:true:steps'
   check "... and sent back to the page" "$signin" 'Location: /games/mini-games/#/match/ABC123'
-  check "... while the app got the game's cookie, not the website's" "$signin" $'X-Seen-Cookie: smg_game=keep\r'
+  check "... while the app got the game's cookie, not the website's" "$signin" $'X-Seen-Cookie: smg_game=keep\n'
   website_cookie_checks "$s"
   check "without a session the sign-in route ends at the website's login" \
     "$(on "$s" "curl -s -L -o /dev/null -w '%{url_effective}' $H '$URL/auth/website?next=$page'")" \

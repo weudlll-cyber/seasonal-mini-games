@@ -85,7 +85,7 @@ async function visitor(browser: Browser, who: Who): Promise<Person> {
 // A member the website already knows signs in through the sign-in route.
 async function member(browser: Browser, m: StubMember): Promise<Person> {
   const p = await visitor(browser, 'host');
-  await p.ctx.addCookies([{ name: 'stub_user', value: String(m.id), url: WEBSITE_URL }]);
+  await p.ctx.addCookies([{ name: 'se.sid', value: String(m.id), url: WEBSITE_URL }]);
   await p.page.goto(`auth/website?next=${encodeURIComponent('/games/mini-games/')}`);
   expect((await sessionOf(p.ctx)).account?.displayName).toBe(m.name);
   return p;
