@@ -7,9 +7,10 @@
  *                 the website's local address (SMG_WEBSITE_LOCAL_URL) with X-Games-Sync-Token;
  *                 each answer's changes are applied in order (./accountChanges) and its `next`
  *                 stored as the cursor (smg.website_feed), asking again until `next` stops
- *                 changing (at most 500 changes an answer). The time of the last successful
- *                 poll is kept for `smg status` (GET /readyz, `feedLastSuccess`). Errors back off
- *                 (30 s doubling to 10 min) and are logged by their message only: the token is
+ *                 changing (at most 500 changes an answer). A kind the game does not know is
+ *                 logged once per process and handled like `rights`. The time of the last
+ *                 successful poll is kept for `smg status` (GET /readyz, `feedLastSuccess`).
+ *                 Errors back off (30 s doubling to 10 min) and are logged by their message only: the token is
  *                 never in a log line. A plain fetch with a 10 s timeout, no redirects and a
  *                 256 KiB cap, not the SafeHttpClient, which takes public https addresses only
  *                 (an SSRF guard for addresses admins type); this one is the operator's local
@@ -24,7 +25,12 @@ import { z } from 'zod';
 import type { SessionEnds } from '../auth/sessionEnds.js';
 import type { DbPool } from '../db/pool.js';
 import { FetchRefused, readLimited } from '../seasons/safeFetch.js';
-import { AccountChange, applyAccountChange } from './accountChanges.js';
+import {
+  ACCOUNT_CHANGE_KINDS,
+  applyAccountChange,
+  FeedChange,
+  type AccountChange,
+} from './accountChanges.js';
 
 const FEED_PATH = '/api/games/mini-games/account-changes';
 const TIMEOUT_MS = 10_000;
@@ -36,7 +42,7 @@ const BACKOFF_MAX_MS = 10 * 60_000;
 const PAGES_PER_POLL = 20;
 
 const Page = z.object({
-  changes: z.array(AccountChange).max(500),
+  changes: z.array(FeedChange).max(500),
   next: z.string().min(1).max(128),
 });
 
@@ -69,6 +75,21 @@ async function fetchPage(deps: AccountFeedDeps, since: string): Promise<z.infer<
   return page.data;
 }
 
+// The unknown kinds already logged by this process: each is logged once.
+const loggedKinds = new Set<string>();
+
+// A change the game knows; an unknown kind is logged once and handled like `rights` (its
+// sessions end, so the next sign-in asks the website again), as Bingo's feed does.
+function known(deps: AccountFeedDeps, change: z.infer<typeof FeedChange>): AccountChange {
+  const kind = ACCOUNT_CHANGE_KINDS.find((k) => k === change.kind);
+  if (kind !== undefined) return { id: change.id, kind };
+  if (!loggedKinds.has(change.kind)) {
+    loggedKinds.add(change.kind);
+    deps.log.warn({ kind: change.kind }, 'website account feed: unknown kind handled as rights');
+  }
+  return { id: change.id, kind: 'rights' };
+}
+
 async function cursorOf(pool: DbPool): Promise<string> {
   const r = await pool.query<{ cursor: string }>('SELECT cursor FROM smg.website_feed');
   return r.rows[0]?.cursor ?? '0';
@@ -81,7 +102,8 @@ export async function pollAccountFeed(deps: AccountFeedDeps): Promise<number> {
   for (let page = 0; page < PAGES_PER_POLL; page += 1) {
     const answer = await fetchPage(deps, since);
     for (const change of answer.changes) {
-      deps.sessionEnds.end(await applyAccountChange(deps.pool, deps.issuer, change));
+      const ended = await applyAccountChange(deps.pool, deps.issuer, known(deps, change));
+      deps.sessionEnds.end(ended);
     }
     applied += answer.changes.length;
     await deps.pool.query('UPDATE smg.website_feed SET cursor = $1', [answer.next]);

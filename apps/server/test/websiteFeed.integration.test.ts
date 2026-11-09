@@ -13,6 +13,8 @@
  *                 A failing feed is logged without the token and retried later. After a member
  *                 deleted their own account (DELETE /me, a hard delete), every change for that
  *                 website user id is a no-op: no error, nothing logged, the cursor moves on.
+ *                 A kind the game does not know neither refuses the page nor stalls the
+ *                 cursor: it is logged once and ends the sessions, as `rights` does.
  * Depends on:     vitest, node:http, ../src/integration/accountFeed, ./harness, ./websiteHelpers
  * Spec:           docs/spec/07-integration.md §7; docs/spec/06-data-model-api-realtime.md §2.9
  */
@@ -205,5 +207,29 @@ describe('changes for an account its member deleted (DELETE /me)', () => {
       'SELECT cursor FROM smg.website_feed',
     );
     expect(state.rows).toEqual([{ cursor: '9' }]);
+  }, 60_000);
+});
+
+describe('a kind the game does not know', () => {
+  it('is logged once, handled like rights, and the cursor moves on', async () => {
+    const member = await signedIn(harness.built, { id: '56', name: 'Newkind' });
+    const twice = [56, 999].map((id) => ({ id, kind: 'password-reset' }));
+    pages = {
+      '9': { body: { changes: [...twice, { id: 999, kind: 'locked' }], next: '12' } },
+      '12': { body: { changes: [{ id: 999, kind: 'password-reset' }], next: '13' } },
+    };
+    lines.length = 0;
+    expect(await pollAccountFeed(feed())).toBe(4);
+    expect(await signedInStill(member.cookie)).toBe(false);
+    expect(lines).toEqual([
+      JSON.stringify({
+        details: { kind: 'password-reset' },
+        message: 'website account feed: unknown kind handled as rights',
+      }),
+    ]);
+    const state = await harness.pool.query<{ cursor: string }>(
+      'SELECT cursor FROM smg.website_feed',
+    );
+    expect(state.rows).toEqual([{ cursor: '13' }]);
   }, 60_000);
 });
