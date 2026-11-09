@@ -1,0 +1,14 @@
+# @file   .gitleaksignore
+# @module repo
+# @brief  Reviewed gitleaks false positives, one fingerprint each (DECISIONS T283).
+#
+# Responsibility: name the exact commit, file, rule and line of a test value that gitleaks
+#                 reads as a key; CI scans the full history, so a finding stays in its commit
+#                 and is listed here rather than rewritten. Add only test values, never a real
+#                 secret: a real one is rotated and removed.
+# Used by:        .github/workflows/ci.yml (job security, gitleaks)
+
+# The website's stand-in session cookie values in the installer's cookie checks.
+e5e437a6e4e3b524858b07e5bca578ff6ae7d421:ops/test/website-cases.sh:generic-api-key:144
+# A throw-away test account's passphrase in the session-length test.
+46a144950a6897014a3e41ca79f806133c383219:apps/server/test/websiteSessions.integration.test.ts:generic-api-key:91
