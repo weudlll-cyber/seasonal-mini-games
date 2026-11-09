@@ -11,7 +11,8 @@
  *                 goes on to the website's login as from GET <base>auth/website/login
  *                 (DECISIONS T215); a member needs a valid id and name (else 403); then the
  *                 account by (site origin, user id) (../../auth/websiteAccounts; a suspended one
- *                 403), a fresh game session (./auth openSession) and a redirect to `next` when
+ *                 403), a fresh game session of at most 7 days (./auth openSession; T280; an
+ *                 admin session keeps its 8 hours) and a redirect to `next` when
  *                 it is a path under the base path, else to the base path (Bingo D43).
  *                 GET <base>auth/website/login: a redirect to SMG_WEBSITE_LOGIN_PATH with the
  *                 sign-in route and `next` as return path (Bingo D43). Both rate-limited per
@@ -30,7 +31,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { RATE_RULES, RateLimiter } from '../../auth/rateLimit.js';
 import type { CookieConfig } from '../../auth/sessionPlugin.js';
 import type { SessionEnds } from '../../auth/sessionEnds.js';
-import { findSession } from '../../auth/sessions.js';
+import { findSession, WEBSITE_SESSION_DAYS } from '../../auth/sessions.js';
 import { websiteAccount } from '../../auth/websiteAccounts.js';
 import { identityFrom, isWebsiteGuest, trustedPeers } from '../../auth/websiteIdentity.js';
 import type { Env } from '../../config/env.js';
@@ -115,7 +116,8 @@ function websiteSignIn(deps: WebsiteSignInDeps) {
     // session here, so the new one replaces it (03 §3; Bingo audit-3 S2).
     const token = request.cookies[deps.cookie.name];
     request.session = token === undefined ? null : await findSession(deps.pool, token);
-    await openSession(request, reply, deps, accountId);
+    // A game session from the website lives at most 7 days (T280); an admin's keeps 8 hours.
+    await openSession(request, reply, { ...deps, playerDays: WEBSITE_SESSION_DAYS }, accountId);
     return reply.redirect(safeNext(request.query.next, env.SMG_BASE_PATH), 302);
   };
 }

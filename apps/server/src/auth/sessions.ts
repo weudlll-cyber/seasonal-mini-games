@@ -8,8 +8,8 @@
  *                 Lookup loads the account's display name, roles and permissions (via role
  *                 assignments; a guest session gets the guest role's permissions) and
  *                 refuses revoked, expired and idle-expired sessions. Idle 7 days, absolute
- *                 30 days for players and guests; idle 30 minutes, absolute 8 hours for
- *                 accounts with an admin role. Dead sessions are purged by the retention job.
+ *                 30 days for players and guests (7 days in website mode, as Bingo); idle 30
+ *                 minutes, absolute 8 hours for accounts with an admin role in either mode. Dead sessions are purged by the retention job.
  * Depends on:     node:crypto, pg (types), ../db/pool
  * Used by:        ./sessionPlugin, ../http/routes/auth, ../http/routes/devSignIn, ./retention,
  *                 ../http/routes/adminAccounts, ../integration/accountChanges, ./superPromotion
@@ -39,28 +39,35 @@ export interface Session {
   readonly permissions: readonly string[];
 }
 
+// In website mode a player or guest session lives at most 7 days from its start (the
+// website sign-in), the same as Bingo's (owner, 2026-11-09; DECISIONS T280).
+export const WEBSITE_SESSION_DAYS = 7;
+
 function tokenHash(token: string): Buffer {
   return createHash('sha256').update(token).digest();
 }
 
+// playerDays: a player or guest session's absolute lifetime (WEBSITE_SESSION_DAYS in website
+// mode); admin sessions keep 8 hours either way.
 export async function createSession(
   pool: DbPool,
   accountId: string | null,
   userAgent: string | null,
+  playerDays = 30,
 ): Promise<{ readonly token: string; readonly csrfToken: string }> {
   const token = randomBytes(32).toString('base64url');
   const csrfToken = randomBytes(32).toString('base64url');
   await pool.query(
     `INSERT INTO smg.sessions (account_id, token_hash, csrf_token, kind, expires_at, idle_expires_at, user_agent)
      SELECT $1, $2, $3, k.kind,
-       now() + CASE k.kind WHEN 'admin' THEN interval '8 hours' ELSE interval '30 days' END,
+       now() + CASE k.kind WHEN 'admin' THEN interval '8 hours' ELSE make_interval(days => $6) END,
        now() + CASE k.kind WHEN 'admin' THEN interval '30 minutes' ELSE interval '7 days' END, $4
      FROM (SELECT CASE
        WHEN $1::uuid IS NULL THEN 'guest'
        WHEN EXISTS (SELECT 1 FROM smg.role_assignments ra
                      WHERE ra.account_id = $1::uuid AND ra.role_id = ANY($5)) THEN 'admin'
        ELSE 'player' END AS kind) k`,
-    [accountId, tokenHash(token), csrfToken, userAgent, ADMIN_ROLES],
+    [accountId, tokenHash(token), csrfToken, userAgent, ADMIN_ROLES, playerDays],
   );
   return { token, csrfToken };
 }
