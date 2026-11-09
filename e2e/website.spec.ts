@@ -16,13 +16,15 @@
  *                 bar's closed Chat panel tells the website's chat it is hidden, the chat's two
  *                 `unread` messages show "2" on the Chat badge, and opening the panel tells it
  *                 visible and clears the badge (T237); the website deletes
- *                 the member, the server's next poll of the account feed ends its session, and
- *                 the host's page shows "Deleted player" in its place. The match is aborted and
+ *                 the member and changes the host's rights, the server's next poll of the
+ *                 account feed ends both sessions, the host's reload signs in again through the
+ *                 website without a form, back on the match page (T282), and shows "Deleted
+ *                 player" in the member's place. The match is aborted and
  *                 the host's account deleted (DELETE /me), also when a step fails; so is the
  *                 member's when the feed did not. Chromium only (playwright.config, T241).
  * Depends on:     @playwright/test, ./devStack, ./play, ./screens, ./websiteStack, ./websiteStub
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 36); docs/spec/07-integration.md
- *                 §2, §7; DECISIONS T221, T236–T239, T241; Seasonal Entertainment docs/EMBED.md
+ *                 §2, §7; DECISIONS T221, T236–T239, T241, T282; Seasonal Entertainment docs/EMBED.md
  */
 import { expect, test, type Browser, type BrowserContext } from '@playwright/test';
 
@@ -85,7 +87,7 @@ async function visitor(browser: Browser, who: Who): Promise<Person> {
 // A member the website already knows signs in through the sign-in route.
 async function member(browser: Browser, m: StubMember): Promise<Person> {
   const p = await visitor(browser, 'host');
-  await p.ctx.addCookies([{ name: 'stub_user', value: String(m.id), url: WEBSITE_URL }]);
+  await p.ctx.addCookies([{ name: 'se.sid', value: String(m.id), url: WEBSITE_URL }]);
   await p.page.goto(`auth/website?next=${encodeURIComponent('/games/mini-games/')}`);
   expect((await sessionOf(p.ctx)).account?.displayName).toBe(m.name);
   return p;
@@ -183,12 +185,20 @@ test('journey 36: inside the website a guest watches, chats, signs in, plays and
     await expect(row).toContainText('online');
     await expect(row.getByTestId('player-steps')).toHaveText('Gold');
     await playOneGuess(host, guest);
-    // The website deletes the member; the server's next poll (every 15 s) ends its session.
+    // The website deletes the member and changes the host's rights; the server's next poll
+    // (every 15 s) ends both game sessions.
     site.remove(PLAYER.id);
+    site.rights(HOST.id);
     await expect
       .poll(async () => (await sessionOf(guest.ctx)).account, { timeout: 45_000 })
       .toBeNull();
+    // The host's next page load signs in again through the website, back on the same page,
+    // without a form (T282).
     await host.page.reload();
+    await expect
+      .poll(async () => (await sessionOf(host.ctx)).account?.displayName, { timeout: 15_000 })
+      .toBe(HOST.name);
+    await expect(host.page).toHaveURL(new RegExp(`#/match/${code}$`));
     const deleted = host.page.locator('span.player-name[title="Deleted player"]');
     await expect(deleted.first()).toBeVisible();
     await expect(host.page.locator(`span.player-name[title="${PLAYER.name}"]`)).toHaveCount(0);

@@ -138,6 +138,11 @@ function registerBasics(fastify: FastifyInstance, deps: AppDeps, metrics: Metric
   }
 }
 
+// Website mode's sign-in route (O66); null in local mode.
+function signInPathOf(env: AppDeps['env']): string | null {
+  return env.SMG_AUTH_MODE === 'website' ? `${env.SMG_BASE_PATH}auth/website` : null;
+}
+
 // How players sign in: local accounts with passwords (and, in development, the quick
 // sign-in), or in website mode only through the website's proxy (O66, Bingo D37).
 function registerSignIn(
@@ -146,7 +151,7 @@ function registerSignIn(
 ): void {
   const { env, pool, cookie, features, sessionEnds } = deps;
   const website = env.SMG_AUTH_MODE === 'website';
-  const signInPath = website ? `${env.SMG_BASE_PATH}auth/website` : null;
+  const signInPath = signInPathOf(env);
   registerAuthRoutes(fastify, { pool, cookie, features, sessionEnds, signInPath });
   if (website) {
     registerWebsiteSignIn(fastify, { env, pool, cookie, sessionEnds });
@@ -180,7 +185,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   registerBasics(fastify, deps, metrics);
   const cookie = cookieConfig(!isDev, deps.env.SMG_BASE_PATH);
   const sessionEnds = new SessionEnds();
-  await registerSessions(fastify, deps.pool, cookie);
+  await registerSessions(fastify, deps.pool, cookie, signInPathOf(deps.env));
   const features = featuresFrom(deps.env);
   registerSignIn(fastify, { ...deps, cookie, features, sessionEnds });
   registerTwoFactor(fastify, { pool: deps.pool, env: deps.env, features, audit });

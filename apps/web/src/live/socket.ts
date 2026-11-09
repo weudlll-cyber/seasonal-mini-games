@@ -8,14 +8,16 @@
  *                 after a sign-in or sign-out, and measure the clock offset with three
  *                 `time.sync` round trips, keeping the shortest (06 §4.1); each sync carries the
  *                 round trip measured before it, which the server keeps as a metric (06 §4.6). The offset is used
- *                 for display only and never sent. Adapted from Bingo's game/socket.ts.
+ *                 for display only and never sent. A refused handshake asks GET /session once,
+ *                 so an ended website session signs in again (T282). Adapted from Bingo's
+ *                 game/socket.ts.
  * Depends on:     socket.io-client, ../shell/http
  * Used by:        ./useMatch, ./useRound, ../shell/session
  * Spec:           docs/spec/06-data-model-api-realtime.md §4.1, §4.3
  */
 import { io, type Socket } from 'socket.io-client';
 
-import { BASE_PATH } from '../shell/http.js';
+import { api, BASE_PATH } from '../shell/http.js';
 
 export interface IntentAnswer {
   readonly ok: boolean;
@@ -35,6 +37,11 @@ export function gameSocket(): Socket {
     socket = io('/play', { path: `${BASE_PATH}ws`, transports: ['websocket'] });
     socket.on('connect', () => {
       void syncClock();
+    });
+    // The gateway refused the cookie's session: one GET /session, whose answer signs in again
+    // through the website when an account's session ended there (../shell/http, T282).
+    socket.on('connect_error', (error) => {
+      if (error.message === 'UNAUTHORIZED') void api('/session').catch(() => undefined);
     });
   }
   return socket;

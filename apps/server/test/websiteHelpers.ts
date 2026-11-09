@@ -11,7 +11,7 @@
  *                 client's write. Adapted from Bingo's websiteHelpers.ts.
  * Depends on:     fastify (types), @smg/contracts (types), ../src/index (types)
  * Used by:        ./website.integration.test, ./websiteFeed.integration.test,
- *                 ./authzWebsite.integration.test
+ *                 ./authzWebsite.integration.test, ./websiteSessions.integration.test
  * Spec:           docs/spec/07-integration.md §7
  */
 import type { PlayerStepView, SessionView } from '@smg/contracts';

@@ -6,11 +6,16 @@
  * Responsibility: one fetch wrapper for the real game, relative to where the client is
  *                 served (BASE_PATH): same-origin credentials (the dev server proxies /api), the session's CSRF token on every state-changing
  *                 call (03 §8), JSON in and out, and an ApiError carrying the server's
- *                 error code and, for a refused setting, its key and sentence (O74).
- * Depends on:     nothing
+ *                 error code and, for a refused setting, its key and sentence (O74). An answer
+ *                 saying the account's session ended (website mode) signs in again through
+ *                 the website (@smg/ui signInAgainAfter, T282); the call then never settles, as
+ *                 the page is leaving.
+ * Depends on:     @smg/ui
  * Used by:        ./session, ../game/*, ../host/*, ../account/accountText, ../api
  * Spec:           Bingo 05 §1; Bingo 03 §8
  */
+
+import { signInAgainAfter } from '@smg/ui';
 
 // Where the client is served: "/" standalone, "/games/mini-games/" inside the website. The page
 // routes with the URL hash, so the folder of its address is the base (09 §1).
@@ -64,6 +69,7 @@ export async function api<T>(
     credentials: 'same-origin',
     ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
   });
+  if (signInAgainAfter(response)) return new Promise<T>(() => undefined);
   if (response.status === 204) return undefined as T;
   const body = (await response.json().catch(() => ({}))) as Refused;
   if (!response.ok) {

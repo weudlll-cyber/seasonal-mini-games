@@ -41,7 +41,12 @@ import {
   type CookieConfig,
 } from '../../auth/sessionPlugin.js';
 import type { SessionEnds } from '../../auth/sessionEnds.js';
-import { accountSessionIds, createSession, revokeSession } from '../../auth/sessions.js';
+import {
+  accountSessionIds,
+  createSession,
+  revokeSession,
+  WEBSITE_SESSION_DAYS,
+} from '../../auth/sessions.js';
 import type { Features } from '../../config/features.js';
 import type { DbPool } from '../../db/pool.js';
 
@@ -87,7 +92,10 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AuthDeps): void {
   app.post('/api/v1/auth/guest', async (request, reply) => {
     if (!deps.features.guests) return reply.status(404).send({ code: 'NOT_FOUND' });
     if (!limits.guest.take(request.ip).allowed) return tooMany(reply);
-    const { token } = await createSession(deps.pool, null, request.headers['user-agent'] ?? null);
+    // A guest session lives as long as a player's: 7 days in website mode (T280).
+    const days = deps.signInPath === null ? undefined : WEBSITE_SESSION_DAYS;
+    const userAgent = request.headers['user-agent'] ?? null;
+    const { token } = await createSession(deps.pool, null, userAgent, days);
     setSessionCookie(reply, deps.cookie, token);
     return reply.status(201).send({ kind: 'guest' });
   });
@@ -162,7 +170,10 @@ async function login(
   return startSession(request, reply, deps, { accountId: account.id, status: 200 });
 }
 
-type SessionDeps = Pick<AuthDeps, 'pool' | 'cookie' | 'sessionEnds'>;
+// playerDays: a player session's absolute lifetime (7 days after a website sign-in, else 30).
+type SessionDeps = Pick<AuthDeps, 'pool' | 'cookie' | 'sessionEnds'> & {
+  readonly playerDays?: number;
+};
 
 // A new session for the account with its cookie set on the reply; the browser's session
 // before it ends (03 §3: a fresh session id on every sign-in, also through the website).
@@ -180,6 +191,7 @@ export async function openSession(
     deps.pool,
     accountId,
     request.headers['user-agent'] ?? null,
+    deps.playerDays,
   );
   setSessionCookie(reply, deps.cookie, token);
 }

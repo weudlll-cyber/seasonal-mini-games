@@ -11,7 +11,7 @@
  *                 accounts, drop it (DECISIONS T216); its sessions end. `locked`: its sessions
  *                 end. `rights`: its sessions end, so the next sign-in recomputes the roles.
  *                 `unlocked`: nothing (the website lets the member in again). Each change is
- *                 safe to apply twice. Returns the ended sessions, whose sockets then close.
+ *                 safe to apply twice. The feed's own shape (`FeedChange`) admits any kind. Returns the ended sessions, whose sockets then close.
  * Depends on:     zod, pg (types), ../db/pool, ../auth/sessions
  * Used by:        ./accountFeed
  * Spec:           docs/spec/07-integration.md §7; docs/spec/06-data-model-api-realtime.md §2.9
@@ -22,11 +22,18 @@ import { z } from 'zod';
 import { revokeAccountSessions } from '../auth/sessions.js';
 import { inTransaction, type DbPool } from '../db/pool.js';
 
-export const AccountChange = z.object({
+export const ACCOUNT_CHANGE_KINDS = ['deleted', 'locked', 'unlocked', 'rights'] as const;
+export interface AccountChange {
+  readonly id: number;
+  readonly kind: (typeof ACCOUNT_CHANGE_KINDS)[number];
+}
+
+// A change as the feed sends it: any short kind, so a kind the website adds later neither
+// refuses the page nor stalls the cursor; ./accountFeed handles an unknown one like `rights`.
+export const FeedChange = z.object({
   id: z.number().int().nonnegative(),
-  kind: z.enum(['deleted', 'locked', 'unlocked', 'rights']),
+  kind: z.string().min(1).max(64),
 });
-export type AccountChange = z.infer<typeof AccountChange>;
 
 // The name every deleted website account shows in past rounds (O66).
 const DELETED_NAME = 'Deleted player';

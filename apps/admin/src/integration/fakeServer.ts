@@ -43,6 +43,7 @@ export function fakeServer(answer: (call: Call) => Answer | undefined): Call[] {
     const reply = {
       status: a.status,
       ok: a.status >= 200 && a.status < 300,
+      headers: new Headers(),
       json: () =>
         a.body === undefined ? Promise.reject(new SyntaxError('no body')) : Promise.resolve(a.body),
     };

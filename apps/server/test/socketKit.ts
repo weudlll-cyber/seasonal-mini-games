@@ -14,7 +14,8 @@
  * Depends on:     socket.io-client, @smg-game/registry, @smg/domain, @smg/game-sdk/crypto,
  *                 ../src/index, ./harness, ./session
  * Used by:        ./rounds.integration.test, ./secrets.integration.test, ./security.integration.test,
- *                 ./authzSetup, and the other socket suites
+ *                 ./authzSetup, ./websiteIdle.integration.test (listening, socketOpener,
+ *                 connectedOf: a website-mode harness of its own), and the other socket suites
  * Spec:           docs/spec/06-data-model-api-realtime.md §4; docs/spec/09-testing-strategy.md §2
  */
 import { GAMES } from '@smg-game/registry';
@@ -79,7 +80,7 @@ async function secretsFrom(harness: Harness, roundId: string): Promise<Secrets> 
   return secrets as Secrets;
 }
 
-function connectedOf(s: Socket): Promise<string> {
+export function connectedOf(s: Socket): Promise<string> {
   return new Promise<string>((resolve) => {
     // A socket opened earlier may have connected already.
     if (s.connected) resolve('ok');
@@ -93,7 +94,7 @@ function connectedOf(s: Socket): Promise<string> {
 }
 
 // Sockets to the gateway, each keeping every frame it receives.
-function socketOpener(url: string) {
+export function socketOpener(url: string) {
   const sockets: Socket[] = [];
   const received = new WeakMap<Socket, unknown[]>();
   const open = (cookie: string | null, origin = 'http://localhost:5410') => {
@@ -115,7 +116,7 @@ function socketOpener(url: string) {
   return { sockets, open, frames: (s: Socket) => received.get(s) ?? [] };
 }
 
-async function listening(harness: Harness) {
+export async function listening(harness: Harness) {
   const { built } = harness;
   const io = attachGateway(built.fastify.server, {
     pool: harness.pool,

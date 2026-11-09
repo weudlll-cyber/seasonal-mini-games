@@ -12,6 +12,9 @@
  *                 to 120 API calls a minute, and requests without a session to 600 a minute
  *                 per address. Cookie name, path and Secure flag follow 03 §3
  *                 (`__Host-` at the root, `__Secure-` with the base path, plain in development).
+ *                 Website mode: a cookie that names an ended session of an active account
+ *                 (idle, expired, revoked) gets the answer header X-Smg-Session-Ended with the
+ *                 sign-in route, so the clients sign in again through the website (T282).
  * Depends on:     fastify, @fastify/cookie, node:crypto, ./sessions, ./rateLimit, ../db/pool
  * Used by:        ../http/app, ../http/routes/auth, ../http/routes/devSignIn
  * Spec:           Bingo 03 §3, §8, §13
@@ -23,7 +26,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import type { DbPool } from '../db/pool.js';
 import { RATE_RULES, RateLimiter } from './rateLimit.js';
-import { findSession, type Session } from './sessions.js';
+import { endedAccountSession, findSession, type Session } from './sessions.js';
 
 declare module 'fastify' {
   interface FastifyRequest {
@@ -57,10 +60,15 @@ const SESSION_STARTERS = new Set([
 const DEV_UNSESSIONED = new Set(['/api/v1/dev/load-accounts']);
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
+// The answer header naming the sign-in route after an account's session ended (website mode).
+export const SESSION_ENDED_HEADER = 'x-smg-session-ended';
+
+// signInPath: website mode's sign-in route, else null (no X-Smg-Session-Ended).
 export async function registerSessions(
   app: FastifyInstance,
   pool: DbPool,
   config: CookieConfig,
+  signInPath: string | null = null,
 ): Promise<void> {
   await app.register(cookie);
   app.decorateRequest('session', null);
@@ -70,6 +78,10 @@ export async function registerSessions(
     if (!request.url.startsWith('/api/')) return;
     const token = request.cookies[config.name];
     request.session = token === undefined ? null : await findSession(pool, token);
+    const ended = request.session === null && token !== undefined && signInPath !== null;
+    if (ended && (await endedAccountSession(pool, token))) {
+      void reply.header(SESSION_ENDED_HEADER, signInPath);
+    }
     // A session is limited by its id, a request without one by its address (audit S3).
     const allowed =
       request.session === null
