@@ -51,7 +51,11 @@ async function countdown(page: Page): Promise<void> {
     /^\d+ s left for your next guess\.$/,
   );
   await shot(page, 'countdown-desktop');
+  // A reload after the resize, as the other phone checks do: WebKit's phone emulation keeps
+  // the page laid out and painted 720 px tall after the switch from the desktop, and the round
+  // bar below that edge measured 1.17:1 on unpainted black (run 42855398617).
   await page.setViewportSize(PHONE);
+  await page.reload();
   await expect(warning).toBeVisible();
   await shot(page, 'countdown-phone');
   await readable(page, 'inactivity countdown on a phone');
