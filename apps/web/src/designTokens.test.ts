@@ -8,7 +8,8 @@
  *                 cards — composited over the base colour and over each of the four token
  *                 glows, as the website measures — and on the top bar's gradient stops; the
  *                 solid pill keeps 4.5:1, and so do text and the pressed team button's icon on
- *                 the season colours in both themes (O26 asks 3:1 of the icon); every text
+ *                 the season colours in both themes (O26 asks 3:1 of the icon); the inactivity
+ *                 countdown's text keeps 4.5:1 on the warning surface (O71); every text
  *                 colour of a row keeps 4.5:1 on the viewer's own-row tint of each season
  *                 colour (`--own-tint` into `--color-own-base`, T261); the board ink
  *                 keeps 7:1 (the hero element); and the motion file turns every animation off under
@@ -160,6 +161,13 @@ describe('token contrast (WCAG AA), light and dark', () => {
       }
     },
   );
+
+  // The inactivity countdown line (round.css): body text on the warning surface; the danger
+  // colour is only its edge.
+  it.each(['light', 'dark'] as const)('%s: the inactivity countdown', (theme) => {
+    const c = (name: string) => parse(resolved(THEMES[theme].set, name));
+    expect(contrast(c('color-text'), c('color-warning-surface'))).toBeGreaterThanOrEqual(4.5);
+  });
 });
 
 // CSS color-mix(in srgb, top pct, base): premultiplied by alpha, as the browser mixes.

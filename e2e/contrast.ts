@@ -14,7 +14,7 @@
  *                 page itself, so no image library is needed. Transitions are held still
  *                 while measuring.
  * Depends on:     @playwright/test, ./screens
- * Used by:        ./range.spec, ./specials.spec
+ * Used by:        ./inactivity.spec, ./range.spec, ./specials.spec
  * Spec:           docs/spec/02-game-guess-the-number.md §12; WCAG 2.2 SC 1.4.3
  */
 import { expect, type Page } from '@playwright/test';
