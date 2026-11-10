@@ -159,14 +159,15 @@ describe('token contrast (WCAG AA), light and dark', () => {
           ).toBeGreaterThanOrEqual(4.5);
         }
       }
-      // The inactivity countdown line (round.css): body text on the warning surface; the
-      // danger colour is only its edge.
-      expect(
-        contrast(parse(set['color-text'] ?? ''), parse(set['color-warning-surface'] ?? '')),
-        `${theme}: the inactivity countdown`,
-      ).toBeGreaterThanOrEqual(4.5);
     },
   );
+
+  // The inactivity countdown line (round.css): body text on the warning surface; the danger
+  // colour is only its edge.
+  it.each(['light', 'dark'] as const)('%s: the inactivity countdown', (theme) => {
+    const c = (name: string) => parse(resolved(THEMES[theme].set, name));
+    expect(contrast(c('color-text'), c('color-warning-surface'))).toBeGreaterThanOrEqual(4.5);
+  });
 });
 
 // CSS color-mix(in srgb, top pct, base): premultiplied by alpha, as the browser mixes.
