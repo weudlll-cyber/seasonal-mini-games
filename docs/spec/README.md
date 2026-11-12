@@ -11,6 +11,7 @@ Blueprint for implementation by Claude Code. The code follows it. What is decide
 | 02b | [Game design: Seasonal Safecracker](02b-game-safecracker.md) | A code of digits, right-place and wrong-place pegs, its season specials (owner decision 38; rules are proposals) |
 | 02c | [Game design: Seasonal Bomb Defusal](02c-game-bomb-defusal.md) | The order of wire cuts, correct cuts from the start, the explosion (owner decisions 38, 40) |
 | 02d | [Game design: Seasonal Target](02d-game-seasonal-target.md) | One cell on a map, distance and direction or closeness only, dots on the map, halving (owner decisions 38, 39) |
+| 02e | [Game design: Seasonal Mind Games](02e-game-mind-games.md) | Pick the least chosen season: the delayed feed, switches, pre-picks, a series of rounds; timing class `phased` (owner decisions 76–89) |
 | 03 | [Seasonal specials](03-seasonal-specials.md) | Season rounds (Spring Herald, Heatwave, Leaf Fall, Frost), In Season, halving round, season teams, visuals |
 | 04 | [Software architecture](04-software-architecture.md) | What is adopted from Bingo, the game-module contract, the round engine, ordering and timing |
 | 05 | [Security and threat model](05-security-threat-model.md) | Cooldown enforcement, secret handling, randomness, rate limits, multi-accounts, latency and "first received wins", audit log, threats |
@@ -36,4 +37,4 @@ Bingo spec files: 01 game design, 02 software architecture, 03 security architec
 - Owner decisions (2026-10-24) are recorded in [DECISIONS.md](../DECISIONS.md) §1 (O1–O15) and applied throughout. In this spec they are marked **(owner)** or "owner, decision N". With O15 the owner accepted every proposal of the first draft, so those details are now rules.
 - Anything new that changes what players experience and was not decided by the owner is marked **proposal**. A proposal is built as written unless the owner changes it. Each one is listed as an owner question in [OPEN.md](../OPEN.md).
 - Every number the owner did not give is an admin setting with a default, a minimum and a maximum, marked *proposal* in [08](08-admin-settings.md).
-- Purely technical choices are recorded with their reasons in [DECISIONS.md](../DECISIONS.md): technical decisions T1–T100 (§2), security decisions S1–S10 (§3), rejected approaches R1–R13 (§4).
+- Purely technical choices are recorded with their reasons in [DECISIONS.md](../DECISIONS.md): technical decisions (§2), security decisions (§3), rejected approaches (§4).

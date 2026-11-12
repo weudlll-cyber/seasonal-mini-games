@@ -77,6 +77,19 @@ The cooldown (owner, decision 3) exists **only** on the server. The client's coo
 - **Cost of the candidate rule:** up to 10 000 cells × every delivered public answer; computed incrementally (each new answer cuts the remaining set once), never re-scanning all answers per fall, so a fall stays within the queue's processing budget at 500 players and a 100 × 100 map (load test L1 with Seasonal Target).
 - **View size:** others' dots come only from the engine's newest-60 guesses; the own guesses are capped by the cooldown and round length; the result's full dot list is sent once at the end.
 
+### 3.2 Seasonal Mind Games: the live state is the secret (DECISIONS S11)
+
+Seasonal Mind Games ([02e](02e-game-mind-games.md)) has no secret value, but its **live state** is worth as much: who chose what in the last `D` seconds (the round's delay), how the counts stand now, who is in the round now, and every player's pre-picks. The server alone holds it. Before the round ends, nothing younger than the delay reaches anyone by any path, and pre-picks reach nobody but their owner, ever ([04](04-software-architecture.md) §4.8 rules 5 and 8):
+
+- **Views and state answers:** every player and spectator view and every `GET /rounds/:id/state` answer is built with `releasedBefore = now − D`. Another player's action, a count, a total and a player's place in the round's list appear only once they are `D` old. Only the viewer's own current choice, own box and own pre-picks are live in their own view.
+- **WebSocket frames:** room and host events are released by the round actor once `D` old; the room's frames and the state's `since` use a release sequence of their own, so no number in a frame counts unreleased actions. The acknowledgement of a choice is `{ ok: true }` or `{ ok: false, code }` and carries no `receiveSeq`, time or count. `match.updated` and the waiting area name match players and their connection, never whether or what they chose.
+- **The host:** once a round has started the host has the player view like everyone (owner, decision 88; S10). The host menu holds controls and settings, no count, choice or pre-pick.
+- **Admin and public routes:** the admin API's round view of a running Mind Games round is the spectator view (§3), so it is delayed too; no admin route returns a running round's events, a player's current choice or anyone's pre-picks. The public read API ([07](07-integration.md) §1) gives a running round's status and phase times only. Webhooks, the chat's round-end line and `standings.updated` come after the end.
+- **Logs and metrics:** a choice's value, a count, a total and a pre-pick are never logged (Pino redaction of `choice`, `prefs`, `counts`) and never a metric label; metrics count actions by result code only (06 §4.6).
+- **Server-side windows:** the platform refuses every action at or after the play's end (`PLAY_OVER`) and every first action at or after the join time's end (`JOIN_CLOSED`) at the server's receive time, whatever the client shows or sends (02e §5.2). Pre-picks enter only at the opening and pass the same checks.
+- **After the end:** the final choices, the counts and the winners are public in the result; switch histories and pre-picks stay private (02e §9).
+- **Tested** as invariant P7 and MG1–MG7 ([09](09-testing-strategy.md) §3, §4.2) and by the security test "Mind Games early read" ([09](09-testing-strategy.md) §6).
+
 ## 4. Cryptographic randomness
 
 - Round seeds: 256 bits from `crypto.randomBytes` through the `SecureRandom` port. Never from `Math.random`, the time or anything a player can influence.
@@ -100,6 +113,8 @@ Bingo's layers apply (Bingo 03 §13). The intent limits differ:
 | Sockets per account / per IP | 5 / 10 | as Bingo 06 §8 |
 
 The guess games of [02b](02b-game-safecracker.md)–[02d](02d-game-seasonal-target.md) add no intent: a Safecracker code, a Bomb Defusal sequence and a Seasonal Target cell are each one `guess` with the limits above, validated with the game's zod schema before the round queue. Typing a digit, tapping a wire, and clicking, tapping or arrow-moving the selection on the map change only the client's own selection and send nothing; only "Guess" (the full code, "Cut", the selected cell) sends, so a burst of map clicks costs the server nothing (map-click rate limits).
+
+Seasonal Mind Games' choice is the same `guess` intent with the same limits: at most 4 accepted switches a second per account, so a player cannot flood the feed; the release once a second merges every switch of that second into one room frame ([04](04-software-architecture.md) §4.8). Its pre-picks travel by `match.prefs`, at most 1 every 2 s per account (*proposal*), at most 2 KiB.
 
 The round queue is bounded at 5 000 items. Beyond that, new guesses are refused with `ROUND_BUSY`, are not queued, and do not start a cooldown. With the limits above, the bound is reached only in an attack. The load gate checks that it is never reached in normal play ([09](09-testing-strategy.md) §5).
 
@@ -159,6 +174,9 @@ Method and Bingo's threats T1–T28 are adopted (Bingo 13 §1–§4; trust bound
 | M13 | 1 | E | A spectator or another player receives a player's private frames | 2 | 2 | Per-player rooms, audience routing, authz matrix test ([09](09-testing-strategy.md) §6) |
 | M15 | 1/2 | S | Forged website identity headers: a browser or another local process names a member or an admin | 2 | 3 | Headers read on one route only, only from a trusted proxy peer with the proxy secret (constant time), cleared by the proxy before it adds the website's answer; roles capped at `game_admin`; tests for untrusted peers, a missing or wrong secret and the headers on other routes ([07](07-integration.md) §7.1) |
 | M16 | 1 | S | An open redirect through the sign-in's `next` | 2 | 1 | Only a printable path under the base path without scheme, host, `//` or backslash; anything else goes to the lobby |
+| M17 | 1 | I | Mind Games: learning choices, counts, entries or pre-picks younger than the delay (state answer, frame sequence, acknowledgement, admin or public route, log) | 2 | 3 | Delayed views and release sequence, `{ ok }` acknowledgement, pre-picks only to their owner, redaction (§3.2); P7 and the early-read test ([09](09-testing-strategy.md) §3, §6) |
+| M18 | 1 | T | Mind Games: a choice or first choice after the play or join time ends (a changed client, a slow network) | 2 | 2 | `PLAY_OVER` and `JOIN_CLOSED` at the server's receive time; pre-picks only at the opening (§3.2) |
+| M19 | 1 | E | Mind Games: several accounts of one person steer the counts (one account makes an option look crowded, another takes the least chosen) | 3 | 2 | Baseline controls and the league minimum of distinct players (§6); accepted residual (§10) |
 | M14 | 1 | I | Learning more from closeness comments than from higher or lower | 3 | 1 | Accepted by the owner (O21, 2026-10-31); see §10. The tier is computed on the server; the client never gets the secret; the comment rides on the events that carry the answer, so Frost and the visibility rules hide it exactly as they hide the answer (DECISIONS T73); no line holds a digit or names the range; a guess outside a hidden range gets the farthest tier |
 
 ## 10. Residual risks (accepted)
@@ -167,4 +185,5 @@ Method and Bingo's threats T1–T28 are adopted (Bingo 13 §1–§4; trust bound
 - Latency decides between correct guesses that arrive close together (§7). This follows from owner decision 4.
 - An operator with shell access and `SMG_ROUND_KEY` can decrypt seeds of running rounds. The operator is trusted, as in Bingo.
 - Closeness comments (owner decision 21, chosen on 2026-10-31) tell more than higher or lower: a tier says how far a guess was from the secret as a share of the range, so two or three tiers narrow the search much faster than the answers alone, and under `full` visibility everyone reads them. With a hidden range many tiers together hint at the range's size (a guess that is "cold" at a known distance bounds the width), even though no line states the bounds. The host can switch the comments off per round (`round.comments`).
+- In Seasonal Mind Games several accounts of one person count as several players and can steer the counts (M19); players may also tell each other their choices in the chat, which is part of the game. The host's End round fixes the final choices at a moment the host picks, seeing only the delayed feed like everyone.
 - Bingo 13 §5's residual risks (DDoS beyond the uplink, lost backup key) apply unchanged.

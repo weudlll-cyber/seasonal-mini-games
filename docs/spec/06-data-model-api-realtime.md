@@ -41,12 +41,15 @@
 | team_match | bool | default true: the season teams play (owner decision 34; migration 0012) |
 | created_by | uuid FK accounts | the host |
 | created_at, closed_at | timestamptz | |
-| aborted_reason, aborted_by | text NULL | as Bingo D17 (`host` or `system`); for a closed match how it closed: the host with no reason, or `system` with `idle` (owner decisions 27, 28; DECISIONS T83) |
+| aborted_reason, aborted_by | text NULL | as Bingo D17 (`host` or `system`); for a closed match how it closed: the host with no reason, or `system` with `idle` (owner decisions 27, 28; DECISIONS T83) or with `complete`, a series whose last round is played ([04](04-software-architecture.md) §4.8 rule 7) |
+| next_settings | jsonb NULL | a series only: the round settings the host saved for the next round during a pause ([02e](02e-game-mind-games.md) §2), validated like `POST …/rounds`; cleared when that round is created |
 | version | bigint | optimistic concurrency |
 
 ### 2.2 `match_players`
 
 `match_id`, `player_key text` (the account id, or `bot-NN` for bots of the development Quick Test), `account_id uuid NULL` (NULL for bots), `joined_at`, `left_at NULL`, `state` (`active`, `left`, `kicked`), `team text NULL` (`spring`/`summer`/`autumn`/`winter`), `team_chosen_at NULL`. PK `(match_id, player_key)`. Index `(account_id, match_id)`. This follows Bingo's built pattern (`player_id` as the key in Bingo's migration 0003), not the `(match_id, account_id)` key that Bingo 04 §3.3 states.
+
+**match_player_prefs** (a game with `prefs`, [04](04-software-architecture.md) §4.8 rule 8; Seasonal Mind Games' pre-picks and its "Hide my switches" box) — `match_id`, `player_key`, `prefs jsonb` (the game's schema, at most 2 KiB), `updated_at`. PK `(match_id, player_key)`, FK to `match_players`. The row is deleted when the player leaves the match or is removed. Only the round engine at a round's opening and that player's own requests read it.
 
 ### 2.3 `rounds`, `round_events`, `round_snapshots`
 
@@ -59,7 +62,7 @@
 | round_index | int | 1, 2, 3 … per match; UNIQUE `(match_id, round_index)` |
 | game_id | text | copied from the match |
 | status | text | `created`, `countdown`, `open`, `ended`, `aborted` |
-| secret_mode | text | `shared` / `individual` |
+| secret_mode | text | `shared` / `individual`; `shared` for a `phased` game without secrets ([04](04-software-architecture.md) §4.8) |
 | season | text | `spring` / `summer` / `autumn` / `winter` |
 | season_source | text | `inSeason` / `manual` |
 | special_on | bool | season special switched on |
@@ -80,7 +83,7 @@
 
 ### 2.4 `round_results`
 
-`round_id`, `player_key` (account id, or `bot-NN` in development), `place int NULL` (NULL = took part / not solved), `solved bool`, `solve_receive_seq bigint NULL`, `solve_at timestamptz NULL`, `guesses int`, `team text NULL`, `points int`. No secret column: the result view and `/rounds/:id/verify` derive every player's secret from the sealed seed, as everything else does ([05](05-security-threat-model.md) §3; DECISIONS T265). PK `(round_id, player_key)`. UNIQUE `(round_id, place)` WHERE `place IS NOT NULL`, so two players can never share a place. Written in the transaction that appends `RoundEnded`.
+`round_id`, `player_key` (account id, or `bot-NN` in development), `place int NULL` (NULL = took part / not solved; always NULL in a `phased` round, whose winners share the win), `won bool` (a round win: `place = 1` in the guess games, the game's `outcome` in a `phased` one; added with the phased class, existing rows from `place = 1`), `solved bool`, `solve_receive_seq bigint NULL`, `solve_at timestamptz NULL`, `guesses int`, `team text NULL`, `points int`. No secret column: the result view and `/rounds/:id/verify` derive every player's secret from the sealed seed, as everything else does ([05](05-security-threat-model.md) §3; DECISIONS T265). PK `(round_id, player_key)`. UNIQUE `(round_id, place)` WHERE `place IS NOT NULL`, so two players can never share a place. Written in the transaction that appends `RoundEnded`.
 
 **round_team_results** — `round_id`, `team`, `members int`, `points int`, `won bool`. PK `(round_id, team)`.
 
@@ -88,7 +91,7 @@
 
 - **match_standings** — `match_id`, `player_key`, `points`, `wins`, `first_win_at NULL`, `rank`. PK `(match_id, player_key)`. Updated with `RoundEnded`.
 - **match_team_standings** — `match_id`, `team`, `points int`, `wins`, `first_win_at NULL`, `rank`. PK `(match_id, team)`.
-- **scheduled_actions** (Bingo 04 §3.3) — `kind` values: `round_open`, `special` (payload: special and index), `round_time_up`, `match_autostart`.
+- **scheduled_actions** (Bingo 04 §3.3) — `kind` values: `round_open`, `special` (payload: special and index), `round_time_up` (in a `phased` round at the plan's end), `match_autostart` (in a series also the next round after the pause, [04](04-software-architecture.md) §4.8 rule 7).
 
 ### 2.6 Seasons and leaderboard additions
 
@@ -100,9 +103,11 @@
 
 ### 2.7 Round event types (platform)
 
-`RoundCreated` (settings, commitment), `CountdownStarted` (roster, teams, `opensAt`), `RoundOpened`, `GuessAccepted` (`playerKey`, `receiveSeq`, `receivedAt`, `value`, `cooldownEndsAt`), `SpecialFired` (special, index, effect summary), `CooldownChanged` (new value), `PlayerSolved` (`playerKey`, `receiveSeq`, `place`), `PlayerTimedOut` (`playerKey`, `at`: the player's inactivity limit, owner decision 71, [02](02-game-guess-the-number.md) §5.3; stamped with the limit's time, never the time the server noticed it, so a late timer or a restart writes the same event, DECISIONS T267), `HeldDelivered` (Frost: `upTo`, the last log seq delivered; written by the round actor, DECISIONS T41), `RoundEnded` (reason, placings, team results, seed when revealed), `RoundAborted` (reason, by), `MarginNoted` (`playerKey`, `ms`: the first would-be correct guess after a shared win inside `round.marginWindowS`, [02](02-game-guess-the-number.md) §9). A game event is logged as `Game` (`audience`, `feedback`, `event`).
+`RoundCreated` (settings, commitment), `CountdownStarted` (roster, teams, `opensAt`), `RoundOpened`, `GuessAccepted` (`playerKey`, `receiveSeq`, `receivedAt`, `value`, `cooldownEndsAt`), `SpecialFired` (special, index, effect summary), `CooldownChanged` (new value), `PlayerSolved` (`playerKey`, `receiveSeq`, `place`), `PlayerTimedOut` (`playerKey`, `at`: the player's inactivity limit, owner decision 71, [02](02-game-guess-the-number.md) §5.3; stamped with the limit's time, never the time the server noticed it, so a late timer or a restart writes the same event, DECISIONS T267), `HeldDelivered` (Frost: `upTo`, the last log seq delivered; written by the round actor, DECISIONS T41), `RoundEnded` (reason, placings, team results, seed when revealed), `RoundAborted` (reason, by), `PlayerEntered` (`playerKey`, `at`: a `phased` round's first accepted action of that player, [04](04-software-architecture.md) §4.8 rule 2), `MarginNoted` (`playerKey`, `ms`: the first would-be correct guess after a shared win inside `round.marginWindowS`, [02](02-game-guess-the-number.md) §9). A game event is logged as `Game` (`audience`, `feedback`, `event`).
 
 Game events of Guess The Number: `FeedbackGiven` (`playerKey`, `receiveSeq`, `receivedAt`, `value`, `feedback`, `comment`; to the guesser, marked `feedback: true`), `GuessFed` (`playerKey`, `guesses`, plus `value` and `feedback` as the visibility allows, and `comment` exactly where `feedback` is; to the room, marked `feedback: true` when it carries an answer). `comment` is the closeness comment ([02](02-game-guess-the-number.md) §6.3): `tier`, the line's `text`, and its `pool` and `index` in the catalogue, or null when the round has the comments off (owner decision 21, DECISIONS T73). No event carries a narrowed range (owner decision 17), `HintGiven` (Spring Herald: `playerKey` or null for the shared hint, `hint`), `NumbersRemoved` (Leaf Fall: `index`, `numbers`), `RangeHalved` (`index`, `playerKey` or null, `range` or null, `size`: the shared window, a player's own range, or the room's line with the size).
+
+Game events of Seasonal Mind Games ([02e](02e-game-mind-games.md)): `ChoiceMade` (`playerKey`, `receivedAt`, `choice`, `from` or null for a first choice, `hidden`; to the chooser), `ChoiceFed` (to the room, so held for the delay: `kind` `first` with `player` and `choice`, `switch` with `player`, `from` and `choice`, or `counts` for a hidden switch without either; always `counts` per option and `entrants` right after it, so the client never counts).
 
 Rejected guesses are **not** events. They are counted in metrics and in the abuse score only.
 
@@ -131,7 +136,10 @@ Every public answer and frame names a player by their number in the match, `p1`,
 | POST | `/matches/:code/team` | `{ team }` | a match player, once per match: refused with `TEAM_LOCKED` once the player was on a started round's roster (owner decision 26), and with `TEAMS_LOCKED` during a countdown or open round; in a match without teams always with `TEAMS_OFF` (owner decision 34) |
 | POST | `/matches/:code/rounds` | `{ settings, startNow? }` (platform round settings of [02](02-game-guess-the-number.md) §3 and the game's settings) | the host (`round.manage`); 422 `ROUND_SETTINGS_INVALID` with `field` (the refused setting's key, or null for a game's own cross-key rule) and `detail` (the sentence to show under that field, from the setting's own check; owner decision 74, DECISIONS T276), 409 `ROUND_RUNNING`, 409 `NOT_A_HALVING_DAY`, 409 `IN_SEASON_UNAVAILABLE` |
 | POST | `/rounds/:id/start` · `/end` · `/abort` | `{}` · `{}` · `{ reason }` | the host |
-| GET | `/rounds/:id/state?since=` | — | anyone allowed to watch: the caller's view (player, spectator or result) and the event seq; `since` gives a delta |
+| PUT | `/matches/:code/next-round` | `{ settings }` | the host of a series, during a pause: the next round's settings (`matches.next_settings`), refused as `POST …/rounds` is (422 `ROUND_SETTINGS_INVALID`); 409 `NOT_A_SERIES` |
+| POST | `/matches/:code/next-round/start` | `{}` | the host of a series, during a pause: Start next round now ([04](04-software-architecture.md) §4.8 rule 7); 409 `NOT_A_SERIES`, 409 `ROUND_RUNNING` |
+| GET · PUT | `/matches/:code/prefs` | — · `{ prefs }` | a match player of a game with `prefs`, their own value only (§2.2; Mind Games' pre-picks, [02e](02e-game-mind-games.md) §7); 422 `PREFS_INVALID`, 409 `PREFS_OFF` for a game without them. `GET /matches/:code` gives the viewer's own value as `myPrefs`, nobody else's |
+| GET | `/rounds/:id/state?since=` | — | anyone allowed to watch: the caller's view (player, spectator or result) and the event seq; `since` gives a delta. A `phased` round with a delay answers as of `now − D` and with its release sequence instead of the event seq ([04](04-software-architecture.md) §4.8 rule 5) |
 | POST | `/rounds/:id/guesses` | `{ value }` | a roster player: the HTTP fallback, same queue and checks |
 | GET | `/rounds/:id/result` | — | anyone, after the end: placings, team results, secret(s), seed if revealed |
 | GET | `/rounds/:id/verify` | — | anyone, after the end with the fairness proof on: seed, settings, roster, the accepted guesses in receive order |
@@ -172,19 +180,20 @@ As Bingo 05 §3 for dashboard, settings, integrations, accounts, moderation, upl
 |---|---|---|
 | `match.watch` / `match.unwatch` | `{ code }` | As Bingo |
 | `time.sync` | `{}` | Answers `{ serverTime }` |
-| `guess` | `{ roundId, value }`: `value` a number, a string of up to 32 characters, up to 16 strings of up to 16 characters, or a record of up to 4 numbers; its exact shape is the round's game's (Guess The Number a whole number, Safecracker a code, Bomb Defusal a list of wires, Seasonal Target a cell; DECISIONS T122) | Acknowledged with `{ ok: true, receiveSeq, cooldownEndsAt }` or `{ ok: false, code, until? }`. Codes: `ROUND_NOT_OPEN`, `ROUND_OVER`, `NOT_IN_ROUND`, `TIMED_OUT` (out of the round for inactivity, [02](02-game-guess-the-number.md) §5.3), `ALREADY_SOLVED`, the game's own (Guess The Number: `OUT_OF_RANGE`, `NUMBER_REMOVED`; the others in 02b–02d), `ALREADY_GUESSED`, `COOLDOWN_ACTIVE` (with `until`), `RATE_LIMITED`, `ROUND_BUSY`, `RESYNC`. The ack comes after group commit ([04](04-software-architecture.md) §5.3). |
+| `guess` | `{ roundId, value }`: `value` a number, a string of up to 32 characters, up to 16 strings of up to 16 characters, or a record of up to 4 keys holding numbers, strings of up to 16 characters or booleans; its exact shape is the round's game's (Guess The Number a whole number, Safecracker a code, Bomb Defusal a list of wires, Seasonal Target a cell, Mind Games `{ choice, hide }`; DECISIONS T122, T284). The intent's name is the same for every game's round action | Acknowledged with `{ ok: true, receiveSeq, cooldownEndsAt }` or `{ ok: false, code, until? }`. Codes: `ROUND_NOT_OPEN`, `ROUND_OVER`, `NOT_IN_ROUND`, `TIMED_OUT` (out of the round for inactivity, [02](02-game-guess-the-number.md) §5.3), `ALREADY_SOLVED`, the game's own (Guess The Number: `OUT_OF_RANGE`, `NUMBER_REMOVED`; the others in 02b–02d), `ALREADY_GUESSED`, `COOLDOWN_ACTIVE` (with `until`), `RATE_LIMITED`, `ROUND_BUSY`, `RESYNC`. The ack comes after group commit ([04](04-software-architecture.md) §5.3). In a `phased` round the ack is `{ ok: true }` without `receiveSeq` or `cooldownEndsAt`, and the codes are `ROUND_NOT_OPEN`, `ROUND_OVER`, `NOT_IN_ROUND`, `PLAY_OVER`, `JOIN_CLOSED`, the game's own (Mind Games: `CHOICE_INVALID`, `CHOICE_UNAVAILABLE`, `SAME_CHOICE`, [02e](02e-game-mind-games.md) §5.2), `RATE_LIMITED`, `ROUND_BUSY`, `RESYNC` |
+| `match.prefs` | `{ code, prefs }` | Same rule as `PUT …/prefs`; acknowledged `{ ok }` |
 | `team.choose` | `{ code, team }` | Same rule as `POST …/team` |
 | `round.start` / `round.end` / `round.abort` | `{ roundId, reason? }` | Host; same as the HTTP routes |
 | `chat.send`, `chat.typing`, `presence.ping` | as Bingo 06 §4.1 | |
 
 ### 4.4 Server → client events
 
-On the wire, committed events arrive as `events` frames (Bingo 06 §4, as built; DECISIONS T35). The match room gets `{ roundId, s, events: [{ s, at, event }] }` with every seq of the batch, so a gap means a missed frame; an event not meant for the room is `null` there. A player's room gets `{ roundId, events }` with only that player's own events, the host room likewise. The `event` values are the projected public or per-player forms below:
+On the wire, committed events arrive as `events` frames (Bingo 06 §4, as built; DECISIONS T35). The match room gets `{ roundId, s, events: [{ s, at, event }] }` with every seq of the batch, so a gap means a missed frame; an event not meant for the room is `null` there. A player's room gets `{ roundId, events }` with only that player's own events, the host room likewise. A `phased` round with a delay sends the match room `{ roundId, rs, events }` instead: only events released once `D` old, numbered by the round's release sequence `rs`, without any `null` place holder, so no number counts what is not released yet ([04](04-software-architecture.md) §4.8 rule 5). The `event` values are the projected public or per-player forms below:
 
 | Event | Room | Data |
 |---|---|---|
 | `match.updated` | match | status, player count, teams |
-| `round.created` | match | round summary: season, special, halving, mode, cooldown, range (none while the range is hidden, DECISIONS T52), commitment |
+| `round.created` | match | round summary: season, special, halving, mode, cooldown, range (none while the range is hidden, DECISIONS T52), commitment; for a `phased` round its phase plan and, in a series, its index and the number of rounds |
 | `round.countdown` | match | `opensAt`, roster size, teams |
 | `round.opened` | match | — |
 | `guess.feed` | match | per `feedbackVisibility` ([02](02-game-guess-the-number.md) §6.2): `{ player, guesses }`, plus `value` and/or `feedback` when allowed |
@@ -196,6 +205,7 @@ On the wire, committed events arrive as `events` frames (Bingo 06 §4, as built;
 | `round.ended` | match | reason, placings, team results, secret(s), seed when revealed |
 | `round.aborted` | match | reason, by |
 | `standings.updated` | match | match standings and team standings (deltas, at most 2/s) |
+| `prefs.refused` | player | a `phased` round's opening could not apply the player's own pre-pick: `{ roundIndex, code }` ([04](04-software-architecture.md) §4.8 rule 8) |
 | `resync` | any | reload state |
 
 ### 4.5 Flow of one guess

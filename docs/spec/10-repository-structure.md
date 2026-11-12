@@ -33,7 +33,8 @@ seasonal-mini-games/
 │  │  └─ web/              GameScreen.tsx, RangeBar.tsx, CooldownRing.tsx, GuessList.tsx, strings.ts
 │  ├─ safecracker/         02b; src/ and web/ as above, on the guess engine
 │  ├─ bomb-defusal/        02c; likewise
-│  └─ seasonal-target/     02d; likewise
+│  ├─ seasonal-target/     02d; likewise
+│  └─ mind-games/          02e; src/ and web/, timing class phased, not on the guess engine (planned, 11 §4)
 ├─ apps/
 │  ├─ server/src/          main.ts, cli.ts, config/, http/, auth/, realtime/ (gateway, intents, inOrder),
 │  │                       round/ (actor host, pgRoundStore, pgScheduler), seasons/ (feed client), db/, dev/

@@ -12,6 +12,7 @@ Full list: [BACKLOG.md](BACKLOG.md). Decisions: [DECISIONS.md](DECISIONS.md).
 - Merged into `master` on 2026-11-06 (merge `59fd076`, PR #4): the inactivity limit per player in every round (O71–O75: the warning and the countdown, out of that round only, a 2 s grace, only the viewer's own deadline in the view, field-level messages, the fields in the Quick Test), journey 37, built on `feat/inactivity`.
 - Merged into `master` on 2026-11-10 (merge `b53055e`, PR #5): the website planning's follow-ups of 2026-11-09 (T278–T283: Can-Host per game and Bingo D46 in the docs, unknown feed kinds handled like rights, 7-day website-mode sessions, the website's session cookie stripped before the game, one re-sign through the website when a game session ended, two reviewed gitleaks fingerprints), built on `feat/website-followups`.
 - On `feat/inactivity`, not merged: the inactivity limit (owner decisions O71–O75, 2026-11-06), its rules, settings and round-state fields (DECISIONS T267–T269), its views with journey 37 (T270–T273) and the owner's refinements: the 2 s grace, the own countdown only, the field messages, the fields in every round setup (T274–T277); open: the merge (BACKLOG part one).
+- On `feat/mind-games`, not merged: the design of Seasonal Mind Games (owner decisions O76–O89, 2026-11-12; spec/02e), the contract change for its timing class `phased` (spec/04 §4.8) and its work packages (spec/11 §4: MG-C1–MG-C3, then MG-1–MG-4); nothing built yet; the proposals are question (af) below.
 
 ## Owner questions
 
@@ -30,6 +31,35 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 **(aa) The fairness proof and player numbers (2026-11-01).** Public answers now name players by their number in the match, never by account id (DECISIONS T104, closing the former question (v)). In an individual round each player's secret is derived from the seed with the label `secret/<account id>`, so an outsider holding only the published proof can check the commitment and the shared secret, but cannot recompute an individual player's secret without that player's account id; the server's own check (`/rounds/:id/verify`) recomputes and shows them all. Proposal: keep it so; a new seed version could derive individual secrets from the match number instead, which would change nothing for rounds already played (their stored seeds keep the old labels).
 
 **(ab) The countdown before a round (2026-11-01).** The countdown is now the round's intro screen (owner decision 36): the season, its special and what it does, the secret and its range, the cooldown and the seconds left. Proposal: `round.countdownS` 10 s instead of 5 s, so the screen can be read; the range stays 3–30 s (02 §3, 08 §3; DECISIONS T109).
+
+**(af) Seasonal Mind Games (2026-11-12).** The owner decided the game (O76–O89); everything below was not given and is written into spec/02e, 04 §4.8, 05, 08 §3.4 and 09 as a proposal, built as written unless the owner decides otherwise:
+
+1. Season specials: none in this game (each of Spring Herald, Heatwave, Leaf Fall and Frost would need its own design). Should it have any?
+2. Halving rounds: none in this game. Should a halving day change anything?
+3. Season teams: none in this game. Should a team score when its members win?
+4. Ties in the winner rule: places are dense (counts 3, 3, 5, 9 give places 1, 1, 2, 3, so "2nd least chosen" is the 5), rather than skipping (1, 1, 3, 4, where no 2nd place exists).
+5. Bounds: total 30–600 s, delay 5–120 s and at most (total − 10 s) / 2, join time 10–590 s and at most total − delay, rounds 1–20, pause 5–120 s.
+6. The join time in the host form: a box "Join time follows the total" (on) beside the number field, which applies only with the box off.
+7. The number of rounds and the pause are chosen in the first round's form and hold for the whole match.
+8. During a pause the host's next-round form is open; what is saved before the next round starts applies to it.
+9. After the last round's pause the match ends by itself with "All 6 rounds are played." and the summary.
+10. Later rounds of a series start without the minimum-players check; a round nobody enters ends "Nobody chose this round."
+11. A click on a choice button sends the choice at once; there is no separate Send.
+12. The order and words of the refusals (02e §5.2): "Join the match to play.", "Choices are closed for this round.", "Joining this round has closed. You can play the next round.", "All is not offered in this round.", "That is already your choice."
+13. The feed's words: "The first choices show in 12 s.", "The round 30 s ago: 23 players", "All 23 players are in. Every change now is a switch.", lines with their age counting on ("· 31 s ago"); the view keeps the newest 60 lines.
+14. A first choice made by a pre-pick looks like any other in the feed (no "away" mark).
+15. "Hide my switches" stays as set for the rest of the match, kept by the server with the pre-picks.
+16. Pre-picks are set in the waiting area (before the first round and in each pause), not during a round; a round's pre-pick locks when it starts.
+17. A pre-pick of All for a round without All gives no choice, and the player's own view says so; leaving the match drops all pre-picks.
+18. The host's End round fixes the final choices at that moment; Abort round as in every game.
+19. The result shows final choices, counts, places and points; switch histories and pre-picks are never shown, not even after the end. Its headlines and the chat line ("Round 3: Winter was the least chosen (3 players).").
+20. The round keeps its season (In Season or the host's pick) for its colours and intro, with "No special this round."; it changes no rule.
+21. No fairness proof: nothing in a round is random, so no commitment and no verification page; the result itself shows everything needed to check it.
+22. The screen: a phase strip with "now" and "feed" markers, choice buttons with the delayed count under each, the lines on the right; on a desktop it stays whole with the Chat panel open; a later call view gets about 360 × 203 px above the chat on a desktop and a sheet of its own on a phone.
+23. The intro line: "Pick a season. The least chosen wins." with the timing in one line.
+24. Pre-picks travel by `match.prefs`, at most once every 2 s per account.
+25. The Quick Test: 7 bots by default; about one in four pre-picks and stays away; the others enter spread over the join time and stay, switch at random, or lean to the least chosen option in the feed they see.
+26. A load scenario L5: one round with 500 players switching up to every 2 s.
 
 ## Firefox/WebKit findings (O69 batch)
 

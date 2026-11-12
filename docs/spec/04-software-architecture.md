@@ -106,7 +106,7 @@ interface GameModule<S, A, E, Cfg, Sec> {
     id: string;                 // 'guess-the-number' — URL- and DB-safe, never reused
     name: string;               // 'Guess The Number'
     contractVersion: 1;         // the game-sdk contract version it implements
-    timing: 'cooldown';         // §4.3 ('own' joins with the first long-running game)
+    timing: 'cooldown';         // §4.3; 'phased' joins with Seasonal Mind Games (§4.8)
     secretModes: ReadonlyArray<'shared' | 'individual'>;
     teams: boolean;             // supports season teams (shared mode)
   };
@@ -154,12 +154,13 @@ The registry lists each game as one entry `{ module, conformance, devBot }`, whe
   - `RoundShouldEnd { reason }`: for game-specific end conditions.
 - Rejections come in the order of [02](02-game-guess-the-number.md) §5.1: the platform's codes for state, roster and solved (`ROUND_NOT_OPEN`, `ROUND_OVER`, `NOT_IN_ROUND`, `TIMED_OUT`, `ALREADY_SOLVED`), then the game's `validate` (for example `OUT_OF_RANGE`, `NUMBER_REMOVED`), then the platform's `COOLDOWN_ACTIVE`. `validate` is pure and gives no event. `decide` runs only for an action that passed all of them.
 
-**Winning stays in the platform.** From the `Solved` signals and their receive order, the platform applies the owner's rules: in shared mode the first `Solved` wins and ends the round, and in individual mode solve order is placing order (owner, decisions 4 and 5). The inactivity limit is the platform's too: it times out a roster player without a guess, and a round ends once nobody is left or, in individual mode, once everyone still in has solved (owner, decision 71; [02](02-game-guess-the-number.md) §5.3). Every later game with these modes inherits the rules unchanged.
+**Winning stays in the platform.** From the `Solved` signals and their receive order, the platform applies the owner's rules: in shared mode the first `Solved` wins and ends the round, and in individual mode solve order is placing order (owner, decisions 4 and 5). The inactivity limit is the platform's too: it times out a roster player without a guess, and a round ends once nobody is left or, in individual mode, once everyone still in has solved (owner, decision 71; [02](02-game-guess-the-number.md) §5.3). Every later game with these modes inherits the rules unchanged. A `phased` game has no Solved signals; its result comes from its own rule (§4.8).
 
 ### 4.3 Timing classes
 
 - `cooldown`: the platform enforces the per-player cooldown of owner decision 3 (range 3–60 s, the same for all, no global tick) after the game's `validate` and before a `PlayerAction` reaches its `decide` (§4.2; a guess out of range during a cooldown is answered `OUT_OF_RANGE`, DECISIONS T29, T263). Heatwave and Frost apply automatically.
 - `own`: for games designed as long-running (owner, decision 3). The game will declare its timers (`ownTimers`), and the platform schedules them. There is no cooldown, Heatwave or Frost. No v1 game uses this class, so it joins the contract with the first long-running game, as a contract change of its own (§4.6).
+- `phased`: rounds with fixed phases that the game declares and the platform schedules and enforces; players act freely inside them, the room may see the round one delay late, and the game's own rule decides the result. No cooldown, Heatwave, Frost or inactivity limit. Specified in §4.8 for Seasonal Mind Games ([02e](02e-game-mind-games.md)), not built yet; a long-running game may later build `own` on the same phase plan.
 
 ### 4.4 Specials
 
@@ -202,6 +203,49 @@ Guess The Number ([02](02-game-guess-the-number.md)), Seasonal Safecracker ([02b
 | `guessModule(game)`: the `GameModule` of §4 from these parts (validate: the game's checks, then repeat; decide; evolve: the engine's events, then the game's) | specials hooks, `reveal`, dev bot and conformance kit as for every game |
 
 Guess The Number runs on the engine with no change in behaviour: the same events, views, secrets, Leaf Fall drops and comment lines for the same seed and guesses, proven by a golden test recorded before the move ([09](09-testing-strategy.md) §2). A game that is not "find the secret by guessing" implements `GameModule` directly and does not use the engine.
+
+### 4.8 Timing class `phased` (contract change for Seasonal Mind Games; DECISIONS T284–T287)
+
+**Status:** specified on 2026-11-12, not built. It is built first, as its own work packages MG-C1–MG-C3 ([11](11-roadmap.md) §4), before any file of `games/mind-games` exists (§4.6). Until then `packages/game-sdk/src/module.ts` allows only `cooldown`. It holds what Seasonal Mind Games ([02e](02e-game-mind-games.md)) needs and nothing else, in terms that a later timed game can use.
+
+**Shape added to §4:**
+
+```ts
+meta.timing: 'cooldown' | 'phased';
+meta.secretModes: [];              // a phased game may have no secret; its rounds store secret_mode 'shared'
+phased?: {                         // present exactly when meta.timing is 'phased'
+  plan(cfg: Cfg): PhasePlan;       // from the round's frozen config
+  series(cfg: Cfg): { rounds: number; pauseMs: number } | null;  // read from the match's first round
+  prefs?: {                        // one small value per player per match (pre-picks)
+    schema: ZodType<P>;
+    action(prefs: P, roundIndex: number, cfg: Cfg): A | null;     // the action it makes at a round's opening
+  };
+  outcome(state: S): ReadonlyArray<{ playerId: string; won: boolean; points: number; actions: number }>;
+};
+interface PhasePlan {              // milliseconds after opensAt
+  entryEndMs: number;              // a player not yet in the round may enter until then
+  actionsEndMs: number;            // no action is accepted at or after it (≥ entryEndMs)
+  endMs: number;                   // the round ends (≥ actionsEndMs)
+  viewDelayMs: number;             // everyone but the actor sees an action this much later; 0 = live
+}
+```
+
+**Rules the platform applies to every `phased` round:**
+
+1. **Phases.** The plan is computed once when the round is created and stored in `RoundCreated`; the countdown makes its times absolute from `opensAt`. The end is a `scheduled_actions` row (`round_time_up` at `opensAt + endMs`, in place of the longest round time); the entry and action ends need no timer, because they are checks at the receive time (rule 2). The views get the plan, so the client shows the phases; it never decides one.
+2. **Checks, in this order** (as [02](02-game-guess-the-number.md) §5.1, the first failure decides): `ROUND_NOT_OPEN` / `ROUND_OVER`; `NOT_IN_ROUND` when the actor is not an active player of the match at the receive time; `PLAY_OVER` at or after `actionsEndMs`; `JOIN_CLOSED` for an actor not yet in the round at or after `entryEndMs`; then the game's `validate`; then `decide`. There is no `TIMED_OUT`, `ALREADY_SOLVED` or `COOLDOWN_ACTIVE`. A player's first accepted action puts them in the round: the platform logs `PlayerEntered` before the action. Every refusal is free and private (P4).
+3. **Players.** There is no roster frozen at the countdown: every active match player may enter while the entry window runs, players who join the match during a round included (in place of 02 §2's "they watch it and play from the next round"); `RoundInput.roster` holds the match's players at the countdown for information only. No teams unless `meta.teams` (Mind Games: none).
+4. **No cooldown, Heatwave, Frost or inactivity limit.** The round has no cooldown and no `cooldownEndsAt`; the host form offers no special for a `phased` game (its document has no `round.specialOn`), so Heatwave and Frost never run; no player is timed out (its document has no `round.inactivityLimitS`). Its acknowledgement is `{ ok: true }` only, without `receiveSeq`: a receive number would tell a player how many actions others made since their last one.
+5. **The delayed room view.** With `viewDelayMs` = `D` > 0, the round's state at any time `now` before the end is public only as it was at `now − D`:
+   - every player and spectator view is built with `ViewCtx.releasedBefore = now − D` (the field Frost uses, §4.1), and the game shows another player's action only if it was received before it; only the viewer's own actions and own data may be live in their own player view;
+   - events addressed to the `room` or the `host` are held until `receivedAt + D` and released by the round actor's tick, once a second, all due events in log order in one room frame; a release writes no event, because what is released follows from the log and the clock, so a restart releases the same events at the same times;
+   - a `phased` round's room frames and `GET …/state?since=` are numbered by their own release sequence, never by the log's `seq`, which would count the actions not yet released ([06](06-data-model-api-realtime.md) §4.4);
+   - the platform's own parts of the round state follow the same cut: a player is listed in the round, and counted, only once their `PlayerEntered` is older than `D`;
+   - `player:<id>` events go to that player at once. After the end the result view shows everything.
+6. **Round end and result.** At the plan's end, or when the host ends the round, the platform asks `outcome(state)` and writes `round_results` from its rows: `place` NULL for everyone (several players share a win, and the unique place rule stays as it is), `won`, `points`, and `guesses` = the row's `actions`, which the game decides ([06](06-data-model-api-realtime.md) §2.4). The end reason is `host` when the host ended it, `noPlayers` when no row exists, else `timeUp`. Match standings count `won` as a round win; the leaderboard is fed as for every game ([06](06-data-model-api-realtime.md) §2.6). `Solved` and `RoundShouldEnd` are not used.
+7. **Series.** When `series(cfg)` of a match's first round is not null, the match is a series of that many rounds: after each round the platform schedules the next one at its end plus `pauseMs` (`match_autostart`), creates it then from the host's saved next-round settings (else the last round's) and starts its countdown; the host's Start next round now runs that action at once. `match.minPlayersPerRound` applies to the first round only. After the last round's pause the match closes itself with its summary ("All 6 rounds are played.", close reason `complete`, [06](06-data-model-api-realtime.md) §2.1). End match works as always.
+8. **Match-level player data.** A game with `prefs` gets one value per player per match, checked against its `schema`, at most 2 KiB: the player reads and replaces their own (`GET`/`PUT /matches/:code/prefs`, intent `match.prefs`, [06](06-data-model-api-realtime.md) §3.1, §4.3); it is in that player's own match details and nowhere else, and it is deleted when the player leaves the match or is removed. At each round's opening the platform asks `prefs.action` for every active match player who has a value, in join order, and runs each returned action through the round's queue as that player's action received at `opensAt`, with every check of rule 2; a refused one is told to that player alone (`prefs.refused` with its code).
+9. **Conformance.** P1, P3–P5 apply as to every game; P2 holds trivially without a secret, P6 without specials. A `phased` module with a view delay must also pass **P7 Delay** ([09](09-testing-strategy.md) §3).
 
 ## 5. The round engine
 
