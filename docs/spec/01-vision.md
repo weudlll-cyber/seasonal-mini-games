@@ -8,7 +8,7 @@ Seasonal Mini Games is a platform for short multiplayer games that people play *
 
 The platform comes first and the games plug into it. Accounts, matches, rounds, timing, ordering, seasons, teams, leaderboards, chat, embedding and administration are platform features. A game supplies only its own rules and its own screen (the game-module contract, [04](04-software-architecture.md) §4).
 
-The first game is **Guess The Number** ([02](02-game-guess-the-number.md)). Later games are listed in the [roadmap](11-roadmap.md) §3 and in [GAME-IDEAS.md](../GAME-IDEAS.md). They have no design yet (owner, decision 2).
+The first game is **Guess The Number** ([02](02-game-guess-the-number.md)). Seasonal Safecracker, Seasonal Bomb Defusal and Seasonal Target followed (owner, decision 38; [02b](02b-game-safecracker.md)–[02d](02d-game-seasonal-target.md)). The other later games are listed in the [roadmap](11-roadmap.md) §3 and in [GAME-IDEAS.md](../GAME-IDEAS.md); they have no design yet (owner, decision 2).
 
 ## 2. Fixed product facts
 
