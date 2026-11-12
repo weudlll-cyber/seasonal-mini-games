@@ -95,7 +95,7 @@ Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.in
 | `target.feedback` | `closeness` | — | — (`direction`, `distance`, `closeness`) | owner (O43, amends O39; default O53): distance and direction, distance only, warm/cold only (default since O53; a stored explicit value keeps its value); the host's round setting, chosen in the round form; the next round's form keeps the last choice (02d §3, §5) | host | frozen |
 | `autumn.minCellsLeft` | 10 | 2 | 50 | proposal: Leaf Fall stops when fewer candidate tiles would remain (02d §8.3); at most 50, so tiles can fall on an 8 × 8 grid (O45) | game admin | frozen |
 | `halving.minCells` | 16 | 4 | 32 | proposal: halving stops once the target area has this many tiles or fewer (02d §8.4); at most 32, so an 8 × 8 grid is halved at least once (O45) | game admin | frozen |
-| Closeness tier table (40 / 25 / 12 / 6 / 3 % of the diagonal, touching = just missed) | — | — | — | proposal, not a setting: Leaf Fall's `closeness` candidates depend on it (02d §7) | — | — |
+| Closeness tier table (way off, cold, cool, warm, hot above 48 / 32 / 20 / 12 / 6 % of the diagonal and above a minimum of n = 61 / 40 / 20 / 13 / 8, n the squared distance in tiles; touching = just missed) | — | — | — | proposal, not a setting: Leaf Fall's `closeness` candidates depend on it (02d §7; `games/seasonal-target/src/geometry.ts`) | — | — |
 
 ## 4. Match settings (document `matchmaking`)
 

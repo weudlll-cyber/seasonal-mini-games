@@ -1,6 +1,6 @@
 # Game Ideas
 
-Future game candidates for the platform, and the criteria every candidate is checked against before design work starts. Nothing here is designed (decision O2). A candidate becomes a game only after an owner decision on its design, a spec section of its own, and a green conformance suite (spec/04-software-architecture.md §4.5).
+Future game candidates for the platform, and the criteria every candidate is checked against before design work starts. Seasonal Target, Seasonal Safecracker and Seasonal Bomb Defusal were designed and built by owner decision O38 (spec/02d, 02b, 02c); the candidates still marked "Vision" have no design (decision O2). A candidate becomes a game only after an owner decision on its design, a spec section of its own, and a green conformance suite (spec/04-software-architecture.md §4.5).
 
 ## 1. Criteria
 
@@ -32,13 +32,13 @@ A candidate is assessed in this order. A higher criterion outweighs every lower 
 
 ## 2. Candidates
 
-| Candidate                | Status               | Note                                                   |
-| ------------------------ | -------------------- | ------------------------------------------------------ |
-| Seasonal Target          | Vision; not designed | Possible user of a shared guess engine (DECISIONS T21) |
-| Seasonal Safecracker     | Vision; not designed | Possible user of a shared guess engine (T21)           |
-| Seasonal Bomb Defusal    | Vision; not designed | Possible user of a shared guess engine (T21)           |
-| Seasonal Prediction      | Vision; not designed | —                                                      |
-| Seasonal Higher Or Lower | Vision; not designed | —                                                      |
-| Seasonal Mystery Object  | Vision; not designed | —                                                      |
+| Candidate                | Status                                            | Note                                        |
+| ------------------------ | ------------------------------------------------- | ------------------------------------------- |
+| Seasonal Target          | Designed and built (spec/02d; O38, confirmed O65) | On the shared guess engine (DECISIONS T117) |
+| Seasonal Safecracker     | Designed and built (spec/02b; O38, confirmed O65) | On the shared guess engine (T117)           |
+| Seasonal Bomb Defusal    | Designed and built (spec/02c; O38, confirmed O65) | On the shared guess engine (T117)           |
+| Seasonal Prediction      | Vision; not designed                              | —                                           |
+| Seasonal Higher Or Lower | Vision; not designed                              | —                                           |
+| Seasonal Mystery Object  | Vision; not designed                              | —                                           |
 
 New ideas are added to this table with the status "idea" and are assessed against §1 before anyone writes a design.
