@@ -11,7 +11,7 @@ Blueprint for implementation by Claude Code. The code follows it. What is decide
 | 02b | [Game design: Seasonal Safecracker](02b-game-safecracker.md) | A code of digits, right-place and wrong-place pegs, its season specials (owner decision 38; rules are proposals) |
 | 02c | [Game design: Seasonal Bomb Defusal](02c-game-bomb-defusal.md) | The order of wire cuts, correct cuts from the start, the explosion (owner decisions 38, 40) |
 | 02d | [Game design: Seasonal Target](02d-game-seasonal-target.md) | One cell on a map, distance and direction or closeness only, dots on the map, halving (owner decisions 38, 39) |
-| 02e | [Game design: Seasonal Mind Games](02e-game-mind-games.md) | Pick the least chosen season: the delayed feed, switches, pre-picks, a series of rounds; timing class `phased` (owner decisions 76–89) |
+| 02e | [Game design: Seasonal Mind Games](02e-game-mind-games.md) | Pick the least chosen season: the delayed feed, switches, pre-picks, a series of rounds; timing class `phased` (owner decisions 76–90) |
 | 03 | [Seasonal specials](03-seasonal-specials.md) | Season rounds (Spring Herald, Heatwave, Leaf Fall, Frost), In Season, halving round, season teams, visuals |
 | 04 | [Software architecture](04-software-architecture.md) | What is adopted from Bingo, the game-module contract, the round engine, ordering and timing |
 | 05 | [Security and threat model](05-security-threat-model.md) | Cooldown enforcement, secret handling, randomness, rate limits, multi-accounts, latency and "first received wins", audit log, threats |

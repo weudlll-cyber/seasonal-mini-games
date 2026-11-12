@@ -14,9 +14,9 @@ The authoritative list. `OPEN.md` is the short page over it and is aligned after
 - Phase 8 — Production readiness, still open: the security pass on the VPS (a ZAP baseline against a production install behind Caddy; the scans that need no server are done, see part two and [security-pass.md](security-pass.md)), the load gate on the reference VPS (the driver is built; a plain shared round at 500 and at 1 000 players ran once on the development machine, and L1's special and halving rounds are built and ran once there with 200 players, see [OPEN.md](OPEN.md) (r); open: the reference VPS, L2 and L3), and v1.0.0
 - Owner decisions O71–O75, the inactivity limit (branch `feat/inactivity`): the rules, settings and round-state fields (DECISIONS T267–T269), the views with journey 37 (T270–T273) and the owner's four refinements (the 2 s grace, the own countdown only, the field messages, the fields in every round setup; T274–T277) are built; still open: the merge
 
-### Seasonal Mind Games (owner decisions O76–O89, spec/02e)
+### Seasonal Mind Games (owner decisions O76–O90, spec/02e)
 
-- Designed on `feat/mind-games` (task MG-SPEC-1, 2026-11-12): the game (spec/02e), the contract change for the timing class `phased` (spec/04 §4.8), its settings (spec/08 §3.4), tests (spec/09 §3, §4.2, journeys 38–41) and work packages (spec/11 §4). Still open: the build in two night chains, MG-C1 → MG-C3 (the contract, platform only) and then MG-1 → MG-4 (the game); the owner's answers to OPEN (af); the merge
+- Designed on `feat/mind-games` (task MG-SPEC-1, 2026-11-12): the game (spec/02e), the contract change for the timing class `phased` (spec/04 §4.8), its settings (spec/08 §3.4), tests (spec/09 §3, §4.2, journeys 38–41) and work packages (spec/11 §4). Still open: the build in two night chains, MG-C1 → MG-C3 (the contract, platform only) and then MG-1 → MG-5 (the game; MG-3 its animation); the owner's answers to OPEN (af); the merge
 
 ### Needed from the website repository
 

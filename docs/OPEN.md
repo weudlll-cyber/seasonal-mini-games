@@ -12,7 +12,7 @@ Full list: [BACKLOG.md](BACKLOG.md). Decisions: [DECISIONS.md](DECISIONS.md).
 - Merged into `master` on 2026-11-06 (merge `59fd076`, PR #4): the inactivity limit per player in every round (O71–O75: the warning and the countdown, out of that round only, a 2 s grace, only the viewer's own deadline in the view, field-level messages, the fields in the Quick Test), journey 37, built on `feat/inactivity`.
 - Merged into `master` on 2026-11-10 (merge `b53055e`, PR #5): the website planning's follow-ups of 2026-11-09 (T278–T283: Can-Host per game and Bingo D46 in the docs, unknown feed kinds handled like rights, 7-day website-mode sessions, the website's session cookie stripped before the game, one re-sign through the website when a game session ended, two reviewed gitleaks fingerprints), built on `feat/website-followups`.
 - On `feat/inactivity`, not merged: the inactivity limit (owner decisions O71–O75, 2026-11-06), its rules, settings and round-state fields (DECISIONS T267–T269), its views with journey 37 (T270–T273) and the owner's refinements: the 2 s grace, the own countdown only, the field messages, the fields in every round setup (T274–T277); open: the merge (BACKLOG part one).
-- On `feat/mind-games`, not merged: the design of Seasonal Mind Games (owner decisions O76–O89, 2026-11-12; spec/02e), the contract change for its timing class `phased` (spec/04 §4.8) and its work packages (spec/11 §4: MG-C1–MG-C3, then MG-1–MG-4); nothing built yet; the proposals are question (af) below.
+- On `feat/mind-games`, not merged: the design of Seasonal Mind Games (owner decisions O76–O90, 2026-11-12; spec/02e, the animated round view O90), the contract change for its timing class `phased` (spec/04 §4.8) and its work packages (spec/11 §4: MG-C1–MG-C3, then MG-1–MG-5); nothing built yet; the proposals are question (af) below.
 
 ## Owner questions
 
@@ -32,7 +32,7 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 
 **(ab) The countdown before a round (2026-11-01).** The countdown is now the round's intro screen (owner decision 36): the season, its special and what it does, the secret and its range, the cooldown and the seconds left. Proposal: `round.countdownS` 10 s instead of 5 s, so the screen can be read; the range stays 3–30 s (02 §3, 08 §3; DECISIONS T109).
 
-**(af) Seasonal Mind Games (2026-11-12).** The owner decided the game (O76–O89); everything below was not given and is written into spec/02e, 04 §4.8, 05, 08 §3.4 and 09 as a proposal, built as written unless the owner decides otherwise:
+**(af) Seasonal Mind Games (2026-11-12).** The owner decided the game (O76–O90); everything below was not given and is written into spec/02e, 04 §4.8, 05, 08 §3.4 and 09 as a proposal, built as written unless the owner decides otherwise:
 
 1. Season specials: none in this game (each of Spring Herald, Heatwave, Leaf Fall and Frost would need its own design). Should it have any?
 2. Halving rounds: none in this game. Should a halving day change anything?
@@ -60,6 +60,12 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 24. Pre-picks travel by `match.prefs`, at most once every 2 s per account.
 25. The Quick Test: 7 bots by default; about one in four pre-picks and stays away; the others enter spread over the join time and stay, switch at random, or lean to the least chosen option in the feed they see.
 26. A load scenario L5: one round with 500 players switching up to every 2 s.
+27. Animation (O90): flights run in a band between the choice buttons and their counts, from count to count, clipped to the stage, never over a button, a feed line or the chat.
+28. Animation: a first choice's icon flies from the player's name line into the season, with the name on it.
+29. Animation: a hidden switch (switches hidden, or "Hide my switches" ticked) still flies from the old season to the new one, without a name.
+30. Animation: all switches of one feed step fly as one wave, at most 12 icons at once with a "+8" tag for the rest, about 0.8 s a flight; the counts are always the step's exact counts.
+31. Animation: at the round end the winning season or seasons light up for about 2 s on the result, beside their check and "wins".
+32. Animation: with the device's reduced-motion setting there are no flights and no light-up; the counts change in place.
 
 ## Firefox/WebKit findings (O69 batch)
 
