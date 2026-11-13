@@ -143,10 +143,12 @@ async function roundPoints(id: string, socket: Socket, want: Record<string, numb
   // The placings table's rows: before T340 every point here was 0.
   expect(byName(ended.results.map((r) => ({ key: r.playerId, points: r.points })))).toEqual(want);
   // The room's end frame (sent wrapped before T341); it may follow the state answer.
-  const endFrame = async () =>
-    (kit.frames(socket) as { events?: { event: Record<string, unknown> | null }[] }[])
-      .flatMap((f) => f.events ?? [])
-      .find((e) => e.event?.type === 'RoundEnded')?.event as Ended | undefined;
+  const endFrame = () =>
+    Promise.resolve(
+      (kit.frames(socket) as { events?: { event: Record<string, unknown> | null }[] }[])
+        .flatMap((f) => f.events ?? [])
+        .find((e) => e.event?.type === 'RoundEnded')?.event as Ended | undefined,
+    );
   const frame = await until(endFrame, (f) => f !== undefined, 5_000);
   const sent = frame?.results.map((r) => ({ key: r.playerId, points: r.points })) ?? [];
   expect(byName(sent), 'the RoundEnded frame').toEqual(want);
