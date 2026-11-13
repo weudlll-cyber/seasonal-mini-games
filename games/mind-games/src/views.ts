@@ -14,7 +14,7 @@
  *                 switch or a pre-pick (02e §9). Each view carries the round's rules and plan in
  *                 milliseconds after the opening, for the intro and the screen.
  * Depends on:     zod, @smg/game-sdk (types), ./choices, ./rules, ./settings, ./state
- * Used by:        ./module, ./devBot, ./words
+ * Used by:        ./module, ./devBot, ./words, ./index
  * Spec:           docs/spec/02e-game-mind-games.md §6, §9, §10; docs/spec/04-software-architecture.md §4.8
  */
 import type { GameViews } from '@smg/game-sdk';
@@ -41,6 +41,8 @@ const line = z.object({
   from: choice.nullable(),
   choice,
   at: z.number(),
+  // The viewer's own line ("You"); false in the spectator's view and the result.
+  own: z.boolean(),
 });
 const rules = z.object({
   allOption: z.boolean(),
@@ -71,7 +73,7 @@ const result = z.object({
   lines: z.array(line),
 });
 
-type FeedLineView = z.infer<typeof line>;
+export type FeedLineView = z.infer<typeof line>;
 export type SpectatorView = z.infer<typeof feed>;
 export type PlayerView = SpectatorView & { readonly own: z.infer<typeof own> };
 export type ResultView = z.infer<typeof result>;
@@ -85,28 +87,29 @@ const rulesOf = (s: MindState) => ({
   plan: planOf(s.cfg),
 });
 
-const lineOf = (m: Move): FeedLineView => ({
+const lineOf = (m: Move, viewer: string | null): FeedLineView => ({
   playerKey: m.playerKey,
   from: m.from,
   choice: m.choice,
   at: m.at,
+  own: m.playerKey === viewer,
 });
 
 // The feed's lines of the moves received before `before`, newest first: no hidden switch.
-const linesBefore = (s: MindState, before: number): FeedLineView[] =>
+const linesBefore = (s: MindState, before: number, viewer: string | null): FeedLineView[] =>
   s.moves
     .filter((m) => m.at < before && !m.hidden)
-    .map(lineOf)
+    .map((m) => lineOf(m, viewer))
     .reverse();
 
 // What anyone may see at a cut: the counts, the players in the round and the newest lines.
-function feedAt(s: MindState, before: number): SpectatorView {
+function feedAt(s: MindState, before: number, viewer: string | null): SpectatorView {
   const finals = finalsBefore(s.moves, before);
   return {
     rules: rulesOf(s),
     counts: countsOf(finals.values()),
     entrants: finals.size,
-    lines: linesBefore(s, before).slice(0, FEED_LINES),
+    lines: linesBefore(s, before, viewer).slice(0, FEED_LINES),
   };
 }
 
@@ -129,15 +132,15 @@ function resultOf(s: MindState): ResultView {
       choice: final,
       points: pointsOf(final, winners),
     })),
-    lines: linesBefore(s, Infinity),
+    lines: linesBefore(s, Infinity, null),
   };
 }
 
 export const views: GameViews<MindState, null> = {
   player: (s, playerKey, ctx) => ({
-    ...feedAt(s, ctx.releasedBefore),
+    ...feedAt(s, ctx.releasedBefore, playerKey),
     own: ownOf(s, playerKey),
   }),
-  spectator: (s, ctx) => feedAt(s, ctx.releasedBefore),
+  spectator: (s, ctx) => feedAt(s, ctx.releasedBefore, null),
   result: (s) => resultOf(s),
 };

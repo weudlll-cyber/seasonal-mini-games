@@ -11,7 +11,7 @@
  *                 keys of a phased document (the countdown and the season) come first in the
  *                 document (packages/application).
  * Depends on:     @smg/game-sdk (SettingDef, GameSettings, PhasePlan, Series)
- * Used by:        ./module, ./rules, ./views, ./conformance
+ * Used by:        ./module, ./rules, ./views, ./conformance, ./index
  * Spec:           docs/spec/08-admin-settings.md §3.4; docs/spec/02e-game-mind-games.md §2–§4
  */
 import type { GameSettings, PhasePlan, Series, SettingDef } from '@smg/game-sdk';

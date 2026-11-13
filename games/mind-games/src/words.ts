@@ -8,13 +8,13 @@
  *                 exist, nobody in the round) and the game's part of the chat's round-end line
  *                 (`reveal`, 07 §2), both from the result view only.
  * Depends on:     ./choices, ./views (types)
- * Used by:        ./module
+ * Used by:        ./module, ./index
  * Spec:           docs/spec/02e-game-mind-games.md §8, §9; docs/spec/07-integration.md §2
  */
 import type { Choice } from './choices.js';
 import type { ResultView } from './views.js';
 
-const CHOICE_NAMES: Readonly<Record<Choice, string>> = {
+export const CHOICE_NAMES: Readonly<Record<Choice, string>> = {
   spring: 'Spring',
   summer: 'Summer',
   autumn: 'Autumn',

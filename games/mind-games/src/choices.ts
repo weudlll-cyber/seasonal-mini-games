@@ -10,7 +10,7 @@
  *                 place); the winning options at a place, none when the round has no such
  *                 place; the points of a final choice (owner decision 84).
  * Depends on:     nothing
- * Used by:        ./rules, ./views, ./words, ./devBot, ./conformance
+ * Used by:        ./rules, ./views, ./words, ./devBot, ./conformance, ./index
  * Spec:           docs/spec/02e-game-mind-games.md §1, §8
  */
 

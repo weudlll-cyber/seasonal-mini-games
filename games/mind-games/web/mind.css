@@ -1,0 +1,266 @@
+/*
+ * @file   games/mind-games/web/mind.css
+ * @module games/mind-games/web
+ * @brief  Styles of Seasonal Mind Games: the stage, the phase strip, the choices, the result.
+ *
+ * Responsibility: colours only from the design tokens (light and dark) and the seasons' own
+ *                 tokens; the stage as a flex column inside the platform's stage box of definite
+ *                 height, never by viewport arithmetic, so the round stays one screen at
+ *                 1280 × 720 with the Chat panel open (the stage keeps at least 560 px: five
+ *                 buttons of 100 px with their gaps) and at 390 × 844 (each button at least
+ *                 66 px wide and 72 px tall, also with All) (02e §11); touch targets of at least
+ *                 44 px; a pressed choice by its check and words as well as its fill. Classes are
+ *                 prefixed `mg-`.
+ * Spec:           docs/spec/02e-game-mind-games.md §11
+ */
+.mg-stage {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.mg-stage > * {
+  flex: none;
+}
+
+/* The phase strip: the three parts in proportion to their lengths. */
+.mg-phases {
+  display: flex;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-small);
+}
+
+.mg-phase {
+  flex-basis: 0;
+  min-width: 0;
+  padding: var(--space-1);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  background: var(--color-surface-2);
+  border-radius: var(--radius);
+}
+
+.mg-phase[data-phase='replay'] {
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border-strong);
+}
+
+.mg-phase-name {
+  font-weight: var(--font-weight-strong);
+}
+
+/* The choices: one row of buttons, the feed's counts in a row under them. */
+.mg-choices {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.mg-buttons,
+.mg-counts {
+  display: grid;
+  grid-template-columns: repeat(var(--mg-options), minmax(66px, 1fr));
+  gap: var(--space-1);
+}
+
+.mg-choice {
+  min-height: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--space-1);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: var(--font-weight-strong);
+  background: var(--color-surface);
+  border: 3px solid var(--mg-color);
+  border-radius: var(--radius-card);
+  cursor: pointer;
+}
+
+.mg-choice[data-choice='all'] {
+  border-color: var(--color-border-strong);
+}
+
+.mg-choice[aria-checked='true'] {
+  color: var(--color-on-season);
+  background: var(--mg-color);
+  box-shadow: inset 0 0 0 2px var(--color-text);
+}
+
+.mg-choice[data-choice='all'][aria-checked='true'] {
+  color: var(--color-text);
+}
+
+.mg-choice:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+
+.mg-choice:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.mg-icons {
+  display: flex;
+  gap: 2px;
+}
+
+.mg-icons img {
+  width: 28px;
+  height: 28px;
+}
+
+.mg-choice[data-choice='all'] .mg-icons img,
+.mg-option[data-choice='all'] .mg-icons img {
+  width: 14px;
+  height: 14px;
+}
+
+.mg-yours {
+  font-size: var(--font-size-small);
+}
+
+.mg-count {
+  margin: 0;
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.mg-count strong {
+  color: var(--color-text);
+}
+
+.mg-bar {
+  display: block;
+  height: 6px;
+  margin-top: 2px;
+  background: var(--mg-color);
+  border-radius: var(--radius-pill);
+}
+
+.mg-count[data-choice='all'] .mg-bar {
+  background: var(--color-border-strong);
+}
+
+.mg-hide {
+  min-height: var(--hit-target);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  cursor: pointer;
+}
+
+.mg-hide input {
+  width: 22px;
+  height: 22px;
+}
+
+.mg-head,
+.mg-line {
+  margin: 0;
+  font-weight: var(--font-weight-strong);
+}
+
+.mg-line {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.mg-refusal {
+  margin: 0;
+  color: var(--color-danger);
+}
+
+/* The result: the options in a row, each with its players. */
+.mg-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mg-option {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-1);
+  background: var(--color-surface);
+  border: 3px solid var(--mg-color);
+  border-radius: var(--radius-card);
+}
+
+.mg-option[data-choice='all'] {
+  border-color: var(--color-border-strong);
+}
+
+.mg-option[data-wins='true'] {
+  box-shadow: inset 0 0 0 2px var(--color-success);
+}
+
+.mg-option-count {
+  font-size: var(--font-size-title);
+  font-weight: var(--font-weight-heading);
+}
+
+.mg-option-place,
+.mg-option-players {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+}
+
+.mg-wins {
+  color: var(--color-success-text);
+  font-weight: var(--font-weight-strong);
+}
+
+.mg-option-players {
+  max-height: 7.5em;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+  text-align: center;
+}
+
+.mg-option-players li[data-own='true'] {
+  color: var(--color-text);
+  font-weight: var(--font-weight-strong);
+  background: var(--own-tint);
+}
+
+.mg-points {
+  color: var(--color-success-text);
+}
+
+.mg-history {
+  margin: 0;
+  padding-left: 1.5em;
+}
+
+@media (max-width: 600px) {
+  .mg-icons img {
+    width: 22px;
+    height: 22px;
+  }
+
+  .mg-choice {
+    font-size: var(--font-size-small);
+  }
+}

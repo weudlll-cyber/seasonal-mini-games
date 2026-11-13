@@ -50,6 +50,8 @@ describe('Mind Games running views (02e §6)', () => {
   it('gives the viewer their own choice and box live', () => {
     const v = views.player(round, 'anna', { releasedBefore: 0 }) as PlayerView;
     expect(v.own).toEqual({ choice: 'autumn', hide: true });
+    const seen = views.player(round, 'bo', { releasedBefore: Infinity }) as PlayerView;
+    expect(seen.lines.map((l) => l.own)).toEqual([false, true, false]);
     expect(v.entrants).toBe(0);
     const none = views.player(round, 'dee', { releasedBefore: 0 }) as PlayerView;
     expect(none.own).toEqual({ choice: null, hide: false });

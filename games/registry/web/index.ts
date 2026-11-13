@@ -10,7 +10,7 @@
  *                 screens only here, by the round's game id.
  * Depends on:     react (types), @smg/game-sdk, @smg-game/guess-the-number/web,
  *                 @smg-game/safecracker/web, @smg-game/bomb-defusal/web,
- *                 @smg-game/seasonal-target/web
+ *                 @smg-game/seasonal-target/web, @smg-game/mind-games/web
  * Used by:        apps/web
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/10-repository-structure.md §1
  */
@@ -24,6 +24,7 @@ import {
   SpectatorPanel,
 } from '@smg-game/guess-the-number/web';
 import { bombDefusalWeb } from '@smg-game/bomb-defusal/web';
+import { mindGamesWeb } from '@smg-game/mind-games/web';
 import { safecrackerWeb } from '@smg-game/safecracker/web';
 import { seasonalTargetWeb } from '@smg-game/seasonal-target/web';
 import type {
@@ -79,4 +80,5 @@ export const GAME_SCREENS: Readonly<Record<string, GameWeb>> = {
   safecracker: safecrackerWeb,
   'bomb-defusal': bombDefusalWeb,
   'seasonal-target': seasonalTargetWeb,
+  'mind-games': mindGamesWeb,
 };
