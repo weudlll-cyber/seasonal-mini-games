@@ -3,16 +3,15 @@
  * @module e2e
  * @brief  Journey 39: a series of three Seasonal Mind Games rounds.
  *
- * Responsibility: 09 §4 journey 39 as far as the platform lets a page play it (chain MG-N2), in
- *                 a match made by hand without bots, so every choice is a pre-pick and the
- *                 standings are known: three rounds with pause 5 s and short timings; the result
+ * Responsibility: 09 §4 journey 39, in a match made by hand without bots, so every choice is
+ *                 known in advance (pre-picks and one click) and so are the standings: three rounds with pause 5 s and short timings; the result
  *                 shows "Round 1 of 3 · Next round in 5 s"; the host's Start next round now starts
  *                 round 2 at once; a second player who joins in the pause plays round 2 by a
  *                 pre-pick; with All on in round 3 (saved as the next round's settings) the host's
  *                 All scores 2; the standings add up over the rounds (host 1 + 1 + 2, player 1
- *                 + 0 + 1); after round 3 the match summary says "All 3 rounds are played.", also
- *                 after a reload. Not here (morning sheet G1): the third player who joins during
- *                 round 2's join time and plays it with a click.
+ *                 + 1 + 1, Summer and Winter tied in round 2); a third player who joins during
+ *                 round 2's join time plays it with a click; after round 3 the match summary says
+ *                 "All 3 rounds are played.", also after a reload.
  * Depends on:     @playwright/test, ./mindGames, ./play
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 39); docs/spec/02e-game-mind-games.md §2
  */
@@ -40,6 +39,15 @@ const prefs = (p: Person, code: string, picks: Readonly<Record<string, string>>)
 const standing = (host: Person, name: string) =>
   host.page.getByTestId('match-standings').locator('tr', { hasText: name });
 
+// Round 2: a third player joins in its join time and chooses Summer by a click.
+async function joinsAndChooses(p: Person, code: string): Promise<void> {
+  await call(p, 'POST', `/matches/${code}/join`, {});
+  await visit(p, code);
+  const summer = p.page.getByRole('radio', { name: /Summer/ });
+  await summer.click();
+  await expect(summer).toHaveAttribute('aria-checked', 'true');
+}
+
 test('journey 39: a series of three Mind Games rounds, the standings add up', async ({
   browser,
 }) => {
@@ -47,6 +55,7 @@ test('journey 39: a series of three Mind Games rounds, the standings add up', as
   const host = await person(browser, 'host', WIDE);
   const one = await person(browser, 'player-1', WIDE);
   const two = await person(browser, 'player-2', WIDE);
+  const three = await person(browser, 'player-3', WIDE);
   const m = await call<{ code: string }>(host, 'POST', '/matches', {
     gameId: 'mind-games',
     title: 'e2e series',
@@ -76,19 +85,22 @@ test('journey 39: a series of three Mind Games rounds, the standings add up', as
       season: 'winter',
       settings: settings(true),
     });
-    // Round 2: the second player plays by their pre-pick, named in the feed one delay late.
-    await expect(host.page.locator('.round-main')).toContainText(/dev-player-2\s*chose Winter/, {
-      timeout: 20_000,
-    });
+    await joinsAndChooses(three, m.code);
+    // The second player plays by their pre-pick; both are named in the feed one delay late.
+    const feed = host.page.locator('.round-main');
+    await expect(feed).toContainText(/dev-player-2\s*chose Winter/, { timeout: 20_000 });
+    await expect(feed).toContainText(/dev-player-3\s*chose Summer/, { timeout: 20_000 });
     await expect(host.page.getByText(/Round 2 of 3/)).toBeVisible({ timeout: 40_000 });
     // Round 3 opens by itself after the pause; then the match closes after its pause.
     await expect(host.page.getByText('All 3 rounds are played.')).toBeVisible({ timeout: 70_000 });
+    // Round 2: Summer twice, Winter twice: both least chosen, everyone wins.
     await expect(standing(host, 'dev-host')).toContainText(/4\s*3/);
-    await expect(standing(host, 'dev-player-1')).toContainText(/2\s*2/);
+    await expect(standing(host, 'dev-player-1')).toContainText(/3\s*3/);
+    await expect(standing(host, 'dev-player-3')).toContainText(/1\s*1/);
     await host.page.reload();
     await expect(host.page.getByText('All 3 rounds are played.')).toBeVisible();
   } finally {
     await abortMatch(host, m.code);
-    await closeAll([host, one, two]);
+    await closeAll([host, one, two, three]);
   }
 });

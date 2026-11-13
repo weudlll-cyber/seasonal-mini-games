@@ -9,7 +9,8 @@
  *                 viewer's current choice is pressed, with a check and "Your choice" in words,
  *                 never by colour alone; choosing it again sends nothing. Under each button its
  *                 count as the feed shows it, "30 s ago: 7", with a bar of that length; the
- *                 count is the view's, never a live one, and the client counts nothing. Every
+ *                 count is the view's, never a live one, and the client counts nothing; while the
+ *                 feed is still empty there is no count at all (09 §4 journey 38). Every
  *                 button has its tooltip (O89). Between the buttons and the counts runs the
  *                 flight band (./FlightBand, 02e §11.1). A spectator gets the same row without
  *                 choosing.
@@ -75,6 +76,10 @@ function Counts(p: { readonly view: SpectatorView; readonly options: readonly Ch
   const { view, options } = p;
   const most = Math.max(1, ...options.map((c) => view.counts[c]));
   const ago = `${String(delayS(view))} s ago`;
+  // Before anything is one delay old the feed is empty: no count yet, the row keeps its place.
+  if (view.entrants === 0 && view.lines.length === 0) {
+    return <div className="mg-counts mg-counts--waiting" aria-hidden="true" />;
+  }
   return (
     <div className="mg-counts">
       {options.map((c) => (

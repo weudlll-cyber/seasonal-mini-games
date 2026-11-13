@@ -3,13 +3,13 @@
  * @module e2e
  * @brief  Journey 40: a player's pre-picks play for them while they are away.
  *
- * Responsibility: 09 §4 journey 40 as far as the platform lets a page play it (chain MG-N2): a
+ * Responsibility: 09 §4 journey 40: a
  *                 second player sets pre-picks for rounds 1–3 in the waiting area's panel (All
  *                 for round 2, where All is off) and closes their browser; their first choice
  *                 appears in the feed one delay after each opening with their name and no mark;
- *                 round 2 gives them no choice; their points count in the standings; the host's
- *                 match details never hold them. Not here (morning sheet G8): the notice "Your
- *                 pre-pick All was not offered in round 2." after reconnecting.
+ *                 round 2 gives them no choice, and after reconnecting they read "Your pre-pick All
+ *                 was not offered in round 2."; their points count in the standings; the host's
+ *                 match details never hold them.
  * Depends on:     @playwright/test, ./mindGames, ./play
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 40); docs/spec/02e-game-mind-games.md §7
  */
@@ -70,6 +70,13 @@ test('journey 40: pre-picks play for an away player, seen by nobody else', async
     await expect(host.page.getByText(/Round 1 of 3/)).toBeVisible({ timeout: 40_000 });
     await expect(list).toContainText(/dev-player-1\s*chose Winter/, { timeout: 30_000 });
     await expect(list).not.toContainText('dev-player-2');
+    // Back in round 2, the away player reads why they have no choice in it (02e §7).
+    const back = await person(browser, 'player-2', WIDE);
+    await visit(back, m.code);
+    await expect(
+      back.page.getByText('Your pre-pick All was not offered in round 2.'),
+    ).toBeVisible();
+    await back.ctx.close();
     await expect(host.page.getByText('All 3 rounds are played.')).toBeVisible({ timeout: 120_000 });
     // Rounds 1 and 3: three options once each, all least chosen: a point each time.
     const row = host.page.getByTestId('match-standings').locator('tr', { hasText: 'dev-player-2' });

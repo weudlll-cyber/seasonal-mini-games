@@ -171,6 +171,10 @@
   font-size: var(--font-size-small);
 }
 
+.mg-counts--waiting {
+  min-height: 1.6em;
+}
+
 .mg-count {
   margin: 0;
   font-size: var(--font-size-small);

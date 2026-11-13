@@ -73,6 +73,11 @@ describe('Mind Games input replies and keys (02e §5.2, §11)', () => {
     );
   });
 
+  it('shows no count while the feed is empty', () => {
+    render(<MindInput {...inputProps(playerView([], 0))} />);
+    expect(document.querySelectorAll('.mg-count')).toHaveLength(0);
+  });
+
   it('offers All with its option, and the box only where each player decides', () => {
     render(
       <MindInput

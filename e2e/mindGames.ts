@@ -7,9 +7,7 @@
  * Responsibility: the Quick Test form for Mind Games with seed `acorn` and the game's fields by
  *                 label, 7 bots by default, from the lobby, a 3 s countdown; the viewer's own
  *                 pre-picks in the waiting area, saved before the host starts; the round's id
- *                 from the match; a guess through the HTTP fallback. The player enters a round
- *                 through a pre-pick: the page offers no first choice to a player not yet listed
- *                 in the round (morning sheet, chain MG-N2, G1).
+ *                 from the match; a guess through the HTTP fallback.
  * Depends on:     @playwright/test, ./play
  * Used by:        ./mindGames.spec, ./mindGamesSeries.spec, ./mindGamesPrePicks.spec,
  *                 ./mindGamesDelay.spec

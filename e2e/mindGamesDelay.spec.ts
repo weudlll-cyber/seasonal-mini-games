@@ -3,18 +3,16 @@
  * @module e2e
  * @brief  Journey 41: nothing of a Mind Games round reaches anyone earlier than the delay.
  *
- * Responsibility: 09 §4 journey 41 (chain MG-N2): during a Quick Test round with 6 bots
- *                 switching (delay 10 s), a guest's page and the playing host's page record every
- *                 socket frame and poll `GET …/state` once a second; no recorded frame holds a
- *                 released choice younger than the delay; no state answer holds a line younger
- *                 than it, and its players in the round are exactly those with a first-choice
- *                 line; the room's release numbers are gap-free; the acknowledgements carry no
- *                 number; the admin's round view holds nothing younger than the delay (it is
- *                 the delayed spectator view, not empty as 09 §4 says: morning sheet G13) and the
- *                 public read API no count, line or entrant before the end. In a match made by hand, a player who joins after the
- *                 join time is refused with `JOIN_CLOSED` (journey 38's late player: a Quick Test
- *                 match has no seat for one, morning sheet G12). The playing host is the "second
- *                 player's socket" of 09 §4: the Quick Test has no seat for another.
+ * Responsibility: 09 §4 journey 41: during a Quick Test round with 6 bots switching (delay
+ *                 10 s), a guest's page and the playing host's page record every socket frame and
+ *                 poll `GET …/state` once a second; no recorded frame holds a released choice
+ *                 younger than the delay; no state answer holds a line younger than it, and its
+ *                 players in the round are exactly those with a first-choice line; the room's
+ *                 release numbers are gap-free; the acknowledgements carry no number; the
+ *                 admin's round view, the delayed spectator view, holds nothing younger than the
+ *                 delay (DECISIONS T337), and the public read API no count, line or entrant
+ *                 before the end. A player who joins after the join time is refused with
+ *                 `JOIN_CLOSED` by the receive time.
  * Depends on:     @playwright/test, ./mindGames, ./play
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 41), §6; docs/spec/05-security-threat-model.md §3.2
  */

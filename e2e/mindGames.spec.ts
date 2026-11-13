@@ -3,30 +3,39 @@
  * @module e2e
  * @brief  Journey 38: one round of Seasonal Mind Games with the owner playing along.
  *
- * Responsibility: 09 §4 journey 38 as far as the platform lets a page play it (chain MG-N2): a
- *                 Quick Test through the lobby with seed `acorn`, 7 bots, total 60 s, delay
- *                 10 s, join 30 s, switches `perPlayer`; the intro names the rule and the timing;
- *                 for the first 10 s the feed says when the first choices show; the player's
- *                 Winter, entered by a pre-pick, shows as "You chose Winter" and the bots'
- *                 named first choices only once they are 10 s old; with the box ticked a switch
- *                 changes only the counts, unticked it adds a line with from → to, and its icon
- *                 flies only once it is in the feed; with reduced motion nothing flies; after
- *                 50 s a click says "Choices are closed …"; the round view fits 1280 × 720 with the Chat
- *                 panel open, with the flight band over no button, line or chat, and 390 × 844;
- *                 every input has a tooltip; axe passes; the result page shows. Not here,
- *                 waiting for the owner (morning sheet G1, G2, G11): the first choice by a click
- *                 (G1), the buttons disabled by phase, "every change is now a switch" (G2), and
- *                 the result's least chosen option with its winners and light-up (G11). A Quick
- *                 Test match has seats for its bots and the host only (G12): the late second
- *                 player and its `JOIN_CLOSED` are journey 41's, in a match made by hand.
+ * Responsibility: 09 §4 journey 38: a Quick Test through the lobby with seed `acorn`, 7 bots,
+ *                 total 60 s, delay 10 s, join 30 s, switches `perPlayer`; the intro names the
+ *                 rule and the timing; for the first 10 s the feed counts down to the first
+ *                 choices and no count is on the page; the player chooses Winter by a click, sees
+ *                 it pressed at once, and sees "You chose Winter" and the bots' named first
+ *                 choices only once they are 10 s old, each with its age; with the box ticked a
+ *                 switch changes only the counts, unticked it adds a line with from → to, and its
+ *                 icon flies only once it is in the feed; with reduced motion nothing flies; after
+ *                 30 s a second browser that joins the match finds the buttons off with "Joining
+ *                 this round has closed …" and a choice it sends anyway is refused with
+ *                 `JOIN_CLOSED`; from 40 s the feed says every change is now a switch; at 50 s the
+ *                 buttons are off and the feed says choices are closed while the replay runs; the
+ *                 result names the least chosen option, lights it up and lists the winners with
+ *                 +1 and the viewer's line; the round view fits 1280 × 720 with the Chat panel
+ *                 open, the flight band over no button, line or chat, and 390 × 844; every input
+ *                 has a tooltip; axe passes.
  * Depends on:     @playwright/test, @axe-core/playwright, ./mindGames, ./play, ./screens
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 38); docs/spec/02e-game-mind-games.md
  */
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
-import { feedHead, mindQuickTest, startRound } from './mindGames.js';
-import { abortMatch, closeAll, fitsScreen, person, roundOpen, type Person } from './play.js';
+import { feedHead, guessHttp, mindQuickTest, roundIdOf, startRound } from './mindGames.js';
+import {
+  abortMatch,
+  call,
+  closeAll,
+  fitsScreen,
+  person,
+  roundOpen,
+  visit,
+  type Person,
+} from './play.js';
 import { PHONE } from './screens.js';
 
 const WIDE = { width: 1280, height: 720 };
@@ -82,12 +91,16 @@ async function axeClean(page: Page): Promise<void> {
   expect(serious.map((v) => v.id)).toEqual([]);
 }
 
-// The first 10 s: nothing in the feed yet; then the own line and the bots' named lines.
+// The first 10 s: the feed counts down and shows no count; the own choice is pressed at once;
+// its line and the bots' named lines come only once they are 10 s old, each with its age.
 async function delayedFirstChoices(p: Person, opened: number): Promise<void> {
-  await expect(feedHead(p.page)).toHaveText('The first choices show 10 s after they are made.');
+  await expect(p.page.getByTestId('feed-note')).toHaveText(/^The first choices show in \d+ s\.$/);
+  await expect(p.page.locator('.mg-count')).toHaveCount(0);
+  await choice(p.page, 'Winter').click();
+  await expect(choice(p.page, 'Winter')).toHaveAttribute('aria-checked', 'true');
   await expect(list(p.page)).not.toContainText('chose');
   // A row's name and its words are apart in the row: the list's text holds both.
-  await expect(list(p.page)).toContainText(/You\s*chose Winter/, { timeout: 15_000 });
+  await expect(list(p.page)).toContainText(/You\s*chose Winter\s*· \d+ s ago/, { timeout: 15_000 });
   expect(Date.now() - opened, 'the own line only once it is 10 s old').toBeGreaterThan(9_000);
   await expect(list(p.page)).toContainText(/bot-0\d\s*chose/, { timeout: 40_000 });
   await expect(feedHead(p.page)).toHaveText(/^The round 10 s ago: \d+ players?$/);
@@ -96,7 +109,6 @@ async function delayedFirstChoices(p: Person, opened: number): Promise<void> {
 // A hidden switch changes only the counts; a named one gets its line and its flight.
 async function switches(p: Person): Promise<void> {
   const page = p.page;
-  await expect(choice(page, 'Winter')).toHaveAttribute('aria-checked', 'true');
   await page.getByLabel('Hide my switches').check();
   await choice(page, 'Autumn').click();
   await expect(choice(page, 'Autumn')).toHaveAttribute('aria-checked', 'true');
@@ -111,17 +123,54 @@ async function switches(p: Person): Promise<void> {
   await expect(list(page)).not.toContainText(/switched Winter/);
 }
 
+// After the join time a second browser joins the match: it may not enter the round.
+async function lateJoiner(late: Person, host: Person, code: string, opened: number) {
+  await expect.poll(() => Date.now() - opened, { timeout: 40_000 }).toBeGreaterThan(31_000);
+  await call(late, 'POST', `/matches/${code}/join`, {});
+  await visit(late, code);
+  await expect(late.page.locator('.mg-refusal')).toHaveText(
+    'Joining this round has closed. You can play the next round.',
+  );
+  const radios = late.page.getByRole('radio');
+  for (const r of await radios.all()) await expect(r).toBeDisabled();
+  const refused = await guessHttp(late, await roundIdOf(host, code), 'summer');
+  expect(refused.body).toMatchObject({ code: 'JOIN_CLOSED' });
+}
+
+// From 40 s the feed has passed the join time; at 50 s choices close and the replay runs.
+async function lastPhases(p: Person, opened: number): Promise<void> {
+  const note = p.page.getByTestId('feed-note');
+  await expect.poll(() => Date.now() - opened, { timeout: 40_000 }).toBeGreaterThan(41_000);
+  await expect(note).toHaveText(/^All \d+ players are in\. Every change now is a switch\.$/);
+  await expect.poll(() => Date.now() - opened, { timeout: 40_000 }).toBeGreaterThan(51_000);
+  await expect(note).toHaveText(/^Choices are closed\. Replay of the last 10 s of play/);
+  for (const r of await p.page.getByRole('radio').all()) await expect(r).toBeDisabled();
+}
+
+// The result: the least chosen option named and lit, its winners with +1, the viewer's line.
+async function result(p: Person): Promise<void> {
+  await expect(p.page.getByTestId('result')).toBeVisible({ timeout: 20_000 });
+  await expect(p.page.getByTestId('closest-miss')).toHaveText(
+    /least chosen( place)? — \d+ players? wins?\./,
+  );
+  const options = p.page.getByTestId('mind-result');
+  await expect(options.locator('.mg-option.smg-anim-win').first()).toBeVisible();
+  await expect(options.getByText('✓ wins').first()).toBeVisible();
+  await expect(options.locator('.mg-points').first()).toHaveText(/\+[12]/);
+  await expect(options.locator('li[data-own="true"]')).toHaveText(/^You/);
+}
+
 test('journey 38: one round of Seasonal Mind Games, everything one delay late', async ({
   browser,
 }) => {
   test.setTimeout(180_000);
   const p = await person(browser, 'host', WIDE);
   const calm = await person(browser, 'guest', WIDE);
+  const late = await person(browser, 'player-2', WIDE);
   let code = '';
   try {
     code = await mindQuickTest(p, {
       fields: { 'Total length': '60', Delay: '10', Switches: 'perPlayer' },
-      picks: { 1: 'winter' },
     });
     await startRound(p);
     await expect(p.page.getByTestId('round-intro')).toContainText(
@@ -147,17 +196,15 @@ test('journey 38: one round of Seasonal Mind Games, everything one delay late', 
     await bandClear(p.page);
     await p.page.keyboard.press('Escape');
     await axeClean(p.page);
-    // After the play's end: a click is refused in words.
-    await expect.poll(() => Date.now() - opened, { timeout: 40_000 }).toBeGreaterThan(51_000);
-    await choice(p.page, 'Summer').click();
-    await expect(p.page.getByText('Choices are closed for this round.')).toBeVisible();
+    await lateJoiner(late, p, code, opened);
+    await lastPhases(p, opened);
     await p.page.setViewportSize(PHONE);
     await fitsScreen(p.page);
     await bandClear(p.page);
     await p.page.setViewportSize(WIDE);
-    await expect(p.page.getByTestId('result')).toBeVisible({ timeout: 20_000 });
+    await result(p);
   } finally {
     if (code !== '') await abortMatch(p, code);
-    await closeAll([p, calm]);
+    await closeAll([p, calm, late]);
   }
 });
