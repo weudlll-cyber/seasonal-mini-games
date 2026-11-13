@@ -10,12 +10,15 @@
  *                 never hold one (05 §3). Checks a game owns run in `validate`, before the
  *                 platform's cooldown check (02 §5.1 order; DECISIONS T29). An accepted
  *                 decision may lengthen the guesser's cooldown (`extraCooldownMs`, T120).
- * Depends on:     zod (schemas), ./random, ./settings
+ *                 A `phased` game (04 §4.8) has no cooldown and gives its plan and its own
+ *                 result rule in `phased` instead (./phased).
+ * Depends on:     zod (schemas), ./phased, ./random, ./settings
  * Used by:        ./index, packages/domain (round engine), games/*
- * Spec:           docs/spec/04-software-architecture.md §4, docs/spec/02-game-guess-the-number.md §5.1
+ * Spec:           docs/spec/04-software-architecture.md §4, §4.8; docs/spec/02-game-guess-the-number.md §5.1
  */
 import type { ZodType } from 'zod';
 
+import type { PhasedHooks } from './phased.js';
 import type { RoundRng } from './random.js';
 import type { SettingDef, SettingValue } from './settings.js';
 
@@ -27,7 +30,9 @@ export interface GameMeta {
   readonly id: string;
   readonly name: string;
   readonly contractVersion: 1;
-  readonly timing: 'cooldown';
+  // 'cooldown': the guess games (04 §4.3); 'phased': fixed phases, no cooldown (04 §4.8).
+  readonly timing: 'cooldown' | 'phased';
+  // A phased game may have none: its rounds are stored as 'shared'.
   readonly secretModes: readonly SecretMode[];
   // Supports season teams (shared mode).
   readonly teams: boolean;
@@ -146,6 +151,8 @@ export interface GameModule<S, A, E, Cfg, Sec> {
   };
   // A season whose special the game does not implement runs without it (04 §4.4).
   readonly specials?: Partial<SpecialHooks<S, E, Sec>>;
+  // Present exactly when meta.timing is 'phased' (04 §4.8).
+  readonly phased?: PhasedHooks<S, Cfg>;
   // The secret in a few words for the chat's round-end line ("the number was 42", O32), from
   // the result view and the winner's key; null, or no hook, names no value.
   readonly reveal?: (result: unknown, winner: string | null) => string | null;

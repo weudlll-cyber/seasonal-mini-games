@@ -163,6 +163,15 @@ export interface RoundStateView {
   // another player's (O73). Null for spectators and results, and while the limit cannot
   // run out for the viewer: off, the round not open, solved or timed out.
   readonly ownInactivity: InactivityView | null;
+  // A phased round's plan in milliseconds after `opensAt` (04 §4.8): the client shows its
+  // phases, the server enforces them. Absent for the guess games. In a phased round `seq` is
+  // its release sequence and the roster lists only players whose entry is one delay old.
+  readonly plan?: {
+    readonly entryEndMs: number;
+    readonly actionsEndMs: number;
+    readonly endMs: number;
+    readonly viewDelayMs: number;
+  };
 }
 
 // One committed event in a frame; `null` where the event is not for this room (06 §4.4).

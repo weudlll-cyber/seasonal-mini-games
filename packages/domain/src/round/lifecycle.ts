@@ -11,18 +11,19 @@
  *                 runs, so a late timer never lets a guess in early or late (T32); with the
  *                 specials it times out the players whose inactivity limit and its grace
  *                 have passed, in time order, which may end the round (O71, O72). `nextDue` names the next of
- *                 these times for the round actor's timer.
+ *                 these times for the round actor's timer. A phased round ends at its plan's
+ *                 end (its longest time) with the results of the game's own rule (04 §4.8).
  * Depends on:     @smg/game-sdk (types), ./builder, ./evolve, ./inactivity, ./results, ./specials,
  *                 ./types
  * Used by:        ./guess, ./step, ../index
  * Spec:           docs/spec/02-game-guess-the-number.md §4, §5.3, §8; docs/spec/04-software-architecture.md §5.1
  */
-import type { PlatformRoundConfig, RosterPlayer, RoundRng, Season } from '@smg/game-sdk';
+import type { PhasePlan, PlatformRoundConfig, RosterPlayer, RoundRng, Season } from '@smg/game-sdk';
 
 import { fail, Step } from './builder.js';
 import { initialRound } from './evolve.js';
 import { heldEnd, leftEnd, nextTimeout } from './inactivity.js';
-import { playerResults, teamResults } from './results.js';
+import { phasedResults, playerResults, teamResults } from './results.js';
 import { fireDue, nextSpecialAt, springHerald } from './specials.js';
 import type { EndReason, Reply, RoundEvent, RoundState } from './types.js';
 
@@ -33,6 +34,8 @@ export interface NewRound<Cfg> {
   readonly season: Season;
   // sha256 of the round seed (hex) when the fairness proof is on (02 §10).
   readonly commitment: string | null;
+  // A phased round's plan (04 §4.8 rule 1); absent for the guess games.
+  readonly plan?: PhasePlan;
 }
 
 export function createRound<S, A, E, Cfg>(
@@ -96,12 +99,17 @@ export function endRound<S, A, E, Cfg, Sec>(
   deliverAt: number | null = null,
 ): void {
   const s = step.state;
+  const outcome = step.deps.module.phased?.outcome;
+  // A phased round's results come from the game's own rule; nobody in it: "no players left"
+  // (04 §4.8 rule 6).
+  const rows =
+    s.plan !== undefined && outcome !== undefined && s.game !== null ? outcome(s.game) : null;
   step.emit({
     type: 'RoundEnded',
     at,
-    reason,
-    results: playerResults(s),
-    teams: teamResults(s),
+    reason: rows !== null && rows.length === 0 ? 'noPlayers' : reason,
+    results: rows === null ? playerResults(s) : phasedResults(rows, at),
+    teams: rows === null ? teamResults(s) : [],
     seed: s.config.commitReveal ? step.deps.seed : null,
     deliverAt,
   });

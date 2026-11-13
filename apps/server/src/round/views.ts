@@ -15,10 +15,15 @@
  *                 room line), a player's own events to that player's room, host events to the
  *                 host room (06 §4.2, §4.4). Under Frost a view shows nothing that was not
  *                 announced yet, and frames hold such events back (09 §6 "Frost early read").
+ *                 A phased round (04 §4.8 rule 5) is shown as it was at its delayed room's cut:
+ *                 the game's views get that cut, the round lists a player only once their entry
+ *                 is older, without action counts, and `phasedPublic` gives its events' public
+ *                 forms for the delayed room (./delayedRoom); its round state carries the plan.
  * Depends on:     @smg/application (RoundSession), @smg/domain (results, inactivity, types),
  *                 @smg/game-sdk (GameViews), ./pgRoundStore (types)
  * Used by:        ./rounds, ../realtime/gateway, ../http/routes/rounds
- * Spec:           docs/spec/02-game-guess-the-number.md §11; docs/spec/06-data-model-api-realtime.md §4.2, §4.4
+ * Spec:           docs/spec/02-game-guess-the-number.md §11; docs/spec/04-software-architecture.md §4.8;
+ *                 docs/spec/06-data-model-api-realtime.md §4.2, §4.4
  */
 import type { RoundSession } from '@smg/application';
 import {
@@ -37,6 +42,35 @@ import type { StoredEvent } from './pgRoundStore.js';
 // solves, the win and an end that a win caused.
 const shown = (at: number | null, cut: number) => at !== null && at < cut;
 
+// The round's players: a phased round lists only those whose entry is older than the cut,
+// and no counts of their actions, which would show switches as they happen (04 §4.8 rule 5).
+function rosterPart<S, Cfg>(state: RoundState<S, Cfg>, cut: number) {
+  const entries = Object.entries(state.roster);
+  if (state.plan !== undefined) {
+    return entries
+      .filter(([, e]) => e.enteredAt != null && e.enteredAt < cut)
+      .map(([playerKey]) => ({
+        playerKey,
+        team: null,
+        guesses: 0,
+        cooldownEndsAt: 0,
+        place: null,
+        solved: false,
+        timedOut: false,
+      }));
+  }
+  return entries.map(([playerKey, e]) => ({
+    playerKey,
+    team: e.team,
+    guesses: e.guesses,
+    cooldownEndsAt: e.cooldownEndsAt,
+    place: shown(e.solvedAt, cut) ? e.place : null,
+    solved: shown(e.solvedAt, cut),
+    // The inactivity limit (O71): out or not; the deadlines are the viewer's own (O73).
+    timedOut: e.timedOut,
+  }));
+}
+
 function platformPart<S, Cfg>(state: RoundState<S, Cfg>, cut: number) {
   const ended = state.status === 'ended' && !announcedEnd(state, cut) ? 'open' : state.status;
   const winner = shown(state.winnerAt, cut) ? state.winner : null;
@@ -54,7 +88,8 @@ function platformPart<S, Cfg>(state: RoundState<S, Cfg>, cut: number) {
     opensAt: state.opensAt,
     endsAt: state.endsAt,
     endedAt: ended === 'ended' ? state.endedAt : null,
-    cooldownMs: state.cooldownMs,
+    // A phased round has no cooldown (04 §4.8 rule 4).
+    cooldownMs: state.plan === undefined ? state.cooldownMs : 0,
     // The round's own limit and warning for the next round's form (O75); a round frozen
     // before O71 has no key and the limit off.
     inactivityLimitMs: state.config.inactivityLimitMs > 0 ? state.config.inactivityLimitMs : 0,
@@ -63,16 +98,9 @@ function platformPart<S, Cfg>(state: RoundState<S, Cfg>, cut: number) {
     abortReason: state.abortReason,
     winner,
     margin: winner === null ? null : state.margin,
-    roster: Object.entries(state.roster).map(([playerKey, e]) => ({
-      playerKey,
-      team: e.team,
-      guesses: e.guesses,
-      cooldownEndsAt: e.cooldownEndsAt,
-      place: shown(e.solvedAt, cut) ? e.place : null,
-      solved: shown(e.solvedAt, cut),
-      // The inactivity limit (O71): out or not; the deadlines are the viewer's own (O73).
-      timedOut: e.timedOut,
-    })),
+    roster: rosterPart(state, cut),
+    // A phased round's plan, so the client shows its phases (rule 1); the guess games have none.
+    ...(state.plan === undefined ? {} : { plan: state.plan }),
   };
 }
 
@@ -84,12 +112,13 @@ function announcedEnd<S, Cfg>(state: RoundState<S, Cfg>, cut: number): boolean {
 export function roundView<S, A, E, Cfg, Sec>(
   session: RoundSession<S, A, E, Cfg, Sec>,
   views: GameViews<S, Sec>,
-  viewer: { readonly key: string | null; readonly now: number },
+  // `cut`: a phased round's delayed room cut (./delayedRoom); else Frost's, from `now`.
+  viewer: { readonly key: string | null; readonly now: number; readonly cut?: number },
   seq: number,
 ) {
   const state = session.state;
   const delay = frostDelay(state);
-  const cut = delay === null ? Infinity : viewer.now - delay;
+  const cut = viewer.cut ?? (delay === null ? Infinity : viewer.now - delay);
   const base = { ...platformPart(state, cut), seq, ownInactivity: null };
   if (base.status === 'ended') {
     return {
@@ -143,6 +172,33 @@ function roomForm(e: RoundEvent<unknown, unknown, unknown>, result: () => unknow
       return { ...e, result: result() };
     default:
       return e;
+  }
+}
+
+// A phased round's event for the delayed room (./delayedRoom): its public room or host form,
+// whether it waits for the delay, or null when only its own player or nobody sees it. An
+// accepted action and a change of match players never reach the room: what the room may see
+// of an action is the game's own room event (04 §4.8 rule 5).
+export function phasedPublic(
+  stored: StoredEvent,
+  result: () => unknown,
+): { readonly room: unknown; readonly host: unknown; readonly delayed: boolean } | null {
+  const e = stored.event as RoundEvent<unknown, unknown, unknown>;
+  switch (e.type) {
+    case 'GuessAccepted':
+    case 'MemberChanged':
+    case 'HeldDelivered':
+      return null;
+    case 'Game':
+      if (e.audience === 'room')
+        return { room: { type: 'Game', event: e.event }, host: null, delayed: true };
+      if (e.audience === 'host')
+        return { room: null, host: { type: 'Game', event: e.event }, delayed: true };
+      return null;
+    case 'PlayerEntered':
+      return { room: { type: e.type, playerKey: e.playerId, at: e.at }, host: null, delayed: true };
+    default:
+      return { room: roomForm(e, result), host: null, delayed: false };
   }
 }
 

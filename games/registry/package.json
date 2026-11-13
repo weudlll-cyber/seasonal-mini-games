@@ -6,7 +6,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./web": "./web/index.ts"
+    "./web": "./web/index.ts",
+    "./testing": "./src/testing.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p web/tsconfig.json"
@@ -17,7 +18,8 @@
     "@smg-game/safecracker": "workspace:*",
     "@smg-game/seasonal-target": "workspace:*",
     "@smg/game-sdk": "workspace:*",
-    "react": "19.3.1"
+    "react": "19.3.1",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/react": "19.3.0",

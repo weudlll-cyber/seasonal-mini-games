@@ -4,9 +4,11 @@
  * @brief  A round's results, team results and the match standings, written at its end.
  *
  * Responsibility: in the transaction that appends RoundEnded (06 §2.4): one row per roster
- *                 player (a place only for placed players, unique per round), one per team,
+ *                 player (a place only for placed players, unique per round; `won` for a round
+ *                 win: place 1 in the guess games, the game's own rule in a phased one, 04 §4.8
+ *                 rule 6), one per team,
  *                 and the match and team standings recomputed over every ended round of the
- *                 match with the domain's tie order (02 §9, 03 §5). A result staff removed
+ *                 match with the domain's tie order (02 §9, 03 §5), wins read from `won`. A result staff removed
  *                 (smg.round_result_removals, 06 §3.2) is left out: its points, and the team
  *                 point of its team when it was the round's winner; the other players keep
  *                 their places. `refreshMatch` recomputes both after a removal.
@@ -29,7 +31,7 @@ export async function writeResults(
   for (const r of ended.results) {
     await c.query(
       `INSERT INTO smg.round_results (round_id, player_key, place, solved, solve_receive_seq, solve_at,
-         guesses, team, points) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+         guesses, team, points, won) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
       [
         roundId,
         r.playerId,
@@ -40,6 +42,7 @@ export async function writeResults(
         r.guesses,
         r.team,
         r.points,
+        r.won ?? r.place === 1,
       ],
     );
   }
@@ -64,8 +67,9 @@ async function refreshStandings(c: pg.PoolClient, matchId: string) {
     place: number | null;
     points: number;
     solve_at: Date | null;
+    won: boolean;
   }>(
-    `SELECT rr.player_key, rr.place, rr.points, rr.solve_at FROM smg.round_results rr
+    `SELECT rr.player_key, rr.place, rr.points, rr.solve_at, rr.won FROM smg.round_results rr
      JOIN smg.rounds r ON r.id = rr.round_id WHERE r.match_id = $1
        AND NOT EXISTS (SELECT 1 FROM smg.round_result_removals x
                        WHERE x.round_id = rr.round_id AND x.player_key = rr.player_key)`,
@@ -82,6 +86,7 @@ async function refreshStandings(c: pg.PoolClient, matchId: string) {
     points: r.points,
     // Only points and wins count for the standings; a timed-out row has neither (O71).
     timedOut: false,
+    won: r.won,
   }));
   await c.query('DELETE FROM smg.match_standings WHERE match_id = $1', [matchId]);
   for (const s of standings(scoredPlayers(results))) {

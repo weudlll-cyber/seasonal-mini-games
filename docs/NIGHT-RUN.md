@@ -2,6 +2,59 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Night MG-N1 (2026-11-12/13): docs cleanup, then the `phased` contract (MG-C1 → MG-C3)
+
+Status, updated after every piece. Branch `feat/mind-games` is not merged tonight; only piece 0 is.
+
+| Piece                                               | State                                                                                                                                                                 |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0 — docs cleanup                                    | **done**: PR #9 merged into `master` (`c3b8a69`, CI green: CI 41 min, CodeQL); branch deleted on origin and locally; master merged into `feat/mind-games` (`f0112f4`) |
+| 1 — MG-C1, the `phased` class and the round engine  | **done**, pushed on `feat/mind-games`                                                                                                                                 |
+| 2 — MG-C2, series and joining a running round       | **running** (joining a running round was built in piece 1)                                                                                                            |
+| 3 — MG-C3, per-player match data and the Quick Test | open                                                                                                                                                                  |
+
+### Piece 0 — docs cleanup (`docs/cleanup-2026-11-13`, PR #9)
+
+Each line checked against the tree or git history before it changed:
+
+- BACKLOG part one: the inactivity limit (O71–O75) closed, merged in PR #4 (`59fd076`); OPEN's stale bullet "On `feat/inactivity`, not merged" removed.
+- BACKLOG part two: the hostEmbed chat row gets "Branch feat/website-mode (piece 2, `787e595`; DECISIONS T236–T240)" and 2026-11-05 (`git log -S` on the row and on T236).
+- 08 §3.3: the code (`games/seasonal-target/src/geometry.ts`, its tier table) has 48 / 32 / 20 / 12 / 6 % of the diagonal with minimums n > 61 / 40 / 20 / 13 / 8, as 02d §7 says; 08's row (40 / 25 / 12 / 6 / 3 %) was the one wrong and now says what the code has.
+- GAME-IDEAS §2 and 01 §1: Target, Safecracker and Bomb Defusal are designed and built (O38, O65).
+- 02b §8: the sentence fused into the heading moved to the end of the closest-miss paragraph.
+- 09 §4: journeys in numeric order (24–27 and 30–32 stay blocks; no number changed).
+- Checks: prettier and the offline link check (lychee, 322 links, 0 errors); PR checks green (docs, verify, e2e Chromium, security, image, CodeQL).
+- Merging master into `feat/mind-games`: BACKLOG and OPEN conflicted; both sides kept (the inactivity row from master and the design row from the branch; master's removal of the stale bullet and the branch's Mind Games bullet).
+
+### Piece 1 — MG-C1, the `phased` class and the round engine (04 §4.8 rules 1–6, 9)
+
+- **Contract** (`packages/game-sdk/src/phased.ts`, `module.ts`): `timing: 'cooldown' | 'phased'`, `phased?: { plan, outcome }`, `PhasePlan`, `OutcomeRow`, `planIssue`; `series` and `prefs` come with pieces 2 and 3.
+- **Settings** (`packages/application/src/round/roundSettings.ts`): a phased game's document holds only `round.countdownS` and `round.seasonSource` of the platform keys; its other platform values are fixed off, its longest time is the plan's end, the plan travels with the settings into `RoundCreated` (T288).
+- **Domain** (`packages/domain/src/round/phased.ts`, `types.ts`, `evolve.ts`, `lifecycle.ts`, `results.ts`, `step.ts`): the check order of rule 2 with `PLAY_OVER` and `JOIN_CLOSED` at the receive time, no cooldown, Frost, timeout or solve, a reply `{ ok: true }` without a receive number, `PlayerEntered` before a player's first action, the command `member` and the event `MemberChanged` (T289), the end with the game's own results: nobody placed, `won`, winners' `solve_at` the end (T290), "no players left" for an empty round. The guess games' events and state keep their shapes (every new field is present only in a phased round).
+- **Server:** the delayed room (`apps/server/src/round/delayedRoom.ts`): room and host events held for the delay, released once a second in one frame with their own release sequence; lifecycle events at once; the end releases everything; restart counts what was due (T292, T293). Views at the room's cut, the round's list of players only once their entry is one delay old, no action counts, the plan in the round state; the players' own frames numbered by the release number (T291); the gateway sends a phased round's room frames only from the delayed room; `Play` tells a running phased round of players who join (after the anti-multi rules) or leave, starts it with every active match player, and lets it play on when players leave; a game without teams gets matches without them (T295); the guess intent takes a record of up to 4 short strings, numbers or booleans (06 §4.3).
+- **Results:** `round_results.won` (migration 0016, idempotent), written as `won ?? place = 1`; the match standings count `won`.
+- **Tests:** `packages/domain/src/round/phased.test.ts` (6: the windows to the millisecond, the order of the codes, no cooldown, `PlayerEntered` once, joining and leaving, the results, "no players left", replay equals live); `games/registry/src/phased.conformance.test.ts` (P1, P3–P5, P7 with 200 cases, and a permanent check that a fixture leaking one live count fails P7); `apps/server/test/phased.integration.test.ts` (frames, state answers and the round's list delayed for another player, a guest and the host; release numbers gap-free and equal to the state's `seq`; `{ ok: true }`; a match player who joins while it runs enters; `JOIN_CLOSED` and `PLAY_OVER`; the results and standings); `apps/server/test/resultWon.integration.test.ts` (real Guess The Number rounds, shared and individual: every row's `won` is its place 1; the rows set back to false, migration 0016 run again: match standings, team standings, league awards and board entries are equal).
+- **Sabotage, twice:** the fixture's spectator view given the live counts → `P7 Delay holds for sides-fixture` failed; restored → green. The server's views given no cut (`cut: Infinity` in `liveRound.ts`) → the integration test failed (`expected [ { playerKey: 'p2', … } ] to deeply equal []`, a player in the round's list before the delay); restored → green.
+- **The four existing games unchanged:** the golden test of Guess The Number, the conformance suite P1–P6 for all four, and every existing server test pass unchanged.
+- **`pnpm verify`:** the first run had 3 failures, all under the full run's load: the new phased test (a join came after the fixture's 4 s window: the plan is now 6/8/10 s), the authorization matrix (timed out; passes alone) and the inactivity test (it read the log right after the view showed the timeouts, before their batch committed; passes alone, three times; the test now waits for the committed log, a test-only change). The second run: green (format, lint, typecheck, 703 + 94 + 163 tests).
+- **Lines before → after:** game-sdk `module.ts` 175 → 182, `index.ts` 88 → 90, `phased.ts` new 53; domain `types.ts` 229 → 262, `evolve.ts` 204 → 228, `lifecycle.ts` 179 → 187, `results.ts` 119 → 139, `step.ts` 39 → 43, `phased.ts` new 100, `phased.test.ts` new 222; application `roundSettings.ts` 80 → 129, `roundSession.ts` 131 → 133; contracts `play.ts` 206 → 215; server `app.ts` 229 → 235, `routes/matches.ts` 249 → 253, `routes/quickTest.ts` 100 → 101, `routes/rounds.ts` 219 → 220, `match/play.ts` 300 → 265, `match/playError.ts` new 32, `match/roundCreation.ts` new 93, `realtime/gateway.ts` 226 → 256, `realtime/intents.ts` 241 → 244, `round/delayedRoom.ts` new 145, `round/gameRunner.ts` 154 → 177, `round/liveRound.ts` 118 → 168, `round/pgResults.ts` 123 → 128, `round/rounds.ts` 146 → 170, `round/runtime.ts` 103 → 116, `round/views.ts` 173 → 229, migration `0016_result_won.sql` new 14; tests `harness.ts` 69 → 76, `socketKit.ts` 188 → 191, `phased.integration.test.ts` new 185, `resultWon.integration.test.ts` new 143, `inactivity.integration.test.ts` +7; registry `index.ts` 50 → 51, `phasedFixture.ts` new 165, `testing.ts` new 18, `phased.conformance.test.ts` new 190, `package.json` (zod 4.6.7, already used by every game; a new export `./testing`).
+- **Extracted:** `match/playError.ts` (the use cases' error type) and `match/roundCreation.ts` (season, settings and the new round) out of `play.ts`, which was at 300 lines; `readers` in `liveRound.ts` and `sendReleased` in the gateway to keep their functions under 60 lines.
+- **Reused:** `ViewCtx.releasedBefore` (Frost's cut) as the delayed cut; `roomForm` for the phased lifecycle events; `toPublic` for the released frames; `roomFrames` merging for them; the existing `round_time_up` end at the round's longest time, set to the plan's end; `catchUp`, `fail`, `withEntry`, `freshEntry`; the test harness's `until`-style waits and `socketKit`.
+- **Noticed, left alone:** `scheduled_actions.kind` has no `match_autostart`, though 06 §2.5 names it (piece 2 adds it); `apps/server/test/league.integration.test.ts` is 324 lines (over 300 before tonight); the host form always sends `round.halving`, which a phased game's document does not hold (piece 2, where the host form changes); the client words no sentence for `PLAY_OVER` and `JOIN_CLOSED` yet (the game's screen, MG-2); the chat's round-end line takes the winner from place 1 (`chat/roundLines.ts`), so a phased round's line names nobody until its game's `reveal` words it (MG-1).
+
+### Needs the owner's word
+
+Every decision below was built as written (the reading that changes no existing game); each is a T-entry in DECISIONS marked "(proposal, night MG-N1)":
+
+- T288: a phased round keeps the default cooldown in its stored config and `rounds.cooldown_ms` (the table's CHECK); never used, shown as 0.
+- T289: joining, leaving or being removed while a phased round runs is the command `member` and the event `MemberChanged`; the round starts with every admitted match player, the minimum counting those connected; it plays on when players leave.
+- T290: a phased round's winners get `solve_at` = the round's end for the earliest-win tie order; no solves.
+- T291: a phased round's own player frames carry the room's current release number as `s`.
+- T292: a phased round's views use the delayed room's last tick minus the delay as their cut.
+- T293: a phased room never hears `GuessAccepted`, `MemberChanged` or own events; `PlayerEntered` after the delay; lifecycle events at once.
+- T294: `Rounds`, the runtime and `buildApp` take an optional list of games; the fixture `sides-fixture` is installed only by tests (`@smg-game/registry/testing`).
+- T295: a game without teams gets matches without teams and no `round.teamsOn` choice.
+
 ## Dress rehearsal of the live install (2026-11-06)
 
 The website's real installer and ours ran together on a fresh systemd Ubuntu 24.04 container with its own Docker (`smg-rehearsal-*`). The machine had a test DNS for `example.org` and the website's own test ACME server (Pebble). It ran in nginx mode first, then on a reset machine in the website's own-Caddy mode. The browser was Chromium with `--host-resolver-rules`, so the origin was exactly `https://example.org`. The machine and every test account are deleted. The screenshots are on the orphan branch `shots/rehearsal`: 35 images and `play-through.txt`.

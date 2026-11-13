@@ -18,7 +18,8 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
 import { quickTests } from '../../dev/quickTest.js';
-import { PlayError, type Play } from '../../match/play.js';
+import type { Play } from '../../match/play.js';
+import { PlayError } from '../../match/playError.js';
 
 import { heatwaveSettings } from './heatwaveBody.js';
 import { inactivitySettings, warnBelowLimit } from './inactivityBody.js';

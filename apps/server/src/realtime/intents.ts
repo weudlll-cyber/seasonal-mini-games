@@ -26,7 +26,7 @@ import { z } from 'zod';
 
 import { RateLimiter } from '../auth/rateLimit.js';
 import { activePlayers, findMatch, matchById, type MatchRow } from '../match/matches.js';
-import { PlayError } from '../match/play.js';
+import { PlayError } from '../match/playError.js';
 import { chatIntent } from './chatIntents.js';
 import type { GatewayDeps, SocketData } from './gateway.js';
 
@@ -48,13 +48,16 @@ const envelope = z.object({
 });
 const codeData = z.object({ code: z.string().min(1).max(16) });
 // A guess's value as the wire may carry it, bounded in size: a number, a short code, a short
-// list of names (wires), a small record of numbers (a cell). The round's game checks the exact
-// shape with its own schema before anything else (DECISIONS T122).
+// list of names (wires), a small record (a cell's numbers; Mind Games' choice and box, short
+// strings and booleans, 06 §4.3). The round's game checks the exact shape with its own schema
+// before anything else (DECISIONS T122).
 const guessValue = z.union([
   z.number(),
   z.string().max(32),
   z.array(z.string().max(16)).max(16),
-  z.record(z.string().max(8), z.number()).refine((o) => Object.keys(o).length <= 4),
+  z
+    .record(z.string().max(8), z.union([z.number(), z.string().max(16), z.boolean()]))
+    .refine((o) => Object.keys(o).length <= 4),
 ]);
 const guessData = z.object({ roundId: z.uuid(), value: guessValue }).strict();
 const teamData = codeData.extend({ team: z.enum(['spring', 'summer', 'autumn', 'winter']) });

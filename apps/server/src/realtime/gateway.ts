@@ -15,6 +15,9 @@
  *                 `roomFrameMs`, ./roomFrames), a player's own events to
  *                 `match:<id>:player:<key>`, host events to `match:<id>:host`, every frame
  *                 naming players by their number in the match, never by account id (T104).
+ *                 A phased round's room and host frames come only from its delayed room, once
+ *                 one delay old and numbered by its release sequence (04 §4.8 rule 5); its
+ *                 committed batches send only each player's own events.
  *                 "Match changed" goes out at most once a second per match (./perKeyAtMost),
  *                 also when a round ends or is aborted, so pages load the new standings.
  *                 Chat events go to `chat:<roomId>` as `chat` frames (ChatEventView).
@@ -22,7 +25,7 @@
  * Depends on:     socket.io, node:http, ../auth/*, ../chat/chat (types), ../match/*, ../round/*,
  *                 ./intents, ./inOrder, ./perKeyAtMost, ./roomFrames
  * Used by:        ../main, test/*
- * Spec:           docs/spec/06-data-model-api-realtime.md §4; docs/spec/04-software-architecture.md §5.2
+ * Spec:           docs/spec/06-data-model-api-realtime.md §4; docs/spec/04-software-architecture.md §4.8, §5.2
  */
 import type { Server as HttpServer } from 'node:http';
 
@@ -114,6 +117,9 @@ export function attachGateway(server: HttpServer, deps: GatewayDeps): Server {
   deps.play.rounds.onCommitted((round, events, how) => {
     sendCommitted(play, toRoom, deps.play, { round, events, how });
   });
+  deps.play.rounds.onReleased((round, released) => {
+    sendReleased(play, toRoom, deps.play, { round, released });
+  });
   // At most one "match changed" a second per match: every page reloads the match on it, and
   // a thousand players entering would otherwise mean a thousand reloads per page.
   deps.play.onMatchChanged(
@@ -137,14 +143,15 @@ function sendCommitted(
   // Players by their number in the match, never by account id (T104).
   const numbers = match.numbers.of(round.matchId);
   const s = events.at(-1)?.seq ?? 0;
-  // Released Frost events repeat earlier seqs: `late` tells the client they are no gap.
+  // Released Frost events repeat earlier seqs: `late` tells the client they are no gap. A
+  // phased round's room hears nothing here: its delayed room sends (04 §4.8 rule 5).
   const room = {
     roundId: round.id,
     s,
     events: toPublic(frames.room, numbers),
     ...(how.late ? { late: true as const } : {}),
   };
-  toRoom(round.matchId, room);
+  if (!round.phased) toRoom(round.matchId, room);
   for (const [key, own] of frames.players) {
     play
       .to(`match:${round.matchId}:player:${key}`)
@@ -158,6 +165,29 @@ function sendCommitted(
   // A round's end changes the match: its standings and team standings (02 §9).
   if (events.some((e) => e.type === 'RoundEnded' || e.type === 'RoundAborted')) {
     match.changed(round.matchId);
+  }
+}
+
+type ReleasedOf = Parameters<Parameters<Play['rounds']['onReleased']>[0]>;
+
+// A phased round's room and host frames, once they are one delay old, numbered by the round's
+// release sequence (04 §4.8 rule 5).
+function sendReleased(
+  play: ReturnType<Server['of']>,
+  toRoom: (matchId: string, frame: RoomFrame) => void,
+  match: Play,
+  r: { round: ReleasedOf[0]; released: ReleasedOf[1] },
+): void {
+  const { round, released } = r;
+  const numbers = match.numbers.of(round.matchId);
+  if (released.room.length > 0) {
+    const events = toPublic(released.room, numbers);
+    toRoom(round.matchId, { roundId: round.id, s: released.rs, events });
+  }
+  if (released.host.length > 0) {
+    play
+      .to(`match:${round.matchId}:host`)
+      .emit('events', { roundId: round.id, events: toPublic(released.host, numbers) });
   }
 }
 

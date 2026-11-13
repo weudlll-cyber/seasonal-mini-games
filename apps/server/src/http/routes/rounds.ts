@@ -20,7 +20,8 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
 import { displayNames, findMatch, matchById, type MatchRow } from '../../match/matches.js';
-import { PlayError, type Play } from '../../match/play.js';
+import type { Play } from '../../match/play.js';
+import { PlayError } from '../../match/playError.js';
 import { playerSteps } from '../../match/playerSteps.js';
 import { forViewer, toPublic } from '../../match/publicIds.js';
 import type { GuessLimits } from '../../round/guessLimits.js';

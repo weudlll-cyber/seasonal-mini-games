@@ -7,7 +7,8 @@
  *                 08 §7 (`SMG_ENGINE_BATCH_MS`, `SMG_ENGINE_BATCH_MAX`) and the queue bound
  *                 setting, presence, the match use cases, the guess limits and the
  *                 scheduler, with the metrics' observer when given, and the idle close of
- *                 matches (O28); the game documents `game.<id>` for the settings service.
+ *                 matches (O28); the game documents `game.<id>` for the settings service, for
+ *                 the installed games the caller names (the registry's, or a test's).
  *                 `start` recovers every running round, closes the matches that went idle
  *                 meanwhile and starts the timers; `stop` stops them and waits until every open
  *                 batch is written.
@@ -17,7 +18,7 @@
  * Spec:           docs/spec/04-software-architecture.md §5; docs/spec/08-admin-settings.md §7
  */
 import { gameSettingsDefs, type SettingsService } from '@smg/application';
-import { GAMES } from '@smg-game/registry';
+import { GAMES, type InstalledGame } from '@smg-game/registry';
 import type { SettingDef } from '@smg/game-sdk';
 
 import type { Env } from '../config/env.js';
@@ -35,10 +36,12 @@ import { Rounds } from './rounds.js';
 import { Seasons } from '../seasons/seasons.js';
 import { RoundScheduler } from './scheduler.js';
 
-// Every registered game's settings document (08 §1: id `game.<gameId>`).
-export function gameDocuments(): Record<string, readonly SettingDef[]> {
+// Every installed game's settings document (08 §1: id `game.<gameId>`).
+export function gameDocuments(
+  games: readonly InstalledGame[] = GAMES,
+): Record<string, readonly SettingDef[]> {
   return Object.fromEntries(
-    GAMES.map((g) => [`game.${g.id}`, g.use((e) => gameSettingsDefs(e.module))]),
+    games.map((g) => [`game.${g.id}`, g.use((e) => gameSettingsDefs(e.module))]),
   );
 }
 
@@ -56,17 +59,27 @@ export function createRoundRuntime(
   env: Env,
   pool: DbPool,
   settings: SettingsService,
-  observe?: RoundObserver,
+  // The metrics' observer; the installed games (the registry's, or a test's list with the
+  // phased fixture).
+  extra: {
+    readonly observe?: RoundObserver;
+    readonly games?: readonly InstalledGame[] | undefined;
+  } = {},
 ): RoundRuntime {
+  const { observe, games = GAMES } = extra;
   const store = new PgRoundStore(pool, roundKeyFrom(env), () => leagueRules(settings));
   const limits = new GuessLimits(settings, pool);
-  const rounds = new Rounds(store, {
-    batchMs: env.SMG_ENGINE_BATCH_MS,
-    batchMax: env.SMG_ENGINE_BATCH_MAX,
-    queueBound: () => limits.queueBound(),
-    now: () => Date.now(),
-    ...(observe === undefined ? {} : { observe }),
-  });
+  const rounds = new Rounds(
+    store,
+    {
+      batchMs: env.SMG_ENGINE_BATCH_MS,
+      batchMax: env.SMG_ENGINE_BATCH_MAX,
+      queueBound: () => limits.queueBound(),
+      now: () => Date.now(),
+      ...(observe === undefined ? {} : { observe }),
+    },
+    games,
+  );
   const devFeed = env.SMG_DEV ? (env.SMG_DEV_FEED_URL ?? null) : null;
   const seasons = new Seasons(pool, settings, devFeed);
   // Website mode ignores the linked-chat rule (DECISIONS T222).

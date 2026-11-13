@@ -64,6 +64,8 @@ export class RoundSession<S, A, E, Cfg, Sec> {
       gameConfig: round.settings.game,
       season: round.season,
       commitment: round.settings.platform.commitReveal ? hex(commitSeed(round.seed)) : null,
+      // A phased round's plan is part of its creation (04 §4.8 rule 1).
+      ...(round.settings.plan === undefined ? {} : { plan: round.settings.plan }),
     });
     return { session: new RoundSession(module, round.seed, state), event };
   }

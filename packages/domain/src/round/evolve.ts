@@ -5,7 +5,9 @@
  *
  * Responsibility: the only place the round state changes. Live steps and recovery after a
  *                 restart both fold through here, so replaying the log gives the live state
- *                 (invariant P5). Game events go to the module's own evolve.
+ *                 (invariant P5). Game events go to the module's own evolve. A phased round
+ *                 (04 §4.8) keeps per roster player whether they are a match player and when
+ *                 they entered; a player who joins the match while it runs gets an entry then.
  * Depends on:     @smg/game-sdk (module, round input), ./inactivity (clock restart), ./types
  * Used by:        ./step, ../index, packages/application (recovery)
  * Spec:           docs/spec/04-software-architecture.md §5.1, §5.3; docs/spec/09-testing-strategy.md §3 P5
@@ -59,6 +61,23 @@ function freshEntry(team: string | null, opensAt: number): RosterEntry {
   };
 }
 
+// A phased round's entry: a match player, not in the round until their first action.
+function phasedEntry(opensAt: number, member: boolean): RosterEntry {
+  return { ...freshEntry(null, opensAt), member, enteredAt: null };
+}
+
+// A match player joined, left or was removed while a phased round ran (04 §4.8 rule 3).
+function memberChanged<S, Cfg>(
+  state: RoundState<S, Cfg>,
+  e: { playerId: string; active: boolean },
+): RoundState<S, Cfg> {
+  if (state.roster[e.playerId] !== undefined) {
+    return withEntry(state, e.playerId, { member: e.active });
+  }
+  const entry = phasedEntry(state.opensAt ?? 0, e.active);
+  return { ...state, roster: { ...state.roster, [e.playerId]: entry } };
+}
+
 export function evolveRound<S, A, E, Cfg, Sec>(
   module: GameModule<S, A, E, Cfg, Sec>,
   state: RoundState<S, Cfg>,
@@ -104,6 +123,10 @@ function lifecycle<S, A, E, Cfg>(
       return { ...state, margin: { playerId: event.playerId, ms: event.ms } };
     case 'PlayerTimedOut':
       return withEntry(state, event.playerId, { timedOut: true });
+    case 'PlayerEntered':
+      return withEntry(state, event.playerId, { enteredAt: event.at });
+    case 'MemberChanged':
+      return memberChanged(state, event);
     case 'CooldownChanged':
       return { ...state, cooldownMs: event.cooldownMs };
   }
@@ -138,9 +161,9 @@ function countdown<S, A, E, Cfg, Sec>(
   state: RoundState<S, Cfg>,
   event: Extract<RoundEvent<E, A, Cfg>, { type: 'CountdownStarted' }>,
 ): RoundState<S, Cfg> {
-  const roster = Object.fromEntries(
-    event.roster.map((p) => [p.playerId, freshEntry(p.team, event.opensAt)]),
-  );
+  const entry = (team: string | null) =>
+    state.plan === undefined ? freshEntry(team, event.opensAt) : phasedEntry(event.opensAt, true);
+  const roster = Object.fromEntries(event.roster.map((p) => [p.playerId, entry(p.team)]));
   const next = { ...state, status: 'countdown' as const, roster };
   const game = module.createRound(roundInput(next, event.roster));
   return { ...next, opensAt: event.opensAt, endsAt: event.endsAt, game };
@@ -190,6 +213,7 @@ export function initialRound<S, A, E, Cfg>(
     specialIndex: { halving: 0, leafFall: 0, heatwave: 0 },
     specialsOver: [],
     game: null,
+    ...(created.plan === undefined ? {} : { plan: created.plan }),
   };
 }
 

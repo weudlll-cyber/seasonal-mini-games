@@ -11,7 +11,7 @@
  *                 suite), so games of different types stay one list.
  * Depends on:     @smg/game-sdk (GameEntry), @smg-game/guess-the-number, @smg-game/safecracker,
  *                 @smg-game/bomb-defusal, @smg-game/seasonal-target
- * Used by:        apps/server, ./conformance.test
+ * Used by:        apps/server, ./conformance.test, ./testing
  * Spec:           docs/spec/04-software-architecture.md §4.6, docs/spec/10-repository-structure.md §1
  */
 import { bombDefusal, bombDefusalConformance, bombDefusalDevBot } from '@smg-game/bomb-defusal';
@@ -32,7 +32,8 @@ export interface InstalledGame {
   readonly use: <R>(f: ForAnyGame<R>) => R;
 }
 
-const install = <S, A, E, Cfg, Sec>(entry: GameEntry<S, A, E, Cfg, Sec>): InstalledGame => ({
+// One entry as an installed game (also for the test entry ./testing).
+export const install = <S, A, E, Cfg, Sec>(entry: GameEntry<S, A, E, Cfg, Sec>): InstalledGame => ({
   id: entry.module.meta.id,
   use: (f) => f(entry),
 });

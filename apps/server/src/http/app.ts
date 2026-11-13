@@ -15,7 +15,8 @@
  *                 public read API, webhooks; ./integrationWiring), in website mode the sign-in
  *                 through the website's proxy (./routes/websiteSignIn, O66; no registration,
  *                 password sign-in, password change or dev sign-in there) and, in development,
- *                 the Quick Test onto a fresh Fastify instance, under the base
+ *                 the Quick Test onto a fresh Fastify instance, for the registry's games or a
+ *                 test's list (a phased fixture, 09 §4.2), under the base
  *                 path (SMG_BASE_PATH) and behind the trusted proxies. The caller owns the
  *                 lifecycle (listen, close, pool disposal). Adapted from Bingo's app.ts.
  * Depends on:     fastify, @smg/application, @smg/contracts, ../db/pool, ../auth/*, ../chat/*,
@@ -40,6 +41,7 @@ import type { DbPool } from '../db/pool.js';
 import { EmbedAllowlist } from '../integration/embedOrigins.js';
 import type { WebhookDelivery } from '../integration/webhookDelivery.js';
 import { createRoundRuntime, gameDocuments, type RoundRuntime } from '../round/runtime.js';
+import type { InstalledGame } from '@smg-game/registry';
 import { registerIntegration } from './integrationWiring.js';
 import { registerProblemDetails } from './plugins/problem.js';
 import { maintenanceFlag, registerMaintenance } from './plugins/maintenance.js';
@@ -67,6 +69,8 @@ import { registerWebsiteSignIn } from './routes/websiteSignIn.js';
 interface AppDeps {
   readonly env: Env;
   readonly pool: DbPool;
+  // The installed games: the registry's, or a test's list with a phased fixture (09 §4.2).
+  readonly games?: readonly InstalledGame[];
 }
 
 export interface App {
@@ -167,7 +171,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   // Development features only with SMG_DEV=1 (fail closed).
   const isDev = deps.env.SMG_DEV;
   const audit = new PgAuditLog(deps.pool);
-  const documents = { ...PLATFORM_SETTINGS, ...gameDocuments() };
+  const documents = { ...PLATFORM_SETTINGS, ...gameDocuments(deps.games) };
   const settings = new SettingsService(documents, new PgSettingsStore(deps.pool), audit);
   // Loaded before the first request: the CSP's frame-ancestors and the CORS checks read it.
   const embeds = new EmbedAllowlist(deps.pool);
@@ -192,7 +196,10 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   registerAdminSettings(fastify, { settings, pool: deps.pool, website, chat: chatFallback });
   registerAdminAudit(fastify, audit);
   registerAdminAccounts(fastify, { pool: deps.pool, audit, sessionEnds });
-  const runtime = createRoundRuntime(deps.env, deps.pool, settings, metrics.rounds);
+  const runtime = createRoundRuntime(deps.env, deps.pool, settings, {
+    observe: metrics.rounds,
+    games: deps.games,
+  });
   attachSources(metrics, runtime);
   const { play, limits, store } = runtime;
   registerMatchRoutes(fastify, { play, settings, pool: deps.pool });
@@ -206,7 +213,6 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   const webhooks = registerIntegration(fastify, integration);
   if (isDev) registerQuickTest(fastify, { play, pool: deps.pool });
   fastify.addHook('onClose', () => runtime.stop());
-  const cookieName = cookie.name;
   return {
     fastify,
     metrics,
@@ -217,7 +223,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
     chat,
     embeds,
     webhooks,
-    cookieName,
+    cookieName: cookie.name,
   };
 }
 

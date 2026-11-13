@@ -3,10 +3,8 @@
  * @module server/match
  * @brief  The match and round use cases the routes and intents share.
  *
- * Responsibility: a host creates a round (one at a time, ROUND_RUNNING; settings from the
- *                 game's document and the host's choices, ROUND_SETTINGS_INVALID; the host's
- *                 season or In Season while it is usable, IN_SEASON_UNAVAILABLE otherwise; a
- *                 halving round only on a halving day, NOT_A_HALVING_DAY) and starts it with
+ * Responsibility: a host creates a round (one at a time, ROUND_RUNNING; its season and
+ *                 settings in ./roundCreation) and starts it with
  *                 the players connected right now, the host among them (O16, 02 §4), every one
  *                 with their match team (placed in the smallest team when none, O26); host end
  *                 and abort; team choice once per match (TEAM_LOCKED after the player's first
@@ -18,18 +16,20 @@
  *                 players, teams or status is told to listeners, and a match opened or closed to
  *                 the lifecycle listeners (webhooks, 07 §3.2); in shared mode the roster keeps
  *                 only players the anti-multi rules admit (./rosterRules). It keeps each match's
- *                 player numbers for the public answers (./publicIds).
- * Depends on:     node:crypto, @smg/application (settings), ../round/*, ../seasons/seasons,
- *                 ./matches, ./presence, ./publicIds, ./rosterRules, ./teams, ../db/pool
+ *                 player numbers for the public answers (./publicIds). A phased round (04 §4.8
+ *                 rule 3) starts with every active match player admitted (at least the minimum
+ *                 connected), is told of players who join (admitted) or leave while it runs,
+ *                 and plays on when its players leave; a game without teams gets no team keys.
+ * Depends on:     @smg/application (settings), ../round/*, ../seasons/seasons, ./roundCreation,
+ *                 ./matches, ./playError, ./presence, ./publicIds, ./rosterRules, ./teams,
+ *                 ../db/pool
  * Used by:        ../http/routes/*, ../realtime/intents, ../dev/quickTest
- * Spec:           docs/spec/02-game-guess-the-number.md §2–§4, §8.3; docs/spec/06-data-model-api-realtime.md §3.1
+ * Spec:           docs/spec/02-game-guess-the-number.md §2–§4, §8.3; docs/spec/04-software-architecture.md §4.8;
+ *                 docs/spec/06-data-model-api-realtime.md §3.1
  */
-import { randomBytes } from 'node:crypto';
-
-import { RoundSettingsError, type SettingsService } from '@smg/application';
+import type { SettingsService } from '@smg/application';
 import type { Reply } from '@smg/domain';
-import type { RosterPlayer, Season } from '@smg/game-sdk';
-import { SEED_BYTES } from '@smg/game-sdk/crypto';
+import type { RosterPlayer } from '@smg/game-sdk';
 
 import { inTransaction, type DbPool } from '../db/pool.js';
 import { withdrawMatch } from '../league/awards.js';
@@ -51,42 +51,16 @@ import {
   type PlayerRow,
   type Team,
 } from './matches.js';
+import { PlayError } from './playError.js';
+import { newRound, type RoundRequest } from './roundCreation.js';
 import type { Admission } from './rosterRules.js';
 import type { Seasons } from '../seasons/seasons.js';
 import type { Presence } from './presence.js';
 import { PlayerNumbers } from './publicIds.js';
-import { fixTeams, setTeam, teamChoices, teamLocked, teamRoster } from './teams.js';
-
-export type PlayCode =
-  | 'ROUND_RUNNING'
-  | 'ROUND_SETTINGS_INVALID'
-  | 'IN_SEASON_UNAVAILABLE'
-  | 'NOT_A_HALVING_DAY'
-  | 'TEAMS_LOCKED'
-  | 'TEAM_LOCKED'
-  | 'TEAMS_OFF'
-  | 'MATCH_CLOSED';
+import { fixTeams, setTeam, teamLocked, teamRoster } from './teams.js';
 
 // The host's End match (O27).
 const HOST_CLOSE: MatchEnd = { status: 'closed', reason: null, by: 'host' };
-
-export class PlayError extends Error {
-  constructor(
-    readonly code: PlayCode,
-    readonly detail: string = code,
-    readonly field: string | null = null, // ROUND_SETTINGS_INVALID: the refused setting (O74)
-  ) {
-    super(detail);
-  }
-}
-
-export interface RoundRequest {
-  readonly choices: Readonly<Record<string, unknown>>;
-  readonly season?: Season | undefined;
-  // Development Quick Test only: a fixed seed, and the fast test profile (09 §4).
-  readonly seed?: Uint8Array | undefined;
-  readonly fast?: boolean | undefined;
-}
 
 const RUNNING = new Set(['created', 'countdown', 'open']);
 
@@ -150,9 +124,20 @@ export class Play {
     const result = await joinMatch(this.pool, match, player);
     if (result === 'joined') {
       await this.numbers.load(match.id);
+      await this.tellMember(match, player.key, true);
       this.changed(match.id);
     }
     return result;
+  }
+
+  // A phased round (04 §4.8 rule 3): a player who joins while it runs may enter once the
+  // anti-multi rules admit them; one who leaves or is removed may not act any more.
+  private async tellMember(match: MatchRow, key: string, active: boolean): Promise<void> {
+    const round = await this.runningRound(match);
+    if (round === null || !round.phased || round.status() === 'created') return;
+    const admitted =
+      !active || (await this.admit(round.id, [{ playerId: key, team: null }])).length > 0;
+    await round.member(key, admitted);
   }
 
   async runningRound(match: MatchRow): Promise<LiveRound | null> {
@@ -162,46 +147,16 @@ export class Play {
   }
 
   // The round's season: the one the host picked, else In Season while it is usable (03 §3).
-  private async seasonOf(
-    req: RoundRequest,
-  ): Promise<{ season: Season; source: 'inSeason' | 'manual' }> {
-    if (req.season !== undefined) return { season: req.season, source: 'manual' };
-    const now = await this.seasons.inSeason();
-    if (now === null) throw new PlayError('IN_SEASON_UNAVAILABLE');
-    return { season: now.season, source: 'inSeason' };
-  }
-
   async createRound(match: MatchRow, hostId: string, req: RoundRequest): Promise<LiveRound> {
     if (match.status === 'closed' || match.status === 'aborted') {
       throw new PlayError('MATCH_CLOSED');
     }
     if ((await this.runningRound(match)) !== null) throw new PlayError('ROUND_RUNNING');
-    // A halving round only on a real halving day, checked again here (03 §4).
-    if (req.choices['round.halving'] === true && (await this.seasons.halvingToday()) === null) {
-      throw new PlayError('NOT_A_HALVING_DAY');
-    }
-    const { season, source } = await this.seasonOf(req);
-    const doc = await this.settings.view(`game.${match.gameId}`, []);
-    try {
-      const round = await this.rounds.create(match.gameId, {
-        matchId: match.id,
-        overrides: doc.overrides,
-        choices: { ...req.choices, ...teamChoices(match), 'round.seasonSource': source },
-        season,
-        seasonSource: source,
-        createdBy: hostId,
-        seed: req.seed ?? new Uint8Array(randomBytes(SEED_BYTES)),
-        fast: req.fast === true,
-      });
-      if (match.status === 'lobby') await setMatchStatus(this.pool, match.id, 'open');
-      // Watchers learn of the new round and load it.
-      this.changed(match.id);
-      return round;
-    } catch (error) {
-      if (error instanceof RoundSettingsError)
-        throw new PlayError('ROUND_SETTINGS_INVALID', error.message, error.field);
-      throw error;
-    }
+    const { pool, rounds, settings, seasons } = this;
+    const round = await newRound({ pool, rounds, settings, seasons }, match, hostId, req);
+    // Watchers learn of the new round and load it.
+    this.changed(match.id);
+    return round;
   }
 
   // The match's active players connected now, in join order.
@@ -222,15 +177,20 @@ export class Play {
     const players = await activePlayers(this.pool, match.id);
     // Every roster player has a number before the round's first frame goes out.
     await this.numbers.load(match.id);
+    const present = this.present(match, players);
+    // A phased round is open to every active match player; the minimum counts those here.
+    const everyone = players.map((p) => ({ playerId: p.playerKey, team: p.team }));
     // A given roster (the Quick Test) is taken as it is; others pass the anti-multi rules (05 §6).
-    const chosen = roster ?? (await this.admit(round.id, this.present(match, players)));
+    const chosen = roster ?? (await this.admit(round.id, round.phased ? everyone : present));
     const teams = teamRoster(match, chosen, players, round.id);
     const values = await this.settings.values('matchmaking');
-    const minPlayers = values['match.minPlayersPerRound'] as number;
+    const minPlayers = roster === undefined ? (values['match.minPlayersPerRound'] as number) : 1;
+    if (round.phased && present.length < minPlayers)
+      return { ok: false, code: 'NOT_ENOUGH_PLAYERS' };
     const reply = await round.run({
       type: 'startCountdown',
       roster: teams.roster,
-      minPlayers: roster === undefined ? minPlayers : 1,
+      minPlayers: round.phased ? 1 : minPlayers,
     });
     if (reply.ok && teams.placed.length > 0) {
       await fixTeams(this.pool, match.id, teams.placed);
@@ -253,22 +213,27 @@ export class Play {
   // Leaving ends a running round once no roster player is left in the match (02 §8.3).
   async leave(match: MatchRow, playerKey: string): Promise<void> {
     await leaveMatch(this.pool, match.id, playerKey);
-    await this.departed(match, null);
+    await this.departed(match, playerKey, false);
   }
 
   // Staff (06 §3.2): false when the player is not active in the match.
   async kick(match: MatchRow, playerKey: string): Promise<boolean> {
     if (!(await kickPlayer(this.pool, match.id, playerKey))) return false;
-    await this.departed(match, playerKey);
+    await this.departed(match, playerKey, true);
     return true;
   }
 
-  private async departed(match: MatchRow, kicked: string | null): Promise<void> {
+  private async departed(match: MatchRow, playerKey: string, kicked: boolean): Promise<void> {
     this.changed(match.id);
     const round = await this.runningRound(match);
     if (round === null) return;
-    if (kicked !== null) round.exclude(kicked);
+    if (kicked) round.exclude(playerKey);
     if (round.status() === 'created') return;
+    // A phased round plays on: the choices of those who left stand (04 §4.8 rule 3).
+    if (round.phased) {
+      await round.member(playerKey, false);
+      return;
+    }
     const active = new Set((await activePlayers(this.pool, match.id)).map((p) => p.playerKey));
     if (!round.rosterKeys().some((k) => active.has(k)))
       await round.run({ type: 'end', reason: 'noPlayers' });

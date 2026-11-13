@@ -7,16 +7,20 @@
  * Responsibility: the registry is read once (04 §4.6: games are found only there); a round
  *                 is created through its game's runner; a round that is not in memory is
  *                 loaded from the database (running rounds at start, ended ones on demand
- *                 for views, with the players staff kicked from its match); committed
- *                 events go to every subscriber (the gateway).
- * Depends on:     @smg-game/registry, ./gameRunner, ./liveRound, ./pgRoundStore, ./actor
+ *                 for views, with the players staff kicked from its match, and a phased one
+ *                 with its whole log for its delayed room); committed events and a phased
+ *                 round's released frames go to every subscriber (the gateway). The list of
+ *                 games is the registry's, or one given by a test (a phased fixture, 09 §4.2).
+ * Depends on:     @smg-game/registry, ./gameRunner, ./liveRound, ./pgRoundStore, ./actor,
+ *                 ./delayedRoom (types)
  * Used by:        ../http/app, ../http/routes/*, ../realtime/*, ../dev/*, ./scheduler
- * Spec:           docs/spec/04-software-architecture.md §4.6, §5.2, §5.3
+ * Spec:           docs/spec/04-software-architecture.md §4.6, §4.8, §5.2, §5.3
  */
-import { GAMES } from '@smg-game/registry';
+import { GAMES, type InstalledGame } from '@smg-game/registry';
 import type { DevBot, GameEntry } from '@smg/game-sdk';
 
 import type { ActorOptions, Delivery } from './actor.js';
+import type { Released } from './delayedRoom.js';
 import { GameRunner, type NewRound } from './gameRunner.js';
 import type { LiveRound } from './liveRound.js';
 import type { LoadedRound, PgRoundStore, StoredEvent } from './pgRoundStore.js';
@@ -33,22 +37,27 @@ interface Runner {
   readonly devBot: DevBot<unknown>;
   // The game's own keys a host may choose per round (the Quick Test sends only these).
   readonly hostKeys: ReadonlySet<string>;
+  // A phased game (04 §4.8): its recovered rounds need their whole log.
+  readonly phased: boolean;
   create(round: NewRound): Promise<LiveRound>;
-  recover(loaded: LoadedRound): LiveRound;
+  recover(loaded: LoadedRound, log: readonly StoredEvent[] | null): LiveRound;
 }
 
 type Listener = (round: LiveRound, events: readonly StoredEvent[], how: Delivery) => void;
+type ReleaseListener = (round: LiveRound, released: Released) => void;
 
 export class Rounds {
   private readonly runners = new Map<string, Runner>();
   private readonly live = new Map<string, LiveRound>();
   private readonly listeners: Listener[] = [];
+  private readonly releaseListeners: ReleaseListener[] = [];
 
   constructor(
     private readonly store: PgRoundStore,
     options: ActorOptions,
+    games: readonly InstalledGame[] = GAMES,
   ) {
-    for (const game of GAMES) {
+    for (const game of games) {
       game.use((entry) => {
         this.add(entry, options);
       });
@@ -62,14 +71,18 @@ export class Rounds {
       committed: (round, events, how) => {
         for (const l of this.listeners) l(round, events, how);
       },
+      released: (round, released) => {
+        for (const l of this.releaseListeners) l(round, released);
+      },
     });
     const { meta } = entry.module;
     this.runners.set(meta.id, {
       info: { id: meta.id, name: meta.name, secretModes: meta.secretModes, teams: meta.teams },
       devBot: entry.devBot,
       hostKeys: new Set(entry.module.settings.defs.filter((d) => d.hostChooses).map((d) => d.key)),
+      phased: meta.timing === 'phased',
       create: (round) => runner.create(round),
-      recover: (loaded) => runner.recover(loaded),
+      recover: (loaded, log) => runner.recover(loaded, log),
     });
   }
 
@@ -83,6 +96,11 @@ export class Rounds {
 
   devBot(gameId: string): DevBot<unknown> | null {
     return this.runners.get(gameId)?.devBot ?? null;
+  }
+
+  // Whether the game plays season teams (a game without has no team keys, 04 §4.8 rule 3).
+  teams(gameId: string): boolean {
+    return this.runners.get(gameId)?.info.teams ?? false;
   }
 
   hostKeys(gameId: string): ReadonlySet<string> {
@@ -104,9 +122,10 @@ export class Rounds {
     const runner = loaded === null ? undefined : this.runners.get(loaded.gameId);
     if (loaded === null || runner === undefined) return null;
     // Another call may have loaded it meanwhile; keep the first.
+    const log = runner.phased ? await this.store.log(roundId) : null;
     const first = this.live.get(roundId);
     if (first !== undefined) return first;
-    const live = runner.recover(loaded);
+    const live = runner.recover(loaded, log);
     for (const key of loaded.kicked) live.exclude(key);
     this.live.set(roundId, live);
     return live;
@@ -137,6 +156,11 @@ export class Rounds {
 
   onCommitted(listener: Listener): void {
     this.listeners.push(listener);
+  }
+
+  // A phased round's delayed room released frames (04 §4.8 rule 5).
+  onReleased(listener: ReleaseListener): void {
+    this.releaseListeners.push(listener);
   }
 
   // Shutdown: every open batch is written, then no timer of a round fires any more.

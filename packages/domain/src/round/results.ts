@@ -7,13 +7,15 @@
  *                 the winner, individual mode places solvers in solve order and lists the
  *                 rest as "not solved"; a player out for inactivity is listed as "timed out",
  *                 never placed, without points (O71); points from the frozen table; 1 team point to the
- *                 winner's team. Match standings sum the points, ties ordered by wins and
- *                 then by the earliest win.
+ *                 winner's team. A phased round's results come from the game's own rule,
+ *                 with nobody placed and every winner holding a win (04 §4.8 rule 6). Match
+ *                 standings sum the points, ties ordered by wins and then by the earliest win.
  * Depends on:     @smg/game-sdk (points table), ./types
  * Used by:        ./step (RoundEnded), ../index, apps/server (standings projection)
- * Spec:           docs/spec/02-game-guess-the-number.md §8, §9; docs/spec/03-seasonal-specials.md §5
+ * Spec:           docs/spec/02-game-guess-the-number.md §8, §9; docs/spec/03-seasonal-specials.md §5;
+ *                 docs/spec/04-software-architecture.md §4.8
  */
-import type { PointsTable } from '@smg/game-sdk';
+import type { OutcomeRow, PointsTable } from '@smg/game-sdk';
 
 import type { PlayerResult, RoundState, TeamResult } from './types.js';
 
@@ -41,6 +43,24 @@ export function playerResults<S, Cfg>(state: RoundState<S, Cfg>): PlayerResult[]
     .filter((r) => r.place !== null)
     .sort((a, b) => (a.place ?? 0) - (b.place ?? 0));
   return [...placed, ...rows.filter((r) => r.place === null)];
+}
+
+// A phased round's results from the game's own rule (04 §4.8 rule 6): nobody is placed, so
+// several winners share the win; a winner's win counts from the round's end (the standings'
+// tie order needs its time, DECISIONS T288).
+export function phasedResults(rows: readonly OutcomeRow[], endedAt: number): PlayerResult[] {
+  return rows.map((r) => ({
+    playerId: r.playerId,
+    place: null,
+    solved: false,
+    solveSeq: null,
+    solveAt: r.won ? endedAt : null,
+    guesses: r.actions,
+    team: null,
+    points: r.points,
+    timedOut: false,
+    won: r.won,
+  }));
 }
 
 // Season teams play in shared mode only; the winner's team scores 1 (O12).
@@ -113,7 +133,7 @@ export function scoredPlayers(results: readonly PlayerResult[]): Scored[] {
   return results.map((r) => ({
     key: r.playerId,
     points: r.points,
-    won: r.place === 1,
+    won: r.won ?? r.place === 1,
     at: r.solveAt,
   }));
 }

@@ -5,13 +5,15 @@
  *
  * Responsibility: the single entry the round actor calls per queue item (04 §5.2). Pure:
  *                 the same state, command and deps give the same result (invariant P1).
- * Depends on:     ./builder, ./guess, ./lifecycle, ./types
+ *                 An action in a `phased` round takes that class's path (./phased, 04 §4.8).
+ * Depends on:     ./builder, ./guess, ./lifecycle, ./phased, ./types
  * Used by:        ../index, packages/application (round session)
- * Spec:           docs/spec/04-software-architecture.md §5.1, §5.2
+ * Spec:           docs/spec/04-software-architecture.md §4.8, §5.1, §5.2
  */
 import { guess } from './guess.js';
 import { Step } from './builder.js';
 import { abortRound, catchUp, hostEnd, startCountdown } from './lifecycle.js';
+import { memberChange, phasedAction } from './phased.js';
 import type { RoundCommand, RoundDeps, RoundState, StepResult } from './types.js';
 
 export function stepRound<S, A, E, Cfg, Sec>(
@@ -30,7 +32,9 @@ export function stepRound<S, A, E, Cfg, Sec>(
       catchUp(step, cmd.at);
       return step.done({ ok: true });
     case 'guess':
-      return step.done(guess(step, cmd));
+      return step.done(state.plan === undefined ? guess(step, cmd) : phasedAction(step, cmd));
+    case 'member':
+      return step.done(memberChange(step, cmd));
     case 'end':
       return step.done(hostEnd(step, cmd.at, cmd.reason));
     case 'abort':
