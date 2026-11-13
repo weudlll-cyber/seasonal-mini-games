@@ -10,12 +10,13 @@
  *                 function written for every game (the server's runner, the conformance
  *                 suite), so games of different types stay one list.
  * Depends on:     @smg/game-sdk (GameEntry), @smg-game/guess-the-number, @smg-game/safecracker,
- *                 @smg-game/bomb-defusal, @smg-game/seasonal-target
+ *                 @smg-game/bomb-defusal, @smg-game/seasonal-target, @smg-game/mind-games
  * Used by:        apps/server, ./conformance.test, ./testing
  * Spec:           docs/spec/04-software-architecture.md §4.6, docs/spec/10-repository-structure.md §1
  */
 import { bombDefusal, bombDefusalConformance, bombDefusalDevBot } from '@smg-game/bomb-defusal';
 import { gtnConformance, gtnDevBot, guessTheNumber } from '@smg-game/guess-the-number';
+import { mindConformance, mindDevBot, mindGames } from '@smg-game/mind-games';
 import { safecracker, safecrackerConformance, safecrackerDevBot } from '@smg-game/safecracker';
 import {
   seasonalTarget,
@@ -48,4 +49,5 @@ export const GAMES: readonly InstalledGame[] = [
     conformance: seasonalTargetConformance,
     devBot: seasonalTargetDevBot,
   }),
+  install({ module: mindGames, conformance: mindConformance, devBot: mindDevBot }),
 ];

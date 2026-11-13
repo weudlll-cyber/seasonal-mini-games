@@ -34,7 +34,7 @@ seasonal-mini-games/
 │  ├─ safecracker/         02b; src/ and web/ as above, on the guess engine
 │  ├─ bomb-defusal/        02c; likewise
 │  ├─ seasonal-target/     02d; likewise
-│  └─ mind-games/          02e; src/ and web/, timing class phased, not on the guess engine (planned, 11 §4)
+│  └─ mind-games/          02e; src/ and web/, timing class phased, not on the guess engine (src/ built in MG-1, 11 §4)
 ├─ apps/
 │  ├─ server/src/          main.ts, cli.ts, config/, http/, auth/, realtime/ (gateway, intents, inOrder),
 │  │                       round/ (actor host, pgRoundStore, pgScheduler), seasons/ (feed client), db/, dev/
