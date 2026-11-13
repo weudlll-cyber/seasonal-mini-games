@@ -26,6 +26,10 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged. Platf
 
 Status, updated after every piece. Branch `feat/mind-games` is not merged. This chain may change `packages/` and `apps/`; the four existing games must behave exactly as before.
 
+- **`pnpm verify`:** format, lint and typecheck green; tests 815 + 99 + 168 passed, 1 failed: the authorization matrix's HTTP test ran past its 150 s timeout under the full run's load (393 s this time; 30–36 s alone), as in every MG-N3 run. Not raised. The existing games' golden test and conformance P1–P6 are among the passing ones.
+- **Journey 38** in Chromium: passed (1.6 min).
+- **Reused:** the phased server test's sockets and its frame reading (`kit.frames`); the league test's board reading.
+
 ### Final report
 
 - **Done:** pieces 1–5. G1–G13 are closed. Seasonal Mind Games is playable as specified: a player's first choice is a click, the phases and countdowns show, the result shows its winners with the light-up, and the summary lists each round's winners. `feat/mind-games` is not merged.
