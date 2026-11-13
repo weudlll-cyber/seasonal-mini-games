@@ -17,7 +17,7 @@ import { cleanup, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { MindLine, MindPlayer, MindSpectator } from './FeedPanels.js';
-import { names, playerView, resultView, spectatorView } from './fixtures.js';
+import { inputProps, names, playerView, resultView, spectatorView } from './fixtures.js';
 import { ResultPanel } from './ResultPanel.js';
 import { mindText } from './text.js';
 
@@ -32,7 +32,7 @@ const panel = { names, colors: {}, season: 'winter' as const, specialOn: false }
 
 describe('Mind Games feed panels (02e §6.1, §10)', () => {
   it('says when the first choices show, then the feed’s time and players', () => {
-    render(<MindPlayer view={playerView(moves, 0)} />);
+    render(<MindPlayer {...inputProps(playerView(moves, 0))} />);
     expect(screen.getByTestId('feed-head').textContent).toBe(
       'The first choices show 30 s after they are made.',
     );

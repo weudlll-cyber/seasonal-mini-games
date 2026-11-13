@@ -41,6 +41,7 @@ import { RoundScreen } from '../round/RoundScreen.js';
 import { api, ApiError } from '../shell/http.js';
 import { useSession } from '../shell/session.js';
 import { HostConsole, HostMenu, hosts, type Values } from './HostMenu.js';
+import { useOwnPart } from './GamePrefs.js';
 import { MatchSummary } from './MatchSummary.js';
 import { ResultBar } from './ResultBar.js';
 import { WaitingArea } from './WaitingArea.js';
@@ -153,6 +154,7 @@ function MatchView(p: {
   };
   const status = live.state?.status ?? null;
   const chat = useMatchChat(match.code);
+  const own = useOwnPart(match, p.reload);
   // Before the host's form made a round here (a Quick Test's first round), the next round
   // still starts from the last round's values (T209, O75).
   const kept = last ?? (live.state === null ? null : keptOf(live.state));
@@ -171,6 +173,7 @@ function MatchView(p: {
         // The chat is in the round view only while the round runs; after it, the waiting
         // area beside the result holds it (one room on the page at a time).
         chat={phase === 'live' ? chat : null}
+        own={own}
       />
     );
   // A running round in focus mode: one screen, no app header (O46, T128).

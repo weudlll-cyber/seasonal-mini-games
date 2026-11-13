@@ -8,12 +8,12 @@
  *                 own value, the series' rounds and those played; what it saves is sent with
  *                 `PUT …/prefs`, and a refusal's code comes back to it; a spectator and a game
  *                 without the panel get nothing.
- * Depends on:     vitest, @testing-library/react, ./GamePrefs
+ * Depends on:     vitest, @testing-library/react, ./GamePrefs (also `useOwnPart`, T327)
  * Spec:           docs/spec/04-software-architecture.md §4.8 rule 8; docs/spec/06-data-model-api-realtime.md §3.1
  */
 import type { MatchDetailsView } from '@smg/contracts';
 import type { PrefsPanelProps } from '@smg/game-sdk';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, renderHook, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -55,10 +55,19 @@ function StubPanel(p: PrefsPanelProps) {
   );
 }
 vi.mock('@smg-game/registry/web', () => ({
-  GAME_SCREENS: { 'sides-fixture': { Prefs: StubPanel } },
+  GAME_SCREENS: { 'sides-fixture': { Prefs: StubPanel }, 'guess-the-number': {} },
 }));
 
-const { GamePrefs } = await import('./GamePrefs.js');
+// A stand-in for the page's socket: the test sends what the server would.
+const listeners = new Map<string, (data: unknown) => void>();
+vi.mock('../live/socket.js', () => ({
+  gameSocket: () => ({
+    on: (name: string, f: (data: unknown) => void) => listeners.set(name, f),
+    off: (name: string) => listeners.delete(name),
+  }),
+}));
+
+const { GamePrefs, useOwnPart } = await import('./GamePrefs.js');
 
 afterEach(() => {
   cleanup();
@@ -101,5 +110,36 @@ describe('the pre-pick panel (04 §4.8 rule 8)', () => {
     expect(screen.queryByTestId('stub-prefs')).toBeNull();
     render(<GamePrefs match={match({ gameId: 'guess-the-number' })} />);
     expect(screen.queryByTestId('stub-prefs')).toBeNull();
+  });
+});
+
+describe("the viewer's own part of a phased round (DECISIONS T327)", () => {
+  const reload = () => Promise.resolve();
+
+  it('is none for a guess game or a spectator', () => {
+    expect(
+      renderHook(() => useOwnPart(match({ gameId: 'guess-the-number' }), reload)).result.current,
+    ).toBeUndefined();
+    expect(
+      renderHook(() => useOwnPart(match({ youPlayer: false }), reload)).result.current,
+    ).toBeUndefined();
+  });
+
+  it("holds the round's number, the value, its saving, and a refusal for this round only", async () => {
+    const { result } = renderHook(() => useOwnPart(match({}), reload));
+    expect(result.current).toMatchObject({
+      roundIndex: 2,
+      prefs: { picks: { '2': 'b' } },
+      refusedPrePick: null,
+    });
+    act(() => listeners.get('prefs.refused')?.({ roundIndex: 1, code: 'CHOICE_UNAVAILABLE' }));
+    expect(result.current?.refusedPrePick).toBeNull();
+    act(() => listeners.get('prefs.refused')?.({ roundIndex: 2, code: 'CHOICE_UNAVAILABLE' }));
+    expect(result.current?.refusedPrePick).toBe('CHOICE_UNAVAILABLE');
+    await result.current?.save({ picks: {}, hide: true });
+    expect(sent.at(-1)).toEqual({
+      path: '/matches/ABC123/prefs',
+      body: { prefs: { picks: {}, hide: true } },
+    });
   });
 });

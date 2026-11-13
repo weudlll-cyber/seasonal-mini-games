@@ -25,11 +25,12 @@
  */
 import type { GameWeb } from '@smg-game/registry/web';
 import type { RosterRowView, RoundStateView } from '@smg/contracts';
-import type { ActReply } from '@smg/game-sdk';
+import type { ActReply, OwnMatchPart } from '@smg/game-sdk';
 import { useState, type ReactElement } from 'react';
 
 import { intent, serverNow } from '../live/socket.js';
 import { CooldownRing } from './CooldownRing.js';
+import { timingOf } from './InfoParts.js';
 import { InactivityLine } from './InactivityLine.js';
 import { colorsOf } from './RoundSide.js';
 import { codeText, solvedText } from './roundText.js';
@@ -43,6 +44,8 @@ interface PlayProps {
   readonly reload: () => Promise<void>;
   // A board game's stage, the box its input draws the board into; null for a list game.
   readonly stage: HTMLElement | null;
+  // A phased game's: the viewer's own part of the match (T327).
+  readonly own?: OwnMatchPart | undefined;
 }
 
 // Whole seconds left of the viewer's cooldown in an open round, else null (T125).
@@ -96,6 +99,7 @@ export function InputRow({
   now,
   reload,
   stage,
+  own,
 }: PlayProps): ReactElement | null {
   const [refusal, setRefusal] = useState<string | null>(null);
   const me = state.roster.find((r) => r.playerKey === viewerKey) ?? null;
@@ -133,6 +137,8 @@ export function InputRow({
         viewerKey={viewerKey}
         ring={ring}
         stage={stage}
+        timing={timingOf(state)}
+        own={own}
       />
       {refusal === null ? null : (
         <p role="status" className="round-refusal">

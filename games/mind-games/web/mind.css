@@ -61,6 +61,45 @@
   display: block;
 }
 
+/* The markers for now and for the feed's moment over the strip, and the next change. */
+.mg-timeline {
+  position: relative;
+}
+
+.mg-markers {
+  position: relative;
+  height: 1.2em;
+  font-size: var(--font-size-small);
+}
+
+.mg-marker {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  padding: 0 4px;
+  border-radius: var(--radius-pill);
+}
+
+.mg-marker-now {
+  color: var(--color-on-solid);
+  background: var(--color-solid);
+}
+
+.mg-marker-feed {
+  color: var(--color-text);
+  background: var(--color-surface-2);
+}
+
+.mg-next,
+.mg-note {
+  margin: 0;
+  font-size: var(--font-size-small);
+}
+
+.mg-next {
+  font-weight: var(--font-weight-strong);
+}
+
 /* The choices: one row of buttons, the feed's counts in a row under them. */
 .mg-choices {
   display: grid;

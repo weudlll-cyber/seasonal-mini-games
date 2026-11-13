@@ -20,6 +20,7 @@
  */
 import { GAME_SCREENS } from '@smg-game/registry/web';
 import type { MatchStandingView, RoundStateView, TeamName } from '@smg/contracts';
+import type { OwnMatchPart } from '@smg/game-sdk';
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 
 import { serverNow } from '../live/socket.js';
@@ -47,6 +48,8 @@ interface RoundScreenProps {
   readonly standings: readonly MatchStandingView[];
   // The match's chat, a panel from the round bar (./FocusShell), or null without a chat.
   readonly chat: ReactNode;
+  // A phased game's: the viewer's own part of the match, for their input (T327).
+  readonly own?: OwnMatchPart | undefined;
 }
 
 // The season's colour, and the viewer's own colour as their dot's (their team's, or their
@@ -106,6 +109,7 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
             panels={panels}
             phone={view === 'phone'}
             rule={rule}
+            own={props.own}
           />
         )
       }

@@ -27,6 +27,7 @@
  */
 import type { GameWeb } from '@smg-game/registry/web';
 import type { RoundStateView } from '@smg/contracts';
+import type { OwnMatchPart } from '@smg/game-sdk';
 import { useState, type ReactElement } from 'react';
 
 import type { RoundLive } from '../live/useRound.js';
@@ -49,6 +50,8 @@ export interface BodyProps {
   readonly phone: boolean;
   // The special's sentence, in the game's words where it has its own (T119).
   readonly rule: string;
+  // A phased game's: the viewer's own part of the match, for their input (T327).
+  readonly own?: OwnMatchPart | undefined;
 }
 
 // Where the game's parts go: a roster player's game (or null for a spectator), whether it is
@@ -94,6 +97,7 @@ function useParts(p: BodyProps) {
         now={p.now}
         reload={p.live.reload}
         stage={board ? stage : null}
+        own={p.own}
       />
     );
   const all = (

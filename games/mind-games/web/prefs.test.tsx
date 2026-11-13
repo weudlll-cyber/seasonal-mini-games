@@ -16,7 +16,8 @@ import { mindGames } from '@smg-game/mind-games';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PrefsPanel, SAVE_AFTER_MS } from './PrefsPanel.js';
+import { PrefsPanel } from './PrefsPanel.js';
+import { SAVE_AFTER_MS } from './useSavedPrefs.js';
 
 const ok = () => vi.fn((_prefs: unknown) => Promise.resolve({ ok: true }));
 const selects = () => screen.getAllByRole<HTMLSelectElement>('combobox');

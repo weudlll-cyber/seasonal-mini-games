@@ -9,64 +9,20 @@
  *                 round (02e §6.3, T309); the line "Pre-picks play for you when you are away.
  *                 If you are here, you can still switch." Before the series' first round the
  *                 number of rounds is the setting's default. A change is saved 2.1 s after the
- *                 last one, so two saves never come closer than the server's one every 2 s
- *                 (DECISIONS T299); a refusal is said in words. The value is the player's own:
+ *                 last one (./useSavedPrefs); a refusal is said in words. The value is the player's own:
  *                 the platform shows this panel to them alone.
  * Depends on:     react, @smg/game-sdk (PrefsPanelProps), @smg-game/mind-games (names,
- *                 settings)
+ *                 settings), ./useSavedPrefs
  * Used by:        ./index
  * Spec:           docs/spec/02e-game-mind-games.md §7, §11
  */
 import { CHOICE_NAMES, DEFAULT_CONFIG, type Choice } from '@smg-game/mind-games';
 import type { PrefsPanelProps } from '@smg/game-sdk';
-import { useEffect, useRef, useState, type ReactElement } from 'react';
+import type { ReactElement } from 'react';
 
-// Waits this long after the last change before saving (the server takes one save per 2 s).
-export const SAVE_AFTER_MS = 2_100;
+import { useSavedPrefs } from './useSavedPrefs.js';
 
 const CHOICES: readonly Choice[] = ['spring', 'summer', 'autumn', 'winter', 'all'];
-
-const REFUSALS: Readonly<Record<string, string>> = {
-  PREFS_INVALID: 'That pre-pick is not allowed.',
-  RATE_LIMITED: 'Saved too quickly. Change it again in a moment.',
-  FORBIDDEN: 'Join the match to set pre-picks.',
-};
-
-interface Prefs {
-  readonly picks: Readonly<Record<string, Choice>>;
-  readonly hide?: boolean;
-}
-
-const asPrefs = (value: unknown): Prefs => (value as Prefs | null) ?? { picks: {} };
-
-// The value as the player edits it, and its saving 2.1 s after the last change.
-function useDraft(initial: unknown, save: PrefsPanelProps['save']) {
-  const [draft, setDraft] = useState<Prefs>(() => asPrefs(initial));
-  const [note, setNote] = useState<string | null>(null);
-  const timer = useRef<number | null>(null);
-  useEffect(
-    () => () => {
-      if (timer.current !== null) window.clearTimeout(timer.current);
-    },
-    [],
-  );
-  const change = (next: Prefs): void => {
-    setDraft(next);
-    setNote('Saving…');
-    if (timer.current !== null) window.clearTimeout(timer.current);
-    timer.current = window.setTimeout(() => {
-      timer.current = null;
-      void save(next).then((reply) => {
-        setNote(
-          reply.ok
-            ? 'Saved.'
-            : (REFUSALS[reply.code ?? ''] ?? 'Your pre-picks could not be saved. Try again.'),
-        );
-      });
-    }, SAVE_AFTER_MS);
-  };
-  return { draft, note, change };
-}
 
 // One round's select; a played round is locked.
 function RoundPick(p: {
@@ -105,7 +61,7 @@ function RoundPick(p: {
 }
 
 export function PrefsPanel(p: PrefsPanelProps): ReactElement {
-  const { draft, note, change } = useDraft(p.prefs, p.save);
+  const { draft, note, change } = useSavedPrefs(p.prefs, p.save);
   const rounds = p.rounds ?? DEFAULT_CONFIG.rounds;
   const pick = (round: number, value: string): void => {
     // Every other round's pick, and this one's unless it is now none.

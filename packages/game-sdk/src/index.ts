@@ -92,6 +92,8 @@ export type {
   GuessAnswer,
   GuessRow,
   GuessSwatch,
+  OwnMatchPart,
+  PhasedTiming,
   PlayerPanelProps,
   PrefsPanelProps,
   ResultPanelProps,

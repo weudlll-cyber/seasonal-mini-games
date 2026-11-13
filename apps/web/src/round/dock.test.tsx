@@ -78,29 +78,30 @@ describe('the input row of a phased round (04 §4.8)', () => {
     lines: [],
     own: { choice: null, hide: false },
   };
-  const open = (role: RoundStateView['role']): RoundStateView => ({
+  // The round's clock is the page's server time: the opening lies `since` before it.
+  const open = (role: RoundStateView['role'], since = 10_000): RoundStateView => ({
     ...ended,
     status: 'open',
     role,
     game: view,
     roster: [],
-    opensAt: 0,
+    opensAt: Date.now() - since,
     plan,
     ownInactivity: null,
   });
   const radios = () => screen.getAllByRole<HTMLButtonElement>('radio');
 
   it('gives a match player the input before the delayed roster lists them, without a ring', () => {
-    render(dock(open('player'), 'mind-games', 10_000));
+    render(dock(open('player'), 'mind-games', Date.now()));
     expect(radios()).toHaveLength(4);
     expect(radios().every((r) => !r.disabled)).toBe(true);
     expect(screen.queryByTestId('cooldown')).toBeNull();
   });
 
   it('lets nobody act after the end of play, and gives a spectator no input', () => {
-    const { container, rerender } = render(dock(open('player'), 'mind-games', 90_000));
+    const { container, rerender } = render(dock(open('player', 90_000), 'mind-games', Date.now()));
     expect(radios().every((r) => r.disabled)).toBe(true);
-    rerender(dock(open('spectator'), 'mind-games', 10_000));
+    rerender(dock(open('spectator'), 'mind-games', Date.now()));
     expect(container.innerHTML).toBe('');
   });
 });
