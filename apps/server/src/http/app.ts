@@ -102,7 +102,16 @@ function createFastify(env: Env): FastifyInstance {
       : {
           level: env.SMG_LOG_LEVEL,
           // Secrets and seeds never reach a log line (05 §3).
-          redact: ['req.headers.cookie', 'req.headers["x-csrf-token"]', '*.seed', '*.secret'],
+          // A phased round's live state never reaches a log either (05 §3.2).
+          redact: [
+            'req.headers.cookie',
+            'req.headers["x-csrf-token"]',
+            '*.seed',
+            '*.secret',
+            '*.prefs',
+            '*.choice',
+            '*.counts',
+          ],
           ...(env.SMG_DEV
             ? { transport: { target: 'pino-pretty', options: { singleLine: true } } }
             : {}),

@@ -18,6 +18,7 @@ export type {
   ConformanceKit,
   Decision,
   DevBot,
+  DevPrefs,
   Emitted,
   GameCtx,
   GameEntry,
@@ -40,6 +41,7 @@ export {
   type OutcomeRow,
   type PhasedHooks,
   type PhasePlan,
+  type PrefsHooks,
   type Series,
 } from './phased.js';
 export {
@@ -91,6 +93,7 @@ export type {
   GuessRow,
   GuessSwatch,
   PlayerPanelProps,
+  PrefsPanelProps,
   ResultPanelProps,
   SpectatorPanelProps,
 } from './web.js';

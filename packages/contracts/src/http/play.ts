@@ -85,6 +85,8 @@ export interface MatchDetailsView extends MatchSummaryView {
   readonly ended: MatchEndView | null;
   // A series of rounds (04 §4.8 rule 7): its number of rounds, those played, and the server
   // time its pause ends (null outside a pause); null for a match that is no series.
+  // The viewer's own value for a phased game's match (its pre-picks, rule 8); null without one.
+  readonly myPrefs?: unknown;
   readonly series?: {
     readonly rounds: number;
     readonly played: number;

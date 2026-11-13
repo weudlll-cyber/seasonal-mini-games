@@ -154,6 +154,9 @@ export const ROUTES: readonly RouteCase[] = [
   { method: 'POST', path: '/api/v1/matches/:code/leave', body: {}, allow: JOINERS, on: 'spare' },
   // Teams are locked while the round runs.
   { method: 'POST', path: '/api/v1/matches/:code/team', body: { team: 'spring' }, allow: JOINERS },
+  // A player's own pre-picks (04 §4.8 rule 8): a guess game has none, its players get PREFS_OFF.
+  { method: 'GET', path: '/api/v1/matches/:code/prefs', allow: ROSTER },
+  { method: 'PUT', path: '/api/v1/matches/:code/prefs', body: { prefs: {} }, allow: ROSTER },
   { method: 'POST', path: '/api/v1/rounds/:id/start', body: {}, allow: HOST },
   { method: 'POST', path: '/api/v1/rounds/:id/end', body: {}, allow: HOST },
   { method: 'POST', path: '/api/v1/rounds/:id/abort', body: {}, allow: HOST },
@@ -259,6 +262,7 @@ export const INTENTS: Readonly<
   'time.sync': { data: () => ({}), allow: SESSION },
   guess: { data: ({ live }) => ({ roundId: live, value: 1_000_001 }), allow: ROSTER },
   'team.choose': { data: ({ code }) => ({ code, team: 'spring' }), allow: JOINERS },
+  'match.prefs': { data: ({ code }) => ({ code, prefs: {} }), allow: ROSTER },
   'round.start': { data: ({ round }) => ({ roundId: round }), allow: HOST },
   'round.end': { data: ({ round }) => ({ roundId: round }), allow: HOST },
   // Without a reason: the host's call is answered VALIDATION_FAILED.

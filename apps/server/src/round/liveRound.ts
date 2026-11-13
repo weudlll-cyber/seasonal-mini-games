@@ -13,7 +13,8 @@
  *                 delayed room (./delayedRoom): its views are built at that room's cut and
  *                 numbered by its release sequence, its frames carry only each player's own
  *                 events (the room's come from the delayed room), and match players who join
- *                 or leave while it runs are told to it (`member`).
+ *                 or leave while it runs are told to it (`member`); at its opening a player's
+ *                 pre-pick becomes their first choice, received at the opening (`prePick`).
  * Depends on:     @smg/application (verify), @smg/domain (types), @smg/game-sdk (GameEntry),
  *                 ./actor, ./delayedRoom, ./pgRoundStore (types), ./views
  * Used by:        ./gameRunner, ./rounds, ../realtime/*, ../http/routes/*, ../dev/*
@@ -21,7 +22,7 @@
  */
 import { verifyRound, type Verified } from '@smg/application';
 import { frostDelay, type Reply, type RoundEvent, type RoundStatus } from '@smg/domain';
-import type { GameEntry, GameModule, RosterPlayer } from '@smg/game-sdk';
+import type { GameEntry, GameModule, PhasePlan, RosterPlayer } from '@smg/game-sdk';
 
 import type { RoundActor } from './actor.js';
 import type { DelayedRoom } from './delayedRoom.js';
@@ -46,12 +47,17 @@ export interface LiveRound {
   // A phased round (04 §4.8): its room frames come from its delayed room.
   readonly phased: boolean;
   status(): RoundStatus;
+  // A phased round's plan (04 §4.8), else null; the development bots time their entry by it.
+  plan(): PhasePlan | null;
   rosterKeys(): string[];
   guess(playerKey: string, raw: unknown): Promise<Reply>;
   // A kicked player: no further guess of theirs reaches the round.
   exclude(playerKey: string): void;
   // A phased round: a match player joined (true) or left or was removed (false) (rule 3).
   member(playerKey: string, active: boolean): Promise<Reply>;
+  // A phased round's opening: the player's pre-pick as their first choice, received at the
+  // opening (rule 8); null when it makes none or the player is in the round already.
+  prePick(playerKey: string, prefs: unknown, roundIndex: number): Promise<Reply | null>;
   run(cmd: LifecycleCommand): Promise<Reply>;
   view(viewerKey: string | null): unknown;
   // The game's own player view of a roster player while the round runs (development bots).
@@ -112,6 +118,24 @@ function readers<S, A, E, Cfg, Sec>(
   };
 }
 
+// A phased round's opening: a player's pre-pick as their first choice, received at the opening
+// (04 §4.8 rule 8). Someone who chose in person already keeps their choice; the check and the
+// queue run in one go, so nothing comes between them.
+function prePickOf<S, A, E, Cfg, Sec>(
+  module: GameModule<S, A, E, Cfg, Sec>,
+  actor: RoundActor<S, A, E, Cfg, Sec>,
+  excluded: ReadonlySet<string>,
+): LiveRound['prePick'] {
+  return (playerKey, prefs, roundIndex) => {
+    const s = actor.current.state;
+    const action = module.phased?.prefs?.action(prefs, roundIndex, s.gameConfig) ?? null;
+    if (action === null || s.roster[playerKey]?.enteredAt != null) return Promise.resolve(null);
+    if (excluded.has(playerKey)) return Promise.resolve({ ok: false, code: 'NOT_IN_ROUND' });
+    const receivedAt = s.opensAt ?? Date.now();
+    return actor.submit(() => ({ type: 'guess', playerId: playerKey, receivedAt, action }));
+  };
+}
+
 export function liveRound<S, A, E, Cfg, Sec>(
   entry: GameEntry<S, A, E, Cfg, Sec>,
   actor: RoundActor<S, A, E, Cfg, Sec>,
@@ -126,6 +150,7 @@ export function liveRound<S, A, E, Cfg, Sec>(
     gameId: module.meta.id,
     phased: delayed !== null,
     status: () => state().status,
+    plan: () => state().plan ?? null,
     rosterKeys: () => Object.keys(state().roster),
     guess: (playerKey, raw) => {
       if (excluded.has(playerKey)) return Promise.resolve({ ok: false, code: 'NOT_IN_ROUND' });
@@ -145,6 +170,7 @@ export function liveRound<S, A, E, Cfg, Sec>(
       delayed === null
         ? Promise.resolve({ ok: true })
         : actor.submit((now) => ({ type: 'member', at: now, playerId: playerKey, active })),
+    prePick: prePickOf(module, actor, excluded),
     run: (cmd) => actor.submit((now) => ({ ...cmd, at: now })),
     ...readers(module, actor, delayed),
     cooldownEndsAt: (playerKey) => state().roster[playerKey]?.cooldownEndsAt ?? null,

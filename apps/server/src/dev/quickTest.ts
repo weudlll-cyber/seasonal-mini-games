@@ -16,19 +16,23 @@
  *                 a season given the seed picks it, so a seed shows the same secret and season
  *                 every time. The match is of the chosen game (O41): the named fields reach
  *                 only a game that has their keys, and the form's `settings` carry the game's
- *                 own (DECISIONS T121). Development builds only (the route exists only with
+ *                 own (DECISIONS T121); a phased game gets only the keys its document has and a
+ *                 match without teams, and its bots play by the seed's plans, some by pre-picks
+ *                 (./phasedBots, 09 §4.2). Development builds only (the route exists only with
  *                 SMG_DEV=1).
- * Depends on:     node:crypto, ../match/*, ./bots
+ * Depends on:     node:crypto, ../match/*, ../round/liveRound (types), ./bots, ./phasedBots
  * Used by:        ../http/routes/quickTest
  * Spec:           docs/spec/11-roadmap.md (phase 1 Quick Test); docs/spec/09-testing-strategy.md §1, §5
  */
 import { createHash, randomBytes, randomInt } from 'node:crypto';
 
-import type { Season } from '@smg/game-sdk';
+import { PLATFORM_ROUND_SETTINGS, type Season } from '@smg/game-sdk';
 
-import { currentRoundId, openMatch, type MatchRow } from '../match/matches.js';
+import { currentRoundId, matchById, openMatch, type MatchRow } from '../match/matches.js';
 import type { Play } from '../match/play.js';
+import type { LiveRound } from '../round/liveRound.js';
 import { runBots } from './bots.js';
+import { botPlan, botPrefs } from './phasedBots.js';
 
 const SEASONS: readonly Season[] = ['spring', 'summer', 'autumn', 'winter'];
 // From the lobby, the bots arrive one after another within about this time.
@@ -78,23 +82,62 @@ const wait = (ms: number) =>
     setTimeout(resolve, ms).unref();
   });
 
-// A bot joins as a connected player (bots are always there, 02 §4), optionally with a team.
-async function joinBot(play: Play, match: MatchRow, key: string, team: Season | null) {
-  play.presence.enter(match.id, key);
+// A bot joins as a connected player (bots are always there, 02 §4), optionally with a team; one
+// with pre-picks in a phased game stays away and plays by them (./phasedBots).
+async function joinBot(
+  play: Play,
+  match: MatchRow,
+  bot: { readonly key: string; readonly team: Season | null; readonly prefs: unknown },
+) {
+  const { key, team, prefs } = bot;
+  if (prefs === null) play.presence.enter(match.id, key);
   await play.join(match, { key, accountId: null });
+  if (prefs !== null) await play.prefs.save(match, key, prefs);
   if (team !== null) await play.chooseTeam(match, key, team);
 }
 
 // From the lobby: the bots arrive one after another, each with a random team in a team match.
 // One that cannot join any more (the match was closed) is simply missing.
-function arrive(play: Play, match: MatchRow, bots: readonly string[]): void {
+function arrive(play: Play, match: MatchRow, bots: readonly string[], seed: Uint8Array): void {
   void (async () => {
     for (const key of bots) {
       await wait(ARRIVAL_MS / bots.length);
       const team = match.teamMatch ? (SEASONS[randomInt(4)] ?? 'spring') : null;
-      await joinBot(play, match, key, team);
+      await joinBot(play, match, { key, team, prefs: botPrefs(play, match, seed, key) });
     }
   })().catch(() => undefined);
+}
+
+interface QuickBots {
+  readonly keys: readonly string[];
+  readonly delayMs: number;
+  readonly seed: Uint8Array;
+}
+
+// A new round's bots: in a phased game seeded by the Quick Test's seed, without those that
+// pre-picked (they stay away, ./phasedBots).
+async function botsFor(
+  play: Play,
+  pool: Parameters<typeof openMatch>[0],
+  round: LiveRound,
+  bots: QuickBots,
+) {
+  const bot = play.rounds.devBot(round.gameId);
+  if (bot === null) return;
+  const plan = round.plan();
+  if (plan === null) {
+    runBots(round, bots.keys, bot, { delayMs: bots.delayMs });
+    return;
+  }
+  const match = await matchById(pool, round.matchId);
+  if (match === null) return;
+  const r = await pool.query<{ round_index: number }>(
+    'SELECT round_index FROM smg.rounds WHERE id = $1',
+    [round.id],
+  );
+  const keys = bots.keys.filter((key) => botPrefs(play, match, bots.seed, key) === null);
+  const seeded = botPlan(bots.seed, r.rows[0]?.round_index ?? 1, plan);
+  runBots(round, keys, bot, { delayMs: bots.delayMs, plan: seeded });
 }
 
 export interface QuickTests {
@@ -103,7 +146,7 @@ export interface QuickTests {
 
 // One per server: it remembers the Quick Test matches and sets their bots to every new round.
 export function quickTests(play: Play, pool: Parameters<typeof openMatch>[0]): QuickTests {
-  const botsOf = new Map<string, { readonly keys: readonly string[]; readonly delayMs: number }>();
+  const botsOf = new Map<string, QuickBots>();
   const played = new Set<string>();
   // Every round created in a Quick Test match gets its bots; they wait for it to open.
   play.onMatchChanged((matchId) => {
@@ -114,8 +157,7 @@ export function quickTests(play: Play, pool: Parameters<typeof openMatch>[0]): Q
       if (id === null || played.has(id)) return;
       played.add(id);
       const round = await play.rounds.get(id);
-      const bot = round === null ? null : play.rounds.devBot(round.gameId);
-      if (round !== null && bot !== null) runBots(round, bots.keys, bot, bots.delayMs);
+      if (round !== null) await botsFor(play, pool, round, bots);
     })().catch(() => undefined);
   });
 
@@ -129,24 +171,29 @@ export function quickTests(play: Play, pool: Parameters<typeof openMatch>[0]): Q
       visibility: 'unlisted',
       maxPlayers: input.bots + 1,
       countsForLeaderboard: false,
-      teamMatch: input.teamMatch,
+      // A game without teams has matches without them (04 §4.8 rule 3).
+      teamMatch: input.teamMatch && play.rounds.teams(input.gameId),
       hostId: input.playerId,
     });
     const bots = Array.from(
       { length: input.bots },
       (_, i) => `bot-${String(i + 1).padStart(2, '0')}`,
     );
-    botsOf.set(match.id, { keys: bots, delayMs: input.botDelayS * 1_000 });
+    botsOf.set(match.id, { keys: bots, delayMs: input.botDelayS * 1_000, seed });
     await play.join(match, { key: input.playerId, accountId: input.playerId });
-    if (!input.lobby) for (const key of bots) await joinBot(play, match, key, null);
+    if (!input.lobby) {
+      for (const key of bots) {
+        await joinBot(play, match, { key, team: null, prefs: botPrefs(play, match, seed, key) });
+      }
+    }
     const round = await play.createRound(match, input.playerId, {
-      choices: choicesOf(input, play.rounds.hostKeys(input.gameId)),
+      choices: choicesOf(input, play.rounds.documentKeys(input.gameId)),
       season,
       seed,
       fast: input.fast,
     });
     // From the lobby the answer goes back now; the bots arrive in the waiting area meanwhile.
-    if (input.lobby) arrive(play, match, bots);
+    if (input.lobby) arrive(play, match, bots, seed);
     else {
       const roster = [input.playerId, ...bots].map((playerId) => ({ playerId, team: null }));
       await play.startRound(match, round, roster);
@@ -156,25 +203,29 @@ export function quickTests(play: Play, pool: Parameters<typeof openMatch>[0]): Q
   return { start };
 }
 
-// The platform's keys, the named game keys the chosen game has (`gameKeys`), then the game
-// settings the form sent, which win.
+// The form's named keys that the chosen game's settings document has (`docKeys`: a phased game
+// has few platform keys, 04 §4.8 rule 4), then the game settings the form sent, which win.
 function choicesOf(
   input: QuickTestInput,
-  gameKeys: ReadonlySet<string>,
+  docKeys: ReadonlySet<string>,
 ): Readonly<Record<string, unknown>> {
   const named = Object.entries({
+    'round.secretMode': input.mode,
+    'round.cooldownS': input.cooldownS,
+    'round.countdownS': input.countdownS,
+    'round.halving': input.halving,
     'round.feedbackVisibility': input.visibility,
     'round.rangeLow': input.rangeLow,
     'round.rangeHigh': input.rangeHigh,
     'round.rangeVisible': input.rangeVisible,
     'round.comments': input.comments,
-  }).filter(([key]) => gameKeys.has(key));
-  return {
-    'round.secretMode': input.mode,
-    'round.cooldownS': input.cooldownS,
-    'round.countdownS': input.countdownS,
-    'round.halving': input.halving,
-    ...Object.fromEntries(named),
-    ...input.settings,
-  };
+  }).filter(([key]) => docKeys.has(key));
+  // The form sends the platform's inactivity and Heatwave keys for every game; a phased game's
+  // document has none of them. A game's own keys and anything else stay for the check.
+  const own = Object.entries(input.settings).filter(
+    ([key]) => docKeys.has(key) || !PLATFORM_KEYS.has(key),
+  );
+  return { ...Object.fromEntries(named), ...Object.fromEntries(own) };
 }
+
+const PLATFORM_KEYS: ReadonlySet<string> = new Set(PLATFORM_ROUND_SETTINGS.map((d) => d.key));

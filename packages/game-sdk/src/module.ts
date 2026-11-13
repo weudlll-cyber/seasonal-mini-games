@@ -152,7 +152,7 @@ export interface GameModule<S, A, E, Cfg, Sec> {
   // A season whose special the game does not implement runs without it (04 §4.4).
   readonly specials?: Partial<SpecialHooks<S, E, Sec>>;
   // Present exactly when meta.timing is 'phased' (04 §4.8).
-  readonly phased?: PhasedHooks<S, Cfg>;
+  readonly phased?: PhasedHooks<S, A, Cfg>;
   // The secret in a few words for the chat's round-end line ("the number was 42", O32), from
   // the result view and the winner's key; null, or no hook, names no value.
   readonly reveal?: (result: unknown, winner: string | null) => string | null;
@@ -174,9 +174,15 @@ export interface ConformanceKit<A, Cfg, Sec> {
 // null when it has nothing to do; `pick(n)` is a uniform integer in [0, n).
 export type DevBot<A> = (playerView: unknown, pick: (n: number) => number) => A | null;
 
+// A development bot's pre-picks for a phased game's match (Quick Test, 09 §4.2), or null for a
+// bot that plays in person; `pick(n)` is the bot's seeded uniform integer in [0, n).
+export type DevPrefs = (pick: (n: number) => number, rounds: number) => unknown;
+
 // One registry line: a module, its conformance kit and its development bot.
 export interface GameEntry<S, A, E, Cfg, Sec> {
   readonly module: GameModule<S, A, E, Cfg, Sec>;
   readonly conformance: ConformanceKit<A, Cfg, Sec>;
   readonly devBot: DevBot<A>;
+  // A phased game with prefs: some development bots fix their picks in advance.
+  readonly devPrefs?: DevPrefs;
 }

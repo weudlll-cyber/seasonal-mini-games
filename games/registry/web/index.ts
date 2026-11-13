@@ -30,6 +30,7 @@ import type {
   GameText,
   SettingDef,
   PlayerPanelProps,
+  PrefsPanelProps,
   ResultPanelProps,
   SpectatorPanelProps,
 } from '@smg/game-sdk';
@@ -60,6 +61,9 @@ export interface GameWeb {
   // player their tag and marker (`marksOf`), the game gets them as `marks`, and a row and the
   // game's board highlight the same player (O62).
   readonly playerTags?: true;
+  // A phased game's panel in the waiting area for the viewer's own value (its pre-picks, 04
+  // §4.8 rule 8); the platform shows it to the match's players and saves what it hands back.
+  readonly Prefs?: ComponentType<PrefsPanelProps>;
 }
 
 export const GAME_SCREENS: Readonly<Record<string, GameWeb>> = {

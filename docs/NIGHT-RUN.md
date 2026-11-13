@@ -11,7 +11,7 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged tonigh
 | 0 — docs cleanup                                    | **done**: PR #9 merged into `master` (`c3b8a69`, CI green: CI 41 min, CodeQL); branch deleted on origin and locally; master merged into `feat/mind-games` (`f0112f4`) |
 | 1 — MG-C1, the `phased` class and the round engine  | **done**, pushed on `feat/mind-games`                                                                                                                                 |
 | 2 — MG-C2, series and joining a running round       | **done**, pushed on `feat/mind-games`                                                                                                                                 |
-| 3 — MG-C3, per-player match data and the Quick Test | **running**                                                                                                                                                           |
+| 3 — MG-C3, per-player match data and the Quick Test | **done**, pushed on `feat/mind-games`                                                                                                                                 |
 
 ### Piece 0 — docs cleanup (`docs/cleanup-2026-11-13`, PR #9)
 
@@ -55,6 +55,19 @@ Each line checked against the tree or git history before it changed:
 - **Reused:** `createRoundBody` and `settingsRefusal` for the next round's settings, `hostOf` of the round routes, `chooseRoundSettings` for the check, `Play.createRound` and `Play.startRound` for the next round, `Play.close` with a `MatchEnd` for the close, the existing scheduler loop and lease, `useTicker` and `serverNow` for the countdown.
 - **Noticed, left alone:** the result page's own next-round box and the Host menu still offer Next round in a series pause too (it saves the settings there, T298); a dedicated pause view on the result page is the game's screen (MG-2).
 
+### Piece 3 — MG-C3, a player's own match value (pre-picks) and the Quick Test of a phased game (04 §4.8 rule 8, 09 §4.2)
+
+- **Contract:** `prefs?: { schema, action(prefs, roundIndex, cfg) }` in `PhasedHooks` (now `PhasedHooks<S, A, Cfg>`), `DevPrefs` on a registry entry, `PrefsPanelProps` for the web half's optional `Prefs` panel; the fixture's pre-picks per round number, with a side `x` its rounds refuse (as Mind Games refuses All when it is off).
+- **Server** (`apps/server/src/match/prefs.ts`, `apps/server/src/http/routes/prefs.ts`, migration 0018): `GET`/`PUT …/prefs` and the intent `match.prefs` for a player's own value only (`FORBIDDEN` for anyone not in the match, then `PREFS_OFF`, `PREFS_INVALID` after the game's schema and 2 KiB, `RATE_LIMITED` beyond one save every 2 s); `myPrefs` in the match details, the viewer's own; deleted on leave and kick; applied at each opening of a phased round, after its batch committed, in join order, as the first choice received at `opensAt` and only for a player not yet in the round (`LiveRound.prePick`, the check and the queue in one step, T300); a refusal goes to that player's room alone as `prefs.refused` (T301); the logger redacts `prefs`, `choice` and `counts` (T303).
+- **Quick Test** (`apps/server/src/dev/phasedBots.ts`, `quickTest.ts`, `bots.ts`; T302): a phased game gets only its document's keys (the form's platform keys it lacks are dropped; for the guess games every key stays as before) and a match without teams; each bot's draws and first move per round from the Quick Test's seed (the first move inside the entry window), and once per match whether it pre-picks (the game's `devPrefs`); a pre-picking bot joins without being connected and plays by its pre-picks.
+- **Web** (`apps/web/src/match/GamePrefs.tsx`): the game's `Prefs` panel in the waiting area for the match's players, with `myPrefs`, the series' rounds and those played, saving through `PUT …/prefs` and handing a refusal's code back.
+- **Tests:** `apps/server/test/prefs.integration.test.ts` (a value outside the schema 422, a second save within 2 s 429, `myPrefs` the viewer's own only, the host's `GET` its own null, a non-player 403; round 1 played by the away player's pick, entered at `opensAt`; round 2's refused pick told only to its player as `prefs.refused` with round 2 and `CHOICE_UNAVAILABLE`; leaving deletes the value; two Quick Tests with seed `frost` and 7 bots: the same pre-picking bots, bot-05 and bot-06, with the same picks, neither connected, no teams); `apps/web/src/match/prefs.test.tsx` (the panel's props, its save and a refusal's code, nothing for a spectator or a game without it); the authorization matrix's rows for `GET`/`PUT …/prefs` and `match.prefs` (the match's players only).
+- **`pnpm verify`:** green (format, lint, typecheck, 711 + 94 + 167 tests).
+- **Lines before → after:** game-sdk `phased.ts` 64 → 77, `module.ts` 182 → 188, `index.ts` 96 → 99, `web.ts` 170 → 181; contracts `play.ts` 223 → 225; server `app.ts` 235 → 244 (the redaction list), `routes/matches.ts` 260 → 276, `routes/prefs.ts` new 74, `match/play.ts` 273 → 281, `match/prefs.ts` new 101, `realtime/gateway.ts` 256 → 261, `realtime/intents.ts` 244 → 260, `round/rounds.ts` 198 → 236, `round/liveRound.ts` 168 → 194, `round/runtime.ts` 137 → 140, `dev/bots.ts` 59 → 75, `dev/quickTest.ts` 180 → 231, `dev/phasedBots.ts` new 48, migration `0018_player_prefs.sql` new 17; tests `authzTable.ts` 270 → 274, `prefs.integration.test.ts` new 165; web `WaitingArea.tsx` 162 → 165, `GamePrefs.tsx` new 39, `prefs.test.tsx` new 105; registry `web/index.ts` 78 → 82, `phasedFixture.ts` 177 → 207.
+- **Extracted:** `phasedParts` in `routes/matches.ts` (the details stayed under the complexity limit), `prePickOf` in `liveRound.ts` (under 60 lines), the phased bots' plan in `dev/phasedBots.ts`.
+- **Reused:** `RateLimiter` (auth), `activePlayers`, the round queue for pre-picks as ordinary actions, `roundRng` (the platform's DRBG) for the bots' plans, `quickTestSeed`, the existing `match:<id>:player:<key>` room for the refusal, the authorization matrix's `ROSTER` callers.
+- **Noticed, left alone:** the per-account save limit is in memory per process, like the other per-account limits (gone after a restart); the result page in a pause has no pre-pick panel of its own (the waiting area beside it has it); the client wording for `prefs.refused` is the game's (MG-4).
+
 ### Needs the owner's word
 
 Every decision below was built as written (the reading that changes no existing game); each is a T-entry in DECISIONS marked "(proposal, night MG-N1)":
@@ -70,6 +83,11 @@ Every decision below was built as written (the reading that changes no existing 
 - T296: a series' next step is a `match_autostart` row on the ended round, written after its end commits, claimed once; migration 0017 widens the kind CHECK by that one value.
 - T297: a series counts its ended rounds; an aborted round schedules nothing (the host starts the next by hand); the automatic round is made by the host's account from the saved settings.
 - T298: the series line and Start next round now in the waiting area; in a pause the Host menu keeps the next round's settings; `round.halving` only where the document has it.
+- T299: pre-picks in `match_player_prefs` (at most 2 KiB), `FORBIDDEN` for a non-player before `PREFS_OFF`, one save every 2 s per account kept in memory, deleted on leave and kick.
+- T300: pre-picks applied after the opening commits, in join order, received at `opensAt`, only for players not yet in the round; a restart in between loses them for that round.
+- T301: a refused pre-pick is the Socket.IO event `prefs.refused` in the player's own room.
+- T302: the Quick Test of a phased game: only its document's keys, no teams, seeded per-round bot plans (`quicktest/<round>/<bot>/pick|entry`) and per-match pre-picks (`quicktest/prefs/<bot>`, up to 20 rounds), pre-picking bots not connected.
+- T303: the web half's optional `Prefs` panel in the waiting area; `myPrefs` the viewer's own; the logger redacts `prefs`, `choice` and `counts`.
 
 ## Dress rehearsal of the live install (2026-11-06)
 

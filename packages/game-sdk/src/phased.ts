@@ -9,12 +9,16 @@
  *                 but the actor sees an action), and the result rows its own rule decides at
  *                 the end, in place of Solved signals, and whether its matches are a series of
  *                 rounds (how many, and the pause between them), read from a match's first
- *                 round. `planIssue` is the one check that a plan
+ *                 round, and optionally one small value per player per match (pre-picks), with
+ *                 the action it makes for that player at a round's opening. `planIssue` is the
+ *                 one check that a plan
  *                 is in order, used where a round is set up.
- * Depends on:     nothing
+ * Depends on:     zod (types)
  * Used by:        ./module, ./index, packages/application (round settings), packages/domain
  * Spec:           docs/spec/04-software-architecture.md §4.8
  */
+
+import type { ZodType } from 'zod';
 
 // Milliseconds after the round's opening (opensAt).
 export interface PhasePlan {
@@ -43,12 +47,21 @@ export interface Series {
   readonly pauseMs: number;
 }
 
-export interface PhasedHooks<S, Cfg> {
+// A player's value for the whole match (04 §4.8 rule 8): checked against `schema` (at most 2 KiB),
+// it becomes the player's first action at each round's opening, or none.
+export interface PrefsHooks<A, Cfg> {
+  readonly schema: ZodType;
+  // `prefs` passed the schema; the round's index in the match, from 1.
+  readonly action: (prefs: unknown, roundIndex: number, cfg: Cfg) => A | null;
+}
+
+export interface PhasedHooks<S, A, Cfg> {
   readonly plan: (cfg: Cfg) => PhasePlan;
   // Read from the config of a match's first round; null: the host runs rounds one by one.
   readonly series: (cfg: Cfg) => Series | null;
   // Every player in the round, in the order the result lists them.
   readonly outcome: (state: S) => readonly OutcomeRow[];
+  readonly prefs?: PrefsHooks<A, Cfg>;
 }
 
 // Null when the plan is in order: whole, non-negative times that follow each other.

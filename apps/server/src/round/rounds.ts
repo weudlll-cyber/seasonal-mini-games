@@ -19,8 +19,9 @@
  * Spec:           docs/spec/04-software-architecture.md §4.6, §4.8, §5.2, §5.3
  */
 import { GAMES, type InstalledGame } from '@smg-game/registry';
-import { chooseRoundSettings } from '@smg/application';
+import { chooseRoundSettings, gameSettingsDefs } from '@smg/application';
 import type { DevBot, GameEntry, Series, SettingOverride } from '@smg/game-sdk';
+import type { ZodType } from 'zod';
 
 import type { ActorOptions, Delivery } from './actor.js';
 import type { Released } from './delayedRoom.js';
@@ -42,8 +43,14 @@ interface Runner {
   readonly hostKeys: ReadonlySet<string>;
   // A phased game (04 §4.8): its recovered rounds need their whole log.
   readonly phased: boolean;
+  // The keys of the game's settings document (a phased game's has few platform keys).
+  readonly docKeys: ReadonlySet<string>;
   // A phased game's series from a match's first round's config (rule 7), else null.
   series(gameConfig: unknown): Series | null;
+  // A phased game's prefs value as its schema reads it, or undefined (rule 8); null: none.
+  readonly parsePrefs: ((raw: unknown) => unknown) | null;
+  // A development bot's pre-picks for a match of `rounds` rounds, or null (09 §4.2).
+  readonly devPrefs: ((pick: (n: number) => number, rounds: number) => unknown) | null;
   // Throws RoundSettingsError for choices the round form would refuse.
   check(
     overrides: Readonly<Record<string, SettingOverride>>,
@@ -51,6 +58,15 @@ interface Runner {
   ): void;
   create(round: NewRound): Promise<LiveRound>;
   recover(loaded: LoadedRound, log: readonly StoredEvent[] | null): LiveRound;
+}
+
+// The game's prefs schema as a parser: the value it reads, or undefined (rule 8).
+function prefsParser(schema: ZodType | undefined): ((raw: unknown) => unknown) | null {
+  if (schema === undefined) return null;
+  return (raw) => {
+    const parsed = schema.safeParse(raw);
+    return parsed.success ? parsed.data : undefined;
+  };
 }
 
 type Listener = (round: LiveRound, events: readonly StoredEvent[], how: Delivery) => void;
@@ -91,7 +107,10 @@ export class Rounds {
       devBot: entry.devBot,
       hostKeys: new Set(entry.module.settings.defs.filter((d) => d.hostChooses).map((d) => d.key)),
       phased: meta.timing === 'phased',
+      docKeys: new Set(gameSettingsDefs(entry.module).map((d) => d.key)),
       series: (cfg) => entry.module.phased?.series(cfg as Cfg) ?? null,
+      parsePrefs: prefsParser(entry.module.phased?.prefs?.schema),
+      devPrefs: entry.devPrefs ?? null,
       check: (overrides, choices) => {
         chooseRoundSettings(entry.module, overrides, choices);
       },
@@ -129,6 +148,25 @@ export class Rounds {
     choices: Readonly<Record<string, unknown>>,
   ): void {
     this.runners.get(gameId)?.check(overrides, choices);
+  }
+
+  // A phased game with per-player match data (04 §4.8 rule 8).
+  hasPrefs(gameId: string): boolean {
+    return (this.runners.get(gameId)?.parsePrefs ?? null) !== null;
+  }
+
+  // A prefs value as the game's schema reads it, or undefined when it does not fit.
+  parsePrefs(gameId: string, raw: unknown): unknown {
+    return this.runners.get(gameId)?.parsePrefs?.(raw);
+  }
+
+  devPrefs(gameId: string): ((pick: (n: number) => number, rounds: number) => unknown) | null {
+    return this.runners.get(gameId)?.devPrefs ?? null;
+  }
+
+  // Every key of the game's settings document (the Quick Test sends only these).
+  documentKeys(gameId: string): ReadonlySet<string> {
+    return this.runners.get(gameId)?.docKeys ?? new Set();
   }
 
   hostKeys(gameId: string): ReadonlySet<string> {

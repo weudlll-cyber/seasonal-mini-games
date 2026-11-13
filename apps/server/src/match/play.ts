@@ -20,7 +20,8 @@
  *                 rule 3) starts with every active match player admitted (at least the minimum
  *                 connected), is told of players who join (admitted) or leave while it runs,
  *                 and plays on when its players leave; a game without teams gets no team keys;
- *                 a phased round's settings are kept for a series' next round (./series).
+ *                 a phased round's settings are kept for a series' next round (./series); a
+ *                 player's pre-picks (./prefs) go when they leave or are removed.
  * Depends on:     @smg/application (settings), ../round/*, ../seasons/seasons, ./roundCreation,
  *                 ./matches, ./playError, ./presence, ./publicIds, ./rosterRules, ./teams,
  *                 ../db/pool
@@ -53,6 +54,7 @@ import {
   type Team,
 } from './matches.js';
 import { PlayError } from './playError.js';
+import { deletePrefs, PlayerPrefs } from './prefs.js';
 import { newRound, type RoundRequest } from './roundCreation.js';
 import { rememberNext } from './series.js';
 import type { Admission } from './rosterRules.js';
@@ -75,6 +77,8 @@ export class Play {
   readonly presence: Presence;
   // Per-match player numbers for every public answer and frame (./publicIds, T104).
   readonly numbers: PlayerNumbers;
+  // A phased game's per-player match data, the pre-picks (./prefs, 04 §4.8 rule 8).
+  readonly prefs: PlayerPrefs;
   private readonly seasons: Seasons;
   // The anti-multi rules of this install (./rosterRules).
   private readonly admit: Admission;
@@ -89,6 +93,7 @@ export class Play {
     this.seasons = live.seasons;
     this.admit = live.admit;
     this.numbers = new PlayerNumbers(pool);
+    this.prefs = new PlayerPrefs(pool, rounds);
   }
 
   // The numbers of the matches whose rounds a starting server recovered (./publicIds).
@@ -221,12 +226,15 @@ export class Play {
   // Leaving ends a running round once no roster player is left in the match (02 §8.3).
   async leave(match: MatchRow, playerKey: string): Promise<void> {
     await leaveMatch(this.pool, match.id, playerKey);
+    // Pre-picks go with the player (04 §4.8 rule 8).
+    await deletePrefs(this.pool, match.id, playerKey);
     await this.departed(match, playerKey, false);
   }
 
   // Staff (06 §3.2): false when the player is not active in the match.
   async kick(match: MatchRow, playerKey: string): Promise<boolean> {
     if (!(await kickPlayer(this.pool, match.id, playerKey))) return false;
+    await deletePrefs(this.pool, match.id, playerKey);
     await this.departed(match, playerKey, true);
     return true;
   }

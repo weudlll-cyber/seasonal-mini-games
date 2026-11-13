@@ -168,3 +168,14 @@ export interface GameText {
   // or no hook, keeps the platform's sentence (T119).
   readonly specialRule?: (season: Season) => string | null;
 }
+
+// A phased game's panel in the waiting area (04 §4.8 rule 8; Mind Games' pre-picks): the
+// viewer's own value (null before the first save), the series' rounds and those played, and a
+// way to save a new value, which the server checks against the game's schema.
+export interface PrefsPanelProps {
+  readonly prefs: unknown;
+  // The series' rounds, or null before its first round (the game's form knows its default).
+  readonly rounds: number | null;
+  readonly played: number;
+  readonly save: (prefs: unknown) => Promise<{ readonly ok: boolean; readonly code?: string }>;
+}

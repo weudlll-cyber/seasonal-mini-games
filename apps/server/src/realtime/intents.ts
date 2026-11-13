@@ -12,6 +12,7 @@
  *                 match.watch / match.unwatch (at most 3 matches, a match player also joins
  *                 their own room and counts as connected, the host joins the host room),
  *                 time.sync, team.choose (an account with match.join, as over HTTP),
+ *                 match.prefs (a player's own pre-picks, as over HTTP, 04 §4.8 rule 8),
  *                 round.start / round.end / round.abort for the host, and the chat's
  *                 chat.join / chat.leave / chat.send (./chatIntents).
  *                 Adapted from Bingo's intents.ts.
@@ -61,6 +62,8 @@ const guessValue = z.union([
 ]);
 const guessData = z.object({ roundId: z.uuid(), value: guessValue }).strict();
 const teamData = codeData.extend({ team: z.enum(['spring', 'summer', 'autumn', 'winter']) });
+// A phased game's per-player match value; the game's schema checks it (04 §4.8 rule 8).
+const prefsData = codeData.extend({ prefs: z.unknown() }).strict();
 const roundData = z.object({
   roundId: z.uuid(),
   reason: z.string().trim().min(1).max(200).optional(),
@@ -73,6 +76,7 @@ export const INTENT_TYPES = [
   'time.sync',
   'guess',
   'team.choose',
+  'match.prefs',
   'round.start',
   'round.end',
   'round.abort',
@@ -151,6 +155,8 @@ async function dispatch(
       return timeSync(ctx, data);
     case 'team.choose':
       return chooseTeam(ctx, teamData.parse(data));
+    case 'match.prefs':
+      return savePrefs(ctx, prefsData.parse(data));
     case 'round.start':
     case 'round.end':
     case 'round.abort':
@@ -171,6 +177,16 @@ async function chooseTeam(ctx: IntentContext, body: z.infer<typeof teamData>): P
   if (match === null) return { ok: false, code: 'NOT_FOUND' };
   const ok = await ctx.deps.play.chooseTeam(match, accountId, body.team);
   return ok ? { ok: true } : { ok: false, code: 'NOT_IN_MATCH' };
+}
+
+// As over HTTP (PUT /matches/:code/prefs): the signed-in player's own value (04 §4.8 rule 8).
+async function savePrefs(ctx: IntentContext, body: z.infer<typeof prefsData>): Promise<Answer> {
+  const { accountId } = ctx.data.session;
+  if (accountId === null) return { ok: false, code: 'SIGN_IN_REQUIRED' };
+  const match = await matchOr(ctx, body.code);
+  if (match === null) return { ok: false, code: 'NOT_FOUND' };
+  const refused = await ctx.deps.play.prefs.save(match, accountId, body.prefs);
+  return refused === null ? { ok: true } : { ok: false, code: refused };
 }
 
 // The server's clock; the client sends the round trip it measured at its previous sync,

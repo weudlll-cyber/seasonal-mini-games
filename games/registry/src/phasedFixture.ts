@@ -11,7 +11,10 @@
  *                 after it, so no client counts. The least taken side wins a point. Its plan is
  *                 short and fixed (join 6 s, play until 8 s, end at 10 s, everyone sees 2 s late),
  *                 so a test round runs in seconds; a match is a series of two rounds 3 s apart.
- *                 Not part of the registry's list.
+ *                 A player may fix a side per round in advance (prefs `{ picks: { "1": "a" } }`,
+ *                 04 §4.8 rule 8); the pick `x`, a side no round offers, is refused like Mind
+ *                 Games' All in a round without it, so a test can see a refused pre-pick. Some
+ *                 development bots pre-pick. Not part of the registry's list.
  * Depends on:     zod, @smg/game-sdk
  * Used by:        ./testing, ./phased.conformance.test, apps/server/test (phased rounds)
  * Spec:           docs/spec/04-software-architecture.md §4.8; docs/spec/09-testing-strategy.md §3 (P7)
@@ -19,6 +22,7 @@
 import type {
   ConformanceKit,
   DevBot,
+  DevPrefs,
   GameEntry,
   GameModule,
   PhasePlan,
@@ -55,6 +59,12 @@ export type SidesEvent =
 
 // Two rounds a match, 3 s apart, so a test plays a whole series (04 §4.8 rule 7).
 export const SIDES_SERIES: Series = { rounds: 2, pauseMs: 3_000 };
+
+// A side per round number, fixed in advance; `x` is no side a round offers.
+const sidesPrefs = z
+  .object({ picks: z.record(z.string().regex(/^[0-9]{1,2}$/), z.enum([...SIDES, 'x'])) })
+  .strict();
+type SidesPrefs = z.infer<typeof sidesPrefs>;
 
 export const SIDES_PLAN: PhasePlan = {
   entryEndMs: 6_000,
@@ -101,8 +111,10 @@ export const sidesGame: GameModule<SidesState, SidePick, SidesEvent, null, null>
   actionSchema: z.object({ value: z.enum(SIDES) }).strict(),
   deriveSecrets: () => null,
   createRound: () => ({ picks: [] }),
-  validate: (s, playerId, a) =>
-    sidesBefore(s, Infinity).get(playerId) === a.value ? 'SAME_CHOICE' : null,
+  validate: (s, playerId, a) => {
+    if (!SIDES.some((x) => x === a.value)) return 'CHOICE_UNAVAILABLE';
+    return sidesBefore(s, Infinity).get(playerId) === a.value ? 'SAME_CHOICE' : null;
+  },
   decide: (s, act) => {
     const { playerId, receivedAt: at } = act;
     const side = act.action.value;
@@ -140,6 +152,13 @@ export const sidesGame: GameModule<SidesState, SidePick, SidesEvent, null, null>
   phased: {
     plan: () => SIDES_PLAN,
     series: () => SIDES_SERIES,
+    prefs: {
+      schema: sidesPrefs,
+      action: (prefs, roundIndex) => {
+        const value = (prefs as SidesPrefs).picks[String(roundIndex)];
+        return value === undefined ? null : ({ value } as SidePick);
+      },
+    },
     outcome: (s) => {
       const sides = sidesBefore(s, Infinity);
       const counts = countsOf(sides);
@@ -170,8 +189,19 @@ export const sidesConformance: ConformanceKit<SidePick, null, null> = {
 // A bot picks a side at random now and then; a pick it already holds is refused at no cost.
 export const sidesDevBot: DevBot<SidePick> = (_view, pick) => ({ value: SIDES[pick(3)] ?? 'a' });
 
+// About one bot in four fixes a side for every round and stays away.
+const sidesDevPrefs: DevPrefs = (pick, rounds) =>
+  pick(4) !== 0
+    ? null
+    : {
+        picks: Object.fromEntries(
+          Array.from({ length: rounds }, (_, i) => [String(i + 1), SIDES[pick(3)] ?? 'a']),
+        ),
+      };
+
 export const sidesEntry: GameEntry<SidesState, SidePick, SidesEvent, null, null> = {
   module: sidesGame,
   conformance: sidesConformance,
   devBot: sidesDevBot,
+  devPrefs: sidesDevPrefs,
 };

@@ -17,7 +17,8 @@
  *                 naming players by their number in the match, never by account id (T104).
  *                 A phased round's room and host frames come only from its delayed room, once
  *                 one delay old and numbered by its release sequence (04 §4.8 rule 5); its
- *                 committed batches send only each player's own events.
+ *                 committed batches send only each player's own events; a refused pre-pick is
+ *                 told to its player alone (`prefs.refused`).
  *                 "Match changed" goes out at most once a second per match (./perKeyAtMost),
  *                 also when a round ends or is aborted, so pages load the new standings.
  *                 Chat events go to `chat:<roomId>` as `chat` frames (ChatEventView).
@@ -119,6 +120,10 @@ export function attachGateway(server: HttpServer, deps: GatewayDeps): Server {
   });
   deps.play.rounds.onReleased((round, released) => {
     sendReleased(play, toRoom, deps.play, { round, released });
+  });
+  // A refused pre-pick goes to its player alone (04 §4.8 rule 8).
+  deps.play.prefs.onRefused((matchId, key, refused) => {
+    play.to(`match:${matchId}:player:${key}`).emit('prefs.refused', refused);
   });
   // At most one "match changed" a second per match: every page reloads the match on it, and
   // a thousand players entering would otherwise mean a thousand reloads per page.

@@ -77,11 +77,14 @@ function roundsOf(env: Env, store: PgRoundStore, limits: GuessLimits, extra: Run
   return new Rounds(store, options, games);
 }
 
-// A series' next round or close after each of its phased rounds (04 §4.8 rule 7).
+// A series' next round or close after each of its phased rounds (04 §4.8 rule 7), and the
+// players' pre-picks at each opening (rule 8).
 function seriesOf(pool: DbPool, play: Play, rounds: Rounds): SeriesRunner {
   const series = new SeriesRunner(pool, play);
   rounds.onCommitted((round, events) => {
-    if (round.phased && events.some((e) => e.type === 'RoundEnded')) void series.roundEnded(round);
+    if (!round.phased) return;
+    if (events.some((e) => e.type === 'RoundOpened')) void play.prefs.apply(round);
+    if (events.some((e) => e.type === 'RoundEnded')) void series.roundEnded(round);
   });
   return series;
 }
