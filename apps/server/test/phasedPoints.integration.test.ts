@@ -10,7 +10,9 @@
  *                 RoundEnded frame, the round_results rows, the ended round's view (the
  *                 placings table's source; it read 0 before T340), the match standings in the
  *                 details, the closed match's summary, and the season and all-time boards all
- *                 give the same points.
+ *                 give the same points. player-1 switches once first (Spring, then Winter):
+ *                 no `guesses` above 0, no count of anyone's choices, appears in the round
+ *                 view's results or roster, the RoundEnded frame or the rows (O91, T342).
  * Depends on:     vitest, socket.io-client, ./harness, ./socketKit
  * Spec:           docs/spec/02e-game-mind-games.md §8, §9; docs/spec/04-software-architecture.md §4.8 rule 6;
  *                 docs/spec/06-data-model-api-realtime.md §2.4–§2.6
@@ -96,6 +98,13 @@ async function playedRound(): Promise<{ id: string; sockets: Record<string, Sock
   });
   expect(round.statusCode).toBe(201);
   const id = round.json<{ id: string }>().id;
+  // player-1's first choice, switched below: a count would show it (T342).
+  const first = { choice: 'spring', hide: false };
+  await until(
+    () => kit.send(sockets['player-1'] as Socket, 'guess', { roundId: id, value: first }),
+    (a) => a.ok,
+    10_000,
+  );
   for (const [who, choice] of PLAYS) {
     const value = { choice, hide: false };
     await until(
@@ -125,8 +134,9 @@ async function expected(): Promise<Record<string, number>> {
 
 interface Ended {
   readonly status: string;
+  readonly roster: readonly { guesses: number }[];
   readonly names: Readonly<Record<string, string>>;
-  readonly results: readonly { playerId: string; points: number; won?: boolean }[];
+  readonly results: readonly { playerId: string; points: number; guesses: number }[];
   readonly game: { readonly players: readonly { playerKey: string; points: number }[] };
 }
 
@@ -152,11 +162,15 @@ async function roundPoints(id: string, socket: Socket, want: Record<string, numb
   const frame = await until(endFrame, (f) => f !== undefined, 5_000);
   const sent = frame?.results.map((r) => ({ key: r.playerId, points: r.points })) ?? [];
   expect(byName(sent), 'the RoundEnded frame').toEqual(want);
-  const rows = await kit.harness.pool.query<{ player_key: string; points: number }>(
-    'SELECT player_key, points FROM smg.round_results WHERE round_id = $1',
-    [id],
-  );
+  const rows = await kit.harness.pool.query<{
+    player_key: string;
+    points: number;
+    guesses: number;
+  }>('SELECT player_key, points, guesses FROM smg.round_results WHERE round_id = $1', [id]);
   expect(byName(rows.rows.map((x) => ({ key: x.player_key, points: x.points })))).toEqual(want);
+  // No count of anyone's choices anywhere, although player-1 switched (O91, T342).
+  const counts = [ended.results, ended.roster, frame?.results ?? [], rows.rows].flat();
+  expect(counts.map((x) => x.guesses).filter((n) => n !== 0)).toEqual([]);
 }
 
 // The match standings, the summary once the series closed, and both boards.

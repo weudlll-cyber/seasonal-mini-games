@@ -112,7 +112,6 @@ export const pickGame: GameModule<
   phased: {
     plan: () => ({ entryEndMs: 5_000, actionsEndMs: 8_000, endMs: 10_000, viewDelayMs: 2_000 }),
     series: () => null,
-    outcome: (s) =>
-      Object.keys(s).map((playerId) => ({ playerId, won: true, points: 1, actions: 1 })),
+    outcome: (s) => Object.keys(s).map((playerId) => ({ playerId, won: true, points: 1 })),
   },
 };

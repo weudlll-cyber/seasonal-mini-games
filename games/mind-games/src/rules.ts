@@ -104,8 +104,7 @@ export function outcome(s: MindState): readonly OutcomeRow[] {
   const { finals, winners } = finalOf(s);
   return [...finals].map(([playerId, choice]) => {
     const points = pointsOf(choice, winners);
-    const actions = s.moves.filter((m) => m.playerKey === playerId).length;
-    return { playerId, won: points > 0, points, actions };
+    return { playerId, won: points > 0, points };
   });
 }
 

@@ -220,7 +220,7 @@ phased?: {                         // present exactly when meta.timing is 'phase
     schema: ZodType<P>;
     action(prefs: P, roundIndex: number, cfg: Cfg): A | null;     // the action it makes at a round's opening
   };
-  outcome(state: S): ReadonlyArray<{ playerId: string; won: boolean; points: number; actions: number }>;
+  outcome(state: S): ReadonlyArray<{ playerId: string; won: boolean; points: number }>;  // no action count (T342)
 };
 interface PhasePlan {              // milliseconds after opensAt
   entryEndMs: number;              // a player not yet in the round may enter until then

@@ -4,7 +4,9 @@
  * @brief  One round as staff watch it, with the staff actions: abort, kick, remove a result.
  *
  * Responsibility: the spectator view staff get (`GET /admin/rounds/:id`: status, players with
- *                 their guesses and places, never a secret before the end), reloaded every 3
+ *                 their guesses and places, never a secret before the end; a phased round's
+ *                 players with their points only: no count of their choices, which would show
+ *                 their switches, and no place, 02e §9, T343), reloaded every 3
  *                 seconds; while it runs, abort it with a reason (`match.abort`); kick an
  *                 active player of the match with a reason (`match.manage`); after the end,
  *                 remove one player's result with a reason (`leaderboard.adjust`). Each action
@@ -31,6 +33,8 @@ interface StaffRound {
   readonly roster: readonly { playerKey: string; guesses: number; place: number | null }[];
   readonly results?: readonly { playerId: string; place: number | null; points: number }[];
   readonly names: Readonly<Record<string, string>>;
+  // A phased round's plan (04 §4.8); absent for the guess games.
+  readonly plan?: unknown;
   readonly match: { readonly id: string; readonly code: string; readonly title: string };
   readonly players: readonly string[];
   readonly removed: readonly string[];
@@ -74,12 +78,20 @@ function requests(view: StaffRound) {
   };
 }
 
-// Name, guesses, place and points (or "removed") of one player.
+// The columns: a phased round's without guesses and place (T343).
+const headings = (view: StaffRound) =>
+  view.plan === undefined
+    ? ['Player', 'Guesses', 'Place', 'Points', 'Action']
+    : ['Player', 'Points', 'Action'];
+
+// Name, guesses, place and points (or "removed") of one player; a phased round's name and points.
 function cells(view: StaffRound, k: string): string[] {
   const row = view.roster.find((r) => r.playerKey === k);
   const result = view.results?.find((r) => r.playerId === k);
   const points = view.removed.includes(k) ? 'removed' : String(result?.points ?? '—');
-  return [view.names[k] ?? k, String(row?.guesses ?? '—'), String(row?.place ?? '—'), points];
+  const name = view.names[k] ?? k;
+  if (view.plan !== undefined) return [name, points];
+  return [name, String(row?.guesses ?? '—'), String(row?.place ?? '—'), points];
 }
 
 function PlayerRow(p: {
@@ -132,7 +144,7 @@ function Players({
       <table className="admin-table" data-testid="round-players">
         <thead>
           <tr>
-            {['Player', 'Guesses', 'Place', 'Points', 'Action'].map((h) => (
+            {headings(view).map((h) => (
               <th key={h} scope="col">
                 {h}
               </th>

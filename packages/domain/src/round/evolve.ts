@@ -7,7 +7,8 @@
  *                 restart both fold through here, so replaying the log gives the live state
  *                 (invariant P5). Game events go to the module's own evolve. A phased round
  *                 (04 §4.8) keeps per roster player whether they are a match player and when
- *                 they entered; a player who joins the match while it runs gets an entry then.
+ *                 they entered; a player who joins the match while it runs gets an entry then,
+ *                 and counts no player's actions (T342).
  * Depends on:     @smg/game-sdk (module, round input), ./inactivity (clock restart), ./types
  * Used by:        ./step, ../index, packages/application (recovery)
  * Spec:           docs/spec/04-software-architecture.md §5.1, §5.3; docs/spec/09-testing-strategy.md §3 P5
@@ -144,11 +145,13 @@ function fired<S, Cfg>(
 
 // One more guess for the player, their cooldown from its receive time, their inactivity
 // clock stopped until the cooldown is over and the answer has arrived, the last number used.
+// A phased round counts no player's actions: a count would show their switches (02e §9, T342).
 function accepted<S, Cfg>(
   state: RoundState<S, Cfg>,
   e: { playerId: string; receiveSeq: number; receivedAt: number; cooldownEndsAt: number },
 ): RoundState<S, Cfg> {
-  const guesses = (state.roster[e.playerId]?.guesses ?? 0) + 1;
+  const counted = state.plan === undefined ? 1 : 0;
+  const guesses = (state.roster[e.playerId]?.guesses ?? 0) + counted;
   const { cooldownEndsAt } = e;
   const readyAt = readyAfter(state, e.receivedAt, cooldownEndsAt);
   const next = withEntry(state, e.playerId, { guesses, cooldownEndsAt, readyAt });

@@ -166,8 +166,7 @@ export const sidesGame: GameModule<SidesState, SidePick, SidesEvent, null, null>
       const least = Math.min(...taken.map((x) => counts[x]));
       return [...sides].map(([playerId, side]) => {
         const won = counts[side] === least;
-        const actions = s.picks.filter((p) => p.playerId === playerId).length;
-        return { playerId, won, points: won ? 1 : 0, actions };
+        return { playerId, won, points: won ? 1 : 0 };
       });
     },
   },

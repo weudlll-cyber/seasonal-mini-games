@@ -10,7 +10,8 @@
  *                 entrants, and equal what a view cut just after it shows; MG3, every player in
  *                 the round has exactly one first-choice line with their name, a switch has a
  *                 line exactly where it is named; MG5, the points of every row and `won`
- *                 exactly for the scoring players, no row without a choice; P5, folding every
+ *                 exactly for the scoring players, no row without a choice, no row with a count
+ *                 of the player's choices (T342); P5, folding every
  *                 event gives the live state.
  * Depends on:     vitest, fast-check, ./choices, ./fakes, ./module, ./state, ./views
  * Spec:           docs/spec/09-testing-strategy.md §3 (MG2, MG3, MG5), §4.2
@@ -106,7 +107,9 @@ describe('Mind Games properties (09 §3, §4.2)', () => {
       { numRuns: 200 },
     );
   });
+});
 
+describe('Mind Games points (09 §3 MG5)', () => {
   it('MG5: rows score 1 or 2 exactly for winning final choices; replay equals live', () => {
     fc.assert(
       fc.property(round, moves, (cfg, list) => {
@@ -118,6 +121,8 @@ describe('Mind Games properties (09 §3, §4.2)', () => {
         for (const r of rows) {
           const points = pointsOf(finals.get(r.playerId) ?? 'spring', winners);
           expect([r.points, r.won]).toEqual([points, points > 0]);
+          // No count of the player's choices: it would show their switches (T342).
+          expect(Object.keys(r).sort()).toEqual(['playerId', 'points', 'won']);
         }
         const replay = steps.flatMap((s) => s.events).reduce(mindGames.evolve, roundWith(cfg));
         expect(replay).toEqual(state);

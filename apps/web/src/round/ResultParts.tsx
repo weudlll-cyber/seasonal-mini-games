@@ -10,7 +10,10 @@
  *                 one; a name cut with an ellipsis at its end only, "(you)" beside it never
  *                 cut; one team line in the first part ("Team Spring wins the round (+1 team
  *                 point)", "No team wins this round."); the team result below, each team's
- *                 team points named as such, so they read apart from player points.
+ *                 team points named as such, so they read apart from player points. A phased
+ *                 round's table has only Player and Points, its winners first, then the rest,
+ *                 each in name order: nobody is placed, and no count of a player's choices is
+ *                 shown, which would show their switches (02e §9, T343).
  *                 Moved out of ./ResultScreen to keep each file under the size limit.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), @smg/ui (highlight),
  *                 ../season/*, ../useMediaQuery, ./PlayerName
@@ -26,7 +29,6 @@ import { SeasonIcon } from '../season/SeasonIcon.js';
 import { teamName } from '../season/season.js';
 import { useMediaQuery } from '../useMediaQuery.js';
 import { PlayerName } from './PlayerName.js';
-import { actionWords } from './roundText.js';
 
 // The first part's placings: the top three.
 const TOP = 3;
@@ -54,8 +56,6 @@ function Shortened(p: { readonly long: string; readonly short: string }): ReactE
 function PlaceCell(p: { readonly state: RoundStateView; readonly r: Result }) {
   if (p.r.place !== null) return <>{formatNumber(p.r.place)}</>;
   if (p.r.timedOut) return <>timed out</>;
-  // A phased round places nobody: its winners share the win (04 §4.8 rule 6, T332).
-  if (p.r.won !== undefined) return <>{p.r.won ? 'won' : '–'}</>;
   if (p.state.secretMode !== 'shared') return <>not solved</>;
   // The words as text for a screen reader (an aria-label on a plain span is not allowed,
   // axe's aria-prohibited-attr), the dash for the eye, the words again as its tooltip.
@@ -74,6 +74,16 @@ export const byPlace = (results: readonly Result[]): Result[] =>
     (a, b) => (a.place ?? Infinity) - (b.place ?? Infinity) || b.guesses - a.guesses,
   );
 
+// A phased round's rows: its winners first, then the rest, each in display-name order (T343).
+export const byWin = (results: readonly Result[], names: Readonly<Record<string, string>>) => {
+  const name = (r: Result) => names[r.playerId] ?? r.playerId;
+  return [...results].sort(
+    (a, b) =>
+      Number(b.won === true) - Number(a.won === true) ||
+      name(a).localeCompare(name(b), 'en', { sensitivity: 'base' }),
+  );
+};
+
 const points = (n: number, what: string): string =>
   `${formatNumber(n)} ${what}${n === 1 ? '' : 's'}`;
 
@@ -91,11 +101,14 @@ function PlacingRow(p: {
   // A game with player tags: the row takes part in the grid's highlight (T211). It shows no
   // marker: the name says who it is, and the room goes to the name.
   const row = useHighlightRow(p.marks?.[r.playerId] === undefined ? null : r.playerId, p.phone);
+  const phased = p.state.plan !== undefined;
   return (
     <tr className={p.you ? 'round-you' : undefined} {...row}>
-      <td>
-        <PlaceCell state={p.state} r={r} />
-      </td>
+      {phased ? null : (
+        <td>
+          <PlaceCell state={p.state} r={r} />
+        </td>
+      )}
       <td>
         <span className="round-player">
           {p.state.teamsOn ? (
@@ -110,9 +123,33 @@ function PlacingRow(p: {
           {p.you ? <span className="round-you-mark"> (you)</span> : null}
         </span>
       </td>
-      <td>{formatNumber(r.guesses)}</td>
+      {phased ? null : <td>{formatNumber(r.guesses)}</td>}
       <td>{formatNumber(r.points)}</td>
     </tr>
+  );
+}
+
+// The table's head: a phased round's without Place and Guesses (T343).
+function PlacingsHead({ phased }: { readonly phased: boolean }): ReactElement {
+  return (
+    <thead>
+      <tr>
+        {phased ? null : (
+          <th scope="col" className="round-col-place">
+            <Shortened long="Place" short="#" />
+          </th>
+        )}
+        <th scope="col">Player</th>
+        {phased ? null : (
+          <th scope="col" className="round-col-num">
+            Guesses
+          </th>
+        )}
+        <th scope="col" className="round-col-num">
+          <Shortened long="Points" short="Pts" />
+        </th>
+      </tr>
+    </thead>
   );
 }
 
@@ -124,27 +161,16 @@ export function Placings(p: {
 }): ReactElement {
   const phone = useMediaQuery(NARROW);
   const [all, setAll] = useState(false);
-  const rows = byPlace(p.state.results ?? []);
+  const phased = p.state.plan !== undefined;
+  const results = p.state.results ?? [];
+  const rows = phased ? byWin(results, p.state.names) : byPlace(results);
   const shown = all ? rows : rows.slice(0, TOP);
   return (
     <div className="round-placings">
       <div className="round-table-wrap">
         <table className="round-table" data-mode={p.state.secretMode} data-testid="placings">
           <caption className="smg-visually-hidden">Placings</caption>
-          <thead>
-            <tr>
-              <th scope="col" className="round-col-place">
-                <Shortened long="Place" short="#" />
-              </th>
-              <th scope="col">Player</th>
-              <th scope="col" className="round-col-num">
-                {actionWords(p.state).Many}
-              </th>
-              <th scope="col" className="round-col-num">
-                <Shortened long="Points" short="Pts" />
-              </th>
-            </tr>
-          </thead>
+          <PlacingsHead phased={phased} />
           <tbody>
             {shown.map((r) => (
               <PlacingRow

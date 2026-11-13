@@ -7,7 +7,8 @@
  *                 round's end, the check order and the windows to the millisecond, no
  *                 cooldown and a reply without a receive number, PlayerEntered once, match
  *                 players joining and leaving while it runs, the results from the game's own
- *                 rule (nobody placed, winners with `won`), "no players left" for an empty
+ *                 rule (nobody placed, winners with `won`, no count of anyone's actions in the
+ *                 roster or the results, T342), "no players left" for an empty
  *                 round, and replaying the log giving the live state.
  * Depends on:     vitest, zod, @smg/game-sdk, ./*
  * Spec:           docs/spec/04-software-architecture.md §4.8; docs/spec/09-testing-strategy.md §4.2
@@ -69,7 +70,6 @@ const voteGame: GameModule<Votes, Vote, Voted, null, null> = {
         playerId,
         won: v === 1,
         points: v === 1 ? 1 : 0,
-        actions: 1,
       })),
   },
 };
@@ -190,11 +190,14 @@ describe('players and the end of a phased round (04 §4.8 rules 3 and 6)', () =>
     expect(d.log).toHaveLength(n);
   });
 
-  it("ends with the game's results: nobody placed, winners with won, no teams", () => {
+  it("ends with the game's results: nobody placed, winners with won, no teams, no count", () => {
     const d = new VoteDriver();
     const t = d.start(['p1', 'p2', 'p3']);
-    d.vote('p1', t + 1_000, 1);
+    d.vote('p1', t + 1_000, 2);
+    d.vote('p1', t + 1_500, 1);
     d.vote('p2', t + 2_000, 2);
+    // No count of a player's actions anywhere: p1 switched, and nothing says so (T342).
+    expect(Object.values(d.state.roster).map((e) => e.guesses)).toEqual([0, 0, 0]);
     d.run({ type: 'tick', at: t + PLAN.endMs });
     const ended = d.log.at(-1);
     expect(ended?.type).toBe('RoundEnded');
@@ -202,8 +205,8 @@ describe('players and the end of a phased round (04 §4.8 rules 3 and 6)', () =>
     expect(ended.reason).toBe('timeUp');
     expect(ended.teams).toEqual([]);
     expect(ended.results.map((r) => [r.playerId, r.place, r.won, r.points, r.guesses])).toEqual([
-      ['p1', null, true, 1, 1],
-      ['p2', null, false, 0, 1],
+      ['p1', null, true, 1, 0],
+      ['p2', null, false, 0, 0],
     ]);
     expect(ended.results[0]?.solveAt).toBe(t + PLAN.endMs);
     expect(replayRound(voteGame, d.log)).toEqual(d.state);

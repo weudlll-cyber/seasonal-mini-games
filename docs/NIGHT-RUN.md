@@ -9,10 +9,33 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged. Platf
 | Piece                                                                | State            |
 | -------------------------------------------------------------------- | ---------------- |
 | 1 — points never reach the table                                     | **done**, pushed |
-| 2 — the result table of a phased round, no per-player count anywhere | open             |
+| 2 — the result table of a phased round, no per-player count anywhere | **done**, pushed |
 | 3 — the Quick Test form's join time                                  | open             |
 | 4 — the phase strip                                                  | open             |
 | 5 — no season in Mind Games                                          | open             |
+
+### Piece 2 — the result table of a phased round, no per-player count anywhere
+
+- **Owner decision O91** (2026-11-13), built as T342 and T343.
+- **Where the count reached, and what changed:**
+  - **The game contract:** `OutcomeRow.actions` is gone (`packages/game-sdk/src/phased.ts`, 04 §4.8). Mind Games (`games/mind-games/src/rules.ts`) and the phased fixture (`games/registry/src/phasedFixture.ts`) no longer count.
+  - **The domain:** a phased round's roster counts no action (`packages/domain/src/round/evolve.ts`), and a phased result row's `guesses` is 0 (`packages/domain/src/round/results.ts`).
+  - **What reads that 0:** RoundEnded and its room frame, `round_results.guesses` (NOT NULL), and the ended view all carry 0, never a count.
+  - **The result's placings** (`apps/web/src/round/ResultParts.tsx`): a phased round shows Player and Points, sorted by the new `byWin`. The game's "won" cell is gone with the Place column.
+  - **The admin's round panel** (`apps/admin/src/live/RoundPanel.tsx`): Player, Points and Action.
+- **Places checked that carry no count:**
+  - the webhooks, which send places and points only;
+  - the public queries;
+  - the chat line, worded from `won`;
+  - the summary and the boards, which hold points and wins;
+  - the proof route, which refuses a round without a commitment (`NO_PROOF`), as every phased round is.
+- **Tests:**
+  - P7's suite (`games/registry/src/phased.conformance.test.ts`) and MG5 (`games/mind-games/src/properties.test.ts`): an outcome row holds only `playerId`, `won` and `points`.
+  - The domain's phased test: a player switches; the roster and RoundEnded show 0.
+  - `apps/web/src/round/phasedWords.test.tsx`: a guess round's table is unchanged, and a phased round's has two columns, in winner-then-name order, with no count.
+  - `apps/admin/src/live/roundPanel.test.tsx` (new): both kinds of round.
+  - `apps/server/test/phasedPoints.integration.test.ts`: player-1 switches. No `guesses` above 0 appears in the round view's results or roster, the RoundEnded frame, or the rows.
+- **Noticed, left alone:** the admin's live list (`apps/admin/src/live/LivePage.tsx`) shows a round's total of guesses, the sum over its roster. For a phased round that is always 0: a total, not a per-player count, but a meaningless number there.
 
 ### Piece 1 — points never reach the table
 

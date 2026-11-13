@@ -32,12 +32,12 @@ export interface PhasePlan {
   readonly viewDelayMs: number;
 }
 
-// One player's result as the game's rule decides it; `actions` fills round_results.guesses.
+// One player's result as the game's rule decides it. It carries no count of the player's
+// actions: a count would show their switches, which no screen shows (02e §9, T342).
 export interface OutcomeRow {
   readonly playerId: string;
   readonly won: boolean;
   readonly points: number;
-  readonly actions: number;
 }
 
 // A match that is a series of rounds (04 §4.8 rule 7): its number of rounds and the pause

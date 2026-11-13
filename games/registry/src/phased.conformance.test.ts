@@ -6,7 +6,7 @@
  * Responsibility: run against the phased fixture and every registered phased module (04 §4.8
  *                 rule 9). P1 the same inputs give the same events; P3 every view validates;
  *                 P4 a refused action changes nothing; P5 folding the events gives the live
- *                 state. P7 (09 §3), metamorphic: at a time `t`, change other players' actions
+ *                 state; no outcome row counts a player's actions (T342). P7 (09 §3), metamorphic: at a time `t`, change other players' actions
  *                 received at or after `t − D`; the viewer's player view (their own actions
  *                 kept) and, with anyone's late actions changed, the spectator view stay
  *                 identical at `releasedBefore = t − D`. A variant of the fixture that shows
@@ -150,6 +150,10 @@ function phasedConformance<S, A, E, Cfg, Sec>(entry: GameEntry<S, A, E, Cfg, Sec
           entry.conformance.sentinels(live.input).secrets,
         );
         expect(module.viewSchemas.result.safeParse(result).success).toBe(true);
+        // A result row never counts a player's actions: that would show their switches (T342).
+        for (const row of module.phased?.outcome(live.state) ?? []) {
+          expect(Object.keys(row).sort()).toEqual(['playerId', 'points', 'won']);
+        }
       }),
       { numRuns: 100 },
     );

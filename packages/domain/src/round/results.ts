@@ -47,7 +47,8 @@ export function playerResults<S, Cfg>(state: RoundState<S, Cfg>): PlayerResult[]
 
 // A phased round's results from the game's own rule (04 §4.8 rule 6): nobody is placed, so
 // several winners share the win; a winner's win counts from the round's end (the standings'
-// tie order needs its time, DECISIONS T288).
+// tie order needs its time, DECISIONS T288). No count of a player's actions: it would show
+// their switches (02e §9), so the row's guesses stay 0 (T342).
 export function phasedResults(rows: readonly OutcomeRow[], endedAt: number): PlayerResult[] {
   return rows.map((r) => ({
     playerId: r.playerId,
@@ -55,7 +56,7 @@ export function phasedResults(rows: readonly OutcomeRow[], endedAt: number): Pla
     solved: false,
     solveSeq: null,
     solveAt: r.won ? endedAt : null,
-    guesses: r.actions,
+    guesses: 0,
     team: null,
     points: r.points,
     timedOut: false,

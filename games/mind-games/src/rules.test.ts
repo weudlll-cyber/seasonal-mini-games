@@ -120,11 +120,11 @@ describe('Mind Games outcome (02e §8)', () => {
     ]);
     // Final counts: spring 3, summer 1, all 1: the least chosen place holds Summer and All.
     expect(mindGames.phased?.outcome(s)).toEqual([
-      { playerId: 'anna', won: false, points: 0, actions: 1 },
-      { playerId: 'bo', won: false, points: 0, actions: 1 },
-      { playerId: 'cy', won: true, points: 2, actions: 1 },
-      { playerId: 'dee', won: false, points: 0, actions: 2 },
-      { playerId: 'ed', won: true, points: 1, actions: 1 },
+      { playerId: 'anna', won: false, points: 0 },
+      { playerId: 'bo', won: false, points: 0 },
+      { playerId: 'cy', won: true, points: 2 },
+      { playerId: 'dee', won: false, points: 0 },
+      { playerId: 'ed', won: true, points: 1 },
     ]);
   });
 
