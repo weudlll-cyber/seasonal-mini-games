@@ -180,6 +180,12 @@
   text-overflow: ellipsis;
 }
 
+/* The dock's line in the info column: the refusal's place, kept even when empty, so the dock
+   takes its own room in the column and the list above it gives way. */
+.mg-input {
+  min-height: 1.5em;
+}
+
 .mg-refusal {
   margin: 0;
   color: var(--color-danger);

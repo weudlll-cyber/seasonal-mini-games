@@ -16,7 +16,7 @@
  */
 import { bombDefusal, bombDefusalConformance, bombDefusalDevBot } from '@smg-game/bomb-defusal';
 import { gtnConformance, gtnDevBot, guessTheNumber } from '@smg-game/guess-the-number';
-import { mindConformance, mindDevBot, mindGames } from '@smg-game/mind-games';
+import { mindConformance, mindDevBot, mindDevPrefs, mindGames } from '@smg-game/mind-games';
 import { safecracker, safecrackerConformance, safecrackerDevBot } from '@smg-game/safecracker';
 import {
   seasonalTarget,
@@ -49,5 +49,10 @@ export const GAMES: readonly InstalledGame[] = [
     conformance: seasonalTargetConformance,
     devBot: seasonalTargetDevBot,
   }),
-  install({ module: mindGames, conformance: mindConformance, devBot: mindDevBot }),
+  install({
+    module: mindGames,
+    conformance: mindConformance,
+    devBot: mindDevBot,
+    devPrefs: mindDevPrefs,
+  }),
 ];

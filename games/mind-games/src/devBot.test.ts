@@ -13,9 +13,10 @@
  */
 import { describe, expect, it } from 'vitest';
 
-import { mindDevBot } from './devBot.js';
+import { mindDevBot, mindDevPrefs } from './devBot.js';
 import { playAll, roundWith } from './fakes.js';
 import { mindGames } from './module.js';
+import { prefsSchema } from './rules.js';
 import type { MindConfig } from './settings.js';
 
 // Draws given in order: the way, the box, the first choice, then the rest.
@@ -77,5 +78,14 @@ describe('Mind Games development bot (09 §4.2)', () => {
     expect(mindDevBot(moved, draws([1, 0, 0, 1]))).toEqual({
       value: { choice: 'winter', hide: false },
     });
+  });
+});
+
+describe('Mind Games development bot pre-picks (09 §4.2)', () => {
+  it('pre-picks every round with its box for one draw in four, a value the game takes', () => {
+    const prefs = mindDevPrefs(draws([0, 4, 1, 0, 1]), 3);
+    expect(prefs).toEqual({ picks: { '1': 'all', '2': 'summer', '3': 'spring' }, hide: true });
+    expect(prefsSchema.safeParse(prefs).success).toBe(true);
+    expect(mindDevPrefs(draws([1]), 3)).toBeNull();
   });
 });

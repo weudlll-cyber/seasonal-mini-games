@@ -104,6 +104,12 @@ describe('Mind Games result (02e §9)', () => {
     );
   });
 
+  it('draws nothing, and words no headline, for a round without its result view', () => {
+    const { container } = render(<ResultPanel {...props} view={null} part="reveal" />);
+    expect(container.innerHTML).toBe('');
+    expect(mindText.runnerUp(null, names, false)).toBeNull();
+  });
+
   it('lists every named line, oldest first, in the history part', () => {
     render(<ResultPanel {...props} view={r} part="history" />);
     expect(screen.getAllByRole('listitem').map((li) => li.textContent)).toEqual([

@@ -11,14 +11,16 @@
  *                 which the round refuses at no cost (`SAME_CHOICE`), so it keeps playing until
  *                 play ends; a bot that stays has nothing to do after its first choice. In the
  *                 Quick Test the draws come from its seeded plan for the round, so the same seed
- *                 gives the same way and first choice (09 §4.2).
+ *                 gives the same way and first choice (09 §4.2). About one bot in four fixes its
+ *                 choice for every round in advance and stays away (`mindDevPrefs`): any of the
+ *                 five names, so a pre-picked All meets a round without it now and then.
  * Depends on:     @smg/game-sdk (DevBot), ./choices, ./state (types), ./views (types)
  * Used by:        ./index, games/registry
  * Spec:           docs/spec/09-testing-strategy.md §4.2, §5; docs/spec/02e-game-mind-games.md §5
  */
-import type { DevBot } from '@smg/game-sdk';
+import type { DevBot, DevPrefs } from '@smg/game-sdk';
 
-import { optionsOf, type Choice } from './choices.js';
+import { CHOICES, optionsOf, type Choice } from './choices.js';
 import type { MindAction } from './state.js';
 import type { PlayerView } from './views.js';
 
@@ -50,3 +52,15 @@ export const mindDevBot: DevBot<MindAction> = (playerView, pick) => {
   if (moved % EVERY !== 0) return send(own, hide);
   return send(options[(pick(options.length) + moved) % options.length] ?? own, hide);
 };
+
+// A Quick Test bot's pre-picks (09 §4.2): about one in four picks every round in advance, with
+// its box; the others play in person.
+export const mindDevPrefs: DevPrefs = (pick, rounds) =>
+  pick(4) !== 0
+    ? null
+    : {
+        picks: Object.fromEntries(
+          Array.from({ length: rounds }, (_, i) => [String(i + 1), CHOICES[pick(5)] ?? 'spring']),
+        ),
+        hide: pick(2) === 1,
+      };
