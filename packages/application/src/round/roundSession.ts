@@ -106,11 +106,14 @@ export class RoundSession<S, A, E, Cfg, Sec> {
     return result;
   }
 
-  // The result view, only once the round has ended (never while it runs, 02 §11).
+  // The result view, only once the round has ended (never while it runs, 02 §11). A guess
+  // game's needs its derived secrets; a phased game may have none (`deriveSecrets` gives null,
+  // 04 §4.8), and its result view is built all the same (DECISIONS T324).
   result(): unknown {
     const { status, game } = this.current;
-    if (status !== 'ended' || game === null || this.secrets === null) return null;
-    return this.module.views.result(game, this.secrets);
+    if (status !== 'ended' || game === null) return null;
+    if (this.secrets === null && this.module.meta.timing !== 'phased') return null;
+    return this.module.views.result(game, this.secrets as Sec);
   }
 
   // When the round next has to run without any player action (open, special, timeout, end).

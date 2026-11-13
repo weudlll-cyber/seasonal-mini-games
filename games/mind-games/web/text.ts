@@ -91,7 +91,6 @@ export const mindText: GameText = {
   code: (code) => CODES[code] ?? null,
   event: () => null,
   guesses,
-  // Null where the round has no result view (morning sheet G11): the platform's line stays alone.
-  runnerUp: (result) => (result === null ? null : headline(result as ResultView)),
+  runnerUp: (result) => headline(result as ResultView),
   intro,
 };

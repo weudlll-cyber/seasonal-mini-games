@@ -112,11 +112,9 @@ function useLit(): boolean {
   return lit;
 }
 
-export function ResultPanel(p: ResultPanelProps): ReactElement | null {
-  const r = p.view as ResultView | null;
+export function ResultPanel(p: ResultPanelProps): ReactElement {
+  const r = p.view as ResultView;
   const lit = useLit();
-  // No result view (morning sheet G11): the platform's placings and standings show alone.
-  if (r === null) return null;
   if (p.part === 'history') return <History r={r} names={p.names} viewerKey={p.viewerKey} />;
   return (
     <ul className="mg-options" aria-label="The options" data-testid="mind-result">

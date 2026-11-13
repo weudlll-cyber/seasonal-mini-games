@@ -74,3 +74,45 @@ export const findGame: GameModule<
   views: { player: (s) => s, spectator: (s) => s, result: (_s, secrets) => secrets },
   viewSchemas: { player: z.number(), spectator: z.number(), result: z.unknown() },
 };
+
+// A phased game without a secret (04 §4.8): each player picks a side, the result counts them.
+export const pickGame: GameModule<
+  Readonly<Record<string, string>>,
+  { value: string },
+  { player: string; side: string },
+  null,
+  null
+> = {
+  meta: {
+    id: 'pick',
+    name: 'Pick',
+    contractVersion: 1,
+    timing: 'phased',
+    secretModes: [],
+    teams: false,
+  },
+  settings: { defs: [], read: () => null, problem: () => null },
+  actionSchema: z.object({ value: z.string() }),
+  deriveSecrets: () => null,
+  createRound: () => ({}),
+  validate: () => null,
+  decide: (_s, act) => ({
+    ok: true,
+    events: [
+      {
+        audience: `player:${act.playerId}`,
+        event: { player: act.playerId, side: act.action.value },
+      },
+    ],
+    signals: [],
+  }),
+  evolve: (s, e) => ({ ...s, [e.player]: e.side }),
+  views: { player: (s) => s, spectator: () => ({}), result: (s) => ({ picks: s }) },
+  viewSchemas: { player: z.unknown(), spectator: z.unknown(), result: z.unknown() },
+  phased: {
+    plan: () => ({ entryEndMs: 5_000, actionsEndMs: 8_000, endMs: 10_000, viewDelayMs: 2_000 }),
+    series: () => null,
+    outcome: (s) =>
+      Object.keys(s).map((playerId) => ({ playerId, won: true, points: 1, actions: 1 })),
+  },
+};

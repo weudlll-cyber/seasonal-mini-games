@@ -2,6 +2,28 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Chain MG-N3 (2026-11-13): the platform gaps G1–G13, then the handover
+
+Status, updated after every piece. Branch `feat/mind-games` is not merged. This chain may change `packages/` and `apps/`; the four existing games must behave exactly as before.
+
+| Piece                                                                                                    | State            |
+| -------------------------------------------------------------------------------------------------------- | ---------------- |
+| 1 — G1, G11, G3: the input for every match player, the result view without a secret, the chat line       | **done**, pushed |
+| 2 — G2, G5, G7, G8: the phase times, the lines' ages, the round's box in the prefs, the refused pre-pick | open             |
+| 3 — G4, G6, G9, G10: the words and the forms of a phased round                                           | open             |
+| 4 — G12, G13: seats in a Quick Test match, the admin's round view                                        | open             |
+| 5 — the journeys completed, the play-through, the handover                                               | open             |
+
+### Piece 1 — the two blockers (G1, G11) and the chat line (G3)
+
+- **G11** (`packages/application/src/round/roundSession.ts` 133 → 136): `result()` builds a phased game's result view also when its secrets are null; a guess game's rule is unchanged (T324). Tests (`roundSession.test.ts` 213 → 245, a secret-less phased fake `pickGame` in `fakes.ts` 76 → 118): the phased round's result exists only after its end; a guess round's result exists once its secrets do. The server's phased test now also checks the fixture's result view at the end (`apps/server/test/phased.integration.test.ts` 185 → 188); the fixture already derives no secret, so it needs no change.
+- **G3** (`apps/server/src/chat/roundLines.ts` 66 → 94, the line's wording extracted into `lineOf`): a phased round's line from `won` and the game's `reveal`, "Round 3: Winter was the least chosen (3 players)." or "Round 3 ended: nobody won." (T325); `roundLines.test.ts` (new, 33) keeps a guess round's line and words a phased one.
+- **G1** (`apps/web/src/round/InputRow.tsx` 122 → 144): every match player of a phased round gets the input, without a ring, acting until the play's end (T326); `dock.test.tsx` (new, 106): a guess round's input only for a roster row and with its ring, a phased round's for a match player before the roster lists them, none after the play's end or for a spectator.
+- **`pnpm verify`:** format, lint, typecheck green; tests 790 + 99 + 166 passed, 1 failed: the authorization matrix's HTTP test ran past its 150 s timeout under the full run's load, as in chain MG-N2 (not raised). The existing games' golden test and conformance P1–P6 are among the passing ones.
+- **Removed:** the game's guards against a missing result view (`games/mind-games/web/ResultPanel.tsx` 128 → 126, `web/text.ts` 97 → 96, their test in `web/panels.test.tsx`), which G11 made unnecessary.
+- **Reused:** `findGame`'s shape for the phased fake; the round fakes `ended` and the inactivity test's `InputRow` set-up; the phased server test's sockets and end check.
+- **Noticed, left alone:** `GamePart` (`apps/web/src/round/InfoParts.tsx`) hands every game's info-column panel an `act` that does nothing; it predates the phased class (the panels only show), so it is not a gap's workaround and stays.
+
 ## Chain MG-N2 (2026-11-13): Seasonal Mind Games itself (MG-1 → MG-5)
 
 Status, updated after every piece. Branch `feat/mind-games` is not merged.

@@ -153,7 +153,10 @@ async function windows(s: Sockets, id: string, opensAt: number): Promise<void> {
 // The end: the game's results, nobody placed, every winner's win in the standings (rule 6).
 async function results(id: string, opensAt: number): Promise<void> {
   await sleep(opensAt + SIDES_PLAN.endMs - Date.now() + 500);
-  expect((await stateOf('player-2', id)).role).toBe('result');
+  const ended = await stateOf('player-2', id);
+  expect(ended.role).toBe('result');
+  // The game's result view, although the fixture has no secret (DECISIONS T324).
+  expect(ended.game).toMatchObject({ counts: { a: 0, b: 1, c: 1 } });
   const rows = await kit.harness.pool.query<{ place: number | null; won: boolean; points: number }>(
     'SELECT place, won, points FROM smg.round_results WHERE round_id = $1 ORDER BY player_key',
     [id],

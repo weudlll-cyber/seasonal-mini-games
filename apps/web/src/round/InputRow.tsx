@@ -11,8 +11,12 @@
  *                 the inactivity warning point the countdown line above the input
  *                 (./InactivityLine, O71). Once the player solved (individual mode), a short
  *                 notice with their place instead (O25); once out of time, the notice that
- *                 they play the next round (O71), while they keep watching. Moved out of
- *                 ./RoundScreen to keep each file under the size limit.
+ *                 they play the next round (O71), while they keep watching. In a phased round
+ *                 (04 §4.8) every match player gets the input, also before the delayed roster
+ *                 lists them (it shows a player only once their entry is one delay old), with no
+ *                 ring, and acting ends at the plan's play end; the server decides every choice
+ *                 (DECISIONS T326). Moved out of ./RoundScreen to keep each file under the size
+ *                 limit.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (ActReply), @smg-game/registry/web
  *                 (types), ../live/socket, ./CooldownRing, ./InactivityLine, ./RoundSide
  *                 (colours), ./roundText
@@ -62,9 +66,29 @@ function noticeOf(me: RosterRowView): ReactElement | null {
   );
 }
 
+// Whether the viewer may act now: the round open, their cooldown over, and in a phased round
+// before the plan's play end (the server checks again, 04 §4.8 rule 2).
+function mayAct(state: RoundStateView, me: RosterRowView | null, now: number): boolean {
+  if (state.status !== 'open') return false;
+  if (state.plan !== undefined) return now < (state.opensAt ?? 0) + state.plan.actionsEndMs;
+  return (me?.cooldownEndsAt ?? 0) <= now;
+}
+
+// Who gets the input: a roster player, and in a phased round every match player (role
+// `player`), also before the delayed roster lists them.
+const inDock = (state: RoundStateView, me: RosterRowView | null): boolean =>
+  me !== null || (state.plan !== undefined && state.role === 'player');
+
+// The cooldown ring of an open guess round; a phased round has no cooldown (04 §4.8 rule 4).
+function ringOf(state: RoundStateView, me: RosterRowView | null, now: number) {
+  if (state.status !== 'open' || me === null || state.plan !== undefined) return null;
+  return <CooldownRing endsAt={me.cooldownEndsAt} cooldownMs={state.cooldownMs} now={now} />;
+}
+
 // A roster player's input row with the ring, and the platform's refusals under it; once the
 // player solved (individual mode), a short notice with their place instead (O25); once out
-// of time, the timeout's notice (O71).
+// of time, the timeout's notice (O71). A phased round's match player without a row yet (the
+// roster is delayed) gets the input too.
 export function InputRow({
   state,
   game,
@@ -75,8 +99,8 @@ export function InputRow({
 }: PlayProps): ReactElement | null {
   const [refusal, setRefusal] = useState<string | null>(null);
   const me = state.roster.find((r) => r.playerKey === viewerKey) ?? null;
-  if (me === null || state.game === null) return null;
-  const notice = noticeOf(me);
+  if (state.game === null || !inDock(state, me)) return null;
+  const notice = me === null ? null : noticeOf(me);
   if (notice !== null) return notice;
   const act = async (action: unknown): Promise<ActReply> => {
     const reply = await intent('guess', { roundId: state.roundId, ...(action as object) });
@@ -88,23 +112,21 @@ export function InputRow({
     await reload().catch(() => undefined);
     return reply;
   };
-  // The cooldown exists only while the round is open.
-  const ring =
-    state.status === 'open' ? (
-      <CooldownRing endsAt={me.cooldownEndsAt} cooldownMs={state.cooldownMs} now={now} />
-    ) : null;
+  const ring = ringOf(state, me, now);
   return (
     <div className="round-input">
       <InactivityLine inactivity={state.ownInactivity} now={now} />
       <game.Input
         view={state.game}
         act={act}
-        canAct={state.status === 'open' && me.cooldownEndsAt <= now}
+        canAct={mayAct(state, me, now)}
         frostDelayMs={state.frostDelayMs}
         now={serverNow}
         season={state.season}
         specialOn={state.specialOn}
-        waitS={waitOf(state, me.cooldownEndsAt, now)}
+        waitS={
+          me === null || state.plan !== undefined ? null : waitOf(state, me.cooldownEndsAt, now)
+        }
         names={state.names}
         colors={colorsOf(state)}
         marks={roundMarks(state, game, viewerKey)}

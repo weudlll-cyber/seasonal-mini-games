@@ -15,7 +15,7 @@ import type { RoundEvent } from '@smg/domain';
 import { commitSeed, SEED_BYTES } from '@smg/game-sdk/crypto';
 import { describe, expect, it } from 'vitest';
 
-import { findGame } from './fakes.js';
+import { findGame, pickGame } from './fakes.js';
 import { RoundSession } from './roundSession.js';
 import { chooseRoundSettings, gameSettingsDefs } from './roundSettings.js';
 import { verifyRound } from './verify.js';
@@ -209,5 +209,37 @@ describe('the fairness proof', () => {
     expect(verifyRound(findGame, [...noProof, ...off.log.slice(1)])).toMatchObject({
       problem: /no fairness proof/,
     });
+  });
+});
+
+describe('the result view (DECISIONS T324)', () => {
+  it("builds a phased game's result without a secret, and only once it has ended", () => {
+    const settings = chooseRoundSettings(pickGame, {}, { 'round.countdownS': 3 });
+    const { session: s } = RoundSession.create(pickGame, {
+      roundId: 'r2',
+      settings,
+      season: 'winter',
+      seed,
+    });
+    s.handle({
+      type: 'startCountdown',
+      at: 0,
+      roster: [{ playerId: 'a', team: null }],
+      minPlayers: 1,
+    });
+    s.handle({ type: 'open', at: 3_000 });
+    s.handle({ type: 'guess', playerId: 'a', receivedAt: 3_100, action: { value: 'x' } });
+    expect(s.result()).toBeNull();
+    s.handle({ type: 'end', at: 4_000, reason: 'host' });
+    expect(s.state.status).toBe('ended');
+    expect(s.result()).toEqual({ picks: { a: 'x' } });
+  });
+
+  it("keeps a guess game's rule: no result view while it runs or before its secrets exist", () => {
+    const { s, run } = session();
+    expect(s.result()).toBeNull();
+    run({ type: 'startCountdown', at: 0, roster: [{ playerId: 'a', team: null }], minPlayers: 1 });
+    run({ type: 'end', at: 1_000, reason: 'host' });
+    expect(s.result()).not.toBeNull();
   });
 });
