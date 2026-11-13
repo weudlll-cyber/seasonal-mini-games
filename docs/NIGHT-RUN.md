@@ -6,6 +6,19 @@
 
 Status, updated after every piece. Branch `feat/mind-games` is not merged tonight; only piece 0 is.
 
+### Final report
+
+- **Done:** all four pieces. Piece 0 merged into `master` (PR #9, merge `c3b8a69`, CI green, branch deleted); pieces 1–3 (MG-C1 → MG-C3, the whole `phased` contract of 04 §4.8) on `feat/mind-games`, not merged.
+- **Branch heads on origin:** `master` `c3b8a69`; `feat/mind-games` at this sheet's commit (the code at `0979b4f`); `docs/cleanup-2026-11-13` deleted.
+- **The four existing games:** unchanged. Their golden test, conformance P1–P6, every existing unit and integration test and the whole e2e suite pass as before; the migration 0016 test proves the same standings, team standings, awards and board entries for existing rows; every new field of an event, a state or a view is present only in a phased round.
+- **Security (05 §3.2, S11):** P7 Delay in the conformance suite with the phased fixture (200 cases) and a permanent check that a leaking variant fails it; the server test checks frames, state answers, the round's player list, acknowledgements and the host's and a guest's views against the delay. Sabotage, done and undone: a live count in the fixture's spectator view turned P7 red; the server's views without their cut turned the integration test red; both green again after removal.
+- **`pnpm verify`:** green at the end of each piece (piece 1 on its second run, see its section): 703 + 94 + 163, 708 + 94 + 165, 711 + 94 + 167 tests.
+- **Full e2e, Chromium, at the end of the chain:** `pnpm e2e --project=chromium` 13 passed (1.3 min), then `--project=chromium-timing --no-deps` 35 passed (15.1 min); nothing flaky, nothing skipped.
+- **CI on `feat/mind-games`:** the runs of pieces 1 and 2 failed in CI's coverage step (`pnpm test:coverage`, not part of `pnpm verify`): `packages/game-sdk` branches 86.71 % against 90 %, `planIssue`'s refusals untested; fixed in `0979b4f` (`phased.test.ts`). The run of piece 3 failed once in `test/webhooks.integration.test.ts` (expected 3 deliveries, got 2, then 3 instead of 1 in the next test: its webhooks are queued without waiting and the test counts what is pending, a race on a busy runner); it passed locally three times in a row and in CI on `0979b4f`. The run on `0979b4f` (43345781693): verify (with coverage), e2e Chromium, docs, security green. Reported, not changed: the webhooks test's count may race (OPEN candidate).
+- **CI for piece 0's merge commit** `c3b8a69`: green (CI 41 min 26 s, CodeQL).
+- **New T-entries, every one "(proposal, night MG-N1)":** T288–T303, one line each under "Needs the owner's word" below.
+- **Noticed, left alone (all pieces):** `apps/server/test/league.integration.test.ts` is 324 lines, over 300 before tonight; the inactivity test's log read raced under load (made to wait for the committed log, a test-only change, piece 1); the webhooks test's pending count may race (above); the per-account limits, the new pre-pick one included, live in each process's memory; the client words no sentence yet for `PLAY_OVER`, `JOIN_CLOSED` and `prefs.refused` (the game's screens, MG-2 and MG-4); the chat's round-end line names a phased round's winner only once its game's `reveal` words it (MG-1).
+
 | Piece                                               | State                                                                                                                                                                 |
 | --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 0 — docs cleanup                                    | **done**: PR #9 merged into `master` (`c3b8a69`, CI green: CI 41 min, CodeQL); branch deleted on origin and locally; master merged into `feat/mind-games` (`f0112f4`) |
