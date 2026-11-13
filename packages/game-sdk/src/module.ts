@@ -20,7 +20,7 @@ import type { ZodType } from 'zod';
 
 import type { PhasedHooks } from './phased.js';
 import type { RoundRng } from './random.js';
-import type { SettingDef, SettingValue } from './settings.js';
+import type { SettingDef, SettingIssue, SettingValue } from './settings.js';
 
 export type SecretMode = 'shared' | 'individual';
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
@@ -42,8 +42,9 @@ export interface GameMeta {
 export interface GameSettings<Cfg> {
   readonly defs: readonly SettingDef[];
   readonly read: (values: Readonly<Record<string, SettingValue>>) => Cfg;
-  // A rule across keys (e.g. a range at least 10 wide); null when the values fit.
-  readonly problem: (cfg: Cfg) => string | null;
+  // A rule across keys (e.g. a range at least 10 wide); null when the values fit. It may name
+  // the setting its sentence belongs under (`SettingIssue`, DECISIONS T335).
+  readonly problem: (cfg: Cfg) => string | SettingIssue | null;
   // False when this round's values rule out a halving round; the round then runs as a
   // normal season round (Guess The Number with a hidden range, DECISIONS T55).
   readonly halvingAllowed?: (cfg: Cfg) => boolean;

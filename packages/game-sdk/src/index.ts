@@ -88,6 +88,7 @@ export {
 export type {
   ActReply,
   FeedLine,
+  FieldState,
   GameText,
   GuessAnswer,
   GuessRow,

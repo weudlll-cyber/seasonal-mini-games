@@ -75,6 +75,7 @@
 | opens_at, ended_at | timestamptz NULL | |
 | end_reason | text NULL | `solved`, `allSolved`, `timeUp`, `host`, `noPlayers` |
 | aborted_reason, aborted_by | text NULL | |
+| outcome_words | text NULL | a phased round only: what won in the game's words once it has ended, an empty text when nobody won (migration 0019; DECISIONS T333); NULL for every guess round |
 | created_by | uuid FK | |
 
 **round_events** — `round_id`, `seq bigint`, `type text`, `payload jsonb`, `occurred_at`, `actor_account_id NULL`. PK `(round_id, seq)`. **Append-only** by trigger: UPDATE and DELETE are rejected for every role. Payload schemas per type live in `packages/contracts/src/events/` (platform) and `games/<game>/src/events.ts` (game). Matches and rounds made by tests are aborted, never deleted.

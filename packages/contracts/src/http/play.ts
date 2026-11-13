@@ -30,6 +30,8 @@ export interface GameInfoView {
   readonly name: string;
   readonly secretModes: readonly string[];
   readonly teams: boolean;
+  // The timing class (04 §4.8): the forms leave out what a phased round does not have (T334).
+  readonly timing: 'cooldown' | 'phased';
 }
 
 export interface MatchSummaryView {
@@ -55,6 +57,9 @@ export interface MatchEndView {
   readonly reason: string | null;
   // Idle close only: the minutes without a round before it closed.
   readonly idleMinutes: number | null;
+  // A phased game's match: every ended round with what won in the game's words, or null
+  // when nobody won (02e §9; DECISIONS T333). Absent for the guess games.
+  readonly rounds?: readonly { readonly index: number; readonly words: string | null }[];
 }
 
 export interface MatchDetailsView extends MatchSummaryView {
@@ -122,6 +127,8 @@ export interface PlayerResultView {
   readonly guesses: number;
   readonly team: TeamName | null;
   readonly points: number;
+  // A phased round's own rule (04 §4.8 rule 6); absent for the guess games.
+  readonly won?: boolean;
   // Listed as "timed out", without a place and without points (O71).
   readonly timedOut: boolean;
 }

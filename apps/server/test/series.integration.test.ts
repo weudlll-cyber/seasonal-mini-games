@@ -40,7 +40,11 @@ interface Details {
   readonly status: string;
   readonly round: { readonly id: string; readonly status: string } | null;
   readonly series: { rounds: number; played: number; nextAt: number | null } | null;
-  readonly ended: { reason: string | null; roundsPlayed: number } | null;
+  readonly ended: {
+    reason: string | null;
+    roundsPlayed: number;
+    rounds?: { index: number; words: string | null }[];
+  } | null;
 }
 
 const details = async (code: string) =>
@@ -119,6 +123,7 @@ describe('a series of rounds (04 §4.8 rule 7)', () => {
       4_000 + SIDES_PLAN.endMs + SIDES_SERIES.pauseMs + 10_000,
     );
     expect(closed.ended).toMatchObject({ reason: 'complete', roundsPlayed: 2 });
+    expect(closed.ended?.rounds?.map((r) => r.index)).toEqual([1, 2]); // with what won, T333
   }, 90_000);
 
   it('is no series in a match of a guess game', async () => {

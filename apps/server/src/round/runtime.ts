@@ -28,6 +28,8 @@ import { IdleClose } from '../match/idleClose.js';
 import { Play } from '../match/play.js';
 import { Presence } from '../match/presence.js';
 import { SeriesRunner } from '../match/series.js';
+import { phasedWords } from '../chat/roundLines.js';
+import { recordWords } from '../match/summary.js';
 import { rosterAdmission } from '../match/rosterRules.js';
 import { leagueRules } from '../league/rules.js';
 import { GuessLimits } from './guessLimits.js';
@@ -84,7 +86,16 @@ function seriesOf(pool: DbPool, play: Play, rounds: Rounds): SeriesRunner {
   rounds.onCommitted((round, events) => {
     if (!round.phased) return;
     if (events.some((e) => e.type === 'RoundOpened')) void play.prefs.apply(round);
-    if (events.some((e) => e.type === 'RoundEnded')) void series.roundEnded(round);
+    const ended = events.find((e) => e.type === 'RoundEnded');
+    if (ended !== undefined) {
+      // What won, in the game's words, for the match summary (02e §9, T333).
+      const results = (ended.event as { results: readonly { won?: boolean }[] }).results;
+      const words = phasedWords(results.filter((r) => r.won === true).length, round.reveal(null));
+      void recordWords(pool, round.id, words).catch((error: unknown) => {
+        console.error('[smg] round words failed:', error);
+      });
+      void series.roundEnded(round);
+    }
   });
   return series;
 }

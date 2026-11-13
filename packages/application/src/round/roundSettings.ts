@@ -120,7 +120,9 @@ export function chooseRoundSettings<S, A, E, Cfg, Sec>(
   if (inactivity !== null) throw new RoundSettingsError(inactivity.message, inactivity.key);
   const game = module.settings.read(values);
   const problem = module.settings.problem(game);
-  if (problem !== null) throw new RoundSettingsError(problem);
+  // A rule across keys says its sentence under the setting it names, if it names one (T335).
+  if (typeof problem === 'string') throw new RoundSettingsError(problem);
+  if (problem !== null) throw new RoundSettingsError(problem.message, problem.key);
   if (module.meta.timing === 'phased') return phasedSettings(module, values, game);
   const platform = readPlatformRound(values);
   // A game may rule halving out for these values: the round keeps its season and special.

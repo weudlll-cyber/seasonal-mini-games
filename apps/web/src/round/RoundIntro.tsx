@@ -67,7 +67,10 @@ export function RoundIntro(p: {
       </div>
       <ul className="round-intro-facts">
         {secret === null ? null : <li data-testid="intro-secret">{secret}</li>}
-        <li>Cooldown {seconds(state.cooldownMs)} between guesses</li>
+        {/* A phased round has no cooldown (04 §4.8 rule 4). */}
+        {state.plan === undefined ? (
+          <li>Cooldown {seconds(state.cooldownMs)} between guesses</li>
+        ) : null}
       </ul>
       <p className="round-intro-count" role="timer" aria-live="off" data-testid="countdown">
         Opens in <strong>{left}</strong> s

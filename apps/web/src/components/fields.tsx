@@ -31,6 +31,8 @@ interface Base {
   readonly testId?: string;
   // The server's sentence for this field after a refused save (O74), shown under the help.
   readonly problem?: string | undefined;
+  // Shown but not changeable (a value that follows another, or holds for the match, T335).
+  readonly disabled?: boolean | undefined;
 }
 
 // The label names the control; the help line and a problem line describe it
@@ -95,6 +97,7 @@ export function TextField(
         maxLength={p.maxLength}
         placeholder={p.placeholder}
         data-testid={p.testId}
+        disabled={p.disabled}
         onChange={(e) => {
           p.onChange(e.target.value);
         }}
@@ -187,6 +190,7 @@ export function NumberField(p: NumberProps): ReactElement {
         value={text}
         aria-invalid={problem !== undefined}
         data-testid={p.testId}
+        disabled={p.disabled}
         onChange={(e) => {
           edit(e.target.value);
         }}
@@ -209,6 +213,7 @@ export function ChoiceField<T extends string>(
         className="smg-select"
         value={p.value}
         data-testid={p.testId}
+        disabled={p.disabled}
         onChange={(e) => {
           p.onChange(e.target.value as T);
         }}
@@ -232,6 +237,7 @@ export function SwitchField(
         type="checkbox"
         checked={p.checked}
         data-testid={p.testId}
+        disabled={p.disabled}
         onChange={(e) => {
           p.onChange(e.target.checked);
         }}

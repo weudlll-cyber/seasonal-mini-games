@@ -142,3 +142,23 @@ describe('the match summary', () => {
     );
   });
 });
+
+describe('the rounds of a phased match (T333)', () => {
+  it('lists each round with what won, and none for a guess game', () => {
+    const end = ended.ended;
+    if (end === null) throw new Error('fixture');
+    const rounds = [
+      { index: 1, words: 'Winter was the least chosen (3 players)' },
+      { index: 2, words: null },
+    ];
+    render(<MatchSummary match={{ ...ended, ended: { ...end, rounds } }} viewerKey="a" />);
+    expect(
+      [...screen.getByTestId('match-round-words').querySelectorAll('li')].map(
+        (li) => li.textContent,
+      ),
+    ).toEqual(['Round 1: Winter was the least chosen (3 players).', 'Round 2: nobody won.']);
+    cleanup();
+    render(<MatchSummary match={ended} viewerKey="a" />);
+    expect(screen.queryByTestId('match-round-words')).toBeNull();
+  });
+});

@@ -16,8 +16,25 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { QuickTest } from './QuickTest.js';
 import { bodyOf, START, type Extra } from './quickTestSettings.js';
 
+// The game list: one guess game and one phased game (T334).
+const GAMES = [
+  {
+    id: 'guess-the-number',
+    name: 'Guess The Number',
+    secretModes: ['shared'],
+    teams: true,
+    timing: 'cooldown',
+  },
+  {
+    id: 'mind-games',
+    name: 'Seasonal Mind Games',
+    secretModes: [],
+    teams: false,
+    timing: 'phased',
+  },
+];
 vi.mock('./http.js', () => ({
-  api: () => Promise.resolve({ games: [] }),
+  api: () => Promise.resolve({ games: GAMES }),
   ApiError: class extends Error {},
   BASE_PATH: '/',
 }));
@@ -62,5 +79,23 @@ describe('Heatwave in the Quick Test form (O63, T208)', () => {
     expect(bodyOf(values, { ...extra, season: 'autumn' }).settings).not.toHaveProperty(
       'summer.stepS',
     );
+  });
+});
+
+describe('the fields of the chosen game (DECISIONS T334)', () => {
+  const labels = () =>
+    [...document.querySelectorAll('label')].map((l) => l.firstChild?.textContent?.trim());
+
+  it('keeps the fields of a guess game and gives a phased game only those it uses', async () => {
+    render(<QuickTest />);
+    const game = await screen.findByTestId('quick-game');
+    await screen.findByRole('option', { name: 'Seasonal Mind Games' });
+    for (const label of ['Cooldown', 'Inactivity limit', 'Fast specials', 'Team match', 'Secret'])
+      expect(labels()).toContain(label);
+    fireEvent.change(game, { target: { value: 'mind-games' } });
+    for (const label of ['Cooldown', 'Inactivity limit', 'Fast specials', 'Team match', 'Secret'])
+      expect(labels()).not.toContain(label);
+    for (const label of ['Seed', 'Bots', 'Countdown before opening', 'Total length', 'Delay'])
+      expect(labels()).toContain(label);
   });
 });

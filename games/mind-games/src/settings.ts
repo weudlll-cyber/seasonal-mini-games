@@ -14,7 +14,7 @@
  * Used by:        ./module, ./rules, ./views, ./conformance, ./index
  * Spec:           docs/spec/08-admin-settings.md §3.4; docs/spec/02e-game-mind-games.md §2–§4
  */
-import type { GameSettings, PhasePlan, Series, SettingDef } from '@smg/game-sdk';
+import type { GameSettings, PhasePlan, Series, SettingDef, SettingIssue } from '@smg/game-sdk';
 
 type SwitchVisibility = 'hidden' | 'visible' | 'perPlayer';
 
@@ -141,17 +141,21 @@ const rules: readonly SettingDef[] = [
 ];
 
 // The join time in force: half the total, rounded down, while it follows the total (O78).
-const joinOf = (cfg: MindConfig): number => (cfg.joinAuto ? Math.floor(cfg.totalS / 2) : cfg.joinS);
+export const joinOf = (cfg: Pick<MindConfig, 'joinAuto' | 'totalS' | 'joinS'>): number =>
+  cfg.joinAuto ? Math.floor(cfg.totalS / 2) : cfg.joinS;
 
-// The cross-key rules of 02e §3, the first that fails.
-function problem(cfg: MindConfig): string | null {
+// The cross-key rules of 02e §3, the first that fails, under the field it names (T335).
+function problem(cfg: MindConfig): SettingIssue | null {
   if (2 * cfg.delayS + 10 > cfg.totalS) {
-    return 'The delay must be at most half the total minus 10 s.';
+    return { key: 'mind.delayS', message: 'The delay must be at most half the total minus 10 s.' };
   }
   if (!cfg.joinAuto && cfg.joinS > cfg.totalS - cfg.delayS) {
-    return 'The join time must end by the time choices close (total − delay).';
+    const message = 'The join time must end by the time choices close (total − delay).';
+    return { key: 'mind.joinS', message };
   }
-  if (cfg.winnerPlace === 5 && !cfg.allOption) return 'The 5th least chosen needs the All option.';
+  if (cfg.winnerPlace === 5 && !cfg.allOption) {
+    return { key: 'mind.winnerPlace', message: 'The 5th least chosen needs the All option.' };
+  }
   return null;
 }
 

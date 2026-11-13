@@ -27,12 +27,20 @@ import { displayNames } from '../match/matches.js';
 import type { Rounds } from '../round/rounds.js';
 import type { Chat } from './chat.js';
 
-// A phased round's line (02e §9): its winners come from `won`, not a first place; the game words
-// what won ("Winter was the least chosen (3 players)"), else the count of winners stands in.
+// What won a phased round (02e §9): the game's words ("Winter was the least chosen (3
+// players)"), else the count of its winners; null when nobody won. Also the match summary's
+// (../match/summary, T333).
+export function phasedWords(winners: number, words: string | null): string | null {
+  if (winners === 0) return null;
+  return words ?? `${String(winners)} ${winners === 1 ? 'player' : 'players'} won`;
+}
+
+// A phased round's line: its winners come from `won`, not a first place.
 export function phasedEndLine(index: number, winners: number, words: string | null): string {
-  if (winners === 0) return `Round ${String(index)} ended: nobody won.`;
-  if (words !== null) return `Round ${String(index)}: ${words}.`;
-  return `Round ${String(index)}: ${String(winners)} ${winners === 1 ? 'player' : 'players'} won.`;
+  const won = phasedWords(winners, words);
+  return won === null
+    ? `Round ${String(index)} ended: nobody won.`
+    : `Round ${String(index)}: ${won}.`;
 }
 
 export function endLine(index: number, winner: string | null, secret: string | null): string {

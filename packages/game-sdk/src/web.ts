@@ -32,6 +32,15 @@ export interface ActReply {
   readonly cooldownEndsAt?: number;
 }
 
+// How the host form shows one of the game's own settings now (02e §3; DECISIONS T335): a value
+// it follows from the others, the field off, a help line of its own; what is left out keeps
+// the setting's own.
+export interface FieldState {
+  readonly value?: number | boolean | string;
+  readonly disabled?: boolean;
+  readonly help?: string;
+}
+
 // A phased round's public timing (04 §4.8): when it opened and its plan, so the game shows its
 // phases and counts down to them, and the server's time (corrected by the measured offset, 06
 // §4.1); the server enforces the phases. Absent for the guess games.

@@ -56,16 +56,21 @@ describe('Mind Games plan and rules (02e §3, §4)', () => {
       mindSettings.problem({ ...DEFAULT_CONFIG, ...c });
     expect(problem({})).toBeNull();
     expect(problem({ totalS: 70, delayS: 30 })).toBeNull();
-    expect(problem({ totalS: 69, delayS: 30 })).toBe(
-      'The delay must be at most half the total minus 10 s.',
-    );
+    expect(problem({ totalS: 69, delayS: 30 })).toEqual({
+      key: 'mind.delayS',
+      message: 'The delay must be at most half the total minus 10 s.',
+    });
     expect(problem({ joinAuto: false, joinS: 90 })).toBeNull();
-    expect(problem({ joinAuto: false, joinS: 91 })).toBe(
-      'The join time must end by the time choices close (total − delay).',
-    );
+    expect(problem({ joinAuto: false, joinS: 91 })).toEqual({
+      key: 'mind.joinS',
+      message: 'The join time must end by the time choices close (total − delay).',
+    });
     // While the join time follows the total, the field's own value is not used.
     expect(problem({ joinS: 590 })).toBeNull();
-    expect(problem({ winnerPlace: 5 })).toBe('The 5th least chosen needs the All option.');
+    expect(problem({ winnerPlace: 5 })).toEqual({
+      key: 'mind.winnerPlace',
+      message: 'The 5th least chosen needs the All option.',
+    });
     expect(problem({ winnerPlace: 5, allOption: true })).toBeNull();
   });
 

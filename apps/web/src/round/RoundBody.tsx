@@ -38,6 +38,7 @@ import { roundMarks } from './playerMarks.js';
 import { RoundLog } from './RoundLog.js';
 import { OthersPanel } from './RoundSide.js';
 import { bannerOf, eventBanner } from './SpecialBanner.js';
+import { actionWords } from './roundText.js';
 import type { Panels } from './usePanels.js';
 
 export interface BodyProps {
@@ -102,7 +103,7 @@ function useParts(p: BodyProps) {
     );
   const all = (
     <FocusPanel
-      title="Guesses and events"
+      title={`${actionWords(state).Many} and events`}
       open={more.open}
       onClose={panels.close}
       testId="list-sheet"
@@ -131,7 +132,10 @@ function Others(p: BodyProps): ReactElement | null {
 export function RoundBody(p: BodyProps): ReactElement {
   const { board, panel, stageBox, dock, all, main, own } = useParts(p);
   const mainBox = (
-    <section className="smg-panel round-main" aria-label="This round's guesses">
+    <section
+      className="smg-panel round-main"
+      aria-label={`This round's ${actionWords(p.state).many}`}
+    >
       {main}
     </section>
   );

@@ -109,7 +109,10 @@ export function PlayersPanelBody(p: {
             {state.teamsOn ? (
               <TeamIcon team={r.team} className="round-player-team" size="0.9rem" />
             ) : null}
-            <span className="round-player-guesses">{guessCount(r.guesses)}</span>
+            {/* A phased round's roster has no counts: they would show switches (04 §4.8). */}
+            {state.plan === undefined ? (
+              <span className="round-player-guesses">{guessCount(r.guesses)}</span>
+            ) : null}
           </li>
         ))}
       </ul>

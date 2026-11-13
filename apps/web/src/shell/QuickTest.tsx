@@ -162,20 +162,42 @@ function switchFields(p: { readonly extra: Extra; readonly set: (e: Partial<Extr
   };
 }
 
+// A phased game's form (04 §4.8, T334): the game, the lobby, the seed, the season, the bots, the
+// countdown and the game's own settings; no secret, cooldown, inactivity, special or teams.
+function PhasedFields(p: {
+  readonly more: ReturnType<typeof extraFields>;
+  readonly fields: (keys: readonly string[]) => ReactElement;
+  readonly gameId: string;
+}): ReactElement {
+  const { more, fields } = p;
+  return (
+    <div className="host-form">
+      {more.game}
+      {more.lobby}
+      {more.seed}
+      {more.season}
+      {more.bots}
+      {fields(['round.countdownS', ...gameKeysOf(p.gameId)])}
+    </div>
+  );
+}
+
 // The form's fields in order: the game first, then the settings every game has, then the
-// chosen game's own (O41).
+// chosen game's own (O41); a phased game's fewer (./PhasedFields).
 function QuickTestFields(p: {
   readonly extra: Extra;
   readonly values: Values;
   readonly set: (key: string, v: SettingValue) => void;
   readonly more: ReturnType<typeof extraFields>;
   readonly problems: FormProblems['fields'];
+  readonly phased: boolean;
 }): ReactElement {
   const { extra, values, set, more, problems } = p;
   const defs = defsOf(extra.gameId);
   const fields = (keys: readonly string[]) => (
     <SettingFields keys={keys} defs={defs} values={values} set={set} problems={problems} />
   );
+  if (p.phased) return <PhasedFields more={more} fields={fields} gameId={extra.gameId} />;
   return (
     <div className="host-form">
       {more.game}
@@ -251,6 +273,7 @@ export function QuickTest(): ReactElement {
         set={set}
         more={more}
         problems={problems.fields}
+        phased={games.find((g) => g.id === extra.gameId)?.timing === 'phased'}
       />
       <Problem text={problems.form} />
       <button type="submit" className="smg-btn smg-btn--primary" data-testid="start-quick-test">

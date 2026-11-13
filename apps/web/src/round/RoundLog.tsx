@@ -40,7 +40,7 @@ import { PlayerName } from './PlayerName.js';
 import { roundMarks } from './playerMarks.js';
 import { guessCount } from './RoundSide.js';
 import { SpecialBanner } from './SpecialBanner.js';
-import { platformLine } from './roundText.js';
+import { actionCount, actionWords, platformLine } from './roundText.js';
 import './roundLog.css';
 
 type Row =
@@ -138,7 +138,7 @@ const showsOthers = (p: LogProps): boolean =>
 
 // The one-line head: what the list holds, the banner in its place while one shows, "Log".
 function Head(p: LogProps & { readonly count: number; readonly all: number }): ReactElement {
-  const title = p.kind === 'own' ? 'Your guesses' : guessCount(p.count);
+  const title = p.kind === 'own' ? 'Your guesses' : actionCount(p.state, p.count);
   const banner = p.banner ?? null;
   return (
     <div className="round-log-head">
@@ -187,13 +187,16 @@ export function RoundLog(p: LogProps): ReactElement {
   // A game with player tags: every row names its player by tag and marker (O62).
   const marks = roundMarks(p.state, p.game, p.viewerKey);
   return (
-    <section className="round-log" aria-label={p.kind === 'own' ? 'Your guesses' : 'Guesses'}>
+    <section
+      className="round-log"
+      aria-label={p.kind === 'own' ? 'Your guesses' : actionWords(p.state).Many}
+    >
       {p.kind === 'all' ? null : (
         <Head {...p} count={shown.length} all={shown.length + events.length} />
       )}
       {showsOthers(p) ? <OthersLine state={p.state} viewerKey={p.viewerKey} /> : null}
       {rows.length === 0 ? (
-        <p className="smg-muted round-log-empty">No guesses yet.</p>
+        <p className="smg-muted round-log-empty">No {actionWords(p.state).many} yet.</p>
       ) : (
         <ol data-testid={LIST_IDS[p.kind]} aria-live="polite">
           {rows.map((row) =>

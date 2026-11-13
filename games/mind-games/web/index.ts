@@ -9,7 +9,8 @@
  *                 (02e §7), the game's text and its setting
  *                 definitions, as one object shaped like the registry's `GameWeb` (04 §4.6).
  *                 The round's one list shows the feed's lines (./text).
- * Depends on:     @smg-game/mind-games (settings), ./FeedPanels, ./MindInput, ./PrefsPanel,
+ * Depends on:     @smg-game/mind-games (settings), ./FeedPanels, ./formFields, ./MindInput,
+ *                 ./PrefsPanel,
  *                 ./ResultPanel,
  *                 ./text, ./mind.css, ./result.css, ./flights.css
  * Used by:        games/registry/web
@@ -18,6 +19,7 @@
 import { mindSettings } from '@smg-game/mind-games';
 
 import { MindLine, MindPlayer, MindSpectator } from './FeedPanels.js';
+import { mindFieldState } from './formFields.js';
 import { MindInput } from './MindInput.js';
 import { PrefsPanel } from './PrefsPanel.js';
 import { ResultPanel } from './ResultPanel.js';
@@ -36,6 +38,8 @@ export const mindGamesWeb = {
   settings: mindSettings.defs,
   // Your pre-picks in the waiting area (02e §7).
   Prefs: PrefsPanel,
+  // The join time following the total, the rounds and the pause held (02e §3).
+  fieldState: mindFieldState,
   // The choices are the stage: the board layout hands the input the stage, the left column at
   // full height, with the feed's head, the lines and the dock in the info column (O51).
   layout: 'board' as const,

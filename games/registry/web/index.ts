@@ -28,8 +28,10 @@ import { mindGamesWeb } from '@smg-game/mind-games/web';
 import { safecrackerWeb } from '@smg-game/safecracker/web';
 import { seasonalTargetWeb } from '@smg-game/seasonal-target/web';
 import type {
+  FieldState,
   GameText,
   SettingDef,
+  SettingValue,
   PlayerPanelProps,
   PrefsPanelProps,
   ResultPanelProps,
@@ -65,6 +67,13 @@ export interface GameWeb {
   // A phased game's panel in the waiting area for the viewer's own value (its pre-picks, 04
   // §4.8 rule 8); the platform shows it to the match's players and saves what it hands back.
   readonly Prefs?: ComponentType<PrefsPanelProps>;
+  // How the host form shows one of the game's settings now, from the form's values and whether
+  // it sets up the match's first round (02e §3, T335); null keeps the definition's.
+  readonly fieldState?: (
+    key: string,
+    values: Readonly<Record<string, SettingValue>>,
+    firstRound: boolean,
+  ) => FieldState | null;
 }
 
 export const GAME_SCREENS: Readonly<Record<string, GameWeb>> = {

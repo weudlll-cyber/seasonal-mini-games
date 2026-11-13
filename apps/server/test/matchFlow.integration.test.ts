@@ -218,6 +218,8 @@ describe('End match (O27)', () => {
     // Guests read it too.
     const guest = await kit.harness.built.fastify.inject({ url: `/api/v1/matches/${code}` });
     expect(guest.json<MatchDetailsView>().ended?.roundsPlayed).toBe(1);
+    // A guess game's summary has no rounds' words (T333).
+    expect(guest.json<MatchDetailsView>().ended).not.toHaveProperty('rounds');
   }, 60_000);
 });
 

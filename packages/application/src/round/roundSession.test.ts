@@ -63,6 +63,22 @@ describe('round settings', () => {
       );
     }
   });
+
+  it('say a rule across keys for the form, or under the setting it names (T335)', () => {
+    expect(() => chooseRoundSettings(findGame, {}, { 'find.max': 13 })).toThrow(
+      expect.objectContaining({ message: 'Thirteen is unlucky.', field: null }),
+    );
+    const named = {
+      ...findGame,
+      settings: {
+        ...findGame.settings,
+        problem: () => ({ key: 'find.max', message: 'Too high.' }),
+      },
+    };
+    expect(() => chooseRoundSettings(named, {}, {})).toThrow(
+      expect.objectContaining({ message: 'Too high.', field: 'find.max' }),
+    );
+  });
 });
 
 describe("Heatwave's numbers per round (O63)", () => {

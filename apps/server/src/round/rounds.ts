@@ -34,6 +34,7 @@ export interface GameInfo {
   readonly name: string;
   readonly secretModes: readonly string[];
   readonly teams: boolean;
+  readonly timing: 'cooldown' | 'phased';
 }
 
 interface Runner {
@@ -103,7 +104,13 @@ export class Rounds {
     });
     const { meta } = entry.module;
     this.runners.set(meta.id, {
-      info: { id: meta.id, name: meta.name, secretModes: meta.secretModes, teams: meta.teams },
+      info: {
+        id: meta.id,
+        name: meta.name,
+        secretModes: meta.secretModes,
+        teams: meta.teams,
+        timing: meta.timing,
+      },
       devBot: entry.devBot,
       hostKeys: new Set(entry.module.settings.defs.filter((d) => d.hostChooses).map((d) => d.key)),
       phased: meta.timing === 'phased',

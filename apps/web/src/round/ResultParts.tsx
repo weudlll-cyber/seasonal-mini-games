@@ -26,6 +26,7 @@ import { SeasonIcon } from '../season/SeasonIcon.js';
 import { teamName } from '../season/season.js';
 import { useMediaQuery } from '../useMediaQuery.js';
 import { PlayerName } from './PlayerName.js';
+import { actionWords } from './roundText.js';
 
 // The first part's placings: the top three.
 const TOP = 3;
@@ -53,6 +54,8 @@ function Shortened(p: { readonly long: string; readonly short: string }): ReactE
 function PlaceCell(p: { readonly state: RoundStateView; readonly r: Result }) {
   if (p.r.place !== null) return <>{formatNumber(p.r.place)}</>;
   if (p.r.timedOut) return <>timed out</>;
+  // A phased round places nobody: its winners share the win (04 §4.8 rule 6, T332).
+  if (p.r.won !== undefined) return <>{p.r.won ? 'won' : '–'}</>;
   if (p.state.secretMode !== 'shared') return <>not solved</>;
   // The words as text for a screen reader (an aria-label on a plain span is not allowed,
   // axe's aria-prohibited-attr), the dash for the eye, the words again as its tooltip.
@@ -135,7 +138,7 @@ export function Placings(p: {
               </th>
               <th scope="col">Player</th>
               <th scope="col" className="round-col-num">
-                Guesses
+                {actionWords(p.state).Many}
               </th>
               <th scope="col" className="round-col-num">
                 <Shortened long="Points" short="Pts" />

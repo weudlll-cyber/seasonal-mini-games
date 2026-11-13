@@ -36,6 +36,7 @@ import { api } from '../shell/http.js';
 import { EndMatch } from './EndMatch.js';
 import { roundRequest } from './roundRequest.js';
 import {
+  fieldStateOf,
   formSeason,
   forSeason,
   HostFields,
@@ -101,6 +102,7 @@ function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
           season={formSeason(choice)}
           values={values}
           problems={problems.fields}
+          fieldState={fieldStateOf(match, values)}
           set={(key, v) => {
             setValues((was) => ({ ...was, [key]: v }));
             setProblems(NO_PROBLEMS);
