@@ -6,13 +6,15 @@
  * Responsibility: the result's first part (02e §9): the round's options in a row, each with its
  *                 icon, its count and its place ("least chosen", "2nd least chosen", none for an
  *                 option nobody chose); the winning ones marked by a check and "wins", never by
- *                 colour alone; under each option the players whose final choice it was, the
+ *                 colour alone, and light up for about 2 s with the platform's win glow
+ *                 (02e §11.1; not with reduced motion); under each option the players whose final choice it was, the
  *                 viewer's own line highlighted, each winner with "+1" or "+2". The headline is
  *                 the platform's line in the result's header (./text `runnerUp`). Its second
  *                 part: every line the feed showed, oldest first; never a hidden switch or a
  *                 pre-pick (02e §6.3, §7).
  * Depends on:     react, @smg/game-sdk (ResultPanelProps), @smg-game/mind-games (options,
- *                 names, places, views), ./seasons, ./text
+ *                 names, places, views), ./seasons, ./text; the win glow `smg-anim-win` of
+ *                 @smg/ui motion.css, which the player client loads
  * Used by:        ./index
  * Spec:           docs/spec/02e-game-mind-games.md §8, §9
  */
@@ -24,18 +26,22 @@ import {
   type ResultView,
 } from '@smg-game/mind-games';
 import type { ResultPanelProps } from '@smg/game-sdk';
-import type { ReactElement } from 'react';
+import { useEffect, useState, type ReactElement } from 'react';
 
 import { colorOf, iconsOf } from './seasons.js';
 import { lineText } from './text.js';
 
 type Names = Readonly<Record<string, string>>;
 
+// How long the winning options light up (02e §11.1, about 2 s): one cycle of the glow.
+export const LIGHT_MS = 2_400;
+
 function OptionCard(p: {
   readonly r: ResultView;
   readonly c: Choice;
   readonly names: Names;
   readonly viewerKey: string | null;
+  readonly lit: boolean;
 }): ReactElement {
   const { r, c } = p;
   const wins = r.winners.includes(c);
@@ -43,9 +49,9 @@ function OptionCard(p: {
   const players = r.players.filter((x) => x.choice === c);
   return (
     <li
-      className="mg-option"
       data-choice={c}
       data-wins={wins}
+      className={wins && p.lit ? 'mg-option smg-anim-win' : 'mg-option'}
       style={{ ['--mg-color' as string]: colorOf(c) }}
     >
       <span className="mg-icons" aria-hidden="true">
@@ -88,13 +94,32 @@ function History(p: {
   );
 }
 
+// The winners light up for about 2 s once the result shows; not with reduced motion.
+function useLit(): boolean {
+  const [lit, setLit] = useState(
+    () =>
+      typeof window.matchMedia !== 'function' ||
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      setLit(false);
+    }, LIGHT_MS);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, []);
+  return lit;
+}
+
 export function ResultPanel(p: ResultPanelProps): ReactElement {
   const r = p.view as ResultView;
+  const lit = useLit();
   if (p.part === 'history') return <History r={r} names={p.names} viewerKey={p.viewerKey} />;
   return (
     <ul className="mg-options" aria-label="The options" data-testid="mind-result">
       {optionsOf(r.rules.allOption).map((c) => (
-        <OptionCard key={c} r={r} c={c} names={p.names} viewerKey={p.viewerKey} />
+        <OptionCard key={c} r={r} c={c} names={p.names} viewerKey={p.viewerKey} lit={lit} />
       ))}
     </ul>
   );

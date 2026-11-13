@@ -9,7 +9,7 @@
  *                 definitions, as one object shaped like the registry's `GameWeb` (04 §4.6).
  *                 The round's one list shows the feed's lines (./text).
  * Depends on:     @smg-game/mind-games (settings), ./FeedPanels, ./MindInput, ./ResultPanel,
- *                 ./text, ./mind.css
+ *                 ./text, ./mind.css, ./result.css, ./flights.css
  * Used by:        games/registry/web
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/02e-game-mind-games.md §11
  */
@@ -20,6 +20,8 @@ import { MindInput } from './MindInput.js';
 import { ResultPanel } from './ResultPanel.js';
 import { mindText } from './text.js';
 import './mind.css';
+import './result.css';
+import './flights.css';
 
 export const mindGamesWeb = {
   Player: MindPlayer,

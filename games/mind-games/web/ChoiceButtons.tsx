@@ -10,14 +10,18 @@
  *                 never by colour alone; choosing it again sends nothing. Under each button its
  *                 count as the feed shows it, "30 s ago: 7", with a bar of that length; the
  *                 count is the view's, never a live one, and the client counts nothing. Every
- *                 button has its tooltip (O89). A spectator gets the same row without choosing.
- * Depends on:     react, @smg-game/mind-games (options, names, views), ./seasons, ./text
+ *                 button has its tooltip (O89). Between the buttons and the counts runs the
+ *                 flight band (./FlightBand, 02e §11.1). A spectator gets the same row without
+ *                 choosing.
+ * Depends on:     react, @smg-game/mind-games (options, names, views), ./FlightBand, ./seasons,
+ *                 ./text
  * Used by:        ./MindInput, ./FeedPanels
  * Spec:           docs/spec/02e-game-mind-games.md §6.1, §11
  */
 import { CHOICE_NAMES, optionsOf, type Choice, type SpectatorView } from '@smg-game/mind-games';
 import { useRef, useState, type KeyboardEvent, type ReactElement } from 'react';
 
+import { FlightBand } from './FlightBand.js';
 import { colorOf, iconsOf } from './seasons.js';
 import { clock, delayS } from './text.js';
 
@@ -28,6 +32,7 @@ export interface ChoiceButtonsProps {
   // Null: a spectator's row, which shows the counts only.
   readonly choose: ((c: Choice) => void) | null;
   readonly canAct: boolean;
+  readonly names: Readonly<Record<string, string>>;
 }
 
 const STEP: Readonly<Record<string, number>> = {
@@ -134,6 +139,7 @@ export function ChoiceButtons(p: ChoiceButtonsProps): ReactElement {
           </button>
         ))}
       </div>
+      <FlightBand view={view} names={p.names} />
       <Counts view={view} options={options} />
     </div>
   );

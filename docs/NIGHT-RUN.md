@@ -40,6 +40,14 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged.
 - **Not built, waiting for the owner (G2):** the phase strip's markers and next-change words, the empty feed's countdown, "Every change now is a switch", the replay's sentence with its countdown, the buttons disabled by phase, the screen reader's phase announcements. The lines' ages wait for G5. The call view's space belongs to the platform's chat column; nothing of it is built (02e §11).
 - **Noticed, left alone (platform):** G4–G6 below.
 
+### Piece 3 — MG-3, the animation (02e §11.1, owner decision 90)
+
+- **Built** (`games/mind-games/web`): the wave of a released step from the difference of two delayed views, each new line a flight, the counts' change no line explains as nameless hidden switches, at most 12 and the rest as "+N" (`flights.ts`, new, 87; T317); the flight band between the buttons and the counts, icons moving between the columns and turning into the new season's, a first choice flying in with its name (from the right on a desktop, from below on a phone), `aria-hidden`, no flight with reduced motion, each wave cleared after 0.9 s (`FlightBand.tsx`, new, 106; `flights.css`, new, 118; T318); the winners' light-up with the platform's win glow for 2.4 s, not with reduced motion (`ResultPanel.tsx` 101 → 126; T319). `ChoiceButtons.tsx` 140 → 146 (the band in the row, the names), `MindInput.tsx` 75 → 81 and `FeedPanels.tsx` 58 (the names passed on); `mind.css` 266 → 197 with the result's styles moved to `result.css` (new, 81) to stay under 300 lines; `index.ts` 35 → 37.
+- **Tests** (`web/animation.test.tsx`, new, 6 cases, the game's tests now 65): views fed one by one, no flight before its step and none for a step that brings nothing; a first choice with its name, a named switch from → to, a hidden switch without a name; 20 switches as 12 icons and "+8" with the step's exact counts at once; the wave gone after its flight; reduced motion without flights and with the counts in place; the winners lit for 2.4 s, not with reduced motion. The band's boxes against the buttons, the lines and the chat at 1280 × 720 and 390 × 844 need a real layout: journey 38 (MG-5).
+- **`pnpm verify`:** format, lint, typecheck green; tests 781 + 97 + 166 passed, 1 failed: the authorization matrix's HTTP test timed out under the full run's load, as in piece 2 (not caused by the game, measured there).
+- **Reused:** the platform's win glow `smg-anim-win` (`@smg/ui` motion.css) and its global reduced-motion rule; the seasons' icons (`seasons.ts`); the delayed views as they are.
+- **Noticed, left alone:** the platform's `useReducedMotion` hook lives in `apps/web` and is not shared with games, so the game reads the media query itself in two places (`FlightBand.tsx`, `ResultPanel.tsx`), one line each.
+
 ### Needs the owner's word (chain MG-N2)
 
 Platform gaps the game cannot close inside `games/mind-games` (the chain changes no file in `packages/` or `apps/`):
@@ -50,7 +58,7 @@ Platform gaps the game cannot close inside `games/mind-games` (the chain changes
 - **G4 — the result page's words for a phased round.** `apps/web/src/round/roundText.ts` `endHeadline` says "Time is up." for a round that ran its time (02e §9: "The round is over."), and the placings table's column is "Guesses" (the game's actions there are choices). The game's headline shows in the header below it (T311).
 - **G5 — the list's rows show no age.** `GameText.guesses` gets no clock and the list draws a row's time only for Frost's held answers, so the feed's lines read "Anna chose Summer" without "· 30 s ago" (02e §6.1).
 - **G6 — the host form's rules of 02e §3.** The platform's round form shows every key of the game's document as it is: the join time does not show half the total while "Join time follows the total" is on, the rounds and the pause stay editable after the first round (the server keeps the first round's anyway, 04 §4.8 rule 7), and a cross-key sentence shows for the form as a whole, not under its field.
-- **New proposals:** T304–T316 (DECISIONS), one line each in the final report.
+- **New proposals:** T304–T319 (DECISIONS), one line each in the final report.
 
 ## Night MG-N1 (2026-11-12/13): docs cleanup, then the `phased` contract (MG-C1 → MG-C3)
 

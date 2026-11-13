@@ -52,7 +52,7 @@ export function MindSpectator(p: SpectatorPanelProps): ReactElement {
     <div className="mg-stage" data-testid="mind-stage">
       <PhaseStrip view={view} />
       <FeedHead view={view} />
-      <ChoiceButtons view={view} own={null} choose={null} canAct={false} />
+      <ChoiceButtons view={view} own={null} choose={null} canAct={false} names={p.names} />
     </div>
   );
 }

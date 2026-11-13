@@ -58,7 +58,13 @@ export function MindInput(p: MindInputProps): ReactElement {
   const stage = (
     <div className="mg-stage" data-testid="mind-stage">
       <PhaseStrip view={view} />
-      <ChoiceButtons view={view} own={view.own.choice} choose={choose} canAct={p.canAct} />
+      <ChoiceButtons
+        view={view}
+        own={view.own.choice}
+        choose={choose}
+        canAct={p.canAct}
+        names={p.names}
+      />
       {view.rules.switchVisibility === 'perPlayer' ? <HideBox hide={hide} set={setHide} /> : null}
     </div>
   );
