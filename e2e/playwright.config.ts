@@ -56,6 +56,11 @@ const TIMING = [
   'accountDeletion.spec.ts',
   // Journeys 30–32: add and remove an identity provider, an embed origin and a webhook.
   'integration.spec.ts',
+  // Journeys 38–41: Seasonal Mind Games' phases, the feed's delay and a series run on the clock.
+  'mindGames.spec.ts',
+  'mindGamesSeries.spec.ts',
+  'mindGamesPrePicks.spec.ts',
+  'mindGamesDelay.spec.ts',
 ];
 // Specs that run in Chromium only: journey 36 starts its own server and nginx container, and
 // proves the server and the proxy, not the browser (DECISIONS T241).
