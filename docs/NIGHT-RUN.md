@@ -35,6 +35,8 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged. Platf
   - `apps/web/src/round/phasedWords.test.tsx`: a guess round's table is unchanged, and a phased round's has two columns, in winner-then-name order, with no count.
   - `apps/admin/src/live/roundPanel.test.tsx` (new): both kinds of round.
   - `apps/server/test/phasedPoints.integration.test.ts`: player-1 switches. No `guesses` above 0 appears in the round view's results or roster, the RoundEnded frame, or the rows.
+- **`pnpm verify`:** format, lint and typecheck green; tests 817 + 99 + 168 passed, 1 failed: the authorization matrix's HTTP test ran past its timeout under load (394 s; not raised). A first run broke because other projects on this machine were running their own test suites at the same time: vitest could not start its workers (110 of 144 unit files ran) and the DRBG's chi-square smoke test failed. The second run is the one counted.
+- **Reused:** the round fakes `ended` and the table's own `byPlace` shape for `byWin`; the admin tests' stubbed `fetch`.
 - **Noticed, left alone:** the admin's live list (`apps/admin/src/live/LivePage.tsx`) shows a round's total of guesses, the sum over its roster. For a phased round that is always 0: a total, not a per-player count, but a meaningless number there.
 
 ### Piece 1 — points never reach the table
