@@ -71,15 +71,17 @@ export class DelayedRoom {
   }
 
   // Recovery: the round's whole log; what was due is counted as released, the rest held.
+  // It counts as `emit` does, room frames only; a log with the end was released whole.
   restore(log: readonly StoredEvent[]): void {
     const now = this.now();
+    const ended = log.some((e) => ENDS.has(e.type));
     for (const e of log) {
       const item = this.itemOf(e);
       if (item === null) continue;
-      if (item.releaseAt <= now) this.rs += 1;
-      else this.held.push(item);
+      if (!ended && item.releaseAt > now) this.held.push(item);
+      else if (item.room !== null) this.rs += 1;
     }
-    if (log.some((e) => ENDS.has(e.type))) this.end();
+    if (ended) this.end();
   }
 
   // A committed batch: lifecycle events out at once, the rest held; an end releases all.

@@ -2,6 +2,29 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Chain MG-N2 (2026-11-13): Seasonal Mind Games itself (MG-1 → MG-5)
+
+Status, updated after every piece. Branch `feat/mind-games` is not merged.
+
+| Piece                                                | State            |
+| ---------------------------------------------------- | ---------------- |
+| 0 — the delayed room's release count after a restart | **done**, pushed |
+| 1 — MG-1, the rules                                  | open             |
+| 2 — MG-2, the views and the screen                   | open             |
+| 3 — MG-3, the animation                              | open             |
+| 4 — MG-4, pre-picks                                  | open             |
+| 5 — MG-5, the Quick Test and the journeys            | open             |
+
+### Piece 0 — the delayed room's release count after a restart
+
+- **The defect is real.** `DelayedRoom.restore` counted one release for every due item, `emit` only for those with a room form; a host-only `Game` event (room form `null`) therefore moved the sequence after a restart and not live. A second gap of the same kind: a log that already holds the round's end re-held the items the live end had flushed, and did not count them.
+- **Test** (`apps/server/src/round/delayedRoom.test.ts`, new, 115 lines, 3 cases, all red before the fix): a live room with host-only and room events against a room restored from the same log at the same time (same `seq()`); the next release numbered the same live and after the restart (same `rs`, same frames); a log with `RoundEnded` before the delay passed (all held counted).
+- **Fix** (`apps/server/src/round/delayedRoom.ts` 145 → 147): `restore` counts room frames only, as `emit` does, and counts a log with the end as released whole.
+
+### Needs the owner's word (chain MG-N2)
+
+- Nothing yet.
+
 ## Night MG-N1 (2026-11-12/13): docs cleanup, then the `phased` contract (MG-C1 → MG-C3)
 
 Status, updated after every piece. Branch `feat/mind-games` is not merged tonight; only piece 0 is.
