@@ -42,7 +42,7 @@ seasonal-mini-games/
 │  │                       leaderboard/, chat/, embed/
 │  ├─ admin/  embed-loader/                                  as Bingo
 ├─ e2e/                    Playwright specs (journeys of 09 §4)
-├─ load/                   guessStorm.mjs (09 §5)
+├─ load/                   guessStorm.mjs, mindStorm.mjs (09 §5)
 ├─ ops/                    install.sh, smg, lib/, compose.yml, compose.website.yml, compose.website-nginx.yml,
 │                          compose.dev.yml, Caddyfile, pull-backups.sh/.ps1, examples/, test/ (as Bingo, renamed)
 └─ docs/

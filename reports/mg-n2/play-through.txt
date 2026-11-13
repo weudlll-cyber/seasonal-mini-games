@@ -1,0 +1,17 @@
+[  4 s] Quick Test from the lobby, seed acorn, 7 bots, total 40 s, delay 5 s, 3 rounds, pause 20 s; match F7GESZ
+[ 11 s] pre-picks Winter, Summer, All: Saved.
+[ 11 s] 01-waiting-area.png: the waiting area: series line, Your pre-picks, the bots (with seed acorn all seven play in person; with seed frost bot-05 and bot-06 pre-pick and stay away) (page 1262 of 720 px high)
+[ 13 s] 02-intro.png: the intro: the rule and the timing; the platform still says "Cooldown 0.0 s" (G10) (page 720 of 720 px high)
+[ 19 s] 03-empty-feed.png: the first seconds: the feed is empty; the viewer is not in the round yet, so no buttons (G1) (page 720 of 720 px high)
+[ 24 s] switched Winter → Autumn with "Hide my switches" ticked
+[ 26 s] switched Autumn → Spring with the box clear
+[ 28 s] 04-round-chat.png: the round at 1280 × 720 with the Chat panel open (page 720 of 720 px high)
+[ 29 s] 05-flight.png: a wave in the flight band between the buttons and the counts (page 720 of 720 px high)
+[ 31 s] 06-phone.png: the round at 390 × 844 (page 844 of 844 px high)
+[ 59 s] 07-result.png: the result: the platform's placings; the game's options and winners are missing (G11) (page 1212 of 720 px high)
+[ 59 s] next round's settings (winner place 2): 204
+[ 59 s] Start next round now
+[ 64 s] round 2 intro rule: The first choices show 5 s after they are made.
+[104 s] next round's settings (All on): 204
+[106 s] 08-intro-all.png: round 3's intro with All on (page 720 of 720 px high)
+[172 s] 09-summary.png: the match summary after the third round (page 720 of 720 px high)

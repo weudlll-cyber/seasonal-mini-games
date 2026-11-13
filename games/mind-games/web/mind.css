@@ -40,11 +40,8 @@
 
 .mg-phase {
   flex-basis: 0;
-  min-width: 0;
+  min-width: max-content;
   padding: var(--space-1);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
   background: var(--color-surface-2);
   border-radius: var(--radius);
 }
@@ -56,6 +53,12 @@
 
 .mg-phase-name {
   font-weight: var(--font-weight-strong);
+}
+
+/* Name and time on two lines, so even a short Replay keeps both whole. */
+.mg-phase-name,
+.mg-phase-time {
+  display: block;
 }
 
 /* The choices: one row of buttons, the feed's counts in a row under them. */
@@ -93,13 +96,10 @@
 }
 
 .mg-choice[aria-checked='true'] {
-  color: var(--color-on-season);
-  background: var(--mg-color);
+  /* A tint, not the full colour: the season's own icon must stay visible on it. */
+  background: color-mix(in srgb, var(--mg-color) 30%, var(--color-surface));
+  border-width: 5px;
   box-shadow: inset 0 0 0 2px var(--color-text);
-}
-
-.mg-choice[data-choice='all'][aria-checked='true'] {
-  color: var(--color-text);
 }
 
 .mg-choice:disabled {
