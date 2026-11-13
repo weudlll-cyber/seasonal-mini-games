@@ -39,16 +39,34 @@
 }
 
 .mg-phase {
+  position: relative;
   flex-basis: 0;
   min-width: max-content;
   padding: var(--space-1);
+  overflow: hidden;
   background: var(--color-surface-2);
+  border: 2px solid transparent;
   border-radius: var(--radius);
 }
 
-.mg-phase[data-phase='replay'] {
+/* The part the round is in now: its own frame (not colour alone) and a bar along its foot that
+   fills as it runs (O92). */
+.mg-phase[data-current='true'] {
   background: var(--color-surface);
-  border: 1px dashed var(--color-border-strong);
+  border-color: var(--color-solid);
+}
+
+.mg-phase-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 4px;
+  background: var(--color-solid);
+}
+
+.mg-phase[data-phase='replay'][data-current='false'] {
+  background: var(--color-surface);
+  border: 2px dashed var(--color-border-strong);
 }
 
 .mg-phase-name {
@@ -61,35 +79,8 @@
   display: block;
 }
 
-/* The markers for now and for the feed's moment over the strip, and the next change. */
-.mg-timeline {
-  position: relative;
-}
-
-.mg-markers {
-  position: relative;
-  height: 1.2em;
-  font-size: var(--font-size-small);
-}
-
-.mg-marker {
-  position: absolute;
-  top: 0;
-  transform: translateX(-50%);
-  padding: 0 4px;
-  border-radius: var(--radius-pill);
-}
-
-.mg-marker-now {
-  color: var(--color-on-solid);
-  background: var(--color-solid);
-}
-
-.mg-marker-feed {
-  color: var(--color-text);
-  background: var(--color-surface-2);
-}
-
+/* Under the strip: the delay in words, then the next change. */
+.mg-delay,
 .mg-next,
 .mg-note {
   margin: 0;

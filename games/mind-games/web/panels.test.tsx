@@ -46,7 +46,7 @@ describe('Mind Games feed panels (02e §6.1, §10)', () => {
     expect(screen.getAllByRole('radio').every((r) => (r as HTMLButtonElement).disabled)).toBe(true);
     expect(screen.getByTestId('count-summer').textContent).toBe('30 s ago: 1');
     expect(screen.getByTestId('phase-strip').textContent).toBe(
-      'Join until 1:00Play until 1:30Replay until 2:00',
+      'Join until 1:00Play until 1:30Replay until 2:00You see the round 30 s late.',
     );
     expect(screen.queryByLabelText('Hide my switches')).toBeNull();
   });

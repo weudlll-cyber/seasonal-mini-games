@@ -7,7 +7,9 @@
  * Responsibility: with the round's public timing (the defaults 120/30/60): the next change in
  *                 words through Join, Play and Replay; the feed's sentences (the first choices'
  *                 countdown, every change a switch, the replay); the screen reader's sentence
- *                 per phase; the strip's markers; the buttons off after the join time for a
+ *                 per phase; the strip's current phase (highlighted, filling, named "now" for a
+ *                 screen reader, the others plain), its delay sentence and no markers (O92); the
+ *                 buttons off after the join time for a
  *                 player not in the round, with the reason, and on for one in it; the box from
  *                 the player's prefs, saved there 2.1 s after a change; the notice of a pre-pick
  *                 the round refused, live and after a reconnect.
@@ -61,12 +63,25 @@ describe('Mind Games phases in words (02e §4, §6, §11)', () => {
 });
 
 describe('Mind Games input with the round timing (02e §5.2, §11)', () => {
-  it('shows the strip’s markers and next change', () => {
+  it('highlights the phase the round is in, fills it as it runs, and says the delay', () => {
     render(<MindInput {...inputProps(playerView([], 0))} timing={at(36_000)} />);
     expect(screen.getByTestId('next-change').textContent).toBe(
       'Joining closes in 0:24 · choices close in 0:54',
     );
-    expect(document.querySelector('.mg-marker-now')?.getAttribute('style')).toContain('left: 30%');
+    expect(screen.getByTestId('delay-line').textContent).toBe('You see the round 30 s late.');
+    const parts = [...document.querySelectorAll('.mg-phase')];
+    expect(parts.map((p) => p.getAttribute('aria-current'))).toEqual(['step', null, null]);
+    expect(parts[0]?.textContent).toContain('Join (now)');
+    // 36 s of a 60 s join: 60 % filled; the other parts have no bar.
+    expect(document.querySelectorAll('.mg-phase-fill')).toHaveLength(1);
+    expect(parts[0]?.querySelector('.mg-phase-fill')?.getAttribute('style')).toContain(
+      'width: 60%',
+    );
+    expect(document.querySelector('.mg-markers')).toBeNull();
+    cleanup();
+    render(<MindInput {...inputProps(playerView([], 0))} timing={at(100_000)} />);
+    const later = [...document.querySelectorAll('.mg-phase')];
+    expect(later.map((p) => p.getAttribute('aria-current'))).toEqual([null, null, 'step']);
   });
 
   it('holds a player not in the round after the join time, with the reason', () => {

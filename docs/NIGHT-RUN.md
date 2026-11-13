@@ -11,8 +11,19 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged. Platf
 | 1 — points never reach the table                                     | **done**, pushed |
 | 2 — the result table of a phased round, no per-player count anywhere | **done**, pushed |
 | 3 — the Quick Test form's join time                                  | **done**, pushed |
-| 4 — the phase strip                                                  | open             |
+| 4 — the phase strip                                                  | **done**, pushed |
 | 5 — no season in Mind Games                                          | open             |
+
+### Piece 4 — the phase strip
+
+- **Owner decision O92** (2026-11-13, the planner's proposal; the owner may revise it after the next test).
+- **`games/mind-games/web/PhaseStrip.tsx`:**
+  - Removed: the "now" and "feed" markers (`Markers`, `along`).
+  - The part the round is in (`PartItem`) has a frame of its own and `aria-current="step"`. For a screen reader its name reads "Join (now)". A bar along its foot fills as the part runs (`filled`); the other parts stay plain.
+  - Under the strip: "You see the round 10 s late." (the plan's delay, also without the round's timing), then the next-change line as before.
+- **`games/mind-games/web/mind.css`:** the markers' rules are gone. New: the current part's frame and its 4 px fill bar, and the delay line styled with the next change. Replay keeps its dashed frame while it is not the current part.
+- **Tests:** `web/phases.test.tsx` checks the current part during Join (36 s of 60: 60 % filled, one bar, "Join (now)", no markers) and during Replay. `web/panels.test.tsx` checks the spectator's strip text with the delay sentence.
+- **02e §11** describes the strip as built.
 
 ### Piece 3 — the Quick Test form's join time
 
