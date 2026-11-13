@@ -69,6 +69,9 @@ export interface GameWeb {
   readonly Prefs?: ComponentType<PrefsPanelProps>;
   // How the host form shows one of the game's settings now, from the form's values and whether
   // it sets up the match's first round (02e §3, T335); null keeps the definition's.
+  // The game's own settings of the round just ended, from its result view, for the next round's
+  // form (T338); without it the form keeps only the platform's.
+  readonly kept?: (resultView: unknown) => Readonly<Record<string, SettingValue>>;
   readonly fieldState?: (
     key: string,
     values: Readonly<Record<string, SettingValue>>,

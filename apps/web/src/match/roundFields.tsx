@@ -20,7 +20,7 @@
  * Used by:        ./HostMenu, ../shell/QuickTest
  * Spec:           docs/spec/08-admin-settings.md §1, §3; docs/spec/03-seasonal-specials.md §3, §4
  */
-import { GAME_SCREENS } from '@smg-game/registry/web';
+import { GAME_SCREENS, type GameWeb } from '@smg-game/registry/web';
 import type {
   MatchDetailsView,
   RoundStateView,
@@ -189,7 +189,9 @@ export const SEASON_CHOICE = 'round.seasonChoice';
 // make it (a Quick Test's first round, the page loaded again): its season and halving (T209)
 // and its inactivity limit and warning (O75), the round view's own; a round made before O71
 // has no warning and leaves the pair to the document's values.
-export function keptOf(state: RoundStateView): Record<string, SettingValue> {
+export function keptOf(state: RoundStateView, game?: GameWeb): Record<string, SettingValue> {
+  // A game's own settings of the round just ended, where it gives them (T338).
+  const own = state.status === 'ended' && game?.kept !== undefined ? game.kept(state.game) : {};
   const inactivity =
     state.inactivityWarnMs > 0
       ? {
@@ -197,7 +199,7 @@ export function keptOf(state: RoundStateView): Record<string, SettingValue> {
           'round.inactivityWarnS': state.inactivityWarnMs / 1_000,
         }
       : {};
-  return { [SEASON_CHOICE]: state.season, 'round.halving': state.halving, ...inactivity };
+  return { [SEASON_CHOICE]: state.season, 'round.halving': state.halving, ...inactivity, ...own };
 }
 
 const choiceOf = (v: SettingValue | undefined): SeasonName | 'inSeason' | null =>

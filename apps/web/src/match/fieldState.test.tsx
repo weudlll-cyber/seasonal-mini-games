@@ -6,15 +6,19 @@
  *
  * Responsibility: without a game's word every field is its definition's, editable (the guess
  *                 games); with it a field shows the value it follows, off, with its own help
- *                 line (Mind Games' join time following the total, 02e §3; DECISIONS T335).
- * Depends on:     vitest, @testing-library/react, @smg/game-sdk (definitions), ./roundFields
+ *                 line (Mind Games' join time following the total, 02e §3; DECISIONS T335). The
+ *                 next round's form keeps a game's own settings of the round just ended where the
+ *                 game gives them (T338), the platform's alone otherwise.
+ * Depends on:     vitest, @testing-library/react, @smg/game-sdk (definitions), ../round/fakes,
+ *                 ./roundFields
  * Spec:           docs/spec/02e-game-mind-games.md §3; docs/spec/08-admin-settings.md §1
  */
 import { PLATFORM_ROUND_SETTINGS, type SettingDef } from '@smg/game-sdk';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { HostFields } from './roundFields.js';
+import { ended } from '../round/fakes.js';
+import { HostFields, keptOf } from './roundFields.js';
 
 afterEach(() => {
   cleanup();
@@ -48,5 +52,15 @@ describe('the host form fields (T335)', () => {
     const box = fields(() => ({ value: 30, disabled: true, help: 'Follows the total.' }));
     expect([box.value, box.disabled]).toEqual(['30', true]);
     expect(screen.getByText('Follows the total.')).toBeTruthy();
+  });
+});
+
+describe('the next round’s kept settings (T338)', () => {
+  const game = { kept: () => ({ 'mind.totalS': 40 }) } as never;
+
+  it('keeps the platform’s alone without a game’s, and adds a game’s own', () => {
+    expect(keptOf(ended)).not.toHaveProperty('mind.totalS');
+    expect(keptOf(ended, game)).toMatchObject({ 'mind.totalS': 40 });
+    expect(keptOf({ ...ended, status: 'open' }, game)).not.toHaveProperty('mind.totalS');
   });
 });

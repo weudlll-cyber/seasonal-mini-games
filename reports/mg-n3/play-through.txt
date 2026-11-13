@@ -1,0 +1,27 @@
+[  2 s] Quick Test form fields: Game · Start from the lobby · Seed · Season · Bots · Countdown before opening · Total length · Delay · Join time follows the total · Join time · All · Switches · Winner · Rounds · Pause
+[  3 s] Quick Test from the lobby, seed frost, 7 bots, total 40 s, delay 5 s, 3 rounds, pause 20 s; match UQXJ6W
+[  8 s] players: dev-host online bot-01 online bot-02 online bot-03 online bot-04 online bot-05 away bot-06 away bot-07 online
+[  9 s] 01-waiting-area.png: the waiting area: Round 1 of 3, Your pre-picks, the bots (bot-05 and bot-06 away: they pre-pick) (page 1238 px high at 720)
+[ 11 s] 02-intro.png: round 1's intro: the rule and the timing, no cooldown line (page 720 px high at 720)
+[ 16 s] at the opening: next change "Joining closes in 0:19 · choices close in 0:34", feed "The first choices show in 4 s."
+[ 16 s] clicked Winter: pressed false
+[ 16 s] 03-first-choice.png: right after my first choice by a click: Winter pressed, the feed still counting down, no count yet (page 720 px high at 720)
+[ 22 s] my line: "You chose Winter · 5 s ago"
+[ 22 s] switched Winter → Autumn with "Hide my switches" ticked
+[ 23 s] switched Autumn → Spring with the box clear
+[ 30 s] 04-round-chat.png: the round at 1280 × 720 with the Chat panel open: phase strip with markers, my named switch, no line for the hidden one (page 720 px high at 720)
+[ 30 s] 05-flight.png: a wave in the flight band (page 720 px high at 720)
+[ 32 s] 06-phone.png: the round at 390 × 844 (page 844 px high at 844)
+[ 55 s] round 1 result: "Summer and Winter share the least chosen place — 2 players win."; lit 2
+[ 56 s] 07-result.png: round 1's result: the least chosen option lit, its winners with +1, my line, Round 1 of 3 · Next round in … (page 1572 px high at 720)
+[ 57 s] 08-host-form.png: the host form in the pause: Join time follows the total (its field off, half the total), Rounds and Pause held (page 1572 px high at 720)
+[ 57 s] next round's settings, winner place 2: 204
+[ 57 s] Start next round now
+[ 64 s] round 2: clicked Summer
+[103 s] round 2 result: "Spring was the 2nd least chosen — 2 players win."
+[103 s] next round's settings, All on: 204
+[110 s] round 3: clicked All, buttons 5
+[150 s] round 3 result: "Autumn and All share the least chosen place — 2 players win."; my points  +2
+[171 s] summary: Round 1: Summer and Winter were the least chosen (2 players). Round 2: Spring was the 2nd least chosen (2 players). Round 3: Autumn and All were the least chosen (2 players).
+[171 s] 09-summary.png: the match summary: the standings and each round with what won (page 720 px high at 720)
+[171 s] page errors: none

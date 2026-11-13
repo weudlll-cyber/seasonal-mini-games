@@ -27,6 +27,7 @@
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/02-game-guess-the-number.md §2, §4, §11; docs/spec/03-seasonal-specials.md §5
  */
+import { GAME_SCREENS } from '@smg-game/registry/web';
 import type { MatchDetailsView } from '@smg/contracts';
 import { useState, type ReactElement } from 'react';
 
@@ -157,7 +158,8 @@ function MatchView(p: {
   const own = useOwnPart(match, p.reload);
   // Before the host's form made a round here (a Quick Test's first round), the next round
   // still starts from the last round's values (T209, O75).
-  const kept = last ?? (live.state === null ? null : keptOf(live.state));
+  const kept =
+    last ?? (live.state === null ? null : keptOf(live.state, GAME_SCREENS[match.gameId]));
   const menu = { match, roundStatus: status, reload: refresh, last: kept, setLast };
   const hostMenu = <HostMenu {...menu} />;
   const phase = phaseOf(match, status);

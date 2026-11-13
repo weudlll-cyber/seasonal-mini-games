@@ -11,7 +11,8 @@
  *                 player's view adds their own current choice and box, live. The result, after
  *                 the end, shows every final choice, the counts, the places, the winning
  *                 options and the points, and every line the feed showed, never a hidden
- *                 switch or a pre-pick (02e §9). Each view carries the round's rules and plan in
+ *                 switch or a pre-pick (02e §9), and the round's settings by key for the next
+ *                 round's form (T338). Each view carries the round's rules and plan in
  *                 milliseconds after the opening, for the intro and the screen.
  * Depends on:     zod, @smg/game-sdk (types), ./choices, ./rules, ./settings, ./state
  * Used by:        ./module, ./devBot, ./words, ./index
@@ -71,6 +72,8 @@ const result = z.object({
   winners: z.array(choice),
   players: z.array(z.object({ playerKey: z.string(), choice, points: z.number() })),
   lines: z.array(line),
+  // The round's frozen settings by key, so the next round's form starts from them (T338).
+  settings: z.record(z.string(), z.union([z.number(), z.boolean(), z.string()])),
 });
 
 export type FeedLineView = z.infer<typeof line>;
@@ -119,6 +122,19 @@ function ownOf(s: MindState, playerKey: string) {
   return { choice: last?.choice ?? null, hide: last?.hide ?? false };
 }
 
+// The frozen config by its settings' keys (08 §3.4).
+const settingsOf = (s: MindState): Record<string, number | boolean | string> => ({
+  'mind.totalS': s.cfg.totalS,
+  'mind.delayS': s.cfg.delayS,
+  'mind.joinAuto': s.cfg.joinAuto,
+  'mind.joinS': s.cfg.joinS,
+  'mind.allOption': s.cfg.allOption,
+  'mind.switchVisibility': s.cfg.switchVisibility,
+  'mind.winnerPlace': s.cfg.winnerPlace,
+  'mind.rounds': s.cfg.rounds,
+  'mind.pauseS': s.cfg.pauseS,
+});
+
 function resultOf(s: MindState): ResultView {
   const { finals, counts: c, winners } = finalOf(s);
   return {
@@ -133,6 +149,7 @@ function resultOf(s: MindState): ResultView {
       points: pointsOf(final, winners),
     })),
     lines: linesBefore(s, Infinity, null),
+    settings: settingsOf(s),
   };
 }
 

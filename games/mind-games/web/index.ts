@@ -16,7 +16,7 @@
  * Used by:        games/registry/web
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/02e-game-mind-games.md §11
  */
-import { mindSettings } from '@smg-game/mind-games';
+import { mindSettings, type ResultView } from '@smg-game/mind-games';
 
 import { MindLine, MindPlayer, MindSpectator } from './FeedPanels.js';
 import { mindFieldState } from './formFields.js';
@@ -40,6 +40,8 @@ export const mindGamesWeb = {
   Prefs: PrefsPanel,
   // The join time following the total, the rounds and the pause held (02e §3).
   fieldState: mindFieldState,
+  // The last round's own settings for the next round's form (T338).
+  kept: (view: unknown) => (view as ResultView).settings,
   // The choices are the stage: the board layout hands the input the stage, the left column at
   // full height, with the feed's head, the lines and the dock in the info column (O51).
   layout: 'board' as const,

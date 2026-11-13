@@ -85,6 +85,12 @@ describe('Mind Games result view (02e §9)', () => {
       { playerKey: 'bo', choice: 'winter', points: 0 },
       { playerKey: 'cy', choice: 'winter', points: 0 },
     ]);
+    // The round's settings by key, for the next round's form (T338).
+    expect(r.settings).toMatchObject({
+      'mind.totalS': 120,
+      'mind.joinAuto': true,
+      'mind.rounds': 6,
+    });
     // Every named line, never the hidden switch.
     expect(r.lines).toHaveLength(3);
     expect(viewSchemas.result.safeParse(r).success).toBe(true);
