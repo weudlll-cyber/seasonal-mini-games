@@ -6,6 +6,56 @@
 
 Status, updated after every piece. Branch `feat/mind-games` is not merged. This chain may change `packages/` and `apps/`; the four existing games must behave exactly as before.
 
+### Final report
+
+- **Done:** pieces 1–5. G1–G13 are closed. Seasonal Mind Games is playable as specified: a player's first choice is a click, the phases and countdowns show, the result shows its winners with the light-up, and the summary lists each round's winners. `feat/mind-games` is not merged.
+- **The existing games are unchanged.** Every changed platform function has a test that covers a guess game (unchanged) and a phased game:
+  - the session's result view: `roundSession.test.ts`;
+  - the chat line: `roundLines.test.ts`;
+  - the dock: `dock.test.tsx`;
+  - the rows' age: `log.test.tsx`;
+  - the own part: `prefs.test.tsx`;
+  - the words: `phasedWords.test.tsx`;
+  - the summary: `summary.test.tsx`, `series` and `matchFlow` integration;
+  - the Quick Test form: `quickTest.test.tsx`;
+  - the host form and `keptOf`: `fieldState.test.tsx`;
+  - a cross-key rule's field: `roundSession.test.ts`;
+  - a Quick Test match's seats: `prefs.integration.test.ts`.
+
+  The guess games' golden test and conformance P1–P6 pass in every verify. Their e2e journeys pass in the full Chromium run, apart from the one race below.
+
+- **`pnpm verify`, one per piece:** format, lint and typecheck green each time. Tests 790 + 99 + 166, 800 + 99 + 166, 811 + 99 + 167, 811 + 99 + 167 and 813 + 99 + 167 passed. Each run had the same one failure: the authorization matrix's HTTP test ran past its 150 s timeout under the full run's load. Alone it takes 30–36 s. I did not raise the timeout. **It is an OPEN candidate.**
+- **Journeys 38–41 in Chromium:** all four passed after their completion. Journey 38 needed two fixes first: no count while the feed is empty (T339), and its own regex for a shared place.
+- **Full e2e in Chromium:**
+  - The main project passed: 13 tests in 2.6 min.
+  - The timing project: 39 passed and 1 failed in 33.2 min. The failure was journey 25 (Safecracker in focus mode): the round's view left the screen during a panel check. Run once more alone, it passed (57 s). It is a race in that journey, not a change of the game. Reported, not changed.
+- **CI:** the run on the branch head is given in the line added after the last push.
+- **My play-through:** described in piece 5's section. Fixed from it: the next round's form after a Quick Test round (T338), and the counts before the feed has anything (T339). Left alone:
+  - the countdown is not kept after a Quick Test, for any game;
+  - a disabled field looks almost like an enabled one.
+- **New T-entries:**
+  - T324: the result view without a secret.
+  - T325: the chat line of a phased round from `won` and the game's words.
+  - T326: the input for every match player of a phased round.
+  - T327: the panels' `timing` and `own`.
+  - T328: the rows' age.
+  - T329: Mind Games' phases on screen.
+  - T330: the round's box in the prefs.
+  - T331: the refused pre-pick's notice.
+  - T332: the platform's words in a phased round.
+  - T333: the summary's rounds with what won (migration 0019).
+  - T334: the game's timing class in the game list; the Quick Test form.
+  - T335: a cross-key rule under its field; the game's word on its fields.
+  - T336: a Quick Test match's seats.
+  - T337: the planner's decision on the admin's round view.
+  - T338: the next round's form keeps a game's own settings.
+  - T339: no count before the feed has one.
+
+  Every entry is "(proposal, chain MG-N3)", except T337, which is the planner's decision.
+
+- **Screenshots:** 9 in light mode, with `play-through.txt`, on the orphan branch `shots/mg-n3`; `shots/mg-n2` is deleted.
+- **Handover:** see the line added after the last push.
+
 | Piece                                                                                                    | State            |
 | -------------------------------------------------------------------------------------------------------- | ---------------- |
 | 1 — G1, G11, G3: the input for every match player, the result view without a secret, the chat line       | **done**, pushed |
