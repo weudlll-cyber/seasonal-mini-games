@@ -6,6 +6,76 @@
 
 Status, updated after every piece. Branch `feat/mind-games` is not merged.
 
+### Final report
+
+- **Done:** pieces 0–5. The game is built in `games/mind-games` (rules, views, screens, animation, pre-picks, Quick Test bots), registered in both registry halves, with journeys 38–41 and the L5 driver. **It is not yet fully playable in the browser:** a player can enter a round only through a pre-pick (G1), and the result page lacks the game's own part (G11); both are platform defects this chain was not allowed to fix. `feat/mind-games` is not merged.
+- **Piece 0:** the defect is real. `DelayedRoom.restore` counted host-only events and re-held what an end had flushed. The test was red before the fix and is green after (piece 0's section).
+- **`pnpm verify`:** pieces 1–4 green except one test each time: the authorization matrix's HTTP test ran past its 150 s timeout under the full run's load. Alone it takes 30–36 s, with and without the game; no timeout was raised. The final run at the end of piece 5 is **all green**: 786 + 97 + 167 tests.
+- **Journeys 38–41, once each in Chromium:** all passed.
+- **Full e2e in Chromium at the end:**
+  - The timing project: 40 passed (27.9 min).
+  - The main project: 10 passed and 3 failed.
+    - Journey 23 failed because its game list did not yet have the fifth game; I updated it.
+    - Journey 28 (Safecracker) and the Trusted Types spec failed with `ECONNREFUSED 127.0.0.1:3910`: the development server had stopped during the run.
+  - With the server running again and journey 23 updated, all three specs passed: 6 tests.
+- **L5 (N = 500 players and 100 spectators, run once, not a gate):**
+  - Acknowledgement p95: 4 109 ms (N = 8 520). The limit is 150 ms: **missed**, through the serial commits on this laptop (OPEN (r)).
+  - Release tick p95: 121 ms (N = 540). The limit is 150 ms: met.
+  - Released steps: all 50 952 add up.
+  - Last step against the result: not checkable (G11).
+- **CI:** see the line added after the last push.
+- **Own play-through, fixed before the handover:**
+  - A 9 px page scroll at 1280 × 720.
+  - A blank page at every round's end.
+  - A pressed button hiding its season's icon.
+  - "Replay" cut short in the phase strip.
+
+  Each is described in piece 5's section.
+
+- **Played and seen working:**
+  - A Quick Test from the lobby with 7 bots.
+  - Pre-picks, with bot-05 and bot-06 away under seed `frost`.
+  - The delayed feed, the lines and the counts.
+  - Hide my switches on and off.
+  - The flights, and none with reduced motion.
+  - The Chat panel open at 1280 × 720, and the phone at 390 × 844.
+  - Winner place 2 in round 2 and All in round 3, saved as next-round settings.
+  - Start next round now.
+  - The pause, the automatic next round, and the summary "All 3 rounds are played.".
+- **Not seen working, because of platform gaps:**
+  - A first choice by a click (G1).
+  - The result's options and light-up (G11).
+  - The phase times on screen (G2).
+  - The refused pre-pick's notice (G8).
+- **Screenshots:** 9, light mode, with `play-through.txt`, on the orphan branch `shots/mg-n2` (`5a09500`). It is for the owner to delete after review.
+- **New proposals, every one "(proposal, chain MG-N2)":**
+  - T304: the views, their schemas and the bot are built with the rules in MG-1, since the registry line registers a whole entry.
+  - T305: the action is `{ value: { choice, hide } }`, any name of up to 16 characters (`CHOICE_INVALID` from `validate`); `ChoiceMade` carries `hide`.
+  - T306: the views carry the rules and the plan; lines carry their time; result and outcome rows are in entry order.
+  - T307: the chat line's part is "Winter was the least chosen (3 players)", none when nobody won.
+  - T308: the dev bot's three ways by its first draw; a random bot moves at every third change of its feed; resending the current choice keeps it playing.
+  - T309: pre-picks are `{ picks: { "1"…"20": choice }, hide? }`.
+  - T310: the game is added to the root coverage script and the registry's `package.json`.
+  - T311: the board layout. The stage holds the strip, the buttons and the box; the info column holds the head, the platform's list and the dock.
+  - T312: the feed's lines are the list's rows from the view, the viewer's own as "You"; no age yet.
+  - T313: the game words `PLAY_OVER`, `JOIN_CLOSED`, `NOT_IN_ROUND` and `INVALID_ACTION` itself.
+  - T314: the empty feed without its countdown, and the phase strip without its markers, until G2.
+  - T315: "not chosen" for an option nobody picked; the result's history lists every named line, oldest first.
+  - T316: the seasons' icons are imported from `assets/seasons`.
+  - T317: flights come from the difference of two released views; hidden switches are the counts' unexplained change, in option order.
+  - T318: the flight band is 40 px, a flight 0.8 s, a first choice flies from the right (from below on a phone), and "+N" sits at the right.
+  - T319: the winners light up with the platform's win glow for 2.4 s; nothing with reduced motion.
+  - T320: the pre-picks panel saves 2.1 s after the last change, with the box in the panel and All always offered.
+  - T321: about one bot in four pre-picks every round, any of the five names, with its box.
+  - T322: the journeys play as far as the platform allows. They use pre-picks for entry and matches made by hand for 39 and 40; `JOIN_CLOSED` moves to 41; the admin view is checked against the delay.
+  - T323: the L5 driver `load/mindStorm.mjs` with `load/mindWorker.mjs`.
+- **Needs the owner's word:** the platform gaps G1–G13 below. G1 (no first choice through the page) and G11 (no result view for a game without a secret) block the game; G2 (phase times) and G8 (the refused pre-pick's notice) are the next.
+- **Handover:** the development server runs on this branch at http://localhost:5410 (server on port 3910). The page shows the badge "Mini Games · dev · 5410" in the bottom-right corner. Sign in with Dev sign-in → host, open Quick Test and enter:
+  - Game: Seasonal Mind Games, Start from the lobby on, Seed `frost`, Bots 7.
+  - Total length 60, Delay 10, Rounds 3, Pause 15, the rest as they are.
+
+  With seed `frost`, bot-05 and bot-06 pre-pick and stay away. In the waiting area, set your own pre-pick for each round: a first choice cannot yet be made by a click (G1). Then choose Host → Start round. From the second round on, the Host menu keeps the next round's settings (for example Winner 2, or All).
+
 | Piece                                                | State            |
 | ---------------------------------------------------- | ---------------- |
 | 0 — the delayed room's release count after a restart | **done**, pushed |
@@ -56,6 +126,14 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged.
 - **Reused:** the platform's slot and `save` (MG-C3), the game's prefs schema for the test, the box's class and words of the round screen.
 - **Not built, waiting for the owner:** the round's own notice "Your pre-pick All was not offered in round 3." (G8) and the round screen's box kept through the prefs (G7).
 
+### Piece 5 — MG-5, the Quick Test and the journeys (09 §4 journeys 38–41, §4.2, §5 L5)
+
+- **Built:** the Quick Test's pre-picking bots, about one in four (`src/devBot.ts` 52 → 66, `src/devBot.test.ts` 72 → 91; the registry's line gives `devPrefs`, `games/registry/src/index.ts` 48 → 58; T321); the four journeys (`e2e/mindGames.ts` 83, `e2e/mindGames.spec.ts` 163, `e2e/mindGamesSeries.spec.ts` 94, `e2e/mindGamesPrePicks.spec.ts` 81, `e2e/mindGamesDelay.spec.ts` 199, all new; `e2e/playwright.config.ts` 130 → 135, the four in the timing project; T322); the L5 driver (`load/mindStorm.mjs` 166, `load/mindWorker.mjs` 98, new; T323; 09 §5 and 10 §1 name it).
+- **Found by playing, and fixed:** (1) at 1280 × 720 the page scrolled by 9 px once the dock appeared: the game's input lives in the stage, so the dock in the info column held nothing but the platform's hidden inactivity announcement, which ended below the screen; the dock now keeps the refusal's line (`web/mind.css`); (2) the page went blank at every round's end (`TypeError … 'rules'`): the result view is null (G11), and the game's headline and result panel now draw nothing for it (`web/text.ts` 96 → 97, `web/ResultPanel.tsx` 126 → 128, one test more in `web/panels.test.tsx`); (3) the pressed choice filled with its season's colour hid the season's own icon: a tint and a thicker border now (`web/mind.css`); (4) the phase strip cut "Replay" to "Repla…" ("Re…" on a phone): each part has its name and time on two lines now (`web/mind.css` 230 → 236). The game's tests: 70, green.
+- **Journeys, once each in Chromium (timing project):** 38 passed (1.4 min), 39 passed (2.3 min), 40 passed (2.2 min), 41 passed (1.2 min and 0.5 min). Each spec's header names the steps of 09 §4 it cannot play yet (T322).
+- **L5 `mind-500`, once on this laptop (not a gate):** 500 players, 100 spectators, defaults 120/30/60, switches every 2–2.5 s: acknowledgement p50 1 512 ms, p95 4 109 ms, p99 4 664 ms (N = 8 520; limit p95 < 150 ms: **missed**); the release tick's distance from a whole second p50 23 ms, p95 121 ms, p99 211 ms (N = 540 gaps; limit p95 < 150 ms: met); every one of 50 952 released steps' counts adds up to its entrants; the last step against the result's counts could not be compared, the result view being null (G11); server CPU peak 0.77 cores, mean 0.34, RSS peak 754 MiB, event-loop lag p99 peak 205 ms; no HTTP problem, no refusal. The acknowledgements queue behind the round's serial commits, as the guess games' did on this laptop (OPEN (r): measure on the reference VPS).
+- **Reused:** the e2e helpers (`person`, `call`, `attempt`, `visit`, `playerRow`, `fitsScreen`, `hostMenu`, `roundOpen`, `abortMatch`, `closeAll`), journey 9's axe check, the load driver's `http.mjs` and `measure.mjs` (`signIn`, `call`, `inGroups`, `metricsSampler`, `spread`) and its worker layout.
+
 ### Needs the owner's word (chain MG-N2)
 
 Platform gaps the game cannot close inside `games/mind-games` (the chain changes no file in `packages/` or `apps/`):
@@ -68,7 +146,13 @@ Platform gaps the game cannot close inside `games/mind-games` (the chain changes
 - **G6 — the host form's rules of 02e §3.** The platform's round form shows every key of the game's document as it is: the join time does not show half the total while "Join time follows the total" is on, the rounds and the pause stay editable after the first round (the server keeps the first round's anyway, 04 §4.8 rule 7), and a cross-key sentence shows for the form as a whole, not under its field.
 - **G7 — the round screen's box and the prefs.** The game's input gets neither the player's prefs nor a way to save them, so Hide my switches in a round starts from the player's last choice in that round (the view's own) and is not kept for the next rounds; only the box in the pre-picks panel is (02e §6.3: "kept by the server with the player's pre-picks").
 - **G8 — no notice of a refused pre-pick.** The server sends `prefs.refused` to the player's own room (MG-C3, T301), but the player client listens to it nowhere and the game's panels get no refusals, so "Your pre-pick All was not offered in round 3." (02e §7) shows nowhere.
-- **New proposals:** T304–T320 (DECISIONS), one line each in the final report.
+- **G9 — the Quick Test form of a phased game.** The form still shows the guess games' fields (Secret, Cooldown, Inactivity limit, Inactivity warning, Fast specials, Team match) beside the game's own; the server drops them for a phased game (T302), so they do nothing.
+- **G10 — the platform's words in a phased round.** The intro says "Cooldown 0.0 s between guesses"; the round's list is headed "2 guesses" and "No guesses yet."; the placings say "took part –" under "Guesses"; the match summary lists no round's winning options (02e §9).
+- **G11 — no result view for a game without a secret (blocks the result).** `packages/application/src/round/roundSession.ts` `result()` returns null when the round's secrets are null, and a game without a secret derives null (the phased fixture too, so the server tests never saw it). The result page shows only the platform's placings and standings: none of the game's options, counts, winners, players with +1/+2 or light-up (02e §9, §11.1), and the chat's `reveal` has nothing to word.
+- **G12 — a Quick Test match has seats for its bots and the host only** (`maxPlayers: bots + 1`), so journey 38's second browser cannot join it; its `JOIN_CLOSED` is checked in journey 41 in a match made by hand.
+- **G13 — the admin's round view.** `GET /admin/rounds/:id` is the delayed spectator view (counts, entrants and lines as of now − D), while 09 §4 journey 41 says the admin round view shows no count until the end. Nothing in it is younger than the delay (checked), so 05 §3.2 holds; the spec's stricter words and the platform differ.
+- **The authorization matrix's timeout:** in every full `pnpm verify` of this chain its HTTP test ran past its 150 s timeout under load (alone 30–36 s, with and without the game). An OPEN candidate.
+- **New proposals:** T304–T323 (DECISIONS), one line each in the final report.
 
 ## Night MG-N1 (2026-11-12/13): docs cleanup, then the `phased` contract (MG-C1 → MG-C3)
 
