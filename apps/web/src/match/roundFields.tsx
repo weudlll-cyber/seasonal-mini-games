@@ -225,16 +225,22 @@ export function useSeasonChoice(
   return { now, season, setSeason, halving, setHalving };
 }
 
-// The game's word on its fields (02e §3, T335); a series' first round has no series yet.
+// The game's word on its fields (02e §3, T335), from the form's values: the host form's and
+// the Quick Test's alike (T344); none for a game without it.
+export const gameFieldState = (
+  gameId: string,
+  values: Readonly<Record<string, SettingValue>>,
+  firstRound: boolean,
+) => {
+  const state = GAME_SCREENS[gameId]?.fieldState;
+  return state === undefined ? undefined : (key: string) => state(key, values, firstRound);
+};
+
+// The host form's: a series' first round has no series yet.
 export const fieldStateOf = (
   match: MatchDetailsView,
   values: Readonly<Record<string, SettingValue>>,
-) => {
-  const state = GAME_SCREENS[match.gameId]?.fieldState;
-  return state === undefined
-    ? undefined
-    : (key: string) => state(key, values, match.series == null);
-};
+) => gameFieldState(match.gameId, values, match.series == null);
 
 // The host's fields of the round's season: Heatwave's only for summer (O63).
 // The settings document's bounds in force where there is one (the host menu); the Quick Test

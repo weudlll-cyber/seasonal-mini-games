@@ -6,7 +6,11 @@
  *
  * Responsibility: the form shows "Heatwave step" and "Heatwave every" only with summer chosen,
  *                 from the definitions' defaults and bounds (the host form's own fields), and
- *                 the request body carries both for a summer round and neither otherwise.
+ *                 the request body carries both for a summer round and neither otherwise. The
+ *                 chosen game's word on its fields, as in the host form (T344): Mind Games' join
+ *                 time shows half the total, off, with its help line, while "Join time follows
+ *                 the total" is on, and is the field's own once it is off; a guess game's fields
+ *                 stay the definitions' own.
  * Depends on:     vitest, @testing-library/react, ./QuickTest, ./quickTestSettings
  * Spec:           docs/spec/03-seasonal-specials.md §2.2; docs/spec/11-roadmap.md (Quick Test)
  */
@@ -97,5 +101,25 @@ describe('the fields of the chosen game (DECISIONS T334)', () => {
       expect(labels()).not.toContain(label);
     for (const label of ['Seed', 'Bots', 'Countdown before opening', 'Total length', 'Delay'])
       expect(labels()).toContain(label);
+  });
+});
+
+describe('the game’s word on its fields in the Quick Test (T344)', () => {
+  it('keeps a guess game’s fields, and shows Mind Games’ join time following the total', async () => {
+    render(<QuickTest />);
+    const game = await screen.findByTestId('quick-game');
+    await screen.findByRole('option', { name: 'Seasonal Mind Games' });
+    expect(field('Cooldown')?.disabled).toBe(false);
+    fireEvent.change(game, { target: { value: 'mind-games' } });
+    const total = field('Total length');
+    if (total === null) throw new Error('the total');
+    fireEvent.change(total, { target: { value: '40' } });
+    fireEvent.blur(total);
+    const join = () => field('Join time');
+    expect([join()?.value, join()?.disabled]).toEqual(['20', true]);
+    expect(screen.getByText(/Follows the total: half of it/)).toBeTruthy();
+    const auto = screen.getByLabelText('Join time follows the total');
+    fireEvent.click(auto);
+    expect([join()?.value, join()?.disabled]).toEqual(['60', false]);
   });
 });

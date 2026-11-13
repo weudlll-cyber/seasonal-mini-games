@@ -46,6 +46,7 @@ import { api } from './http.js';
 import {
   bodyOf,
   defsOf,
+  fieldStateFor,
   gameKeysOf,
   INACTIVITY_KEYS,
   KEYS,
@@ -194,8 +195,17 @@ function QuickTestFields(p: {
 }): ReactElement {
   const { extra, values, set, more, problems } = p;
   const defs = defsOf(extra.gameId);
+  // The game's word on its fields, as in the host form (T344).
+  const fieldState = fieldStateFor(extra.gameId, values);
   const fields = (keys: readonly string[]) => (
-    <SettingFields keys={keys} defs={defs} values={values} set={set} problems={problems} />
+    <SettingFields
+      keys={keys}
+      defs={defs}
+      values={values}
+      set={set}
+      problems={problems}
+      fieldState={fieldState}
+    />
   );
   if (p.phased) return <PhasedFields more={more} fields={fields} gameId={extra.gameId} />;
   return (

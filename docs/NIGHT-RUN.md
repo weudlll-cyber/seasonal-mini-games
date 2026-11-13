@@ -10,9 +10,16 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged. Platf
 | -------------------------------------------------------------------- | ---------------- |
 | 1 — points never reach the table                                     | **done**, pushed |
 | 2 — the result table of a phased round, no per-player count anywhere | **done**, pushed |
-| 3 — the Quick Test form's join time                                  | open             |
+| 3 — the Quick Test form's join time                                  | **done**, pushed |
 | 4 — the phase strip                                                  | open             |
 | 5 — no season in Mind Games                                          | open             |
+
+### Piece 3 — the Quick Test form's join time
+
+- **The defect:** the Quick Test form showed `mind.joinS` as an editable 60 while "Join time follows the total" was on. The host form asked the game how to show its fields (`fieldState`, T335); the Quick Test's `SettingFields` did not.
+- **Fix** (T344): one mechanism for both forms. `gameFieldState(gameId, values, firstRound)` in `apps/web/src/match/roundFields.tsx` is extracted from `fieldStateOf`, which now calls it. The Quick Test passes it to `SettingFields` through `fieldStateFor` (`apps/web/src/shell/quickTestSettings.tsx`): the form's values, each setting's default where the form has none yet, as a match's first round. While the box is on, the join time shows half the total, off, with its help line. The guess games give no word, so their fields stay the definitions' own.
+- **Test** (`apps/web/src/shell/quickTest.test.tsx`): a guess game's Cooldown field stays on. For Mind Games with the total at 40, the join time shows 20, off, with "Follows the total: half of it"; with the box off it is the field's own 60, on.
+- **Reused:** the host form's `Field`, which already took a `state`, and the game's `mindFieldState`.
 
 ### Piece 2 — the result table of a phased round, no per-player count anywhere
 

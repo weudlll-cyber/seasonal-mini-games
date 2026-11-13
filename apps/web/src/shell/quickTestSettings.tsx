@@ -6,7 +6,8 @@
  * Responsibility: the round settings every game's Quick Test shows and its starting values,
  *                 the inactivity limit and warning as in every round setup (O75), the chosen
  *                 game's own host settings after them (O41), their fields through the host
- *                 form's own `Field` (with the server's sentence under a refused one, O74),
+ *                 form's own `Field` (with the server's sentence under a refused one, O74) and
+ *                 the game's word on them, as in the host form (`gameFieldState`, T344),
  *                 the keys the form shows, and the body of `POST /dev/quicktest` with the
  *                 game's settings and the inactivity pair by key (DECISIONS T121) and, for a
  *                 summer round, Heatwave's step and interval (O63, T208). Development builds
@@ -18,10 +19,15 @@
  */
 import { GAME_SCREENS } from '@smg-game/registry/web';
 import type { SeasonName } from '@smg/contracts';
-import { PLATFORM_ROUND_SETTINGS, type SettingDef, type SettingValue } from '@smg/game-sdk';
+import {
+  PLATFORM_ROUND_SETTINGS,
+  type FieldState,
+  type SettingDef,
+  type SettingValue,
+} from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
-import { Field, seasonalDefs, type FormProblems } from '../match/roundFields.js';
+import { Field, gameFieldState, seasonalDefs, type FormProblems } from '../match/roundFields.js';
 
 // The round settings the Quick Test offers for every game, in the form's order; the chosen
 // game's own host settings follow (O41). Its own starting values where they differ.
@@ -82,6 +88,8 @@ export function SettingFields(p: {
   readonly values: Values;
   readonly set: (key: string, v: SettingValue) => void;
   readonly problems: FormProblems['fields'];
+  // The game's word on how one of its fields shows now (T335, T344).
+  readonly fieldState?: ((key: string) => FieldState | null) | undefined;
 }): ReactElement {
   return (
     <>
@@ -93,6 +101,7 @@ export function SettingFields(p: {
             def={def}
             value={p.values[key] ?? def.default}
             problem={p.problems[key]}
+            state={p.fieldState?.(key)}
             set={(v) => {
               p.set(key, v);
             }}
@@ -101,6 +110,13 @@ export function SettingFields(p: {
       })}
     </>
   );
+}
+
+// The form's values with each setting's default where the form has none yet: what the
+// game's rules about its fields read (a Quick Test is always a match's first round, T344).
+export function fieldStateFor(gameId: string, values: Values) {
+  const defaults = Object.fromEntries(defsOf(gameId).map((d) => [d.key, d.default]));
+  return gameFieldState(gameId, { ...defaults, ...values }, true);
 }
 
 // The request body: the server's Quick Test names the common fields; the game's own settings
