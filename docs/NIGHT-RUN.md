@@ -29,7 +29,7 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged. This 
 - **Full e2e in Chromium:**
   - The main project passed: 13 tests in 2.6 min.
   - The timing project: 39 passed and 1 failed in 33.2 min. The failure was journey 25 (Safecracker in focus mode): the round's view left the screen during a panel check. Run once more alone, it passed (57 s). It is a race in that journey, not a change of the game. Reported, not changed.
-- **CI:** the run on the branch head is given in the line added after the last push.
+- **CI on `feat/mind-games`:** every run green except one: the run on `8aac804` failed in the e2e job's timing project on journey 12 (the Quick Test through the lobby, "element(s) not found"). That journey passed in the next run (`85cfa39`) and in my local full run. The run on `1248ff1` was green in every job (verify with coverage, e2e, docs, security). The run on this sheet's own commit is reported in the chat.
 - **My play-through:** described in piece 5's section. Fixed from it: the next round's form after a Quick Test round (T338), and the counts before the feed has anything (T339). Left alone:
   - the countdown is not kept after a Quick Test, for any game;
   - a disabled field looks almost like an enabled one.
@@ -54,7 +54,14 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged. This 
   Every entry is "(proposal, chain MG-N3)", except T337, which is the planner's decision.
 
 - **Screenshots:** 9 in light mode, with `play-through.txt`, on the orphan branch `shots/mg-n3`; `shots/mg-n2` is deleted.
-- **Handover:** see the line added after the last push.
+- **Handover:**
+  - **Stack:** I stopped every old Mini Games dev process, including the Vite pair from 10 November on ports 5410 and 5411. `pnpm dev` runs fresh on `feat/mind-games`.
+  - **Where:** http://localhost:5410 (server on port 3910). The badge in the bottom-right corner reads "Mini Games · dev · 5410".
+  - **Quick Test:** Dev sign-in → host, then Quick Test with these settings:
+    - Game: Seasonal Mind Games; Start from the lobby on.
+    - Seed `frost`, Bots 7.
+    - Total length 60, Delay 10, Rounds 3, Pause 15; the rest as it is.
+  - **Then:** Host → Start round, and make your own first choice by clicking a season. With `frost`, bot-05 and bot-06 pre-pick and stay away.
 
 | Piece                                                                                                    | State            |
 | -------------------------------------------------------------------------------------------------------- | ---------------- |
