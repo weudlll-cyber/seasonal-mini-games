@@ -14,6 +14,7 @@
  * Used by:        ../app
  * Spec:           docs/spec/11-roadmap.md (phase 1 Quick Test); docs/spec/09-testing-strategy.md §1
  */
+import type { SettingsService } from '@smg/application';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
@@ -70,7 +71,11 @@ export const quickTestBody = z
 
 export function registerQuickTest(
   app: FastifyInstance,
-  deps: { readonly play: Play; readonly pool: Parameters<typeof quickTests>[1] },
+  deps: {
+    readonly play: Play;
+    readonly pool: Parameters<typeof quickTests>[1];
+    readonly settings: SettingsService;
+  },
 ): void {
   const quick = quickTests(deps.play, deps.pool);
   app.post('/api/v1/dev/quicktest', async (request, reply) => {
@@ -86,7 +91,9 @@ export function registerQuickTest(
       return reply.status(422).send({ code: 'GAME_UNKNOWN' });
     }
     try {
-      const started = await quick.start({ ...parsed.data, playerId: accountId });
+      // The normal match's seats, so people can join beside the bots (DECISIONS T336).
+      const seats = (await deps.settings.values('matchmaking'))['match.maxPlayers'] as number;
+      const started = await quick.start({ ...parsed.data, playerId: accountId, seats });
       return await reply.status(201).send(started);
     } catch (error) {
       // Settings that do not fit the game: refused in its words, like the host's form.

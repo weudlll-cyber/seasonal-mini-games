@@ -64,6 +64,8 @@ export interface QuickTestInput {
   readonly season?: Season | undefined;
   // The chosen game's own round settings by key (O41); the settings layer checks them.
   readonly settings: Readonly<Record<string, string | number | boolean>>;
+  // The normal match's seats (`match.maxPlayers`): people may join beside the bots (T336).
+  readonly seats: number;
 }
 
 export interface QuickTestStarted {
@@ -169,7 +171,7 @@ export function quickTests(play: Play, pool: Parameters<typeof openMatch>[0]): Q
       gameId: input.gameId,
       title: 'Quick Test',
       visibility: 'unlisted',
-      maxPlayers: input.bots + 1,
+      maxPlayers: Math.max(input.bots + 1, input.seats),
       countsForLeaderboard: false,
       // A game without teams has matches without them (04 §4.8 rule 3).
       teamMatch: input.teamMatch && play.rounds.teams(input.gameId),

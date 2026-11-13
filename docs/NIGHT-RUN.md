@@ -14,6 +14,12 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged. This 
 | 4 — G12, G13: seats in a Quick Test match, the admin's round view                                        | open             |
 | 5 — the journeys completed, the play-through, the handover                                               | open             |
 
+### Piece 4 — seats in a Quick Test match (G12), the admin's round view (G13)
+
+- **G12** (T336): the Quick Test route reads `match.maxPlayers` and its match gets that many seats, at least the bots and the host (`apps/server/src/http/routes/quickTest.ts`, `apps/server/src/dev/quickTest.ts`, `apps/server/src/http/app.ts` passes the settings). Test: a person joins a Quick Test match beside its bots, in a guess game and in the phased fixture (`apps/server/test/prefs.integration.test.ts`). Journey 38's second browser comes back in piece 5.
+- **`pnpm verify`:** format, lint, typecheck green; tests 811 + 99 + 167 passed, 1 failed: the authorization matrix's HTTP test ran past its timeout under load (not raised).
+- **G13** (T337, the planner's decision of 2026-11-13): no code; the admin's round view stays the delayed spectator view, and 09 §4 journey 41 says so.
+
 ### Piece 3 — words and forms (G4, G6, G9, G10)
 
 - **G4, G10, words** (T332): `actionWords` and `actionCount` and a phased round's headline (`apps/web/src/round/roundText.ts`); the list's title, empty line and label (`RoundLog.tsx`), the list panel's title (`RoundBody.tsx`), no cooldown line in the intro (`RoundIntro.tsx`), no counts in the Players panel (`RoundSide.tsx`), the placings' column and a winner's "won" (`ResultParts.tsx`); `won` in the results' view (`packages/contracts/src/http/play.ts`).

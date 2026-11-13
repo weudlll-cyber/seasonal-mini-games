@@ -220,7 +220,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   registerChatRoutes(fastify, { chat, audit });
   const integration = { ...deps, features, embeds, audit, cookie, sessionEnds, runtime };
   const webhooks = registerIntegration(fastify, integration);
-  if (isDev) registerQuickTest(fastify, { play, pool: deps.pool });
+  if (isDev) registerQuickTest(fastify, { play, pool: deps.pool, settings });
   fastify.addHook('onClose', () => runtime.stop());
   return {
     fastify,

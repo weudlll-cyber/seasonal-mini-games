@@ -163,3 +163,25 @@ describe('the Quick Test of a phased game (09 §4.2)', () => {
     for (const row of first.rows) expect(first.connected).not.toContain(row.player_key);
   }, 60_000);
 });
+
+describe('the seats of a Quick Test match (DECISIONS T336)', () => {
+  it('lets a person join beside the bots, in a guess game and a phased one', async () => {
+    for (const gameId of ['guess-the-number', 'sides-fixture']) {
+      const r = await kit.clients.host.post('/api/v1/dev/quicktest', {
+        gameId,
+        bots: 3,
+        countdownS: 3,
+      });
+      expect(r.statusCode).toBe(201);
+      const code = r.json<{ matchCode: string }>().matchCode;
+      const d = (await kit.clients.host.get(`/api/v1/matches/${code}`)).json<{
+        maxPlayers: number;
+      }>();
+      expect(d.maxPlayers).toBeGreaterThan(4);
+      expect(
+        (await kit.clients['player-3'].post(`/api/v1/matches/${code}/join`, {})).statusCode,
+      ).toBe(204);
+      await kit.clients.host.post(`/api/v1/matches/${code}/abort`, { reason: 'test done' });
+    }
+  }, 60_000);
+});
