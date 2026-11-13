@@ -48,6 +48,14 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged.
 - **Reused:** the platform's win glow `smg-anim-win` (`@smg/ui` motion.css) and its global reduced-motion rule; the seasons' icons (`seasons.ts`); the delayed views as they are.
 - **Noticed, left alone:** the platform's `useReducedMotion` hook lives in `apps/web` and is not shared with games, so the game reads the media query itself in two places (`FlightBand.tsx`, `ResultPanel.tsx`), one line each.
 
+### Piece 4 — MG-4, the pre-picks (02e §7)
+
+- **Built:** the Your pre-picks panel (`web/PrefsPanel.tsx`, new, 152): a select per round of the series, played rounds locked, a tooltip on each, the box Hide my switches for every round, the line "Pre-picks play for you when you are away. If you are here, you can still switch.", saving 2.1 s after the last change (T320); registered as the web half's `Prefs` (`web/index.ts` 37 → 42); its styles, two columns on a phone (`web/mind.css` 197 → 230); `DEFAULT_CONFIG` exported for the panel (`src/index.ts`). The prefs schema with the box and the pre-pick's action came with MG-1 (T309), the platform's saving, applying and refusing with MG-C3.
+- **Tests** (`web/prefs.test.tsx`, new, 76 lines, 3 cases, the game's tests now 68): the selects per round and the default before the first round, played rounds locked, the tooltip and the line; one save 2.1 s after the last change with a value the game's schema takes (none removes a pick, the box rides along); a refusal in words.
+- **`pnpm verify`:** format, lint, typecheck green (after a typecheck fix in the new test, a mock typed without its parameter); tests 784 + 97 + 166 passed, 1 failed: the authorization matrix's HTTP test timed out under load, as in pieces 1–3.
+- **Reused:** the platform's slot and `save` (MG-C3), the game's prefs schema for the test, the box's class and words of the round screen.
+- **Not built, waiting for the owner:** the round's own notice "Your pre-pick All was not offered in round 3." (G8) and the round screen's box kept through the prefs (G7).
+
 ### Needs the owner's word (chain MG-N2)
 
 Platform gaps the game cannot close inside `games/mind-games` (the chain changes no file in `packages/` or `apps/`):
@@ -58,7 +66,9 @@ Platform gaps the game cannot close inside `games/mind-games` (the chain changes
 - **G4 — the result page's words for a phased round.** `apps/web/src/round/roundText.ts` `endHeadline` says "Time is up." for a round that ran its time (02e §9: "The round is over."), and the placings table's column is "Guesses" (the game's actions there are choices). The game's headline shows in the header below it (T311).
 - **G5 — the list's rows show no age.** `GameText.guesses` gets no clock and the list draws a row's time only for Frost's held answers, so the feed's lines read "Anna chose Summer" without "· 30 s ago" (02e §6.1).
 - **G6 — the host form's rules of 02e §3.** The platform's round form shows every key of the game's document as it is: the join time does not show half the total while "Join time follows the total" is on, the rounds and the pause stay editable after the first round (the server keeps the first round's anyway, 04 §4.8 rule 7), and a cross-key sentence shows for the form as a whole, not under its field.
-- **New proposals:** T304–T319 (DECISIONS), one line each in the final report.
+- **G7 — the round screen's box and the prefs.** The game's input gets neither the player's prefs nor a way to save them, so Hide my switches in a round starts from the player's last choice in that round (the view's own) and is not kept for the next rounds; only the box in the pre-picks panel is (02e §6.3: "kept by the server with the player's pre-picks").
+- **G8 — no notice of a refused pre-pick.** The server sends `prefs.refused` to the player's own room (MG-C3, T301), but the player client listens to it nowhere and the game's panels get no refusals, so "Your pre-pick All was not offered in round 3." (02e §7) shows nowhere.
+- **New proposals:** T304–T320 (DECISIONS), one line each in the final report.
 
 ## Night MG-N1 (2026-11-12/13): docs cleanup, then the `phased` contract (MG-C1 → MG-C3)
 

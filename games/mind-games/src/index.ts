@@ -14,6 +14,6 @@ export { mindConformance } from './conformance.js';
 export { mindDevBot } from './devBot.js';
 export { mindGames } from './module.js';
 export { optionsOf, type Choice } from './choices.js';
-export { mindSettings } from './settings.js';
+export { DEFAULT_CONFIG, mindSettings } from './settings.js';
 export type { FeedLineView, PlayerView, ResultView, SpectatorView } from './views.js';
 export { CHOICE_NAMES, headline, placeWords } from './words.js';
