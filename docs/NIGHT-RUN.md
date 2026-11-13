@@ -23,7 +23,7 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged.
   - Release tick p95: 121 ms (N = 540). The limit is 150 ms: met.
   - Released steps: all 50 952 add up.
   - Last step against the result: not checkable (G11).
-- **CI:** see the line added after the last push.
+- **CI on `feat/mind-games`:** piece 0's run (`5a903d2`) was green. Every run from MG-1 (`e3a8b51`) to `0217576` failed only in the e2e job, on journey 23 (`gameChoice.spec.ts`): its list of games in the create-match form did not have the fifth game. Verify (with coverage), docs and security were green in each of them. I did not watch CI between the pieces and saw it only at the end. The list is fixed in `33b68c1`; the run on the branch head was still running at the handover and is reported afterwards.
 - **Own play-through, fixed before the handover:**
   - A 9 px page scroll at 1280 × 720.
   - A blank page at every round's end.
