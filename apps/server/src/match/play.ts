@@ -19,7 +19,8 @@
  *                 player numbers for the public answers (./publicIds). A phased round (04 §4.8
  *                 rule 3) starts with every active match player admitted (at least the minimum
  *                 connected), is told of players who join (admitted) or leave while it runs,
- *                 and plays on when its players leave; a game without teams gets no team keys.
+ *                 and plays on when its players leave; a game without teams gets no team keys;
+ *                 a phased round's settings are kept for a series' next round (./series).
  * Depends on:     @smg/application (settings), ../round/*, ../seasons/seasons, ./roundCreation,
  *                 ./matches, ./playError, ./presence, ./publicIds, ./rosterRules, ./teams,
  *                 ../db/pool
@@ -53,6 +54,7 @@ import {
 } from './matches.js';
 import { PlayError } from './playError.js';
 import { newRound, type RoundRequest } from './roundCreation.js';
+import { rememberNext } from './series.js';
 import type { Admission } from './rosterRules.js';
 import type { Seasons } from '../seasons/seasons.js';
 import type { Presence } from './presence.js';
@@ -154,6 +156,10 @@ export class Play {
     if ((await this.runningRound(match)) !== null) throw new PlayError('ROUND_RUNNING');
     const { pool, rounds, settings, seasons } = this;
     const round = await newRound({ pool, rounds, settings, seasons }, match, hostId, req);
+    // A series keeps these settings for its next round until the host changes them (rule 7).
+    if (round.phased) {
+      await rememberNext(pool, match.id, { choices: req.choices, season: req.season ?? null });
+    }
     // Watchers learn of the new round and load it.
     this.changed(match.id);
     return round;
@@ -169,10 +175,12 @@ export class Play {
 
   // The roster: the players present; the host plays along (O16, 02 §4). Every roster player
   // has their match team; one without is placed now and keeps it (O26).
+  // `auto`: a series starts its next round itself, without the minimum (04 §4.8 rule 7).
   async startRound(
     match: MatchRow,
     round: LiveRound,
     roster?: readonly RosterPlayer[],
+    auto = false,
   ): Promise<Reply> {
     const players = await activePlayers(this.pool, match.id);
     // Every roster player has a number before the round's first frame goes out.
@@ -185,7 +193,7 @@ export class Play {
     const teams = teamRoster(match, chosen, players, round.id);
     const values = await this.settings.values('matchmaking');
     const minPlayers = roster === undefined ? (values['match.minPlayersPerRound'] as number) : 1;
-    if (round.phased && present.length < minPlayers)
+    if (round.phased && !auto && present.length < minPlayers)
       return { ok: false, code: 'NOT_ENOUGH_PLAYERS' };
     const reply = await round.run({
       type: 'startCountdown',

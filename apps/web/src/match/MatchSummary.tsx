@@ -39,6 +39,8 @@ export function endText(status: MatchDetailsView['status'], end: MatchEndView): 
   if (status === 'aborted') {
     return end.reason === null ? 'The match was aborted.' : `The match was aborted: ${end.reason}.`;
   }
+  // A series closes itself after its last round (04 §4.8 rule 7).
+  if (end.reason === 'complete') return `All ${String(end.roundsPlayed)} rounds are played.`;
   if (end.reason === 'idle') {
     const n = end.idleMinutes ?? 0;
     return `The match closed after ${String(n)} ${n === 1 ? 'minute' : 'minutes'} without a round.`;

@@ -7,7 +7,9 @@
  *                 (04 §4.8): the plan of its round from the frozen config (until when a player
  *                 may enter, until when actions count, when it ends, and how late everyone
  *                 but the actor sees an action), and the result rows its own rule decides at
- *                 the end, in place of Solved signals. `planIssue` is the one check that a plan
+ *                 the end, in place of Solved signals, and whether its matches are a series of
+ *                 rounds (how many, and the pause between them), read from a match's first
+ *                 round. `planIssue` is the one check that a plan
  *                 is in order, used where a round is set up.
  * Depends on:     nothing
  * Used by:        ./module, ./index, packages/application (round settings), packages/domain
@@ -34,8 +36,17 @@ export interface OutcomeRow {
   readonly actions: number;
 }
 
+// A match that is a series of rounds (04 §4.8 rule 7): its number of rounds and the pause
+// after each one, in which the result shows.
+export interface Series {
+  readonly rounds: number;
+  readonly pauseMs: number;
+}
+
 export interface PhasedHooks<S, Cfg> {
   readonly plan: (cfg: Cfg) => PhasePlan;
+  // Read from the config of a match's first round; null: the host runs rounds one by one.
+  readonly series: (cfg: Cfg) => Series | null;
   // Every player in the round, in the order the result lists them.
   readonly outcome: (state: S) => readonly OutcomeRow[];
 }

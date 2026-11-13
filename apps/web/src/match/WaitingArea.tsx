@@ -4,7 +4,8 @@
  * @brief  The waiting area before a round: the team choice once per match, and who is here.
  *
  * Responsibility: shown before the first round and between rounds (O23): whether the next
- *                 round is set up and who starts it; and every player with their name (one
+ *                 round is set up and who starts it (in a series: that it starts by itself, with
+ *                 its round count and pause, ./SeriesStatus); and every player with their name (one
  *                 line, cut with an ellipsis only where the row is too narrow,
  *                 ../round/PlayerName), their team under the heading "Team" as its icon alone
  *                 (its name the icon's accessible name and tooltip, "no team yet" a named dash,
@@ -19,7 +20,7 @@
  *                 chat is not part of the area: the match page shows it as a panel of its own
  *                 (./MatchPage, T116).
  * Depends on:     react, @smg/contracts, ../live/socket, ../round/PlayerName, ../round/roundText,
- *                 ../season/*
+ *                 ../season/*, ./SeriesStatus
  * Used by:        ./MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §2, §4; docs/spec/03-seasonal-specials.md §5
  */
@@ -32,6 +33,7 @@ import { codeText } from '../round/roundText.js';
 import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASONS, seasonColor, teamName } from '../season/season.js';
 import { TeamIcon } from '../season/TeamIcon.js';
+import { SeriesStatus } from './SeriesStatus.js';
 
 interface Props {
   readonly match: MatchDetailsView;
@@ -116,6 +118,12 @@ function Players({ match }: { readonly match: MatchDetailsView }): ReactElement 
 
 // Whether the next round is set up, and who acts now.
 function stateText(match: MatchDetailsView): string {
+  // A series starts its next round by itself after the pause (04 §4.8 rule 7).
+  if (match.series?.nextAt != null) {
+    return match.youHost
+      ? 'The next round starts by itself. Change its settings in the Host menu.'
+      : 'The next round starts by itself.';
+  }
   if (match.round?.status === 'created') {
     return match.youHost
       ? 'The next round is set up. Start it from the Host menu.'
@@ -138,6 +146,7 @@ export function WaitingArea(p: Props): ReactElement {
     >
       <h2 id="waiting-title">{p.after ? 'Next round' : 'Before the round'}</h2>
       <p data-testid="waiting-state">{stateText(match)}</p>
+      <SeriesStatus match={match} />
       {choosing || (match.teamMatch && !match.youPlayer && !p.after) ? (
         <p className="smg-muted">
           Pick a season team for this match: in shared rounds the winner’s team gets a point. You

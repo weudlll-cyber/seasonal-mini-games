@@ -127,7 +127,7 @@ describe('the match summary', () => {
     expect(screen.getByTestId('match-summary').textContent).not.toMatch(/team/i);
   });
 
-  it('says why it ended: the idle close with its minutes, or an abort with its reason', () => {
+  it('says why it ended: the idle close, a complete series, or an abort with its reason', () => {
     const end = ended.ended;
     if (end === null) throw new Error('fixture');
     expect(endText('closed', { ...end, by: 'system', reason: 'idle', idleMinutes: 60 })).toBe(
@@ -135,6 +135,10 @@ describe('the match summary', () => {
     );
     expect(endText('aborted', { ...end, reason: 'lights out' })).toBe(
       'The match was aborted: lights out.',
+    );
+    // A series after its last round (04 §4.8 rule 7).
+    expect(endText('closed', { ...end, by: 'system', reason: 'complete', roundsPlayed: 6 })).toBe(
+      'All 6 rounds are played.',
     );
   });
 });

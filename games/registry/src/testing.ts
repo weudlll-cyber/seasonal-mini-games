@@ -13,6 +13,6 @@
 import { install, type InstalledGame } from './index.js';
 import { sidesEntry } from './phasedFixture.js';
 
-export { SIDES_PLAN } from './phasedFixture.js';
+export { SIDES_PLAN, SIDES_SERIES } from './phasedFixture.js';
 
 export const SIDES_FIXTURE: InstalledGame = install(sidesEntry);

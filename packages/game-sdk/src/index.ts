@@ -35,7 +35,13 @@ export type {
   ViewCtx,
 } from './module.js';
 export { formatNumber } from './format.js';
-export { planIssue, type OutcomeRow, type PhasedHooks, type PhasePlan } from './phased.js';
+export {
+  planIssue,
+  type OutcomeRow,
+  type PhasedHooks,
+  type PhasePlan,
+  type Series,
+} from './phased.js';
 export {
   MARK_COLORS,
   MARK_SHAPES,

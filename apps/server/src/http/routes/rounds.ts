@@ -78,7 +78,8 @@ async function roundOr404(deps: RoundRouteDeps, request: FastifyRequest, reply: 
 }
 
 // The match's host runs its rounds (DECISIONS T48): opening a match needs match.create.
-async function hostOf(request: FastifyRequest, reply: FastifyReply, match: MatchRow | null) {
+// The signed-in host of the match, or null once a refusal is sent (also ./series).
+export async function hostOf(request: FastifyRequest, reply: FastifyReply, match: MatchRow | null) {
   const accountId = request.session?.accountId ?? null;
   if (accountId === null) {
     await reply.status(401).send({ code: 'SIGN_IN_REQUIRED' });

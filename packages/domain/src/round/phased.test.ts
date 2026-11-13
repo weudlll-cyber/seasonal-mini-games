@@ -63,6 +63,7 @@ const voteGame: GameModule<Votes, Vote, Voted, null, null> = {
   viewSchemas: { player: z.unknown(), spectator: z.unknown(), result: z.unknown() },
   phased: {
     plan: () => PLAN,
+    series: () => null,
     outcome: (s) =>
       Object.entries(s).map(([playerId, v]) => ({
         playerId,

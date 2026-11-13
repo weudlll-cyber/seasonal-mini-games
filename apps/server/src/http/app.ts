@@ -202,7 +202,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   });
   attachSources(metrics, runtime);
   const { play, limits, store } = runtime;
-  registerMatchRoutes(fastify, { play, settings, pool: deps.pool });
+  registerMatchRoutes(fastify, { play, settings, series: runtime.series, pool: deps.pool });
   registerRoundRoutes(fastify, { play, limits, store, pool: deps.pool });
   registerSeasonRoutes(fastify, { pool: deps.pool, seasons: runtime.seasons, audit });
   registerLeaderboardRoutes(fastify, { pool: deps.pool, audit });

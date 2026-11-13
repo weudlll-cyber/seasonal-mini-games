@@ -20,7 +20,7 @@
  *                 plain words; a refused setting's sentence under its field (O74). The host plays the round like every player; the menu holds no
  *                 secret.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (types), ../components/*, ../shell/http,
- *                 ../live/socket, ../round/roundText, ./EndMatch, ./roundFields
+ *                 ../live/socket, ../round/roundText, ./EndMatch, ./roundFields, ./roundRequest
  * Used by:        ./MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §3, §4, §9; docs/spec/08-admin-settings.md §3
  */
@@ -34,6 +34,7 @@ import { intent } from '../live/socket.js';
 import { codeText } from '../round/roundText.js';
 import { api } from '../shell/http.js';
 import { EndMatch } from './EndMatch.js';
+import { roundRequest } from './roundRequest.js';
 import {
   formSeason,
   forSeason,
@@ -73,12 +74,9 @@ function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
   const { season, halving } = choice;
   const [problems, setProblems] = useState<FormProblems>(NO_PROBLEMS);
   const create = (startNow: boolean): void => {
-    const body = {
-      settings: { ...values, 'round.halving': halving },
-      startNow,
-      ...(season === 'inSeason' ? {} : { season }),
-    };
-    api(`/matches/${match.code}/rounds`, { method: 'POST', body })
+    const keys = doc.defs.map((d) => d.key);
+    const { path, method, body } = roundRequest(match, { keys, values, halving, season }, startNow);
+    api(path, { method, body })
       .then(() => {
         // The season choice and halving are kept with the settings for the next round (T209).
         done({ ...values, 'round.halving': halving, [SEASON_CHOICE]: season });

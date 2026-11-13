@@ -10,12 +10,20 @@
  *                 it was at the view's `releasedBefore`. Its room event carries the counts right
  *                 after it, so no client counts. The least taken side wins a point. Its plan is
  *                 short and fixed (join 6 s, play until 8 s, end at 10 s, everyone sees 2 s late),
- *                 so a test round runs in seconds. Not part of the registry's list.
+ *                 so a test round runs in seconds; a match is a series of two rounds 3 s apart.
+ *                 Not part of the registry's list.
  * Depends on:     zod, @smg/game-sdk
  * Used by:        ./testing, ./phased.conformance.test, apps/server/test (phased rounds)
  * Spec:           docs/spec/04-software-architecture.md §4.8; docs/spec/09-testing-strategy.md §3 (P7)
  */
-import type { ConformanceKit, DevBot, GameEntry, GameModule, PhasePlan } from '@smg/game-sdk';
+import type {
+  ConformanceKit,
+  DevBot,
+  GameEntry,
+  GameModule,
+  PhasePlan,
+  Series,
+} from '@smg/game-sdk';
 import { z } from 'zod';
 
 export const SIDES = ['a', 'b', 'c'] as const;
@@ -44,6 +52,9 @@ export type SidesEvent =
       readonly at: number;
       readonly counts: Readonly<Record<Side, number>>;
     };
+
+// Two rounds a match, 3 s apart, so a test plays a whole series (04 §4.8 rule 7).
+export const SIDES_SERIES: Series = { rounds: 2, pauseMs: 3_000 };
 
 export const SIDES_PLAN: PhasePlan = {
   entryEndMs: 6_000,
@@ -128,6 +139,7 @@ export const sidesGame: GameModule<SidesState, SidePick, SidesEvent, null, null>
   },
   phased: {
     plan: () => SIDES_PLAN,
+    series: () => SIDES_SERIES,
     outcome: (s) => {
       const sides = sidesBefore(s, Infinity);
       const counts = countsOf(sides);

@@ -7,7 +7,7 @@
  *                 open, `match.join` to join, the match's host for close and abort), every body
  *                 validated with zod. The host joins their own match as a player when opening
  *                 it, and plays along (O16); a game without season teams gets a match without
- *                 them (04 §4.8 rule 3). A summary tells the viewer whether they host or
+ *                 them (04 §4.8 rule 3), and a series' host routes (./series). A summary tells the viewer whether they host or
  *                 play and whether their team is fixed (O26), names the players, gives the
  *                 team standings, gives the host the next round's defaults (the host-chosen
  *                 keys of the game's document), and once the match ended its summary (O27);
@@ -35,6 +35,8 @@ import {
 } from '../../match/matches.js';
 import { matchStandings } from '../../league/boards.js';
 import type { Play } from '../../match/play.js';
+import type { SeriesRunner } from '../../match/series.js';
+import { registerSeriesRoutes } from './series.js';
 import { PlayError } from '../../match/playError.js';
 import { playerSteps, withSteps } from '../../match/playerSteps.js';
 import { forViewer } from '../../match/publicIds.js';
@@ -63,6 +65,7 @@ const abortBody = z.object({ reason: z.string().trim().min(1).max(200) }).strict
 
 export interface MatchRouteDeps {
   readonly play: Play;
+  readonly series: SeriesRunner;
   readonly settings: SettingsService;
   readonly pool: Parameters<typeof findMatch>[0];
 }
@@ -89,6 +92,8 @@ async function matchOr404(deps: MatchRouteDeps, code: string, reply: FastifyRepl
 
 export function registerMatchRoutes(app: FastifyInstance, deps: MatchRouteDeps): void {
   app.get('/api/v1/games', () => ({ games: deps.play.rounds.games() }));
+  // A series' next round (04 §4.8 rule 7, ./series).
+  registerSeriesRoutes(app, deps);
 
   app.get('/api/v1/matches', async (request, reply) => {
     const q = listQuery.safeParse(request.query);
@@ -170,6 +175,8 @@ async function matchDetails(
     standings: await matchStandings(deps.pool, match.id),
     nextRoundDefaults: youHost ? await deps.settings.view(`game.${match.gameId}`, []) : null,
     ended: await matchEnd(deps.pool, match),
+    // A series: its rounds, those played and the end of a pause (04 §4.8 rule 7).
+    series: await deps.series.state(match),
   };
   // Players by their number in the match; `you` is the viewer's own (T104).
   return forViewer(details, await deps.play.numbers.ready(match.id), viewer);

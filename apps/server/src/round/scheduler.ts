@@ -1,7 +1,7 @@
 /**
  * @file   apps/server/src/round/scheduler.ts
  * @module server/round
- * @brief  Timed round commands as rows in scheduled_actions: open and time-up.
+ * @brief  Timed commands as rows in scheduled_actions: a round's open and time-up, a series' next step.
  *
  * Responsibility: the loop polls every `pollMs`, claims due rows with FOR UPDATE SKIP
  *                 LOCKED and a 30-second lease (safe with several instances), runs each
@@ -9,7 +9,9 @@
  *                 retried up to five times with a growing delay. Rows are written by the
  *                 batch that starts a countdown (./pgRoundStore), so a restarted server
  *                 continues every round. The round itself catches up with time, so a late
- *                 firing changes nothing (DECISIONS T32). Adapted from Bingo's pgScheduler.ts.
+ *                 firing changes nothing (DECISIONS T32). A `match_autostart` row (a series'
+ *                 next round or close, 04 §4.8 rule 7) goes to its handler, which claims it
+ *                 once. Adapted from Bingo's pgScheduler.ts.
  * Depends on:     node:crypto, ../db/pool, ./rounds
  * Used by:        ../main, test/*
  * Spec:           docs/spec/04-software-architecture.md §5.5; docs/spec/06-data-model-api-realtime.md §2.5
@@ -24,7 +26,7 @@ const MAX_ATTEMPTS = 5;
 interface ActionRow {
   id: string;
   round_id: string;
-  kind: 'round_open' | 'round_time_up' | 'special';
+  kind: 'round_open' | 'round_time_up' | 'special' | 'match_autostart';
   attempts: number;
 }
 
@@ -37,6 +39,8 @@ export class RoundScheduler {
     private readonly pool: DbPool,
     private readonly rounds: Rounds,
     private readonly pollMs: number,
+    // A series' next round or close (04 §4.8 rule 7, ../match/series), by the action's id.
+    private readonly autostart: (actionId: string) => Promise<void>,
   ) {}
 
   start(): void {
@@ -74,7 +78,8 @@ export class RoundScheduler {
 
   private async runOne(row: ActionRow): Promise<void> {
     try {
-      const round = await this.rounds.get(row.round_id);
+      if (row.kind === 'match_autostart') await this.autostart(row.id);
+      const round = row.kind === 'match_autostart' ? null : await this.rounds.get(row.round_id);
       // Specials join with the seasonal specials; until then no row of that kind exists.
       if (round !== null && row.kind !== 'special') {
         await round.run({ type: row.kind === 'round_open' ? 'open' : 'timeUp' });

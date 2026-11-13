@@ -9,15 +9,18 @@
  *                 loaded from the database (running rounds at start, ended ones on demand
  *                 for views, with the players staff kicked from its match, and a phased one
  *                 with its whole log for its delayed room); committed events and a phased
- *                 round's released frames go to every subscriber (the gateway). The list of
+ *                 round's released frames go to every subscriber (the gateway); a phased game's
+ *                 series and a settings check for a series' next round. The list of
  *                 games is the registry's, or one given by a test (a phased fixture, 09 §4.2).
- * Depends on:     @smg-game/registry, ./gameRunner, ./liveRound, ./pgRoundStore, ./actor,
+ * Depends on:     @smg/application (settings), @smg-game/registry, ./gameRunner, ./liveRound,
+ *                 ./pgRoundStore, ./actor,
  *                 ./delayedRoom (types)
  * Used by:        ../http/app, ../http/routes/*, ../realtime/*, ../dev/*, ./scheduler
  * Spec:           docs/spec/04-software-architecture.md §4.6, §4.8, §5.2, §5.3
  */
 import { GAMES, type InstalledGame } from '@smg-game/registry';
-import type { DevBot, GameEntry } from '@smg/game-sdk';
+import { chooseRoundSettings } from '@smg/application';
+import type { DevBot, GameEntry, Series, SettingOverride } from '@smg/game-sdk';
 
 import type { ActorOptions, Delivery } from './actor.js';
 import type { Released } from './delayedRoom.js';
@@ -39,6 +42,13 @@ interface Runner {
   readonly hostKeys: ReadonlySet<string>;
   // A phased game (04 §4.8): its recovered rounds need their whole log.
   readonly phased: boolean;
+  // A phased game's series from a match's first round's config (rule 7), else null.
+  series(gameConfig: unknown): Series | null;
+  // Throws RoundSettingsError for choices the round form would refuse.
+  check(
+    overrides: Readonly<Record<string, SettingOverride>>,
+    choices: Readonly<Record<string, unknown>>,
+  ): void;
   create(round: NewRound): Promise<LiveRound>;
   recover(loaded: LoadedRound, log: readonly StoredEvent[] | null): LiveRound;
 }
@@ -81,6 +91,10 @@ export class Rounds {
       devBot: entry.devBot,
       hostKeys: new Set(entry.module.settings.defs.filter((d) => d.hostChooses).map((d) => d.key)),
       phased: meta.timing === 'phased',
+      series: (cfg) => entry.module.phased?.series(cfg as Cfg) ?? null,
+      check: (overrides, choices) => {
+        chooseRoundSettings(entry.module, overrides, choices);
+      },
       create: (round) => runner.create(round),
       recover: (loaded, log) => runner.recover(loaded, log),
     });
@@ -101,6 +115,20 @@ export class Rounds {
   // Whether the game plays season teams (a game without has no team keys, 04 §4.8 rule 3).
   teams(gameId: string): boolean {
     return this.runners.get(gameId)?.info.teams ?? false;
+  }
+
+  // A series match's number of rounds and pause, from its first round's config (04 §4.8 rule 7).
+  series(gameId: string, gameConfig: unknown): Series | null {
+    return this.runners.get(gameId)?.series(gameConfig) ?? null;
+  }
+
+  // The next round's settings of a series, checked as a new round's are (06 §3.1).
+  checkSettings(
+    gameId: string,
+    overrides: Readonly<Record<string, SettingOverride>>,
+    choices: Readonly<Record<string, unknown>>,
+  ): void {
+    this.runners.get(gameId)?.check(overrides, choices);
   }
 
   hostKeys(gameId: string): ReadonlySet<string> {

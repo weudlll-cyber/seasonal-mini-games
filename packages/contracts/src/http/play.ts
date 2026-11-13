@@ -50,7 +50,8 @@ export interface MatchSummaryView {
 export interface MatchEndView {
   readonly roundsPlayed: number;
   readonly by: 'host' | 'system' | null;
-  // `idle` for the idle close (O28), the host's reason for an abort, else null.
+  // `idle` for the idle close (O28), `complete` for a series after its last round (04 §4.8
+  // rule 7), the host's reason for an abort, else null.
   readonly reason: string | null;
   // Idle close only: the minutes without a round before it closed.
   readonly idleMinutes: number | null;
@@ -82,6 +83,13 @@ export interface MatchDetailsView extends MatchSummaryView {
   readonly nextRoundDefaults: SettingsDocumentView | null;
   // Once the match is closed or aborted, its summary; null before.
   readonly ended: MatchEndView | null;
+  // A series of rounds (04 §4.8 rule 7): its number of rounds, those played, and the server
+  // time its pause ends (null outside a pause); null for a match that is no series.
+  readonly series?: {
+    readonly rounds: number;
+    readonly played: number;
+    readonly nextAt: number | null;
+  } | null;
 }
 
 // A player's inactivity deadlines (O71), absolute server times like `cooldownEndsAt`: the
