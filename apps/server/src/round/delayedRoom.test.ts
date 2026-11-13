@@ -107,6 +107,9 @@ describe('DelayedRoom restore after the end (04 §4.8 rule 5)', () => {
     pass(1_000);
     a.add(log);
     // The end released the held room event before the delay had passed.
+    const end = live.at(-1)?.room.at(-1);
+    // The room gets the end's own public form, not its wrapper (T341).
+    expect(end?.event).toMatchObject({ type: 'RoundEnded', at: 1_000 });
     const b = room([]);
     b.restore(log);
     expect(b.seq()).toBe(a.seq());

@@ -16,7 +16,8 @@
  *                 `JOIN_CLOSED`; from 40 s the feed says every change is now a switch; at 50 s the
  *                 buttons are off and the feed says choices are closed while the replay runs; the
  *                 result names the least chosen option, lights it up and lists the winners with
- *                 +1 and the viewer's line; the round view fits 1280 × 720 with the Chat panel
+ *                 +1 and the viewer's line, the cards' points equal to the placings table's and
+ *                 the match standings' (T340); the round view fits 1280 × 720 with the Chat panel
  *                 open, the flight band over no button, line or chat, and 390 × 844; every input
  *                 has a tooltip; axe passes.
  * Depends on:     @playwright/test, @axe-core/playwright, ./mindGames, ./play, ./screens
@@ -25,7 +26,14 @@
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 
-import { feedHead, guessHttp, mindQuickTest, roundIdOf, startRound } from './mindGames.js';
+import {
+  feedHead,
+  guessHttp,
+  mindQuickTest,
+  resultPoints,
+  roundIdOf,
+  startRound,
+} from './mindGames.js';
 import {
   abortMatch,
   call,
@@ -80,6 +88,18 @@ async function countFlights(page: Page): Promise<void> {
 
 const flightsSeen = (page: Page) =>
   page.evaluate(() => (window as unknown as { flights: number }).flights);
+
+// Records whether a winning option ever lights up: the light lasts about 2 s from the result's
+// first frame, which may come before the journey looks.
+async function watchLight(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const w = window as unknown as { lit: boolean };
+    w.lit = false;
+    new MutationObserver(() => {
+      if (document.querySelector('.mg-option.smg-anim-win') !== null) w.lit = true;
+    }).observe(document.body, { subtree: true, childList: true, attributes: true });
+  });
+}
 
 async function axeClean(page: Page): Promise<void> {
   const result = await new AxeBuilder({ page })
@@ -154,10 +174,20 @@ async function result(p: Person): Promise<void> {
     /least chosen( place)? — \d+ players? wins?\./,
   );
   const options = p.page.getByTestId('mind-result');
-  await expect(options.locator('.mg-option.smg-anim-win').first()).toBeVisible();
+  const lit = () => p.page.evaluate(() => (window as unknown as { lit: boolean }).lit);
+  await expect.poll(lit, { message: 'a winning option lit up' }).toBe(true);
   await expect(options.getByText('✓ wins').first()).toBeVisible();
   await expect(options.locator('.mg-points').first()).toHaveText(/\+[12]/);
   await expect(options.locator('li[data-own="true"]')).toHaveText(/^You/);
+  // The cards' points are the table's and, after one round, the match standings' (T340).
+  await expect(p.page.getByTestId('match-standings')).toBeVisible();
+  const got = await resultPoints(p.page);
+  expect(
+    Object.values(got.cards).some((n) => n > 0),
+    'someone won points',
+  ).toBe(true);
+  expect(got.table, 'the placings table').toEqual(got.cards);
+  expect(got.standings, 'the match standings').toEqual(got.cards);
 }
 
 test('journey 38: one round of Seasonal Mind Games, everything one delay late', async ({
@@ -197,6 +227,7 @@ test('journey 38: one round of Seasonal Mind Games, everything one delay late', 
     await p.page.keyboard.press('Escape');
     await axeClean(p.page);
     await lateJoiner(late, p, code, opened);
+    await watchLight(p.page);
     await lastPhases(p, opened);
     await p.page.setViewportSize(PHONE);
     await fitsScreen(p.page);

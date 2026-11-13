@@ -12,20 +12,35 @@
  *                 specials it times out the players whose inactivity limit and its grace
  *                 have passed, in time order, which may end the round (O71, O72). `nextDue` names the next of
  *                 these times for the round actor's timer. A phased round ends at its plan's
- *                 end (its longest time) with the results of the game's own rule (04 §4.8).
+ *                 end (its longest time) with the results of the game's own rule (04 §4.8);
+ *                 `roundResults` gives a round's results to RoundEnded and to its ended view.
  * Depends on:     @smg/game-sdk (types), ./builder, ./evolve, ./inactivity, ./results, ./specials,
  *                 ./types
  * Used by:        ./guess, ./step, ../index
  * Spec:           docs/spec/02-game-guess-the-number.md §4, §5.3, §8; docs/spec/04-software-architecture.md §5.1
  */
-import type { PhasePlan, PlatformRoundConfig, RosterPlayer, RoundRng, Season } from '@smg/game-sdk';
+import type {
+  GameModule,
+  PhasePlan,
+  PlatformRoundConfig,
+  RosterPlayer,
+  RoundRng,
+  Season,
+} from '@smg/game-sdk';
 
 import { fail, Step } from './builder.js';
 import { initialRound } from './evolve.js';
 import { heldEnd, leftEnd, nextTimeout } from './inactivity.js';
 import { phasedResults, playerResults, teamResults } from './results.js';
 import { fireDue, nextSpecialAt, springHerald } from './specials.js';
-import type { EndReason, Reply, RoundEvent, RoundState } from './types.js';
+import type {
+  EndReason,
+  PlayerResult,
+  Reply,
+  RoundEvent,
+  RoundState,
+  TeamResult,
+} from './types.js';
 
 export interface NewRound<Cfg> {
   readonly roundId: string;
@@ -92,6 +107,21 @@ export function nextDue<S, Cfg>(
   return due.length === 0 ? null : Math.min(...due);
 }
 
+// A round's results at its end `at`: a phased round's from the game's own rule (04 §4.8
+// rule 6), a guess round's from the platform's placings. RoundEnded and the ended round's
+// view both take them from here, so the table shows what the round gave (DECISIONS T340).
+export function roundResults<S, A, E, Cfg, Sec>(
+  s: RoundState<S, Cfg>,
+  module: GameModule<S, A, E, Cfg, Sec>,
+  at: number,
+): { results: PlayerResult[]; teams: TeamResult[]; nobody: boolean } {
+  const outcome = module.phased?.outcome;
+  const rows =
+    s.plan !== undefined && outcome !== undefined && s.game !== null ? outcome(s.game) : null;
+  if (rows === null) return { results: playerResults(s), teams: teamResults(s), nobody: false };
+  return { results: phasedResults(rows, at), teams: [], nobody: rows.length === 0 };
+}
+
 export function endRound<S, A, E, Cfg, Sec>(
   step: Step<S, A, E, Cfg, Sec>,
   at: number,
@@ -99,17 +129,14 @@ export function endRound<S, A, E, Cfg, Sec>(
   deliverAt: number | null = null,
 ): void {
   const s = step.state;
-  const outcome = step.deps.module.phased?.outcome;
-  // A phased round's results come from the game's own rule; nobody in it: "no players left"
-  // (04 §4.8 rule 6).
-  const rows =
-    s.plan !== undefined && outcome !== undefined && s.game !== null ? outcome(s.game) : null;
+  const { results, teams, nobody } = roundResults(s, step.deps.module, at);
   step.emit({
     type: 'RoundEnded',
     at,
-    reason: rows !== null && rows.length === 0 ? 'noPlayers' : reason,
-    results: rows === null ? playerResults(s) : phasedResults(rows, at),
-    teams: rows === null ? teamResults(s) : [],
+    // Nobody in a phased round: "no players left" (04 §4.8 rule 6).
+    reason: nobody ? 'noPlayers' : reason,
+    results,
+    teams,
     seed: s.config.commitReveal ? step.deps.seed : null,
     deliverAt,
   });

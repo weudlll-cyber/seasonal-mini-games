@@ -6,7 +6,8 @@
  * Responsibility: host choices are taken only for host keys inside their bounds, the
  *                 inactivity warning below the limit (O71) and the game's own rule; a session commits to its seed, derives secrets once the
  *                 roster is frozen, shows a result only after the end and reveals the seed
- *                 there; recovery from the log continues where the live session was; the
+ *                 there, and its results as RoundEnded gave them (T340); recovery from the log
+ *                 continues where the live session was; the
  *                 fairness proof checks out, and a wrong seed or a round without proof fails.
  * Depends on:     vitest, @smg/game-sdk/crypto, ./fakes, ./roundSession, ./roundSettings, ./verify
  * Spec:           docs/spec/02-game-guess-the-number.md §4, §10; docs/spec/04-software-architecture.md §5.3, §5.4
@@ -257,5 +258,44 @@ describe('the result view (DECISIONS T324)', () => {
     run({ type: 'startCountdown', at: 0, roster: [{ playerId: 'a', team: null }], minPlayers: 1 });
     run({ type: 'end', at: 1_000, reason: 'host' });
     expect(s.result()).not.toBeNull();
+  });
+});
+
+describe('the results of an ended round (DECISIONS T340)', () => {
+  const endedOf = (events: readonly { type: string }[]) =>
+    events.find((e) => e.type === 'RoundEnded') as { results: unknown; teams: unknown } | undefined;
+
+  it("are a guess round's RoundEnded results, and none before the end", () => {
+    const { s, log, run } = session();
+    run({ type: 'startCountdown', at: 0, roster: [{ playerId: 'a', team: null }], minPlayers: 1 });
+    expect(s.results()).toBeNull();
+    run({ type: 'end', at: 4_000, reason: 'host' });
+    const ended = endedOf(log);
+    expect(s.results()).toEqual({ results: ended?.results, teams: ended?.teams });
+  });
+
+  it("are a phased round's results from the game's rule, with its points", () => {
+    const settings = chooseRoundSettings(pickGame, {}, { 'round.countdownS': 3 });
+    const { session: s } = RoundSession.create(pickGame, {
+      roundId: 'r3',
+      settings,
+      season: 'winter',
+      seed,
+    });
+    s.handle({
+      type: 'startCountdown',
+      at: 0,
+      roster: [{ playerId: 'a', team: null }],
+      minPlayers: 1,
+    });
+    s.handle({ type: 'open', at: 3_000 });
+    s.handle({ type: 'guess', playerId: 'a', receivedAt: 3_100, action: { value: 'x' } });
+    expect(s.results()).toBeNull();
+    const ended = endedOf(s.handle({ type: 'end', at: 4_000, reason: 'host' }).events);
+    // The roster places nobody: rebuilt from it, the points were 0 (the defect T340 fixes).
+    expect(s.results()).toEqual({ results: ended?.results, teams: [] });
+    expect(s.results()?.results.map((r) => [r.playerId, r.points, r.won])).toEqual([
+      ['a', 1, true],
+    ]);
   });
 });

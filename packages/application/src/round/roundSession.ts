@@ -6,7 +6,8 @@
  * Responsibility: the round seed's commitment at creation (fairness proof on), the secrets
  *                 derived from the seed as soon as the roster is frozen and kept only in
  *                 memory (05 §3), every command through the pure round rules, recovery by
- *                 replaying the log or from a snapshot and the log's tail, and the result view once the round has ended. The round
+ *                 replaying the log or from a snapshot and the log's tail, and the result view and the
+ *                 results (as RoundEnded gave them) once the round has ended. The round
  *                 actor (queue, group commit, delivery) wraps one session.
  * Depends on:     @smg/domain (round rules), @smg/game-sdk (module, crypto entry)
  * Used by:        ../index, apps/server (round actor)
@@ -19,6 +20,7 @@ import {
   replayRound,
   roundInput,
   rosterPlayers,
+  roundResults,
   stepRound,
   type RoundCommand,
   type RoundEvent,
@@ -114,6 +116,15 @@ export class RoundSession<S, A, E, Cfg, Sec> {
     if (status !== 'ended' || game === null) return null;
     if (this.secrets === null && this.module.meta.timing !== 'phased') return null;
     return this.module.views.result(game, this.secrets as Sec);
+  }
+
+  // An ended round's results and team results, the same RoundEnded gave (DECISIONS T340);
+  // null before the end.
+  results(): Omit<ReturnType<typeof roundResults>, 'nobody'> | null {
+    const s = this.current;
+    if (s.status !== 'ended' || s.endedAt === null) return null;
+    const { results, teams } = roundResults(s, this.module, s.endedAt);
+    return { results, teams };
   }
 
   // When the round next has to run without any player action (open, special, timeout, end).

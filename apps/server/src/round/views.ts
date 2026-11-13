@@ -19,21 +19,14 @@
  *                 the game's views get that cut, the round lists a player only once their entry
  *                 is older, without action counts, and `phasedPublic` gives its events' public
  *                 forms for the delayed room (./delayedRoom); its round state carries the plan.
- * Depends on:     @smg/application (RoundSession), @smg/domain (results, inactivity, types),
+ * Depends on:     @smg/application (RoundSession, its results), @smg/domain (inactivity, types),
  *                 @smg/game-sdk (GameViews), ./pgRoundStore (types)
  * Used by:        ./rounds, ../realtime/gateway, ../http/routes/rounds
  * Spec:           docs/spec/02-game-guess-the-number.md §11; docs/spec/04-software-architecture.md §4.8;
  *                 docs/spec/06-data-model-api-realtime.md §4.2, §4.4
  */
 import type { RoundSession } from '@smg/application';
-import {
-  frostDelay,
-  inactivityDeadline,
-  playerResults,
-  teamResults,
-  type RoundEvent,
-  type RoundState,
-} from '@smg/domain';
+import { frostDelay, inactivityDeadline, type RoundEvent, type RoundState } from '@smg/domain';
 import type { GameViews } from '@smg/game-sdk';
 
 import type { StoredEvent } from './pgRoundStore.js';
@@ -121,11 +114,14 @@ export function roundView<S, A, E, Cfg, Sec>(
   const cut = viewer.cut ?? (delay === null ? Infinity : viewer.now - delay);
   const base = { ...platformPart(state, cut), seq, ownInactivity: null };
   if (base.status === 'ended') {
+    // The results RoundEnded gave: a phased round's from the game's rule, not from the roster,
+    // which places nobody in it (DECISIONS T340).
+    const ended = session.results() ?? { results: [], teams: [] };
     return {
       ...base,
       role: 'result' as const,
-      results: playerResults(state),
-      teams: teamResults(state),
+      results: ended.results,
+      teams: ended.teams,
       seed: session.revealedSeed(),
       game: session.result(),
     };

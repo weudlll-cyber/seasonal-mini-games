@@ -2,6 +2,26 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Task MG-N4 (2026-11-13): fixes from the owner's first play-test
+
+Status, updated after every piece. Branch `feat/mind-games` is not merged. Platform code may change; the four existing games must behave exactly as before.
+
+| Piece                                                                | State            |
+| -------------------------------------------------------------------- | ---------------- |
+| 1 — points never reach the table                                     | **done**, pushed |
+| 2 — the result table of a phased round, no per-player count anywhere | open             |
+| 3 — the Quick Test form's join time                                  | open             |
+| 4 — the phase strip                                                  | open             |
+| 5 — no season in Mind Games                                          | open             |
+
+### Piece 1 — points never reach the table
+
+- **Where the points were lost:** the ended round's view (`apps/server/src/round/views.ts`) built its `results` again from the roster with `playerResults(state)`, the guess games' placings. A phased round places nobody, so every row got 0 points. RoundEnded, the `round_results` rows, the match standings, the summary and the boards had the right points all along: they come from the event, not from the view. The placings table reads the view.
+- **Why the earlier tests missed it:** the phased server test (`apps/server/test/phased.integration.test.ts`) checked the stored rows, the standings and the game's result view, never the round view's `results`. The web tests of the table use fixtures that already hold points. Journeys 38–41 checked the option cards' "+1", never the table.
+- **Fix** (T340): one function gives a round's results, `roundResults` in `packages/domain/src/round/lifecycle.ts` (RoundEnded uses it as before); `RoundSession.results()` (`packages/application/src/round/roundSession.ts`) gives an ended round's results from it, and the view takes them from there. `playerResults` and `teamResults` are no longer exported from the domain's entry: nothing outside it uses them.
+- **Found on the way, fixed** (T341): the delayed room sent a phased round's RoundEnded to the room wrapped in its own `{ room, host, delayed }` record, so a client never saw its `type` (`apps/server/src/round/delayedRoom.ts`). The room now gets the end's own public form; `delayedRoom.test.ts` checks it. The embed's "round ended" message to the host page (`apps/web/src/embed/embedHost.ts`) depends on that type.
+- **Tests:** `RoundSession.results()` for a guess round and a phased one (`packages/application/src/round/roundSession.test.ts`); the end frame's own form (`apps/server/src/round/delayedRoom.test.ts`); `apps/server/test/phasedPoints.integration.test.ts` (new): one Mind Games round with All on, played by four accounts: All, Winter, Winter and Spring. All and Spring are the least chosen. The test checks the same points (+2 for All, +1 for Spring, 0 for the rest) in the game's result view, the round view's results, the RoundEnded frame, the `round_results` rows, the match standings, the closed match's summary, and the season and all-time boards. Journey 38 now checks that the option cards' points equal the placings table and the match standings (`e2e/mindGames.spec.ts`, the helper `resultPoints` in `e2e/mindGames.ts`). It also records the winners' light-up as it happens: with the end frame unwrapped (T341), the result shows at the round's end, and its 2 s light could be over before the journey looked.
+
 ## Chain MG-N3 (2026-11-13): the platform gaps G1–G13, then the handover
 
 Status, updated after every piece. Branch `feat/mind-games` is not merged. This chain may change `packages/` and `apps/`; the four existing games must behave exactly as before.
@@ -66,10 +86,10 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged. This 
 | Piece                                                                                                    | State            |
 | -------------------------------------------------------------------------------------------------------- | ---------------- |
 | 1 — G1, G11, G3: the input for every match player, the result view without a secret, the chat line       | **done**, pushed |
-| 2 — G2, G5, G7, G8: the phase times, the lines' ages, the round's box in the prefs, the refused pre-pick | open             |
-| 3 — G4, G6, G9, G10: the words and the forms of a phased round                                           | open             |
-| 4 — G12, G13: seats in a Quick Test match, the admin's round view                                        | open             |
-| 5 — the journeys completed, the play-through, the handover                                               | open             |
+| 2 — G2, G5, G7, G8: the phase times, the lines' ages, the round's box in the prefs, the refused pre-pick | **done**, pushed |
+| 3 — G4, G6, G9, G10: the words and the forms of a phased round                                           | **done**, pushed |
+| 4 — G12, G13: seats in a Quick Test match, the admin's round view                                        | **done**, pushed |
+| 5 — the journeys completed, the play-through, the handover                                               | **done**, pushed |
 
 ### Piece 5 — the journeys completed, the play-through, the handover
 

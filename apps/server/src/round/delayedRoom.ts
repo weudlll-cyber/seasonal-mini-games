@@ -89,7 +89,9 @@ export class DelayedRoom {
     for (const e of events) {
       if (ENDS.has(e.type)) {
         this.flush(Infinity);
-        this.emit([{ releaseAt: e.at, at: e.at, room: phasedPublic(e, this.result), host: null }]);
+        // The end's own public form, never delayed (it was sent wrapped before, T341).
+        const end = this.itemOf(e);
+        if (end !== null) this.emit([end]);
         this.end();
         continue;
       }

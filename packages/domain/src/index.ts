@@ -24,20 +24,13 @@ export {
   roundInput,
   rosterPlayers,
 } from './round/evolve.js';
-export { createRound, nextDue, type NewRound } from './round/lifecycle.js';
+export { createRound, nextDue, roundResults, type NewRound } from './round/lifecycle.js';
 export {
   INACTIVITY_GRACE_MS,
   inactivityDeadline,
   type InactivityDeadline,
 } from './round/inactivity.js';
-export {
-  playerResults,
-  scoredPlayers,
-  standings,
-  teamResults,
-  type Scored,
-  type StandingRow,
-} from './round/results.js';
+export { scoredPlayers, standings, type Scored, type StandingRow } from './round/results.js';
 export { seasonPeriod, type SeasonPeriod } from './league/periods.js';
 export { frostDelay } from './round/specials.js';
 export { stepRound } from './round/step.js';

@@ -76,6 +76,36 @@ export async function roundIdOf(p: Person, code: string): Promise<string> {
   return m.round?.id ?? '';
 }
 
+// A row's player: "you" for the viewer, else the name as shown.
+const who = (text: string) =>
+  /\(you\)|^You\b/.test(text) ? 'you' : text.replace(/\s*\+\d+$/, '').trim();
+
+// The points by player of the result's option cards (no "+N" is 0), of its placings table
+// (every row, its last cell) and of the match standings (their third cell) (T340).
+export async function resultPoints(page: Page) {
+  const cards: Record<string, number> = {};
+  for (const li of await page.locator('[data-testid="mind-result"] .mg-option-players li').all()) {
+    const text = (await li.innerText()).trim();
+    cards[who(text)] = Number(/\+(\d+)$/.exec(text)?.[1] ?? 0);
+  }
+  const more = page.getByTestId('all-placings');
+  if ((await more.count()) > 0 && (await more.getAttribute('aria-expanded')) === 'false')
+    await more.click();
+  const rows = async (table: string, cell: string) => {
+    const out: Record<string, number> = {};
+    for (const tr of await page.locator(`[data-testid="${table}"] tbody tr`).all()) {
+      const name = await tr.locator('.round-player').innerText();
+      out[who(name)] = Number(await tr.locator(cell).innerText());
+    }
+    return out;
+  };
+  return {
+    cards,
+    table: await rows('placings', 'td:last-child'),
+    standings: await rows('match-standings', 'td:nth-child(3)'),
+  };
+}
+
 // A choice sent through the HTTP fallback, whatever its answer.
 export const guessHttp = (p: Person, roundId: string, choice: string) =>
   attempt(p, 'POST', `/rounds/${roundId}/guesses`, { value: { choice, hide: false } });
