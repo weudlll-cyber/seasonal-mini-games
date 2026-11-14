@@ -22,13 +22,13 @@
  *                 player" in the member's place. The match is aborted and
  *                 the host's account deleted (DELETE /me), also when a step fails; so is the
  *                 member's when the feed did not. Chromium only (playwright.config, T241).
- * Depends on:     @playwright/test, ./devStack, ./play, ./screens, ./websiteStack, ./websiteStub
+ * Depends on:     @playwright/test, ./testStack, ./play, ./screens, ./websiteStack, ./websiteStub
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 36); docs/spec/07-integration.md
  *                 §2, §7; DECISIONS T221, T236–T239, T241, T282; Seasonal Entertainment docs/EMBED.md
  */
 import { expect, test, type Browser, type BrowserContext } from '@playwright/test';
 
-import { WEBSITE_URL } from './devStack.js';
+import { WEBSITE_URL } from './testStack.js';
 import {
   abortMatch,
   attempt,

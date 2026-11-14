@@ -12,7 +12,7 @@
  *                 same page from localhost:5420 (not on the list) cannot frame the game
  *                 (frame-ancestors) and its handoff is refused. The accounts the handoff made are
  *                 removed (in the database, as they have no password), then the provider and origin.
- * Depends on:     @playwright/test, node:child_process, ./devStack, ./play
+ * Depends on:     @playwright/test, node:child_process, ./testStack, ./play
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 8); docs/spec/07-integration.md §1;
  *                 Bingo 07 §2.2, §3.3, §3.4
  */
@@ -28,7 +28,7 @@ import {
   REPO_ROOT,
   SERVER_URL,
   databaseUrl,
-} from './devStack.js';
+} from './testStack.js';
 import { call, person, type Person } from './play.js';
 
 const HOST_ORIGIN = HOST_PAGE_URL;
@@ -43,7 +43,7 @@ let admin: Person;
 let host: HostKey;
 let providerId = '';
 
-// One statement against the dev database, inside its container (handoff accounts have no
+// One statement against the run's database (smg_test), inside its container (handoff accounts have no
 // password, so DELETE /me cannot remove them).
 function sql(statement: string): void {
   const db = new URL(databaseUrl());

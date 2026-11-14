@@ -12,6 +12,19 @@
 | Test data and determinism (fixed seeds, failing seeds turned into regression tests, shared builders, tests remove their accounts and abort their matches, timing specs in their own Playwright projects, fixed local ports) | Bingo 12 §7 | Ports from [10](10-repository-structure.md) §4. Builders: `aRound().shared().withPlayers(500)`. |
 | Manual acceptance by the owner with a Quick Test seed | Bingo 12 §8 | The Quick Test plays rounds against bots (§5), through the waiting area or started at once (owner decision 24). |
 
+### 1.1 Databases and ports of the automated tests
+
+No automated test uses the developer's database (`smg` in the development PostgreSQL on 5510) or the ports of `pnpm dev` (server 3910, player client 5410, admin app 5411); starting or stopping a run never starts, stops or restarts `pnpm dev` (DECISIONS T345).
+
+| Suite | Database | Ports |
+|---|---|---|
+| Unit, property, component, conformance (`pnpm test`, every project but the server's integration tests) | none | none |
+| Server integration (`apps/server/test`, `pnpm test`) | its own PostgreSQL 17 container per test file (Testcontainers), removed afterwards | an ephemeral port per app (port 0) |
+| Browser tests (`pnpm e2e`, Playwright) | `smg_test` in the development PostgreSQL, dropped and created empty at every run's start and migrated by the test server (`apps/server/tools/testServer.ts`, which also starts that PostgreSQL) | server 3940, player client 5440, admin app 5441, test host site 5420; journey 36 its own database `smg_e2e_website`, recreated the same way at its start, and ports 3960 and 5430 |
+| Load check (`node load/guessStorm.mjs`, 5) | `smg_load` in the development PostgreSQL, recreated the same way (`load/stack.mjs`) | server 3950 |
+
+A browser-test run starts its own stack and reuses none: a port already taken stops the run instead. The test server refuses any database but `smg_test` and `smg_load`. The developer's database gets a clean start only by hand, with `pnpm dev:reset-db` ([10](10-repository-structure.md) §4).
+
 ## 2. Levels specific to this platform
 
 | Level | Scope |
@@ -92,6 +105,8 @@
 35. A 24-character display name whole in "Next round" → Players at 1280 × 720, the team as its named icon under "Team" (DECISIONS T212, `e2e/playerNames.spec.ts`).
 36. Inside the website (O66, DECISIONS T241), Chromium only: the game in website mode under `/games/mini-games/` behind a stand-in website's nginx (`e2e/websiteStack.ts`, `e2e/websiteStub.ts`); a member who may host signs in through the website and opens a match; a visitor who is not signed in watches it, finds the website's chat under the waiting area (the frame titled "Chat" from `/embed/chat?room=mini-games&theme=light`, the stand-in's page in it) and its "Log in", which goes through the sign-in route and the website's login back to the match, signed in; the member joins, counts as online with its Discord step beside its name, and plays a guess in a round the host starts and ends, during which the round bar's closed Chat panel tells the stand-in's chat it is hidden, the chat's two `unread` messages show "2" on the Chat badge, and opening the panel tells it visible and clears the badge (T237); the website deletes the member and changes the host's rights through its account feed, both sessions end, the host's reload signs in again through the website without a form and lands on the same match page (T282), and the page shows "Deleted player"; the stand-in signs members in by its session cookie `se.sid`, which the route keeps from the game (T281) (`e2e/website.spec.ts`).
 37. Inactivity (owner decisions 71–75), Chromium timing: an individual Guess The Number round started at once with the limit 20 s and the warning 10 s (the server takes the player out 2 s later, owner decision 72) and one bot on the range 1–10 with a 23 s cooldown; the player never guesses; from the warning point "N s left for your next guess" stands at the input row at 1280 × 720 and 390 × 844, counting down, announced once, its text at 4.5:1 in both themes; at the limit, while the bot still plays, the input row gives way to "Out of time this round. You can play the next round."; once the bot solved the round ends early ("Everyone still in the round found their number."), the placings say "timed out" for the player; the next round's host form shows the two settings, the limit taking 0, starting from the round's 20 s and 10 s (owner decision 75) (`e2e/inactivity.spec.ts`). Journey 2 sets the limit to 0 in the host form, so its idle players stay in the round until time is up.
+
+42. The build badge (owner, 2026-11-14; DECISIONS T346), in every browser: at 1280 × 720 and 390 × 844, in light and dark, the badge "Mini Games · dev · <branch> · <commit> · <date>" shows at the page's right edge on the lobby, in a running Guess The Number round in focus mode (still one screen) with its Chat panel open, and on the round's result page, and on none of them is it drawn over a button, a link, a field, a dialog, the round view or the chat (`e2e/buildBadge.spec.ts`).
 
 Journeys 1–19 are Guess The Number's and stay unchanged by the guess engine (DECISIONS T117).
 

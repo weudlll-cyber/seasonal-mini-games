@@ -7,13 +7,16 @@
  *                 cookie, CSRF token and account id; call the API as that account; run work in
  *                 groups with an optional pause; count HTTP problems with a few examples.
  *                 Adapted from Bingo's load/drawLatency.mjs.
- * Depends on:     nothing (Node's fetch)
+ * Depends on:     ./stack (port and origin), Node's fetch
  * Used by:        ./guessStorm
  * Spec:           docs/spec/09-testing-strategy.md §5
  */
 
-export const BASE = 'http://127.0.0.1:3910';
-export const ORIGIN = 'http://localhost:5410';
+import { LOAD_ORIGIN, LOAD_PORT } from './stack.mjs';
+
+// The load check's own server (./stack), never the developer's.
+export const BASE = `http://127.0.0.1:${LOAD_PORT}`;
+export const ORIGIN = LOAD_ORIGIN;
 
 export const problems = { http: 0, socket: 0, examples: [] };
 export function fail(kind, detail) {

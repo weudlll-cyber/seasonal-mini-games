@@ -32,6 +32,9 @@ RUN pnpm fetch
 # collect the server's production files (package.json "files": dist), the client and the
 # admin app.
 FROM deps AS build
+# The build badge's commit (apps/web/vite.config.ts): the context has no .git, so the
+# installer and CI pass it; without it the badge says "unknown". The date is the build's own.
+ARG SMG_BUILD_COMMIT
 COPY . .
 RUN pnpm install --frozen-lockfile --offline
 RUN pnpm --filter @smg/web build && pnpm --filter @smg/admin build && pnpm --filter @smg/server build

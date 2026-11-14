@@ -4,7 +4,7 @@
  * @brief  Journeys 30–32: the admin's Integration area — an identity provider, an embed origin
  *         and a webhook endpoint each created, changed and removed in the admin app.
  *
- * Responsibility: the admin signs in to the admin app (development sign-in, port 5411) and
+ * Responsibility: the admin signs in to the admin app (development sign-in, the run's admin app on 5441) and
  *                 opens Integration. Journey 30: a provider with a pinned key is added, renamed
  *                 (the key stays pinned without being pasted again), disabled through the
  *                 confirm dialog and removed. Journey 31: an origin is added, its label and
@@ -13,7 +13,7 @@
  *                 journey uses its own `.e2e.invalid` names and removes what is left in the end
  *                 through the API, so the allowlist and providers are as before (the spec runs
  *                 in TIMING: the allowlist is shared by every page).
- * Depends on:     @playwright/test, node:crypto, ./devStack, ./play
+ * Depends on:     @playwright/test, node:crypto, ./testStack, ./play
  * Spec:           docs/spec/09-testing-strategy.md §4 (journeys 30–32); docs/spec/07-integration.md
  *                 §1, §3.2; Bingo 11 §1
  */
@@ -21,7 +21,7 @@ import { generateKeyPairSync } from 'node:crypto';
 
 import { expect, test, type Page } from '@playwright/test';
 
-import { ADMIN_URL } from './devStack.js';
+import { ADMIN_URL } from './testStack.js';
 import { attempt, type Person } from './play.js';
 
 let admin: Person;

@@ -116,11 +116,9 @@ jobs:
       - name: Playwright browser (Chromium)
         if: env.ALL_BROWSERS != 'true'
         run: pnpm exec playwright install --with-deps chromium
-      # Playwright starts its web servers before its global setup, so PostgreSQL must be up
-      # first: the server migrates on start and exits when the database is unreachable.
-      - name: PostgreSQL (ops/compose.dev.yml)
-        run: docker compose --env-file ops/.env.dev.example -f ops/compose.dev.yml up -d --wait postgres
-      # The server on 3910 and the client on 5410 (e2e/playwright.config.ts).
+      # The run's own stack: the test server starts PostgreSQL (ops/compose.dev.yml) and its
+      # fresh database smg_test, then listens on 3940; the client on 5440, the admin app on
+      # 5441 (e2e/playwright.config.ts, docs/spec/09-testing-strategy.md §1.1).
       - if: env.ALL_BROWSERS == 'true'
         run: pnpm e2e
       # Chromium alone: its own specs, then its timing specs one at a time after them (the
@@ -147,7 +145,7 @@ jobs:
       MAX_IMAGE_BYTES: 250000000
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - run: docker build -t "$IMAGE" .
+      - run: docker build --build-arg SMG_BUILD_COMMIT="${GITHUB_SHA::7}" -t "$IMAGE" .
       - name: Trivy (HIGH/CRITICAL with a fix available)
         run: |
           docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$TRIVY_IMAGE" image \

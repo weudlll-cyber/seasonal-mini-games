@@ -88,13 +88,18 @@ Every port of this repository differs from every port used in the Bingo reposito
 | Mailpit web UI (dev compose) | **8510** | 8490 |
 | App port inside its container | **3100** | 3000 |
 | Test host page for e2e journey 8 (development only) | **5420** | — |
+| Browser tests' own server, player client and admin app ([09](09-testing-strategy.md) §1.1) | **3940**, **5440**, **5441** | — |
+| Journey 36's website-mode server and stand-in website | **3960** (3930 until 2026-11-14, now taken by another project), **5430** | — |
+| Load check's own server ([09](09-testing-strategy.md) §1.1) | **3950** | — |
 | Metrics port inside its container | **9465** | 9464 |
 
 Container-side ports of the third-party images (PostgreSQL 5432, Mailpit 1025 and 8025) are not bound on the host and are the same in both repositories.
 
 **Off-limits** (used by other projects on the development machine, as listed in Bingo 08 §1.1 and Bingo `ops/.env.dev.example`): 3800, 5380, 7880, 7881, 3478, 5349, 50000–50499 (Seasonal Entertainment), 4000, 5173, 4173 (race game), 5273, 8000 (mining game), and all Bingo ports above. Before starting anything on a port, check that it is free. If a port of this project is held by an earlier run of this project, stop that process first.
 
-Every development page shows a small fixed badge **"Mini Games · dev · &lt;port&gt;"**, compiled out of production builds, as in Bingo 08 §1.1. Development features need `SMG_DEV=1`, which the server refuses unless `SMG_PUBLIC_URL` is a localhost address (fail closed, as Bingo).
+The development PostgreSQL holds the developer's database `smg` and the automated runs' own `smg_test` and `smg_load` ([09](09-testing-strategy.md) §1.1). `pnpm dev:reset-db` gives the developer's database a clean start: it drops and creates `smg` and runs the migrations (`apps/server/tools/resetDevDatabase.ts`). It refuses anything but the settings of `apps/server/dev.env` (development mode, `SMG_DEV=1`, the database `smg` on 127.0.0.1:5510) and refuses while a server answers on 3910; everything in that database is lost. No row is deleted past a trigger or constraint: the whole database is replaced (owner, 2026-11-13; DECISIONS O94, T345).
+
+Every page of the player client ends with a small **build badge** at its bottom right, in every build (owner, 2026-11-14; DECISIONS O95, T346): "Mini Games · &lt;short commit&gt; · &lt;build date&gt;", and in a development build "Mini Games · dev · &lt;branch&gt; · &lt;commit&gt; · &lt;date&gt;" (the values of the dev server's start). It stands in the page's flow, under the screen, so it covers nothing. A Docker build has no `.git`: the installer and CI pass the commit as the build argument `SMG_BUILD_COMMIT`. Development features need `SMG_DEV=1`, which the server refuses unless `SMG_PUBLIC_URL` is a localhost address (fail closed, as Bingo).
 
 ## 5. DevOps (adopted)
 

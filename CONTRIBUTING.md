@@ -18,7 +18,7 @@ docker compose --env-file ops/.env.dev.example -f ops/compose.dev.yml up -d   # 
 pnpm dev                                                                       # server 3910, player client 5410
 ```
 
-Open http://localhost:5410. Development builds have a "Dev sign-in" menu (host, admin, players 1–3; one sign-in per browser window, use a private window for a second person). The server's development features need `SMG_DEV=1`, which `apps/server/dev.env` sets; it refuses to run with a public address. Browser tests: `pnpm e2e` uses a running `pnpm dev` or starts its own server and client on the same ports (restart `pnpm dev` after pulling server changes, or the tests run against the old code).
+Open http://localhost:5410. Development builds have a "Dev sign-in" menu (host, admin, players 1–3; one sign-in per browser window, use a private window for a second person). The server's development features need `SMG_DEV=1`, which `apps/server/dev.env` sets; it refuses to run with a public address. Browser tests: `pnpm e2e` starts its own server, client and admin app on 3940, 5440 and 5441 with its own database `smg_test`, created empty at every run; a running `pnpm dev` is neither used nor touched ([09 §1.1](docs/spec/09-testing-strategy.md)). A clean start of your own database: stop `pnpm dev`, then `pnpm dev:reset-db` (everything in it is lost).
 
 ## Branching
 

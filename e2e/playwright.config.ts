@@ -1,31 +1,45 @@
 /**
  * @file   e2e/playwright.config.ts
  * @module e2e
- * @brief  Playwright config: three browsers against the dev server, player client and admin app.
+ * @brief  Playwright config: three browsers against the run's own server, client and admin app.
  *
- * Responsibility: start PostgreSQL (global setup), the server on 3910, the player client
- *                 on 5410, the admin app on 5411 and the test host site on 5420 (development
- *                 only, ./host-page), then run the specs in Chromium, Firefox
- *                 and WebKit at a phone viewport. Specs listed in TIMING (their checks depend
- *                 on browser timers, or they change shared settings) run afterwards, one at a time and one browser after the other, as
- *                 Bingo learned to (its NIGHT-3); WebKit records no trace there. Specs in
- *                 CHROMIUM_ONLY run in Chromium alone (journey 36 starts its own website-mode
- *                 server and nginx, ./websiteStack). Locally an already-running stack is reused.
- * Depends on:     @playwright/test, ./devStack, ./globalSetup
- * Spec:           docs/spec/09-testing-strategy.md §1, §4; Bingo 12 §7
+ * Responsibility: start the run's own stack, never the developer's (09 §1.1): the test server
+ *                 on 3940 on its fresh database smg_test (apps/server/tools/testServer, which
+ *                 also starts the development PostgreSQL), the player client on 5440 and the
+ *                 admin app on 5441, both pointed at it, and the test host site on 5420
+ *                 (development only, ./host-page); a running `pnpm dev` (3910, 5410, 5411) is
+ *                 neither reused nor touched, and a port already taken stops the run. Then run
+ *                 the specs in Chromium, Firefox and WebKit at a phone viewport. Specs listed in
+ *                 TIMING (their checks depend on browser timers, or they change shared settings)
+ *                 run afterwards, one at a time and one browser after the other, as Bingo learned
+ *                 to (its NIGHT-3); WebKit records no trace there. Specs in CHROMIUM_ONLY run in
+ *                 Chromium alone (journey 36 starts its own website-mode server and nginx,
+ *                 ./websiteStack).
+ * Depends on:     @playwright/test, ./testStack
+ * Spec:           docs/spec/09-testing-strategy.md §1.1, §4; Bingo 12 §7
  */
 import { defineConfig, devices } from '@playwright/test';
 
 import {
+  ADMIN_PORT,
   ADMIN_URL,
+  CLIENT_PORT,
   CLIENT_URL,
   HOST_PAGE_URL,
   REPO_ROOT,
+  SERVER_PORT,
   SERVER_URL,
   databaseUrl,
-} from './devStack.js';
+} from './testStack.js';
 
 const CI = process.env['CI'] !== undefined;
+
+// The clients of the run, the only browser origins its server lets open a socket.
+const ORIGINS = [CLIENT_PORT, ADMIN_PORT]
+  .flatMap((port) => [`http://127.0.0.1:${String(port)}`, `http://localhost:${String(port)}`])
+  .join(',');
+// The Vite dev servers' port and the server they pass /api and /ws to (apps/*/vite.config.ts).
+const viteEnv = (port: number) => ({ SMG_VITE_PORT: String(port), SMG_VITE_SERVER: SERVER_URL });
 
 // Specs whose checks depend on timers firing on time (countdown, cooldown, specials, Frost):
 // they run after the others, one test at a time.
@@ -69,7 +83,6 @@ const BROWSERS = [
 export default defineConfig({
   testDir: '.',
   outputDir: '../test-results',
-  globalSetup: './globalSetup.ts',
   timeout: 90_000,
   forbidOnly: CI,
   retries: 0,
@@ -94,28 +107,37 @@ export default defineConfig({
         i === 0 ? BROWSERS.map((x) => x.name) : [`${BROWSERS[i - 1]?.name ?? ''}-timing`],
     })),
   ],
+  // Never an existing server: a run always uses the stack it started (09 §1.1).
   webServer: [
     {
-      command: 'pnpm --filter @smg/server start',
+      command: 'pnpm --filter @smg/server test-server',
       cwd: REPO_ROOT,
       url: `${SERVER_URL}/readyz`,
       // The specs use the development features (quick sign-in, Quick Test bots).
-      env: { DATABASE_URL: databaseUrl(), SMG_PORT: '3910', SMG_LOG_LEVEL: 'warn', SMG_DEV: '1' },
-      reuseExistingServer: !CI,
+      env: {
+        DATABASE_URL: databaseUrl(),
+        SMG_PORT: String(SERVER_PORT),
+        SMG_ALLOWED_ORIGINS: ORIGINS,
+        SMG_LOG_LEVEL: 'warn',
+        SMG_DEV: '1',
+      },
+      reuseExistingServer: false,
       timeout: 120_000,
     },
     {
       command: 'pnpm --filter @smg/web dev',
       cwd: REPO_ROOT,
       url: CLIENT_URL,
-      reuseExistingServer: !CI,
+      env: viteEnv(CLIENT_PORT),
+      reuseExistingServer: false,
       timeout: 120_000,
     },
     {
       command: 'pnpm --filter @smg/admin dev',
       cwd: REPO_ROOT,
       url: ADMIN_URL,
-      reuseExistingServer: !CI,
+      env: viteEnv(ADMIN_PORT),
+      reuseExistingServer: false,
       timeout: 120_000,
     },
     {
@@ -123,7 +145,8 @@ export default defineConfig({
       command: 'node --experimental-strip-types e2e/host-page/server.ts',
       cwd: REPO_ROOT,
       url: `${HOST_PAGE_URL}/healthz`,
-      reuseExistingServer: !CI,
+      env: { SMG_TEST_HOST_GAME: CLIENT_URL },
+      reuseExistingServer: false,
       timeout: 30_000,
     },
   ],
