@@ -48,3 +48,17 @@ export function useGames(): readonly GameInfoView[] {
 
 export const gameName = (games: readonly GameInfoView[], id: string): string =>
   games.find((g) => g.id === id)?.name ?? id;
+
+// Whether the game's rounds show a season (O93); true until the list has loaded, as for every
+// guess game.
+export const showsSeason = (games: readonly GameInfoView[], id: string): boolean =>
+  games.find((g) => g.id === id)?.seasons !== false;
+
+// The same for one game, where nothing else of the list is needed (the host form).
+export const useShowsSeason = (id: string): boolean => showsSeason(useGames(), id);
+
+// The game's name when its rounds show no season, the intro's heading then (O93); else null.
+export function useSeasonless(id: string): string | null {
+  const games = useGames();
+  return showsSeason(games, id) ? null : gameName(games, id);
+}

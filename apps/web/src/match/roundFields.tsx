@@ -131,7 +131,10 @@ export function SeasonControls(p: {
   setSeason: (s: SeasonName | 'inSeason') => void;
   halving: boolean;
   setHalving: (h: boolean) => void;
-}): ReactElement {
+  shows: boolean;
+}): ReactElement | null {
+  // Nothing about a season for a game whose rounds show none (O93).
+  if (!p.shows) return null;
   const inSeason = p.now?.inSeason ?? null;
   const options = [
     ...(inSeason === null
@@ -166,12 +169,17 @@ export interface SeasonChoice {
   readonly setSeason: (s: SeasonName | 'inSeason') => void;
   readonly halving: boolean;
   readonly setHalving: (h: boolean) => void;
+  // False for a game whose rounds show no season (O93).
+  readonly shows: boolean;
 }
 
 // The round's season as the form stands: the one chosen by hand, or In Season's; null while
-// the feed is not known.
-export const formSeason = (c: SeasonChoice): SeasonName | null =>
-  c.season === 'inSeason' ? (c.now?.inSeason?.season ?? null) : c.season;
+// the feed is not known, and for a game that shows no season (its form has no season's own
+// fields, O93).
+export const formSeason = (c: SeasonChoice): SeasonName | null => {
+  if (!c.shows) return null;
+  return c.season === 'inSeason' ? (c.now?.inSeason?.season ?? null) : c.season;
+};
 
 // A season's own fields show only for that season: Heatwave's in summer (O63).
 export const forSeason = (key: string, season: SeasonName | null): boolean =>
@@ -210,6 +218,7 @@ const choiceOf = (v: SettingValue | undefined): SeasonName | 'inSeason' | null =
 // halving as last time, else off (`GET /seasons/current`).
 export function useSeasonChoice(
   last?: Readonly<Record<string, SettingValue>> | null,
+  shows = true,
 ): SeasonChoice {
   const kept = choiceOf(last?.[SEASON_CHOICE]);
   const [season, setSeason] = useState<SeasonName | 'inSeason'>(kept ?? 'inSeason');
@@ -222,7 +231,7 @@ export function useSeasonChoice(
       if (s.inSeason === null) setSeason((was) => (was === 'inSeason' ? 'spring' : was));
     });
   }, []);
-  return { now, season, setSeason, halving, setHalving };
+  return { now, season, setSeason, halving, setHalving, shows };
 }
 
 // The game's word on its fields (02e §3, T335), from the form's values: the host form's and

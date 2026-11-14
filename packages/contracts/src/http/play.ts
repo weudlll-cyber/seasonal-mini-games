@@ -32,6 +32,8 @@ export interface GameInfoView {
   readonly teams: boolean;
   // The timing class (04 §4.8): the forms leave out what a phased round does not have (T334).
   readonly timing: 'cooldown' | 'phased';
+  // False for a game whose rounds show no season (the module's `meta.seasons`, O93).
+  readonly seasons: boolean;
 }
 
 export interface MatchSummaryView {

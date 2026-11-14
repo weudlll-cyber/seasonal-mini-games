@@ -18,6 +18,7 @@
  * Used by:        ../http/app, ../http/routes/*, ../realtime/*, ../dev/*, ./scheduler
  * Spec:           docs/spec/04-software-architecture.md §4.6, §4.8, §5.2, §5.3
  */
+import type { GameInfoView } from '@smg/contracts';
 import { GAMES, type InstalledGame } from '@smg-game/registry';
 import { chooseRoundSettings, gameSettingsDefs } from '@smg/application';
 import type { DevBot, GameEntry, Series, SettingOverride } from '@smg/game-sdk';
@@ -29,13 +30,8 @@ import { GameRunner, type NewRound } from './gameRunner.js';
 import type { LiveRound } from './liveRound.js';
 import type { LoadedRound, PgRoundStore, StoredEvent } from './pgRoundStore.js';
 
-export interface GameInfo {
-  readonly id: string;
-  readonly name: string;
-  readonly secretModes: readonly string[];
-  readonly teams: boolean;
-  readonly timing: 'cooldown' | 'phased';
-}
+// A game's entry of the game list: the contract's own shape (O93 added `seasons`).
+export type GameInfo = GameInfoView;
 
 interface Runner {
   readonly info: GameInfo;
@@ -110,6 +106,8 @@ export class Rounds {
         secretModes: meta.secretModes,
         teams: meta.teams,
         timing: meta.timing,
+        // A game may show no season in its rounds (O93); the guess games all do.
+        seasons: meta.seasons !== false,
       },
       devBot: entry.devBot,
       hostKeys: new Set(entry.module.settings.defs.filter((d) => d.hostChooses).map((d) => d.key)),

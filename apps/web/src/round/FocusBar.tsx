@@ -70,6 +70,8 @@ export interface FocusBarProps {
   readonly now: number;
   // The special's sentence, in the game's words where it has its own (T119).
   readonly rule: string;
+  // False in a game that shows no season: no pill (O93).
+  readonly season: boolean;
   // A phone: the pill is the special's button with its note; a desktop's info column has the
   // special's line instead (T141).
   readonly phone: boolean;
@@ -85,7 +87,7 @@ export function FocusBar(p: FocusBarProps): ReactElement {
   const time = timeText(state, p.now);
   return (
     <header className="focus-bar" data-testid="round-banner">
-      <SeasonPill state={state} rule={p.rule} note={p.phone} />
+      {p.season ? <SeasonPill state={state} rule={p.rule} note={p.phone} /> : null}
       <span className="focus-fact focus-mode-fact">
         {state.secretMode === 'shared' ? 'Shared' : 'Individual'}
       </span>

@@ -12,7 +12,29 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged. Platf
 | 2 — the result table of a phased round, no per-player count anywhere | **done**, pushed |
 | 3 — the Quick Test form's join time                                  | **done**, pushed |
 | 4 — the phase strip                                                  | **done**, pushed |
-| 5 — no season in Mind Games                                          | open             |
+| 5 — no season in Mind Games                                          | **done**, pushed |
+
+### Piece 5 — no season in Mind Games
+
+- **Owner decision O93** (2026-11-13, the planner's proposal; the owner may revise it after the next test). Season specials for Mind Games stay an owner question, OPEN (af) 1.
+- **Through the game-module contract, not the game's id:**
+  - `GameMeta.seasons?: false` (`packages/game-sdk/src/module.ts`; 04 §4); Mind Games sets it (`games/mind-games/src/module.ts`).
+  - The server passes it on as `GameInfoView.seasons` (`packages/contracts/src/http/play.ts`, `apps/server/src/round/rounds.ts`). The server's own copy of that shape is now an alias of the contract's.
+  - The web reads it from the game list: `showsSeason`, `useShowsSeason` and `useSeasonless` (`apps/web/src/lobby/games.ts`).
+- **What is gone for such a game:**
+  - The round bar's season pill (`FocusShell.tsx` → `FocusBar.tsx`).
+  - On the intro (`RoundIntro.tsx`, split into `IntroHead` and `IntroSpecial`): the season's icon and name and the special block with "No special this round.". The heading is the game's name.
+  - The screen's season colour, now a neutral border colour (`RoundScreen.tsx`).
+  - The host form's season controls and the season's own fields (`SeasonControls` and `formSeason` know `shows`, `apps/web/src/match/roundFields.tsx`; `HostMenu.tsx`).
+  - The Quick Test's season field (`apps/web/src/shell/QuickTest.tsx`, which now takes the chosen game's list entry).
+  - A round still stores a season.
+- **Guess games:** unchanged. Their list entries say `seasons: true`, and every view and form takes the path it took before.
+- **Tests:**
+  - `apps/web/src/round/seasonless.test.tsx` (new): the pill, the intro and the host form's season parts, for a game that shows its season and one that does not.
+  - `apps/server/test/phasedPoints.integration.test.ts`: the game list's flag for Mind Games and the four guess games.
+  - Journey 38 (`e2e/mindGames.spec.ts`) checks the intro's heading (the game's name), that the bar has no season pill, and the strip's current phase with its delay line (O92).
+- **Docs:** 02e §12 and 04 §4.
+- **Also fixed:** the web registry's comment on `kept` sat between `fieldState`'s comment and its field (`games/registry/web/index.ts`, from MG-N3).
 
 ### Piece 4 — the phase strip
 

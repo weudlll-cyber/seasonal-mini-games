@@ -31,6 +31,7 @@ import { useDisclosure } from '@smg/ui';
 
 import { ActionButton, Problem } from '../components/fields.js';
 import { intent } from '../live/socket.js';
+import { useShowsSeason } from '../lobby/games.js';
 import { codeText } from '../round/roundText.js';
 import { api } from '../shell/http.js';
 import { EndMatch } from './EndMatch.js';
@@ -71,7 +72,8 @@ function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
   const [values, setValues] = useState<Values>(() =>
     Object.fromEntries(fields.map((d) => [d.key, last?.[d.key] ?? doc.values[d.key] ?? d.default])),
   );
-  const choice = useSeasonChoice(last);
+  // A game whose rounds show no season has nothing about one here (O93).
+  const choice = useSeasonChoice(last, useShowsSeason(match.gameId));
   const { season, halving } = choice;
   const [problems, setProblems] = useState<FormProblems>(NO_PROBLEMS);
   const create = (startNow: boolean): void => {

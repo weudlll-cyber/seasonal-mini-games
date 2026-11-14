@@ -109,6 +109,7 @@ interface GameModule<S, A, E, Cfg, Sec> {
     timing: 'cooldown';         // §4.3; 'phased' joins with Seasonal Mind Games (§4.8)
     secretModes: ReadonlyArray<'shared' | 'individual'>;
     teams: boolean;             // supports season teams (shared mode)
+    seasons?: false;            // false: the rounds show no season (Mind Games, O93); absent: shown
   };
   settings: {
     defs: SettingDef[];         // the game's own keys of document game.<id> (08 §3)

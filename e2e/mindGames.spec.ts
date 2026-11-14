@@ -18,7 +18,9 @@
  *                 result names the least chosen option, lights it up and lists the winners with
  *                 +1 and the viewer's line, the cards' points equal to the placings table's and
  *                 the match standings' (T340); the round view fits 1280 × 720 with the Chat panel
- *                 open, the flight band over no button, line or chat, and 390 × 844; every input
+ *                 open, the flight band over no button, line or chat, and 390 × 844; no season on
+ *                 the intro or in the bar (O93), the strip's current phase and its delay line
+ *                 (O92); every input
  *                 has a tooltip; axe passes.
  * Depends on:     @playwright/test, @axe-core/playwright, ./mindGames, ./play, ./screens
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 38); docs/spec/02e-game-mind-games.md
@@ -206,8 +208,17 @@ test('journey 38: one round of Seasonal Mind Games, everything one delay late', 
     await expect(p.page.getByTestId('round-intro')).toContainText(
       'Pick a season. The least chosen wins. Join within 0:30 · choices close at 0:50 · everyone sees the round 10 s late',
     );
+    // No season in the game (O93): the intro is the game's, the bar has no season pill.
+    await expect(p.page.locator('#round-intro-season')).toHaveText('Seasonal Mind Games');
+    await expect(p.page.getByTestId('round-season')).toHaveCount(0);
     await roundOpen(p.page);
     const opened = Date.now();
+    // The strip marks the phase the round is in (O92).
+    await expect(p.page.locator('.mg-phase[aria-current="step"]')).toHaveAttribute(
+      'data-phase',
+      'join',
+    );
+    await expect(p.page.getByTestId('delay-line')).toHaveText('You see the round 10 s late.');
     await calm.page.emulateMedia({ reducedMotion: 'reduce' });
     await calm.page.goto(`./#/match/${code}`);
     await countFlights(calm.page);

@@ -36,6 +36,10 @@ export interface GameMeta {
   readonly secretModes: readonly SecretMode[];
   // Supports season teams (shared mode).
   readonly teams: boolean;
+  // False: the game's rounds show no season, neither in the round bar, on the intro, in the
+  // host form nor in the Quick Test; a round still stores one (owner decision O93). Absent: the
+  // season shows, as in every guess game.
+  readonly seasons?: false;
 }
 
 // The game's own keys of its settings document, and how frozen values become its config.

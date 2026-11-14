@@ -169,6 +169,7 @@ function PhasedFields(p: {
   readonly more: ReturnType<typeof extraFields>;
   readonly fields: (keys: readonly string[]) => ReactElement;
   readonly gameId: string;
+  readonly seasons: boolean;
 }): ReactElement {
   const { more, fields } = p;
   return (
@@ -176,7 +177,8 @@ function PhasedFields(p: {
       {more.game}
       {more.lobby}
       {more.seed}
-      {more.season}
+      {/* No season for a game whose rounds show none (O93). */}
+      {p.seasons ? more.season : null}
       {more.bots}
       {fields(['round.countdownS', ...gameKeysOf(p.gameId)])}
     </div>
@@ -191,7 +193,8 @@ function QuickTestFields(p: {
   readonly set: (key: string, v: SettingValue) => void;
   readonly more: ReturnType<typeof extraFields>;
   readonly problems: FormProblems['fields'];
-  readonly phased: boolean;
+  // The chosen game's entry of the game list: its timing class and whether it shows a season.
+  readonly game: GameInfoView | undefined;
 }): ReactElement {
   const { extra, values, set, more, problems } = p;
   const defs = defsOf(extra.gameId);
@@ -207,7 +210,10 @@ function QuickTestFields(p: {
       fieldState={fieldState}
     />
   );
-  if (p.phased) return <PhasedFields more={more} fields={fields} gameId={extra.gameId} />;
+  if (p.game?.timing === 'phased') {
+    const seasons = p.game.seasons;
+    return <PhasedFields more={more} fields={fields} gameId={extra.gameId} seasons={seasons} />;
+  }
   return (
     <div className="host-form">
       {more.game}
@@ -283,7 +289,7 @@ export function QuickTest(): ReactElement {
         set={set}
         more={more}
         problems={problems.fields}
-        phased={games.find((g) => g.id === extra.gameId)?.timing === 'phased'}
+        game={games.find((g) => g.id === extra.gameId)}
       />
       <Problem text={problems.form} />
       <button type="submit" className="smg-btn smg-btn--primary" data-testid="start-quick-test">

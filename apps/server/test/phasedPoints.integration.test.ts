@@ -12,7 +12,8 @@
  *                 details, the closed match's summary, and the season and all-time boards all
  *                 give the same points. player-1 switches once first (Spring, then Winter):
  *                 no `guesses` above 0, no count of anyone's choices, appears in the round
- *                 view's results or roster, the RoundEnded frame or the rows (O91, T342).
+ *                 view's results or roster, the RoundEnded frame or the rows (O91, T342). The game
+ *                 list says Mind Games shows no season and every guess game does (O93).
  * Depends on:     vitest, socket.io-client, ./harness, ./socketKit
  * Spec:           docs/spec/02e-game-mind-games.md §8, §9; docs/spec/04-software-architecture.md §4.8 rule 6;
  *                 docs/spec/06-data-model-api-realtime.md §2.4–§2.6
@@ -201,4 +202,21 @@ describe('a phased round’s points (DECISIONS T340)', () => {
     await matchAndBoards(want);
     for (const s of Object.values(sockets)) s.disconnect();
   }, 120_000);
+});
+
+describe('the game list (O93)', () => {
+  it('says Mind Games shows no season, and every guess game does', async () => {
+    const games = (await kit.clients.host.get('/api/v1/games')).json<{
+      games: { id: string; seasons: boolean }[];
+    }>().games;
+    expect(games.find((g) => g.id === 'mind-games')?.seasons).toBe(false);
+    const guess = games.filter((g) => g.id !== 'mind-games');
+    expect(guess.map((g) => g.id).sort()).toEqual([
+      'bomb-defusal',
+      'guess-the-number',
+      'safecracker',
+      'seasonal-target',
+    ]);
+    expect(guess.every((g) => g.seasons)).toBe(true);
+  });
 });

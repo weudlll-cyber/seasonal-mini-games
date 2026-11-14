@@ -33,7 +33,7 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 
 **(af) Seasonal Mind Games (2026-11-12).** The owner decided the game (O76–O90); everything below was not given and is written into spec/02e, 04 §4.8, 05, 08 §3.4 and 09 as a proposal, built as written unless the owner decides otherwise:
 
-1. Season specials: none in this game (each of Spring Herald, Heatwave, Leaf Fall and Frost would need its own design). Should it have any?
+1. Season specials: none in this game (each of Spring Herald, Heatwave, Leaf Fall and Frost would need its own design). Should it have any? For now its rounds show no season at all (O93, the planner's proposal of 2026-11-13).
 2. Halving rounds: none in this game. Should a halving day change anything?
 3. Season teams: none in this game. Should a team score when its members win?
 4. Ties in the winner rule: places are dense (counts 3, 3, 5, 9 give places 1, 1, 2, 3, so "2nd least chosen" is the 5), rather than skipping (1, 1, 3, 4, where no 2nd place exists).

@@ -26,6 +26,7 @@ import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { serverNow } from '../live/socket.js';
 import type { RoundLive } from '../live/useRound.js';
 import { useTicker } from '../live/useTicker.js';
+import { useSeasonless } from '../lobby/games.js';
 import { seasonColor } from '../season/season.js';
 import { FocusShell } from './FocusShell.js';
 import { ResultScreen } from './ResultScreen.js';
@@ -52,12 +53,12 @@ interface RoundScreenProps {
   readonly own?: OwnMatchPart | undefined;
 }
 
-// The season's colour, and the viewer's own colour as their dot's (their team's, or their
-// roster colour): own rows and a board game's own tiles take it, so the list and the board
-// agree (night 6).
-const screenStyle = (state: RoundStateView, viewerKey: string | null) =>
+// The season's colour (a neutral one in a game that shows no season, O93), and the viewer's
+// own colour as their dot's (their team's, or their roster colour): own rows and a board
+// game's own tiles take it, so the list and the board agree (night 6).
+const screenStyle = (state: RoundStateView, viewerKey: string | null, season: boolean) =>
   ({
-    '--season': seasonColor(state.season),
+    '--season': season ? seasonColor(state.season) : 'var(--color-border-strong)',
     '--own': viewerKey === null ? undefined : playerColor(state, viewerKey),
   }) as CSSProperties;
 
@@ -66,6 +67,9 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
   const view = useRoundView();
   useTicker(state !== null && state.status !== 'ended' && state.status !== 'aborted');
   const game = GAME_SCREENS[props.gameId] ?? null;
+  // A game whose rounds show no season names itself instead (O93).
+  const noSeason = useSeasonless(props.gameId);
+  const season = noSeason === null;
   if (state === null) return <p className="smg-muted">Loading the round…</p>;
   if (state.status === 'ended') {
     return (
@@ -88,7 +92,8 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
       now={now}
       rule={rule}
       view={view}
-      style={screenStyle(state, props.viewerKey)}
+      style={screenStyle(state, props.viewerKey, season)}
+      season={season}
       layout={game?.layout ?? 'list'}
       viewerKey={props.viewerKey}
       marks={roundMarks(state, game, props.viewerKey)}
@@ -98,7 +103,7 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
     >
       {(panels) =>
         state.status === 'countdown' ? (
-          <RoundIntro state={state} game={game} now={now} />
+          <RoundIntro state={state} game={game} now={now} noSeason={noSeason} />
         ) : (
           <RoundBody
             state={state}

@@ -67,11 +67,12 @@ export interface GameWeb {
   // A phased game's panel in the waiting area for the viewer's own value (its pre-picks, 04
   // §4.8 rule 8); the platform shows it to the match's players and saves what it hands back.
   readonly Prefs?: ComponentType<PrefsPanelProps>;
-  // How the host form shows one of the game's settings now, from the form's values and whether
-  // it sets up the match's first round (02e §3, T335); null keeps the definition's.
   // The game's own settings of the round just ended, from its result view, for the next round's
   // form (T338); without it the form keeps only the platform's.
   readonly kept?: (resultView: unknown) => Readonly<Record<string, SettingValue>>;
+  // How the host form and the Quick Test show one of the game's settings now, from the form's
+  // values and whether it sets up the match's first round (02e §3, T335, T344); null keeps the
+  // definition's.
   readonly fieldState?: (
     key: string,
     values: Readonly<Record<string, SettingValue>>,
