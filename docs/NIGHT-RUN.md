@@ -39,6 +39,8 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged. Platf
 - **A race in an existing test, fixed:** `apps/server/test/phased.integration.test.ts` read the round's stored results as soon as the round's view said it had ended. The view runs ahead of the log by the batches still being written, which is why the proof route drains first. Under the full run's load (now with this task's points test beside it) the rows were sometimes not written yet: "expected [] to deeply equal [[true, 1], [true, 1]]", seen in pieces 4 and 5. The test now reads the rows once they are there, at most 5 s. No timeout is raised, and the guess games' tests are unchanged.
 - **Also fixed:** the web registry's comment on `kept` sat between `fieldState`'s comment and its field (`games/registry/web/index.ts`, from MG-N3).
 
+- **`pnpm verify`** (worktree, at the race fix's commit): format, lint and typecheck green; tests 822 + 99 + 169 passed, 1 failed: the authorization matrix's timeout (330 s; not raised). Earlier runs on the way caught the Heatwave test's mock (fixed above). One run failed `games/registry/src/phased.conformance.test.ts` › "P7 catches a spectator view that shows one live count" (the file took 7.5 s under load); it passed alone and in every other run. It is a property check with random inputs and the default per-test timeout, reported, not changed.
+
 ### Piece 4 — the phase strip
 
 - **Owner decision O92** (2026-11-13, the planner's proposal; the owner may revise it after the next test).
@@ -50,12 +52,16 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged. Platf
 - **Tests:** `web/phases.test.tsx` checks the current part during Join (36 s of 60: 60 % filled, one bar, "Join (now)", no markers) and during Replay. `web/panels.test.tsx` checks the spectator's strip text with the delay sentence.
 - **02e §11** describes the strip as built.
 
+- **`pnpm verify`** (worktree): format, lint and typecheck green; tests 818 + 99 + 167 passed, 2 failed: the authorization matrix's timeout (354 s), and `apps/server/test/phased.integration.test.ts`, which passed alone (the race found and fixed in piece 5, below).
+
 ### Piece 3 — the Quick Test form's join time
 
 - **The defect:** the Quick Test form showed `mind.joinS` as an editable 60 while "Join time follows the total" was on. The host form asked the game how to show its fields (`fieldState`, T335); the Quick Test's `SettingFields` did not.
 - **Fix** (T344): one mechanism for both forms. `gameFieldState(gameId, values, firstRound)` in `apps/web/src/match/roundFields.tsx` is extracted from `fieldStateOf`, which now calls it. The Quick Test passes it to `SettingFields` through `fieldStateFor` (`apps/web/src/shell/quickTestSettings.tsx`): the form's values, each setting's default where the form has none yet, as a match's first round. While the box is on, the join time shows half the total, off, with its help line. The guess games give no word, so their fields stay the definitions' own.
 - **Test** (`apps/web/src/shell/quickTest.test.tsx`): a guess game's Cooldown field stays on. For Mind Games with the total at 40, the join time shows 20, off, with "Follows the total: half of it"; with the box off it is the field's own 60, on.
 - **Reused:** the host form's `Field`, which already took a `state`, and the game's `mindFieldState`.
+
+- **`pnpm verify`** (run in a separate worktree at the piece's commit, so the next piece could be built meanwhile): format, lint and typecheck green; tests 818 + 99 + 168 passed, 1 failed: the authorization matrix's timeout under load (335 s; not raised). The first run there stopped at `apps/web/src/shell/shell.test.tsx` ("offers the quick sign-in only in development", 7.5 s for the file under load), which passed alone (7 tests); that run never reached the server tests, so it was run again.
 
 ### Piece 2 — the result table of a phased round, no per-player count anywhere
 
