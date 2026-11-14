@@ -91,7 +91,7 @@ export default defineConfig(
       // Static files served as they are (the plain early theme script, outside the TS
       // projects); apps/web/src/shell/theme.test.tsx runs it.
       'apps/web/public/',
-      // The load check: a plain Node script against a running stack, outside the TS projects.
+      // The load check: plain Node scripts on their own server (load/stack.mjs), outside the TS projects.
       'load/',
     ],
   },
@@ -148,7 +148,7 @@ export default defineConfig(
   {
     // Tool config files must default-export their configuration (Vite, Vitest, etc.);
     // so must Playwright's global setup.
-    files: ['*.config.js', '*.config.ts', '**/*.config.js', '**/*.config.ts', 'e2e/globalSetup.ts'],
+    files: ['*.config.js', '*.config.ts', '**/*.config.js', '**/*.config.ts'],
     rules: { 'no-restricted-syntax': 'off' },
   },
   prettier,

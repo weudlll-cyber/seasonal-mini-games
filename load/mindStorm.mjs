@@ -3,7 +3,7 @@
  * @module load
  * @brief  Load scenario L5 `mind-500`: one Seasonal Mind Games round, 500 players, 100 spectators.
  *
- * Responsibility: 09 §5 L5 against a local development stack: load accounts signed in and
+ * Responsibility: 09 §5 L5 on its own server (./stack: port 3950, a fresh database): load accounts signed in and
  *                 joined to a Mind Games match, one round with the defaults 120/30/60 (the season
  *                 picked by hand), each player switching up to every 2 s until play ends
  *                 (./mindWorker); then the acknowledgement's spread (p95 < 150 ms), the release
@@ -11,7 +11,7 @@
  *                 150 ms), and the released counts: each step's counts add up to its entrants,
  *                 and the last step's equal the result's (from the log). Usage: `node
  *                 mindStorm.mjs [players] [out.json]`. Not a gate: run once, numbers reported.
- * Depends on:     node:worker_threads, ./http, ./measure
+ * Depends on:     node:worker_threads, ./http, ./measure, ./stack
  * Spec:           docs/spec/09-testing-strategy.md §5 (L5)
  */
 import { writeFileSync } from 'node:fs';
@@ -19,6 +19,7 @@ import { Worker } from 'node:worker_threads';
 
 import { BASE, ORIGIN, call, inGroups, problems, signIn } from './http.mjs';
 import { metricsSampler, spread } from './measure.mjs';
+import { withLoadStack } from './stack.mjs';
 
 const PLAYERS = Number(process.argv[2] ?? 500);
 const OUT = process.argv[3] || null;
@@ -163,4 +164,4 @@ async function main() {
   }
 }
 
-await main();
+await withLoadStack(main);

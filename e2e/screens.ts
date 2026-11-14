@@ -9,7 +9,7 @@
  *                 directly); the page's theme is put back afterwards.
  *                 `captureLook` adds the desktop (1280×800) and phone (390×844) size, and can
  *                 bring one element into view first.
- * Depends on:     @playwright/test, node:path, ./devStack
+ * Depends on:     @playwright/test, node:path, ./testStack
  * Used by:        ./account.spec, ./contrast (setTheme)
  * Spec:           Bingo 12 §4; Bingo 01 §13
  */
@@ -17,7 +17,7 @@ import path from 'node:path';
 
 import { expect, type Locator, type Page } from '@playwright/test';
 
-import { REPO_ROOT } from './devStack.js';
+import { REPO_ROOT } from './testStack.js';
 
 // Where the latest run's screenshots go (git-ignored; every run replaces them).
 export const SHOTS_DIR = path.join(REPO_ROOT, 'reports', 'screens', 'latest');

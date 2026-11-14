@@ -4,20 +4,20 @@
  * @brief  Journey 15: the admin changes a special's default, sees the diff, rolls it back, and
  *         aborts a running Quick Test round from Live; the player sees the staff abort.
  *
- * Responsibility: the admin signs in to the admin app (development sign-in, port 5411);
+ * Responsibility: the admin signs in to the admin app (development sign-in, the run's admin app on 5441);
  *                 changes Leaf Fall's default in the game's settings document; finds the new
  *                 version in the history with its diff; rolls back to the version before
  *                 through the confirm dialog (a new version, the diff the other way round);
  *                 opens the player's running Quick Test round in Live and aborts it with a
  *                 reason; the player's page shows "aborted: by staff (reason)". The match is
  *                 aborted at the end, never deleted (CLAUDE.md).
- * Depends on:     @playwright/test, ./devStack, ./play
+ * Depends on:     @playwright/test, ./testStack, ./play
  * Spec:           docs/spec/11-roadmap.md (Phase 6); docs/spec/08-admin-settings.md §1;
  *                 docs/spec/06-data-model-api-realtime.md §3.2; Bingo 11 §1, §3.2
  */
 import { expect, test, type Page } from '@playwright/test';
 
-import { ADMIN_URL } from './devStack.js';
+import { ADMIN_URL } from './testStack.js';
 import { abortMatch, call, closeAll, person, visit } from './play.js';
 
 const LEAF_FALL = 'Leaf Fall stops at: default';

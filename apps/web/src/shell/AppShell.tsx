@@ -18,9 +18,10 @@
  *                 the page shown (../account/SignIn SignInLink); no Register, no "Dev sign-in",
  *                 and the sign-in and register addresses show the website's sign-in; a
  *                 signed-out visitor who opens a match watches with a guest session
- *                 (./session useWatchSession, DECISIONS T221).
+ *                 (./session useWatchSession, DECISIONS T221). Under the screen, on every
+ *                 page, the build badge (./BuildBadge).
  *                 Bingo's shell, without its game screens.
- * Depends on:     react, ./router, ./session, ./ThemeToggle, ./DevTools (lazy, development
+ * Depends on:     react, ./router, ./session, ./ThemeToggle, ./BuildBadge, ./DevTools (lazy, development
  *                 only), @smg/ui (useDisclosure), ../lobby/Lobby, ../account/*,
  *                 ../match/MatchPage, ../boards/*, ./shell.css, assets/brand/emblem.webp
  * Used by:        ../main
@@ -39,6 +40,7 @@ import { ProfilePage } from '../boards/ProfilePage.js';
 import { VerifyPage } from '../boards/VerifyPage.js';
 import { Lobby } from '../lobby/Lobby.js';
 import { MatchPage } from '../match/MatchPage.js';
+import { BuildBadge } from './BuildBadge.js';
 import { hrefOf, useRoute, type Route } from './router.js';
 import { useSession, useWatchSession } from './session.js';
 import { ThemeToggle } from './ThemeToggle.js';
@@ -80,6 +82,7 @@ export function AppShell({ dev }: { readonly dev: boolean }): ReactElement {
       <main className="shell-main">
         <Screen route={route} dev={dev} />
       </main>
+      <BuildBadge />
     </>
   );
 }

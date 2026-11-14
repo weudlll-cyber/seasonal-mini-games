@@ -14,13 +14,13 @@
  *                 account; the host page signs the same user in again, as a new account. The
  *                 test deletes that account (DELETE /me with the typed name), also when a step
  *                 fails, then the provider and the origin.
- * Depends on:     @playwright/test, ./devStack, ./hostSite, ./play
+ * Depends on:     @playwright/test, ./testStack, ./hostSite, ./play
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 29); docs/spec/07-integration.md §4;
  *                 DECISIONS T105, T170, T201
  */
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
-import { CLIENT_URL, HOST_PAGE_URL } from './devStack.js';
+import { CLIENT_URL, HOST_PAGE_URL } from './testStack.js';
 import { registerHostSite, removeHostSite } from './hostSite.js';
 import { call, person, type Person } from './play.js';
 

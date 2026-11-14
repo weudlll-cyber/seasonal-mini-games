@@ -5,9 +5,9 @@
  *         removed by the test.
  *
  * Responsibility: `startWebsiteStack` makes the journey's own database in the dev PostgreSQL
- *                 (smg_e2e_website, kept between runs, so the server migrates only what is new),
+ *                 (smg_e2e_website, recreated empty at every run, T345),
  *                 builds the player client as production does (./builtAdmin `viteBuild`), starts
- *                 the stand-in website (./websiteStub) and a server in website mode on 3930
+ *                 the stand-in website (./websiteStub) and a server in website mode on 3960
  *                 (SMG_AUTH_MODE=website under /games/mini-games/, its feed at the stand-in,
  *                 the built client from SMG_WEB_DIR), then the nginx container smg-e2e-website on
  *                 5430 with the website's server block and the game's route (`nginxConf`). On
@@ -15,11 +15,11 @@
  *                 publishes 127.0.0.1:5430 and reaches the host as host.docker.internal. Either
  *                 way the server sees the proxy as 127.0.0.1, its only trusted proxy. `close`
  *                 stops the server, removes the container and the stand-in, and the build.
- *                 Its own database, not the dev database: two servers on one database would
+ *                 Its own database, not the run's smg_test: two servers on one database would
  *                 both run the round scheduler and recovery, and a round runs on one instance
  *                 only (DECISIONS T4, T13, T241).
  * Depends on:     node:child_process, node:crypto, node:fs, node:os, node:path, ./builtAdmin,
- *                 ./devStack, ./websiteStub, docker
+ *                 ./testStack, ./websiteStub, docker
  * Used by:        ./website.spec
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 36); docs/spec/07-integration.md §7
  */
@@ -37,7 +37,7 @@ import {
   WEBSITE_SERVER_PORT,
   WEBSITE_URL,
   databaseUrl,
-} from './devStack.js';
+} from './testStack.js';
 import { nginxConf, startStubSite, type StubSite } from './websiteStub.js';
 
 const DATABASE = 'smg_e2e_website';
@@ -55,10 +55,12 @@ export interface WebsiteStack {
 const docker = (args: readonly string[]): string =>
   execFileSync('docker', args, { cwd: REPO_ROOT, encoding: 'utf8', stdio: 'pipe' });
 
-// The journey's database beside the dev database, made once.
-function ensureDatabase(): void {
-  const psql = 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"';
-  const script = `${psql} -tAc "SELECT 1 FROM pg_database WHERE datname = '${DATABASE}'" | grep -q 1 || ${psql} -c "CREATE DATABASE ${DATABASE}"`;
+// The journey's database beside the run's and the developer's, recreated empty at every run
+// (through the maintenance database, never the developer's): a database kept between runs held
+// another branch's migrations and stopped this server from starting (09 §1.1, T345).
+function recreateDatabase(): void {
+  const psql = 'psql -U "$POSTGRES_USER" -d postgres -v ON_ERROR_STOP=1';
+  const script = `${psql} -c "DROP DATABASE IF EXISTS ${DATABASE} WITH (FORCE)" -c "CREATE DATABASE ${DATABASE}"`;
   docker(
     ['compose', '--env-file', ENV_FILE, '-f', COMPOSE_FILE, 'exec', '-T', 'postgres'].concat([
       'sh',
@@ -147,7 +149,7 @@ async function stopServer(server: ChildProcess): Promise<void> {
 export async function startWebsiteStack(): Promise<WebsiteStack> {
   const dir = mkdtempSync(path.join(tmpdir(), 'smg-website-'));
   const secret = randomBytes(32).toString('hex');
-  ensureDatabase();
+  recreateDatabase();
   viteBuild(path.join(REPO_ROOT, 'apps/web'), path.join(dir, 'web'));
   const site = await startStubSite();
   const server = startServer(site, secret, dir);

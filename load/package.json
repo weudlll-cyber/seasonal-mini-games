@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "license": "AGPL-3.0-or-later",
-  "description": "Load check of one shared round against a local development stack (spec 09 §5).",
+  "description": "Load check of one shared round on its own local server and database (spec 09 §1.1, §5).",
   "type": "module",
   "scripts": {
     "guess-storm": "node guessStorm.mjs"

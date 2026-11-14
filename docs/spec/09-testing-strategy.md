@@ -12,6 +12,19 @@
 | Test data and determinism (fixed seeds, failing seeds turned into regression tests, shared builders, tests remove their accounts and abort their matches, timing specs in their own Playwright projects, fixed local ports) | Bingo 12 §7 | Ports from [10](10-repository-structure.md) §4. Builders: `aRound().shared().withPlayers(500)`. |
 | Manual acceptance by the owner with a Quick Test seed | Bingo 12 §8 | The Quick Test plays rounds against bots (§5), through the waiting area or started at once (owner decision 24). |
 
+### 1.1 Databases and ports of the automated tests
+
+No automated test uses the developer's database (`smg` in the development PostgreSQL on 5510) or the ports of `pnpm dev` (server 3910, player client 5410, admin app 5411); starting or stopping a run never starts, stops or restarts `pnpm dev` (DECISIONS T345).
+
+| Suite | Database | Ports |
+|---|---|---|
+| Unit, property, component, conformance (`pnpm test`, every project but the server's integration tests) | none | none |
+| Server integration (`apps/server/test`, `pnpm test`) | its own PostgreSQL 17 container per test file (Testcontainers), removed afterwards | an ephemeral port per app (port 0) |
+| Browser tests (`pnpm e2e`, Playwright) | `smg_test` in the development PostgreSQL, dropped and created empty at every run's start and migrated by the test server (`apps/server/tools/testServer.ts`, which also starts that PostgreSQL) | server 3940, player client 5440, admin app 5441, test host site 5420; journey 36 its own database `smg_e2e_website`, recreated the same way at its start, and ports 3960 and 5430 |
+| Load check (`node load/guessStorm.mjs`, 5) | `smg_load` in the development PostgreSQL, recreated the same way (`load/stack.mjs`) | server 3950 |
+
+A browser-test run starts its own stack and reuses none: a port already taken stops the run instead. The test server refuses any database but `smg_test` and `smg_load`. The developer's database gets a clean start only by hand, with `pnpm dev:reset-db` ([10](10-repository-structure.md) §4).
+
 ## 2. Levels specific to this platform
 
 | Level | Scope |
@@ -108,6 +121,7 @@
 39. Seasonal Mind Games, a series (`e2e/mindGamesSeries.spec.ts`): a match of 3 rounds with pause 5 s and short timings; the result shows "Round 1 of 3 · Next round in 5 s"; the host's Start next round now starts round 2 at once; a second player joins the match in the pause and plays round 2; a third joins during round 2's join time and plays it; with All on in round 3 a choice of All scores 2; the standings add up over the rounds; after round 3 the match summary says "All 3 rounds are played.", also after a reload.
 40. Seasonal Mind Games, pre-picks (`e2e/mindGamesPrePicks.spec.ts`): a second player sets pre-picks for rounds 1–3 in the waiting area (All for round 2, where All is off) and closes their browser; their first choices appear in the feed one delay after each opening with their name and no mark; round 2 gives them no choice, and after reconnecting they see "Your pre-pick All was not offered in round 2."; their points count; the host's view never shows the pre-picks.
 41. Seasonal Mind Games, nothing early over the wire (`e2e/mindGamesDelay.spec.ts`, Chromium): during a round a guest socket and a second player's socket record every frame and poll `GET …/state` once a second while bots switch; no recorded frame or answer holds a count, line, entrant or player in the round younger than the delay, the release numbers are gap-free, the acknowledgements carry no number; the admin round view, the delayed spectator view, holds nothing younger than the delay, and the public read API shows no count until the end (DECISIONS T337).
+42. The build badge (owner, 2026-11-14; DECISIONS T346), in every browser: at 1280 × 720 and 390 × 844, in light and dark, the badge "Mini Games · dev · <branch> · <commit> · <date>" shows at the page's right edge on the lobby, in a running Guess The Number round in focus mode (still one screen) with its Chat panel open, and on the round's result page, and on none of them is it drawn over a button, a link, a field, a dialog, the round view or the chat (`e2e/buildBadge.spec.ts`).
 
 Journeys 1–19 are Guess The Number's and stay unchanged by the guess engine (DECISIONS T117).
 
@@ -159,7 +173,7 @@ Journeys 1, 10, 11, 16, 20–22, 24–27 and 38 also check that the round view f
 
 Driver: `load/guessStorm.mjs`, Node.js with `socket.io-client`. It signs in load accounts through the development-only route, as Bingo's `load/drawLatency.mjs` does. Bots binary-search their own feedback and guess when their cooldown ends, plus a human-like delay (uniform 200–1 500 ms).
 
-Command, from the repository root against a running development stack: `node load/guessStorm.mjs <players> [out.json] [scenario]`. L5 has its own driver: `node load/mindStorm.mjs [players] [out.json]` (DECISIONS T323). The scenario is one of L1's rounds alone (`plain`, `spring`, `summer`, `autumn`, `winter`, `halving`), `specials` (the four season rounds) or `l1` (all ten in one match, one after another: five plain rounds, the four season rounds, the halving round, DECISIONS T200); L4 is `l1` with 1 000 players. Each round is shared, cooldown 3 s (Heatwave's 6 s, so that it steps), range 1–1 000 000, with the game document's special timings; a halving round adds today's halving day through the admin route when there is none and removes it afterwards (DECISIONS T180–T184).
+Command, from the repository root; the driver starts its own server on 3950 with a fresh database `smg_load` and stops it afterwards (§1.1): `node load/guessStorm.mjs <players> [out.json] [scenario]`. L5 has its own driver: `node load/mindStorm.mjs [players] [out.json]` (DECISIONS T323). The scenario is one of L1's rounds alone (`plain`, `spring`, `summer`, `autumn`, `winter`, `halving`), `specials` (the four season rounds) or `l1` (all ten in one match, one after another: five plain rounds, the four season rounds, the halving round, DECISIONS T200); L4 is `l1` with 1 000 players. Each round is shared, cooldown 3 s (Heatwave's 6 s, so that it steps), range 1–1 000 000, with the game document's special timings; a halving round adds today's halving day through the admin route when there is none and removes it afterwards (DECISIONS T180–T184).
 
 | Scenario | Shape |
 |---|---|

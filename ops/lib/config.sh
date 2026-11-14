@@ -158,7 +158,8 @@ build_image() {
   fi
   info "  building $SMG_IMAGE from $ref on this server (a few minutes)"
   git -C "$src" -c advice.detachedHead=false checkout --quiet --force "$commit"
-  docker build --quiet -t "$SMG_IMAGE" "$src"
+  # The build badge names the commit (the build has no .git, DECISIONS T346).
+  docker build --quiet --build-arg SMG_BUILD_COMMIT="${commit:0:7}" -t "$SMG_IMAGE" "$src"
   SMG_CHANGES=$((SMG_CHANGES + 1))
 }
 

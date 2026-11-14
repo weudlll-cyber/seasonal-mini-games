@@ -1,0 +1,28 @@
+/**
+ * @file   apps/web/src/shell/buildBadge.css
+ * @module web/shell
+ * @brief  Layout of the build badge (./BuildBadge): the page's last line, at its right edge.
+ *
+ * Responsibility: make the page a column at least one screen high, so the badge after the main
+ *                 column sits at the bottom right of a short page and at the end of a long one;
+ *                 on a one-screen view (a running round, a match's summary, ./shell.css) it
+ *                 takes its own line under the view, which shrinks by that line. It is never
+ *                 laid over anything, so it covers no chat, round view or button. Small muted
+ *                 text (@smg/ui `smg-muted`), the same in light and dark.
+ * Spec:           docs/spec/10-repository-structure.md §4
+ */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.build-badge {
+  flex: none;
+  align-self: flex-end;
+  margin: auto 0 0;
+  padding: 0 var(--gutter) 0.15rem;
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  white-space: nowrap;
+}
