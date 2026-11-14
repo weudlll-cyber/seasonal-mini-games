@@ -106,11 +106,13 @@ async function checkState(
 }
 
 // The admin's round view is the delayed spectator view (morning sheet G13): nothing in it
-// younger than the delay; the public read API holds no count, line or entrant at all.
-async function adminAndPublic(admin: Person, roundId: string): Promise<void> {
-  expect(await checkState(admin, roundId, `/admin/rounds/${roundId}`)).toBe(true);
+// younger than the delay; the public read API holds no count, line or entrant at all. True
+// while the round is open: the round may end between the host's check and the admin's.
+async function adminAndPublic(admin: Person, roundId: string): Promise<boolean> {
+  const open = await checkState(admin, roundId, `/admin/rounds/${roundId}`);
   const text = JSON.stringify((await attempt(admin, 'GET', '/public/rounds/current')).body);
   expect(text).not.toMatch(/"counts"|"entrants"|"lines"|ChoiceFed/);
+  return open;
 }
 
 test('journey 41: no frame or answer of a Mind Games round is younger than the delay', async ({
@@ -135,13 +137,15 @@ test('journey 41: no frame or answer of a Mind Games round is younger than the d
     await startRound(host);
     await roundOpen(host.page);
     const roundId = await roundIdOf(host, code);
-    await adminAndPublic(admin, roundId);
+    expect(await adminAndPublic(admin, roundId)).toBe(true);
     // A switch of the host's own once its first choice is in the feed: an acknowledgement.
     await host.page.getByRole('radio', { name: /Spring/ }).click({ timeout: 20_000 });
     let open = true;
     while (open) {
-      open = (await checkState(host, roundId)) && (await checkState(guest, roundId));
-      if (open) await adminAndPublic(admin, roundId);
+      open =
+        (await checkState(host, roundId)) &&
+        (await checkState(guest, roundId)) &&
+        (await adminAndPublic(admin, roundId));
       await host.page.waitForTimeout(1_000);
     }
     checkFrames(hostSeen);

@@ -73,7 +73,13 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged. Platf
   Every T-entry is "(proposal, MG-N4)".
 
 - **Screenshots:** 8 in light mode, with `play-through.txt`, on the orphan branch `shots/mg-n4`; `shots/mg-n3` is deleted.
-- **CI and handover:** in the lines below, added after the last push.
+- **CI on `7f38216` (run 43542971276):** docs, verify and security green; e2e failed on journey 41, "no frame or answer … younger than the delay": the round ended between the host's check and the admin's, and the admin check counted an ended round as a failure. That race is in the journey since MG-N3; this task's changes do not touch it. Fixed in the journey: the admin's check now ends the loop like the host's and the guest's. Both journey 41 tests passed locally after the fix. The CI run on the final head follows below.
+- **Handover:**
+  - **Stack:** every old Mini Games dev process is stopped (the two server watchers, the server, the client and admin Vite servers; the other projects' processes are untouched). `pnpm dev` runs fresh on `feat/mind-games`.
+  - **Where:** http://localhost:5410 (server on port 3910, admin on port 5411).
+  - **Build badge: none shows.** The `DevBadge` component (`apps/web/src/components/DevBadge.tsx`, "Mini Games · dev · <port>", 08 §1.1) is mounted nowhere, on this branch and on `master` alike. MG-N3's handover said the badge reads "Mini Games · dev · 5410"; that was wrong. Reported, not changed.
+  - **Quick Test:** Dev sign-in → host, then Quick Test. Game Seasonal Mind Games, Start from the lobby on, Seed `frost`, Bots 4, Total length 40, Delay 5, Rounds 3, Pause 20, All ticked; the rest as it is. The join time shows 20 and is off.
+  - **Then:** Host → Start round, and click your own first choice. With these settings, my play-through ended round 1 with All a winner (+2). Before round 2, set Winner to 2 and All off in the Host menu.
 
 | Piece                                                                | State            |
 | -------------------------------------------------------------------- | ---------------- |
