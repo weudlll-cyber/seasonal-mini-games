@@ -22,6 +22,7 @@ const WIDE = { width: 1280, height: 720 };
 const DELAY_MS = 5_000;
 const settings = {
   'mind.totalS': 30,
+  'mind.delayAuto': false,
   'mind.delayS': 5,
   'mind.rounds': 3,
   'mind.pauseS': 5,

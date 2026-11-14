@@ -104,7 +104,8 @@ Platform round keys used: `round.countdownS`, `round.seasonSource` (the round's 
 | Key | Default | Min | Max | Status | Who | Running rounds |
 |---|---|---|---|---|---|---|
 | `mind.totalS` | 120 | 30 | 600 | default: owner (O78); bounds: *proposal* | host | frozen |
-| `mind.delayS` | 30 | 5 | 120 | default: owner (O78); bounds and the rule 2 × delay + 10 ≤ total: *proposal* (02e §3) | host | frozen |
+| `mind.delayAuto` | true | — | — | owner (O96): the delay is a quarter of the total, rounded down, and follows it; off: `mind.delayS` applies | host | frozen |
+| `mind.delayS` | 30 | 5 | 120 | default: owner (O78); bounds and the rule 2 × delay + 10 ≤ total: *proposal* (02e §3); used only with `mind.delayAuto` off | host | frozen |
 | `mind.joinAuto` | true | — | — | owner (O78): the join time is half the total, rounded down, and follows it; off: `mind.joinS` applies | host | frozen |
 | `mind.joinS` | 60 | 10 | 590 | owner (O78); bounds: *proposal*; at most total − delay; used only with `mind.joinAuto` off | host | frozen |
 | `mind.allOption` | false | — | — | owner (O77): the fifth choice "All" | host | frozen |
@@ -115,7 +116,7 @@ Platform round keys used: `round.countdownS`, `round.seasonSource` (the round's 
 | Points for a winning final choice | 1; All 2 | — | — | owner (O84, not a setting) | — | — |
 | Feed lines in a view | newest 60 | — | — | *proposal*, not a setting (02e §6.1) | — | — |
 
-The cross-key rules are the game's `problem` (owner decision 74; 02e §3): the delay at most (total − 10 s) / 2; with `mind.joinAuto` off the join time at most total − delay; `mind.winnerPlace` 5 only with All on. With the defaults the join time is 60 s and choices close at 90 s.
+The cross-key rules are the game's `problem` (owner decision 74; 02e §3), with the delay in force (a quarter of the total while `mind.delayAuto` is on): the delay at most (total − 10 s) / 2; with `mind.joinAuto` off the join time at most total − delay; `mind.winnerPlace` 5 only with All on. With the defaults the delay is 30 s, the join time 60 s and choices close at 90 s.
 
 ## 4. Match settings (document `matchmaking`)
 

@@ -7,9 +7,10 @@
  * Responsibility: the form shows "Heatwave step" and "Heatwave every" only with summer chosen,
  *                 from the definitions' defaults and bounds (the host form's own fields), and
  *                 the request body carries both for a summer round and neither otherwise. The
- *                 chosen game's word on its fields, as in the host form (T344): Mind Games' join
- *                 time shows half the total, off, with its help line, while "Join time follows
- *                 the total" is on, and is the field's own once it is off; a guess game's fields
+ *                 chosen game's word on its fields, as in the host form (T344): Mind Games' delay
+ *                 shows a quarter of the total (O96) and its join time half of it, off, with
+ *                 their help lines, while their "… follows the total" is on, and each is the
+ *                 field's own once its box is off; a guess game's fields
  *                 stay the definitions' own.
  * Depends on:     vitest, @testing-library/react, ./QuickTest, ./quickTestSettings
  * Spec:           docs/spec/03-seasonal-specials.md §2.2; docs/spec/11-roadmap.md (Quick Test)
@@ -105,7 +106,7 @@ describe('the fields of the chosen game (DECISIONS T334)', () => {
 });
 
 describe('the game’s word on its fields in the Quick Test (T344)', () => {
-  it('keeps a guess game’s fields, and shows Mind Games’ join time following the total', async () => {
+  it('keeps a guess game’s fields, and shows Mind Games’ delay and join time following the total', async () => {
     render(<QuickTest />);
     const game = await screen.findByTestId('quick-game');
     await screen.findByRole('option', { name: 'Seasonal Mind Games' });
@@ -115,6 +116,20 @@ describe('the game’s word on its fields in the Quick Test (T344)', () => {
     if (total === null) throw new Error('the total');
     fireEvent.change(total, { target: { value: '40' } });
     fireEvent.blur(total);
+    // A quarter of the total and half of it, off, each with its line (O96, O78).
+    const delay = () => field('Delay');
+    expect([delay()?.value, delay()?.disabled]).toEqual(['10', true]);
+    expect(screen.getByText(/Follows the total: a quarter of it/)).toBeTruthy();
+    const setTotal = (value: string) => {
+      fireEvent.change(total, { target: { value } });
+      fireEvent.blur(total);
+    };
+    setTotal('120');
+    expect(delay()?.value).toBe('30');
+    setTotal('40');
+    // Off: the field's own value (the default 30 s), to be set.
+    fireEvent.click(screen.getByLabelText('Delay follows the total'));
+    expect([delay()?.value, delay()?.disabled]).toEqual(['30', false]);
     const join = () => field('Join time');
     expect([join()?.value, join()?.disabled]).toEqual(['20', true]);
     expect(screen.getByText(/Follows the total: half of it/)).toBeTruthy();

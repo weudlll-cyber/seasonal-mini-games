@@ -8,7 +8,8 @@
  *                 game that shows its season and has none for one that does not; the intro
  *                 names the season and its special, or the game's name with no season and no
  *                 special; the host form's season controls and the season's own fields (its
- *                 `formSeason`) are there only for a game that shows its season.
+ *                 `formSeason`) are there only for a game that shows its season. Through
+ *                 `secretModes`: the bar's "Shared" only for a game with a secret (T347).
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./fakes, ./RoundScreen,
  *                 ../match/roundFields
  * Spec:           docs/spec/02e-game-mind-games.md §12; docs/spec/04-software-architecture.md §4
@@ -81,6 +82,19 @@ describe('a round of a game that shows no season (O93)', () => {
     // The game list arrives after the first frame.
     await waitFor(() => {
       expect(screen.queryByTestId('round-season')).toBeNull();
+    });
+  });
+
+  it('names the secret mode in the bar only for a game with a secret (T347)', async () => {
+    screenOf('seasonal', 'open');
+    const bar = () => screen.getByTestId('round-banner');
+    await waitFor(() => {
+      expect(bar().textContent).toContain('Shared');
+    });
+    cleanup();
+    screenOf('plain', 'open');
+    await waitFor(() => {
+      expect(bar().textContent).not.toMatch(/Shared|Individual/);
     });
   });
 

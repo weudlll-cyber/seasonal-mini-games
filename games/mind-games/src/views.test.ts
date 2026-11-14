@@ -88,6 +88,7 @@ describe('Mind Games result view (02e §9)', () => {
     // The round's settings by key, for the next round's form (T338).
     expect(r.settings).toMatchObject({
       'mind.totalS': 120,
+      'mind.delayAuto': true,
       'mind.joinAuto': true,
       'mind.rounds': 6,
     });

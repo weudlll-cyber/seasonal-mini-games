@@ -107,7 +107,7 @@ interface GameModule<S, A, E, Cfg, Sec> {
     name: string;               // 'Guess The Number'
     contractVersion: 1;         // the game-sdk contract version it implements
     timing: 'cooldown';         // §4.3; 'phased' joins with Seasonal Mind Games (§4.8)
-    secretModes: ReadonlyArray<'shared' | 'individual'>;
+    secretModes: ReadonlyArray<'shared' | 'individual'>;  // none: the round bar names no mode (T347)
     teams: boolean;             // supports season teams (shared mode)
     seasons?: false;            // false: the rounds show no season (Mind Games, O93); absent: shown
   };
@@ -213,7 +213,8 @@ Guess The Number runs on the engine with no change in behaviour: the same events
 
 ```ts
 meta.timing: 'cooldown' | 'phased';
-meta.secretModes: [];              // a phased game may have no secret; its rounds store secret_mode 'shared'
+meta.secretModes: [];              // a phased game may have no secret; its rounds store secret_mode 'shared',
+                                   // and its round bar says neither Shared nor Individual (T347)
 phased?: {                         // present exactly when meta.timing is 'phased'
   plan(cfg: Cfg): PhasePlan;       // from the round's frozen config
   series(cfg: Cfg): { rounds: number; pauseMs: number } | null;  // read from the match's first round

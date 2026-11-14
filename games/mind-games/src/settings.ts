@@ -3,7 +3,7 @@
  * @module games/mind-games
  * @brief  The game's own keys of document `game.mind-games`, its frozen config and its plan.
  *
- * Responsibility: the round's lengths (total, delay, join time following the total or set),
+ * Responsibility: the round's lengths (total; delay and join time, each following the total or set),
  *                 the All option, how switches show, the winner place, and the match's rounds
  *                 and pause (host, 08 §3.4) as setting definitions; reading frozen values into
  *                 the config; the cross-key rules with their sentences (02e §3); the round's
@@ -20,6 +20,7 @@ type SwitchVisibility = 'hidden' | 'visible' | 'perPlayer';
 
 export interface MindConfig {
   readonly totalS: number;
+  readonly delayAuto: boolean;
   readonly delayS: number;
   readonly joinAuto: boolean;
   readonly joinS: number;
@@ -48,10 +49,19 @@ const lengths: readonly SettingDef[] = [
     ...host,
   },
   {
+    key: 'mind.delayAuto',
+    kind: 'bool',
+    label: 'Delay follows the total',
+    help: 'On: everyone sees the round a quarter of the total later. Off: the delay below applies.',
+    default: true,
+    ...owner('O96'),
+    ...host,
+  },
+  {
     key: 'mind.delayS',
     kind: 'int',
     label: 'Delay',
-    help: 'Everyone sees the round this much later. At most half the total minus 10 s.',
+    help: 'Everyone sees the round this much later. Used only while the delay does not follow the total; at most half the total minus 10 s.',
     default: 30,
     min: 5,
     max: 120,
@@ -140,16 +150,22 @@ const rules: readonly SettingDef[] = [
   },
 ];
 
+// The delay in force: a quarter of the total, rounded down, while it follows the total (O96).
+export const delayOf = (cfg: Pick<MindConfig, 'delayAuto' | 'totalS' | 'delayS'>): number =>
+  cfg.delayAuto ? Math.floor(cfg.totalS / 4) : cfg.delayS;
+
 // The join time in force: half the total, rounded down, while it follows the total (O78).
 export const joinOf = (cfg: Pick<MindConfig, 'joinAuto' | 'totalS' | 'joinS'>): number =>
   cfg.joinAuto ? Math.floor(cfg.totalS / 2) : cfg.joinS;
 
-// The cross-key rules of 02e §3, the first that fails, under the field it names (T335).
+// The cross-key rules of 02e §3, the first that fails, under the field it names (T335), with
+// the delay in force: a quarter of the total always meets the first (the total is at least 30 s).
 function problem(cfg: MindConfig): SettingIssue | null {
-  if (2 * cfg.delayS + 10 > cfg.totalS) {
+  const delayS = delayOf(cfg);
+  if (2 * delayS + 10 > cfg.totalS) {
     return { key: 'mind.delayS', message: 'The delay must be at most half the total minus 10 s.' };
   }
-  if (!cfg.joinAuto && cfg.joinS > cfg.totalS - cfg.delayS) {
+  if (!cfg.joinAuto && cfg.joinS > cfg.totalS - delayS) {
     const message = 'The join time must end by the time choices close (total − delay).';
     return { key: 'mind.joinS', message };
   }
@@ -163,6 +179,7 @@ export const mindSettings: GameSettings<MindConfig> = {
   defs: [...lengths, ...rules],
   read: (values) => ({
     totalS: values['mind.totalS'] as number,
+    delayAuto: values['mind.delayAuto'] as boolean,
     delayS: values['mind.delayS'] as number,
     joinAuto: values['mind.joinAuto'] as boolean,
     joinS: values['mind.joinS'] as number,
@@ -178,9 +195,9 @@ export const mindSettings: GameSettings<MindConfig> = {
 // The round's timeline (02e §4): joining until J, choices until T − D, the end at T.
 export const planOf = (cfg: MindConfig): PhasePlan => ({
   entryEndMs: joinOf(cfg) * 1_000,
-  actionsEndMs: (cfg.totalS - cfg.delayS) * 1_000,
+  actionsEndMs: (cfg.totalS - delayOf(cfg)) * 1_000,
   endMs: cfg.totalS * 1_000,
-  viewDelayMs: cfg.delayS * 1_000,
+  viewDelayMs: delayOf(cfg) * 1_000,
 });
 
 // Every match is a series (02e §2): its rounds and pause from its first round.

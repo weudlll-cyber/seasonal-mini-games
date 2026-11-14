@@ -192,6 +192,14 @@ async function result(p: Person): Promise<void> {
   expect(got.standings, 'the match standings').toEqual(got.cards);
 }
 
+// Journey 38's round: the delay set by hand, its box turned off first (O96).
+const BY_HAND = {
+  'Total length': '60',
+  'Delay follows the total': 'off',
+  Delay: '10',
+  Switches: 'perPlayer',
+};
+
 test('journey 38: one round of Seasonal Mind Games, everything one delay late', async ({
   browser,
 }) => {
@@ -202,7 +210,7 @@ test('journey 38: one round of Seasonal Mind Games, everything one delay late', 
   let code = '';
   try {
     code = await mindQuickTest(p, {
-      fields: { 'Total length': '60', Delay: '10', Switches: 'perPlayer' },
+      fields: BY_HAND,
     });
     await startRound(p);
     await expect(p.page.getByTestId('round-intro')).toContainText(

@@ -4,7 +4,8 @@
  * @brief  What staff see of running rounds, and the removal of one round result.
  *
  * Responsibility: the live list (06 §3.2): every running round with its match, host, mode and
- *                 counts — roster, connected players, guesses, times — never a secret or a
+ *                 counts — roster, connected players, guesses (none for a phased round, which
+ *                 counts none, T342, T348), times — never a secret or a
  *                 seed; the removed results of a round; removing a result (reason required):
  *                 one row in smg.round_result_removals, then the match and team standings
  *                 recomputed without it and the league awards of the match replaced, all in
@@ -39,6 +40,8 @@ interface CountsView {
   readonly opensAt: number | null;
   readonly endsAt: number | null;
   readonly roster: readonly { readonly guesses: number }[];
+  // A phased round's plan (04 §4.8); absent for the guess games.
+  readonly plan?: unknown;
 }
 
 const RUNNING = new Set(['created', 'countdown', 'open']);
@@ -69,7 +72,7 @@ export async function liveRounds(pool: DbPool, play: Play): Promise<LiveRoundVie
       halving: row.halving,
       roster: v.roster.length,
       connected: play.presence.connected(row.match_id).size,
-      guesses: v.roster.reduce((n, p) => n + p.guesses, 0),
+      guesses: v.plan === undefined ? v.roster.reduce((n, p) => n + p.guesses, 0) : null,
       opensAt: v.opensAt,
       endsAt: v.endsAt,
     });

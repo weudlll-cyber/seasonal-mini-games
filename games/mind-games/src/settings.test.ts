@@ -4,9 +4,9 @@
  * @brief  The settings' defaults, the plan, the series and the cross-key rules with their words.
  *
  * Responsibility: the catalogue of 08 §3.4 (keys, defaults, bounds); the defaults 120/30/60
- *                 giving join 60 s, play end 90 s, end 120 s; the join time following the total
- *                 and not following it; the series from the rounds and the pause; each cross-key
- *                 rule's sentence of 02e §3.
+ *                 giving join 60 s, play end 90 s, end 120 s; the delay (O96) and the join time
+ *                 following the total and not following it; the series from the rounds and the
+ *                 pause; each cross-key rule's sentence of 02e §3, with the delay in force.
  * Depends on:     vitest, ./settings
  * Spec:           docs/spec/09-testing-strategy.md §4.2; docs/spec/08-admin-settings.md §3.4
  */
@@ -21,6 +21,7 @@ describe('Mind Games settings (08 §3.4)', () => {
     );
     expect(table).toEqual([
       ['mind.totalS', 120, 30, 600],
+      ['mind.delayAuto', true],
       ['mind.delayS', 30, 5, 120],
       ['mind.joinAuto', true],
       ['mind.joinS', 60, 10, 590],
@@ -44,23 +45,51 @@ describe('Mind Games settings (08 §3.4)', () => {
   });
 });
 
-describe('Mind Games plan and rules (02e §3, §4)', () => {
+describe('Mind Games plan (02e §3, §4)', () => {
+  it('lets the delay follow the total, a quarter rounded down, unless the host sets it', () => {
+    // 120 → 30, 40 → 10, 61 → 15: choices close one delay before the end.
+    for (const [totalS, delayS] of [
+      [120, 30],
+      [40, 10],
+      [61, 15],
+      [30, 7],
+      [600, 150],
+    ] as const) {
+      const plan = planOf({ ...DEFAULT_CONFIG, totalS, delayS: 5 });
+      expect([plan.viewDelayMs, plan.actionsEndMs]).toEqual([
+        delayS * 1_000,
+        (totalS - delayS) * 1_000,
+      ]);
+    }
+    const own = planOf({ ...DEFAULT_CONFIG, totalS: 40, delayAuto: false, delayS: 5 });
+    expect([own.viewDelayMs, own.actionsEndMs, own.entryEndMs]).toEqual([5_000, 35_000, 20_000]);
+  });
+
   it('lets the join time follow the total, rounded down, unless the host sets it', () => {
     expect(planOf({ ...DEFAULT_CONFIG, totalS: 61, delayS: 10 }).entryEndMs).toBe(30_000);
     expect(planOf({ ...DEFAULT_CONFIG, joinS: 45 }).entryEndMs).toBe(60_000);
     expect(planOf({ ...DEFAULT_CONFIG, joinAuto: false, joinS: 45 }).entryEndMs).toBe(45_000);
   });
+});
 
+describe('Mind Games rules (02e §3)', () => {
   it('words each cross-key rule (02e §3)', () => {
     const problem = (c: Partial<typeof DEFAULT_CONFIG>) =>
       mindSettings.problem({ ...DEFAULT_CONFIG, ...c });
     expect(problem({})).toBeNull();
-    expect(problem({ totalS: 70, delayS: 30 })).toBeNull();
-    expect(problem({ totalS: 69, delayS: 30 })).toEqual({
+    const own = { delayAuto: false } as const;
+    expect(problem({ ...own, totalS: 70, delayS: 30 })).toBeNull();
+    expect(problem({ ...own, totalS: 69, delayS: 30 })).toEqual({
       key: 'mind.delayS',
       message: 'The delay must be at most half the total minus 10 s.',
     });
+    // While the delay follows the total, the field's own value is not used.
+    expect(problem({ totalS: 30, delayS: 120 })).toBeNull();
     expect(problem({ joinAuto: false, joinS: 90 })).toBeNull();
+    expect(problem({ ...own, delayS: 31, joinAuto: false, joinS: 90 })).toEqual({
+      key: 'mind.joinS',
+      message: 'The join time must end by the time choices close (total − delay).',
+    });
     expect(problem({ joinAuto: false, joinS: 91 })).toEqual({
       key: 'mind.joinS',
       message: 'The join time must end by the time choices close (total − delay).',

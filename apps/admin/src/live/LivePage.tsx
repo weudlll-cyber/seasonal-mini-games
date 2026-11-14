@@ -4,7 +4,8 @@
  * @brief  The Live area: every running round, refreshed every few seconds, and one opened.
  *
  * Responsibility: list the running rounds (`GET /admin/rounds/live`: match, host, mode,
- *                 players, connected, guesses, times; never a secret) every 3 seconds; open
+ *                 players, connected, guesses — "—" for a phased round, T348 — times; never a
+ *                 secret) every 3 seconds; open
  *                 one into ./RoundPanel, which stays open after the round ended so a result
  *                 can be removed. The server checks every permission again.
  * Depends on:     react, @smg/contracts (LiveRoundView), ../http, ./RoundPanel
@@ -66,7 +67,7 @@ function Rows({
               </td>
               <td>{r.roster}</td>
               <td>{r.connected}</td>
-              <td>{r.guesses}</td>
+              <td>{r.guesses ?? '—'}</td>
               <td>{time(r.opensAt)}</td>
               <td>{time(r.endsAt)}</td>
               <td>

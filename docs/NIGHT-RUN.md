@@ -2,6 +2,27 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Task MG-N5 (2026-11-14): test isolation and a build badge, then small Mind Games fixes
+
+Status, updated after every piece. `feat/mind-games` is not merged.
+
+| Piece                                                                                                                                              | State                                                                                                                     |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| A — test isolation, the dev database's clean start, the build badge (`chore/test-isolation`)                                                       | done: merged into `master` by PR #10 (merge `dc78140`); the branch is deleted once master's CI run for the merge is green |
+| Master merged into `feat/mind-games`                                                                                                               | done (`2e92aa1`, a normal merge)                                                                                          |
+| B — the delay follows the total (O96), no "Shared" without a secret (T347), no guess total for a phased round (T348), `roundSession.test.ts` split | running                                                                                                                   |
+| Play-through and handover                                                                                                                          | open                                                                                                                      |
+| Needs the owner's word                                                                                                                             | the proposals T345–T349                                                                                                   |
+
+### Piece A
+
+- **What each suite used before:** unit and component tests no database; the server's integration tests a Testcontainers PostgreSQL per file (unchanged); Playwright the developer's database `smg` and the ports of `pnpm dev` (3910, 5410, 5411), reusing a running dev server; the load check the dev server on 3910.
+- **Now (09 §1.1, T345):** Playwright its own server on 3940 with `smg_test` (recreated empty and migrated at every run by `apps/server/tools/testServer.ts`), the client on 5440, the admin app on 5441, no server reused; journey 36 its own `smg_e2e_website`, recreated at every run, server on 3960; the load check its own server on 3950 with `smg_load` (`load/stack.mjs`).
+- **The dev database's clean start:** `pnpm dev:reset-db` (`apps/server/tools/resetDevDatabase.ts`).
+- **The build badge (T346):** `apps/web/src/shell/BuildBadge.tsx` in the page's flow under the screen; journey 42.
+- **Found on the way:** journey 36's database, kept between runs, held this branch's migrations 0016–0019; and another project (`seasonal-spirits`) now listens on 3930, so journey 36's server moved to 3960.
+- **Checks:** `pnpm verify`'s full run broke in the server integration tests under load (three Docker health checks past 120 s, while piece B's tests ran beside it); format, lint, typecheck and 696 + 94 unit tests green; the server's 161 integration tests green alone. Full e2e in Chromium: the main project 13/14 (journey 36, then fixed and green), the timing project 35/35. During the run the dev server on 3910 logged only my own two `readyz` checks. PR #10's CI green in every job.
+
 ## Task MG-N4 (2026-11-13): fixes from the owner's first play-test
 
 Status, updated after every piece. Branch `feat/mind-games` is not merged. Platform code may change; the four existing games must behave exactly as before.

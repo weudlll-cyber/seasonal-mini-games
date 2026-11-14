@@ -147,7 +147,8 @@ export interface LiveRoundView {
   readonly halving: boolean;
   readonly roster: number;
   readonly connected: number;
-  readonly guesses: number;
+  // Null for a phased round, which counts no guesses (04 §4.8, DECISIONS T342, T348).
+  readonly guesses: number | null;
   readonly opensAt: number | null;
   readonly endsAt: number | null;
 }

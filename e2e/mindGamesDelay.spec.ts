@@ -129,7 +129,8 @@ test('journey 41: no frame or answer of a Mind Games round is younger than the d
   let code = '';
   try {
     code = await mindQuickTest(host, {
-      fields: { 'Total length': '40', Delay: '10', Switches: 'visible' },
+      // The delay follows the total: a quarter of 40 s (O96).
+      fields: { 'Total length': '40', Switches: 'visible' },
       bots: 6,
       picks: { 1: 'winter' },
     });
@@ -182,6 +183,7 @@ test('journey 41: a choice after the join time is refused by the receive time', 
       season: 'winter',
       settings: {
         'mind.totalS': 30,
+        'mind.delayAuto': false,
         'mind.delayS': 5,
         'round.countdownS': 3,
         'round.seasonSource': 'manual',

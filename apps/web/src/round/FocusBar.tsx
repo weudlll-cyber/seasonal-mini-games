@@ -6,7 +6,7 @@
  * Responsibility: one row, at most 44 px on a desktop and 52 px on a phone (./focus.css): the
  *                 season pill (./SeasonPill, on a phone with the special's note; a desktop has
  *                 the special's line in the info column, T141), shared or individual (a
- *                 desktop only), "9:50 left" once the round is open (the countdown's seconds
+ *                 desktop only, and only in a game with a secret, T347), "9:50 left" once the round is open (the countdown's seconds
  *                 are the intro's), then the buttons of the panels on demand (./usePanels):
  *                 Chat with the unread count (only with a chat, the provider not `none`),
  *                 Players with the teams, Host (the host only), and the full-screen toggle
@@ -72,6 +72,8 @@ export interface FocusBarProps {
   readonly rule: string;
   // False in a game that shows no season: no pill (O93).
   readonly season: boolean;
+  // False in a game without a secret: no "Shared" or "Individual" (T347).
+  readonly mode: boolean;
   // A phone: the pill is the special's button with its note; a desktop's info column has the
   // special's line instead (T141).
   readonly phone: boolean;
@@ -88,9 +90,11 @@ export function FocusBar(p: FocusBarProps): ReactElement {
   return (
     <header className="focus-bar" data-testid="round-banner">
       {p.season ? <SeasonPill state={state} rule={p.rule} note={p.phone} /> : null}
-      <span className="focus-fact focus-mode-fact">
-        {state.secretMode === 'shared' ? 'Shared' : 'Individual'}
-      </span>
+      {p.mode ? (
+        <span className="focus-fact focus-mode-fact">
+          {state.secretMode === 'shared' ? 'Shared' : 'Individual'}
+        </span>
+      ) : null}
       {time === null ? null : (
         <span className="focus-fact" data-testid="countdown">
           {time}

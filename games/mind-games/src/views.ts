@@ -125,6 +125,7 @@ function ownOf(s: MindState, playerKey: string) {
 // The frozen config by its settings' keys (08 §3.4).
 const settingsOf = (s: MindState): Record<string, number | boolean | string> => ({
   'mind.totalS': s.cfg.totalS,
+  'mind.delayAuto': s.cfg.delayAuto,
   'mind.delayS': s.cfg.delayS,
   'mind.joinAuto': s.cfg.joinAuto,
   'mind.joinS': s.cfg.joinS,

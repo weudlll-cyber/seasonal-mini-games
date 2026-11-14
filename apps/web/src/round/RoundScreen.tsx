@@ -26,7 +26,7 @@ import type { CSSProperties, ReactElement, ReactNode } from 'react';
 import { serverNow } from '../live/socket.js';
 import type { RoundLive } from '../live/useRound.js';
 import { useTicker } from '../live/useTicker.js';
-import { useSeasonless } from '../lobby/games.js';
+import { useRoundLook } from '../lobby/games.js';
 import { seasonColor } from '../season/season.js';
 import { FocusShell } from './FocusShell.js';
 import { ResultScreen } from './ResultScreen.js';
@@ -67,8 +67,8 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
   const view = useRoundView();
   useTicker(state !== null && state.status !== 'ended' && state.status !== 'aborted');
   const game = GAME_SCREENS[props.gameId] ?? null;
-  // A game whose rounds show no season names itself instead (O93).
-  const noSeason = useSeasonless(props.gameId);
+  // No season: the game names itself (O93); no secret: no "Shared" or "Individual" (T347).
+  const { noSeason, mode } = useRoundLook(props.gameId);
   const season = noSeason === null;
   if (state === null) return <p className="smg-muted">Loading the round…</p>;
   if (state.status === 'ended') {
@@ -94,6 +94,7 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
       view={view}
       style={screenStyle(state, props.viewerKey, season)}
       season={season}
+      mode={mode}
       layout={game?.layout ?? 'list'}
       viewerKey={props.viewerKey}
       marks={roundMarks(state, game, props.viewerKey)}

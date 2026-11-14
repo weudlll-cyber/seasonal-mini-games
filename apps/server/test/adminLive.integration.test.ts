@@ -5,7 +5,8 @@
  *         kick, staff abort, and the removal of a round result.
  *
  * Responsibility: a running round shows in the live list with its counts and nothing else (no
- *                 secret, no seed); staff watch it with the spectator view; a kicked player
+ *                 secret, no seed), a guess round with its guesses, a phased round without a
+ *                 guess count (T348); staff watch it with the spectator view; a kicked player
  *                 leaves as `kicked`, cannot guess or join again; a staff abort ends the round
  *                 with "by staff (reason)" for its players and is audited with the reason; a
  *                 removed result leaves the match standings, the team standings and the
@@ -117,10 +118,36 @@ describe('the live list', () => {
     }>().items;
     const item = live.find((r) => r['roundId'] === id);
     expect(item).toMatchObject({ matchCode: code, status: 'open', roster: 2, connected: 2 });
+    expect(item?.['guesses']).toBe(0);
     expect(Object.keys(item ?? {}).sort()).toEqual(LIVE_KEYS.sort());
     view = (await admin.get(`/api/v1/admin/rounds/${id}`)).json<StaffView>();
     expect(view.role).toBe('spectator');
     expect(JSON.stringify(view)).not.toMatch(/"seed"|"secret"/);
+  });
+
+  it('lists a phased round without a guess count (T348)', async () => {
+    const open = await kit.clients.host.post('/api/v1/matches', {
+      gameId: 'mind-games',
+      title: 'live phased',
+      maxPlayers: 10,
+    });
+    const code = open.json<{ code: string }>().code;
+    await kit.clients['player-1'].post(`/api/v1/matches/${code}/join`, {});
+    const r = await kit.clients.host.post(`/api/v1/matches/${code}/rounds`, {
+      settings: { 'round.countdownS': 3 },
+      season: 'spring',
+      startNow: true,
+    });
+    expect(r.statusCode).toBe(201);
+    const id = r.json<{ id: string }>().id;
+    const live = (await admin.get('/api/v1/admin/rounds/live')).json<{
+      items: Record<string, unknown>[];
+    }>().items;
+    const item = live.find((x) => x['roundId'] === id);
+    expect(item).toMatchObject({ matchCode: code, guesses: null });
+    expect(Object.keys(item ?? {}).sort()).toEqual(LIVE_KEYS.sort());
+    // Aborted here: the staff abort below finds no other running round.
+    await kit.clients.host.post(`/api/v1/matches/${code}/abort`, { reason: 'test done' });
   });
 
   it('refuses staff actions without a reason or the permission', async () => {

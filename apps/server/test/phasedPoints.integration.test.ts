@@ -87,6 +87,7 @@ async function playedRound(): Promise<{ id: string; sockets: Record<string, Sock
   const settings = {
     'round.countdownS': 3,
     'mind.totalS': 30,
+    'mind.delayAuto': false,
     'mind.delayS': 5,
     'mind.allOption': true,
     'mind.rounds': 1,
