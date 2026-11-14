@@ -89,7 +89,7 @@ Every port of this repository differs from every port used in the Bingo reposito
 | App port inside its container | **3100** | 3000 |
 | Test host page for e2e journey 8 (development only) | **5420** | — |
 | Browser tests' own server, player client and admin app ([09](09-testing-strategy.md) §1.1) | **3940**, **5440**, **5441** | — |
-| Journey 36's website-mode server and stand-in website | **3930**, **5430** | — |
+| Journey 36's website-mode server and stand-in website | **3960** (3930 until 2026-11-14, now taken by another project), **5430** | — |
 | Load check's own server ([09](09-testing-strategy.md) §1.1) | **3950** | — |
 | Metrics port inside its container | **9465** | 9464 |
 

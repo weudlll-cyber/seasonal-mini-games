@@ -20,7 +20,7 @@ No automated test uses the developer's database (`smg` in the development Postgr
 |---|---|---|
 | Unit, property, component, conformance (`pnpm test`, every project but the server's integration tests) | none | none |
 | Server integration (`apps/server/test`, `pnpm test`) | its own PostgreSQL 17 container per test file (Testcontainers), removed afterwards | an ephemeral port per app (port 0) |
-| Browser tests (`pnpm e2e`, Playwright) | `smg_test` in the development PostgreSQL, dropped and created empty at every run's start and migrated by the test server (`apps/server/tools/testServer.ts`, which also starts that PostgreSQL) | server 3940, player client 5440, admin app 5441, test host site 5420; journey 36 its own database `smg_e2e_website` and ports 3930 and 5430 |
+| Browser tests (`pnpm e2e`, Playwright) | `smg_test` in the development PostgreSQL, dropped and created empty at every run's start and migrated by the test server (`apps/server/tools/testServer.ts`, which also starts that PostgreSQL) | server 3940, player client 5440, admin app 5441, test host site 5420; journey 36 its own database `smg_e2e_website`, recreated the same way at its start, and ports 3960 and 5430 |
 | Load check (`node load/guessStorm.mjs`, 5) | `smg_load` in the development PostgreSQL, recreated the same way (`load/stack.mjs`) | server 3950 |
 
 A browser-test run starts its own stack and reuses none: a port already taken stops the run instead. The test server refuses any database but `smg_test` and `smg_load`. The developer's database gets a clean start only by hand, with `pnpm dev:reset-db` ([10](10-repository-structure.md) §4).

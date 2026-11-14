@@ -5,11 +5,12 @@
  *
  * Responsibility: one place for the ports a Playwright run uses (server 3940, player client
  *                 5440, admin app 5441, test host site 5420; journey 36's website-mode server
- *                 3930 behind the stand-in website on 5430), none of them a port of `pnpm dev`
- *                 (3910, 5410, 5411), and the URL of a database of the development PostgreSQL
- *                 built from its env file: the run's own `smg_test` (recreated empty at every
- *                 start by apps/server/tools/testServer), or another one (journey 36's), never
- *                 the developer's `smg` (09 §1.1, DECISIONS T345).
+ *                 3960 behind the stand-in website on 5430, as 3930 is taken by another project
+ *                 on the development machine), none of them a port of `pnpm dev` (3910, 5410,
+ *                 5411), and the URL of a database of the development PostgreSQL built from its
+ *                 env file: the run's own `smg_test` (recreated empty at every start by
+ *                 apps/server/tools/testServer), or another one (journey 36's, recreated by
+ *                 ./websiteStack), never the developer's `smg` (09 §1.1, DECISIONS T345).
  * Depends on:     ops/.env.dev.example
  * Used by:        ./playwright.config.ts, ./play, ./screens, ./builtAdmin, ./hostSite, the
  *                 specs that open the admin app, the host site or the database, ./websiteStack
@@ -33,7 +34,7 @@ export const TEST_DATABASE = 'smg_test';
 export const HOST_PAGE_URL = 'http://127.0.0.1:5420';
 // Journey 36 (T241): a server in website mode, reached only through the stand-in website's
 // nginx, which serves the game under /games/mini-games/ as the real website does.
-export const WEBSITE_SERVER_PORT = 3930;
+export const WEBSITE_SERVER_PORT = 3960;
 export const WEBSITE_URL = 'http://127.0.0.1:5430';
 
 function readEnvFile(): Map<string, string> {
