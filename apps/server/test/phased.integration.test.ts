@@ -157,10 +157,18 @@ async function results(id: string, opensAt: number): Promise<void> {
   expect(ended.role).toBe('result');
   // The game's result view, although the fixture has no secret (DECISIONS T324).
   expect(ended.game).toMatchObject({ counts: { a: 0, b: 1, c: 1 } });
-  const rows = await kit.harness.pool.query<{ place: number | null; won: boolean; points: number }>(
-    'SELECT place, won, points FROM smg.round_results WHERE round_id = $1 ORDER BY player_key',
-    [id],
-  );
+  // The view runs ahead of the log by the batches still being written (the proof route drains
+  // for the same reason): the rows are read once the end's batch is committed.
+  const read = () =>
+    kit.harness.pool.query<{ place: number | null; won: boolean; points: number }>(
+      'SELECT place, won, points FROM smg.round_results WHERE round_id = $1 ORDER BY player_key',
+      [id],
+    );
+  let rows = await read();
+  for (let tries = 0; tries < 50 && rows.rows.length === 0; tries += 1) {
+    await sleep(100);
+    rows = await read();
+  }
   expect(rows.rows.every((r) => r.place === null)).toBe(true);
   // Sides b and c were taken once each: both are the least taken, so both players win.
   expect(rows.rows.map((r) => [r.won, r.points])).toEqual([

@@ -36,6 +36,7 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged. Platf
   - Journey 38 (`e2e/mindGames.spec.ts`) checks the intro's heading (the game's name), that the bar has no season pill, and the strip's current phase with its delay line (O92).
 - **Docs:** 02e §12 and 04 §4.
 - **Test fixture adjusted:** the host form now asks for the game list. The Heatwave test's API mock (`apps/web/src/match/heatwave.test.tsx`) answers `/games` with an empty list, as for a guess game. Without that, the list came back undefined and the new call would have shifted the test's recorded posts. Its assertions are unchanged.
+- **A race in an existing test, fixed:** `apps/server/test/phased.integration.test.ts` read the round's stored results as soon as the round's view said it had ended. The view runs ahead of the log by the batches still being written, which is why the proof route drains first. Under the full run's load (now with this task's points test beside it) the rows were sometimes not written yet: "expected [] to deeply equal [[true, 1], [true, 1]]", seen in pieces 4 and 5. The test now reads the rows once they are there, at most 5 s. No timeout is raised, and the guess games' tests are unchanged.
 - **Also fixed:** the web registry's comment on `kept` sat between `fieldState`'s comment and its field (`games/registry/web/index.ts`, from MG-N3).
 
 ### Piece 4 — the phase strip
