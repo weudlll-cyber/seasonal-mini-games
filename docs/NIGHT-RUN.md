@@ -6,13 +6,13 @@
 
 Status, updated after every piece. `feat/mind-games` is not merged.
 
-| Piece                                                                                                                                              | State                                                                                                                     |
-| -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| A — test isolation, the dev database's clean start, the build badge (`chore/test-isolation`)                                                       | done: merged into `master` by PR #10 (merge `dc78140`); the branch is deleted once master's CI run for the merge is green |
-| Master merged into `feat/mind-games`                                                                                                               | done (`2e92aa1`, a normal merge)                                                                                          |
-| B — the delay follows the total (O96), no "Shared" without a secret (T347), no guess total for a phased round (T348), `roundSession.test.ts` split | running                                                                                                                   |
-| Play-through and handover                                                                                                                          | open                                                                                                                      |
-| Needs the owner's word                                                                                                                             | the proposals T345–T349                                                                                                   |
+| Piece                                                                                                                                              | State                                                                                                                                                                                                  |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A — test isolation, the dev database's clean start, the build badge (`chore/test-isolation`)                                                       | done: merged into `master` by PR #10 (merge `dc78140`); master's CI run 43592343594 for the merge green in every job (e2e in all three browsers); `chore/test-isolation` deleted on origin and locally |
+| Master merged into `feat/mind-games`                                                                                                               | done (`2e92aa1`, a normal merge)                                                                                                                                                                       |
+| B — the delay follows the total (O96), no "Shared" without a secret (T347), no guess total for a phased round (T348), `roundSession.test.ts` split | done (`310f1f8`)                                                                                                                                                                                       |
+| Play-through and handover                                                                                                                          | done; CI on the final head reported in the handover                                                                                                                                                    |
+| Needs the owner's word                                                                                                                             | the proposals T345–T349                                                                                                                                                                                |
 
 ### Piece A
 
@@ -22,6 +22,33 @@ Status, updated after every piece. `feat/mind-games` is not merged.
 - **The build badge (T346):** `apps/web/src/shell/BuildBadge.tsx` in the page's flow under the screen; journey 42.
 - **Found on the way:** journey 36's database, kept between runs, held this branch's migrations 0016–0019; and another project (`seasonal-spirits`) now listens on 3930, so journey 36's server moved to 3960.
 - **Checks:** `pnpm verify`'s full run broke in the server integration tests under load (three Docker health checks past 120 s, while piece B's tests ran beside it); format, lint, typecheck and 696 + 94 unit tests green; the server's 161 integration tests green alone. Full e2e in Chromium: the main project 13/14 (journey 36, then fixed and green), the timing project 35/35. During the run the dev server on 3910 logged only my own two `readyz` checks. PR #10's CI green in every job.
+
+### Piece B
+
+- **The delay follows the total (O96, T349):** `mind.delayAuto` (default on) before `mind.delayS`; `delayOf` in `games/mind-games/src/settings.ts` gives the delay in force (a quarter of the total, rounded down), used by the plan and the cross-key rules; `mindFieldState` shows it off with "Follows the total: a quarter of it. …" in the host form and the Quick Test alike. Journey 38 sets its delay by hand (box off), journey 41 now follows the total (40 → 10); the API tests that set `mind.delayS` turn the box off.
+- **No "Shared" without a secret (T347):** `showsMode` and `useRoundLook` in `apps/web/src/lobby/games.ts` read the game list's `secretModes`; `FocusBar` gets `mode`. Guess games unchanged (their bar still says Shared/Individual; `seasonless.test.tsx` checks both).
+- **No guess total for a phased round (T348):** `LiveRoundView.guesses` null when the round's view has a plan; the live list shows "—". `adminLive.integration.test.ts` checks a guess round (0) and a Mind Games round (null); `livePage.test.tsx` the cells.
+- **`roundSession.test.ts` 301 → 206:** its round-settings tests are now `roundSettings.test.ts` (110), beside `roundSettings.ts`.
+- **Checks:** `pnpm verify`: format, lint, typecheck green; 828 + 99 unit tests; the server's integration tests 138 passed with four files failing to start their Docker database under load (health check past 120 s, hooks past 180 s), all four green alone (33 tests). Full e2e in Chromium (piece B touches the round bar every game uses): 14/14 and timing 40/40, journeys 38–41 and 42 among them.
+
+### Play-through (`tmp/mg5-play.mjs`, the full log in `reports/mg-n5/play-through.txt`)
+
+- **Dev database:** recreated with `pnpm dev:reset-db` (19 migrations), then `pnpm dev` started fresh; the script refused while `pnpm dev` answered on 3910.
+- **Quick Test form:** total 40 → delay 10 (off), join 20; total 120 → delay 30 (off), join 60; back to 40 → 10; the box off → the delay set to 8; the box on again → 10. No season field.
+- **Badge:** "Mini Games · dev · feat/mind-games · 310f1f8 · 2026-11-14", the head then.
+- **Match** (seed `frost`, 4 bots, total 40, delay following = 10 s, 3 rounds, pause 20, All on in rounds 1 and 3, winner place 2 in round 2): every intro said "everyone sees the round 10 s late"; the bar "0:37 left Chat Players Host Full screen", no Shared, on a desktop and a phone; the admin's live list `guesses: null`; the host form in the pause: delay 10, off.
+  - **Round 1** (Winter → Autumn hidden → All): All least chosen, 1 winner. Cards Spring 2 (bot-03, bot-02), Summer 0, Autumn 0, Winter 2 (bot-01, bot-04), All 1 (You +2). Table dev-host 2, the bots 0. Standings dev-host 2.
+  - **Round 2** (winner place 2; Winter → Spring): Spring and Winter share the 2nd least chosen, 4 winners. Cards Spring 2 (You +1, bot-03 +1), Summer 0, Autumn 1 (bot-02), Winter 2 (bot-01 +1, bot-04 +1). Table bot-01 1, bot-03 1, bot-04 1, dev-host 1, bot-02 0. Standings dev-host 3, bot-01 1, bot-03 1, bot-04 1, bot-02 0.
+  - **Round 3** (Winter → All): Spring, Winter and All share the least chosen, 3 winners. Cards Spring 1 (bot-01 +1), Summer 0, Autumn 2 (bot-03, bot-04), Winter 1 (bot-02 +1), All 1 (You +2). Table bot-01 1, bot-02 1, dev-host 2, bot-03 0, bot-04 0. Standings dev-host 5 (3 wins), bot-01 2, bot-03 1, bot-04 1, bot-02 1.
+  - **Summary:** the same totals; every count equals its players, every "+N" the table, the standings the rounds' sums (each within 0.81 s of the result). No page errors.
+- **Screenshots:** 4, light mode, on the orphan branch `shots/mg-n5`; `shots/mg-n4` deleted.
+
+### Noticed, left alone
+
+- A disabled field that follows the total (delay, join time) looks like an editable one: only its help line says it is off.
+- The admin live list's Mode column says "shared, spring" for a Mind Games round (the stored values).
+- The verification page still names a proof's mode; a Mind Games round has no proof page.
+- `pnpm verify`'s server integration tests need the machine quiet: in both full runs Docker's health checks timed out while other work ran.
 
 ## Task MG-N4 (2026-11-13): fixes from the owner's first play-test
 
