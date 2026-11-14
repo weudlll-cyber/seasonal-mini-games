@@ -6,6 +6,75 @@
 
 Status, updated after every piece. Branch `feat/mind-games` is not merged. Platform code may change; the four existing games must behave exactly as before.
 
+### Final report
+
+- **Done:** all five pieces, pushed; `feat/mind-games` is not merged.
+- **Piece 1, where the points were lost:** the ended round's view rebuilt its results from the roster, which places nobody in a phased round, so every row got 0. RoundEnded, `round_results`, the standings, the summary and the boards always had the right points.
+  - **Why the earlier tests missed it:** the server test checked the rows and the standings, never the view's `results`. The table's web tests use fixtures that already hold points. The journeys checked the cards' "+1", never the table.
+  - **Fix:** one `roundResults` for both (T340). On the way, the delayed room's end frame now goes out unwrapped (T341).
+- **The existing games are unchanged.** Every changed platform function has a test with a guess game and a phased one:
+  - `RoundSession.results()`: `roundSession.test.ts`.
+  - The end frame: `delayedRoom.test.ts`.
+  - The domain's count: `phased.test.ts`, and the guess rounds' own tests.
+  - The table: `phasedWords.test.tsx`.
+  - The admin's panel: `roundPanel.test.tsx`.
+  - The Quick Test fields: `quickTest.test.tsx`.
+  - The season flag: `seasonless.test.tsx`, and the server's game list in `phasedPoints.integration.test.ts`.
+
+  The guess games' golden test and conformance P1–P6 pass in every verify. Their only test change is the Heatwave test's API mock, which now answers the game list the host form asks for (its assertions are unchanged).
+
+- **`pnpm verify`, one per piece:** format, lint and typecheck green every time. Tests 815 + 99 + 168, 817 + 99 + 168, 818 + 99 + 168, 818 + 99 + 167 and 822 + 99 + 169 passed. In each run the authorization matrix's HTTP test ran past its timeout under the full run's load, 330–394 s against 30–36 s alone. **Not raised; an OPEN candidate, as in MG-N3.** Load problems on the way:
+  - Other projects' test suites on this machine broke one run.
+  - `shell.test.tsx` failed once and the DRBG chi-square smoke test once; both passed alone.
+  - P7's sabotage check failed once (7.5 s for its file under load) and passed alone; reported, not changed.
+  - The phased server test had a real race, fixed in its test.
+- **Journeys 38–41 in Chromium:** all five tests pass, on the fresh dev stack. A first run lost three of them at sign-in, while the two dev servers this session had left running restarted against each other.
+- **Full e2e in Chromium:**
+  - The timing project passed: 40 of 40 in 22.0 min, all the guess games' journeys and 38–41 included.
+  - The main project's first run had 8 passed and 5 failed with "TypeError: fetch failed". It ran a few minutes after the fresh dev stack started, and the timing run that followed cleared the failures' details from `test-results/`. Run again alone, it passed 13 of 13 in 1.6 min. I can't name the five or their cause; reported, not changed.
+- **Play-through:** `tmp/mg4-shots.mjs`, seed `frost`, 4 bots, total 40 s, delay 5 s, 3 rounds, pause 20 s, played by clicking; the full log is in `reports/mg-n4/play-through.txt`.
+  - **The Quick Test form:** the join time shows 20 (half of 40), off; no season field; no season in the countdown's help.
+  - **Round 1** (All on, winner place 1). I clicked Winter, switched to Autumn with Hide my switches ticked, then to All. "Spring, Summer and All share the least chosen place — 3 players win."
+    - Cards: Spring 1 (bot-02 +1), Summer 1 (bot-03 +1), Autumn 0, Winter 2 (bot-01, bot-04), All 1 (You +2).
+    - Table: bot-02 1, bot-03 1, dev-host 2, bot-01 0, bot-04 0.
+    - Standings: dev-host 2, bot-02 1, bot-03 1, bot-01 0, bot-04 0.
+  - **Round 2** (winner place 2, All off). I clicked Winter, then Spring. "Spring and Winter share the 2nd least chosen place — 4 players win."
+    - Cards: Spring 2 (You +1, bot-03 +1), Summer 0, Autumn 1 (bot-02), Winter 2 (bot-01 +1, bot-04 +1).
+    - Table: bot-01 1, bot-03 1, bot-04 1, dev-host 1, bot-02 0.
+    - Standings: dev-host 3, bot-03 2, bot-02 1, bot-01 1, bot-04 1.
+  - **Round 3** (All on). I clicked Winter, then All. "All was the least chosen — 1 player wins."
+    - Cards: Summer 2, Winter 2, All 1 (You +2).
+    - Table: dev-host 2, the rest 0.
+    - Standings: dev-host 5 (3 wins), bot-03 2, bot-02 1, bot-01 1, bot-04 1.
+  - **Summary:** the same totals, and each round's words.
+  - **Agreement:** every count equals its players; every "+N" equals the table; the standings are the rounds' sums.
+  - **Shown nowhere:** a season (pill, intro, "No special", host form, Quick Test) or anyone's count of choices (the table, the Players panel, the Others line).
+  - **The phase strip:** looked at in Join at 1280 × 720 and in Play at 390 × 844.
+  - **Page errors:** none.
+- **Found in the play-through:**
+  - **Fixed:** the countdown's help line named the season in Mind Games' forms (piece 5).
+  - **Noticed, left alone:**
+    - The match standings come with the match's reload, which the server sends at most once a second per match. A result can show before its new standings: within 0.8 s in the final run's three rounds; in an earlier run, more than 0.8 s once. The guess games have always worked this way. A phased round's page now learns of the end from the end frame (T341), where before it learned it from that same reload.
+    - The round bar shows "Shared" in a game without a secret.
+    - The Quick Test's sentences "the same seed gives the same secret and the same season" stay, and are still true.
+    - After a Quick Test the next round's countdown starts from the document's 10 s, as in MG-N3.
+    - The admin's live list sums a phased round's guesses to 0.
+    - A server test's afterAll closes the pool while a chat line is still posting (a logged error, no failure).
+- **Decisions:**
+  - O91: the phased table and no count anywhere (owner).
+  - O92: the phase strip (the planner's proposal; the owner may revise it after the next test).
+  - O93: no season in Mind Games (the planner's proposal; the owner may revise it after the next test).
+  - T340: one place for a round's results.
+  - T341: the end frame unwrapped.
+  - T342: no action count computed.
+  - T343: no count or place in a phased round's tables.
+  - T344: the Quick Test asks the game about its fields.
+
+  Every T-entry is "(proposal, MG-N4)".
+
+- **Screenshots:** 8 in light mode, with `play-through.txt`, on the orphan branch `shots/mg-n4`; `shots/mg-n3` is deleted.
+- **CI and handover:** in the lines below, added after the last push.
+
 | Piece                                                                | State            |
 | -------------------------------------------------------------------- | ---------------- |
 | 1 — points never reach the table                                     | **done**, pushed |
