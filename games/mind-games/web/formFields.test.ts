@@ -28,4 +28,10 @@ describe('Mind Games host form fields (02e §3)', () => {
     expect(mindFieldState('mind.pauseS', values, false)).toMatchObject({ disabled: true });
     expect(mindFieldState('mind.totalS', values, false)).toBeNull();
   });
+
+  it('words the countdown without a season, which the game does not show (O93)', () => {
+    const help = mindFieldState('round.countdownS', values, true)?.help ?? '';
+    expect(help).toBe('The intro screen with the round’s rule and times, before it opens.');
+    expect(help).not.toMatch(/season|special/i);
+  });
 });

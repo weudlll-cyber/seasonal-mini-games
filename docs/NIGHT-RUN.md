@@ -27,6 +27,7 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged. Platf
   - The screen's season colour, now a neutral border colour (`RoundScreen.tsx`).
   - The host form's season controls and the season's own fields (`SeasonControls` and `formSeason` know `shows`, `apps/web/src/match/roundFields.tsx`; `HostMenu.tsx`).
   - The Quick Test's season field (`apps/web/src/shell/QuickTest.tsx`, which now takes the chosen game's list entry).
+  - The countdown's help line, "The intro screen with the season and its special…", in the host form and the Quick Test: Mind Games words it through its `fieldState`, "The intro screen with the round's rule and times, before it opens." (`games/mind-games/web/formFields.ts`, its test). Found in the play-through.
   - A round still stores a season.
 - **Guess games:** unchanged. Their list entries say `seasons: true`, and every view and form takes the path it took before.
 - **Tests:**
