@@ -124,6 +124,7 @@ The server makes an encrypted backup every night at 03:30 in `/var/backups/smg/p
    It takes a backup of the current state, asks, and goes back to the version before. **If the update changed the database layout, the database goes back to the moment before the update: accounts, matches and points since then are lost** (they stay in the backup it took first). Without a layout change the data stays as it is.
 4. Before a planned update you can stop new matches and rounds: `sudo smg maintenance on` (running rounds finish), and afterwards `sudo smg maintenance off`.
 5. Everyday checks: `sudo smg status` (what runs, health, rounds running, last backup) and `sudo smg logs app`.
+6. Which version runs? Every game page ends with a small line at its bottom right, "Mini Games · <commit> · <build date>": the first seven characters of the commit `smg update` built, and the day it was built.
 
 ## 7. Hardening checklist
 

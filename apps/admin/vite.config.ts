@@ -4,7 +4,8 @@
  * @brief  Vite config of the admin app: React, the local port 5411, the API through the server.
  *
  * Responsibility: serve the admin app on its project port (10 §4) and pass /api to the
- *                 server on 3910, so the session cookie stays first-party; relative asset
+ *                 server on 3910, so the session cookie stays first-party (a browser-test run
+ *                 passes its own port and server in SMG_VITE_PORT and SMG_VITE_SERVER, 09 §1.1); relative asset
  *                 paths so one build serves at "/" or under a base path. Tests run in jsdom
  *                 where a file asks for it.
  * Depends on:     vite, @vitejs/plugin-react
@@ -14,8 +15,9 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 
-const PORT = 5411;
-const SERVER = 'http://127.0.0.1:3910';
+// `pnpm dev`'s port and server; Playwright's run sets its own (e2e/testStack).
+const PORT = Number(process.env['SMG_VITE_PORT'] ?? 5411);
+const SERVER = process.env['SMG_VITE_SERVER'] ?? 'http://127.0.0.1:3910';
 
 export default defineConfig({
   base: './',

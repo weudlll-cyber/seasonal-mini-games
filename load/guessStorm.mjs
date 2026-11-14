@@ -3,7 +3,7 @@
  * @module load
  * @brief  Load scenario L1: shared rounds with N players guessing as fast as their cooldown allows.
  *
- * Responsibility: against a running development stack (server 3910): raise the match size
+ * Responsibility: on its own server (./stack: port 3950, a fresh database): raise the match size
  *                 limit for the check, sign in N numbered load players (dev sign-in
  *                 `load-NNNN`) and 100 spectators, let the players join one match and learn
  *                 their player numbers, and spread every client's socket over worker threads
@@ -17,7 +17,8 @@
  *                 Usage: node load/guessStorm.mjs [players=500] [out.json] [scenario=plain]
  *                 with scenario one of plain, spring, summer, autumn, winter, halving,
  *                 specials, l1.
- * Depends on:     node:worker_threads, node:fs, ./http, ./measure, ./scenarios, ./stormWorker
+ * Depends on:     node:worker_threads, node:fs, ./http, ./measure, ./scenarios, ./stack,
+ *                 ./stormWorker
  * Spec:           docs/spec/09-testing-strategy.md §5 (L1 shared-500, L4 headroom-1000)
  */
 import { writeFileSync } from 'node:fs';
@@ -26,6 +27,7 @@ import { Worker } from 'node:worker_threads';
 import { BASE, ORIGIN, call, inGroups, problems, signIn } from './http.mjs';
 import { firedSpecials, integrity, metricsSampler, spread } from './measure.mjs';
 import { ROUNDS, SCENARIOS, ensureHalvingDay, removeHalvingDay } from './scenarios.mjs';
+import { withLoadStack } from './stack.mjs';
 
 const PLAYERS = Number(process.argv[2] ?? 500);
 const OUT = process.argv[3] || null;
@@ -178,7 +180,7 @@ async function main() {
   }
 }
 
-main().catch((error) => {
+withLoadStack(main).catch((error) => {
   console.error(error);
   process.exit(1);
 });

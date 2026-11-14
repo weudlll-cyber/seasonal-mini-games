@@ -10,13 +10,13 @@
  *                 allowlist with the handoff allowed, and answers the provider's id;
  *                 `removeHostSite` deletes both (the accounts' website links go with the
  *                 provider). The same steps as journey 8's setup (./embed.spec).
- * Depends on:     @playwright/test (types), ./devStack, ./play
+ * Depends on:     @playwright/test (types), ./testStack, ./play
  * Used by:        ./accountDeletion.spec
  * Spec:           docs/spec/07-integration.md §1, §4; docs/spec/09-testing-strategy.md §4 (journey 29)
  */
 import type { APIRequestContext } from '@playwright/test';
 
-import { HOST_PAGE_URL } from './devStack.js';
+import { HOST_PAGE_URL } from './testStack.js';
 import { call, type Person } from './play.js';
 
 export async function registerHostSite(admin: Person, request: APIRequestContext): Promise<string> {

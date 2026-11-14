@@ -18,7 +18,12 @@ import { generateKeyPairSync, randomUUID, sign } from 'node:crypto';
 import { createServer, type ServerResponse } from 'node:http';
 
 const PORT = 5420;
-const GAME = process.env['SMG_TEST_HOST_GAME'] ?? 'http://127.0.0.1:5410';
+// The run's player client (../testStack CLIENT_URL), which Playwright passes in.
+const GAME = (() => {
+  const url = process.env['SMG_TEST_HOST_GAME'];
+  if (url === undefined) throw new Error('SMG_TEST_HOST_GAME: the player client to embed');
+  return url;
+})();
 const HOST_ISSUER = `http://127.0.0.1:${String(PORT)}/test-host`;
 
 // A new key pair at every start: nothing secret is ever written down.

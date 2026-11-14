@@ -15,7 +15,7 @@
  *                 range and the player's own answers leave, until the round ends or the player
  *                 solved — exactly as a person reading the screen would.
  *                 Matches are aborted at the end, never deleted (CLAUDE.md).
- * Depends on:     @playwright/test, ./devStack, ./screens
+ * Depends on:     @playwright/test, ./testStack, ./screens
  * Used by:        ./rounds.spec, ./specials.spec, ./players.spec, ./access.spec, ./range.spec,
  *                 ./lobby.spec, ./chat.spec
  * Spec:           docs/spec/09-testing-strategy.md §4; docs/spec/02-game-guess-the-number.md §12
@@ -28,7 +28,7 @@ import {
   type Page,
 } from '@playwright/test';
 
-import { CLIENT_URL } from './devStack.js';
+import { CLIENT_URL } from './testStack.js';
 import { DESKTOP } from './screens.js';
 
 export type Who = 'host' | 'admin' | 'player-1' | 'player-2' | 'player-3' | 'guest';

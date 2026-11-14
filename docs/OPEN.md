@@ -11,6 +11,7 @@ Full list: [BACKLOG.md](BACKLOG.md). Decisions: [DECISIONS.md](DECISIONS.md).
 - Merged into `master` on 2026-11-06 (merge `66e2828`, PR #3): the Others panel and the dark own row (T260, T261, confirmed), and OPEN's spec conflicts and gaps resolved (T263–T266), built on `feat/round-polish`.
 - Merged into `master` on 2026-11-06 (merge `59fd076`, PR #4): the inactivity limit per player in every round (O71–O75: the warning and the countdown, out of that round only, a 2 s grace, only the viewer's own deadline in the view, field-level messages, the fields in the Quick Test), journey 37, built on `feat/inactivity`.
 - Merged into `master` on 2026-11-10 (merge `b53055e`, PR #5): the website planning's follow-ups of 2026-11-09 (T278–T283: Can-Host per game and Bingo D46 in the docs, unknown feed kinds handled like rights, 7-day website-mode sessions, the website's session cookie stripped before the game, one re-sign through the website when a game session ended, two reviewed gitleaks fingerprints), built on `feat/website-followups`.
+- Merged into `master` on 2026-11-14 (PR #10, `chore/test-isolation`): the automated tests on databases and ports of their own, the dev database's clean start `pnpm dev:reset-db`, and the build badge on every page (O94, O95, T345, T346).
 
 ## Owner questions
 

@@ -15,11 +15,11 @@
  *                 publishes 127.0.0.1:5430 and reaches the host as host.docker.internal. Either
  *                 way the server sees the proxy as 127.0.0.1, its only trusted proxy. `close`
  *                 stops the server, removes the container and the stand-in, and the build.
- *                 Its own database, not the dev database: two servers on one database would
+ *                 Its own database, not the run's smg_test: two servers on one database would
  *                 both run the round scheduler and recovery, and a round runs on one instance
  *                 only (DECISIONS T4, T13, T241).
  * Depends on:     node:child_process, node:crypto, node:fs, node:os, node:path, ./builtAdmin,
- *                 ./devStack, ./websiteStub, docker
+ *                 ./testStack, ./websiteStub, docker
  * Used by:        ./website.spec
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 36); docs/spec/07-integration.md §7
  */
@@ -37,7 +37,7 @@ import {
   WEBSITE_SERVER_PORT,
   WEBSITE_URL,
   databaseUrl,
-} from './devStack.js';
+} from './testStack.js';
 import { nginxConf, startStubSite, type StubSite } from './websiteStub.js';
 
 const DATABASE = 'smg_e2e_website';
@@ -55,7 +55,7 @@ export interface WebsiteStack {
 const docker = (args: readonly string[]): string =>
   execFileSync('docker', args, { cwd: REPO_ROOT, encoding: 'utf8', stdio: 'pipe' });
 
-// The journey's database beside the dev database, made once.
+// The journey's database beside the run's and the developer's, made once.
 function ensureDatabase(): void {
   const psql = 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"';
   const script = `${psql} -tAc "SELECT 1 FROM pg_database WHERE datname = '${DATABASE}'" | grep -q 1 || ${psql} -c "CREATE DATABASE ${DATABASE}"`;

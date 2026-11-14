@@ -13,6 +13,8 @@
   "scripts": {
     "dev": "node --env-file=dev.env --watch --import=tsx src/main.ts",
     "start": "node --import=tsx src/main.ts",
+    "test-server": "node --import=tsx tools/testServer.ts",
+    "db:reset-dev": "node --env-file=dev.env --import=tsx tools/resetDevDatabase.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "build": "node build.mjs"
   },
