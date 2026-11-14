@@ -1,109 +1,111 @@
-[  6 s] Quick Test form: join time 20, disabled true; season field 1
-[  6 s] OK   the Quick Test join time shows half the total, off
-[  6 s] FAIL the Quick Test has no season field
-[  6 s] 01-quick-test.png: the Quick Test form: the join time follows the total (20 of 40, off), no season (page 904 px high at 720)
-[  7 s] Quick Test from the lobby, seed frost, 4 bots, total 40 s, delay 5 s, 3 rounds, pause 20 s, All on; match FJTWK8
-[ 13 s] OK   round 1: the intro's heading is the game's name ("Seasonal Mind Games")
-[ 13 s] OK   round 1 intro: no season pill
-[ 13 s] OK   round 1 intro: no "No special this round."
-[ 13 s] OK   round 1 intro: no count of anyone's choices
-[ 13 s] 02-intro.png: round 1's intro: the game's name, no season, no special line (page 720 px high at 720)
-[ 18 s] round 1: clicked Winter (first choice)
-[ 24 s] 03-strip-join.png: round 1 at 1280 × 720 in Join: Join framed and filling, "You see the round 5 s late.", the next change (page 720 px high at 720)
-[ 25 s] round 1: switched Winter → Autumn with "Hide my switches" ticked
-[ 27 s] round 1: switched to All by clicking
-[ 38 s] 04-strip-phone.png: round 1 at 390 × 844 in Play: Play framed and filling, the others plain (page 844 px high at 844)
-[ 38 s] OK   round 1 while it runs: no season pill
-[ 38 s] OK   round 1 while it runs: no "No special this round."
-[ 38 s] FAIL round 1 while it runs: no count of anyone's choices
-[ 59 s] round 1 headline: "Spring, Summer and All share the least chosen place — 3 players win."
-[ 59 s]   card spring: count 1, wins; bot-02 +1
-[ 59 s]   card summer: count 1, wins; bot-03 +1
-[ 59 s]   card autumn: count 0; -
-[ 59 s]   card winter: count 2; bot-01, bot-04
-[ 59 s]   card all: count 1, wins; You +2
-[ 59 s]   table [Player | Points]: bot-02 1; bot-03 1; dev-host (you) 2; bot-01 0; bot-04 0
-[ 59 s]   match standings [rank player points wins]: 1 dev-host (you) 2 1; 2 bot-02 1 1; 2 bot-03 1 1; 4 bot-01 0 0; 4 bot-04 0 0
-[ 59 s] OK   round 1: spring's count 1 is its 1 players
-[ 59 s] OK   round 1: summer's count 1 is its 1 players
-[ 59 s] OK   round 1: autumn's count 0 is its 0 players
-[ 59 s] OK   round 1: winter's count 2 is its 2 players
-[ 59 s] OK   round 1: all's count 1 is its 1 players
-[ 59 s] OK   round 1: the cards' points equal the table's
-[ 59 s] OK   round 1: the table has Player and Points only
-[ 59 s] round 1: my final choice All, my points 2
-[ 59 s] OK   round 1: my winning All gives +2
-[ 59 s] OK   round 1: the match standings are the rounds' sums
-[ 59 s] 05-result-1.png: round 1's result: the cards with +1/+2, the table with Player and Points only, the match standings (page 1281 px high at 720)
-[ 59 s] OK   round 1 result: no season pill
-[ 59 s] OK   round 1 result: no "No special this round."
-[ 59 s] OK   round 1 result: no count of anyone's choices
-[ 61 s] OK   the host form has no season field
-[ 61 s] 06-host-form.png: the host form in the pause: no season, the join time following the total (page 1281 px high at 720)
-[ 61 s] next round's settings {"mind.winnerPlace":2,"mind.allOption":false}: 204
-[ 63 s] OK   round 2: the intro's heading is the game's name ("Seasonal Mind Games")
-[ 63 s] OK   round 2 intro: no season pill
-[ 63 s] OK   round 2 intro: no "No special this round."
-[ 63 s] OK   round 2 intro: no count of anyone's choices
-[ 67 s] round 2: clicked Winter (first choice)
-[ 69 s] round 2: switched to Spring by clicking
-[ 69 s] OK   round 2 while it runs: no season pill
-[ 69 s] OK   round 2 while it runs: no "No special this round."
-[ 69 s] FAIL round 2 while it runs: no count of anyone's choices
-[108 s] round 2 headline: "Spring was the 2nd least chosen — 3 players win."
-[108 s]   card spring: count 3, wins; You +1, bot-01 +1, bot-03 +1
-[108 s]   card summer: count 0; -
-[108 s]   card autumn: count 0; -
-[108 s]   card winter: count 2; bot-02, bot-04
-[108 s]   table [Player | Points]: bot-01 1; bot-03 1; dev-host (you) 1; bot-02 0; bot-04 0
-[108 s]   match standings [rank player points wins]: 1 dev-host (you) 3 2; 2 bot-03 2 2; 3 bot-02 1 1; 4 bot-01 1 1; 5 bot-04 0 0
-[108 s] OK   round 2: spring's count 3 is its 3 players
-[108 s] OK   round 2: summer's count 0 is its 0 players
-[108 s] OK   round 2: autumn's count 0 is its 0 players
-[108 s] OK   round 2: winter's count 2 is its 2 players
-[108 s] OK   round 2: the cards' points equal the table's
-[108 s] OK   round 2: the table has Player and Points only
-[108 s] round 2: my final choice Spring, my points 1
-[108 s] OK   round 2: the match standings are the rounds' sums
-[108 s] 07-result-2.png: round 2's result: winner place 2 (page 1425 px high at 720)
-[109 s] OK   round 2 result: no season pill
-[109 s] OK   round 2 result: no "No special this round."
-[109 s] OK   round 2 result: no count of anyone's choices
-[109 s] next round's settings {"mind.allOption":true}: 204
-[111 s] OK   round 3: the intro's heading is the game's name ("Seasonal Mind Games")
-[111 s] OK   round 3 intro: no season pill
-[111 s] OK   round 3 intro: no "No special this round."
-[111 s] OK   round 3 intro: no count of anyone's choices
-[116 s] round 3: clicked Winter (first choice)
-[118 s] round 3: switched to All by clicking
-[118 s] OK   round 3 while it runs: no season pill
-[118 s] OK   round 3 while it runs: no "No special this round."
-[118 s] FAIL round 3 while it runs: no count of anyone's choices
-[156 s] round 3 headline: "All was the least chosen — 1 player wins."
-[156 s]   card spring: count 0; -
-[156 s]   card summer: count 2; bot-03, bot-04
-[156 s]   card autumn: count 0; -
-[156 s]   card winter: count 2; bot-02, bot-01
-[156 s]   card all: count 1, wins; You +2
-[156 s]   table [Player | Points]: dev-host (you) 2; bot-01 0; bot-02 0; bot-03 0; bot-04 0
-[156 s]   match standings [rank player points wins]: 1 dev-host (you) 5 3; 2 bot-03 2 2; 3 bot-02 1 1; 4 bot-01 1 1; 5 bot-04 0 0
-[156 s] OK   round 3: spring's count 0 is its 0 players
-[156 s] OK   round 3: summer's count 2 is its 2 players
-[156 s] OK   round 3: autumn's count 0 is its 0 players
-[156 s] OK   round 3: winter's count 2 is its 2 players
-[156 s] OK   round 3: all's count 1 is its 1 players
-[156 s] OK   round 3: the cards' points equal the table's
-[156 s] OK   round 3: the table has Player and Points only
-[156 s] round 3: my final choice All, my points 2
-[156 s] OK   round 3: my winning All gives +2
-[156 s] OK   round 3: the match standings are the rounds' sums
-[156 s] OK   round 3 result: no season pill
-[156 s] OK   round 3 result: no "No special this round."
-[156 s] OK   round 3 result: no count of anyone's choices
-[156 s] OK   a round with All on had an All winner
-[177 s] summary standings [rank player points wins]: 1 dev-host (you) 5 3; 2 bot-03 2 2; 3 bot-02 1 1; 4 bot-01 1 1; 5 bot-04 0 0
-[177 s] summary rounds: Round 1: Spring, Summer and All were the least chosen (3 players). Round 2: Spring was the 2nd least chosen (3 players). Round 3: All was the least chosen (1 player).
-[177 s] OK   the summary is the rounds' sums
-[177 s] 08-summary.png: the match summary: the standings and each round with what won (page 720 px high at 720)
-[177 s] page errors: none
-[177 s] problems: the Quick Test has no season field | round 1 while it runs: no count of anyone's choices | round 2 while it runs: no count of anyone's choices | round 3 while it runs: no count of anyone's choices
+[ 15 s] Quick Test form: join time 20, disabled true; season field 0
+[ 15 s] OK   the Quick Test join time shows half the total, off
+[ 15 s] OK   the Quick Test has no season field
+[ 15 s] OK   the Quick Test countdown help names no season
+[ 16 s] 01-quick-test.png: the Quick Test form: the join time follows the total (20 of 40, off), no season (page 904 px high at 720)
+[ 22 s] Quick Test from the lobby, seed frost, 4 bots, total 40 s, delay 5 s, 3 rounds, pause 20 s, All on; match YHV4CS
+[ 29 s] OK   round 1: the intro's heading is the game's name ("Seasonal Mind Games")
+[ 29 s] OK   round 1 intro: no season pill
+[ 29 s] OK   round 1 intro: no season words of the platform
+[ 29 s] OK   round 1 intro: no count of anyone's choices
+[ 29 s] 02-intro.png: round 1's intro: the game's name, no season, no special line (page 720 px high at 720)
+[ 33 s] round 1: clicked Winter (first choice)
+[ 41 s] 03-strip-join.png: round 1 at 1280 × 720 in Join: Join framed and filling, "You see the round 5 s late.", the next change (page 720 px high at 720)
+[ 41 s] round 1: switched Winter → Autumn with "Hide my switches" ticked
+[ 43 s] round 1: switched to All by clicking
+[ 54 s] 04-strip-phone.png: round 1 at 390 × 844 in Play: Play framed and filling, the others plain (page 844 px high at 844)
+[ 56 s] OK   round 1 while it runs, the Players panel open: no season pill
+[ 56 s] OK   round 1 while it runs, the Players panel open: no season words of the platform
+[ 56 s] OK   round 1 while it runs, the Players panel open: no count of anyone's choices
+[ 77 s] round 1 headline: "Spring, Summer and All share the least chosen place — 3 players win."
+[ 77 s]   card spring: count 1, wins; bot-02 +1
+[ 77 s]   card summer: count 1, wins; bot-03 +1
+[ 77 s]   card autumn: count 0; -
+[ 77 s]   card winter: count 2; bot-01, bot-04
+[ 77 s]   card all: count 1, wins; You +2
+[ 77 s]   table [Player | Points]: bot-02 1; bot-03 1; dev-host (you) 2; bot-01 0; bot-04 0
+[ 77 s]   match standings [rank player points wins]: 1 dev-host (you) 2 1; 2 bot-02 1 1; 2 bot-03 1 1; 4 bot-01 0 0; 4 bot-04 0 0
+[ 77 s] OK   round 1: spring's count 1 is its 1 players
+[ 77 s] OK   round 1: summer's count 1 is its 1 players
+[ 77 s] OK   round 1: autumn's count 0 is its 0 players
+[ 77 s] OK   round 1: winter's count 2 is its 2 players
+[ 77 s] OK   round 1: all's count 1 is its 1 players
+[ 77 s] OK   round 1: the cards' points equal the table's
+[ 77 s] OK   round 1: the table has Player and Points only
+[ 77 s] round 1: my final choice All, my points 2
+[ 77 s] OK   round 1: my winning All gives +2
+[ 77 s] OK   round 1: the match standings are the rounds' sums
+[ 77 s] 05-result-1.png: round 1's result: the cards with +1/+2, the table with Player and Points only, the match standings (page 1281 px high at 720)
+[ 77 s] OK   round 1 result: no season pill
+[ 77 s] OK   round 1 result: no season words of the platform
+[ 77 s] OK   round 1 result: no count of anyone's choices
+[ 78 s] OK   the host form has no season field
+[ 78 s] OK   the host form names no season
+[ 79 s] 06-host-form.png: the host form in the pause: no season, the join time following the total (page 1281 px high at 720)
+[ 79 s] next round's settings {"mind.winnerPlace":2,"mind.allOption":false}: 204
+[ 82 s] OK   round 2: the intro's heading is the game's name ("Seasonal Mind Games")
+[ 82 s] OK   round 2 intro: no season pill
+[ 82 s] OK   round 2 intro: no season words of the platform
+[ 82 s] OK   round 2 intro: no count of anyone's choices
+[ 87 s] round 2: clicked Winter (first choice)
+[ 90 s] round 2: switched to Spring by clicking
+[ 90 s] OK   round 2 while it runs, the Players panel open: no season pill
+[ 90 s] OK   round 2 while it runs, the Players panel open: no season words of the platform
+[ 90 s] OK   round 2 while it runs, the Players panel open: no count of anyone's choices
+[128 s] round 2 headline: "Spring and Winter share the 2nd least chosen place — 4 players win."
+[128 s]   card spring: count 2, wins; You +1, bot-03 +1
+[128 s]   card summer: count 1; bot-02
+[128 s]   card autumn: count 0; -
+[128 s]   card winter: count 2, wins; bot-01 +1, bot-04 +1
+[128 s]   table [Player | Points]: bot-01 1; bot-03 1; bot-04 1; dev-host (you) 1; bot-02 0
+[128 s]   match standings [rank player points wins]: 1 dev-host (you) 2 1; 2 bot-02 1 1; 2 bot-03 1 1; 4 bot-01 0 0; 4 bot-04 0 0
+[128 s] OK   round 2: spring's count 2 is its 2 players
+[128 s] OK   round 2: summer's count 1 is its 1 players
+[128 s] OK   round 2: autumn's count 0 is its 0 players
+[128 s] OK   round 2: winter's count 2 is its 2 players
+[128 s] OK   round 2: the cards' points equal the table's
+[128 s] OK   round 2: the table has Player and Points only
+[128 s] round 2: my final choice Spring, my points 1
+[128 s] FAIL round 2: the match standings are the rounds' sums
+[128 s] 07-result-2.png: round 2's result: winner place 2 (page 1497 px high at 720)
+[128 s] OK   round 2 result: no season pill
+[128 s] OK   round 2 result: no season words of the platform
+[128 s] OK   round 2 result: no count of anyone's choices
+[129 s] next round's settings {"mind.allOption":true}: 204
+[133 s] OK   round 3: the intro's heading is the game's name ("Seasonal Mind Games")
+[133 s] OK   round 3 intro: no season pill
+[133 s] OK   round 3 intro: no season words of the platform
+[133 s] OK   round 3 intro: no count of anyone's choices
+[137 s] round 3: clicked Winter (first choice)
+[139 s] round 3: switched to All by clicking
+[140 s] OK   round 3 while it runs, the Players panel open: no season pill
+[140 s] OK   round 3 while it runs, the Players panel open: no season words of the platform
+[140 s] OK   round 3 while it runs, the Players panel open: no count of anyone's choices
+[180 s] round 3 headline: "All was the least chosen — 1 player wins."
+[180 s]   card spring: count 0; -
+[180 s]   card summer: count 2; bot-03, bot-04
+[180 s]   card autumn: count 0; -
+[180 s]   card winter: count 2; bot-02, bot-01
+[180 s]   card all: count 1, wins; You +2
+[180 s]   table [Player | Points]: dev-host (you) 2; bot-01 0; bot-02 0; bot-03 0; bot-04 0
+[180 s]   match standings [rank player points wins]: 1 dev-host (you) 5 3; 2 bot-03 2 2; 3 bot-02 1 1; 4 bot-01 1 1; 4 bot-04 1 1
+[180 s] OK   round 3: spring's count 0 is its 0 players
+[180 s] OK   round 3: summer's count 2 is its 2 players
+[180 s] OK   round 3: autumn's count 0 is its 0 players
+[180 s] OK   round 3: winter's count 2 is its 2 players
+[180 s] OK   round 3: all's count 1 is its 1 players
+[180 s] OK   round 3: the cards' points equal the table's
+[180 s] OK   round 3: the table has Player and Points only
+[180 s] round 3: my final choice All, my points 2
+[180 s] OK   round 3: my winning All gives +2
+[180 s] OK   round 3: the match standings are the rounds' sums
+[181 s] OK   round 3 result: no season pill
+[181 s] OK   round 3 result: no season words of the platform
+[181 s] OK   round 3 result: no count of anyone's choices
+[181 s] OK   a round with All on had an All winner
+[198 s] summary standings [rank player points wins]: 1 dev-host (you) 5 3; 2 bot-03 2 2; 3 bot-02 1 1; 4 bot-01 1 1; 4 bot-04 1 1
+[198 s] summary rounds: Round 1: Spring, Summer and All were the least chosen (3 players). Round 2: Spring and Winter were the 2nd least chosen (4 players). Round 3: All was the least chosen (1 player).
+[198 s] OK   the summary is the rounds' sums
+[199 s] 08-summary.png: the match summary: the standings and each round with what won (page 720 px high at 720)
+[199 s] page errors: none
+[199 s] problems: round 2: the match standings are the rounds' sums

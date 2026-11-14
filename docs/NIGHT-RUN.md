@@ -35,6 +35,7 @@ Status, updated after every piece. Branch `feat/mind-games` is not merged. Platf
   - `apps/server/test/phasedPoints.integration.test.ts`: the game list's flag for Mind Games and the four guess games.
   - Journey 38 (`e2e/mindGames.spec.ts`) checks the intro's heading (the game's name), that the bar has no season pill, and the strip's current phase with its delay line (O92).
 - **Docs:** 02e §12 and 04 §4.
+- **Test fixture adjusted:** the host form now asks for the game list. The Heatwave test's API mock (`apps/web/src/match/heatwave.test.tsx`) answers `/games` with an empty list, as for a guess game. Without that, the list came back undefined and the new call would have shifted the test's recorded posts. Its assertions are unchanged.
 - **Also fixed:** the web registry's comment on `kept` sat between `fieldState`'s comment and its field (`games/registry/web/index.ts`, from MG-N3).
 
 ### Piece 4 — the phase strip
