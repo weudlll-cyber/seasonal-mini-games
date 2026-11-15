@@ -6,14 +6,14 @@
 
 Status, updated after every piece. `feat/mind-games` is not merged.
 
-| Piece                                                                   | State                   |
-| ----------------------------------------------------------------------- | ----------------------- |
-| 1 — the chat docked below (`meta.chatDock`)                             | done                    |
-| 2 — the round view                                                      | done                    |
-| 3 — the result and pause view                                           | done                    |
-| 4 — small fixes (locked fields, the live list's Mode, 02c §9's heading) | done                    |
-| Play-through and handover                                               | open                    |
-| Needs the owner's word                                                  | the proposals from T350 |
+| Piece                                                                   | State                                               |
+| ----------------------------------------------------------------------- | --------------------------------------------------- |
+| 1 — the chat docked below (`meta.chatDock`)                             | done                                                |
+| 2 — the round view                                                      | done                                                |
+| 3 — the result and pause view                                           | done                                                |
+| 4 — small fixes (locked fields, the live list's Mode, 02c §9's heading) | done                                                |
+| Play-through and handover                                               | done; CI on the final head reported in the handover |
+| Needs the owner's word                                                  | the proposals T350–T354                             |
 
 ### Piece 1 — the chat docked below
 
@@ -40,6 +40,25 @@ Status, updated after every piece. `feat/mind-games` is not merged.
 - **The live list's Mode** (T354): `liveRounds.ts` sends `secretMode: null` for a game without secret modes (the game list's `secretModes`); `LivePage.tsx` shows "—". Guess games keep "shared, spring".
 - **02c §9:** the sentence fused into the heading is now its own paragraph.
 - **Checks:** the web's component, match and shell tests 75/75 (a new locked-field test), the admin's live list 3/3, the server's `adminLive.integration.test.ts` 6/6 (a guess round "shared", a Mind Games round null).
+
+### Tests, e2e and the play-through
+
+- **Verify per piece:** 1: unit and web green, 14 server files failed to start Docker under load, then 170/171 alone and `phased.integration.test.ts` green alone (a timing test, see Noticed); 2: green but `authzMatrix.integration.test.ts` timed out at 150 s, green alone; 3 and 4: fully green (833/834 + 99 + 171).
+- **e2e in Chromium:** journeys 38–42 5/6 (journey 40 still read "Round 1 of 3"; fixed, `7e1313b`, then green), then the full suite once: 54/54 (main and timing).
+- **Play-through** (`tmp/mg6-play.mjs`, the log in `reports/mg-n6/play-through.txt`): seed `maple`, 4 bots, total 40 s (delay following, 10 s, locked with its padlock), 3 rounds, pause 25 s, All on in rounds 1 and 3, winner place 2 in round 2; the badge "Mini Games · dev · feat/mind-games · 7e1313b · 2026-11-15". Round view and result at 1280 × 720, 1920 × 1080 and 390 × 844 in light and dark: one screen, nothing over the chat, no target under 44 px; no Chat button in the bar; five cards in one row with All on (round and result); the strip "Join · now … Reveal …"; "Your choice: Winter" on the phone; the typed chat text kept from the round to the result.
+  - **Round 1:** "Spring and Summer win!" / "Least chosen · 2 players win · +1 each". Cards Spring 1 (bot-02 +1), Summer 1 (bot-01 +1), Autumn 0, Winter 0, All 3, not least chosen (You, bot-03, bot-04). Standings bot-01 1 | 1, bot-02 1 | 1, the rest 0 | 0. Pause "Round 2 starts in 0:20".
+  - **Round 2** (winner place 2, no All): "Spring and Summer win!" / "2nd least chosen · 4 players win · +1 each". Cards Spring 2 (bot-02 +1, You +1), Summer 2 (bot-01 +1, bot-04 +1), Autumn 1, not 2nd least chosen (bot-03), Winter 0. Totals bot-01 2, bot-02 2, bot-04 1, dev-host 1, bot-03 0.
+  - **Round 3** (All on): "Autumn, Winter and All win!" / "Least chosen · 3 players win · +1 each, All +2". Cards Spring 2, not least chosen (bot-04, bot-03), Summer 0, Autumn 1 (bot-01 +1), Winter 1 (bot-02 +1), All 1 (You +2). Totals bot-01 3, bot-02 3, dev-host 3, bot-04 1, bot-03 0.
+  - **Summary:** bot-01 3 (3 wins), bot-02 3 (3), dev-host 3 (2), bot-04 1 (1), bot-03 0; each count equals its players, each "+N" the standings' This round, each Total and the summary the rounds' sums. No page errors.
+- **Screenshots:** 8, light and dark, on the orphan branch `shots/mg-n6`; `shots/mg-n5` deleted.
+
+### Noticed, left alone
+
+- At 1280 × 720 the Next round panel's pre-pick selects and the standings' "All N players…" lie just under their panels' fold (they scroll inside the panel); at 1920 × 1080 everything shows.
+- `phased.integration.test.ts` and `authzMatrix.integration.test.ts` failed once each inside a full `pnpm verify` (a join window closed, a 150 s timeout) and passed alone: the server's integration tests still need a quiet machine.
+- The phone's result scrolls inside its part above the chat bar (about 140 px); the design does not say whether it should.
+- The match summary page has no docked chat (it never had a chat); unchanged.
+- The dev servers of the previous task outlived their stopped shell: `TaskStop` ended the shell, not the watcher's children, so the next `pnpm dev` found its ports taken; they were stopped by process id.
 
 ## Task MG-N5 (2026-11-14): test isolation and a build badge, then small Mind Games fixes
 

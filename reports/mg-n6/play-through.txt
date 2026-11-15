@@ -1,0 +1,92 @@
+[  2 s] OK   the delay follows the total: 10 of 40, locked
+[  2 s] OK   the locked fields show the padlock
+[  2 s] build badge: "Mini Games · dev · feat/mind-games · 7e1313b · 2026-11-15" (head 7e1313b)
+[  2 s] OK   the badge names feat/mind-games and the head commit
+[  3 s] Quick Test, seed maple, 4 bots, total 40 s (delay following, 10 s), 3 rounds, pause 25 s, All on; match BNNBYJ
+[ 12 s] round 1: clicked Winter
+[ 12 s] OK   the round bar has no Chat button
+[ 23 s] OK   round 1 with All on: 5 cards in one row
+[ 23 s] round 1's strip: "Join · now until 0:20 Play until 0:30 Reveal until 0:40 You see the round 10 s late · Joining closes in 0:08 · Choices close in 0:18"
+[ 23 s] OK   the strip names the current phase "· now" and Reveal
+[ 24 s] OK   round 1 at 1280 × 720, light: one screen (720 px), nothing over the chat [], no target under 44 px (0)
+[ 24 s] 01-round-1280-light.png: round 1 at 1280 × 720, light
+[ 25 s] OK   round 1 at 1280 × 720, dark: one screen (720 px), nothing over the chat [], no target under 44 px (0)
+[ 25 s] 02-round-1280-dark.png: round 1 at 1280 × 720, dark
+[ 25 s] OK   round 1 at 1920 × 1080, light: one screen (1080 px), nothing over the chat [], no target under 44 px (0)
+[ 26 s] OK   round 1 at 390 × 844, light: one screen (844 px), nothing over the chat [], no target under 44 px (0)
+[ 26 s] 03-round-phone-light.png: round 1 at 390 × 844, light
+[ 26 s] OK   the phone's line says Your choice: Winter
+[ 27 s] OK   round 1 at 390 × 844, dark: one screen (844 px), nothing over the chat [], no target under 44 px (0)
+[ 27 s] 04-round-phone-dark.png: round 1 at 390 × 844, dark
+[ 29 s] round 1: switched to All
+[ 53 s] round 1 result: "Spring and Summer win!" / "Least chosen · 2 players win · +1 each"
+[ 53 s]   card spring: count 1, ✓ wins; bot-02 +1
+[ 53 s]   card summer: count 1, ✓ wins; bot-01 +1
+[ 53 s]   card autumn: count 0, not chosen; -
+[ 53 s]   card winter: count 0, not chosen; -
+[ 53 s]   card all: count 3, not least chosen; You, bot-03, bot-04
+[ 53 s]   standings [player | this round | total]: bot-01 | 1 | 1; bot-02 | 1 | 1; bot-03 | 0 | 0; bot-04 | 0 | 0; dev-host (you) | 0 | 0
+[ 53 s] OK   round 1: no placings table beside the cards
+[ 53 s] OK   round 1: spring's count 1 is its 1 players
+[ 53 s] OK   round 1: summer's count 1 is its 1 players
+[ 53 s] OK   round 1: autumn's count 0 is its 0 players
+[ 53 s] OK   round 1: winter's count 0 is its 0 players
+[ 53 s] OK   round 1: all's count 3 is its 3 players
+[ 53 s] OK   round 1: every card's +N is the standings' This round
+[ 53 s] OK   the chat keeps its typed text from the round to the result
+[ 53 s] OK   round 1's result with All on: 5 cards in one row
+[ 54 s] OK   round 1 result at 1280 × 720, light: one screen (720 px), nothing over the chat [], no target under 44 px (0)
+[ 54 s] 05-result-1280-light.png: round 1 result at 1280 × 720, light
+[ 55 s] OK   round 1 result at 1280 × 720, dark: one screen (720 px), nothing over the chat [], no target under 44 px (0)
+[ 55 s] 06-result-1280-dark.png: round 1 result at 1280 × 720, dark
+[ 55 s] OK   round 1 result at 1920 × 1080, dark: one screen (1080 px), nothing over the chat [], no target under 44 px (0)
+[ 56 s] OK   round 1 result at 390 × 844, light: one screen (844 px), nothing over the chat [], no target under 44 px (0)
+[ 56 s] 07-result-phone-light.png: round 1 result at 390 × 844, light
+[ 56 s] OK   round 1 result at 390 × 844, dark: one screen (844 px), nothing over the chat [], no target under 44 px (0)
+[ 56 s] OK   round 1: every Total is the rounds' sum
+[ 56 s] round 1: my points 0, totals {"bot-01":1,"bot-02":1,"bot-03":0,"bot-04":0,"you":0}
+[ 56 s] round 1's pause: "Round 2 starts in 0:20 Start now"
+[ 56 s] OK   round 1: the next round's countdown
+[ 57 s] next round's settings {"mind.winnerPlace":2,"mind.allOption":false}: 204
+[ 64 s] round 2: clicked Winter
+[ 66 s] round 2: switched to Spring
+[105 s] round 2 result: "Spring and Summer win!" / "2nd least chosen · 4 players win · +1 each"
+[105 s]   card spring: count 2, ✓ wins; bot-02 +1, You +1
+[105 s]   card summer: count 2, ✓ wins; bot-01 +1, bot-04 +1
+[105 s]   card autumn: count 1, not 2nd least chosen; bot-03
+[105 s]   card winter: count 0, not chosen; -
+[105 s]   standings [player | this round | total]: bot-01 | 1 | 2; bot-02 | 1 | 2; bot-04 | 1 | 1; dev-host (you) | 1 | 1; bot-03 | 0 | 0
+[105 s] OK   round 2: no placings table beside the cards
+[105 s] OK   round 2: spring's count 2 is its 2 players
+[105 s] OK   round 2: summer's count 2 is its 2 players
+[105 s] OK   round 2: autumn's count 1 is its 1 players
+[105 s] OK   round 2: winter's count 0 is its 0 players
+[105 s] OK   round 2: every card's +N is the standings' This round
+[105 s] OK   round 2: every Total is the rounds' sum
+[105 s] round 2: my points 1, totals {"bot-01":2,"bot-02":2,"bot-04":1,"you":1,"bot-03":0}
+[105 s] round 2's pause: "Round 3 starts in 0:24 Start now"
+[105 s] OK   round 2: the next round's countdown
+[105 s] next round's settings {"mind.allOption":true}: 204
+[113 s] round 3: clicked Winter
+[115 s] round 3: switched to All
+[154 s] round 3 result: "Autumn, Winter and All win!" / "Least chosen · 3 players win · +1 each, All +2"
+[154 s]   card spring: count 2, not least chosen; bot-04, bot-03
+[154 s]   card summer: count 0, not chosen; -
+[154 s]   card autumn: count 1, ✓ wins; bot-01 +1
+[154 s]   card winter: count 1, ✓ wins; bot-02 +1
+[154 s]   card all: count 1, ✓ wins; You +2
+[154 s]   standings [player | this round | total]: bot-01 | 1 | 3; bot-02 | 1 | 3; dev-host (you) | 2 | 3; bot-04 | 0 | 1; bot-03 | 0 | 0
+[154 s] OK   round 3: no placings table beside the cards
+[154 s] OK   round 3: spring's count 2 is its 2 players
+[154 s] OK   round 3: summer's count 0 is its 0 players
+[154 s] OK   round 3: autumn's count 1 is its 1 players
+[154 s] OK   round 3: winter's count 1 is its 1 players
+[154 s] OK   round 3: all's count 1 is its 1 players
+[154 s] OK   round 3: every card's +N is the standings' This round
+[154 s] OK   round 3: every Total is the rounds' sum
+[154 s] round 3: my points 2, totals {"bot-01":3,"bot-02":3,"you":3,"bot-04":1,"bot-03":0}
+[179 s] summary standings [rank player points wins]: 1 bot-01 3 3; 1 bot-02 3 3; 3 dev-host (you) 3 2; 4 bot-04 1 1; 5 bot-03 0 0
+[179 s] OK   the summary is the rounds' sums
+[179 s] 08-summary.png: the match summary
+[179 s] page errors: none
+[179 s] problems: none
