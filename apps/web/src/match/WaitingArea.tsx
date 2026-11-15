@@ -118,8 +118,8 @@ function Players({ match }: { readonly match: MatchDetailsView }): ReactElement 
   );
 }
 
-// Whether the next round is set up, and who acts now.
-function stateText(match: MatchDetailsView): string {
+// Whether the next round is set up, and who acts now (also ./NextRound's line).
+export function stateText(match: MatchDetailsView): string {
   // A series starts its next round by itself after the pause (04 §4.8 rule 7).
   if (match.series?.nextAt != null) {
     return match.youHost

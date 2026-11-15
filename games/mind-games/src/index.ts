@@ -16,4 +16,4 @@ export { mindGames } from './module.js';
 export { optionsOf, type Choice } from './choices.js';
 export { DEFAULT_CONFIG, delayOf, joinOf, mindSettings } from './settings.js';
 export type { FeedLineView, PlayerView, ResultView, SpectatorView } from './views.js';
-export { CHOICE_NAMES, headline, placeWords } from './words.js';
+export { CHOICE_NAMES, placeWords, resultLine, resultTitle, whyNot } from './words.js';

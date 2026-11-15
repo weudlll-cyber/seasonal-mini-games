@@ -51,6 +51,8 @@ interface RoundScreenProps {
   readonly chat: ReactNode;
   // A phased game's: the viewer's own part of the match, for their input (T327).
   readonly own?: OwnMatchPart | undefined;
+  // The docked page's next-round box, beside the standings under the result (O97).
+  readonly next?: ReactNode;
 }
 
 // The season's colour (a neutral one in a game that shows no season, O93), and the viewer's
@@ -72,14 +74,8 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
   const season = noSeason === null;
   if (state === null) return <p className="smg-muted">Loading the round…</p>;
   if (state.status === 'ended') {
-    return (
-      <ResultScreen
-        state={state}
-        game={game}
-        viewerKey={props.viewerKey}
-        standings={props.standings}
-      />
-    );
+    // The viewer, the standings and the docked page's next-round box come with the props.
+    return <ResultScreen {...props} state={state} game={game} />;
   }
   if (state.status === 'aborted') {
     return <p className="smg-panel">The round was aborted: {state.abortReason}</p>;

@@ -16,7 +16,8 @@
  *                 `JOIN_CLOSED`; from 40 s the feed says every change is now a switch; at 50 s the
  *                 buttons are off and the feed says choices are closed while the reveal runs; the
  *                 result names the least chosen option, lights it up and lists the winners with
- *                 +1 and the viewer's line, the cards' points equal to the placings table's and
+ *                 +1 and the viewer's line under a headline ("Winter wins!") and its line, the
+ *                 cards' points equal to the standings' "This round" and
  *                 the match standings' (T340); the round view fits 1280 × 720 with the chat docked
  *                 under it and no Chat button in the bar (O97), the flight band over no button,
  *                 line or chat, and 390 × 844 with the chat's bar; no season on
@@ -50,6 +51,7 @@ import {
 import { PHONE } from './screens.js';
 
 const WIDE = { width: 1280, height: 720 };
+const DRAFT = 'half a sentence';
 const list = (page: Page) => page.locator('.round-main');
 const choice = (page: Page, name: string) => page.getByRole('radio', { name: new RegExp(name) });
 
@@ -170,26 +172,39 @@ async function lastPhases(p: Person, opened: number): Promise<void> {
   for (const r of await p.page.getByRole('radio').all()) await expect(r).toBeDisabled();
 }
 
+// The chat docked under the round, not a panel from the bar (O97); a draft typed into it, not
+// sent, which the result must still show (the chat is mounted once).
+async function dockedChat(page: Page): Promise<void> {
+  await expect(page.getByTestId('focus-chat')).toHaveCount(0);
+  await expect(page.getByTestId('chat-dock')).toHaveAttribute('data-view', 'desktop');
+  await page.getByTestId('chat-dock').getByRole('textbox').fill(DRAFT);
+}
+
 // The result: the least chosen option named and lit, its winners with +1, the viewer's line.
 async function result(p: Person): Promise<void> {
   await expect(p.page.getByTestId('result')).toBeVisible({ timeout: 20_000 });
-  await expect(p.page.getByTestId('closest-miss')).toHaveText(
-    /least chosen( place)? — \d+ players? wins?\./,
+  await expect(p.page.getByTestId('chat-dock').getByRole('textbox')).toHaveValue(DRAFT);
+  await fitsScreen(p.page);
+  await expect(p.page.getByTestId('result-title')).toHaveText(/ wins?!$/);
+  await expect(p.page.getByTestId('result-line')).toHaveText(
+    /^Least chosen · \d+ players? wins? · \+[12]/,
   );
+  // The cards and the standings, no placings table beside them (O97).
+  await expect(p.page.getByTestId('placings')).toHaveCount(0);
   const options = p.page.getByTestId('mind-result');
   const lit = () => p.page.evaluate(() => (window as unknown as { lit: boolean }).lit);
   await expect.poll(lit, { message: 'a winning option lit up' }).toBe(true);
   await expect(options.getByText('✓ wins').first()).toBeVisible();
   await expect(options.locator('.mg-points').first()).toHaveText(/\+[12]/);
   await expect(options.locator('li[data-own="true"]')).toHaveText(/^You/);
-  // The cards' points are the table's and, after one round, the match standings' (T340).
+  // The cards' points are the standings' "This round" and, after one round, the totals (T340).
   await expect(p.page.getByTestId('match-standings')).toBeVisible();
   const got = await resultPoints(p.page);
   expect(
     Object.values(got.cards).some((n) => n > 0),
     'someone won points',
   ).toBe(true);
-  expect(got.table, 'the placings table').toEqual(got.cards);
+  expect(got.table, "the standings' This round").toEqual(got.cards);
   expect(got.standings, 'the match standings').toEqual(got.cards);
 }
 
@@ -241,9 +256,7 @@ test('journey 38: one round of Seasonal Mind Games, everything one delay late', 
     // The same waves flew on the player's page, none on the reduced-motion one.
     expect(await flightsSeen(p.page)).toBeGreaterThan(0);
     expect(await flightsSeen(calm.page)).toBe(0);
-    // The chat is docked under the round, not a panel from the bar (O97).
-    await expect(p.page.getByTestId('focus-chat')).toHaveCount(0);
-    await expect(p.page.getByTestId('chat-dock')).toHaveAttribute('data-view', 'desktop');
+    await dockedChat(p.page);
     await fitsScreen(p.page);
     await bandClear(p.page);
     await axeClean(p.page);

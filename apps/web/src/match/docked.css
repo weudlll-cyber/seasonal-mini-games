@@ -6,7 +6,8 @@
  * Responsibility: one screen without a page scrollbar: the box fills what the hidden app
  *                 header leaves (../shell/shell.css `.one-screen`), the view on top takes every
  *                 height the chat (./chatDock.css) does not; a result taller than its part
- *                 scrolls inside it, never the page. Colours only from @smg/ui tokens.
+ *                 scrolls inside it, never the page; the next round's countdown with its bar
+ *                 under a game's own result (./NextRound). Colours only from @smg/ui tokens.
  * Spec:           docs/spec/02e-game-mind-games.md §11
  */
 .match-docked {
@@ -24,9 +25,65 @@
   flex-direction: column;
 }
 
-/* The result and the pause: its part scrolls inside itself when it is taller. */
+/* The result and the pause: the bar, then the result in the whole width and the height that
+   is left (no column beside it: the next round's box is in the result); taller, it scrolls
+   inside itself. */
 .match-docked-main > .match-result-page {
   flex: 1;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
   overflow-y: auto;
+}
+
+.match-after.match-after--docked {
+  flex: 1 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.match-after--docked > .round-result {
+  flex: 1;
+}
+
+/* The next round's countdown under a game's own result (./SeriesStatus `SeriesCountdown`):
+   the words and Start now in one row, the bar filling from the round's end to the start. */
+.match-countdown {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.match-countdown-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-1);
+}
+
+.match-countdown-words {
+  margin: 0;
+  font-size: var(--font-size-lead);
+  font-weight: var(--font-weight-strong);
+}
+
+.match-countdown-bar {
+  display: block;
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-2);
+}
+
+.match-countdown-bar > span {
+  display: block;
+  height: 100%;
+  background: var(--color-solid);
+  transition: width 1s linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .match-countdown-bar > span {
+    transition: none;
+  }
 }

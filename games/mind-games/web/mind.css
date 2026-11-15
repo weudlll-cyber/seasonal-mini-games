@@ -286,15 +286,36 @@
   color: var(--color-danger);
 }
 
-/* Your pre-picks: one select per round, two columns on a phone. */
-.mg-prefs h3 {
+/* Your pre-picks: the heading with the box beside it, the line, one select per round still to
+   play in rows of up to six (two columns on a phone), the saving note. */
+.mg-prefs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.25rem var(--space-2);
+}
+
+.mg-prefs > * {
+  grid-column: 1 / -1;
   margin: 0;
+}
+
+.mg-prefs > h3 {
+  grid-column: 1;
   font-size: var(--font-size-lead);
+}
+
+.mg-prefs > .mg-hide {
+  grid-row: 1;
+  grid-column: 2;
 }
 
 .mg-prefs-rounds {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(max(8.5rem, calc((100% - 5 * var(--space-1)) / 6)), 1fr)
+  );
   gap: var(--space-1);
 }
 

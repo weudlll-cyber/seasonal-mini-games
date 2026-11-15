@@ -85,22 +85,29 @@ describe('Mind Games result (02e §9)', () => {
   const r = resultView([...moves, ['bo', 'all'], ['cy', 'winter']], { allOption: true });
   const props = { names, colors: {}, viewerKey: 'me' };
 
-  it('shows each option with its count, place and players, the winners with check and points', () => {
+  it('heads the result, then shows each option in one row with its count, players and why', () => {
     render(<ResultPanel {...props} view={r} part="reveal" />);
+    expect(screen.getByTestId('result-title').textContent).toBe('Autumn and All win!');
+    expect(screen.getByTestId('result-line').textContent).toBe(
+      'Least chosen · 2 players win · +1 each, All +2',
+    );
+    // One column per option, so the row never wraps (O97).
+    expect(screen.getByRole('list', { name: 'The options' }).getAttribute('style')).toContain(
+      '--mg-options: 5',
+    );
     const autumn = within(screen.getByText('Autumn').closest('li') as HTMLElement);
     expect(autumn.getByText('✓ wins')).toBeTruthy();
-    expect(autumn.getByText('least chosen')).toBeTruthy();
     expect(autumn.getByText('Anna').textContent).toBe('Anna +1');
     const all = within(screen.getByText('All').closest('li') as HTMLElement);
     expect(all.getByText('Bo').textContent).toBe('Bo +2');
     const winter = within(screen.getByText('Winter').closest('li') as HTMLElement);
-    expect(winter.getByText('2nd least chosen')).toBeTruthy();
+    expect(winter.getByText('not least chosen')).toBeTruthy();
     expect(winter.getByText('You').getAttribute('data-own')).toBe('true');
     expect(winter.queryByText('✓ wins')).toBeNull();
     const spring = within(screen.getByText('Spring').closest('li') as HTMLElement);
     expect(spring.getByText('not chosen')).toBeTruthy();
     expect(mindText.runnerUp(r, names, false)).toBe(
-      'Autumn and All share the least chosen place — 2 players win.',
+      'Autumn and All win! Least chosen · 2 players win · +1 each, All +2',
     );
   });
 

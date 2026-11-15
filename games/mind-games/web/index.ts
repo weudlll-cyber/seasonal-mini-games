@@ -40,6 +40,9 @@ export const mindGamesWeb = {
   Prefs: PrefsPanel,
   // The join time following the total, the rounds and the pause held (02e §3).
   fieldState: mindFieldState,
+  // The result's first part is the game's own: its headline, the cards with every player's
+  // points; the platform adds the standings and the next round beside them (O97, T352).
+  ownResult: true as const,
   // The last round's own settings for the next round's form (T338).
   kept: (view: unknown) => (view as ResultView).settings,
   // The choices are the stage: the split layout hands the input the stage, its phase strip

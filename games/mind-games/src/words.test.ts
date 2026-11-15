@@ -1,7 +1,7 @@
 /**
  * @file   games/mind-games/src/words.test.ts
  * @module games/mind-games
- * @brief  The result's headline and the chat's round line in the words of 02e §9.
+ * @brief  The result's headline, its line, a loser's reason and the chat's round line (02e §9).
  *
  * Responsibility: one winning option, a shared place, the 2nd least chosen, one player, a place
  *                 that does not exist, a round nobody chose in; the chat line's part, none
@@ -15,7 +15,7 @@ import { playAll, roundWith } from './fakes.js';
 import { mindGames } from './module.js';
 import type { MindConfig } from './settings.js';
 import type { ResultView } from './views.js';
-import { headline, placeWords } from './words.js';
+import { placeWords, resultLine, resultTitle, whyNot } from './words.js';
 
 // A round's result with these final choices, one player each.
 function resultOf(choices: readonly string[], cfg: Partial<MindConfig> = {}): ResultView {
@@ -28,32 +28,43 @@ function resultOf(choices: readonly string[], cfg: Partial<MindConfig> = {}): Re
 
 const reveal = (r: ResultView) => mindGames.reveal?.(r, null);
 
-describe('Mind Games result words (02e §9)', () => {
+describe('Mind Games result words (02e §9, O97)', () => {
   it('names one winning option and its players', () => {
     const r = resultOf(['winter', 'winter', 'winter', 'spring', 'spring', 'spring', 'spring']);
-    expect(headline(r)).toBe('Winter was the least chosen — 3 players win.');
+    expect(resultTitle(r)).toBe('Winter wins!');
+    expect(resultLine(r)).toBe('Least chosen · 3 players win · +1 each');
     expect(reveal(r)).toBe('Winter was the least chosen (3 players)');
+    expect(whyNot(r, 'spring')).toBe('not least chosen');
+    expect(whyNot(r, 'summer')).toBe('not chosen');
   });
 
   it('names a shared place', () => {
     const r = resultOf(['spring', 'autumn', 'summer', 'summer']);
-    expect(headline(r)).toBe('Spring and Autumn share the least chosen place — 2 players win.');
+    expect(resultTitle(r)).toBe('Spring and Autumn win!');
+    expect(resultLine(r)).toBe('Least chosen · 2 players win · +1 each');
     expect(reveal(r)).toBe('Spring and Autumn were the least chosen (2 players)');
   });
 
-  it('names another place and a single winner', () => {
+  it('names another place, a single winner and All with its points', () => {
     const r = resultOf(['summer', 'winter', 'winter'], { winnerPlace: 2 });
-    expect(headline(r)).toBe('Winter was the 2nd least chosen — 2 players win.');
-    expect(headline(resultOf(['all', 'spring', 'spring'], { allOption: true }))).toBe(
-      'All was the least chosen — 1 player wins.',
-    );
+    expect(resultTitle(r)).toBe('Winter wins!');
+    expect(resultLine(r)).toBe('2nd least chosen · 2 players win · +1 each');
+    expect(whyNot(r, 'summer')).toBe('not 2nd least chosen');
+    const all = resultOf(['all', 'spring', 'spring'], { allOption: true });
+    expect(resultTitle(all)).toBe('All wins!');
+    expect(resultLine(all)).toBe('Least chosen · 1 player wins · +2');
+    const both = resultOf(['all', 'autumn', 'spring', 'spring'], { allOption: true });
+    expect(resultTitle(both)).toBe('Autumn and All win!');
+    expect(resultLine(both)).toBe('Least chosen · 2 players win · +1 each, All +2');
   });
 
   it('says when nobody wins and when nobody chose', () => {
     const none = resultOf(['spring', 'summer'], { winnerPlace: 4 });
-    expect(headline(none)).toBe('Nobody wins: there is no 4th least chosen option this round.');
+    expect(resultTitle(none)).toBe('Nobody wins this round.');
+    expect(resultLine(none)).toBe('There is no 4th least chosen option this round.');
     expect(reveal(none)).toBeNull();
-    expect(headline(resultOf([]))).toBe('Nobody chose this round.');
+    expect(resultTitle(resultOf([]))).toBe('Nobody chose this round.');
+    expect(resultLine(resultOf([]))).toBeNull();
   });
 
   it('words every place', () => {

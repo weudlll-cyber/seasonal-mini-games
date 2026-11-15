@@ -24,10 +24,9 @@ import { useSavedPrefs } from './useSavedPrefs.js';
 
 const CHOICES: readonly Choice[] = ['spring', 'summer', 'autumn', 'winter', 'all'];
 
-// One round's select; a played round is locked.
+// One round's select.
 function RoundPick(p: {
   readonly round: number;
-  readonly locked: boolean;
   readonly value: string;
   readonly pick: (round: number, value: string) => void;
 }): ReactElement {
@@ -35,16 +34,11 @@ function RoundPick(p: {
   return (
     <label
       className="mg-prefs-round"
-      title={
-        p.locked
-          ? `Round ${n} is played.`
-          : `Your first choice in round ${n} if you have not chosen by its start.`
-      }
+      title={`Your first choice in round ${n} if you have not chosen by its start.`}
     >
       Round {p.round}{' '}
       <select
         value={p.value}
-        disabled={p.locked}
         onChange={(e) => {
           p.pick(p.round, e.target.value);
         }}
@@ -60,9 +54,10 @@ function RoundPick(p: {
   );
 }
 
-export function PrefsPanel(p: PrefsPanelProps): ReactElement {
+export function PrefsPanel(p: PrefsPanelProps): ReactElement | null {
   const { draft, note, change } = useSavedPrefs(p.prefs, p.save);
-  const rounds = p.rounds ?? DEFAULT_CONFIG.rounds;
+  // Only the rounds still to play (O97): one select each.
+  const left = (p.rounds ?? DEFAULT_CONFIG.rounds) - p.played;
   const pick = (round: number, value: string): void => {
     // Every other round's pick, and this one's unless it is now none.
     const picks = Object.fromEntries([
@@ -71,6 +66,7 @@ export function PrefsPanel(p: PrefsPanelProps): ReactElement {
     ]);
     change({ ...draft, picks });
   };
+  if (left <= 0) return null;
   return (
     <section className="mg-prefs" aria-labelledby="mg-prefs-title">
       <h3 id="mg-prefs-title">Your pre-picks</h3>
@@ -78,11 +74,10 @@ export function PrefsPanel(p: PrefsPanelProps): ReactElement {
         Pre-picks play for you when you are away. If you are here, you can still switch.
       </p>
       <div className="mg-prefs-rounds">
-        {Array.from({ length: rounds }, (_, i) => i + 1).map((round) => (
+        {Array.from({ length: left }, (_, i) => p.played + i + 1).map((round) => (
           <RoundPick
             key={round}
             round={round}
-            locked={round <= p.played}
             value={draft.picks[String(round)] ?? ''}
             pick={pick}
           />

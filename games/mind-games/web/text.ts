@@ -10,7 +10,8 @@
  *                 "chose Summer", "switched Summer → Winter" (02e §6.1); the feed's head ("30
  *                 seconds ago · 23 players") and the empty feed's sentence; times after the
  *                 opening as "1:30"; the intro's rule and timing (02e §2); the result's headline
- *                 where the platform puts the line about the best of the rest (O22). Room events
+ *                 and its line where the platform asks for the line about the best of the rest
+ *                 (O22). Room events
  *                 make no row of their own: the lines come from the view, so a reload shows the
  *                 same list.
  * Depends on:     @smg-game/mind-games (views, words), @smg/game-sdk (GameText, GuessRow)
@@ -19,7 +20,8 @@
  */
 import {
   CHOICE_NAMES,
-  headline,
+  resultLine,
+  resultTitle,
   placeWords,
   type FeedLineView,
   type ResultView,
@@ -91,6 +93,9 @@ export const mindText: GameText = {
   code: (code) => CODES[code] ?? null,
   event: () => null,
   guesses,
-  runnerUp: (result) => headline(result as ResultView),
+  // The result's headline and its line in one, where the platform asks (the result itself
+  // draws them, `ownResult`, T352).
+  runnerUp: (result) =>
+    [resultTitle(result as ResultView), resultLine(result as ResultView)].filter(Boolean).join(' '),
   intro,
 };

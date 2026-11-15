@@ -69,6 +69,11 @@ export interface GameWeb {
   // player their tag and marker (`marksOf`), the game gets them as `marks`, and a row and the
   // game's board highlight the same player (O62).
   readonly playerTags?: true;
+  // True: the game's reveal is the result's whole first part, its headline and every player's
+  // result included; the platform adds no headline, margin, placings or team line, and shows
+  // the match standings with this round's points beside the page's next-round box (Seasonal
+  // Mind Games, owner decision O97, T352).
+  readonly ownResult?: true;
   // A phased game's panel in the waiting area for the viewer's own value (its pre-picks, 04
   // §4.8 rule 8); the platform shows it to the match's players and saves what it hands back.
   readonly Prefs?: ComponentType<PrefsPanelProps>;

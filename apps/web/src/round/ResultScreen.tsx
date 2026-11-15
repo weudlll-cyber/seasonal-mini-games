@@ -19,23 +19,29 @@
  *                 round's verification page (02 §9, §10; 03 §5).
  * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber),
  *                 @smg-game/registry/web (types), ../season/*, ../shell/router,
- *                 ./MatchStandings, ./ResultParts, ./RoundSide, ./roundText, ./result.css,
- *                 ./resultBoard.css
+ *                 ./MatchStandings, ./ResultParts, ./RoundSide, ./RoundStandings, ./roundText,
+ *                 ./result.css, ./resultBoard.css, ./resultOwn.css
+ *                 A game that draws its own first part (`ownResult`, O97, T352) gets only its
+ *                 reveal with every line behind a disclosure at its top right, then the match
+ *                 standings with this round's points (./RoundStandings) beside the page's
+ *                 next-round box (`next`).
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §10; docs/spec/03-seasonal-specials.md §5
  */
 import type { GameWeb } from '@smg-game/registry/web';
 import type { MatchStandingView, RoundStateView } from '@smg/contracts';
-import type { ReactElement } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 
 import { hrefOf } from '../shell/router.js';
 import { MatchStandings } from './MatchStandings.js';
 import { roundMarks } from './playerMarks.js';
 import { Placings, TeamLine, Teams } from './ResultParts.js';
 import { colorsOf } from './RoundSide.js';
+import { RoundStandings } from './RoundStandings.js';
 import { endHeadline, marginText } from './roundText.js';
 import './result.css';
 import './resultBoard.css';
+import './resultOwn.css';
 
 function Proof({ state }: { readonly state: RoundStateView }): ReactElement | null {
   if (state.commitment === null) return null;
@@ -79,17 +85,52 @@ function GamePart(p: {
   );
 }
 
-export function ResultScreen({
-  state,
-  game,
-  viewerKey,
-  standings,
-}: {
+interface ResultProps {
   readonly state: RoundStateView;
   readonly game: GameWeb | null;
   readonly viewerKey: string | null;
   readonly standings: readonly MatchStandingView[];
-}): ReactElement {
+  // The page's box for the next round, beside the standings (the docked page, O97), if any.
+  readonly next?: ReactNode;
+}
+
+// A game that draws its whole first part (`ownResult`, T352): its reveal with its own
+// headline and, at its top right, every line of the round behind a disclosure that opens over
+// the part; then the standings with this round's points beside the next round's box, so the
+// page stays one screen.
+function OwnResult(p: ResultProps & { readonly game: GameWeb }): ReactElement {
+  const { state } = p;
+  const part = (which: 'reveal' | 'history') => (
+    <GamePart state={state} game={p.game} viewerKey={p.viewerKey} part={which} />
+  );
+  return (
+    <section
+      className="round-result round-result--own"
+      data-testid="result"
+      data-layout={p.game.layout ?? 'list'}
+    >
+      <div className="smg-panel round-result-first" data-testid="result-first">
+        {part('reveal')}
+        <details className="round-result-lines" data-testid="result-history">
+          <summary className="smg-btn">Every line</summary>
+          <div className="round-result-lines-body">{part('history')}</div>
+        </details>
+      </div>
+      <div className="round-result-panels">
+        <RoundStandings
+          standings={p.standings}
+          results={state.results ?? []}
+          viewerKey={p.viewerKey}
+        />
+        {p.next}
+      </div>
+    </section>
+  );
+}
+
+export function ResultScreen(props: ResultProps): ReactElement {
+  const { state, game, viewerKey, standings } = props;
+  if (game?.ownResult === true) return <OwnResult {...props} game={game} />;
   const margin = marginText(state);
   // Without a margin, the game's line about the closest miss or guess stands in its place (O22).
   const miss =
@@ -132,6 +173,7 @@ export function ResultScreen({
         {part('history')}
       </section>
       <div className="smg-panel round-result-more">
+        {props.next}
         <Teams state={state} />
         <MatchStandings standings={standings} viewerKey={viewerKey} />
       </div>

@@ -1,81 +1,242 @@
 /*
  * @file   games/mind-games/web/result.css
  * @module games/mind-games/web
- * @brief  Styles of the Seasonal Mind Games result: the options in a row with their players.
+ * @brief  Styles of the Seasonal Mind Games result: the headline and the option cards in one row.
  *
  * Responsibility: colours only from the design tokens (light and dark) and the seasons' own;
- *                 each option a card in its season's colour, a winner's by its check and words
- *                 and an inner line in the success colour, never by colour alone; the viewer's
- *                 own line on the own tint; each option's players in a short scrolling list, so
- *                 the result's first part stays one screen (02e §9, §11).
+ *                 the headline in large type with its line under it; the options in one row at
+ *                 every width, never wrapping (as many equal columns as options); a winning
+ *                 card glowing in its season's colour (All's in the text colour) with the "✓
+ *                 wins" pill, never by colour alone; the others dimmed: the second surface, the
+ *                 muted text colour (over 4.5:1 on it in both themes) and a faded icon, with
+ *                 their reason; the viewer's own line on the own tint; each card's players in a
+ *                 short list that scrolls inside the card, so the result stays one screen with
+ *                 the chat docked under it (02e §9, §11, O97).
  * Spec:           docs/spec/02e-game-mind-games.md §9, §11
  */
-/* The result: the options in a row, each with its players. */
+.mg-result {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* The headline, and its line beside it where the width allows. */
+.mg-result-head {
+  /* Room at the right for the platform's "Every line" button. */
+  padding-right: 8rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem var(--space-3);
+}
+
+.mg-result-head h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 1.1rem + 1.2vw, 2.4rem);
+  line-height: 1.15;
+}
+
+.mg-result-head p {
+  margin: 0;
+  font-weight: var(--font-weight-strong);
+}
+
+/* One row, always: one equal column per option. */
 .mg-options {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: var(--space-1);
+  grid-template-columns: repeat(var(--mg-options), minmax(0, 1fr));
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
+/* A card in two columns: the icon beside the name, the count beside its pill or reason, the
+   players under both. */
 .mg-option {
   min-width: 0;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: center;
+  align-content: start;
   align-items: center;
-  gap: 2px;
+  gap: 2px 0.5rem;
   padding: var(--space-1);
   background: var(--color-surface);
-  border: 3px solid var(--mg-color);
+  border: 2px solid var(--mg-color);
   border-radius: var(--radius-card);
+}
+
+/* A winner glows in its colour; All, without a season colour, in the text colour. */
+.mg-option[data-wins='true'] {
+  --mg-glow: var(--mg-color);
+  background: color-mix(in srgb, var(--mg-glow) 16%, var(--color-surface));
+  border-width: 4px;
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--mg-glow) 40%, transparent),
+    0 0 20px color-mix(in srgb, var(--mg-glow) 55%, transparent);
 }
 
 .mg-option[data-choice='all'] {
   border-color: var(--color-border-strong);
 }
 
-.mg-option[data-wins='true'] {
-  box-shadow: inset 0 0 0 2px var(--color-success);
+.mg-option[data-choice='all'][data-wins='true'] {
+  --mg-glow: var(--color-text);
+  border-color: var(--color-text);
 }
 
-.mg-option-count {
-  font-size: var(--font-size-title);
-  font-weight: var(--font-weight-heading);
+/* Not a winner: dimmed, its words still at full contrast on the second surface. */
+.mg-option[data-wins='false'] {
+  background: var(--color-surface-2);
+  border-color: var(--color-border);
 }
 
-.mg-option-place,
-.mg-option-players {
-  font-size: var(--font-size-small);
+.mg-option[data-wins='false'] .mg-icons {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+}
+
+.mg-option[data-wins='false'] .mg-name,
+.mg-option[data-wins='false'] .mg-option-count {
   color: var(--color-text-muted);
 }
 
+.mg-option .mg-icons img {
+  width: 34px;
+  height: 34px;
+}
+
+.mg-option[data-choice='all'] .mg-icons {
+  width: 34px;
+}
+
+.mg-option[data-choice='all'] .mg-icons img {
+  width: 16px;
+  height: 16px;
+}
+
+.mg-option .mg-wins,
+.mg-option-why {
+  justify-self: start;
+}
+
+.mg-option-count {
+  font-size: 1.75rem;
+  font-weight: var(--font-weight-heading);
+  line-height: 1.1;
+}
+
 .mg-wins {
-  color: var(--color-success-text);
+  padding: 0.05rem 0.55rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-success-text);
+  color: var(--color-surface);
+  font-size: var(--font-size-small);
   font-weight: var(--font-weight-strong);
+  white-space: nowrap;
+}
+
+.mg-option-why,
+.mg-option-players {
+  font-size: var(--font-size-small);
+  color: var(--color-text-muted);
+  text-align: center;
 }
 
 .mg-option-players {
-  max-height: 7.5em;
+  grid-column: 1 / -1;
+  width: 100%;
+  max-height: 3.7em;
   margin: 0;
   padding: 0;
   overflow-y: auto;
   list-style: none;
-  text-align: center;
+}
+
+.mg-option-players li {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .mg-option-players li[data-own='true'] {
   color: var(--color-text);
   font-weight: var(--font-weight-strong);
-  background: var(--own-tint);
+  background: color-mix(
+    in srgb,
+    var(--own, var(--color-accent)) var(--own-tint),
+    var(--color-own-base)
+  );
+  border-radius: var(--radius);
 }
 
 .mg-points {
   color: var(--color-success-text);
+  font-weight: var(--font-weight-strong);
 }
 
 .mg-history {
   margin: 0;
   padding-left: 1.5em;
+}
+
+/* The phone (the platform's layout): smaller icons and counts, the row still one. */
+@media (max-width: 899px), (orientation: portrait) {
+  .mg-options {
+    gap: 0.25rem;
+  }
+
+  /* One column: the phone's card is too narrow for two. */
+  .mg-option {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    padding: 0.25rem 0.15rem;
+  }
+
+  .mg-option .mg-wins,
+  .mg-option-why {
+    justify-self: center;
+  }
+
+  /* A season's name stays whole (the result's text may otherwise break anywhere). */
+  .mg-option .mg-name {
+    overflow-wrap: normal;
+    font-size: 0.8rem;
+  }
+
+  .mg-option[data-wins='true'] {
+    border-width: 3px;
+  }
+
+  /* A player's line wraps rather than cutting its "+1". */
+  .mg-option-players li {
+    white-space: normal;
+  }
+
+  .mg-option-players {
+    max-height: 5.2em;
+  }
+
+  .mg-option .mg-icons img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .mg-option[data-choice='all'] .mg-icons {
+    width: 28px;
+  }
+
+  .mg-option[data-choice='all'] .mg-icons img {
+    width: 13px;
+    height: 13px;
+  }
+
+  .mg-option-count {
+    font-size: 1.35rem;
+  }
+
+  .mg-wins {
+    padding-inline: 0.3rem;
+  }
 }

@@ -1,0 +1,120 @@
+/*
+ * @file   apps/web/src/round/resultOwn.css
+ * @module web/round
+ * @brief  The result of a game that draws its own first part (`ownResult`, O97, T352).
+ *
+ * Responsibility: the game's reveal at its own height (its headline and cards) with "Every
+ *                 line" at its top right, a disclosure whose list opens over the part as a
+ *                 menu does (opaque, scrolling inside itself); under it the standings and the
+ *                 page's next-round box side by side, stacked on a phone; compact, so the result stays
+ *                 one screen at 1280 × 720 with the chat docked under it (../match/docked.css
+ *                 lets a taller one scroll inside its part). Colours only from @smg/ui tokens.
+ * Spec:           docs/spec/02e-game-mind-games.md §9, §11
+ */
+.round-result--own {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.round-result--own .round-result-first {
+  position: relative;
+  flex: none;
+  display: block;
+  height: auto;
+  min-height: 0;
+  padding: var(--space-2) var(--space-3);
+}
+
+/* The two panels share the height the reveal leaves; each scrolls inside itself. */
+.round-result-panels {
+  flex: 1 1 0;
+  min-height: 9rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+.round-standings,
+.next-round {
+  min-height: 0;
+  display: grid;
+  gap: var(--space-1);
+  align-content: start;
+  padding: var(--space-1) var(--space-3);
+  overflow-y: auto;
+}
+
+.round-standings th {
+  white-space: nowrap;
+}
+
+.round-standings h2,
+.next-round h2 {
+  margin: 0;
+  font-size: var(--font-size-lead);
+}
+
+.round-standings .round-table th,
+.round-standings .round-table td {
+  padding-block: 0.05rem;
+}
+
+/* Every player: the list scrolls inside the panel. */
+.round-standings-rows[data-all='true'] {
+  max-height: 12rem;
+  overflow-y: auto;
+}
+
+.round-standings-more {
+  justify-self: start;
+}
+
+/* "Every line": a button at the part's top right; open, the list lies over the part. */
+.round-result-lines {
+  position: absolute;
+  top: var(--space-2);
+  right: var(--space-3);
+}
+
+.round-result-lines > summary {
+  list-style: none;
+}
+
+.round-result-lines > summary::-webkit-details-marker {
+  display: none;
+}
+
+.round-result-lines-body {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  width: min(24rem, 80vw);
+  max-height: 16rem;
+  overflow-y: auto;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-raised);
+}
+
+/* A phone: the panels stacked at their own heights; the result scrolls inside its part. */
+@media (max-width: 899px), (orientation: portrait) {
+  .round-result-panels {
+    flex: none;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .round-standings,
+  .next-round {
+    overflow-y: visible;
+  }
+
+  .round-result--own .round-result-first,
+  .round-standings,
+  .next-round {
+    padding: var(--space-1) var(--space-2);
+  }
+}

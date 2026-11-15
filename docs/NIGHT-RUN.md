@@ -10,7 +10,7 @@ Status, updated after every piece. `feat/mind-games` is not merged.
 | ----------------------------------------------------------------------- | ----------------------- |
 | 1 — the chat docked below (`meta.chatDock`)                             | done                    |
 | 2 — the round view                                                      | done                    |
-| 3 — the result and pause view                                           | open                    |
+| 3 — the result and pause view                                           | done                    |
 | 4 — small fixes (locked fields, the live list's Mode, 02c §9's heading) | open                    |
 | Play-through and handover                                               | open                    |
 | Needs the owner's word                                                  | the proposals from T350 |
@@ -26,6 +26,13 @@ Status, updated after every piece. `feat/mind-games` is not merged.
 - **Platform:** a game layout `split` (`games/registry/web` `GameWeb.layout`, T351): `RoundBody` treats it like `board` (the input draws into the stage); `round.css` makes the stage a subgrid across both columns, the strip on top, the cards on the left 3/5, the info column on the right 2/5; on a phone the stage, the info line, the list, the dock. The four other games keep `board` or the list layout.
 - **Mind Games:** `PhaseStrip.tsx` (Join, Play, Reveal; "· now", a fill, one line under the strip), `ChoiceButtons.tsx` (cards with frames behind the buttons, the band and the counts; "✓ Your choice"), `MindInput.tsx` ("Your choice: Autumn" on a phone), `FeedPanels.tsx` (the spectator's main part), `phases.ts` (Reveal), `text.ts` ("10 seconds ago · 4 players"), `mind.css` rewritten for the cards and the strip.
 - **Checks:** the game's web tests 34/34 and the round's 101/101 with the new words; the author's look at 1280 × 720, 1920 × 1080 and 390 × 844, light and dark: one screen each, no overlap of the chat or the band, the five cards in one row with All on.
+
+### Piece 3 — the result and pause view
+
+- **Platform:** a game flag `ownResult` (T352): `ResultScreen` gives such a game's reveal the whole first part with "Every line" at its top right, then `RoundStandings` (new) beside the page's `next` box; `RoundScreen` passes `next` through. The docked page builds `NextRound` (new: Join/Leave, the countdown `SeriesCountdown` with its bar and Start now, the waiting area's line outside a pause, the pre-picks) and drops the side column (`AfterView`). `SeriesStatus.tsx` shares `useSeriesPause` between the waiting area's line and the countdown; `FocusBar`'s `clockText` is reused for "0:11"; `WaitingArea`'s `stateText` is exported for the box. New `resultOwn.css`.
+- **Mind Games:** `words.ts` `resultTitle`, `resultLine`, `whyNot` replace `headline`; `ResultPanel.tsx` heads the result and draws the cards in one row; `result.css` rewritten (the auto-fit grid is gone); `PrefsPanel.tsx` only the rounds still to play, none after the last.
+- **Removed:** the result's placings table and team line for a game with `ownResult` (the four other games keep theirs), Mind Games' `headline`, the pre-pick panel's locked rounds, the auto-fit grid.
+- **Checks:** the game's tests 81/81, the web's match and round tests 142/142; the author's look at the three sizes in light and dark: no page scrollbar, nothing over the chat; the typed chat text kept from the round to the result.
 
 ## Task MG-N5 (2026-11-14): test isolation and a build badge, then small Mind Games fixes
 

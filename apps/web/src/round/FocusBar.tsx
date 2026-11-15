@@ -25,12 +25,16 @@ import { SeasonPill } from './SeasonPill.js';
 import type { Fullscreen } from './useFullscreen.js';
 import type { PanelId, Panels } from './usePanels.js';
 
+// Milliseconds as "9:30", whole seconds down.
+export function clockText(ms: number): string {
+  const secs = Math.floor((ms % 60_000) / 1_000);
+  return `${String(Math.floor(ms / 60_000))}:${String(secs).padStart(2, '0')}`;
+}
+
 // The time left of an open round, "9:30"; null before it opens.
 export function timeText(state: RoundStateView, now: number): string | null {
   if (state.status !== 'open' || state.endsAt === null) return null;
-  const left = Math.max(0, state.endsAt - now);
-  const secs = Math.floor((left % 60_000) / 1_000);
-  return `${String(Math.floor(left / 60_000))}:${String(secs).padStart(2, '0')}`;
+  return clockText(Math.max(0, state.endsAt - now));
 }
 
 function PanelButton(p: {

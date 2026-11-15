@@ -2,11 +2,11 @@
 /**
  * @file   games/mind-games/web/prefs.test.tsx
  * @module games/mind-games/web
- * @brief  Your pre-picks: one select per round, played rounds locked, the box, the saving.
+ * @brief  Your pre-picks: one select per round still to play, the box, the saving.
  *
  * Responsibility: the panel's part of MG6 (09 §3): a select per round of the series (the
- *                 setting's default before its first round), each with its tooltip, played
- *                 rounds locked; a change saved once, 2.1 s after the last one, as a value the
+ *                 setting's default before its first round), each with its tooltip, only the
+ *                 rounds still to play (O97), none after the last; a change saved once, 2.1 s after the last one, as a value the
  *                 game's own prefs schema takes (none removes a round's pick; the box rides
  *                 along); a refusal in words; the saved value shown again from `prefs`.
  * Depends on:     vitest, @testing-library/react, @smg-game/mind-games (module), ./PrefsPanel
@@ -31,20 +31,23 @@ afterEach(() => {
 });
 
 describe('Mind Games pre-picks panel (02e §7)', () => {
-  it('has a select per round, the default number before the first round, played ones locked', () => {
+  it('has a select per round still to play, the default number before the first round', () => {
     render(<PrefsPanel prefs={null} rounds={null} played={0} save={ok()} />);
     expect(selects()).toHaveLength(6);
     cleanup();
     render(<PrefsPanel prefs={{ picks: { '1': 'winter' } }} rounds={3} played={1} save={ok()} />);
     expect(selects().map((s) => [s.value, s.disabled])).toEqual([
-      ['winter', true],
       ['', false],
       ['', false],
     ]);
+    expect(screen.queryByText(/Round 1/)).toBeNull();
     expect(screen.getByText(/Round 2/).closest('label')?.title).toBe(
       'Your first choice in round 2 if you have not chosen by its start.',
     );
     expect(screen.getByText(/Pre-picks play for you when you are away/)).toBeTruthy();
+    cleanup();
+    render(<PrefsPanel prefs={null} rounds={3} played={3} save={ok()} />);
+    expect(screen.queryByText('Your pre-picks')).toBeNull();
   });
 
   it('saves once, 2.1 s after the last change, a value the game takes', async () => {

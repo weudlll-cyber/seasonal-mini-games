@@ -43,6 +43,7 @@ import { HostConsole, HostMenu, hosts, type Values } from './HostMenu.js';
 import { JoinLeave } from './JoinLeave.js';
 import { useOwnPart } from './GamePrefs.js';
 import { MatchSummary } from './MatchSummary.js';
+import { NextRound } from './NextRound.js';
 import { ResultBar } from './ResultBar.js';
 import { WaitingArea } from './WaitingArea.js';
 import { keptOf } from './roundFields.js';
@@ -87,6 +88,16 @@ function useMatchChat(code: string): ReactElement | null {
   return <ChatPanel target={{ kind: 'match', code }} config={config} bare />;
 }
 
+// The next round's form values: the host's last ones; before the host's form made a round here
+// (a Quick Test's first round), the last round's (T209, O75).
+const keptValues = (last: Values | null, live: RoundLive, gameId: string): Values | null =>
+  last ?? (live.state === null ? null : keptOf(live.state, GAME_SCREENS[gameId]));
+
+// The docked page's next-round box under the result; its bar starts at the round's end.
+const nextBox = (match: MatchDetailsView, live: RoundLive, reload: () => void) => (
+  <NextRound match={match} since={live.state?.endedAt ?? null} reload={reload} />
+);
+
 // The round view alone while a round runs, else the lobby with the last result and the
 // waiting area.
 function MatchView(p: {
@@ -105,10 +116,7 @@ function MatchView(p: {
   const status = live.state?.status ?? null;
   const chat = useMatchChat(match.code);
   const own = useOwnPart(match, p.reload);
-  // Before the host's form made a round here (a Quick Test's first round), the next round
-  // still starts from the last round's values (T209, O75).
-  const kept =
-    last ?? (live.state === null ? null : keptOf(live.state, GAME_SCREENS[match.gameId]));
+  const kept = keptValues(last, live, match.gameId);
   const menu = { match, roundStatus: status, reload: refresh, last: kept, setLast };
   const hostMenu = <HostMenu {...menu} />;
   const phase = phaseOf(match, status);
@@ -128,6 +136,8 @@ function MatchView(p: {
       // neither: ./DockedMatch holds it under both.
       chat={phase === 'live' && !docked ? chat : null}
       own={own}
+      // Docked, the next round's box goes beside the standings under the result (O97).
+      next={docked ? nextBox(match, live, refresh) : undefined}
     />
   );
   const lobby = { match, viewerKey: viewer, refresh, hostMenu, chat: docked ? null : chat };
@@ -192,6 +202,8 @@ function AfterView(
     readonly round: ReactElement | null;
     // The box's class and, outside the docked page, the page's test id.
     readonly outer: { readonly className: string };
+    // Docked (O97): no column beside the result; its next-round box is in the result.
+    readonly docked: boolean;
   },
 ): ReactElement {
   const games = useGames();
@@ -203,9 +215,9 @@ function AfterView(
         code={p.match.code}
         host={p.hostMenu}
       />
-      <div className="match-after">
+      <div className={p.docked ? 'match-after match-after--docked' : 'match-after'}>
         {p.round}
-        <Side {...p} after />
+        {p.docked ? null : <Side {...p} after />}
       </div>
     </div>
   );
