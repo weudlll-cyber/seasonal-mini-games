@@ -187,7 +187,7 @@ async function result(p: Person): Promise<void> {
   await fitsScreen(p.page);
   await expect(p.page.getByTestId('result-title')).toHaveText(/ wins?!$/);
   await expect(p.page.getByTestId('result-line')).toHaveText(
-    /^Least chosen · \d+ players? wins? · \+[12]/,
+    /^Least chosen season · \d+ players? wins?( 1 point)?( · \+2 for All)?$/,
   );
   // The cards and the standings, no placings table beside them (O97).
   await expect(p.page.getByTestId('placings')).toHaveCount(0);
