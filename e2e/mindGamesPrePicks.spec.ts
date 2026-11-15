@@ -68,7 +68,8 @@ test('journey 40: pre-picks play for an away player, seen by nobody else', async
     await expect(list).toContainText(/dev-player-2\s*chose Summer/, { timeout: 15_000 });
     expect(Date.now() - opened).toBeGreaterThan(DELAY_MS - 1_000);
     // Round 2: All is off, so the away player has no choice in it.
-    await expect(host.page.getByText(/Round 1 of 3/)).toBeVisible({ timeout: 40_000 });
+    // Round 1's result with the pause's countdown (O97).
+    await expect(host.page.getByText(/Round 2 starts in \d:\d\d/)).toBeVisible({ timeout: 40_000 });
     await expect(list).toContainText(/dev-player-1\s*chose Winter/, { timeout: 30_000 });
     await expect(list).not.toContainText('dev-player-2');
     // Back in round 2, the away player reads why they have no choice in it (02e §7).
