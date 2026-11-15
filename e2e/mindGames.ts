@@ -80,30 +80,24 @@ export async function roundIdOf(p: Person, code: string): Promise<string> {
 const who = (text: string) =>
   /\(you\)|^You\b/.test(text) ? 'you' : text.replace(/\s*\+\d+$/, '').trim();
 
-// The points by player of the result's option cards (no "+N" is 0), of the standings' "This
-// round" (their second cell) and of the match total (their third cell) (T340, O97).
+// The points by player of the result's option cards (each card's whole list of players, which
+// "+N more" opens; no "+N" is 0), of the standings' "This round" (their second cell) and of the
+// match total (their third cell), from the whole standings the sheet holds (T340, O97, MG-N7).
+// Both lists are in the page while closed: read by their text, not their rendering.
 export async function resultPoints(page: Page) {
   const cards: Record<string, number> = {};
-  for (const li of await page.locator('[data-testid="mind-result"] .mg-option-players li').all()) {
-    const text = (await li.innerText()).trim();
-    cards[who(text)] = Number(/\+(\d+)$/.exec(text)?.[1] ?? 0);
-  }
-  const more = page.getByTestId('all-standings');
-  if ((await more.count()) > 0 && (await more.getAttribute('aria-expanded')) === 'false')
-    await more.click();
-  const rows = async (table: string, cell: string) => {
-    const out: Record<string, number> = {};
-    for (const tr of await page.locator(`[data-testid="${table}"] tbody tr`).all()) {
-      const name = await tr.locator('.round-player').innerText();
-      out[who(name)] = Number(await tr.locator(cell).innerText());
-    }
-    return out;
-  };
-  return {
-    cards,
-    table: await rows('match-standings', 'td:nth-child(2)'),
-    standings: await rows('match-standings', 'td:nth-child(3)'),
-  };
+  const lines = await page
+    .locator('[data-testid="mind-result"] .mg-option-players li')
+    .evaluateAll((els) => els.map((e) => e.textContent.trim()));
+  for (const text of lines) cards[who(text)] = Number(/\+(\d+)$/.exec(text)?.[1] ?? 0);
+  const rows = await page
+    .locator('[data-testid="match-standings-all"] tbody tr')
+    .evaluateAll((trs) =>
+      trs.map((tr) => [...tr.querySelectorAll('td')].map((td) => td.textContent.trim())),
+    );
+  const column = (i: number) =>
+    Object.fromEntries(rows.map((r) => [who(r[0] ?? ''), Number(r[i])]));
+  return { cards, table: column(1), standings: column(2) };
 }
 
 // A choice sent through the HTTP fallback, whatever its answer.

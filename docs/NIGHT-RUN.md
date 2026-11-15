@@ -2,6 +2,24 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Task MG-N7 (2026-11-15): the result and pause view rebuilt to the owner's measured design (O98)
+
+Status. `feat/mind-games` is not merged.
+
+| Part                                                                     | State                   |
+| ------------------------------------------------------------------------ | ----------------------- |
+| The rebuild (headline, cards, standings, next round, pre-picks, fitting) | done                    |
+| "replay" in the total's help                                             | done                    |
+| Tests, play-through, handover                                            | open                    |
+| Needs the owner's word                                                   | the proposals T355–T358 |
+
+### The rebuild
+
+- **Mind Games:** `words.ts` the design's line (T355); `ResultPanel.tsx` the card stack; new `CardPlayers.tsx` (three names, "You" first, "+N more" opening every player, T356); `result.css` rewritten to the design's measures with the short-window steps (T357); `PrefsPanel.tsx` and `prefs.css` the title's line with the info icon and the box, the selects in one row of up to six under their labels; `settings.ts` "the reveal of its last part".
+- **Platform:** `RoundStandings.tsx` "Standings after round N", the rows that fit (new `useRowsFit.ts`), "All N players…" as a sheet (T358); `ResultScreen.tsx` no panel around the game's part, the round's number passed through `RoundScreen` from `MatchPage`; `NextRound.tsx` no heading; `SeriesStatus.tsx` the countdown as the box's first row with a blue Start now and the bar; `resultOwn.css` the panels; `docked.css` the row, button and bar in place of the old countdown block; `chatDock.css` 150 px under 760 px.
+- **Removed:** the panels' inner scrolling and the standings' "Top 5" toggle, the old countdown block and its `match-countdown` styles, the cards' scrolling players' list and their grid layout, the pre-picks' sentence line (now the icon's tooltip).
+- **Found on the way:** the new players' button first reused the class `mg-more`, which the flight band's "+8" tag already has (absolutely placed); renamed `mg-names-more`. The docked result had kept `match.css`'s `align-items: start`, which shrank it to its content's width.
+
 ## Task MG-N6 (2026-11-15): the new Mind Games layout (owner-approved design, O97) and small fixes
 
 Status, updated after every piece. `feat/mind-games` is not merged.

@@ -4,9 +4,10 @@
  * @brief  The next round's box under a game's own result on the docked page (owner decision O97).
  *
  * Responsibility: beside the standings (../round/RoundStandings) in place of the waiting area's
- *                 column, which the docked page has no room for (./DockedMatch): joining or
- *                 leaving (./JoinLeave); in a series' pause the countdown "Round 3 starts in
- *                 0:11" with its progress bar and, for the host, Start now (./SeriesStatus);
+ *                 column, which the docked page has no room for (./DockedMatch), without a
+ *                 heading of its own (the design of MG-N7): joining or leaving (./JoinLeave);
+ *                 in a series' pause one row "Round 3 starts in 0:11" with, for the host,
+ *                 Start now, and the progress bar under it (./SeriesStatus);
  *                 outside a pause the waiting area's line on who starts the next round
  *                 (./WaitingArea); and the viewer's own panel of a phased game, its pre-picks
  *                 (./GamePrefs). The players' list and the team picker stay in the waiting
@@ -32,12 +33,8 @@ export function NextRound(p: {
   const { match } = p;
   const pausing = match.series?.nextAt != null;
   return (
-    <section
-      className="smg-panel next-round"
-      aria-labelledby="next-round-title"
-      data-testid="next-round"
-    >
-      <h2 id="next-round-title">Next round</h2>
+    // No heading of its own (the design of MG-N7): the countdown's row heads the box.
+    <section className="next-round" aria-label="Next round" data-testid="next-round">
       <JoinLeave match={match} reload={p.reload} />
       {pausing ? (
         <SeriesCountdown match={match} since={p.since} />

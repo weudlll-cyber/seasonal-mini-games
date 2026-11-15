@@ -92,6 +92,8 @@ interface ResultProps {
   readonly standings: readonly MatchStandingView[];
   // The page's box for the next round, beside the standings (the docked page, O97), if any.
   readonly next?: ReactNode;
+  // The round just ended, by its number in the match (a series'), for the standings' title.
+  readonly roundNo?: number | null;
 }
 
 // A game that draws its whole first part (`ownResult`, T352): its reveal with its own
@@ -109,7 +111,8 @@ function OwnResult(p: ResultProps & { readonly game: GameWeb }): ReactElement {
       data-testid="result"
       data-layout={p.game.layout ?? 'list'}
     >
-      <div className="smg-panel round-result-first" data-testid="result-first">
+      {/* No panel around the game's part: its cards are the surfaces (the design of MG-N7). */}
+      <div className="round-result-first" data-testid="result-first">
         {part('reveal')}
         <details className="round-result-lines" data-testid="result-history">
           <summary className="smg-btn">Every line</summary>
@@ -121,6 +124,7 @@ function OwnResult(p: ResultProps & { readonly game: GameWeb }): ReactElement {
           standings={p.standings}
           results={state.results ?? []}
           viewerKey={p.viewerKey}
+          round={p.roundNo ?? null}
         />
         {p.next}
       </div>

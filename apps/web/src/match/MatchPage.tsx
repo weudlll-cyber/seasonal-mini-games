@@ -93,6 +93,9 @@ function useMatchChat(code: string): ReactElement | null {
 const keptValues = (last: Values | null, live: RoundLive, gameId: string): Values | null =>
   last ?? (live.state === null ? null : keptOf(live.state, GAME_SCREENS[gameId]));
 
+// The rounds a series has played (the one just ended, for the standings' title); null outside one.
+const playedOf = (match: MatchDetailsView): number | null => match.series?.played ?? null;
+
 // The docked page's next-round box under the result; its bar starts at the round's end.
 const nextBox = (match: MatchDetailsView, live: RoundLive, reload: () => void) => (
   <NextRound match={match} since={live.state?.endedAt ?? null} reload={reload} />
@@ -138,6 +141,7 @@ function MatchView(p: {
       own={own}
       // Docked, the next round's box goes beside the standings under the result (O97).
       next={docked ? nextBox(match, live, refresh) : undefined}
+      roundNo={playedOf(match)}
     />
   );
   const lobby = { match, viewerKey: viewer, refresh, hostMenu, chat: docked ? null : chat };

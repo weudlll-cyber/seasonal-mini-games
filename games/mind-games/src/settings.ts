@@ -40,7 +40,7 @@ const lengths: readonly SettingDef[] = [
     key: 'mind.totalS',
     kind: 'int',
     label: 'Total length',
-    help: 'The whole round, from its opening to the result: joining, play and the replay of its last part.',
+    help: 'The whole round, from its opening to the result: joining, play and the reveal of its last part.',
     default: 120,
     min: 30,
     max: 600,

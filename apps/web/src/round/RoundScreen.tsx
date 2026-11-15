@@ -54,6 +54,8 @@ interface RoundScreenProps {
   readonly own?: OwnMatchPart | undefined;
   // The docked page's next-round box, beside the standings under the result (O97).
   readonly next?: ReactNode;
+  // The round just ended, by its number in the match, for the standings' title.
+  readonly roundNo?: number | null;
 }
 
 // The season's colour (a neutral one in a game that shows no season, O93), and the viewer's

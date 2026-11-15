@@ -6,7 +6,7 @@
  * Responsibility: one screen without a page scrollbar: the box fills what the hidden app
  *                 header leaves (../shell/shell.css `.one-screen`), the view on top takes every
  *                 height the chat (./chatDock.css) does not; a result taller than its part
- *                 scrolls inside it, never the page; the next round's countdown with its bar
+ *                 scrolls inside it, never the page; the next round's row, Start now and bar
  *                 under a game's own result (./NextRound). Colours only from @smg/ui tokens.
  * Spec:           docs/spec/02e-game-mind-games.md §11
  */
@@ -40,50 +40,63 @@
   flex: 1 0 auto;
   display: flex;
   flex-direction: column;
+  /* The whole width (../match/match.css aligns the result's column to its start). */
+  align-items: stretch;
 }
 
 .match-after--docked > .round-result {
   flex: 1;
 }
 
-/* The next round's countdown under a game's own result (./SeriesStatus `SeriesCountdown`):
-   the words and Start now in one row, the bar filling from the round's end to the start. */
-.match-countdown {
-  display: grid;
-  gap: 0.35rem;
-}
-
-.match-countdown-row {
+/* The next round's box under a game's own result (./NextRound, the design of MG-N7): one row
+   with "Round 3 starts in 0:11" and the host's Start now, the 6 px bar under it. */
+.next-round-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-1);
+  gap: var(--space-1) var(--space-2);
 }
 
-.match-countdown-words {
+.next-round-when {
   margin: 0;
-  font-size: var(--font-size-lead);
+  font-size: 17px;
   font-weight: var(--font-weight-strong);
 }
 
-.match-countdown-bar {
-  display: block;
-  height: 8px;
-  overflow: hidden;
-  border-radius: var(--radius-pill);
-  background: var(--color-surface-2);
+/* The accent blue of the round's winter and the focus ring, with dark text (8.4:1). */
+.next-round-start {
+  min-height: var(--hit-target);
+  border-color: transparent;
+  border-radius: 999px;
+  background: var(--color-accent);
+  color: #0a1233;
+  font-weight: var(--font-weight-strong);
 }
 
-.match-countdown-bar > span {
+.next-round-start:hover:not(:disabled) {
+  background: var(--color-accent);
+  filter: brightness(1.08);
+}
+
+/* The track: the text colour at 10 % (white in dark, ink in light); the fill the accent. */
+.next-round-bar {
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+}
+
+.next-round-bar > span {
   display: block;
   height: 100%;
-  background: var(--color-solid);
+  background: var(--color-accent);
   transition: width 1s linear;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .match-countdown-bar > span {
+  .next-round-bar > span {
     transition: none;
   }
 }

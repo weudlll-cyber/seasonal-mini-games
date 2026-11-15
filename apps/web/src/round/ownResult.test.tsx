@@ -6,9 +6,10 @@
  *
  * Responsibility: such a game's reveal is the whole first part: no platform headline, no
  *                 placings table, no team line; "Every line" holds the game's history; under it
- *                 the standings (Player · This round · Total, "—" for a player not in the round)
- *                 with the top five and the viewer's row when lower, "All N players…" showing
- *                 every row; the page's next-round box beside them. A game without the flag
+ *                 the standings "after round N" (Player · This round · Total, "—" for a player not
+ *                 in the round) with the rows that fit (six where nothing is laid out) and the
+ *                 viewer's row when lower, "All N players…" opening every row in a sheet that
+ *                 Escape closes; the page's next-round box beside them. A game without the flag
  *                 keeps its placings.
  * Depends on:     vitest, @testing-library/react, @smg/contracts, @smg-game/registry/web,
  *                 ./fakes, ./ResultScreen
@@ -71,6 +72,7 @@ describe('a game that draws its own result', () => {
         viewerKey="v"
         standings={standings}
         next={<p>The next round's box</p>}
+        roundNo={2}
       />,
     );
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Winter wins!');
@@ -86,9 +88,14 @@ describe('a game that draws its own result', () => {
       ['player e', '—', '6'],
       ['player v (you)', '0', '4'],
     ]);
+    expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Standings after round 2');
+    // Every player in a sheet over the page, closed again by Escape.
+    const sheet = screen.getByRole('dialog', { hidden: true });
+    expect(sheet.hidden).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'All 7 players…' }));
-    expect(rows()).toHaveLength(7);
-    fireEvent.click(screen.getByRole('button', { name: 'Top 5' }));
-    expect(rows()).toHaveLength(6);
+    expect(sheet.hidden).toBe(false);
+    expect(screen.getByTestId('match-standings-all').querySelectorAll('tbody tr')).toHaveLength(7);
+    fireEvent.keyDown(sheet, { key: 'Escape' });
+    expect(sheet.hidden).toBe(true);
   });
 });

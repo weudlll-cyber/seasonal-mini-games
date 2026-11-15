@@ -3,18 +3,21 @@
  * @module web/round
  * @brief  The result of a game that draws its own first part (`ownResult`, O97, T352).
  *
- * Responsibility: the game's reveal at its own height (its headline and cards) with "Every
- *                 line" at its top right, a disclosure whose list opens over the part as a
- *                 menu does (opaque, scrolling inside itself); under it the standings and the
- *                 page's next-round box side by side, stacked on a phone; compact, so the result stays
- *                 one screen at 1280 × 720 with the chat docked under it (../match/docked.css
- *                 lets a taller one scroll inside its part). Colours only from @smg/ui tokens.
+ * Responsibility: the owner's design of 2026-11-15 (task MG-N7): the game's reveal at its own
+ *                 height, without a panel around it, with "Every line" at the right of its
+ *                 headline (a small button; its list opens over the part as a menu does);
+ *                 under it the standings and the page's next-round box side by side (flex,
+ *                 wrapping, 20 px apart, each at least 360 px, radius 20 px, the surface colour,
+ *                 a hairline, padding 16 px 20 px), stacked on a phone. Nothing here scrolls: the
+ *                 standings' rows take the height the next-round box leaves them and show as
+ *                 many rows as fit (./RoundStandings, T358), the whole list is a sheet over
+ *                 the page. Colours only from @smg/ui tokens.
  * Spec:           docs/spec/02e-game-mind-games.md §9, §11
  */
 .round-result--own {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 16px;
 }
 
 .round-result--own .round-result-first {
@@ -23,61 +26,103 @@
   display: block;
   height: auto;
   min-height: 0;
-  padding: var(--space-2) var(--space-3);
+  padding: 0;
 }
 
-/* The two panels share the height the reveal leaves; each scrolls inside itself. */
+/* The two panels: as high as the next-round box at least, and the height left at most. */
 .round-result-panels {
-  flex: 1 1 0;
-  min-height: 9rem;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-1);
+  flex: 1 1 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 
 .round-standings,
 .next-round {
+  flex: 1 1 360px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-surface);
+}
+
+.next-round {
+  align-self: flex-start;
+}
+
+.round-standings h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+/* The rows' box takes the panel's height and adds none of its own (size containment), so
+   the rows that fit are counted and the rest wait behind "All N players…". */
+.round-standings-rows {
+  flex: 1 1 0;
   min-height: 0;
-  display: grid;
-  gap: var(--space-1);
-  align-content: start;
-  padding: var(--space-1) var(--space-3);
-  overflow-y: auto;
+  overflow: hidden;
+  contain: size;
+}
+
+.round-standings .round-table th,
+.round-standings .round-table td {
+  padding-block: 7px;
+  font-size: 15px;
 }
 
 .round-standings th {
   white-space: nowrap;
 }
 
-.round-standings h2,
-.next-round h2 {
-  margin: 0;
-  font-size: var(--font-size-lead);
-}
-
-.round-standings .round-table th,
-.round-standings .round-table td {
-  padding-block: 0.05rem;
-}
-
-/* Every player: the list scrolls inside the panel. */
-.round-standings-rows[data-all='true'] {
-  max-height: 12rem;
-  overflow-y: auto;
-}
-
+/* A link, not a button's pill. */
 .round-standings-more {
-  justify-self: start;
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-weight: var(--font-weight-strong);
+  text-decoration: underline;
+  cursor: pointer;
 }
 
-/* "Every line": a button at the part's top right; open, the list lies over the part. */
+/* Every player: a sheet over the page, scrolling inside itself. */
+.round-standings-sheet {
+  position: fixed;
+  z-index: 40;
+  top: 10vh;
+  left: 50%;
+  width: min(32rem, calc(100vw - 1rem));
+  max-height: 75vh;
+  padding: 0 var(--space-3) var(--space-2);
+  overflow-y: auto;
+  transform: translateX(-50%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-raised);
+}
+
+.round-standings-sheet[hidden] {
+  display: none;
+}
+
+/* "Every line": a small button at the right of the headline's first line. */
 .round-result-lines {
   position: absolute;
-  top: var(--space-2);
-  right: var(--space-3);
+  top: 0;
+  right: 0;
 }
 
 .round-result-lines > summary {
+  min-height: 36px;
+  padding-inline: 0.75rem;
+  font-size: var(--font-size-small);
   list-style: none;
 }
 
@@ -100,21 +145,56 @@
   box-shadow: var(--shadow-raised);
 }
 
-/* A phone: the panels stacked at their own heights; the result scrolls inside its part. */
+/* A short desktop window (1280 × 720): the gaps and the panels' padding tighter (T357). */
+@media (min-width: 900px) and (max-height: 760px) {
+  .round-result--own {
+    gap: 10px;
+  }
+
+  .round-result-panels {
+    gap: 12px;
+  }
+
+  .round-standings,
+  .next-round {
+    gap: 6px;
+    padding: 10px 16px;
+  }
+}
+
+/* A phone: the panels stacked at their own heights, the standings' rows a fixed few. */
 @media (max-width: 899px), (orientation: portrait) {
+  .round-result--own {
+    gap: 12px;
+  }
+
   .round-result-panels {
     flex: none;
-    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
   }
 
   .round-standings,
   .next-round {
-    overflow-y: visible;
+    flex-basis: 100%;
+    padding: 12px 14px;
   }
 
-  .round-result--own .round-result-first,
-  .round-standings,
-  .next-round {
-    padding: var(--space-1) var(--space-2);
+  .round-standings-rows {
+    flex: none;
+    contain: none;
+  }
+
+  .round-standings .round-table th,
+  .round-standings .round-table td {
+    padding-inline: 0.35rem;
+    font-size: 14px;
+  }
+
+  .round-standings-more {
+    min-height: var(--hit-target);
+  }
+
+  .round-result-lines > summary {
+    min-height: var(--hit-target);
   }
 }

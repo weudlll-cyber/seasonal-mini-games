@@ -195,7 +195,14 @@ async function result(p: Person): Promise<void> {
   const lit = () => p.page.evaluate(() => (window as unknown as { lit: boolean }).lit);
   await expect.poll(lit, { message: 'a winning option lit up' }).toBe(true);
   await expect(options.getByText('✓ wins').first()).toBeVisible();
-  await expect(options.locator('.mg-points').first()).toHaveText(/\+[12]/);
+  // The winners' "+1" or "+2" in the cards' lists of players (opened by "+N more").
+  const listed = await options
+    .locator('.mg-option-players li')
+    .evaluateAll((els) => els.map((e) => e.textContent));
+  expect(
+    listed.some((t) => /\+[12]$/.test(t)),
+    'a winner with +1 or +2',
+  ).toBe(true);
   await expect(options.locator('li[data-own="true"]')).toHaveText(/^You/);
   // The cards' points are the standings' "This round" and, after one round, the totals (T340).
   await expect(p.page.getByTestId('match-standings')).toBeVisible();

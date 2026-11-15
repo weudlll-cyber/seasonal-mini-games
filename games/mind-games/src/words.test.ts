@@ -32,7 +32,7 @@ describe('Mind Games result words (02e §9, O97)', () => {
   it('names one winning option and its players', () => {
     const r = resultOf(['winter', 'winter', 'winter', 'spring', 'spring', 'spring', 'spring']);
     expect(resultTitle(r)).toBe('Winter wins!');
-    expect(resultLine(r)).toBe('Least chosen · 3 players win · +1 each');
+    expect(resultLine(r)).toBe('Least chosen season · 3 players win 1 point');
     expect(reveal(r)).toBe('Winter was the least chosen (3 players)');
     expect(whyNot(r, 'spring')).toBe('not least chosen');
     expect(whyNot(r, 'summer')).toBe('not chosen');
@@ -41,27 +41,27 @@ describe('Mind Games result words (02e §9, O97)', () => {
   it('names a shared place', () => {
     const r = resultOf(['spring', 'autumn', 'summer', 'summer']);
     expect(resultTitle(r)).toBe('Spring and Autumn win!');
-    expect(resultLine(r)).toBe('Least chosen · 2 players win · +1 each');
+    expect(resultLine(r)).toBe('Least chosen season · 2 players win 1 point');
     expect(reveal(r)).toBe('Spring and Autumn were the least chosen (2 players)');
   });
 
   it('names another place, a single winner and All with its points', () => {
     const r = resultOf(['summer', 'winter', 'winter'], { winnerPlace: 2 });
     expect(resultTitle(r)).toBe('Winter wins!');
-    expect(resultLine(r)).toBe('2nd least chosen · 2 players win · +1 each');
+    expect(resultLine(r)).toBe('2nd least chosen season · 2 players win 1 point');
     expect(whyNot(r, 'summer')).toBe('not 2nd least chosen');
     const all = resultOf(['all', 'spring', 'spring'], { allOption: true });
     expect(resultTitle(all)).toBe('All wins!');
-    expect(resultLine(all)).toBe('Least chosen · 1 player wins · +2');
+    expect(resultLine(all)).toBe('Least chosen season · 1 player wins · +2 for All');
     const both = resultOf(['all', 'autumn', 'spring', 'spring'], { allOption: true });
     expect(resultTitle(both)).toBe('Autumn and All win!');
-    expect(resultLine(both)).toBe('Least chosen · 2 players win · +1 each, All +2');
+    expect(resultLine(both)).toBe('Least chosen season · 2 players win 1 point · +2 for All');
   });
 
   it('says when nobody wins and when nobody chose', () => {
     const none = resultOf(['spring', 'summer'], { winnerPlace: 4 });
     expect(resultTitle(none)).toBe('Nobody wins this round.');
-    expect(resultLine(none)).toBe('There is no 4th least chosen option this round.');
+    expect(resultLine(none)).toBe('There is no 4th least chosen season this round.');
     expect(reveal(none)).toBeNull();
     expect(resultTitle(resultOf([]))).toBe('Nobody chose this round.');
     expect(resultLine(resultOf([]))).toBeNull();
