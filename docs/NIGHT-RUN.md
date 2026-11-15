@@ -10,7 +10,7 @@ Status. `feat/mind-games` is not merged. The reference is `docs/design/mind-game
 | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | Desktop result 2A/2B: headline row, winners panel, cards without names, standings, next round | done                                                                                  |
 | Phone 3/4a/4b: one scrolling area, the chat bar with its own field                            | done                                                                                  |
-| Tests, journey 43, play-through, handover                                                     | open                                                                                  |
+| Tests, journey 43, play-through, handover                                                     | done; CI on the final head reported in the handover                                   |
 | Needs the owner's word                                                                        | T367 (shrinking past the allowed list at 1280 × 720), T368 (the standings' tie-break) |
 
 ### The build
@@ -18,6 +18,30 @@ Status. `feat/mind-games` is not merged. The reference is `docs/design/mind-game
 - **Mind Games:** new `WinnersPanel.tsx` (chips, at most 4/3/2 rows, "+N more" opening every winner, T359) and `winners.css`; `ResultPanel.tsx` the headline row, the winners, the cards without names; `result.css` rewritten to the reference (`display: contents`, so the platform's grid places the parts); `words.ts` `resultLine` "<place> season · N players" and `winnersTitle`; `PrefsPanel.tsx` and `prefs.css` one row per round, the short line, the box at the foot; `CardPlayers.tsx` removed.
 - **Platform:** `ResultScreen.tsx` one grid (headline row across, the left column, the next round on the right); `RoundStandings.tsx` the plain ranking in two columns, the own row in amber and scrolled into view, the phone's own line first (T361, T362); `resultOwn.css` rewritten; `useRowsFit.ts` and the "All N players" sheet removed; `SeriesStatus.tsx` "Round 2 in 0:21"; `ChatDock.tsx` and `chatDock.css` the phone bar in the layout with the room's own field (`Writer`, offered through `ChatComposerSlot`, T363), the sheet above it, the desktop strip 190/150 px; `DockedMatch.tsx` the visible viewport's height on a phone (T364); `docked.css` the reference's page padding, the phone's single scrolling area, the round view at its own height there; `ChatRoom.tsx` exports `Writer` and offers its room; `chatArrivals.ts` `ChatComposerSlot`.
 - **Removed:** `CardPlayers.tsx` and its styles, `useRowsFit.ts`, the standings' sheet and "All N players…", the old card and countdown styles, the info icon of the pre-picks, the phone chat's fixed sheet between the bars.
+
+### Tests and the play-through
+
+- **Tests:** while working, Mind Games 87/87 and the web's round, match and chat tests 159/159, among them the 160-player component tests (`winners.test.tsx`: four chip rows on a desktop, three on a phone, "+N more" opening all 36, no name in a card; `ownResult.test.tsx`: 160 rows in a desktop panel scrolled to the viewer's row, the phone's own line first) and the phone bar's sending (`chatDock.test.tsx`). `pnpm verify` green on the second run (843 + 99 + 171; the first stopped at a type error in the new test). Journeys 38–41 and the new 43 in Chromium: 6/6.
+- **Fit** (the play-through with 51 players, light and dark): 1280 × 720: the chat 150 px, one or two chip rows, 4–5 standings rows, the countdown and the first pre-pick shown; 1440 × 900: 11 rows; 1900 × 860: 10 rows; 1920 × 1080: 19 rows; no page scroll anywhere, only the standings' panel (and at 150 px the chat's own message list) scroll. With 160 players and 36 long-named winners (inflated in the browser, `tmp/mg8-look.mjs`): 1280 × 720 two chip rows ("+23 more") and 6 standings rows; 1440 × 900 four chip rows, all 36; 1900 × 860 and 1920 × 1080 three chip rows. Phones 390 × 844 and 360 × 740: the winners, the cards and the countdown above the chat bar on the first screen, three chip rows at most, one scrolling area, the last standings row whole above the bar at the end.
+- **Play-through** (`tmp/mg8-play.mjs`, the log in `reports/mg-n8/play-through.txt`): seed `maple`, 50 bots (the Quick Test's most), total 40 s, 3 rounds, pause 90 s, All on in round 1, winner place 2 in round 2; the badge "Mini Games · dev · feat/mind-games · b0a6717 · 2026-11-15"; "hello from the phone bar" sent from the phone bar's field arrived ("Chat · dev-host: hello from the phone bar") with the sheet closed.
+  - **Round 1** (All on, 51 players): "Autumn wins!" / "Least chosen season · 51 players" / "6 winners · +1 each". Cards Spring 11, Summer 9, Autumn 6 ✓ WINNER, Winter 14, All 11. The 6 chips (bot-11, bot-21, bot-30, bot-05, bot-08, bot-27) = Autumn's count; each "+1" the standings' This round, every other player "0".
+  - **Round 2** (winner place 2, 49 players in the round): "Autumn wins!" / "2nd least chosen season · 49 players" / "11 winners · +1 each". Cards Spring 12, Summer 18, Autumn 11 ✓, Winter 8; 11 chips = Autumn's count; This round and totals agree (bot-21 and bot-27 2, the round's other winners 1; bot-14 "—", not in the round).
+  - **Round 3:** "Summer wins!" / "Least chosen season · 49 players" / "5 winners · +1 each". Cards Spring 9, Summer 5 ✓, Autumn 21, Winter 14; 5 chips = Summer's count.
+  - **Summary:** bot-08, bot-21, bot-27 2 points (place 1), bot-06, bot-32 2 (place 4), then 1 point… every Total the rounds' sum after each round; no page errors. The server's places show the tie-break by wins and the earliest win (T368): in round 2 players on 1 point were placed 3 or 7.
+- **Screenshots:** 8 on the orphan branch `shots/mg-n8` (the phone round, the result at 1280 × 720 and 1900 × 860 light and dark, the phone result at the top and at the standings, the 160-player state beside reference 2B); `shots/mg-n7` deleted.
+
+### Differences from the reference
+
+- "Every line" sits at the right of the headline row, as the task says, not in the top bar as the reference draws it; the top bar is the existing result bar (title, game, code, Host, Play).
+- The desktop chat keeps the platform's look (its Send a plain button, its placeholder "Write a message"), which every game shares; the phone bar's field says "Write a message…" as the reference does.
+- The standings' title stays at the top of its panel while the rows scroll (T366); the reference's title scrolls away.
+- On the light theme the green title and the amber own row use AA colours of their own (T360, T362); the reference is drawn in dark only.
+- The places are the server's ranks (T368), so equal totals can differ in place.
+
+### Noticed, left alone
+
+- The standings' scroll to the viewer's row happens on the first render only, as asked; after a window resize the panel keeps its scroll position, so the row can leave the view.
+- The phone's result bar keeps its title chip ("Seasonal Mind Ga…"), cut at 390 px.
 
 ## Task MG-N7 (2026-11-15): the result and pause view rebuilt to the owner's measured design (O98)
 
