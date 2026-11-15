@@ -2,16 +2,53 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Task MG-N9 (2026-11-15): equal totals share a place (O100), T367 accepted (O101), the console's 401s
+
+Status. `feat/mind-games` is not merged.
+
+| Part                                                                    | State                                               |
+| ----------------------------------------------------------------------- | --------------------------------------------------- |
+| O101: T367 accepted, no code change                                     | done                                                |
+| O100: equal totals share a place, listed by name (`meta.standingsTies`) | done (`0427f70`)                                    |
+| The console's 401s for `/chat/rooms/lobby`                              | done: the request without a session removed (T370)  |
+| Tests, play-through, handover                                           | done; CI on the final head reported in the handover |
+| Needs the owner's word                                                  | the proposal T369                                   |
+
+### The shared places (O100, T369)
+
+- **Contract:** `meta.standingsTies?: 'shared-by-name'` in `packages/game-sdk/src/module.ts`; Mind Games sets it. Absent, today's rule.
+- **Domain:** the one ranking, `standings` in `packages/domain/src/round/results.ts`, takes the rule (`StandingsTies`): with 'shared-by-name' equal points alone share a rank; the numbering is today's (1, 1, 3), so nothing about places changed but who shares them.
+- **Server:** new `apps/server/src/league/standingsTies.ts` (`tiesOf` by the match's game, `byRankThenName` for a shared place); `round/pgResults.ts` passes the rule to `standings` when it recomputes; `league/boards.ts` `matchStandings` lists a shared place by display name (the result's standings and the closed match's summary both read it). The leaderboards' awards keep each match's stored rank.
+- **Tests:** a domain test (`results.test.ts`: four players on 10 points with different wins share rank 1, the next is 5) and `apps/server/test/standingsTies.integration.test.ts`: a Mind Games series of three real rounds where the host wins with All (+2) and player-1 and player-2 win twice (+1, +1) shares place 1 among the three, listed dev-host, dev-player-1, dev-player-2, after the last round and in the closed match's summary, player-3 4th; a Guess The Number match with player-2 winning first, then player-1, keeps places 1 and 2 by the earlier win.
+
+### The console's 401s (T370)
+
+- **When and why:** only the lobby page asks for the lobby's chat room (`apps/web/src/lobby/Lobby.tsx` → `ChatPanel` → `useChatRoom`, `apps/web/src/chat/useChat.ts`); a match page never does. The server answers it 401 exactly when the request has no session (`reader` in `apps/server/src/http/routes/chat.ts`). Reproduced in Chromium (`tmp/mg9-console.mjs`): signed in, a match page opened directly, no request; the lobby opened signed out, two requests, both 401 (React's development double effect), and the browser's console keeps them after the page moves on to the match; signed in, the lobby, two answers 200. So the owner's errors came from the lobby opened before signing in, not from the match page.
+- **What was done:** asking for a room without any session is provably useless, so `useChatRoom` now waits for the session and, without one, shows "Sign in, or watch as a guest, to read the chat." without asking; it asks once the viewer signs in. A guest and a signed-in viewer are unchanged. `chat.test.tsx` checks both: no request without a session, the request for a guest.
+
+### Tests and the play-through
+
+- **Tests:** while working the domain's, the web chat's and the new server file's; `pnpm verify` green on the second run (846 + 99 + 173; the first stopped on the formatting of the domain test). Journeys 38–41 and 43 in Chromium: 6/6.
+- **Play-through** (`tmp/mg9-play.mjs`, the log in `reports/mg-n9/play-through.txt`): seed `maple`, 20 bots, total 40 s, 3 rounds, pause 30 s, All on in round 1, winner place 2 in round 3; the badge "Mini Games · dev · feat/mind-games · 0427f70 · 2026-11-15".
+  - **After round 1** ("Winter wins!", 2 winners): bot-09 and bot-13 share place 1; the other 19 share place 3.
+  - **After round 2** ("Autumn and Winter win!", 6 winners): eight players on 1 point share place 1 (bot-06, bot-07, bot-08, bot-09, …); 13 on 0 share place 9.
+  - **After round 3** ("Spring and Winter win!", 10 winners) and **in the summary:** bot-06, bot-09, bot-10, bot-20 on 2 share place 1; ten on 1 share place 5 (bot-02, bot-05, bot-07, bot-08, bot-11, bot-12, bot-13, bot-17, bot-18, dev-host); seven on 0 share place 15. Every shared place alphabetical, every place counting everyone above it. In this run equal totals always had equal wins (no All winner); the server test covers a shared place of different wins.
+  - **Console:** no error on the match page at 1440 × 900 or 390 × 844.
+
+### Noticed, left alone
+
+- The browser keeps console errors across the hash routes of one page, so an error of an earlier page (the lobby) shows while a later one (a match) is open.
+
 ## Task MG-N8 (2026-11-15): the result and the phone chat bar built to the owner's reference (O99)
 
 Status. `feat/mind-games` is not merged. The reference is `docs/design/mind-games-screens.html` (committed unchanged; there was no older `mind-games-result.html`).
 
-| Part                                                                                          | State                                                                                 |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| Desktop result 2A/2B: headline row, winners panel, cards without names, standings, next round | done                                                                                  |
-| Phone 3/4a/4b: one scrolling area, the chat bar with its own field                            | done                                                                                  |
-| Tests, journey 43, play-through, handover                                                     | done; CI on the final head reported in the handover                                   |
-| Needs the owner's word                                                                        | T367 (shrinking past the allowed list at 1280 × 720), T368 (the standings' tie-break) |
+| Part                                                                                          | State                                                          |
+| --------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Desktop result 2A/2B: headline row, winners panel, cards without names, standings, next round | done                                                           |
+| Phone 3/4a/4b: one scrolling area, the chat bar with its own field                            | done                                                           |
+| Tests, journey 43, play-through, handover                                                     | done; CI on the final head reported in the handover            |
+| Needs the owner's word                                                                        | none: T367 accepted (O101), T368 decided (O100), both in MG-N9 |
 
 ### The build
 
