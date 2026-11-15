@@ -3,85 +3,83 @@
  * @module games/mind-games/web
  * @brief  Styles of Seasonal Mind Games' pre-picks panel (./PrefsPanel).
  *
- * Responsibility: the design of MG-N7: one line with the title (15 px bold), its info icon,
- *                 the saving note and "Hide my switches" at the right; under it the selects in
- *                 one row, a grid of min(rounds left, 6) equal columns 8 px apart (three on a
- *                 phone), each with its small label above a select at least 44 px high; in the
- *                 waiting area and the next round's box alike (02e §7, §11). Colours only from
- *                 the design tokens.
+ * Responsibility: the owner's reference of 2026-11-15 (MG-N8): the title (15 px bold) with its
+ *                 short line (13 px muted); one row per round still to play, the label at the left
+ *                 and a select 170 px wide and at least 44 px high at the right, the list the only
+ *                 part that scrolls when the box is short; "Hide my switches" at the foot. On a
+ *                 phone the rounds two to a row, the label above its select. In the waiting area
+ *                 and the next round's box alike (02e §7, §11). Colours only from the tokens.
  * Spec:           docs/spec/02e-game-mind-games.md §7, §11
  */
-/* Your pre-picks: the title's line, then the selects. */
+/* Your pre-picks: the title's line, the rounds, the box at the foot. */
 .mg-prefs {
-  display: grid;
-  gap: 8px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .mg-prefs-head {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  min-width: 0;
-}
-
-.mg-prefs-head h3 {
   margin: 0;
   font-size: 15px;
-  font-weight: var(--font-weight-strong);
 }
 
-/* The info icon: a small ring with "i"; its words are its tooltip and accessible name. */
-.mg-info {
-  flex: none;
-  display: inline-grid;
-  place-items: center;
-  width: 1.15rem;
-  height: 1.15rem;
-  border: 1.5px solid var(--color-text-muted);
-  border-radius: 999px;
+.mg-prefs-what {
   color: var(--color-text-muted);
-  font-size: 0.75rem;
-  font-weight: var(--font-weight-strong);
-  font-style: italic;
-  cursor: help;
+  font-size: 13px;
+}
+
+.mg-prefs-rounds {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+/* The label at the left, its select at the right. */
+.mg-prefs-round {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+}
+
+.mg-prefs-round select {
+  flex: none;
+  width: 170px;
+  min-height: var(--hit-target);
 }
 
 .mg-prefs-note {
   margin: 0;
-  overflow: hidden;
   color: var(--color-text-muted);
   font-size: var(--font-size-small);
-  white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
-.mg-prefs-head > .mg-hide {
-  margin-left: auto;
+/* "Hide my switches" at the foot of its box. */
+.mg-prefs > .mg-hide {
+  margin-top: auto;
 }
 
-.mg-prefs-rounds {
-  display: grid;
-  grid-template-columns: repeat(var(--mg-cols, 6), minmax(0, 1fr));
-  gap: 8px;
-}
-
-/* "Round 3" small above its select. */
-.mg-prefs-round {
-  min-width: 0;
-  display: grid;
-  gap: 2px;
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
-}
-
-.mg-prefs-round select {
-  min-width: 0;
-  min-height: var(--hit-target);
-}
-
-/* A phone: rows of three. */
+/* A phone: two rounds to a row, the label above its select. */
 @media (max-width: 899px), (orientation: portrait) {
   .mg-prefs-rounds {
-    grid-template-columns: repeat(min(var(--mg-cols, 3), 3), minmax(0, 1fr));
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .mg-prefs-round {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    color: var(--color-text-muted);
+    font-size: 13px;
+  }
+
+  .mg-prefs-round select {
+    width: auto;
   }
 }

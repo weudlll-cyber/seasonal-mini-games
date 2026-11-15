@@ -21,10 +21,10 @@
  *                 @smg-game/registry/web (types), ../season/*, ../shell/router,
  *                 ./MatchStandings, ./ResultParts, ./RoundSide, ./RoundStandings, ./roundText,
  *                 ./result.css, ./resultBoard.css, ./resultOwn.css
- *                 A game that draws its own first part (`ownResult`, O97, T352) gets only its
- *                 reveal with every line behind a disclosure at its top right, then the match
- *                 standings with this round's points (./RoundStandings) beside the page's
- *                 next-round box (`next`).
+ *                 A game that draws its own first part (`ownResult`, O97, T352) gets its
+ *                 reveal (a headline row, the winners, the cards) with every line behind a
+ *                 disclosure at the right, the match standings (./RoundStandings) under it and
+ *                 the page's next-round box (`next`) beside them (MG-N8).
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §10; docs/spec/03-seasonal-specials.md §5
  */
@@ -96,10 +96,10 @@ interface ResultProps {
   readonly roundNo?: number | null;
 }
 
-// A game that draws its whole first part (`ownResult`, T352): its reveal with its own
-// headline and, at its top right, every line of the round behind a disclosure that opens over
-// the part; then the standings with this round's points beside the next round's box, so the
-// page stays one screen.
+// A game that draws its whole first part (`ownResult`, T352): one grid (./resultOwn.css, the
+// reference of MG-N8). The game's reveal is no box of its own: its first child, the headline
+// row, spans the width with "Every line" at its right; its next two (the winners, the cards)
+// and the standings make the left column; the page's next-round box is the right column.
 function OwnResult(p: ResultProps & { readonly game: GameWeb }): ReactElement {
   const { state } = p;
   const part = (which: 'reveal' | 'history') => (
@@ -111,7 +111,6 @@ function OwnResult(p: ResultProps & { readonly game: GameWeb }): ReactElement {
       data-testid="result"
       data-layout={p.game.layout ?? 'list'}
     >
-      {/* No panel around the game's part: its cards are the surfaces (the design of MG-N7). */}
       <div className="round-result-first" data-testid="result-first">
         {part('reveal')}
         <details className="round-result-lines" data-testid="result-history">
@@ -119,15 +118,13 @@ function OwnResult(p: ResultProps & { readonly game: GameWeb }): ReactElement {
           <div className="round-result-lines-body">{part('history')}</div>
         </details>
       </div>
-      <div className="round-result-panels">
-        <RoundStandings
-          standings={p.standings}
-          results={state.results ?? []}
-          viewerKey={p.viewerKey}
-          round={p.roundNo ?? null}
-        />
-        {p.next}
-      </div>
+      <RoundStandings
+        standings={p.standings}
+        results={state.results ?? []}
+        viewerKey={p.viewerKey}
+        round={p.roundNo ?? null}
+      />
+      {p.next}
     </section>
   );
 }

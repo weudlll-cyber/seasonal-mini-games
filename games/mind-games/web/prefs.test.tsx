@@ -45,9 +45,10 @@ describe('Mind Games pre-picks panel (02e §7)', () => {
       'Your first choice in round 2 if you have not chosen by its start.',
     );
     // The sentence is the info icon's tooltip and accessible name (the design of MG-N7).
-    expect(
-      screen.getByRole('img', { name: /^Pre-picks play for you when you are away/ }).title,
-    ).toBe('Pre-picks play for you when you are away. If you are here, you can still switch.');
+    // The short line beside the title; the whole sentence its tooltip (the reference of MG-N8).
+    expect(screen.getByText('play for you while you are away').title).toBe(
+      'Pre-picks play for you when you are away. If you are here, you can still switch.',
+    );
     cleanup();
     render(<PrefsPanel prefs={null} rounds={3} played={3} save={ok()} />);
     expect(screen.queryByText('Your pre-picks')).toBeNull();

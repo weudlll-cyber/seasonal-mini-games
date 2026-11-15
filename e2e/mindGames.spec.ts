@@ -15,10 +15,10 @@
  *                 this round has closed …" and a choice it sends anyway is refused with
  *                 `JOIN_CLOSED`; from 40 s the feed says every change is now a switch; at 50 s the
  *                 buttons are off and the feed says choices are closed while the reveal runs; the
- *                 result names the least chosen option, lights it up and lists the winners with
- *                 +1 and the viewer's line under a headline ("Winter wins!") and its line, the
- *                 cards' points equal to the standings' "This round" and
- *                 the match standings' (T340); the round view fits 1280 × 720 with the chat docked
+ *                 result names the least chosen option under a headline ("Winter wins!") and
+ *                 its line, lights it up, lists the winners in a panel of their own and no
+ *                 names in the cards, the winners' points equal to the standings' "This round"
+ *                 and the totals (T340, O99); the round view fits 1280 × 720 with the chat docked
  *                 under it and no Chat button in the bar (O97), the flight band over no button,
  *                 line or chat, and 390 × 844 with the chat's bar; no season on
  *                 the intro or in the bar (O93), the strip's current phase and its delay line
@@ -187,32 +187,23 @@ async function result(p: Person): Promise<void> {
   await fitsScreen(p.page);
   await expect(p.page.getByTestId('result-title')).toHaveText(/ wins?!$/);
   await expect(p.page.getByTestId('result-line')).toHaveText(
-    /^Least chosen season · \d+ players? wins?( 1 point)?( · \+2 for All)?$/,
+    /^Least chosen season · \d+ players?$/,
   );
-  // The cards and the standings, no placings table beside them (O97).
+  // The winners in their own panel, the cards without names, no placings table (O97, O99).
   await expect(p.page.getByTestId('placings')).toHaveCount(0);
   const options = p.page.getByTestId('mind-result');
   const lit = () => p.page.evaluate(() => (window as unknown as { lit: boolean }).lit);
   await expect.poll(lit, { message: 'a winning option lit up' }).toBe(true);
-  await expect(options.getByText('✓ wins').first()).toBeVisible();
-  // The winners' "+1" or "+2" in the cards' lists of players (opened by "+N more").
-  const listed = await options
-    .locator('.mg-option-players li')
-    .evaluateAll((els) => els.map((e) => e.textContent));
-  expect(
-    listed.some((t) => /\+[12]$/.test(t)),
-    'a winner with +1 or +2',
-  ).toBe(true);
-  await expect(options.locator('li[data-own="true"]')).toHaveText(/^You/);
-  // The cards' points are the standings' "This round" and, after one round, the totals (T340).
-  await expect(p.page.getByTestId('match-standings')).toBeVisible();
+  await expect(options.getByText('✓ WINNER').first()).toBeVisible();
+  await expect(p.page.getByTestId('winners').locator('.mg-chip').first()).toBeVisible();
+  // Every winner's points are the standings' "This round", every other player's 0 there, and
+  // after one round the totals the same (T340).
   const got = await resultPoints(p.page);
-  expect(
-    Object.values(got.cards).some((n) => n > 0),
-    'someone won points',
-  ).toBe(true);
-  expect(got.table, "the standings' This round").toEqual(got.cards);
-  expect(got.standings, 'the match standings').toEqual(got.cards);
+  expect(Object.keys(got.winners).length, 'someone won').toBeGreaterThan(0);
+  for (const [name, points] of Object.entries(got.round)) {
+    expect(points, `${name}'s points this round`).toBe(got.winners[name] ?? 0);
+  }
+  expect(got.total, 'the match standings').toEqual(got.round);
 }
 
 // Journey 38's round: the delay set by hand, its box turned off first (O96).

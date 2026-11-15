@@ -17,7 +17,7 @@
  */
 import type { GameWeb } from '@smg-game/registry/web';
 import type { MatchStandingView, RoundStateView } from '@smg/contracts';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { ended } from './fakes.js';
@@ -59,12 +59,12 @@ const state: RoundStateView = {
 };
 
 const rows = () =>
-  [...screen.getByTestId('match-standings').querySelectorAll('tbody tr')].map((tr) =>
-    [...tr.querySelectorAll('td')].map((td) => td.textContent),
+  [...screen.getByTestId('match-standings').querySelectorAll('li')].map((li) =>
+    [...li.children].map((x) => x.textContent),
   );
 
 describe('a game that draws its own result', () => {
-  it('shows its reveal, the standings and the next round, no placings', () => {
+  it('shows its reveal, every player in the standings and the next round, no placings', () => {
     render(
       <ResultScreen
         state={state}
@@ -79,23 +79,75 @@ describe('a game that draws its own result', () => {
     expect(screen.queryByTestId('placings')).toBeNull();
     expect(screen.getByText("The next round's box")).toBeTruthy();
     expect(screen.getByTestId('result-history').textContent).toContain('Every line');
-    // The top five and the viewer's own row, "—" for a player not in the round.
-    expect(rows()).toEqual([
-      ['player a', '2', '10'],
-      ['player b', '0', '9'],
-      ['player c', '—', '8'],
-      ['player d', '—', '7'],
-      ['player e', '—', '6'],
-      ['player v (you)', '0', '4'],
-    ]);
     expect(screen.getByRole('heading', { level: 2 }).textContent).toBe('Standings after round 2');
-    // Every player in a sheet over the page, closed again by Escape.
-    const sheet = screen.getByRole('dialog', { hidden: true });
-    expect(sheet.hidden).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'All 7 players…' }));
-    expect(sheet.hidden).toBe(false);
-    expect(screen.getByTestId('match-standings-all').querySelectorAll('tbody tr')).toHaveLength(7);
-    fireEvent.keyDown(sheet, { key: 'Escape' });
-    expect(sheet.hidden).toBe(true);
+    expect(screen.getByTestId('round-standings').textContent).toContain('7 players');
+    // Every player in the server's order: "+2" this round, "0", "—" for a player not in it.
+    expect(rows()).toEqual([
+      ['1', 'player a', '+2', '10'],
+      ['2', 'player b', '0', '9'],
+      ['3', 'player c', '—', '8'],
+      ['4', 'player d', '—', '7'],
+      ['5', 'player e', '—', '6'],
+      ['6', 'player f', '—', '5'],
+      ['7', 'You', '0', '4'],
+    ]);
+    // No "All N players" link any more (MG-N8).
+    expect(screen.queryByText(/^All \d+ players/)).toBeNull();
+  });
+});
+
+// 160 players, the viewer far down: a desktop's panel scrolls to their row; a phone's starts
+// with their own line and does not scroll.
+describe('the standings of 160 players (MG-N8)', () => {
+  const many: MatchStandingView[] = Array.from({ length: 160 }, (_, i) => ({
+    playerKey: `p${String(i + 1)}`,
+    name: `A player with a rather long name ${String(i + 1)}`,
+    rank: i < 36 ? 1 : 37,
+    points: i < 36 ? 1 : 0,
+    wins: i < 36 ? 1 : 0,
+  }));
+  const at = (height: number, client: number) => {
+    Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+      configurable: true,
+      value: height,
+    });
+    Object.defineProperty(HTMLElement.prototype, 'clientHeight', {
+      configurable: true,
+      value: client,
+    });
+    Object.defineProperty(HTMLElement.prototype, 'offsetTop', {
+      configurable: true,
+      get(this: HTMLElement) {
+        return this.dataset['own'] === 'true' ? 2400 : 0;
+      },
+    });
+  };
+  afterEach(() => {
+    const proto = HTMLElement.prototype as unknown as Record<string, unknown>;
+    delete proto['scrollHeight'];
+    delete proto['clientHeight'];
+    delete proto['offsetTop'];
+  });
+  const show = () =>
+    render(
+      <ResultScreen state={state} game={game} viewerKey="p100" standings={many} roundNo={1} />,
+    );
+
+  it('lists all 160 and scrolls a desktop panel to the viewer, in the middle', () => {
+    at(6000, 300);
+    show();
+    const panel = screen.getByTestId('round-standings');
+    expect(panel.querySelectorAll('.round-standing')).toHaveLength(160);
+    expect(panel.querySelector('.round-standing[data-own="true"]')?.textContent).toContain('You');
+    expect(panel.scrollTop).toBe(2400 - 150);
+  });
+
+  it("starts a phone's panel with the viewer's own line and leaves a panel that fits alone", () => {
+    at(300, 300);
+    show();
+    const panel = screen.getByTestId('round-standings');
+    // The head, then the own line, then every row.
+    expect(panel.children[1]?.textContent).toBe('37You · place 37—0');
+    expect(panel.scrollTop).toBe(0);
   });
 });

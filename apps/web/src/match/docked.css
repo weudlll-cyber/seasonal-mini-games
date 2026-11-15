@@ -3,11 +3,15 @@
  * @module web/match
  * @brief  The docked match page (./DockedMatch, O97): the view above, the chat under it.
  *
- * Responsibility: one screen without a page scrollbar: the box fills what the hidden app
- *                 header leaves (../shell/shell.css `.one-screen`), the view on top takes every
- *                 height the chat (./chatDock.css) does not; a result taller than its part
- *                 scrolls inside it, never the page; the next round's row, Start now and bar
- *                 under a game's own result (./NextRound). Colours only from @smg/ui tokens.
+ * Responsibility: the owner's reference of 2026-11-15 (MG-N8). A desktop: one screen without a
+ *                 page scrollbar, padding 20 × 28 px, 16 px between the view above and the chat
+ *                 (./chatDock.css) under it; the result fills exactly the height left (its own
+ *                 grid shares it out, ../round/resultOwn.css). A phone (the round view's rule):
+ *                 the screen is two parts, the content, the only part that scrolls (the round view
+ *                 or the result at their own height, nothing scrolling inside them), and the chat
+ *                 bar under it, in the layout; no fixed or sticky part. The next round's row,
+ *                 Start now and bar under a game's own result (./NextRound). Colours only from
+ *                 @smg/ui tokens.
  * Spec:           docs/spec/02e-game-mind-games.md §11
  */
 .match-docked {
@@ -15,7 +19,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: 16px;
 }
 
 .match-docked-main {
@@ -25,19 +29,19 @@
   flex-direction: column;
 }
 
-/* The result and the pause: the bar, then the result in the whole width and the height that
-   is left (no column beside it: the next round's box is in the result); taller, it scrolls
-   inside itself. */
+/* The result and the pause: the bar, then the result in the whole width and exactly the height
+   that is left; nothing here scrolls on a desktop. */
 .match-docked-main > .match-result-page {
   flex: 1;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  gap: 16px;
 }
 
 .match-after.match-after--docked {
-  flex: 1 0 auto;
+  flex: 1 1 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   /* The whole width (../match/match.css aligns the result's column to its start). */
@@ -48,8 +52,70 @@
   flex: 1;
 }
 
-/* The next round's box under a game's own result (./NextRound, the design of MG-N7): one row
-   with "Round 3 starts in 0:11" and the host's Start now, the 6 px bar under it. */
+/* A desktop: the reference's page padding (the shell's focus mode has 8 px). */
+@media (min-width: 900px) and (orientation: landscape) {
+  #root .shell-main.shell-main:has(.match-docked) {
+    padding: 20px 28px;
+  }
+}
+
+/* A desktop window under 760 px high: 12 px above and below, so three standings rows show
+   (T367, past the owner's list of what may shrink; needs the owner's word). */
+@media (min-width: 900px) and (orientation: landscape) and (max-height: 759px) {
+  #root .shell-main.shell-main:has(.match-docked) {
+    padding-block: 12px;
+  }
+}
+
+/* A phone: the content scrolls, alone; the chat bar under it is in the layout. */
+@media (max-width: 899px), (orientation: portrait) {
+  #root .shell-main.shell-main:has(.match-docked) {
+    padding: 0;
+  }
+
+  .match-docked {
+    gap: 0;
+  }
+
+  .match-docked-main {
+    padding: 12px 14px 16px;
+    overflow-y: auto;
+  }
+
+  .match-docked-main > .match-result-page,
+  .match-after.match-after--docked {
+    flex: none;
+  }
+
+  /* The round view at its own height: no box inside it scrolls (the content does). */
+  .match-docked .match-live {
+    flex: none;
+    container-type: normal;
+  }
+
+  .match-docked .round-live,
+  .match-docked .round-main,
+  .match-docked .round-log ol {
+    overflow: visible;
+  }
+}
+
+/* The next round's box under a game's own result (./NextRound, the reference of MG-N8): a
+   column, one row with "Round 3 in 0:11" and the host's Start now, the 6 px bar, then the
+   game's panel (the pre-picks) filling the rest. */
+.next-round {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 18px;
+  overflow: hidden;
+}
+
+.next-round > :last-child {
+  flex: 1;
+  min-height: 0;
+}
+
 .next-round-row {
   display: flex;
   flex-wrap: wrap;
@@ -60,7 +126,7 @@
 
 .next-round-when {
   margin: 0;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: var(--font-weight-strong);
 }
 

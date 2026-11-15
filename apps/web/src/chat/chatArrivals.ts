@@ -11,11 +11,14 @@
  *                 those that arrive while its panel is closed, and the docked chat's bar shows
  *                 the newest one's start. `HostChatSight`: a host's embedded chat (`hostEmbed`, the website's
  *                 frame, ./useHostChatFrame) is told whether its panel is in sight and hands
- *                 back the frame's own unread count (DECISIONS T237).
+ *                 back the frame's own unread count (DECISIONS T237). `ChatComposerSlot`: the
+ *                 builtin room offers its writing part to a screen that writes from elsewhere
+ *                 (the docked chat's phone bar, T363).
  * Depends on:     react
  * Used by:        ./ChatRoom, ./useHostChatFrame, ../round/FocusShell, ../match/ChatDock
  * Spec:           docs/spec/07-integration.md §2; Seasonal Entertainment docs/EMBED.md
  */
+import type { ChatRoomView } from '@smg/contracts';
 import { createContext } from 'react';
 
 // A message that arrived: its author's name and its text (null once a moderator deleted it).
@@ -34,3 +37,16 @@ export interface ChatSight {
 }
 
 export const HostChatSight = createContext<ChatSight | null>(null);
+
+// What a builtin room (./ChatRoom) hands to a screen that shows it from somewhere else, the
+// docked chat's phone bar (MG-N8): the room, its newest message of any kind (a system line
+// too), and its writing part, null while the viewer cannot write there; nothing until loaded.
+export interface ChatComposer {
+  readonly room: ChatRoomView;
+  readonly newest: ChatArrival | null;
+  readonly send: ((text: string) => Promise<string | null>) | null;
+}
+
+export const ChatComposerSlot = createContext<((composer: ChatComposer | null) => void) | null>(
+  null,
+);

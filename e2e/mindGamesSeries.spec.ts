@@ -5,7 +5,7 @@
  *
  * Responsibility: 09 §4 journey 39, in a match made by hand without bots, so every choice is
  *                 known in advance (pre-picks and one click) and so are the standings: three rounds with pause 5 s and short timings; the result
- *                 shows "Round 2 starts in 0:05" (O97); the host's Start now starts
+ *                 shows "Round 2 in 0:05" (O97, MG-N8); the host's Start now starts
  *                 round 2 at once; a second player who joins in the pause plays round 2 by a
  *                 pre-pick; with All on in round 3 (saved as the next round's settings) the host's
  *                 All scores 2; the standings add up over the rounds (host 1 + 1 + 2, player 1
@@ -75,7 +75,7 @@ test('journey 39: a series of three Mind Games rounds, the standings add up', as
       startNow: true,
     });
     // Round 1: Spring and Winter once each, both least chosen.
-    await expect(host.page.getByText(/Round 2 starts in 0:0\d/)).toBeVisible({
+    await expect(host.page.getByText(/Round 2 in 0:0\d/)).toBeVisible({
       timeout: 40_000,
     });
     await call(two, 'POST', `/matches/${m.code}/join`, {});
@@ -91,7 +91,7 @@ test('journey 39: a series of three Mind Games rounds, the standings add up', as
     const feed = host.page.locator('.round-main');
     await expect(feed).toContainText(/dev-player-2\s*chose Winter/, { timeout: 20_000 });
     await expect(feed).toContainText(/dev-player-3\s*chose Summer/, { timeout: 20_000 });
-    await expect(host.page.getByText(/Round 3 starts in 0:0\d/)).toBeVisible({ timeout: 40_000 });
+    await expect(host.page.getByText(/Round 3 in 0:0\d/)).toBeVisible({ timeout: 40_000 });
     // Round 3 opens by itself after the pause; then the match closes after its pause.
     await expect(host.page.getByText('All 3 rounds are played.')).toBeVisible({ timeout: 70_000 });
     // Round 2: Summer twice, Winter twice: both least chosen, everyone wins.

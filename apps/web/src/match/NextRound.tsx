@@ -6,7 +6,7 @@
  * Responsibility: beside the standings (../round/RoundStandings) in place of the waiting area's
  *                 column, which the docked page has no room for (./DockedMatch), without a
  *                 heading of its own (the design of MG-N7): joining or leaving (./JoinLeave);
- *                 in a series' pause one row "Round 3 starts in 0:11" with, for the host,
+ *                 in a series' pause one row "Round 3 in 0:11" with, for the host,
  *                 Start now, and the progress bar under it (./SeriesStatus);
  *                 outside a pause the waiting area's line on who starts the next round
  *                 (./WaitingArea); and the viewer's own panel of a phased game, its pre-picks

@@ -11,16 +11,39 @@
  *                 and the docked chat (./ChatDock) under it. The chat keeps its place in this
  *                 box whatever is above it, so it is mounted once and keeps its room and what
  *                 was typed between the round and the result (07 §2). The layout, desktop or
- *                 phone, is the round view's (../round/useRoundView, T141).
+ *                 phone, is the round view's (../round/useRoundView, T141); on a phone the
+ *                 content scrolls alone above the chat bar and the page is the visible viewport's
+ *                 height, so the bar stays above the on-screen keyboard (MG-N8, T364).
  * Depends on:     react, ../round/useRoundView, ./ChatDock, ./docked.css
  * Used by:        ./MatchPage
  * Spec:           docs/spec/02e-game-mind-games.md §11; docs/spec/07-integration.md §2
  */
-import type { ReactElement, ReactNode } from 'react';
+import { useEffect, type ReactElement, type ReactNode } from 'react';
 
 import { useRoundView } from '../round/useRoundView.js';
 import { ChatDock } from './ChatDock.js';
 import './docked.css';
+
+// On a phone the screen is the visible viewport: when the on-screen keyboard takes part of it,
+// the page shrinks with it, so the chat bar stays directly above the keyboard (T364). The app's
+// root is a screen high (../shell/shell.css `.one-screen`); its height follows the viewport
+// while this page is shown and is handed back after.
+function useVisibleHeight(phone: boolean): void {
+  useEffect(() => {
+    const vv = window.visualViewport;
+    const root = document.getElementById('root');
+    if (!phone || vv == null || root === null) return undefined;
+    const follow = (): void => {
+      root.style.height = `${String(Math.round(vv.height))}px`;
+    };
+    follow();
+    vv.addEventListener('resize', follow);
+    return () => {
+      vv.removeEventListener('resize', follow);
+      root.style.height = '';
+    };
+  }, [phone]);
+}
 
 export function DockedMatch(p: {
   readonly phase: 'live' | 'loading' | 'after';
@@ -29,6 +52,7 @@ export function DockedMatch(p: {
   readonly children: ReactNode;
 }): ReactElement {
   const view = useRoundView();
+  useVisibleHeight(view === 'phone');
   return (
     <div
       className="match-docked one-screen focus-mode"

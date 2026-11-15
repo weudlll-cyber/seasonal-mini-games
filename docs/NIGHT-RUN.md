@@ -2,6 +2,23 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Task MG-N8 (2026-11-15): the result and the phone chat bar built to the owner's reference (O99)
+
+Status. `feat/mind-games` is not merged. The reference is `docs/design/mind-games-screens.html` (committed unchanged; there was no older `mind-games-result.html`).
+
+| Part                                                                                          | State                                                                                 |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Desktop result 2A/2B: headline row, winners panel, cards without names, standings, next round | done                                                                                  |
+| Phone 3/4a/4b: one scrolling area, the chat bar with its own field                            | done                                                                                  |
+| Tests, journey 43, play-through, handover                                                     | open                                                                                  |
+| Needs the owner's word                                                                        | T367 (shrinking past the allowed list at 1280 × 720), T368 (the standings' tie-break) |
+
+### The build
+
+- **Mind Games:** new `WinnersPanel.tsx` (chips, at most 4/3/2 rows, "+N more" opening every winner, T359) and `winners.css`; `ResultPanel.tsx` the headline row, the winners, the cards without names; `result.css` rewritten to the reference (`display: contents`, so the platform's grid places the parts); `words.ts` `resultLine` "<place> season · N players" and `winnersTitle`; `PrefsPanel.tsx` and `prefs.css` one row per round, the short line, the box at the foot; `CardPlayers.tsx` removed.
+- **Platform:** `ResultScreen.tsx` one grid (headline row across, the left column, the next round on the right); `RoundStandings.tsx` the plain ranking in two columns, the own row in amber and scrolled into view, the phone's own line first (T361, T362); `resultOwn.css` rewritten; `useRowsFit.ts` and the "All N players" sheet removed; `SeriesStatus.tsx` "Round 2 in 0:21"; `ChatDock.tsx` and `chatDock.css` the phone bar in the layout with the room's own field (`Writer`, offered through `ChatComposerSlot`, T363), the sheet above it, the desktop strip 190/150 px; `DockedMatch.tsx` the visible viewport's height on a phone (T364); `docked.css` the reference's page padding, the phone's single scrolling area, the round view at its own height there; `ChatRoom.tsx` exports `Writer` and offers its room; `chatArrivals.ts` `ChatComposerSlot`.
+- **Removed:** `CardPlayers.tsx` and its styles, `useRowsFit.ts`, the standings' sheet and "All N players…", the old card and countdown styles, the info icon of the pre-picks, the phone chat's fixed sheet between the bars.
+
 ## Task MG-N7 (2026-11-15): the result and pause view rebuilt to the owner's measured design (O98)
 
 Status. `feat/mind-games` is not merged.

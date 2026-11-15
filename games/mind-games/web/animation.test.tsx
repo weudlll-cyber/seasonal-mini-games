@@ -146,7 +146,7 @@ describe('Mind Games winners light up (02e §11.1)', () => {
       vi.advanceTimersByTime(LIGHT_MS);
     });
     expect(lit()).toEqual([]);
-    expect(screen.getByText('✓ wins')).toBeTruthy();
+    expect(document.querySelector('.mg-wins')?.textContent).toBe('✓ WINNER');
   });
 
   it('lights nothing with reduced motion', () => {

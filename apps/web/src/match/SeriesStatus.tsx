@@ -10,7 +10,7 @@
  *                 button that ends the pause at once; its tooltip says so. Two forms with one
  *                 logic (`useSeriesPause`): the waiting area's line (`SeriesStatus`, Start next
  *                 round now) and, under a game's own result on the docked page, the countdown
- *                 "Round 3 starts in 0:11" with a bar that fills from the round's end to the
+ *                 "Round 3 in 0:11" (the reference of MG-N8) with a bar that fills from the round's end to the
  *                 next start, and Start now in one row with the words (`SeriesCountdown`, owner
  *                 decision O97 and the design of MG-N7); after the
  *                 last round "The match ends in 0:11", without a button. The server starts the
@@ -88,7 +88,7 @@ export function SeriesStatus({ match }: { readonly match: MatchDetailsView }): R
   );
 }
 
-// The pause's countdown under a game's own result: "Round 3 starts in 0:11" with the host's
+// The pause's countdown under a game's own result: "Round 3 in 0:11" with the host's
 // Start now in one row, the bar under it; null outside a pause. `since` is the end of the
 // round just played, where the bar starts.
 export function SeriesCountdown(p: {
@@ -101,9 +101,7 @@ export function SeriesCountdown(p: {
   const share = length <= 0 ? 0 : Math.min(1, Math.max(0, 1 - s.leftMs / length));
   // The seconds left rounded up, as the waiting area's line counts them.
   const left = clockText(s.leftMs + 999);
-  const words = s.last
-    ? `The match ends in ${left}`
-    : `Round ${String(s.played + 1)} starts in ${left}`;
+  const words = s.last ? `The match ends in ${left}` : `Round ${String(s.played + 1)} in ${left}`;
   // One row, the words and the host's button, then the bar: no block of its own (MG-N7).
   return (
     <>

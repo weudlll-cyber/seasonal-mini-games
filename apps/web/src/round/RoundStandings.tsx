@@ -1,86 +1,66 @@
 /**
  * @file   apps/web/src/round/RoundStandings.tsx
  * @module web/round
- * @brief  The match standings under a game's own result: Player · This round · Total.
+ * @brief  The match standings under a game's own result: a plain ranking by the match total.
  *
- * Responsibility: a panel beside the next round's box (owner design of 2026-11-15, task MG-N7):
- *                 the title "Standings after round 3", then the match's players in the
- *                 server's rank order (02 §9), each with the points of the round just ended
- *                 ("—" for a player not in it) and the match total. It shows as many rows as
- *                 fit the panel's height, never a scrollbar: the leaders first and the viewer's
- *                 own row always, highlighted with "(you)"; on a phone the top three and the
- *                 viewer (T358). "All N players…" opens the whole list as a sheet over the page,
- *                 which scrolls inside itself; Close or Escape closes it and hands the focus
- *                 back. The whole list stays in the page while hidden, for a reader and the
- *                 tests. The full table with ranks and wins stays on the match summary
- *                 (./MatchStandings).
- * Depends on:     react, @smg/contracts (MatchStandingView, PlayerResultView), @smg/ui
- *                 (useDisclosure), @smg/game-sdk (formatNumber), ./PlayerName, ./useRowsFit
+ * Responsibility: the owner's reference of 2026-11-15 (MG-N8, O99): "Standings after round 3"
+ *                 with the number of players beside it, then every player in the server's rank
+ *                 and order (02 §9; the client ranks nothing), each row the place, the name (cut
+ *                 with an ellipsis, whole in its tooltip), this round's points ("+1", "0", "—"
+ *                 for a player not in it) and the total; the viewer's row in amber, nothing in a
+ *                 winner's colour. On a desktop the rows run in two columns in a panel that
+ *                 scrolls inside itself when they do not fit, opening with the viewer's row in
+ *                 view (./resultOwn.css). On a phone the panel is part of the page, without a
+ *                 height or a scroll of its own, and starts with the viewer's own line ("You ·
+ *                 place 37", T361) above every row. The full table with wins stays on the match
+ *                 summary (./MatchStandings).
+ * Depends on:     react, @smg/contracts (MatchStandingView, PlayerResultView),
+ *                 @smg/game-sdk (formatNumber), ./PlayerName
  * Used by:        ./ResultScreen
  * Spec:           docs/spec/02e-game-mind-games.md §9; docs/spec/02-game-guess-the-number.md §9
  */
 import type { MatchStandingView, PlayerResultView } from '@smg/contracts';
 import { formatNumber } from '@smg/game-sdk';
-import { useDisclosure } from '@smg/ui';
-import type { ReactElement } from 'react';
+import { useLayoutEffect, useRef, type ReactElement } from 'react';
 
 import { PlayerName } from './PlayerName.js';
-import { useRowsFit } from './useRowsFit.js';
 
-interface TableProps {
-  readonly rows: readonly MatchStandingView[];
-  readonly round: ReadonlyMap<string, number>;
-  readonly viewerKey: string | null;
-  readonly testId: string;
-}
+// This round's points as the reference writes them: "+1", "0", "—" when not in the round.
+const roundText = (points: number | undefined): string =>
+  points === undefined ? '—' : points > 0 ? `+${formatNumber(points)}` : '0';
 
-// The leaders that fit, the viewer's own row in place of the last when it is lower down.
-function rowsShown(
-  standings: readonly MatchStandingView[],
-  viewerKey: string | null,
-  fit: number,
-): readonly MatchStandingView[] {
-  const top = standings.slice(0, fit);
-  const own = standings.find((s) => s.playerKey === viewerKey);
-  if (own === undefined || top.includes(own) || fit === 0) return top;
-  return [...top.slice(0, fit - 1), own];
-}
-
-function StandingsTable(p: TableProps): ReactElement {
+function Row(p: {
+  readonly s: MatchStandingView;
+  readonly points: number | undefined;
+  readonly you: boolean;
+}): ReactElement {
   return (
-    <table className="round-table" data-testid={p.testId}>
-      <caption className="smg-visually-hidden">Match standings</caption>
-      <thead>
-        <tr>
-          <th scope="col">Player</th>
-          <th scope="col" className="round-col-num">
-            This round
-          </th>
-          <th scope="col" className="round-col-num">
-            Total
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        {p.rows.map((s) => {
-          const you = s.playerKey === p.viewerKey;
-          const points = p.round.get(s.playerKey);
-          return (
-            <tr key={s.playerKey} className={you ? 'round-you' : undefined}>
-              <td>
-                <span className="round-player">
-                  <PlayerName name={s.name} steps={s.steps} />
-                  {you ? <span className="round-you-mark"> (you)</span> : null}
-                </span>
-              </td>
-              <td>{points === undefined ? '—' : formatNumber(points)}</td>
-              <td>{formatNumber(s.points)}</td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+    <li className="round-standing" data-own={p.you}>
+      <span className="round-standing-place">{formatNumber(p.s.rank)}</span>
+      <span className="round-standing-name" title={p.s.name}>
+        {p.you ? 'You' : <PlayerName name={p.s.name} steps={p.s.steps} />}
+      </span>
+      <span className="round-standing-round">{roundText(p.points)}</span>
+      <span className="round-standing-total">{formatNumber(p.s.points)}</span>
+    </li>
   );
+}
+
+// The viewer's row in view once, when the standings first show (a desktop's panel scrolls).
+function useOwnInView(shown: boolean) {
+  const box = useRef<HTMLElement>(null);
+  const done = useRef(false);
+  useLayoutEffect(() => {
+    const el = box.current;
+    const own = el?.querySelector<HTMLElement>('.round-standing[data-own="true"]');
+    if (!shown || done.current || el == null || own == null) return;
+    done.current = true;
+    if (el.scrollHeight <= el.clientHeight) return;
+    // The panel scrolls, never the page: its own scrollTop, the row in the middle (the panel
+    // is the row's offset parent, ./resultOwn.css).
+    el.scrollTop = own.offsetTop - el.clientHeight / 2;
+  }, [shown]);
+  return box;
 }
 
 export function RoundStandings(p: {
@@ -90,53 +70,44 @@ export function RoundStandings(p: {
   // The round just ended, by its number in the match; null outside a series.
   readonly round: number | null;
 }): ReactElement | null {
-  const sheet = useDisclosure();
-  const fit = useRowsFit<HTMLDivElement>(p.standings.length > 0);
+  const box = useOwnInView(p.standings.length > 0);
   if (p.standings.length === 0) return null;
   const round = new Map(p.results.map((r) => [r.playerId, r.points]));
-  const shown = rowsShown(p.standings, p.viewerKey, fit.rows);
+  const own = p.standings.find((s) => s.playerKey === p.viewerKey);
   const title = p.round === null ? 'Standings' : `Standings after round ${String(p.round)}`;
-  const table = { round, viewerKey: p.viewerKey };
+  const n = p.standings.length;
   return (
     <section
+      ref={box}
       className="round-standings"
       aria-labelledby="round-standings-title"
       data-testid="round-standings"
-      onKeyDown={sheet.onKeyDown}
     >
-      <h2 id="round-standings-title">{title}</h2>
-      {/* The rows that fit this box's height; the box never scrolls. */}
-      <div className="round-standings-rows" ref={fit.ref}>
-        <StandingsTable {...table} rows={shown} testId="match-standings" />
-      </div>
-      {shown.length >= p.standings.length ? null : (
-        <button
-          ref={sheet.button}
-          type="button"
-          className="round-standings-more"
-          aria-expanded={sheet.open}
-          aria-controls={sheet.panelId}
-          data-testid="all-standings"
-          onClick={sheet.toggle}
-        >
-          All {p.standings.length} players…
-        </button>
+      <header className="round-standings-head">
+        <h2 id="round-standings-title">{title}</h2>
+        <span className="smg-muted">
+          {formatNumber(n)} {n === 1 ? 'player' : 'players'}
+        </span>
+      </header>
+      {/* The phone's own line above every row (T361); a desktop shows the row in place. */}
+      {own === undefined ? null : (
+        <p className="round-standings-own" data-testid="own-standing">
+          <span className="round-standing-place">{formatNumber(own.rank)}</span>
+          <span className="round-standing-name">You · place {formatNumber(own.rank)}</span>
+          <span className="round-standing-round">{roundText(round.get(own.playerKey))}</span>
+          <span className="round-standing-total">{formatNumber(own.points)}</span>
+        </p>
       )}
-      <div
-        id={sheet.panelId}
-        className="round-standings-sheet"
-        role="dialog"
-        aria-label={title}
-        hidden={!sheet.open}
-      >
-        <header className="focus-panel-head">
-          <h2>{title}</h2>
-          <button type="button" className="smg-btn" onClick={sheet.close}>
-            Close
-          </button>
-        </header>
-        <StandingsTable {...table} rows={p.standings} testId="match-standings-all" />
-      </div>
+      <ol className="round-standings-rows" aria-label={title} data-testid="match-standings">
+        {p.standings.map((s) => (
+          <Row
+            key={s.playerKey}
+            s={s}
+            points={round.get(s.playerKey)}
+            you={s.playerKey === p.viewerKey}
+          />
+        ))}
+      </ol>
     </section>
   );
 }

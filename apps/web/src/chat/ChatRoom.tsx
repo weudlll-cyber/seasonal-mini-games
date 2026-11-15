@@ -12,10 +12,12 @@
  *                 sent (T102), for viewers with chat.send (guests read only); a hint when the room
  *                 is locked or the viewer may not write now; the server's refusal of a message
  *                 in a plain sentence under the field. Each live message by another player is
- *                 told to the screen around it (./chatArrivals: the round's unread badge).
+ *                 told to the screen around it (./chatArrivals: the round's unread badge); a
+ *                 screen that writes from elsewhere gets the room's writing part, which it shows
+ *                 with this file's `Writer` (the docked chat's phone bar, T363).
  * Depends on:     react, @smg/contracts (views), ../round/PlayerName, ../shell/session,
  *                 ./chatArrivals, ./ModActions, ./useChat
- * Used by:        ./ChatPanel
+ * Used by:        ./ChatPanel, ../match/ChatDock (Writer)
  * Spec:           docs/spec/07-integration.md §2; Bingo 06 §7, Bingo 03 §12
  */
 import type { ChatMessageView, ChatRoomView } from '@smg/contracts';
@@ -30,7 +32,7 @@ import {
 
 import { PlayerName } from '../round/PlayerName.js';
 import { useSession } from '../shell/session.js';
-import { ChatArrivals } from './chatArrivals.js';
+import { ChatArrivals, ChatComposerSlot } from './chatArrivals.js';
 import { LineActions } from './ModActions.js';
 import { useChatRoom, type ChatTarget } from './useChat.js';
 
@@ -59,9 +61,11 @@ function Line(p: {
   );
 }
 
-function Writer(p: {
+export function Writer(p: {
   readonly room: ChatRoomView;
   readonly send: (text: string) => Promise<string | null>;
+  // The field's placeholder; the room's own is "Write a message".
+  readonly placeholder?: string;
 }): ReactElement {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
@@ -94,7 +98,7 @@ function Writer(p: {
         <input
           className="smg-input"
           aria-label="Message"
-          placeholder="Write a message"
+          placeholder={p.placeholder ?? 'Write a message'}
           maxLength={300}
           value={text}
           data-testid="chat-input"
@@ -123,6 +127,17 @@ export function ChatRoom({ target }: { readonly target: ChatTarget }): ReactElem
   const { room, messages, problem, send } = useChatRoom(target, (m) => {
     if (m.kind === 'player' && m.author !== me) arrived?.(m);
   });
+  const offer = useContext(ChatComposerSlot);
+  const writes = can('chat.send');
+  // A screen that shows the room from elsewhere gets its newest line and writing part (T363).
+  const newest = messages.at(-1) ?? null;
+  useEffect(() => {
+    if (offer === null) return undefined;
+    offer(room === null ? null : { room, newest, send: writes ? send : null });
+    return () => {
+      offer(null);
+    };
+  }, [offer, room, newest, send, writes]);
   const list = useRef<HTMLOListElement>(null);
   // Follow the newest message at the bottom.
   useEffect(() => {
@@ -131,7 +146,6 @@ export function ChatRoom({ target }: { readonly target: ChatTarget }): ReactElem
   }, [messages]);
   if (problem !== null) return <p className="smg-muted">{problem}</p>;
   if (room === null) return <p className="smg-muted">Loading the chat…</p>;
-  const writes = can('chat.send');
   return (
     <>
       <ol ref={list} className="chat-list" data-testid="chat-messages" aria-live="polite">

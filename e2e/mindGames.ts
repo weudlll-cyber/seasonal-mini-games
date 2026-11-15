@@ -80,24 +80,26 @@ export async function roundIdOf(p: Person, code: string): Promise<string> {
 const who = (text: string) =>
   /\(you\)|^You\b/.test(text) ? 'you' : text.replace(/\s*\+\d+$/, '').trim();
 
-// The points by player of the result's option cards (each card's whole list of players, which
-// "+N more" opens; no "+N" is 0), of the standings' "This round" (their second cell) and of the
-// match total (their third cell), from the whole standings the sheet holds (T340, O97, MG-N7).
-// Both lists are in the page while closed: read by their text, not their rendering.
+// The points by player of the result's winners (the whole list "+N more" opens; a player not
+// in it won nothing), of the standings' "This round" ("+1", "0"; "—" not in the round) and of
+// the match total, every row of the standings (T340, O97, MG-N8). The winners' list is in the
+// page while closed: read by its text, not its rendering.
 export async function resultPoints(page: Page) {
-  const cards: Record<string, number> = {};
+  const winners: Record<string, number> = {};
   const lines = await page
-    .locator('[data-testid="mind-result"] .mg-option-players li')
+    .locator('[data-testid="winners"] .mg-winners-all li')
     .evaluateAll((els) => els.map((e) => e.textContent.trim()));
-  for (const text of lines) cards[who(text)] = Number(/\+(\d+)$/.exec(text)?.[1] ?? 0);
+  for (const text of lines) winners[who(text)] = Number(/\+(\d+)$/.exec(text)?.[1] ?? 0);
   const rows = await page
-    .locator('[data-testid="match-standings-all"] tbody tr')
-    .evaluateAll((trs) =>
-      trs.map((tr) => [...tr.querySelectorAll('td')].map((td) => td.textContent.trim())),
-    );
-  const column = (i: number) =>
-    Object.fromEntries(rows.map((r) => [who(r[0] ?? ''), Number(r[i])]));
-  return { cards, table: column(1), standings: column(2) };
+    .locator('[data-testid="match-standings"] li')
+    .evaluateAll((lis) => lis.map((li) => [...li.children].map((x) => x.textContent.trim())));
+  const round: Record<string, number> = {};
+  const total: Record<string, number> = {};
+  for (const [, name = '', r = '', t = ''] of rows) {
+    if (r !== '—') round[who(name)] = Number(r.replace('+', ''));
+    total[who(name)] = Number(t);
+  }
+  return { winners, round, total };
 }
 
 // A choice sent through the HTTP fallback, whatever its answer.

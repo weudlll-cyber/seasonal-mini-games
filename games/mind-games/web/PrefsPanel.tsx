@@ -3,13 +3,15 @@
  * @module games/mind-games/web
  * @brief  "Your pre-picks" in the waiting area: one choice or none per round, and the box.
  *
- * Responsibility: 02e §7 and §11, laid out as the design of MG-N7: the title "Your pre-picks"
- *                 with a small info icon whose tooltip and accessible name hold "Pre-picks play
- *                 for you when you are away. If you are here, you can still switch.", the box
- *                 "Hide my switches" (which every pre-pick carries into its round, 02e §6.3,
- *                 T309) at the right of that line; under it one select per round still to play
- *                 ("Round 4" above "none, Spring, Summer, Autumn, Winter, All"), each with its
- *                 tooltip, in one row of up to six. Before the series' first round the
+ * Responsibility: 02e §7 and §11, laid out as the owner's reference of 2026-11-15 (MG-N8):
+ *                 "Your pre-picks" with "play for you while you are away" beside it (the whole
+ *                 sentence, "Pre-picks play for you when you are away. If you are here, you can
+ *                 still switch.", its tooltip); one row per round still to play, its label at
+ *                 the left and its select at the right ("none, Spring, Summer, Autumn, Winter,
+ *                 All"), each with its tooltip; at the foot the box "Hide my switches", which
+ *                 every pre-pick carries into its round (02e §6.3, T309). On a phone the rounds
+ *                 two to a row, the label above its select (./prefs.css). Before the series'
+ *                 first round the
  *                 number of rounds is the setting's default. A change is saved 2.1 s after the
  *                 last one (./useSavedPrefs); a refusal is said in words. The value is the player's own:
  *                 the platform shows this panel to them alone.
@@ -26,7 +28,7 @@ import { useSavedPrefs } from './useSavedPrefs.js';
 
 const CHOICES: readonly Choice[] = ['spring', 'summer', 'autumn', 'winter', 'all'];
 
-// What pre-picks do, in the info icon's tooltip and accessible name (the design of MG-N7).
+// What pre-picks do, whole, in the tooltip of the title's short line (the reference of MG-N8).
 export const ABOUT =
   'Pre-picks play for you when you are away. If you are here, you can still switch.';
 
@@ -91,28 +93,16 @@ export function PrefsPanel(p: PrefsPanelProps): ReactElement | null {
     change({ ...draft, picks });
   };
   if (left <= 0) return null;
-  // One row of selects, at most six to a row (three on a phone, ./prefs.css).
-  const cols = { ['--mg-cols' as string]: String(Math.min(left, 6)) };
   return (
     <section className="mg-prefs" aria-labelledby="mg-prefs-title">
-      <div className="mg-prefs-head">
-        <h3 id="mg-prefs-title">Your pre-picks</h3>
-        <span className="mg-info" role="img" aria-label={ABOUT} title={ABOUT} tabIndex={0}>
-          i
+      <p className="mg-prefs-head">
+        <strong id="mg-prefs-title">Your pre-picks</strong>{' '}
+        <span className="mg-prefs-what" title={ABOUT}>
+          play for you while you are away
         </span>
-        {note === null ? null : (
-          <p role="status" className="mg-prefs-note">
-            {note}
-          </p>
-        )}
-        <HideBox
-          hide={draft.hide ?? false}
-          set={(hide) => {
-            change({ ...draft, hide });
-          }}
-        />
-      </div>
-      <div className="mg-prefs-rounds" style={cols}>
+      </p>
+      {/* One row per round still to play; only this list scrolls when it does not fit. */}
+      <div className="mg-prefs-rounds">
         {Array.from({ length: left }, (_, i) => p.played + i + 1).map((round) => (
           <RoundPick
             key={round}
@@ -122,6 +112,17 @@ export function PrefsPanel(p: PrefsPanelProps): ReactElement | null {
           />
         ))}
       </div>
+      {note === null ? null : (
+        <p role="status" className="mg-prefs-note">
+          {note}
+        </p>
+      )}
+      <HideBox
+        hide={draft.hide ?? false}
+        set={(hide) => {
+          change({ ...draft, hide });
+        }}
+      />
     </section>
   );
 }

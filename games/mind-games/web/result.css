@@ -1,39 +1,45 @@
 /*
  * @file   games/mind-games/web/result.css
  * @module games/mind-games/web
- * @brief  Styles of the Seasonal Mind Games result: the headline and the option cards in one row.
+ * @brief  Styles of the Seasonal Mind Games result: the headline row, the winners, the cards.
  *
- * Responsibility: the owner's design of 2026-11-15 in its measures at 1440 × 900 (task MG-N7):
- *                 the headline 34 px bold with its line 17 px muted under it; the cards one row
- *                 of equal columns 16 px apart, each a centred stack (gap 8 px, padding
- *                 18 px 12 px, radius 24 px, the surface colour): icon 56 px, name 19 px bold,
- *                 count 44 px bold, the tag, the players' line 14 px. A winner has a 4 px frame
- *                 and a 32 px glow in its season's colour (All's in the text colour) and the
- *                 pill "✓ wins" (15 px bold, green, dark text); the others a 2 px frame and
- *                 opacity 0.6 with their reason 13 px muted. No scrollbar in a card: the players'
- *                 whole list is a popover (./CardPlayers). On a short desktop (the 1280 × 720
- *                 window) the icon and count shrink first, then the padding, then the headline
- *                 (T357); on a phone the card is icon 32 px, name 12 px, count 26 px and "+N".
+ * Responsibility: the owner's reference of 2026-11-15 (docs/design/mind-games-screens.html,
+ *                 screens 2A, 2B, 4a; MG-N8) in its measures at 1440 × 900. The result's box is
+ *                 no box of its own (`display: contents`): its three parts are the platform's
+ *                 grid items (../../../apps/web/src/round/resultOwn.css). The headline 36 px
+ *                 with its line 16 px muted beside it (the winners panel is ./winners.css); the
+ *                 cards one
+ *                 row of equal columns 12 px apart: icon, name and count on one line, then the
+ *                 "✓ WINNER" pill or the reason at 4.5:1; a winner lifted with a gradient of its
+ *                 season's colour, a 4 px frame, a green ring and a glow. The green is the
+ *                 reference's #4acb8a in both themes; its title text, on the light page, the
+ *                 theme's success text colour (T360). At 1280 × 720 the headline is 28 px and the
+ *                 card's icon and count 28 px (T359); on a phone (the platform's rule) the
+ *                 headline 26 px, cards with icon 28 px, name 12 px, count 24 px and a "✓" pill.
  * Spec:           docs/spec/02e-game-mind-games.md §9, §11
  */
 .mg-result {
-  --mg-icon: 56px;
-  --mg-count: 44px;
-  --mg-pad: 18px 12px;
-  --mg-head: 34px;
-  /* The design's win pill: the dark theme's success green with dark text, in both themes. */
-  --mg-win-bg: #4acb8a;
-  --mg-win-text: #0a1233;
-  display: grid;
-  gap: 16px;
-  min-width: 0;
+  --mg-icon: 36px;
+  --mg-count: 36px;
+  --mg-head: 36px;
+  --mg-win: #4acb8a;
+  --mg-win-ink: #0a1233;
+  --mg-win-title: var(--mg-win);
+  display: contents;
 }
 
+:root:not([data-theme='dark']) .mg-result {
+  --mg-win-title: var(--color-success-text);
+}
+
+/* The headline row: the headline, the line beside it ("Every line" is the platform's). */
 .mg-result-head {
-  /* Room at the right of line 1 for the platform's "Every line" button. */
-  padding-right: 7.5rem;
-  display: grid;
-  gap: 2px;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 20px;
+  padding-right: 8rem;
 }
 
 .mg-result-head h1 {
@@ -46,64 +52,44 @@
 .mg-result-head p {
   margin: 0;
   color: var(--color-text-muted);
-  font-size: 17px;
+  font-size: 16px;
 }
 
-/* One row, always: one equal column per option. */
+/* The cards: one row of equal columns. */
 .mg-options {
   display: grid;
   grid-template-columns: repeat(var(--mg-options), minmax(0, 1fr));
-  gap: 16px;
+  gap: 12px;
   margin: 0;
-  padding: 0;
+  padding: 4px 0 0;
   list-style: none;
 }
 
 .mg-option {
-  position: relative;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
-  padding: var(--mg-pad);
-  background: var(--color-surface);
-  border: 2px solid var(--mg-color);
-  border-radius: 24px;
-  text-align: center;
+  padding: 14px 16px;
+  border: 2px solid var(--color-border);
+  border-radius: 20px;
+  background: color-mix(in srgb, var(--color-surface) 45%, transparent);
 }
 
-.mg-option[data-choice='all'] {
-  border-color: var(--color-border-strong);
-}
-
-/* A winner: a 4 px frame and a glow in its colour; All, without a season colour, in the text
-   colour. No tint beyond the glow. */
-.mg-option[data-wins='true'] {
-  border-width: 4px;
-  box-shadow: 0 0 32px var(--mg-color);
-}
-
-.mg-option[data-choice='all'][data-wins='true'] {
-  border-color: var(--color-text);
-  box-shadow: 0 0 32px var(--color-text);
-}
-
-.mg-option[data-wins='false'] {
-  opacity: 0.6;
-}
-
-/* A card whose players' list is open lies over its neighbours, at full strength. */
-.mg-option:has(.mg-names-more[aria-expanded='true']) {
-  z-index: 30;
-  opacity: 1;
+.mg-card-top {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .mg-option .mg-icons {
+  flex: none;
+  width: var(--mg-icon);
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 2px;
+  gap: 1px;
 }
 
 .mg-option .mg-icons img {
@@ -111,103 +97,76 @@
   height: var(--mg-icon);
 }
 
-/* All's four icons in a square of the same size. */
-.mg-option[data-choice='all'] .mg-icons {
-  width: var(--mg-icon);
+/* Five cards (All on): a little tighter, so every name stays whole beside its count (T365). */
+.mg-options[data-count='5'] .mg-option {
+  padding-inline: 10px;
 }
 
+.mg-options[data-count='5'] .mg-card-top {
+  gap: 6px;
+}
+
+.mg-options[data-count='5'] .mg-name {
+  font-size: 16px;
+}
+
+/* All's four icons in a square of the same size. */
 .mg-option[data-choice='all'] .mg-icons img {
   width: calc(var(--mg-icon) / 2 - 1px);
   height: calc(var(--mg-icon) / 2 - 1px);
 }
 
 .mg-option .mg-name {
-  font-size: 19px;
-  font-weight: var(--font-weight-strong);
-  overflow-wrap: normal;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 18px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .mg-option-count {
+  flex: none;
+  margin-left: auto;
+  white-space: nowrap;
   font-size: var(--mg-count);
   font-weight: var(--font-weight-heading);
   line-height: 1;
 }
 
+.mg-option-why {
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
 .mg-wins {
   padding: 4px 14px;
   border-radius: 999px;
-  background: var(--mg-win-bg);
-  color: var(--mg-win-text);
-  font-size: 15px;
+  background: var(--mg-win);
+  color: var(--mg-win-ink);
+  font-size: 16px;
   font-weight: var(--font-weight-strong);
+  letter-spacing: 0.04em;
   white-space: nowrap;
 }
 
-.mg-option-why {
-  color: var(--color-text-muted);
-  font-size: 13px;
+/* A winner: lifted, a gradient from its season's colour, its frame, a green ring and a glow;
+   All, without a season colour, in the text colour. */
+.mg-option[data-wins='true'] {
+  --mg-glow: var(--mg-color);
+  border: 4px solid var(--mg-glow);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--mg-glow) 33%, transparent),
+    color-mix(in srgb, var(--color-surface) 90%, transparent) 70%
+  );
+  box-shadow:
+    0 0 0 3px var(--mg-win),
+    0 0 34px var(--mg-glow);
+  transform: translateY(-4px);
 }
 
-/* The players' line: three names, then "+N more" (./CardPlayers), one line: the names give way
-   with an ellipsis, "+N more" stays whole (T356). */
-.mg-card-players {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  column-gap: 0.3rem;
-  font-size: 14px;
-}
-
-.mg-names {
-  min-width: 0;
-  margin: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}
-
-.mg-names-more {
-  flex: none;
-  white-space: nowrap;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--color-text);
-  font: inherit;
-  font-weight: var(--font-weight-strong);
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.mg-more-phone,
-.mg-card-players[data-rest='false'] .mg-names-more {
-  display: none;
-}
-
-/* The whole list: over the card's foot, opaque as menus are, never a scrollbar in the card. */
-.mg-option-players {
-  position: absolute;
-  z-index: 20;
-  top: calc(100% - 0.5rem);
-  left: 50%;
-  min-width: 10rem;
-  max-height: 14rem;
-  margin: 0;
-  padding: var(--space-1) var(--space-2);
-  overflow-y: auto;
-  transform: translateX(-50%);
-  list-style: none;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-raised);
-  font-size: 14px;
-  text-align: start;
-}
-
-.mg-option-players[hidden] {
-  display: none;
+.mg-option[data-choice='all'][data-wins='true'] {
+  --mg-glow: var(--color-text);
 }
 
 .mg-history {
@@ -215,83 +174,78 @@
   padding-left: 1.5em;
 }
 
-/* A short desktop window: first the icon and the count, then the padding, then the headline
-   (T357). */
-@media (min-width: 900px) and (max-height: 880px) {
+/* A desktop window under 760 px high: the headline, the card's icon and count at 28 px
+   (the owner's allowed shrinking, T359). */
+@media (min-width: 900px) and (orientation: landscape) and (max-height: 759px) {
   .mg-result {
-    --mg-icon: 40px;
-    --mg-count: 32px;
+    --mg-icon: 28px;
+    --mg-count: 28px;
+    --mg-head: 28px;
   }
 }
 
-@media (min-width: 900px) and (max-height: 800px) {
-  .mg-result {
-    --mg-pad: 10px 12px;
-  }
-}
-
-@media (min-width: 900px) and (max-height: 760px) {
-  .mg-result {
-    --mg-head: 26px;
-    gap: 10px;
-  }
-
-  /* Past the design's own steps (T357): the stack's gaps tighter. */
-  .mg-option {
-    gap: 4px;
-  }
-}
-
-/* The phone (the platform's layout): icon 32 px, name 12 px, count 26 px, the tag small,
-   the players as "+N" only. */
+/* The phone (the platform's layout, screen 4a). */
 @media (max-width: 899px), (orientation: portrait) {
   .mg-result {
-    --mg-icon: 32px;
-    --mg-count: 26px;
-    --mg-pad: 8px 2px;
+    --mg-icon: 28px;
+    --mg-count: 24px;
     --mg-head: 26px;
-    gap: 10px;
+  }
+
+  .mg-result-head {
+    display: grid;
+    gap: 2px;
   }
 
   .mg-result-head p {
-    font-size: 15px;
+    font-size: 14px;
   }
 
   .mg-options {
     gap: 6px;
+    padding: 0;
   }
 
   .mg-option {
+    align-items: center;
     gap: 4px;
-    border-radius: 16px;
+    padding: 8px 2px;
+    border-radius: 14px;
+  }
+
+  /* Icon, name and count stacked. */
+  .mg-card-top {
+    flex-direction: column;
+    gap: 4px;
   }
 
   .mg-option .mg-name {
     font-size: 12px;
   }
 
-  .mg-wins {
-    padding: 2px 6px;
-    font-size: 12px;
+  .mg-option-count {
+    margin-left: 0;
   }
 
   .mg-option-why {
     font-size: 11px;
+    text-align: center;
   }
 
-  .mg-names,
-  .mg-more-wide {
+  .mg-wins {
+    padding: 1px 10px;
+    font-size: 13px;
+  }
+
+  .mg-wins-word {
     display: none;
   }
 
-  .mg-more-phone,
-  .mg-card-players[data-rest='false'] .mg-names-more {
-    display: inline;
-  }
-
-  /* "+N" is a tap target of its own on a phone. */
-  .mg-names-more {
-    min-width: var(--hit-target);
-    min-height: var(--hit-target);
+  .mg-option[data-wins='true'] {
+    border-width: 3px;
+    box-shadow:
+      0 0 0 2px var(--mg-win),
+      0 0 18px var(--mg-glow);
+    transform: none;
   }
 }
