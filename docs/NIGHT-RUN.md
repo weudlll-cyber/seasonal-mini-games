@@ -6,12 +6,12 @@
 
 Status. `feat/mind-games` is not merged.
 
-| Part                                                                     | State                   |
-| ------------------------------------------------------------------------ | ----------------------- |
-| The rebuild (headline, cards, standings, next round, pre-picks, fitting) | done                    |
-| "replay" in the total's help                                             | done                    |
-| Tests, play-through, handover                                            | open                    |
-| Needs the owner's word                                                   | the proposals T355–T358 |
+| Part                                                                     | State                                               |
+| ------------------------------------------------------------------------ | --------------------------------------------------- |
+| The rebuild (headline, cards, standings, next round, pre-picks, fitting) | done                                                |
+| "replay" in the total's help                                             | done                                                |
+| Tests, play-through, handover                                            | done; CI on the final head reported in the handover |
+| Needs the owner's word                                                   | the proposals T355–T358                             |
 
 ### The rebuild
 
@@ -19,6 +19,23 @@ Status. `feat/mind-games` is not merged.
 - **Platform:** `RoundStandings.tsx` "Standings after round N", the rows that fit (new `useRowsFit.ts`), "All N players…" as a sheet (T358); `ResultScreen.tsx` no panel around the game's part, the round's number passed through `RoundScreen` from `MatchPage`; `NextRound.tsx` no heading; `SeriesStatus.tsx` the countdown as the box's first row with a blue Start now and the bar; `resultOwn.css` the panels; `docked.css` the row, button and bar in place of the old countdown block; `chatDock.css` 150 px under 760 px.
 - **Removed:** the panels' inner scrolling and the standings' "Top 5" toggle, the old countdown block and its `match-countdown` styles, the cards' scrolling players' list and their grid layout, the pre-picks' sentence line (now the icon's tooltip).
 - **Found on the way:** the new players' button first reused the class `mg-more`, which the flight band's "+8" tag already has (absolutely placed); renamed `mg-names-more`. The docked result had kept `match.css`'s `align-items: start`, which shrank it to its content's width.
+
+### Tests and the play-through
+
+- **Tests:** Mind Games 82/82 and the web's round and match tests 143/143 while working; `pnpm verify` once: green (835 + 99 + 171). Journeys 38–41 in Chromium: 4/5 at first (journey 38 still read the old result line), fixed (`99d86f7`), journey 38 green again.
+- **Fit at 1280 × 720:** every shrink step applies (icon 40 px, count 32 px, padding 10 × 12 px, headline 26 px, the tighter gaps) and the chat is 150 px; the headline, the five cards, the standings (2 rows: the leader and the viewer, or the viewer and the next, with "All N players…") and the next round's box with every select show, and nothing scrolls. At 1920 × 1080 the chat is 180 px and the standings show all 5 rows.
+- **Play-through** (`tmp/mg7-play.mjs`, the log in `reports/mg-n7/play-through.txt`): seed `maple`, 4 bots, total 40 s (delay following, 10 s), 3 rounds, pause 25 s, All on in round 1, winner place 2 in round 2; the badge "Mini Games · dev · feat/mind-games · 99d86f7 · 2026-11-15". On every result at 1280 × 720 and 1920 × 1080 in light and dark: no page, card, standings or next-round box scrolls and every pre-pick select shows; on the phone the cards and the boxes never scroll (the result area does, 135 px, above the chat bar).
+  - **Round 1** (All on): "Spring, Summer and All win!" / "Least chosen season · 3 players win 1 point · +2 for All". Cards Spring 1 (bot-02 +1), Summer 1 (bot-01 +1), Autumn 2, not least chosen (bot-03, bot-04), Winter 0, All 1 (You +2). Standings after round 1: you 2 | 2, bot-01 1 | 1, bot-02 1 | 1, bot-03 0 | 0, bot-04 0 | 0.
+  - **Round 2** (winner place 2): "Spring and Autumn win!" / "2nd least chosen season · 4 players win 1 point". Cards Spring 2 (You +1, bot-02 +1), Summer 1, not 2nd least chosen (bot-01), Autumn 2 (bot-03 +1, bot-04 +1), Winter 0. Totals you 3, bot-02 2, bot-01 1, bot-03 1, bot-04 1.
+  - **Round 3:** "Autumn and Winter win!" / "Least chosen season · 2 players win 1 point". Cards Spring 3, not least chosen (You, bot-04, bot-03), Summer 0, Autumn 1 (bot-01 +1), Winter 1 (bot-02 +1). Totals bot-02 3, you 3, bot-01 2, bot-03 1, bot-04 1.
+  - **Summary:** bot-02 3 (3 wins), dev-host 3 (2), bot-01 2 (2), bot-03 1 (1), bot-04 1 (1); every count equals its players, every "+N" the standings' This round, every total and the summary the rounds' sums; the chat kept its typed text from the round to the result; no page errors.
+- **Screenshots:** 5 (the result at 1280 × 720 light and dark, at 1920 × 1080, on the phone, the summary) on the orphan branch `shots/mg-n7`; `shots/mg-n6` deleted.
+
+### Noticed, left alone
+
+- On a phone the standings' "This round" and "Total" headers nearly touch.
+- A dimmed card at opacity 0.6, as the design gives it, takes its muted reason ("not least chosen") under 4.5:1 against the page.
+- The 150 px chat applies to any desktop window under 760 px high, so the round view there has it too.
 
 ## Task MG-N6 (2026-11-15): the new Mind Games layout (owner-approved design, O97) and small fixes
 
