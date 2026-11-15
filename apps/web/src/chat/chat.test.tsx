@@ -9,7 +9,8 @@
  *                 deleted messages, sends with Enter (one message at a time, keeping what was
  *                 typed meanwhile) and says a refusal in a plain sentence; a
  *                 moderator's mute asks a confirm sentence and a reason before it calls the
- *                 server; a guest reads without a field. The refusal and confirm sentences.
+ *                 server; a guest reads without a field; a viewer without any session is asked to
+ *                 sign in and the room is not asked for (T370). The refusal and confirm sentences.
  *                 The server and the socket are stand-ins.
  * Depends on:     vitest, @testing-library/react, @smg/contracts (views), ../shell/session,
  *                 ./ChatPanel, ./chatText
@@ -60,9 +61,16 @@ const MESSAGES: ChatMessageView[] = [
 ];
 
 // The server: the session, the chat config and the lobby room; every call is recorded.
-function serve(config: ChatConfigView, permissions: readonly string[], moderator = false) {
+function serve(
+  config: ChatConfigView,
+  permissions: readonly string[],
+  moderator = false,
+  // The session's kind as the server sends it; null: no session at all.
+  kind?: string | null,
+) {
   const calls: { url: string; body: unknown }[] = [];
   const session = {
+    ...(kind === undefined ? {} : { kind }),
     signedIn: permissions.includes('chat.send'),
     account: permissions.includes('chat.send') ? { id: 'me', displayName: 'Mia' } : null,
     permissions,
@@ -192,6 +200,25 @@ describe('the builtin room', () => {
     expect(screen.queryByTestId('chat-input')).toBeNull();
     expect(screen.getByText('Sign in to write in the chat.')).toBeTruthy();
     expect(screen.queryByText('Report')).toBeNull();
+  });
+});
+
+describe('the builtin room without a session (T370)', () => {
+  it('asks a viewer without any session to sign in, without asking the server for the room', async () => {
+    const calls = serve({ provider: 'builtin', hostChatUrl: null }, [], false, null);
+    await screen.findByText('Sign in, or watch as a guest, to read the chat.');
+    expect(calls.map((c) => c.url)).not.toContain('/chat/rooms/lobby');
+  });
+
+  it('asks the server for the room for a guest', async () => {
+    const calls = serve(
+      { provider: 'builtin', hostChatUrl: null },
+      ['match.watch'],
+      false,
+      'guest',
+    );
+    await screen.findByText('gg');
+    expect(calls.map((c) => c.url)).toContain('/chat/rooms/lobby');
   });
 });
 

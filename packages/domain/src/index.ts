@@ -30,7 +30,13 @@ export {
   inactivityDeadline,
   type InactivityDeadline,
 } from './round/inactivity.js';
-export { scoredPlayers, standings, type Scored, type StandingRow } from './round/results.js';
+export {
+  scoredPlayers,
+  standings,
+  type Scored,
+  type StandingRow,
+  type StandingsTies,
+} from './round/results.js';
 export { seasonPeriod, type SeasonPeriod } from './league/periods.js';
 export { frostDelay } from './round/specials.js';
 export { stepRound } from './round/step.js';

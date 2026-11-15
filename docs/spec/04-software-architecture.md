@@ -112,6 +112,8 @@ interface GameModule<S, A, E, Cfg, Sec> {
     seasons?: false;            // false: the rounds show no season (Mind Games, O93); absent: shown
     chatDock?: 'below';         // the match chat docked under the round and the result (O97);
                                 // absent: a panel from the round bar
+    standingsTies?: 'shared-by-name'; // equal totals share a place, listed by name (O100);
+                                // absent: ties by round wins, then the earliest win (02 §9)
   };
   settings: {
     defs: SettingDef[];         // the game's own keys of document game.<id> (08 §3)

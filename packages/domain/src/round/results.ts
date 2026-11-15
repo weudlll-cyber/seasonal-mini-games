@@ -9,7 +9,9 @@
  *                 never placed, without points (O71); points from the frozen table; 1 team point to the
  *                 winner's team. A phased round's results come from the game's own rule,
  *                 with nobody placed and every winner holding a win (04 §4.8 rule 6). Match
- *                 standings sum the points, ties ordered by wins and then by the earliest win.
+ *                 standings sum the points, ties ordered by wins and then by the earliest win,
+ *                 or, for a game whose ties are shared (`meta.standingsTies`, O100), by nothing:
+ *                 equal points share a place.
  * Depends on:     @smg/game-sdk (points table), ./types
  * Used by:        ./step (RoundEnded), ../index, apps/server (standings projection)
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9; docs/spec/03-seasonal-specials.md §5;
@@ -97,9 +99,14 @@ export interface Scored {
   readonly at: number | null;
 }
 
-// Sums per key; equal points are ordered by wins, then by the earliest win. Keys equal on
-// all three share a rank (1, 1, 3); the key itself only fixes the listing order.
-export function standings(scores: readonly Scored[]): StandingRow[] {
+// How equal points are ordered (the game module's `meta.standingsTies`): by round wins, then
+// by the earliest win (the default, 02 §9), or not at all: equal points share a place
+// ('shared-by-name'; the listing within the place is by display name, apps/server's read).
+export type StandingsTies = 'wins' | 'shared-by-name';
+
+// Sums per key; equal points are ordered by the tie rule. Keys equal under it share a rank
+// (1, 1, 3); the key itself only fixes the listing order.
+export function standings(scores: readonly Scored[], ties: StandingsTies = 'wins'): StandingRow[] {
   const rows = new Map<string, { points: number; wins: number; firstWinAt: number | null }>();
   for (const s of scores) {
     const row = rows.get(s.key) ?? { points: 0, wins: 0, firstWinAt: null };
@@ -111,7 +118,9 @@ export function standings(scores: readonly Scored[]): StandingRow[] {
     rows.set(s.key, row);
   }
   const cmp = (a: Omit<StandingRow, 'rank'>, b: Omit<StandingRow, 'rank'>) =>
-    b.points - a.points || b.wins - a.wins || earlier(a.firstWinAt, b.firstWinAt);
+    ties === 'shared-by-name'
+      ? b.points - a.points
+      : b.points - a.points || b.wins - a.wins || earlier(a.firstWinAt, b.firstWinAt);
   const sorted = [...rows.entries()]
     .map(([key, r]) => ({ key, ...r }))
     .sort((a, b) => cmp(a, b) || (a.key < b.key ? -1 : 1));

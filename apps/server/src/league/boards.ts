@@ -8,8 +8,10 @@
  *                 then solves; equal rows share a rank (SQL `rank()`), and within a rank rows
  *                 are listed by display name so a page is stable. Players are shown by display
  *                 name only; deleted accounts are left out. Pages are offsets of `PAGE` rows.
+ *                 A match's standings come in rank order; a game whose equal totals share a
+ *                 place lists that place by display name (./standingsTies, O100).
  * Depends on:     @smg/contracts (views), ../db/pool, ../match/matches (displayNames),
- *                 ../match/playerSteps (a website member's steps, O66)
+ *                 ../match/playerSteps (a website member's steps, O66), ./standingsTies
  * Used by:        ../http/routes/matches, ../http/routes/leaderboards, ./profiles
  * Spec:           docs/spec/06-data-model-api-realtime.md §2.6, §3.1; Bingo 05 §2.4
  */
@@ -25,22 +27,41 @@ import type {
 import type { DbPool } from '../db/pool.js';
 import { displayNames } from '../match/matches.js';
 import { playerSteps, withSteps } from '../match/playerSteps.js';
+import { byRankThenName, tiesOf } from './standingsTies.js';
 
 export const PAGE = 50;
 
 export async function matchStandings(pool: DbPool, matchId: string): Promise<MatchStandingView[]> {
-  const r = await pool.query<{ player_key: string; points: number; wins: number; rank: number }>(
-    'SELECT player_key, points, wins, rank FROM smg.match_standings WHERE match_id = $1 ORDER BY rank, player_key',
+  const r = await pool.query<{
+    player_key: string;
+    points: number;
+    wins: number;
+    rank: number;
+    game_id: string;
+  }>(
+    `SELECT s.player_key, s.points, s.wins, s.rank, m.game_id FROM smg.match_standings s
+     JOIN smg.matches m ON m.id = s.match_id WHERE s.match_id = $1 ORDER BY s.rank, s.player_key`,
     [matchId],
   );
   const keys = r.rows.map((x) => x.player_key);
   const names = await displayNames(pool, keys);
   const steps = await playerSteps(pool, keys);
-  return r.rows.map((x) => ({
+  const rows = r.rows.map((x) => ({
     rank: x.rank,
-    playerKey: x.player_key,
+    key: x.player_key,
     name: names[x.player_key] ?? x.player_key,
-    ...withSteps(steps[x.player_key]),
+    points: x.points,
+    wins: x.wins,
+  }));
+  // A game whose equal totals share a place lists that place by name (O100); otherwise the
+  // rank and the player number fix the order, as the query gives it.
+  const game = r.rows[0]?.game_id ?? '';
+  const listed = tiesOf(game) === 'shared-by-name' ? byRankThenName(rows) : rows;
+  return listed.map((x) => ({
+    rank: x.rank,
+    playerKey: x.key,
+    name: x.name,
+    ...withSteps(steps[x.key]),
     points: x.points,
     wins: x.wins,
   }));

@@ -8,16 +8,20 @@
  *                 win: place 1 in the guess games, the game's own rule in a phased one, 04 §4.8
  *                 rule 6), one per team,
  *                 and the match and team standings recomputed over every ended round of the
- *                 match with the domain's tie order (02 §9, 03 §5), wins read from `won`. A result staff removed
+ *                 match with the domain's tie order (02 §9, 03 §5), wins read from `won`; the
+ *                 match standings by the game's rule for equal totals (`meta.standingsTies`,
+ *                 ../league/standingsTies, O100). A result staff removed
  *                 (smg.round_result_removals, 06 §3.2) is left out: its points, and the team
  *                 point of its team when it was the round's winner; the other players keep
  *                 their places. `refreshMatch` recomputes both after a removal.
- * Depends on:     pg, @smg/domain (results, standings)
+ * Depends on:     pg, @smg/domain (results, standings), ../league/standingsTies
  * Used by:        ./pgRoundStore, ../admin/liveRounds
  * Spec:           docs/spec/06-data-model-api-realtime.md §2.4, §2.5; docs/spec/02-game-guess-the-number.md §9
  */
 import { scoredPlayers, standings, type PlayerResult, type TeamResult } from '@smg/domain';
 import type pg from 'pg';
+
+import { tiesOf } from '../league/standingsTies.js';
 
 // Milliseconds as an ISO time for timestamptz columns; null stays null.
 export const ts = (ms: number | null) => (ms === null ? null : new Date(ms).toISOString());
@@ -88,8 +92,13 @@ async function refreshStandings(c: pg.PoolClient, matchId: string) {
     timedOut: false,
     won: r.won,
   }));
+  // The game's rule for equal totals (`meta.standingsTies`, O100).
+  const game = await c.query<{ game_id: string }>('SELECT game_id FROM smg.matches WHERE id = $1', [
+    matchId,
+  ]);
+  const ties = tiesOf(game.rows[0]?.game_id ?? '');
   await c.query('DELETE FROM smg.match_standings WHERE match_id = $1', [matchId]);
-  for (const s of standings(scoredPlayers(results))) {
+  for (const s of standings(scoredPlayers(results), ties)) {
     await c.query(
       `INSERT INTO smg.match_standings (match_id, player_key, points, wins, first_win_at, rank)
        VALUES ($1, $2, $3, $4, $5, $6)`,

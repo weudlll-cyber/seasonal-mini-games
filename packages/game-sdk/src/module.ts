@@ -44,6 +44,10 @@ export interface GameMeta {
   // width, and the round bar has no Chat button; on a phone a bottom bar opens it as a sheet
   // (owner decision O97). Absent: the chat is a panel from the round bar, as in every guess game.
   readonly chatDock?: 'below';
+  // 'shared-by-name': equal match totals share a place, and a place lists its players by
+  // display name; round wins and the earliest win do not count (owner decision O100). Absent:
+  // equal points are ordered by round wins, then by the earliest win, as in every guess game.
+  readonly standingsTies?: 'shared-by-name';
 }
 
 // The game's own keys of its settings document, and how frozen values become its config.

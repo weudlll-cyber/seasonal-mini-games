@@ -5,7 +5,8 @@
  *
  * Responsibility: an individual solver after the table gets the further-solver points;
  *                 no team results with teams off; standings sum points, order equal points
- *                 by wins and then by the earliest win, and give fully equal rows one rank.
+ *                 by wins and then by the earliest win, and give fully equal rows one rank; for
+ *                 a game whose ties are shared (O100) equal points alone share a rank.
  * Depends on:     vitest, ./fakes, ./results
  * Spec:           docs/spec/02-game-guess-the-number.md §9 (points); docs/spec/03-seasonal-specials.md §5
  */
@@ -58,6 +59,28 @@ describe('standings', () => {
       ['none', 10, 0, null, 4],
       ['nil', 0, 0, null, 5],
       ['zero', 0, 0, null, 5],
+    ]);
+  });
+
+  it('share a place for equal points when the game says so, wins and times aside (O100)', () => {
+    const rows = standings(
+      [
+        { key: 'early', points: 10, won: true, at: 100 },
+        { key: 'late', points: 10, won: true, at: 200 },
+        { key: 'two', points: 5, won: true, at: 300 },
+        { key: 'two', points: 5, won: true, at: 50 },
+        { key: 'none', points: 10, won: false, at: null },
+        { key: 'zero', points: 0, won: false, at: null },
+      ],
+      'shared-by-name',
+    );
+    // One place for the four on 10 points, the next counts everyone above it (1, 1, …, 5).
+    expect(rows.map((r) => [r.key, r.points, r.rank])).toEqual([
+      ['early', 10, 1],
+      ['late', 10, 1],
+      ['none', 10, 1],
+      ['two', 10, 1],
+      ['zero', 0, 5],
     ]);
   });
 });
