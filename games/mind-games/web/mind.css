@@ -1,16 +1,22 @@
 /*
  * @file   games/mind-games/web/mind.css
  * @module games/mind-games/web
- * @brief  Styles of Seasonal Mind Games: the stage, the phase strip, the choices, the result.
+ * @brief  Styles of Seasonal Mind Games' round: the stage, the phase strip, the choice cards.
  *
  * Responsibility: colours only from the design tokens (light and dark) and the seasons' own
- *                 tokens; the stage as a flex column inside the platform's stage box of definite
- *                 height, never by viewport arithmetic, so the round stays one screen at
- *                 1280 × 720 with the Chat panel open (the stage keeps at least 560 px: five
- *                 buttons of 100 px with their gaps) and at 390 × 844 (each button at least
- *                 66 px wide and 72 px tall, also with All) (02e §11); touch targets of at least
- *                 44 px; a pressed choice by its check and words as well as its fill. The result
- *                 is styled in ./result.css, the flights in ./flights.css. Classes are prefixed
+ *                 tokens; the stage's two parts, the strip and the main part, which the
+ *                 platform's split layout places on a desktop (the strip across the width, the
+ *                 cards on the left 3/5 beside the feed, ../../../apps/web/src/round/round.css),
+ *                 never by viewport arithmetic, so the round stays one screen at 1280 × 720 and
+ *                 1920 × 1080 with the chat docked under it and at 390 × 844 (02e §11, O97).
+ *                 The current phase by its frame, its fill and "· now"; the cards in one row
+ *                 with their frames behind the buttons, the flight band and the counts, the own
+ *                 choice's frame strong and its pill, never by colour alone; touch targets of
+ *                 at least 44 px (a phone's card at least 66 px wide and 72 px tall, also with
+ *                 All). The phone layout is the platform's (a landscape viewport under 900 px
+ *                 or any portrait one, the same media query here): the strip compact, the cards
+ *                 with icon, name and count, and the line "Your choice: Autumn". The result is
+ *                 styled in ./result.css, the flights in ./flights.css. Classes are prefixed
  *                 `mg-`.
  * Spec:           docs/spec/02e-game-mind-games.md §11
  */
@@ -20,18 +26,30 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-2);
+  gap: var(--space-1);
 }
 
 .mg-stage > * {
   flex: none;
 }
 
-/* The phase strip: the three parts in proportion to their lengths. */
+.mg-main {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* The phase strip: the three parts in proportion to their lengths, the line under them. */
+.mg-timeline {
+  display: grid;
+  gap: 0.25rem;
+}
+
 .mg-phases {
   display: flex;
-  gap: 2px;
+  gap: 0.25rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -42,15 +60,18 @@
   position: relative;
   flex-basis: 0;
   min-width: max-content;
-  padding: var(--space-1);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1);
+  padding: 0.3rem 0.6rem;
   overflow: hidden;
   background: var(--color-surface-2);
-  border: 2px solid transparent;
+  border: 3px solid transparent;
   border-radius: var(--radius);
 }
 
-/* The part the round is in now: its own frame (not colour alone) and a bar along its foot that
-   fills as it runs (O92). */
+/* The part the round is in now: a strong frame, a fill as it runs and "· now" (O92, O97). */
 .mg-phase[data-current='true'] {
   background: var(--color-surface);
   border-color: var(--color-solid);
@@ -58,30 +79,27 @@
 
 .mg-phase-fill {
   position: absolute;
+  top: 0;
   bottom: 0;
   left: 0;
-  height: 4px;
-  background: var(--color-solid);
+  background: color-mix(in srgb, var(--color-solid) 14%, transparent);
 }
 
-.mg-phase[data-phase='replay'][data-current='false'] {
-  background: var(--color-surface);
-  border: 2px dashed var(--color-border-strong);
+.mg-phase-name,
+.mg-phase-time {
+  position: relative;
 }
 
 .mg-phase-name {
   font-weight: var(--font-weight-strong);
 }
 
-/* Name and time on two lines, so even a short Replay keeps both whole. */
-.mg-phase-name,
-.mg-phase-time {
-  display: block;
+.mg-phase[data-phase='reveal'][data-current='false'] {
+  background: var(--color-surface);
+  border: 2px dashed var(--color-border-strong);
 }
 
-/* Under the strip: the delay in words, then the next change. */
-.mg-delay,
-.mg-next,
+.mg-strip-line,
 .mg-note {
   margin: 0;
   font-size: var(--font-size-small);
@@ -91,105 +109,148 @@
   font-weight: var(--font-weight-strong);
 }
 
-/* The choices: one row of buttons, the feed's counts in a row under them. */
+/* The cards: frames behind three rows, the buttons, the flight band and the counts. */
 .mg-choices {
+  position: relative;
   display: grid;
-  gap: var(--space-1);
 }
 
+.mg-frames,
 .mg-buttons,
 .mg-counts {
   display: grid;
-  grid-template-columns: repeat(var(--mg-options), minmax(66px, 1fr));
+  grid-template-columns: repeat(var(--mg-options), minmax(0, 1fr));
   gap: var(--space-1);
 }
 
+.mg-frames {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.mg-frame {
+  background: var(--color-surface);
+  border: 2px solid var(--mg-color);
+  border-radius: var(--radius-card);
+}
+
+.mg-frame[data-choice='all'] {
+  border-color: var(--color-border-strong);
+}
+
+/* The own choice: a strong frame in its colour (All's in the text colour) on a tint. */
+.mg-frame[data-own='true'] {
+  background: color-mix(in srgb, var(--mg-color) 22%, var(--color-surface));
+  border-width: 5px;
+}
+
+.mg-frame[data-choice='all'][data-own='true'] {
+  border-color: var(--color-text);
+}
+
+.mg-buttons,
+.mg-counts,
+.mg-choices > .mg-band {
+  position: relative;
+}
+
 .mg-choice {
+  min-width: 0;
   min-height: 72px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 2px;
-  padding: var(--space-1);
+  justify-content: flex-start;
+  gap: 0.3rem;
+  padding: var(--space-2) var(--space-1) 0;
   color: var(--color-text);
   font: inherit;
   font-weight: var(--font-weight-strong);
-  background: var(--color-surface);
-  border: 3px solid var(--mg-color);
+  background: none;
+  border: 0;
   border-radius: var(--radius-card);
   cursor: pointer;
 }
 
-.mg-choice[data-choice='all'] {
-  border-color: var(--color-border-strong);
-}
-
-.mg-choice[aria-checked='true'] {
-  /* A tint, not the full colour: the season's own icon must stay visible on it. */
-  background: color-mix(in srgb, var(--mg-color) 30%, var(--color-surface));
-  border-width: 5px;
-  box-shadow: inset 0 0 0 2px var(--color-text);
-}
-
 .mg-choice:disabled {
   cursor: default;
-  opacity: 0.75;
+}
+
+/* Off: the icon fades, the words keep their contrast. */
+.mg-choice:disabled .mg-icons {
+  opacity: 0.6;
 }
 
 .mg-choice:focus-visible {
   outline: 3px solid var(--color-accent);
-  outline-offset: 2px;
+  outline-offset: -3px;
 }
 
 .mg-icons {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   gap: 2px;
 }
 
 .mg-icons img {
-  width: 28px;
-  height: 28px;
+  width: 64px;
+  height: 64px;
 }
 
-.mg-choice[data-choice='all'] .mg-icons img,
-.mg-option[data-choice='all'] .mg-icons img {
-  width: 14px;
-  height: 14px;
+/* All's four icons in a square of the same size. */
+.mg-choice[data-choice='all'] .mg-icons {
+  width: 64px;
+}
+
+.mg-choice[data-choice='all'] .mg-icons img {
+  width: 31px;
+  height: 31px;
 }
 
 .mg-yours {
+  padding: 0.1rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-solid);
+  color: var(--color-on-solid);
   font-size: var(--font-size-small);
-}
-
-.mg-counts--waiting {
-  min-height: 1.6em;
+  white-space: nowrap;
 }
 
 .mg-count {
   margin: 0;
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: var(--space-1);
   text-align: center;
 }
 
-.mg-count strong {
-  color: var(--color-text);
+.mg-count-n {
+  font-size: 2rem;
+  font-weight: var(--font-weight-heading);
+  line-height: 1.1;
 }
 
-.mg-bar {
-  display: block;
-  height: 6px;
-  margin-top: 2px;
-  background: var(--mg-color);
-  border-radius: var(--radius-pill);
+.mg-count-ago {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
 }
 
-.mg-count[data-choice='all'] .mg-bar {
-  background: var(--color-border-strong);
+.mg-counts--waiting {
+  min-height: 3.7rem;
+}
+
+/* The phone's line naming the choice; a desktop has the pill instead. */
+.mg-yourline {
+  display: none;
+  margin: 0;
+  font-weight: var(--font-weight-strong);
 }
 
 .mg-hide {
+  align-self: flex-start;
   min-height: var(--hit-target);
   display: inline-flex;
   align-items: center;
@@ -254,17 +315,66 @@
   color: var(--color-text-muted);
 }
 
-@media (max-width: 600px) {
-  .mg-prefs-rounds {
-    grid-template-columns: 1fr 1fr;
+/* The phone layout (the platform's: under 900 px or upright): a compact strip, the cards
+   with icon, name and count, the choice in a line of its own. */
+@media (max-width: 899px), (orientation: portrait) {
+  .mg-phase {
+    padding: 0.2rem 0.4rem;
+  }
+
+  .mg-phase-time {
+    display: none;
   }
 
   .mg-icons img {
-    width: 22px;
-    height: 22px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .mg-choice[data-choice='all'] .mg-icons {
+    width: 32px;
+  }
+
+  .mg-choice[data-choice='all'] .mg-icons img {
+    width: 15px;
+    height: 15px;
   }
 
   .mg-choice {
+    gap: 2px;
+    padding-top: var(--space-1);
     font-size: var(--font-size-small);
+  }
+
+  .mg-yours {
+    display: none;
+  }
+
+  .mg-count-n {
+    font-size: 1.5rem;
+  }
+
+  /* Read out, not shown: the card has no room for it. */
+  .mg-count-ago {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .mg-counts--waiting {
+    min-height: 2.6rem;
+  }
+
+  .mg-yourline {
+    display: block;
+  }
+}
+
+@media (max-width: 600px) {
+  .mg-prefs-rounds {
+    grid-template-columns: 1fr 1fr;
   }
 }

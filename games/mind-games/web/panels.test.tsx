@@ -38,15 +38,15 @@ describe('Mind Games feed panels (02e §6.1, §10)', () => {
     );
     cleanup();
     render(<MindLine {...panel} view={spectatorView(moves, 1_500)} />);
-    expect(screen.getByText('The round 30 s ago: 2 players')).toBeTruthy();
+    expect(screen.getByText('30 seconds ago · 2 players')).toBeTruthy();
   });
 
   it('lets a spectator watch the counts without choosing', () => {
     render(<MindSpectator {...panel} view={spectatorView(moves, 1_500)} />);
     expect(screen.getAllByRole('radio').every((r) => (r as HTMLButtonElement).disabled)).toBe(true);
-    expect(screen.getByTestId('count-summer').textContent).toBe('30 s ago: 1');
+    expect(screen.getByTestId('count-summer').textContent).toBe('1 player, 30 s ago');
     expect(screen.getByTestId('phase-strip').textContent).toBe(
-      'Join until 1:00Play until 1:30Replay until 2:00You see the round 30 s late.',
+      'Join until 1:00Play until 1:30Reveal until 2:00You see the round 30 s late',
     );
     expect(screen.queryByLabelText('Hide my switches')).toBeNull();
   });

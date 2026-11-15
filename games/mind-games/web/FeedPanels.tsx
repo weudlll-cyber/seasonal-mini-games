@@ -3,15 +3,15 @@
  * @module games/mind-games/web
  * @brief  The feed's head in the info column and on a phone, and a spectator's stage.
  *
- * Responsibility: the head names the feed's time and the players in the round then ("The
- *                 round 30 s ago: 23 players"), and below it the feed's own sentence (./phases):
+ * Responsibility: the head names the feed's time and the players in the round then ("30
+ *                 seconds ago · 23 players"), and below it the feed's own sentence (./phases):
  *                 when the first choices show ("The first choices show in 12 s."), that every
- *                 change is now a switch once the feed has passed the join time, the replay with
+ *                 change is now a switch once the feed has passed the join time, the reveal with
  *                 the seconds to the result (02e §6.1, §6.2). A player's panel in the info column
  *                 is that head (the lines are the round's list below it, ./text); a phone's info
  *                 line is the feed's sentence, else its head, in one line. A spectator (a guest, a
  *                 match player outside the round, an admin) watches on the stage: the phase
- *                 strip, the head and the choice row with the feed's counts, without choosing
+ *                 strip, then the head and the cards with the feed's counts, without choosing
  *                 (02e §10). Everything here comes from the delayed view and the round's public
  *                 timing; nothing is counted on the client.
  * Depends on:     react, @smg/game-sdk (panel props), @smg-game/mind-games (views),
@@ -71,8 +71,10 @@ export function MindSpectator(p: SpectatorPanelProps): ReactElement {
   return (
     <div className="mg-stage" data-testid="mind-stage">
       <PhaseStrip view={view} timing={p.timing} />
-      <FeedHead view={view} timing={p.timing} />
-      <ChoiceButtons view={view} own={null} choose={null} canAct={false} names={p.names} />
+      <div className="mg-main">
+        <FeedHead view={view} timing={p.timing} />
+        <ChoiceButtons view={view} own={null} choose={null} canAct={false} names={p.names} />
+      </div>
     </div>
   );
 }

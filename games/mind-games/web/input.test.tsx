@@ -49,8 +49,8 @@ describe('Mind Games input (02e §5, §11)', () => {
 
   it('shows the feed’s counts only: the viewer’s own live choice is not yet among them', () => {
     render(<MindInput {...inputProps(view)} />);
-    expect(screen.getByTestId('count-summer').textContent).toBe('30 s ago: 1');
-    expect(screen.getByTestId('count-winter').textContent).toBe('30 s ago: 0');
+    expect(screen.getByTestId('count-summer').textContent).toBe('1 player, 30 s ago');
+    expect(screen.getByTestId('count-winter').textContent).toBe('0 players, 30 s ago');
   });
 
   it('sends a click at once with the box, and nothing for the current choice', () => {

@@ -3,7 +3,7 @@
  * @module games/mind-games/web
  * @brief  The screens of Seasonal Mind Games for the player client.
  *
- * Responsibility: the player's stage (phase strip, choice buttons, Hide my switches) drawn
+ * Responsibility: the player's stage (phase strip, choice cards, Hide my switches) drawn
  *                 into the round's stage, the feed's head in the info column and on a phone,
  *                 the spectator's stage, the result, the pre-picks panel of the waiting area
  *                 (02e §7), the game's text and its setting
@@ -42,7 +42,8 @@ export const mindGamesWeb = {
   fieldState: mindFieldState,
   // The last round's own settings for the next round's form (T338).
   kept: (view: unknown) => (view as ResultView).settings,
-  // The choices are the stage: the board layout hands the input the stage, the left column at
-  // full height, with the feed's head, the lines and the dock in the info column (O51).
-  layout: 'board' as const,
+  // The choices are the stage: the split layout hands the input the stage, its phase strip
+  // across the width and its cards on the left, with the feed's head, the lines and the dock
+  // in the info column on the right (O97, T351).
+  layout: 'split' as const,
 };

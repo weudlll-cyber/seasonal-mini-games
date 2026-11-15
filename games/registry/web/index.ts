@@ -59,7 +59,12 @@ export interface GameWeb {
   // 'board': the game's board takes the stage, the left column at full height on a desktop,
   // with its panel, the list and the action dock in the info column on the right (T123, O51,
   // T141); by default the stage holds the round's guesses with the dock at its bottom.
-  readonly layout?: 'board';
+  // 'split': the game's input draws into the stage as with 'board', but on a desktop the stage
+  // spans the round view's width: the stage's box has two children, the first (a strip) across
+  // the whole width, the second on the left (3/5) beside the info column (2/5) under the strip;
+  // on a phone the stage at its own height under the bar, then the info line, the list and the
+  // dock (Seasonal Mind Games, owner decision O97, T351).
+  readonly layout?: 'board' | 'split';
   // True: a round can have 20 players or more, so the list and the Players panel give each
   // player their tag and marker (`marksOf`), the game gets them as `marks`, and a row and the
   // game's board highlight the same player (O62).

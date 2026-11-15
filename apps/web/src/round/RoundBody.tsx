@@ -6,7 +6,8 @@
  * Responsibility: one arrangement for every game (T141), only what matters for the next guess
  *                 in this round (O54). A desktop: the stage on the left, for a list game the
  *                 round's guesses (./RoundLog `main`) with the action dock at its bottom, for a
- *                 board game (Seasonal Target) its board (the input's `stage` box, O51); the
+ *                 board game (Seasonal Target) its board (the input's `stage` box, O51), for a
+ *                 split game (Seasonal Mind Games) its strip and its main part (T351); the
  *                 info column on the right, top to bottom the special line, the game's compact
  *                 panel, then for a list game "Your guesses" (in shared mode; in individual mode
  *                 the stage already holds only the viewer's guesses, T141), for a board game
@@ -60,7 +61,8 @@ export interface BodyProps {
 // who watches on the stage).
 function partsOf(state: RoundStateView, game: GameWeb | null) {
   const playing = state.role === 'player' && game !== null ? game : null;
-  const board = game?.layout === 'board';
+  // A board or split game draws into the stage (T123, T351); the rest is the same.
+  const board = game?.layout === 'board' || game?.layout === 'split';
   const watching = playing === null ? <GamePart state={state} game={game} /> : null;
   const panel =
     playing !== null ? <GamePart state={state} game={playing} /> : board ? null : watching;

@@ -96,7 +96,7 @@ describe('Mind Games flights (02e §11.1)', () => {
     step(500);
     step(1_500);
     expect(flights()).toEqual([{ from: 'summer', to: 'autumn', name: null }]);
-    expect(screen.getByTestId('count-autumn').textContent).toBe('30 s ago: 1');
+    expect(screen.getByTestId('count-autumn').textContent).toBe('1 player, 30 s ago');
   });
 });
 
@@ -117,8 +117,8 @@ describe('Mind Games waves and reduced motion (02e §11.1)', () => {
     step(40_000);
     expect(flights()).toHaveLength(12);
     expect(screen.getByText('+8')).toBeTruthy();
-    expect(screen.getByTestId('count-summer').textContent).toBe('30 s ago: 20');
-    expect(screen.getByTestId('count-spring').textContent).toBe('30 s ago: 0');
+    expect(screen.getByTestId('count-summer').textContent).toBe('20 players, 30 s ago');
+    expect(screen.getByTestId('count-spring').textContent).toBe('0 players, 30 s ago');
   });
 
   it('flies nothing with reduced motion; the counts change in place', () => {
@@ -126,7 +126,7 @@ describe('Mind Games waves and reduced motion (02e §11.1)', () => {
     const step = feed([['anna', 'summer']]);
     step(500);
     expect(flights()).toEqual([]);
-    expect(screen.getByTestId('count-summer').textContent).toBe('30 s ago: 1');
+    expect(screen.getByTestId('count-summer').textContent).toBe('1 player, 30 s ago');
   });
 });
 

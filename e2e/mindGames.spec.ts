@@ -14,7 +14,7 @@
  *                 30 s a second browser that joins the match finds the buttons off with "Joining
  *                 this round has closed …" and a choice it sends anyway is refused with
  *                 `JOIN_CLOSED`; from 40 s the feed says every change is now a switch; at 50 s the
- *                 buttons are off and the feed says choices are closed while the replay runs; the
+ *                 buttons are off and the feed says choices are closed while the reveal runs; the
  *                 result names the least chosen option, lights it up and lists the winners with
  *                 +1 and the viewer's line, the cards' points equal to the placings table's and
  *                 the match standings' (T340); the round view fits 1280 × 720 with the chat docked
@@ -126,7 +126,7 @@ async function delayedFirstChoices(p: Person, opened: number): Promise<void> {
   await expect(list(p.page)).toContainText(/You\s*chose Winter\s*· \d+ s ago/, { timeout: 15_000 });
   expect(Date.now() - opened, 'the own line only once it is 10 s old').toBeGreaterThan(9_000);
   await expect(list(p.page)).toContainText(/bot-0\d\s*chose/, { timeout: 40_000 });
-  await expect(feedHead(p.page)).toHaveText(/^The round 10 s ago: \d+ players?$/);
+  await expect(feedHead(p.page)).toHaveText(/^10 seconds ago · \d+ players?$/);
 }
 
 // A hidden switch changes only the counts; a named one gets its line and its flight.
@@ -160,13 +160,13 @@ async function lateJoiner(late: Person, host: Person, code: string, opened: numb
   expect(refused.body).toMatchObject({ code: 'JOIN_CLOSED' });
 }
 
-// From 40 s the feed has passed the join time; at 50 s choices close and the replay runs.
+// From 40 s the feed has passed the join time; at 50 s choices close and the reveal runs.
 async function lastPhases(p: Person, opened: number): Promise<void> {
   const note = p.page.getByTestId('feed-note');
   await expect.poll(() => Date.now() - opened, { timeout: 40_000 }).toBeGreaterThan(41_000);
   await expect(note).toHaveText(/^All \d+ players are in\. Every change now is a switch\.$/);
   await expect.poll(() => Date.now() - opened, { timeout: 40_000 }).toBeGreaterThan(51_000);
-  await expect(note).toHaveText(/^Choices are closed\. Replay of the last 10 s of play/);
+  await expect(note).toHaveText(/^Choices are closed\. Revealing the last 10 s of play/);
   for (const r of await p.page.getByRole('radio').all()) await expect(r).toBeDisabled();
 }
 
@@ -227,7 +227,7 @@ test('journey 38: one round of Seasonal Mind Games, everything one delay late', 
       'data-phase',
       'join',
     );
-    await expect(p.page.getByTestId('delay-line')).toHaveText('You see the round 10 s late.');
+    await expect(p.page.getByTestId('delay-line')).toHaveText('You see the round 10 s late');
     await calm.page.emulateMedia({ reducedMotion: 'reduce' });
     await calm.page.goto(`./#/match/${code}`);
     await countFlights(calm.page);

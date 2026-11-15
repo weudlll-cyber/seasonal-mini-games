@@ -1,19 +1,22 @@
 /**
  * @file   games/mind-games/web/ChoiceButtons.tsx
  * @module games/mind-games/web
- * @brief  The four or five choice buttons with the feed's count and bar under each.
+ * @brief  The choice cards: four or five in one row, each with its button and the feed's count.
  *
- * Responsibility: one row of large buttons, each in its season's colour with its original icon
- *                 and name (All in the neutral colour with the four icons), as a radio group:
- *                 the arrow keys move between them, Enter or Space chooses (02e §11). The
- *                 viewer's current choice is pressed, with a check and "Your choice" in words,
- *                 never by colour alone; choosing it again sends nothing. Under each button its
- *                 count as the feed shows it, "30 s ago: 7", with a bar of that length; the
- *                 count is the view's, never a live one, and the client counts nothing; while the
- *                 feed is still empty there is no count at all (09 §4 journey 38). Every
- *                 button has its tooltip (O89). Between the buttons and the counts runs the
- *                 flight band (./FlightBand, 02e §11.1). A spectator gets the same row without
- *                 choosing.
+ * Responsibility: one row of cards (owner decision O97), each in its season's colour (All in
+ *                 the neutral colour with the four icons): on top the button with the season's
+ *                 original icon and its name, a radio group (the arrow keys move between them,
+ *                 Enter or Space chooses, 02e §11); at the foot the count as the feed shows it,
+ *                 in large type, with "players, 10 s ago" under it; the count is the view's,
+ *                 never a live one, and the client counts nothing; while the feed is still
+ *                 empty there is no count at all (09 §4 journey 38). The viewer's current choice
+ *                 has a strong frame in its colour and the pill "✓ Your choice", never colour
+ *                 alone; choosing it again sends nothing. On a phone a card shows the icon, the
+ *                 name and the count, and one line under the row names the choice ("Your
+ *                 choice: Autumn", ./mind.css). Every button has its tooltip (O89). Between the
+ *                 buttons and the counts, inside the cards' frames, runs the flight band
+ *                 (./FlightBand, 02e §11.1), which no button overlaps. A spectator gets the same
+ *                 row without choosing.
  * Depends on:     react, @smg-game/mind-games (options, names, views), ./FlightBand, ./seasons,
  *                 ./text
  * Used by:        ./MindInput, ./FeedPanels
@@ -46,6 +49,8 @@ const STEP: Readonly<Record<string, number>> = {
 export const tooltipOf = (c: Choice, view: SpectatorView): string =>
   `Choose ${CHOICE_NAMES[c]}. You can switch until ${clock(view.rules.plan.actionsEndMs)}.`;
 
+const tint = (c: Choice) => ({ ['--mg-color' as string]: colorOf(c) });
+
 function Icons(p: { readonly choice: Choice }): ReactElement {
   return (
     <span className="mg-icons" aria-hidden="true">
@@ -71,34 +76,35 @@ function useRoving(count: number, start: number) {
   return { focus, setFocus, refs, onKeyDown };
 }
 
-// The feed's count under each button, with a bar of its length among the options.
+// The feed's count at each card's foot: the number large, "players, 10 s ago" under it.
 function Counts(p: { readonly view: SpectatorView; readonly options: readonly Choice[] }) {
   const { view, options } = p;
-  const most = Math.max(1, ...options.map((c) => view.counts[c]));
-  const ago = `${String(delayS(view))} s ago`;
   // Before anything is one delay old the feed is empty: no count yet, the row keeps its place.
   if (view.entrants === 0 && view.lines.length === 0) {
     return <div className="mg-counts mg-counts--waiting" aria-hidden="true" />;
   }
+  const ago = `${String(delayS(view))} s ago`;
   return (
     <div className="mg-counts">
       {options.map((c) => (
-        <p
-          key={c}
-          className="mg-count"
-          data-choice={c}
-          data-testid={`count-${c}`}
-          style={{ ['--mg-color' as string]: colorOf(c) }}
-        >
-          <span>
-            {ago}: <strong>{view.counts[c]}</strong>
+        <p key={c} className="mg-count" data-choice={c} data-testid={`count-${c}`}>
+          <strong className="mg-count-n">{view.counts[c]}</strong>{' '}
+          <span className="mg-count-ago">
+            {view.counts[c] === 1 ? 'player' : 'players'}, {ago}
           </span>
-          <span
-            className="mg-bar"
-            aria-hidden="true"
-            style={{ width: `${String((view.counts[c] / most) * 100)}%` }}
-          />
         </p>
+      ))}
+    </div>
+  );
+}
+
+// The cards' frames behind the buttons, the band and the counts: one per option, the own
+// choice's strong.
+function Frames(p: { readonly options: readonly Choice[]; readonly own: Choice | null }) {
+  return (
+    <div className="mg-frames" aria-hidden="true">
+      {p.options.map((c) => (
+        <span key={c} className="mg-frame" data-choice={c} data-own={p.own === c} style={tint(c)} />
       ))}
     </div>
   );
@@ -110,6 +116,7 @@ export function ChoiceButtons(p: ChoiceButtonsProps): ReactElement {
   const roving = useRoving(options.length, Math.max(0, own === null ? 0 : options.indexOf(own)));
   return (
     <div className="mg-choices" style={{ ['--mg-options' as string]: String(options.length) }}>
+      <Frames options={options} own={own} />
       <div
         className="mg-buttons"
         role="radiogroup"
@@ -126,7 +133,7 @@ export function ChoiceButtons(p: ChoiceButtonsProps): ReactElement {
             role="radio"
             className="mg-choice"
             data-choice={c}
-            style={{ ['--mg-color' as string]: colorOf(c) }}
+            style={tint(c)}
             aria-checked={own === c}
             tabIndex={i === roving.focus ? 0 : -1}
             disabled={p.choose === null || !p.canAct}

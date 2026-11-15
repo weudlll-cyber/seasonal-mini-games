@@ -7,8 +7,8 @@
  *                 phased codes included (`PLAY_OVER`, `JOIN_CLOSED`, `NOT_IN_ROUND`), so the
  *                 player reads the game's sentence; the feed's lines as the rows of the round's
  *                 one list, which the platform draws with the name ("You" for the viewer's own):
- *                 "chose Summer", "switched Summer → Winter" (02e §6.1); the feed's head ("The
- *                 round 30 s ago: 23 players") and the empty feed's sentence; times after the
+ *                 "chose Summer", "switched Summer → Winter" (02e §6.1); the feed's head ("30
+ *                 seconds ago · 23 players") and the empty feed's sentence; times after the
  *                 opening as "1:30"; the intro's rule and timing (02e §2); the result's headline
  *                 where the platform puts the line about the best of the rest (O22). Room events
  *                 make no row of their own: the lines come from the view, so a reload shows the
@@ -47,9 +47,9 @@ export const delayS = (v: SpectatorView): number => Math.round(v.rules.plan.view
 
 const playersWord = (n: number) => `${String(n)} ${n === 1 ? 'player' : 'players'}`;
 
-// The feed's head: the time it shows and how many were in the round then (02e §6.1).
+// The feed's head: the time it shows and how many were in the round then (02e §6.1, O97).
 export const headText = (v: SpectatorView): string =>
-  `The round ${String(delayS(v))} s ago: ${playersWord(v.entrants)}`;
+  `${String(delayS(v))} seconds ago · ${playersWord(v.entrants)}`;
 
 // Before the first choice reaches the feed (02e §6.1; the countdown needs the opening, OPEN).
 export const emptyText = (v: SpectatorView): string =>

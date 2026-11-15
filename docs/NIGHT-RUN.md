@@ -9,7 +9,7 @@ Status, updated after every piece. `feat/mind-games` is not merged.
 | Piece                                                                   | State                   |
 | ----------------------------------------------------------------------- | ----------------------- |
 | 1 — the chat docked below (`meta.chatDock`)                             | done                    |
-| 2 — the round view                                                      | open                    |
+| 2 — the round view                                                      | done                    |
 | 3 — the result and pause view                                           | open                    |
 | 4 — small fixes (locked fields, the live list's Mode, 02c §9's heading) | open                    |
 | Play-through and handover                                               | open                    |
@@ -20,6 +20,12 @@ Status, updated after every piece. `feat/mind-games` is not merged.
 - **The flag:** `meta.chatDock?: 'below'` in the game-module contract (04 §4), the game list's `chatDock` (`'panel'` by default); Mind Games sets it. The other four games have no flag and keep the round bar's Chat panel and the chat beside the result.
 - **The page:** `apps/web/src/match/DockedMatch.tsx` holds the round view, the loading line and the result in one box with `ChatDock` under each, so the chat is mounted once (T350); `JoinLeave` moved out of `MatchPage.tsx` into its own file. A desktop gets the chat as a strip of 180 px; a phone a bar with the newest message and the unread count that opens a sheet. The arrivals context now passes the message itself.
 - **Checks:** `chatDock.test.tsx` (typed text kept from the round to the result and the next round; desktop without a bar; the phone's bar, unread, Escape and Close; no dock without a chat).
+
+### Piece 2 — the round view
+
+- **Platform:** a game layout `split` (`games/registry/web` `GameWeb.layout`, T351): `RoundBody` treats it like `board` (the input draws into the stage); `round.css` makes the stage a subgrid across both columns, the strip on top, the cards on the left 3/5, the info column on the right 2/5; on a phone the stage, the info line, the list, the dock. The four other games keep `board` or the list layout.
+- **Mind Games:** `PhaseStrip.tsx` (Join, Play, Reveal; "· now", a fill, one line under the strip), `ChoiceButtons.tsx` (cards with frames behind the buttons, the band and the counts; "✓ Your choice"), `MindInput.tsx` ("Your choice: Autumn" on a phone), `FeedPanels.tsx` (the spectator's main part), `phases.ts` (Reveal), `text.ts` ("10 seconds ago · 4 players"), `mind.css` rewritten for the cards and the strip.
+- **Checks:** the game's web tests 34/34 and the round's 101/101 with the new words; the author's look at 1280 × 720, 1920 × 1080 and 390 × 844, light and dark: one screen each, no overlap of the chat or the band, the five cards in one row with All on.
 
 ## Task MG-N5 (2026-11-14): test isolation and a build badge, then small Mind Games fixes
 

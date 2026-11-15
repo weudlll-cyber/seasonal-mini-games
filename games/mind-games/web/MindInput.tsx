@@ -1,11 +1,12 @@
 /**
  * @file   games/mind-games/web/MindInput.tsx
  * @module games/mind-games/web
- * @brief  A player's stage: the phase strip, the choice buttons and Hide my switches.
+ * @brief  A player's stage: the phase strip, the choice cards and Hide my switches.
  *
- * Responsibility: drawn into the round's stage (the board layout, O51): the phase strip with
- *                 the round's timing, the choice row and, in a `perPlayer` round only, the box
- *                 "Hide my switches" (02e §6.3, §11). A click sends the choice at once with the
+ * Responsibility: drawn into the round's stage (the split layout, T351): its first part the
+ *                 phase strip with the round's timing, its second the choice cards, on a phone
+ *                 the line "Your choice: Autumn", and, in a `perPlayer` round only, the box
+ *                 "Hide my switches" (02e §6.3, §11, O97). A click sends the choice at once with the
  *                 box as it stands (02e §5.1, no separate Send); the viewer's own choice comes back
  *                 live in their own view. The buttons are off where the page already knows the
  *                 answer (02e §5.2): after the play's end (the platform's `canAct`), and after the
@@ -100,17 +101,22 @@ export function MindInput(p: MindInputProps): ReactElement {
   };
   const notice = prePickNotice(p.own, view) ?? (shut ? mindText.code('JOIN_CLOSED') : null);
   const said = message ?? notice;
+  const mine = view.own.choice;
   const stage = (
     <div className="mg-stage" data-testid="mind-stage">
       <PhaseStrip view={view} timing={p.timing} />
-      <ChoiceButtons
-        view={view}
-        own={view.own.choice}
-        choose={choose}
-        canAct={p.canAct && !shut}
-        names={p.names}
-      />
-      {view.rules.switchVisibility === 'perPlayer' ? <HideBox hide={hide} set={set} /> : null}
+      <div className="mg-main">
+        <ChoiceButtons
+          view={view}
+          own={mine}
+          choose={choose}
+          canAct={p.canAct && !shut}
+          names={p.names}
+        />
+        {/* The phone's words for the pressed card (a desktop has its pill, ./mind.css). */}
+        {mine === null ? null : <p className="mg-yourline">Your choice: {CHOICE_NAMES[mine]}</p>}
+        {view.rules.switchVisibility === 'perPlayer' ? <HideBox hide={hide} set={set} /> : null}
+      </div>
     </div>
   );
   return (
