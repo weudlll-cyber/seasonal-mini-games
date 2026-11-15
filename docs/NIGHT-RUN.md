@@ -2,6 +2,18 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Task MG-MERGE (2026-11-16): T369 accepted (O102), `feat/mind-games` merged into `master`, the sweep
+
+Status. The owner approved the merge on 2026-11-16.
+
+| Part                                                   | State   |
+| ------------------------------------------------------ | ------- |
+| O102: T369 accepted; DECISIONS, BACKLOG, OPEN          | done    |
+| Merge `feat/mind-games` into `master` (a merge commit) | running |
+| CI on the merge commit                                 | open    |
+| Sweep: `feat/mind-games`, `shots/mg-n8`                | open    |
+| Handover on `master`                                   | open    |
+
 ## Task MG-N9 (2026-11-15): equal totals share a place (O100), T367 accepted (O101), the console's 401s
 
 Status. `feat/mind-games` is not merged.
@@ -12,7 +24,7 @@ Status. `feat/mind-games` is not merged.
 | O100: equal totals share a place, listed by name (`meta.standingsTies`) | done (`0427f70`)                                    |
 | The console's 401s for `/chat/rooms/lobby`                              | done: the request without a session removed (T370)  |
 | Tests, play-through, handover                                           | done; CI on the final head reported in the handover |
-| Needs the owner's word                                                  | the proposal T369                                   |
+| Needs the owner's word                                                  | none: T369 accepted (O102, 2026-11-16)              |
 
 ### The shared places (O100, T369)
 
