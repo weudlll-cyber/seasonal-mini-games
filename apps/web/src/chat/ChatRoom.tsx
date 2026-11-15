@@ -121,7 +121,7 @@ export function ChatRoom({ target }: { readonly target: ChatTarget }): ReactElem
   const arrived = useContext(ChatArrivals);
   // Unread counts another player's message, never the viewer's own or a system line.
   const { room, messages, problem, send } = useChatRoom(target, (m) => {
-    if (m.kind === 'player' && m.author !== me) arrived?.();
+    if (m.kind === 'player' && m.author !== me) arrived?.(m);
   });
   const list = useRef<HTMLOListElement>(null);
   // Follow the newest message at the bottom.

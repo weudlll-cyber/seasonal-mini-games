@@ -108,6 +108,8 @@ export class Rounds {
         timing: meta.timing,
         // A game may show no season in its rounds (O93); the guess games all do.
         seasons: meta.seasons !== false,
+        // The match chat docked under the round on a desktop (O97); a panel by default.
+        chatDock: meta.chatDock ?? 'panel',
       },
       devBot: entry.devBot,
       hostKeys: new Set(entry.module.settings.defs.filter((d) => d.hostChooses).map((d) => d.key)),

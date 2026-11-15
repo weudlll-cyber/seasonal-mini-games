@@ -34,6 +34,9 @@ export interface GameInfoView {
   readonly timing: 'cooldown' | 'phased';
   // False for a game whose rounds show no season (the module's `meta.seasons`, O93).
   readonly seasons: boolean;
+  // Where the match chat sits around a round (the module's `meta.chatDock`, O97): 'panel'
+  // from the round bar, or 'below', docked under the round view and the result.
+  readonly chatDock: 'panel' | 'below';
 }
 
 export interface MatchSummaryView {

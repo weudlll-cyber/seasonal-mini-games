@@ -8,7 +8,8 @@
  *                 together behind the contract of 04 §4 and §4.8. The game has no secret, no
  *                 special, no halving and no teams (02e §12): `secretModes` is empty, it
  *                 derives nothing and implements no special hook; its rounds show no season
- *                 (`seasons` false, owner decision O93).
+ *                 (`seasons` false, owner decision O93); its match chat is docked under the
+ *                 round view and the result (`chatDock` 'below', O97).
  * Depends on:     @smg/game-sdk (GameModule), ./rules, ./settings, ./state, ./views, ./words
  * Used by:        ./index, games/registry
  * Spec:           docs/spec/02e-game-mind-games.md; docs/spec/04-software-architecture.md §4, §4.8
@@ -31,6 +32,8 @@ export const mindGames: GameModule<MindState, MindAction, MindEvent, MindConfig,
     teams: false,
     // No season shows in the game for now (owner decision O93, 02e §12).
     seasons: false,
+    // The match chat docked under the round and the result (owner decision O97, 02e §11).
+    chatDock: 'below',
   },
   settings: mindSettings,
   actionSchema,

@@ -36,68 +36,17 @@ import { useChatConfig } from '../chat/useChat.js';
 import { useMatch } from '../live/useMatch.js';
 import { useRound, type RoundLive } from '../live/useRound.js';
 import { RoundChat } from '../round/RoundChat.js';
-import { gameName, useGames } from '../lobby/games.js';
-import { codeText } from '../round/roundText.js';
+import { docksChat, gameName, useGames } from '../lobby/games.js';
 import { RoundScreen } from '../round/RoundScreen.js';
-import { api, ApiError } from '../shell/http.js';
-import { useSession } from '../shell/session.js';
+import { DockedMatch } from './DockedMatch.js';
 import { HostConsole, HostMenu, hosts, type Values } from './HostMenu.js';
+import { JoinLeave } from './JoinLeave.js';
 import { useOwnPart } from './GamePrefs.js';
 import { MatchSummary } from './MatchSummary.js';
 import { ResultBar } from './ResultBar.js';
 import { WaitingArea } from './WaitingArea.js';
 import { keptOf } from './roundFields.js';
 import './match.css';
-
-function JoinLeave({
-  match,
-  reload,
-}: {
-  readonly match: MatchDetailsView;
-  readonly reload: () => void;
-}): ReactElement | null {
-  const { can } = useSession();
-  const [problem, setProblem] = useState<string | null>(null);
-  if (
-    match.youHost ||
-    !can('match.join') ||
-    match.status === 'closed' ||
-    match.status === 'aborted'
-  )
-    return null;
-  const go = async (what: 'join' | 'leave'): Promise<void> => {
-    try {
-      await api(`/matches/${match.code}/${what}`, { method: 'POST', body: {} });
-      setProblem(null);
-    } catch (error) {
-      setProblem(error instanceof ApiError ? codeText(error.code) : 'That did not work.');
-    }
-    reload();
-  };
-  return (
-    <div className="smg-row">
-      {match.youPlayer ? (
-        <button type="button" className="smg-btn" onClick={() => void go('leave')}>
-          Leave match
-        </button>
-      ) : (
-        <button
-          type="button"
-          className="smg-btn smg-btn--primary"
-          onClick={() => void go('join')}
-          data-testid="join"
-        >
-          Join match
-        </button>
-      )}
-      {problem === null ? null : (
-        <p role="alert" className="round-refusal">
-          {problem}
-        </p>
-      )}
-    </div>
-  );
-}
 
 // The round view takes the page from the countdown; a round only set up waits in the lobby.
 const LIVE = new Set(['countdown', 'open']);
@@ -163,38 +112,55 @@ function MatchView(p: {
   const menu = { match, roundStatus: status, reload: refresh, last: kept, setLast };
   const hostMenu = <HostMenu {...menu} />;
   const phase = phaseOf(match, status);
-  const round =
-    phase !== 'live' && phase !== 'after' ? null : (
-      <RoundScreen
-        live={live}
-        gameId={match.gameId}
-        viewerKey={viewer}
-        host={hosts(match) ? (close) => <HostConsole {...menu} close={close} /> : null}
-        teamPoints={match.teamStandings}
-        standings={match.standings}
-        // The chat is in the round view only while the round runs; after it, the waiting
-        // area beside the result holds it (one room on the page at a time).
-        chat={phase === 'live' ? chat : null}
-        own={own}
-      />
-    );
+  // A game that docks its chat under the round (O97): one chat for the round and the result.
+  const docked = docksChat(useGames(), match.gameId) && phase !== 'waiting';
+  // Mounted only by the phases that show a round (./PhaseBody: live and after).
+  const round = (
+    <RoundScreen
+      live={live}
+      gameId={match.gameId}
+      viewerKey={viewer}
+      host={hosts(match) ? (close) => <HostConsole {...menu} close={close} /> : null}
+      teamPoints={match.teamStandings}
+      standings={match.standings}
+      // The chat is in the round view only while the round runs; after it, the waiting
+      // area beside the result holds it (one room on the page at a time). Docked, it is
+      // neither: ./DockedMatch holds it under both.
+      chat={phase === 'live' && !docked ? chat : null}
+      own={own}
+    />
+  );
+  const lobby = { match, viewerKey: viewer, refresh, hostMenu, chat: docked ? null : chat };
+  if (phase === 'waiting') return <LobbyView {...lobby} />;
+  const body = <PhaseBody {...lobby} phase={phase} docked={docked} round={round} />;
+  return docked ? (
+    <DockedMatch phase={phase} chat={chat}>
+      {body}
+    </DockedMatch>
+  ) : (
+    body
+  );
+}
+
+// The page in a phase other than waiting. The page's one test id and the focus mode's class
+// go on its outermost box, ./DockedMatch's when docked (the loading line is in no focus mode).
+function PhaseBody(
+  p: LobbyProps & {
+    readonly phase: 'live' | 'loading' | 'after';
+    readonly docked: boolean;
+    readonly round: ReactElement;
+  },
+): ReactElement {
+  const outer = (className: string, focus = true) =>
+    p.docked
+      ? { className }
+      : { className: focus ? `${className} focus-mode` : className, 'data-testid': 'match' };
   // A running round in focus mode: one screen, no app header (O46, T128).
-  if (phase === 'live') {
-    return (
-      <div className="match-live one-screen focus-mode" data-testid="match">
-        {round}
-      </div>
-    );
+  if (p.phase === 'live') {
+    return <div {...outer(p.docked ? 'match-live' : 'match-live one-screen')}>{p.round}</div>;
   }
-  if (phase === 'loading') {
-    return (
-      <p className="smg-muted" data-testid="match">
-        Loading the round…
-      </p>
-    );
-  }
-  const lobby = { match, viewerKey: viewer, refresh, hostMenu, chat };
-  return phase === 'after' ? <AfterView {...lobby} round={round} /> : <LobbyView {...lobby} />;
+  if (p.phase === 'loading') return <p {...outer('smg-muted', false)}>Loading the round…</p>;
+  return <AfterView {...p} outer={outer('match-result-page')} />;
 }
 
 interface LobbyProps {
@@ -221,10 +187,16 @@ function Side(p: LobbyProps & { readonly after: boolean }): ReactElement {
 // A finished round: the slim bar instead of the app header (T145), the result's first part
 // on one screen, the next round's box and the chat beside it on a desktop, under it on a
 // phone, where the page scrolls.
-function AfterView(p: LobbyProps & { readonly round: ReactElement | null }): ReactElement {
+function AfterView(
+  p: LobbyProps & {
+    readonly round: ReactElement | null;
+    // The box's class and, outside the docked page, the page's test id.
+    readonly outer: { readonly className: string };
+  },
+): ReactElement {
   const games = useGames();
   return (
-    <div className="match-result-page focus-mode" data-testid="match">
+    <div {...p.outer}>
       <ResultBar
         title={p.match.title}
         game={gameName(games, p.match.gameId)}

@@ -17,8 +17,9 @@
  *                 buttons are off and the feed says choices are closed while the replay runs; the
  *                 result names the least chosen option, lights it up and lists the winners with
  *                 +1 and the viewer's line, the cards' points equal to the placings table's and
- *                 the match standings' (T340); the round view fits 1280 × 720 with the Chat panel
- *                 open, the flight band over no button, line or chat, and 390 × 844; no season on
+ *                 the match standings' (T340); the round view fits 1280 × 720 with the chat docked
+ *                 under it and no Chat button in the bar (O97), the flight band over no button,
+ *                 line or chat, and 390 × 844 with the chat's bar; no season on
  *                 the intro or in the bar (O93), the strip's current phase and its delay line
  *                 (O92); every input
  *                 has a tooltip; axe passes.
@@ -52,13 +53,13 @@ const WIDE = { width: 1280, height: 720 };
 const list = (page: Page) => page.locator('.round-main');
 const choice = (page: Page, name: string) => page.getByRole('radio', { name: new RegExp(name) });
 
-// The flight band's box overlaps no button, no line of the list and no chat panel.
+// The flight band's box overlaps no button, no line of the list and no chat.
 async function bandClear(page: Page): Promise<void> {
   const covered = await page.evaluate(() => {
     const band = document.querySelector('[data-testid="flight-band"]')?.getBoundingClientRect();
     if (band === undefined) return ['no band'];
     const parts = document.querySelectorAll(
-      '.mg-choice, .round-main li, [data-testid="round-chat"]',
+      '.mg-choice, .round-main li, [data-testid="chat-dock"]',
     );
     return [...parts]
       .filter((e) => {
@@ -240,15 +241,17 @@ test('journey 38: one round of Seasonal Mind Games, everything one delay late', 
     // The same waves flew on the player's page, none on the reduced-motion one.
     expect(await flightsSeen(p.page)).toBeGreaterThan(0);
     expect(await flightsSeen(calm.page)).toBe(0);
-    await p.page.getByTestId('focus-chat').click();
+    // The chat is docked under the round, not a panel from the bar (O97).
+    await expect(p.page.getByTestId('focus-chat')).toHaveCount(0);
+    await expect(p.page.getByTestId('chat-dock')).toHaveAttribute('data-view', 'desktop');
     await fitsScreen(p.page);
     await bandClear(p.page);
-    await p.page.keyboard.press('Escape');
     await axeClean(p.page);
     await lateJoiner(late, p, code, opened);
     await watchLight(p.page);
     await lastPhases(p, opened);
     await p.page.setViewportSize(PHONE);
+    await expect(p.page.getByTestId('chat-dock-bar')).toBeVisible();
     await fitsScreen(p.page);
     await bandClear(p.page);
     await p.page.setViewportSize(WIDE);

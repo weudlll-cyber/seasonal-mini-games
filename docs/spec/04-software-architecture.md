@@ -110,6 +110,8 @@ interface GameModule<S, A, E, Cfg, Sec> {
     secretModes: ReadonlyArray<'shared' | 'individual'>;  // none: the round bar names no mode (T347)
     teams: boolean;             // supports season teams (shared mode)
     seasons?: false;            // false: the rounds show no season (Mind Games, O93); absent: shown
+    chatDock?: 'below';         // the match chat docked under the round and the result (O97);
+                                // absent: a panel from the round bar
   };
   settings: {
     defs: SettingDef[];         // the game's own keys of document game.<id> (08 §3)

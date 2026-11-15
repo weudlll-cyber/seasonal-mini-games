@@ -2,6 +2,25 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Task MG-N6 (2026-11-15): the new Mind Games layout (owner-approved design, O97) and small fixes
+
+Status, updated after every piece. `feat/mind-games` is not merged.
+
+| Piece                                                                   | State                   |
+| ----------------------------------------------------------------------- | ----------------------- |
+| 1 — the chat docked below (`meta.chatDock`)                             | done                    |
+| 2 — the round view                                                      | open                    |
+| 3 — the result and pause view                                           | open                    |
+| 4 — small fixes (locked fields, the live list's Mode, 02c §9's heading) | open                    |
+| Play-through and handover                                               | open                    |
+| Needs the owner's word                                                  | the proposals from T350 |
+
+### Piece 1 — the chat docked below
+
+- **The flag:** `meta.chatDock?: 'below'` in the game-module contract (04 §4), the game list's `chatDock` (`'panel'` by default); Mind Games sets it. The other four games have no flag and keep the round bar's Chat panel and the chat beside the result.
+- **The page:** `apps/web/src/match/DockedMatch.tsx` holds the round view, the loading line and the result in one box with `ChatDock` under each, so the chat is mounted once (T350); `JoinLeave` moved out of `MatchPage.tsx` into its own file. A desktop gets the chat as a strip of 180 px; a phone a bar with the newest message and the unread count that opens a sheet. The arrivals context now passes the message itself.
+- **Checks:** `chatDock.test.tsx` (typed text kept from the round to the result and the next round; desktop without a bar; the phone's bar, unread, Escape and Close; no dock without a chat).
+
 ## Task MG-N5 (2026-11-14): test isolation and a build badge, then small Mind Games fixes
 
 Status, updated after every piece. `feat/mind-games` is not merged.

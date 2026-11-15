@@ -7,10 +7,11 @@
  *                 create-match form's game choice, the Play list, the Quick Test form, the
  *                 match page and its summary, and the profile's rounds (O41) — and the name for
  *                 an id, the id itself while the list loads or for a game no longer installed;
- *                 whether a game's rounds show a season (O93) and a secret mode (T347).
+ *                 whether a game's rounds show a season (O93) and a secret mode (T347), and
+ *                 whether its match chat is docked under the round (O97).
  * Depends on:     react, @smg/contracts (GameInfoView), ../shell/http
  * Used by:        ./Lobby, ../shell/QuickTest, ../match/MatchSummary, ../match/MatchPage,
- *                 ../boards/ProfilePage
+ *                 ../boards/ProfilePage, ../round/RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §2 (owner decision 41); docs/spec/06-data-model-api-realtime.md §3.1
  */
 import type { GameInfoView } from '@smg/contracts';
@@ -76,3 +77,8 @@ export function useRoundLook(id: string): {
     mode: showsMode(games, id),
   };
 }
+
+// Whether the game docks its match chat under the round view and the result (the module's
+// `meta.chatDock`, O97); false until the list has loaded, as for every guess game.
+export const docksChat = (games: readonly GameInfoView[], id: string): boolean =>
+  games.find((g) => g.id === id)?.chatDock === 'below';

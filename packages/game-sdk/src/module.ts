@@ -40,6 +40,10 @@ export interface GameMeta {
   // host form nor in the Quick Test; a round still stores one (owner decision O93). Absent: the
   // season shows, as in every guess game.
   readonly seasons?: false;
+  // 'below': on a desktop the match chat is docked under the round view and the result, full
+  // width, and the round bar has no Chat button; on a phone a bottom bar opens it as a sheet
+  // (owner decision O97). Absent: the chat is a panel from the round bar, as in every guess game.
+  readonly chatDock?: 'below';
 }
 
 // The game's own keys of its settings document, and how frozen values become its config.

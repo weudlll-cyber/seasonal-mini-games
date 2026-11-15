@@ -1,0 +1,32 @@
+/*
+ * @file   apps/web/src/match/docked.css
+ * @module web/match
+ * @brief  The docked match page (./DockedMatch, O97): the view above, the chat under it.
+ *
+ * Responsibility: one screen without a page scrollbar: the box fills what the hidden app
+ *                 header leaves (../shell/shell.css `.one-screen`), the view on top takes every
+ *                 height the chat (./chatDock.css) does not; a result taller than its part
+ *                 scrolls inside it, never the page. Colours only from @smg/ui tokens.
+ * Spec:           docs/spec/02e-game-mind-games.md §11
+ */
+.match-docked {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.match-docked-main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The result and the pause: its part scrolls inside itself when it is taller. */
+.match-docked-main > .match-result-page {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
