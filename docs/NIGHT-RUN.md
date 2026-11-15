@@ -11,7 +11,7 @@ Status, updated after every piece. `feat/mind-games` is not merged.
 | 1 — the chat docked below (`meta.chatDock`)                             | done                    |
 | 2 — the round view                                                      | done                    |
 | 3 — the result and pause view                                           | done                    |
-| 4 — small fixes (locked fields, the live list's Mode, 02c §9's heading) | open                    |
+| 4 — small fixes (locked fields, the live list's Mode, 02c §9's heading) | done                    |
 | Play-through and handover                                               | open                    |
 | Needs the owner's word                                                  | the proposals from T350 |
 
@@ -33,6 +33,13 @@ Status, updated after every piece. `feat/mind-games` is not merged.
 - **Mind Games:** `words.ts` `resultTitle`, `resultLine`, `whyNot` replace `headline`; `ResultPanel.tsx` heads the result and draws the cards in one row; `result.css` rewritten (the auto-fit grid is gone); `PrefsPanel.tsx` only the rounds still to play, none after the last.
 - **Removed:** the result's placings table and team line for a game with `ownResult` (the four other games keep theirs), Mind Games' `headline`, the pre-pick panel's locked rounds, the auto-fit grid.
 - **Checks:** the game's tests 81/81, the web's match and round tests 142/142; the author's look at the three sizes in light and dark: no page scrollbar, nothing over the chat; the typed chat text kept from the round to the result.
+
+### Piece 4 — small fixes
+
+- **Locked fields** (T354): `packages/ui/src/base.css` gives a disabled field a muted fill and text, a dashed edge and the not-allowed cursor; `apps/web/src/components/fields.tsx` adds `LockMark` (a padlock and "locked") at the field's top right, outside the label. This is the one visible change outside Mind Games: every game's disabled form fields.
+- **The live list's Mode** (T354): `liveRounds.ts` sends `secretMode: null` for a game without secret modes (the game list's `secretModes`); `LivePage.tsx` shows "—". Guess games keep "shared, spring".
+- **02c §9:** the sentence fused into the heading is now its own paragraph.
+- **Checks:** the web's component, match and shell tests 75/75 (a new locked-field test), the admin's live list 3/3, the server's `adminLive.integration.test.ts` 6/6 (a guess round "shared", a Mind Games round null).
 
 ## Task MG-N5 (2026-11-14): test isolation and a build badge, then small Mind Games fixes
 

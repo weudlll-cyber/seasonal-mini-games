@@ -3,8 +3,9 @@
  * @module admin/live
  * @brief  The Live area: every running round, refreshed every few seconds, and one opened.
  *
- * Responsibility: list the running rounds (`GET /admin/rounds/live`: match, host, mode,
- *                 players, connected, guesses — "—" for a phased round, T348 — times; never a
+ * Responsibility: list the running rounds (`GET /admin/rounds/live`: match, host, mode —
+ *                 "—" for a game without a secret, T354 — players, connected, guesses — "—" for
+ *                 a phased round, T348 — times; never a
  *                 secret) every 3 seconds; open
  *                 one into ./RoundPanel, which stays open after the round ended so a result
  *                 can be removed. The server checks every permission again.
@@ -34,6 +35,17 @@ const COLUMNS = [
 
 const time = (ms: number | null) => (ms === null ? '—' : new Date(ms).toLocaleTimeString());
 
+// The mode and season; a game without a secret names neither (T354).
+function ModeCell({ r }: { readonly r: LiveRoundView }): ReactElement {
+  if (r.secretMode === null) return <td>—</td>;
+  return (
+    <td>
+      {r.secretMode}, {r.season}
+      {r.halving ? ', halving' : ''}
+    </td>
+  );
+}
+
 function Rows({
   rounds,
   open,
@@ -61,10 +73,7 @@ function Rows({
               </td>
               <td>{r.host ?? '—'}</td>
               <td>{r.status}</td>
-              <td>
-                {r.secretMode}, {r.season}
-                {r.halving ? ', halving' : ''}
-              </td>
+              <ModeCell r={r} />
               <td>{r.roster}</td>
               <td>{r.connected}</td>
               <td>{r.guesses ?? '—'}</td>

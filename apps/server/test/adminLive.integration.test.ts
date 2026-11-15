@@ -119,13 +119,14 @@ describe('the live list', () => {
     const item = live.find((r) => r['roundId'] === id);
     expect(item).toMatchObject({ matchCode: code, status: 'open', roster: 2, connected: 2 });
     expect(item?.['guesses']).toBe(0);
+    expect(item?.['secretMode']).toBe('shared');
     expect(Object.keys(item ?? {}).sort()).toEqual(LIVE_KEYS.sort());
     view = (await admin.get(`/api/v1/admin/rounds/${id}`)).json<StaffView>();
     expect(view.role).toBe('spectator');
     expect(JSON.stringify(view)).not.toMatch(/"seed"|"secret"/);
   });
 
-  it('lists a phased round without a guess count (T348)', async () => {
+  it('lists a phased round without a guess count or a mode (T348, T354)', async () => {
     const open = await kit.clients.host.post('/api/v1/matches', {
       gameId: 'mind-games',
       title: 'live phased',
@@ -144,7 +145,7 @@ describe('the live list', () => {
       items: Record<string, unknown>[];
     }>().items;
     const item = live.find((x) => x['roundId'] === id);
-    expect(item).toMatchObject({ matchCode: code, guesses: null });
+    expect(item).toMatchObject({ matchCode: code, guesses: null, secretMode: null });
     expect(Object.keys(item ?? {}).sort()).toEqual(LIVE_KEYS.sort());
     // Aborted here: the staff abort below finds no other running round.
     await kit.clients.host.post(`/api/v1/matches/${code}/abort`, { reason: 'test done' });

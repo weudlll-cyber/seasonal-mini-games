@@ -21,7 +21,7 @@ afterEach(() => {
 
 const RIGHTS = { abort: false, kick: false, removeResult: false };
 
-const round = (code: string, guesses: number | null) => ({
+const round = (code: string, guesses: number | null, secretMode: string | null = 'shared') => ({
   roundId: `r-${code}`,
   matchId: `m-${code}`,
   matchCode: code,
@@ -29,7 +29,7 @@ const round = (code: string, guesses: number | null) => ({
   host: 'dev-host',
   status: 'open',
   season: 'spring',
-  secretMode: 'shared',
+  secretMode,
   halving: false,
   roster: 3,
   connected: 3,
@@ -38,9 +38,9 @@ const round = (code: string, guesses: number | null) => ({
   endsAt: null,
 });
 
-describe('the live list (T348)', () => {
-  it("shows a guess round's guesses and none for a phased round", async () => {
-    const items = [round('GUESS1', 7), round('PHASE1', null)];
+describe('the live list (T348, T354)', () => {
+  it("shows a guess round's guesses and mode, and neither for a phased game without a secret", async () => {
+    const items = [round('GUESS1', 7), round('PHASE1', null, null)];
     vi.stubGlobal(
       'fetch',
       vi.fn(() => Promise.resolve(new Response(JSON.stringify({ items }), { status: 200 }))),
@@ -52,9 +52,14 @@ describe('the live list (T348)', () => {
     const column = [...screen.getAllByRole('columnheader')].findIndex(
       (h) => h.textContent === 'Guesses',
     );
-    const cell = (code: string) =>
-      screen.getByTestId(`live-${code}`).querySelectorAll('td')[column]?.textContent;
+    const mode = [...screen.getAllByRole('columnheader')].findIndex(
+      (h) => h.textContent === 'Mode',
+    );
+    const cell = (code: string, at = column) =>
+      screen.getByTestId(`live-${code}`).querySelectorAll('td')[at]?.textContent;
     expect(cell('GUESS1')).toBe('7');
     expect(cell('PHASE1')).toBe('—');
+    expect(cell('GUESS1', mode)).toBe('shared, spring');
+    expect(cell('PHASE1', mode)).toBe('—');
   });
 });
