@@ -12,7 +12,7 @@
  * Depends on:     @smg-game/mind-games (settings), ./FeedPanels, ./formFields, ./MindInput,
  *                 ./PrefsPanel,
  *                 ./ResultPanel,
- *                 ./text, ./mind.css, ./result.css, ./flights.css
+ *                 ./text, ./mind.css, ./strip.css, ./prefs.css, ./result.css, ./flights.css
  * Used by:        games/registry/web
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/02e-game-mind-games.md §11
  */
@@ -25,6 +25,8 @@ import { PrefsPanel } from './PrefsPanel.js';
 import { ResultPanel } from './ResultPanel.js';
 import { mindText } from './text.js';
 import './mind.css';
+import './strip.css';
+import './prefs.css';
 import './result.css';
 import './flights.css';
 

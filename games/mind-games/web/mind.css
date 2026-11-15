@@ -1,7 +1,7 @@
 /*
  * @file   games/mind-games/web/mind.css
  * @module games/mind-games/web
- * @brief  Styles of Seasonal Mind Games' round: the stage, the phase strip, the choice cards.
+ * @brief  Styles of Seasonal Mind Games' round: the stage and the choice cards.
  *
  * Responsibility: colours only from the design tokens (light and dark) and the seasons' own
  *                 tokens; the stage's two parts, the strip and the main part, which the
@@ -15,8 +15,9 @@
  *                 at least 44 px (a phone's card at least 66 px wide and 72 px tall, also with
  *                 All). The phone layout is the platform's (a landscape viewport under 900 px
  *                 or any portrait one, the same media query here): the strip compact, the cards
- *                 with icon, name and count, and the line "Your choice: Autumn". The result is
- *                 styled in ./result.css, the flights in ./flights.css. Classes are prefixed
+ *                 with icon, name and count, and the line "Your choice: Autumn". The phase strip
+ *                 is styled in ./strip.css, the pre-picks in ./prefs.css, the result in
+ *                 ./result.css, the flights in ./flights.css. Classes are prefixed
  *                 `mg-`.
  * Spec:           docs/spec/02e-game-mind-games.md §11
  */
@@ -39,74 +40,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-}
-
-/* The phase strip: the three parts in proportion to their lengths, the line under them. */
-.mg-timeline {
-  display: grid;
-  gap: 0.25rem;
-}
-
-.mg-phases {
-  display: flex;
-  gap: 0.25rem;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  font-size: var(--font-size-small);
-}
-
-.mg-phase {
-  position: relative;
-  flex-basis: 0;
-  min-width: max-content;
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-1);
-  padding: 0.3rem 0.6rem;
-  overflow: hidden;
-  background: var(--color-surface-2);
-  border: 3px solid transparent;
-  border-radius: var(--radius);
-}
-
-/* The part the round is in now: a strong frame, a fill as it runs and "· now" (O92, O97). */
-.mg-phase[data-current='true'] {
-  background: var(--color-surface);
-  border-color: var(--color-solid);
-}
-
-.mg-phase-fill {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  background: color-mix(in srgb, var(--color-solid) 14%, transparent);
-}
-
-.mg-phase-name,
-.mg-phase-time {
-  position: relative;
-}
-
-.mg-phase-name {
-  font-weight: var(--font-weight-strong);
-}
-
-.mg-phase[data-phase='reveal'][data-current='false'] {
-  background: var(--color-surface);
-  border: 2px dashed var(--color-border-strong);
-}
-
-.mg-strip-line,
-.mg-note {
-  margin: 0;
-  font-size: var(--font-size-small);
-}
-
-.mg-next {
-  font-weight: var(--font-weight-strong);
 }
 
 /* The cards: frames behind three rows, the buttons, the flight band and the counts. */
@@ -286,67 +219,9 @@
   color: var(--color-danger);
 }
 
-/* Your pre-picks: the heading with the box beside it, the line, one select per round still to
-   play in rows of up to six (two columns on a phone), the saving note. */
-.mg-prefs {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.25rem var(--space-2);
-}
-
-.mg-prefs > * {
-  grid-column: 1 / -1;
-  margin: 0;
-}
-
-.mg-prefs > h3 {
-  grid-column: 1;
-  font-size: var(--font-size-lead);
-}
-
-.mg-prefs > .mg-hide {
-  grid-row: 1;
-  grid-column: 2;
-}
-
-.mg-prefs-rounds {
-  display: grid;
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(max(8.5rem, calc((100% - 5 * var(--space-1)) / 6)), 1fr)
-  );
-  gap: var(--space-1);
-}
-
-.mg-prefs-round {
-  min-height: var(--hit-target);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-1);
-}
-
-.mg-prefs-round select {
-  min-height: var(--hit-target);
-}
-
-.mg-prefs-note {
-  margin: 0;
-  color: var(--color-text-muted);
-}
-
-/* The phone layout (the platform's: under 900 px or upright): a compact strip, the cards
-   with icon, name and count, the choice in a line of its own. */
+/* The phone layout (the platform's: under 900 px or upright): the cards with icon, name and
+   count, the choice in a line of its own. */
 @media (max-width: 899px), (orientation: portrait) {
-  .mg-phase {
-    padding: 0.2rem 0.4rem;
-  }
-
-  .mg-phase-time {
-    display: none;
-  }
-
   .mg-icons img {
     width: 32px;
     height: 32px;
@@ -391,11 +266,5 @@
 
   .mg-yourline {
     display: block;
-  }
-}
-
-@media (max-width: 600px) {
-  .mg-prefs-rounds {
-    grid-template-columns: 1fr 1fr;
   }
 }

@@ -14,7 +14,7 @@
  *                 result screen takes over, outside focus mode (T128).
  * Depends on:     react, @smg/contracts, @smg-game/registry/web, ../live/*, ../season/*,
  *                 ./FocusShell, ./ResultScreen, ./RoundBody, ./RoundIntro, ./RoundSide,
- *                 ./SeasonPill, ./useRoundView, ./round.css
+ *                 ./SeasonPill, ./useRoundView, ./round.css, ./roundSplit.css
  * Used by:        ../match/MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §4, §7, §11, §12; docs/spec/03-seasonal-specials.md §2, §6
  */
@@ -37,6 +37,7 @@ import { ruleOf } from './SeasonPill.js';
 import { useRoundView } from './useRoundView.js';
 import { roundMarks } from './playerMarks.js';
 import './round.css';
+import './roundSplit.css';
 
 interface RoundScreenProps {
   readonly live: RoundLive;

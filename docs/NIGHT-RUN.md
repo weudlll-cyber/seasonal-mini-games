@@ -51,6 +51,7 @@ Status, updated after every piece. `feat/mind-games` is not merged.
   - **Round 3** (All on): "Autumn, Winter and All win!" / "Least chosen · 3 players win · +1 each, All +2". Cards Spring 2, not least chosen (bot-04, bot-03), Summer 0, Autumn 1 (bot-01 +1), Winter 1 (bot-02 +1), All 1 (You +2). Totals bot-01 3, bot-02 3, dev-host 3, bot-04 1, bot-03 0.
   - **Summary:** bot-01 3 (3 wins), bot-02 3 (3), dev-host 3 (2), bot-04 1 (1), bot-03 0; each count equals its players, each "+N" the standings' This round, each Total and the summary the rounds' sums. No page errors.
 - **Screenshots:** 8, light and dark, on the orphan branch `shots/mg-n6`; `shots/mg-n5` deleted.
+- **After the play-through:** `mind.css` (401 lines) and `round.css` (324) were over the 300-line limit, which lint does not count for CSS: the phase strip moved to `strip.css` (90), the pre-picks to `prefs.css` (66), the split layout to `roundSplit.css` (64); `mind.css` 270, `round.css` 271. The author's look again at the three sizes, light and dark: unchanged.
 
 ### Noticed, left alone
 

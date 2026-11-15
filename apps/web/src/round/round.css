@@ -8,8 +8,7 @@
  *                 of two layouts set on the container (`data-view`, ./useRoundView). A desktop:
  *                 the slim bar (./focus.css) over the stage on the left (a list game's guesses
  *                 with the action dock at its bottom, a board game's board, square, the column
- *                 beside it taking the rest; a split game's strip across the width over its
- *                 main part on the left 3/5 and the info column on the right 2/5, T351) and the
+ *                 beside it taking the rest; a split game's in ./roundSplit.css, T351) and the
  *                 340 px info
  *                 column on the right (the special line, the game's compact panel, then "Your
  *                 guesses" or a board game's list with the dock); an open panel on demand is a
@@ -82,51 +81,6 @@
   grid-template-columns: var(--board-side) minmax(340px, 1fr) 360px;
 }
 
-/* A split game on a desktop (T351, O97): the stage spans both columns under the bar, as a
-   subgrid of the round view's, so the game's strip (the first child of its box) takes the
-   whole width and its main part (the second) the left 3/5; the info column takes the right
-   2/5 under the strip; an open panel is the third column beside both. */
-.round-live[data-view='desktop'][data-layout='split'] {
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  grid-template-rows: 44px auto minmax(0, 1fr);
-  grid-template-areas:
-    'bar bar'
-    'strip strip'
-    'stage info';
-}
-
-.round-live[data-view='desktop'][data-layout='split'][data-panel] {
-  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr) 360px;
-  grid-template-areas:
-    'bar bar bar'
-    'strip strip panel'
-    'stage info panel';
-}
-
-.round-live[data-view='desktop'][data-layout='split'] > .round-stage,
-.round-live[data-view='desktop'][data-layout='split'] > .round-stage > * {
-  grid-row: 2 / 4;
-  grid-column: 1 / 3;
-  display: grid;
-  grid-template-columns: subgrid;
-  grid-template-rows: subgrid;
-}
-
-.round-live[data-view='desktop'][data-layout='split'] > .round-stage > * {
-  grid-row: 1 / -1;
-  grid-column: 1 / -1;
-}
-
-.round-live[data-view='desktop'][data-layout='split'] > .round-stage > * > :first-child {
-  grid-row: 1;
-  grid-column: 1 / -1;
-}
-
-.round-live[data-view='desktop'][data-layout='split'] > .round-stage > * > :nth-child(2) {
-  grid-row: 2;
-  grid-column: 1;
-}
-
 /* A phone: bar, info line, the round's guesses filling the height, the dock at the bottom. A
    sheet lies over every row between the bar and the dock (./focus.css), so this box is its
    grid. */
@@ -144,13 +98,6 @@
 
 .round-live[data-view='phone'][data-layout='board'] .round-stage {
   aspect-ratio: 1 / 1;
-}
-
-/* A split game on a phone: the stage at its own height under the bar, then the info line
-   (the game's head of the list), the list filling the rest, the dock (T351). */
-.round-live[data-view='phone'][data-layout='split'] {
-  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
-  grid-template-areas: 'bar' 'stage' 'line' 'main' 'dock';
 }
 
 .round-live[data-view='phone'] > .round-input {
