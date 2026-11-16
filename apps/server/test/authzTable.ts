@@ -73,13 +73,9 @@ export const ROUTES: readonly RouteCase[] = [
   { method: 'GET', path: '/api/v1/session', allow: ALL },
   // Session starters take no CSRF token; the bodies are refused before anything is made.
   { method: 'POST', path: '/api/v1/auth/register', body: {}, allow: ALL, mode: 'local' },
-  {
-    method: 'POST',
-    path: '/api/v1/auth/login',
-    body: { email: 'x@example.com', password: 'x' },
-    allow: ALL,
-    mode: 'local',
-  },
+  // Refused before any password is hashed (T375): the matrix asks who gets through, and a
+  // hash a call costs hundreds of milliseconds on a loaded machine.
+  { method: 'POST', path: '/api/v1/auth/login', body: {}, allow: ALL, mode: 'local' },
   // Website mode: the sign-in reads the headers of the website's proxy only (403 for anyone
   // else); the hop to the website's login lets everyone through.
   { method: 'GET', path: '/auth/website', allow: [], mode: 'website' },
@@ -92,13 +88,8 @@ export const ROUTES: readonly RouteCase[] = [
   { method: 'GET', path: '/embed.js', allow: ALL },
   { method: 'POST', path: '/api/v1/auth/logout', body: {}, allow: SESSION },
   { method: 'DELETE', path: '/api/v1/me', body: { password: 'not the password' }, allow: ACCOUNTS },
-  {
-    method: 'POST',
-    path: '/api/v1/me/password',
-    body: { current: 'x', next: 'y' },
-    allow: ACCOUNTS,
-    mode: 'local',
-  },
+  // The session is checked first, then the body: an empty one is refused before any hash (T375).
+  { method: 'POST', path: '/api/v1/me/password', body: {}, allow: ACCOUNTS, mode: 'local' },
   { method: 'GET', path: '/api/v1/me/matches', allow: ACCOUNTS },
   { method: 'POST', path: '/api/v1/dev/sign-in', body: { as: 'nobody' }, allow: ALL, dev: true },
   // Development only and outside any session: the load check's cleanup (no load account here).

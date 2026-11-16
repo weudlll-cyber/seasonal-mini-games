@@ -10,6 +10,8 @@
  *                 display name) and closing the match queue one delivery each; the deliverer
  *                 sends them through the safe client (test CA, loopback allowed) signed with
  *                 HMAC-SHA256, retries the one the receiver refused, and the admin sees them.
+ *                 The test delivers at the database's clock, which queued the deliveries, not at
+ *                 its own: a delivery queued a moment before is then due (T374).
  * Depends on:     vitest, node:https, node:crypto, ../src/*, ./selfSignedCert, ./socketKit
  * Spec:           docs/spec/07-integration.md §1, §3.2; Bingo 07 §5; docs/spec/09-testing-strategy.md §2
  */
@@ -81,6 +83,17 @@ async function until<T>(probe: () => Promise<T | null>): Promise<T> {
     await new Promise((r) => setTimeout(r, 100));
   }
   throw new Error('timed out');
+}
+
+// The database's clock, rounded up to the millisecond: a delivery is due from its `next_at`,
+// the database's `now()` when it was queued, so every delivery queued before this call is due
+// at it. The test's own clock may run a millisecond or more behind (CI: one delivery queued
+// just before was not due yet, T374).
+async function dbNow(): Promise<number> {
+  const r = await kit.harness.pool.query<{ ms: string }>(
+    'SELECT ceil(extract(epoch FROM clock_timestamp()) * 1000) AS ms',
+  );
+  return Number(r.rows[0]?.ms);
 }
 
 const pending = async (event: string) =>
@@ -202,9 +215,9 @@ describe('webhooks', () => {
     await until(async () => ((await pending('match.opened')) > 0 ? true : null));
     // The receiver refuses the first attempt: kept pending with its error, retried after 30 s.
     answers.push(500);
-    expect(await delivery.deliverDue()).toBe(1);
-    expect(await delivery.deliverDue()).toBe(0);
-    expect(await delivery.deliverDue(Date.now() + 31_000)).toBe(1);
+    expect(await delivery.deliverDue(await dbNow())).toBe(1);
+    expect(await delivery.deliverDue(await dbNow())).toBe(0);
+    expect(await delivery.deliverDue((await dbNow()) + 31_000)).toBe(1);
     expect(received).toHaveLength(2);
     const opened = JSON.parse(received[1]?.body ?? '{}') as { event: string; data: unknown };
     expect(opened).toMatchObject({ event: 'match.opened', data: { match: code } });
@@ -215,7 +228,7 @@ describe('webhooks', () => {
     await until(async () => ((await pending('round.ended')) > 0 ? true : null));
     await kit.clients.host.post(`/api/v1/matches/${code}/close`, {});
     await until(async () => ((await pending('match.closed')) > 0 ? true : null));
-    expect(await delivery.deliverDue()).toBe(3);
+    expect(await delivery.deliverDue(await dbNow())).toBe(3);
     await checkRoundEvents(code, roundId);
     await checkDeliveriesThenRemove(endpoint.id);
   }, 60_000);
@@ -226,7 +239,7 @@ describe('webhooks', () => {
     const code = await kit.openMatch([]);
     // The first test's endpoint is gone, and its deliveries with it.
     await until(async () => ((await pending('match.opened')) > 0 ? true : null));
-    let at = Date.now();
+    let at = await dbNow();
     for (let i = 0; i < 4; i += 1) {
       expect(await delivery.deliverDue(at)).toBe(1);
       at += 10 * 60_000;

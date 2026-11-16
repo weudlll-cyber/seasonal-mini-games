@@ -6,7 +6,7 @@
  * Responsibility: for each route the server registers and each intent of the gateway (the
  *                 tables of ./authzTable), the callers that get through and the ones refused
  *                 (SIGN_IN_REQUIRED, FORBIDDEN, NOT_THE_HOST, CSRF_INVALID, NOT_IN_ROUND; a
- *                 refused socket handshake), each call with a fresh session. A route or intent
+ *                 refused socket handshake), a read route's callers at once (T375). A route or intent
  *                 missing from the tables fails the test, so a new one cannot go in unreviewed;
  *                 the routes of a server with the built client and admin app, and of a build
  *                 without SMG_DEV, are listed too. The host plays their round with a player view while an admin
@@ -37,6 +37,7 @@ import { ROLES, SESSION } from './authzRoles.js';
 import { CSRF_WRITES, REFUSALS } from './authzChecks.js';
 import { INTENTS, ROUTES, type RouteCase } from './authzTable.js';
 import {
+  callAll,
   callAs,
   prepare,
   registeredRoutes,
@@ -109,8 +110,7 @@ describe('the authorization matrix: HTTP routes', () => {
   it('lets through exactly the callers each route allows', async () => {
     const wrong: string[] = [];
     for (const route of ROUTES.filter((r) => r.web !== true && r.mode !== 'website')) {
-      for (const role of ROLES) {
-        const r = await callAs(w, role, route);
+      for (const [role, r] of await callAll(w, ROLES, route)) {
         const refused = r.code !== undefined && REFUSALS[r.code] === r.status;
         if (refused === route.allow.includes(role)) {
           wrong.push(
