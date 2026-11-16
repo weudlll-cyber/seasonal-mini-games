@@ -40,7 +40,7 @@ export type MindInputProps = PlayerPanelProps & {
   readonly stage?: HTMLElement | null;
 };
 
-export const HIDE_TIP = 'While this is ticked, your switches show only in the counts.';
+const HIDE_TIP = 'While this is ticked, your switches show only in the counts.';
 
 function HideBox(p: { readonly hide: boolean; readonly set: (hide: boolean) => void }) {
   return (

@@ -21,7 +21,6 @@ import {
   baseState,
   withPlayer,
   type CommentState,
-  type Guess as EngineGuess,
   type GuessBase,
   type GuessEvent,
   type GuessPlayer,
@@ -31,14 +30,12 @@ import type { Thresholds } from './closeness.js';
 import type { Feedback } from './feedback.js';
 import type { GtnConfig } from './settings.js';
 
-export type Guess = EngineGuess<number, Feedback>;
-
 // Spring Herald's hint: the secret's last digit (O56), or which half of the range (03 §2.1).
 export type Hint =
   | { readonly kind: 'lastDigit'; readonly digit: number }
   | { readonly kind: 'half'; readonly low: number; readonly high: number };
 
-export interface PlayerState extends GuessPlayer<number, Feedback> {
+interface PlayerState extends GuessPlayer<number, Feedback> {
   readonly range: Range;
   // Individual mode: the hint about the player's own number.
   readonly hint: Hint | null;

@@ -17,7 +17,7 @@ import type { ChatMessageView, ChatRoomView } from '@smg/contracts';
 
 import type { DbPool } from '../db/pool.js';
 
-export const PAGE = 50;
+const PAGE = 50;
 
 export type RoomBase = Omit<ChatRoomView, 'canSend' | 'canModerate'>;
 

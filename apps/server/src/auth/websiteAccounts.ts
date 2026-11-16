@@ -32,7 +32,7 @@ interface Linked {
 
 // The website's provider row, made at the first sign-in; null when disabled or when the
 // issuer belongs to a JWT handoff provider.
-export async function websiteProvider(c: pg.PoolClient | DbPool, issuer: string) {
+async function websiteProvider(c: pg.PoolClient | DbPool, issuer: string) {
   const r = await c.query<{ id: string; enabled: boolean; kind: string }>(
     `INSERT INTO smg.identity_providers (kind, name, issuer)
        VALUES ('proxy_header', 'Seasonal Entertainment website', $1)

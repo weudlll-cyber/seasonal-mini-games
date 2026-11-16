@@ -7,7 +7,7 @@
  *                 (a non-browser environment such as jsdom) the query counts as not matching.
  *                 The round view's layout is ./round/useRoundView.
  * Depends on:     react
- * Used by:        ./useReducedMotion
+ * Used by:        ./round/ResultParts
  * Spec:           docs/spec/02-game-guess-the-number.md §12; Bingo 01 §13
  */
 import { useEffect, useState } from 'react';

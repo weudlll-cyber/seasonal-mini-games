@@ -37,7 +37,7 @@ const LABELS = {
 };
 
 // "organizers = organizer" lines → { organizers: 'organizer' }; the contract checks the roles.
-export function mappingOf(text: string): Record<string, string> {
+function mappingOf(text: string): Record<string, string> {
   const lines = text.split('\n').filter((l) => l.trim() !== '');
   return Object.fromEntries(
     lines.map((l) => {

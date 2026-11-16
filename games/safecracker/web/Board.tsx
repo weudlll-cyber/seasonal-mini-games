@@ -64,7 +64,7 @@ function DigitStrip(p: {
   );
 }
 
-export function Board({ length, digits, fallen, hint }: BoardProps): ReactElement {
+function Board({ length, digits, fallen, hint }: BoardProps): ReactElement {
   return (
     <section className="sc-board" aria-label="The code" data-testid="sc-board">
       <p className="sc-line" data-testid="code-line">

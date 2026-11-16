@@ -30,7 +30,7 @@ import { useSession } from '../shell/session.js';
 import { refusalText } from './boardsText.js';
 import { useApi, withGame } from './useApi.js';
 
-export function BoardTable(p: {
+function BoardTable(p: {
   readonly caption: string;
   readonly rows: readonly LeaderboardRowView[];
   readonly testId: string;

@@ -27,7 +27,7 @@ interface Event {
   readonly [key: string]: unknown;
 }
 
-export interface Guess {
+interface Guess {
   readonly seq: number;
   readonly playerId: string;
   readonly action: unknown;
@@ -70,7 +70,7 @@ export function readProof(answer: ProofAnswer): Proof {
 }
 
 // The bytes of a hex string, or null when it is no whole hex.
-export function hexBytes(hex: string): Uint8Array<ArrayBuffer> | null {
+function hexBytes(hex: string): Uint8Array<ArrayBuffer> | null {
   if (!/^(?:[0-9a-f]{2})+$/i.test(hex)) return null;
   const bytes = new Uint8Array(hex.length / 2);
   for (let i = 0; i < bytes.length; i += 1) bytes[i] = parseInt(hex.slice(2 * i, 2 * i + 2), 16);

@@ -72,7 +72,7 @@ export interface MatchRouteDeps {
   readonly pool: Parameters<typeof findMatch>[0];
 }
 
-export function summaryOf(m: MatchRow): MatchSummaryView {
+function summaryOf(m: MatchRow): MatchSummaryView {
   return {
     code: m.code,
     gameId: m.gameId,

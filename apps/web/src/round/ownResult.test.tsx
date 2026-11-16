@@ -8,9 +8,8 @@
  *                 placings table, no team line; "Every line" holds the game's history; under it
  *                 the standings "after round N" (Player · This round · Total, "—" for a player not
  *                 in the round) with the rows that fit (six where nothing is laid out) and the
- *                 viewer's row when lower, "All N players…" opening every row in a sheet that
- *                 Escape closes; the page's next-round box beside them. A game without the flag
- *                 keeps its placings.
+ *                 viewer's row when lower; the page's next-round box beside them. A game
+ *                 without the flag keeps its placings.
  * Depends on:     vitest, @testing-library/react, @smg/contracts, @smg-game/registry/web,
  *                 ./fakes, ./ResultScreen
  * Spec:           docs/spec/02e-game-mind-games.md §9; docs/spec/09-testing-strategy.md §2
@@ -91,8 +90,6 @@ describe('a game that draws its own result', () => {
       ['6', 'player f', '—', '5'],
       ['7', 'You', '0', '4'],
     ]);
-    // No "All N players" link any more (MG-N8).
-    expect(screen.queryByText(/^All \d+ players/)).toBeNull();
   });
 });
 

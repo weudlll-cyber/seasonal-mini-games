@@ -29,7 +29,7 @@ import type { DelayedRoom } from './delayedRoom.js';
 import type { StoredEvent } from './pgRoundStore.js';
 import { framesOf, roundView, type Frames } from './views.js';
 
-export type LifecycleCommand =
+type LifecycleCommand =
   | {
       readonly type: 'startCountdown';
       readonly roster: readonly RosterPlayer[];

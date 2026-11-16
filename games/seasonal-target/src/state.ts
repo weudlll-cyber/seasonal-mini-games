@@ -53,7 +53,7 @@ export const QUARTER_NAMES: readonly QuarterName[] = [
   'south-east',
 ];
 
-export interface StPlayer extends GuessPlayer<Cell, Feedback> {
+interface StPlayer extends GuessPlayer<Cell, Feedback> {
   // The player's current target area: the whole map until a halving.
   readonly area: Area;
   // Individual mode: the quarters about the player's own target.

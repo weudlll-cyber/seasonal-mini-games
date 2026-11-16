@@ -16,7 +16,7 @@ import type { RoundEvent, RoundState } from '@smg/domain';
 
 import type { BatchWrite, StoredEvent } from './pgRoundStore.js';
 
-export const SNAPSHOT_EVERY = 200;
+const SNAPSHOT_EVERY = 200;
 
 export function eventType(event: RoundEvent<unknown, unknown, unknown>): string {
   if (event.type !== 'Game') return event.type;

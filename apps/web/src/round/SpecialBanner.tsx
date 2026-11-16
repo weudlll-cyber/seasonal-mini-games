@@ -27,7 +27,7 @@ import { platformBanner } from './roundText.js';
 import './roundSpecials.css';
 
 // How long a banner stays (T142: 5 s).
-export const BANNER_MS = 5_000;
+const BANNER_MS = 5_000;
 
 function textOf(event: unknown, game: GameWeb | null): string | null {
   const e = event as { type?: string; event?: unknown };

@@ -24,7 +24,7 @@ import { createState, evolveGame, type ScEvent, type ScState } from './state.js'
 import { reveal, views, viewSchemas } from './views.js';
 
 // One code: each position a uniform digit in use, repeats allowed (02b §3).
-export const drawCode = (rng: Drbg, config: ScConfig): string =>
+const drawCode = (rng: Drbg, config: ScConfig): string =>
   Array.from({ length: config.codeLength }, () => String(rng.nextInt(config.codeDigits))).join('');
 
 export const safecracker: GameModule<

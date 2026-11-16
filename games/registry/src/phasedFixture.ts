@@ -30,8 +30,8 @@ import type {
 } from '@smg/game-sdk';
 import { z } from 'zod';
 
-export const SIDES = ['a', 'b', 'c'] as const;
-export type Side = (typeof SIDES)[number];
+const SIDES = ['a', 'b', 'c'] as const;
+type Side = (typeof SIDES)[number];
 
 // The wire's guess value is the side itself (06 §4.3).
 export interface SidePick {
@@ -172,7 +172,7 @@ export const sidesGame: GameModule<SidesState, SidePick, SidesEvent, null, null>
   },
 };
 
-export const sidesConformance: ConformanceKit<SidePick, null, null> = {
+const sidesConformance: ConformanceKit<SidePick, null, null> = {
   input: (_mode, playerIds) => ({
     roundId: 'r-sides',
     roster: playerIds.map((playerId) => ({ playerId, team: null })),
@@ -186,7 +186,7 @@ export const sidesConformance: ConformanceKit<SidePick, null, null> = {
 };
 
 // A bot picks a side at random now and then; a pick it already holds is refused at no cost.
-export const sidesDevBot: DevBot<SidePick> = (_view, pick) => ({ value: SIDES[pick(3)] ?? 'a' });
+const sidesDevBot: DevBot<SidePick> = (_view, pick) => ({ value: SIDES[pick(3)] ?? 'a' });
 
 // About one bot in four fixes a side for every round and stays away.
 const sidesDevPrefs: DevPrefs = (pick, rounds) =>

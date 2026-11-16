@@ -32,7 +32,7 @@ import {
   type SpectatorView,
 } from '@smg-game/mind-games';
 
-export const WAVE_CAP = 12;
+const WAVE_CAP = 12;
 
 export interface Flight {
   readonly key: string;

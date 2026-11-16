@@ -45,7 +45,7 @@ export interface NewRoundRow {
   readonly createdBy: string | null;
 }
 
-export interface RoundStatusRow {
+interface RoundStatusRow {
   readonly status: string;
   readonly opensAt: number | null;
   readonly endedAt: number | null;

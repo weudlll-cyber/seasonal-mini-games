@@ -46,7 +46,7 @@ const STEP: Readonly<Record<string, number>> = {
   ArrowUp: -1,
 };
 
-export const tooltipOf = (c: Choice, view: SpectatorView): string =>
+const tooltipOf = (c: Choice, view: SpectatorView): string =>
   `Choose ${CHOICE_NAMES[c]}. You can switch until ${clock(view.rules.plan.actionsEndMs)}.`;
 
 const tint = (c: Choice) => ({ ['--mg-color' as string]: colorOf(c) });

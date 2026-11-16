@@ -47,12 +47,7 @@ export async function setTheme(page: Page, theme: string): Promise<void> {
 
 // <name>-light.jpg and <name>-dark.jpg. `show`, when given, is brought to the middle of the
 // window after each theme switch (the toggle's click scrolls the page to the top bar).
-export async function captureThemes(
-  page: Page,
-  dir: string,
-  name: string,
-  show?: Locator,
-): Promise<void> {
+async function captureThemes(page: Page, dir: string, name: string, show?: Locator): Promise<void> {
   const before = (await themeNow(page)) ?? 'light';
   for (const theme of ['light', 'dark'] as const) {
     await setTheme(page, theme);

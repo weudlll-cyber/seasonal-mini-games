@@ -14,7 +14,6 @@
   "dependencies": {
     "@smg/game-sdk": "workspace:*",
     "@smg/guess-engine": "workspace:*",
-    "@smg/ui": "workspace:*",
     "zod": "4.6.7",
     "react": "19.3.1"
   },

@@ -35,7 +35,7 @@ import { SignIn } from './SignIn.js';
 import { StepUp } from './StepUp.js';
 import { TwoFactorPage } from './twofactor/TwoFactorPage.js';
 
-export interface SessionInfo {
+interface SessionInfo {
   readonly account: { readonly id: string; readonly displayName: string } | null;
   readonly permissions: readonly string[];
   readonly csrfToken: string | null;
