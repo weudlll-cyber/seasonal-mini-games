@@ -6,8 +6,10 @@
  * Responsibility: start the socket kit; make the staff accounts (another host, a moderator, a
  *                 game admin and a staff-only security admin); open the host's match with a
  *                 player and a spare match; run one round to its abort and start a second that
- *                 stays open (the inactivity limit off, O71); call a route of the tables as any kind of caller with a fresh
- *                 session and an address of its own; list the routes Fastify registered; abort
+ *                 stays open (the inactivity limit off, O71); call a route of the tables as any
+ *                 kind of caller with an address of its own and the caller's session, kept
+ *                 while only reads are made and new after any write (T375), a read route's
+ *                 callers all at once (`callAll`); list the routes Fastify registered; abort
  *                 the matches and remove the accounts at the end. Adapted from Bingo's matrix.
  * Depends on:     fastify, socket.io-client (types), ../src/auth/*, ./authzRoles, ./authzTable, ./session,
  *                 ./socketKit
@@ -132,7 +134,7 @@ export async function tearDown(w: World): Promise<void> {
   await w.kit.close();
 }
 
-// A fresh session per call, so logout, sign-in or deletion cannot spoil the next one.
+// A fresh session; callAs keeps one per caller between writes (keptSession, below).
 export async function sessionOf(
   w: World,
   role: Role,
@@ -161,6 +163,27 @@ function urlOf(w: World, route: RouteCase): string {
 
 let address = 0;
 
+// A read cannot spoil a session; anything else may (sign-out, password change, deletion).
+const READS = new Set(['GET', 'HEAD', 'OPTIONS']);
+const isRead = (route: RouteCase): boolean => READS.has(route.method);
+
+// Each caller's session, kept while only reads are made and dropped for every caller after
+// any write, so no call meets a spoiled session; one new session per call made the matrix
+// a thousand database writes in a row, too slow on a loaded machine (T375).
+const kept = new WeakMap<World, Map<string, Promise<{ cookie: string; csrf: string } | null>>>();
+
+function keptSession(w: World, role: Role, cookieName: string) {
+  const byCaller =
+    kept.get(w) ?? new Map<string, Promise<{ cookie: string; csrf: string } | null>>();
+  kept.set(w, byCaller);
+  const key = `${cookieName} ${role}`;
+  const known = byCaller.get(key);
+  if (known !== undefined) return known;
+  const made = sessionOf(w, role, cookieName);
+  byCaller.set(key, made);
+  return made;
+}
+
 interface CallOptions {
   // Another app, which may name its session cookie differently (production: `__Host-`).
   readonly app?: { readonly fastify: FastifyInstance; readonly cookieName: string };
@@ -176,7 +199,7 @@ export async function callAs(
   how: CallOptions = {},
 ): Promise<{ status: number; code: string | undefined; body: unknown }> {
   const app = how.app ?? w.kit.harness.built;
-  const s = await sessionOf(w, role, app.cookieName);
+  const s = await keptSession(w, role, app.cookieName);
   address += 1;
   const headers: Record<string, string> = {};
   if (s !== null) headers['cookie'] = s.cookie;
@@ -191,9 +214,25 @@ export async function callAs(
     ...(route.body === undefined ? {} : { payload: route.body }),
   };
   const r = await app.fastify.inject(options);
+  if (!isRead(route)) kept.delete(w);
   const body: unknown = r.body.startsWith('{') ? r.json<unknown>() : null;
   const code = (body as { code?: unknown } | null)?.code;
   return { status: r.statusCode, code: typeof code === 'string' ? code : undefined, body };
+}
+
+// A route called as each caller, each answer beside its caller: a read route's callers all at
+// once (no read changes what another caller sees), any other route's one after another.
+type Answer = Awaited<ReturnType<typeof callAs>>;
+export async function callAll(
+  w: World,
+  roles: readonly Role[],
+  route: RouteCase,
+): Promise<(readonly [Role, Answer])[]> {
+  const one = async (role: Role) => [role, await callAs(w, role, route)] as const;
+  if (isRead(route)) return Promise.all(roles.map(one));
+  const answers: (readonly [Role, Answer])[] = [];
+  for (const role of roles) answers.push(await one(role));
+  return answers;
 }
 
 // "METHOD /path" for every route Fastify registered (HEAD is Fastify's own copy of GET).
