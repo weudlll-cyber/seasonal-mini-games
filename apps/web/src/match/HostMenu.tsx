@@ -20,7 +20,7 @@
  *                 plain words; a refused setting's sentence under its field (O74). The host plays the round like every player; the menu holds no
  *                 secret.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (types), ../components/*, ../shell/http,
- *                 ../live/socket, ../round/roundText, ./EndMatch, ./roundFields
+ *                 ../live/socket, ../round/roundText, ./EndMatch, ./roundFields, ./roundRequest
  * Used by:        ./MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §3, §4, §9; docs/spec/08-admin-settings.md §3
  */
@@ -31,10 +31,13 @@ import { useDisclosure } from '@smg/ui';
 
 import { ActionButton, Problem } from '../components/fields.js';
 import { intent } from '../live/socket.js';
+import { useShowsSeason } from '../lobby/games.js';
 import { codeText } from '../round/roundText.js';
 import { api } from '../shell/http.js';
 import { EndMatch } from './EndMatch.js';
+import { roundRequest } from './roundRequest.js';
 import {
+  fieldStateOf,
   formSeason,
   forSeason,
   HostFields,
@@ -69,16 +72,14 @@ function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
   const [values, setValues] = useState<Values>(() =>
     Object.fromEntries(fields.map((d) => [d.key, last?.[d.key] ?? doc.values[d.key] ?? d.default])),
   );
-  const choice = useSeasonChoice(last);
+  // A game whose rounds show no season has nothing about one here (O93).
+  const choice = useSeasonChoice(last, useShowsSeason(match.gameId));
   const { season, halving } = choice;
   const [problems, setProblems] = useState<FormProblems>(NO_PROBLEMS);
   const create = (startNow: boolean): void => {
-    const body = {
-      settings: { ...values, 'round.halving': halving },
-      startNow,
-      ...(season === 'inSeason' ? {} : { season }),
-    };
-    api(`/matches/${match.code}/rounds`, { method: 'POST', body })
+    const keys = doc.defs.map((d) => d.key);
+    const { path, method, body } = roundRequest(match, { keys, values, halving, season }, startNow);
+    api(path, { method, body })
       .then(() => {
         // The season choice and halving are kept with the settings for the next round (T209).
         done({ ...values, 'round.halving': halving, [SEASON_CHOICE]: season });
@@ -103,6 +104,7 @@ function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
           season={formSeason(choice)}
           values={values}
           problems={problems.fields}
+          fieldState={fieldStateOf(match, values)}
           set={(key, v) => {
             setValues((was) => ({ ...was, [key]: v }));
             setProblems(NO_PROBLEMS);

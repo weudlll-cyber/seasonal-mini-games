@@ -1,0 +1,56 @@
+/**
+ * @file   games/mind-games/web/index.ts
+ * @module games/mind-games/web
+ * @brief  The screens of Seasonal Mind Games for the player client.
+ *
+ * Responsibility: the player's stage (phase strip, choice cards, Hide my switches) drawn
+ *                 into the round's stage, the feed's head in the info column and on a phone,
+ *                 the spectator's stage, the result, the pre-picks panel of the waiting area
+ *                 (02e §7), the game's text and its setting
+ *                 definitions, as one object shaped like the registry's `GameWeb` (04 §4.6).
+ *                 The round's one list shows the feed's lines (./text).
+ * Depends on:     @smg-game/mind-games (settings), ./FeedPanels, ./formFields, ./MindInput,
+ *                 ./PrefsPanel,
+ *                 ./ResultPanel,
+ *                 ./text, ./mind.css, ./strip.css, ./prefs.css, ./result.css, ./winners.css,
+ *                 ./flights.css
+ * Used by:        games/registry/web
+ * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/02e-game-mind-games.md §11
+ */
+import { mindSettings, type ResultView } from '@smg-game/mind-games';
+
+import { MindLine, MindPlayer, MindSpectator } from './FeedPanels.js';
+import { mindFieldState } from './formFields.js';
+import { MindInput } from './MindInput.js';
+import { PrefsPanel } from './PrefsPanel.js';
+import { ResultPanel } from './ResultPanel.js';
+import { mindText } from './text.js';
+import './mind.css';
+import './strip.css';
+import './prefs.css';
+import './result.css';
+import './winners.css';
+import './flights.css';
+
+export const mindGamesWeb = {
+  Player: MindPlayer,
+  Input: MindInput,
+  Spectator: MindSpectator,
+  Line: MindLine,
+  Result: ResultPanel,
+  text: mindText,
+  settings: mindSettings.defs,
+  // Your pre-picks in the waiting area (02e §7).
+  Prefs: PrefsPanel,
+  // The join time following the total, the rounds and the pause held (02e §3).
+  fieldState: mindFieldState,
+  // The result's first part is the game's own: its headline, the cards with every player's
+  // points; the platform adds the standings and the next round beside them (O97, T352).
+  ownResult: true as const,
+  // The last round's own settings for the next round's form (T338).
+  kept: (view: unknown) => (view as ResultView).settings,
+  // The choices are the stage: the split layout hands the input the stage, its phase strip
+  // across the width and its cards on the left, with the feed's head, the lines and the dock
+  // in the info column on the right (O97, T351).
+  layout: 'split' as const,
+};

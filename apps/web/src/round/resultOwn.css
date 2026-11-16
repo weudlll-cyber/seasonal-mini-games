@@ -1,0 +1,269 @@
+/*
+ * @file   apps/web/src/round/resultOwn.css
+ * @module web/round
+ * @brief  The result of a game that draws its own first part (`ownResult`, O97, T352).
+ *
+ * Responsibility: the owner's reference of 2026-11-15 (docs/design/mind-games-screens.html,
+ *                 MG-N8). A desktop: one grid filling the height the page leaves, never
+ *                 scrolling: the game's headline row across the width with "Every line" at its
+ *                 right; the left column (the game's winners and cards, then the standings,
+ *                 which take the rest of the height, at least 120 px, and scroll inside
+ *                 themselves when needed under their title, their rows in two columns); the right
+ *                 column, 376 px, the next-round box from the winners' top to the foot. A phone: one column
+ *                 in the page's order (headline, winners, cards, next round, standings), the
+ *                 standings without a height or a scroll of their own and with the viewer's own
+ *                 line first. The viewer's row in amber, AA in both themes (T362). Colours from
+ *                 @smg/ui tokens.
+ * Spec:           docs/spec/02e-game-mind-games.md §9, §11
+ */
+.round-result--own {
+  --own-amber: #8a5a00;
+  position: relative;
+  min-height: 0;
+  display: grid;
+  /* The reference's right column: 340 px of content and its padding (T366). */
+  grid-template-columns: minmax(0, 1fr) 376px;
+  grid-template-rows: auto auto auto minmax(120px, 1fr);
+  gap: 14px 20px;
+}
+
+:root[data-theme='dark'] .round-result--own {
+  --own-amber: #ffd27a;
+}
+
+/* The game's part is no box of its own: its children are this grid's items. */
+.round-result--own .round-result-first {
+  display: contents;
+}
+
+.round-result--own .round-result-first > * > :first-child {
+  grid-row: 1;
+  grid-column: 1 / -1;
+  margin-bottom: 2px;
+}
+
+.round-result--own .round-result-first > * > :nth-child(2) {
+  grid-row: 2;
+  grid-column: 1;
+}
+
+.round-result--own .round-result-first > * > :nth-child(3) {
+  grid-row: 3;
+  grid-column: 1;
+}
+
+.round-result--own > .round-standings {
+  grid-row: 4;
+  grid-column: 1;
+}
+
+.round-result--own > .next-round {
+  grid-row: 2 / 5;
+  grid-column: 2;
+}
+
+/* The panels: the surface, a hairline, the reference's radius. */
+.round-standings,
+.round-result--own > .next-round {
+  min-height: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--color-surface) 72%, transparent);
+}
+
+.round-standings {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 14px 18px;
+  overflow-y: auto;
+}
+
+.round-standings-head {
+  /* The title stays in view while the rows scroll under it (T366). */
+  position: sticky;
+  z-index: 1;
+  top: -14px;
+  margin: -14px -18px 0;
+  padding: 14px 18px 6px;
+  background: var(--color-surface);
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.round-standings-head h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.round-standings-head span {
+  font-size: 14px;
+}
+
+.round-standings-rows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.round-standing,
+.round-standings-own {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 7px 8px;
+  border-top: 1px solid var(--color-border);
+  font-size: 15px;
+}
+
+.round-standing-place {
+  flex: none;
+  width: 22px;
+  color: var(--color-text-muted);
+}
+
+.round-standing-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.round-standing-round {
+  flex: none;
+  width: 44px;
+  color: var(--color-text-muted);
+  text-align: right;
+}
+
+.round-standing-total {
+  flex: none;
+  width: 36px;
+  font-weight: var(--font-weight-strong);
+  text-align: right;
+}
+
+/* The viewer: bold amber, the place and the round too. */
+.round-standing[data-own='true'],
+.round-standings-own {
+  color: var(--own-amber);
+  font-weight: var(--font-weight-strong);
+}
+
+.round-standing[data-own='true'] > span,
+.round-standings-own > span {
+  color: inherit;
+}
+
+/* The own line is the phone's (below). */
+.round-standings-own {
+  display: none;
+}
+
+/* "Every line": a small button at the right of the headline row; its list over the page. */
+.round-result-lines {
+  position: absolute;
+  z-index: 2;
+  top: 0;
+  right: 0;
+}
+
+.round-result-lines > summary {
+  min-height: 36px;
+  padding-inline: 0.85rem;
+  font-size: var(--font-size-small);
+  list-style: none;
+}
+
+.round-result-lines > summary::-webkit-details-marker {
+  display: none;
+}
+
+.round-result-lines-body {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 0.4rem);
+  right: 0;
+  width: min(24rem, 80vw);
+  max-height: 16rem;
+  overflow-y: auto;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-raised);
+}
+
+/* A desktop window under 760 px high: the standings' rows 5 px above and below (T367). */
+@media (min-width: 900px) and (orientation: landscape) and (max-height: 759px) {
+  .round-standing {
+    padding-block: 5px;
+  }
+}
+
+/* A phone (screens 4a, 4b): one column in the page's order, the standings part of the page. */
+@media (max-width: 899px), (orientation: portrait) {
+  .round-result--own {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: none;
+    gap: 12px;
+  }
+
+  .round-result--own > .next-round {
+    grid-row: 4;
+    grid-column: 1;
+  }
+
+  .round-result--own > .round-standings {
+    grid-row: 5;
+    grid-column: 1;
+    padding: 10px 12px;
+    overflow: visible;
+  }
+
+  /* Part of the page on a phone: nothing sticks. */
+  .round-standings-head {
+    position: static;
+    margin: 0;
+    padding: 0;
+    background: none;
+  }
+
+  .round-standings-rows {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .round-standing,
+  .round-standings-own {
+    padding: 6px 4px;
+    font-size: 14px;
+  }
+
+  .round-standing-round {
+    width: 30px;
+  }
+
+  .round-standing-total {
+    width: 26px;
+  }
+
+  .round-standings-own {
+    display: flex;
+    padding-block: 8px;
+    border-top: 0;
+    border-bottom: 2px solid color-mix(in srgb, var(--own-amber) 40%, transparent);
+  }
+
+  .round-result-lines > summary {
+    min-height: var(--hit-target);
+  }
+}

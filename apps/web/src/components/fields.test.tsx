@@ -16,7 +16,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { useState, type ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { NumberField } from './fields.js';
+import { NumberField, SwitchField } from './fields.js';
 
 afterEach(cleanup);
 
@@ -112,5 +112,23 @@ describe('NumberField bounds and sign', () => {
     cleanup();
     field(1);
     expect(screen.queryByRole('button')).toBeNull();
+  });
+});
+
+describe('a locked field (O97)', () => {
+  it('shows a padlock and "locked" beside its label, outside it, so its name stays', () => {
+    render(
+      <>
+        <NumberField label="Delay" value={10} min={5} max={120} disabled onChange={vi.fn()} />
+        <SwitchField label="Hide" checked={false} onChange={vi.fn()} />
+      </>,
+    );
+    const delay = screen.getByLabelText('Delay');
+    expect(delay).toHaveProperty('disabled', true);
+    expect(delay.closest('label')?.textContent).toBe('Delay');
+    expect(screen.getByTestId('field-lock').textContent).toBe('locked');
+    // Only the locked field has the mark.
+    expect(screen.getAllByTestId('field-lock')).toHaveLength(1);
+    expect(screen.getByLabelText('Hide')).toHaveProperty('disabled', false);
   });
 });

@@ -10,7 +10,7 @@
  *                 screens only here, by the round's game id.
  * Depends on:     react (types), @smg/game-sdk, @smg-game/guess-the-number/web,
  *                 @smg-game/safecracker/web, @smg-game/bomb-defusal/web,
- *                 @smg-game/seasonal-target/web
+ *                 @smg-game/seasonal-target/web, @smg-game/mind-games/web
  * Used by:        apps/web
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/10-repository-structure.md §1
  */
@@ -24,12 +24,16 @@ import {
   SpectatorPanel,
 } from '@smg-game/guess-the-number/web';
 import { bombDefusalWeb } from '@smg-game/bomb-defusal/web';
+import { mindGamesWeb } from '@smg-game/mind-games/web';
 import { safecrackerWeb } from '@smg-game/safecracker/web';
 import { seasonalTargetWeb } from '@smg-game/seasonal-target/web';
 import type {
+  FieldState,
   GameText,
   SettingDef,
+  SettingValue,
   PlayerPanelProps,
+  PrefsPanelProps,
   ResultPanelProps,
   SpectatorPanelProps,
 } from '@smg/game-sdk';
@@ -55,11 +59,35 @@ export interface GameWeb {
   // 'board': the game's board takes the stage, the left column at full height on a desktop,
   // with its panel, the list and the action dock in the info column on the right (T123, O51,
   // T141); by default the stage holds the round's guesses with the dock at its bottom.
-  readonly layout?: 'board';
+  // 'split': the game's input draws into the stage as with 'board', but on a desktop the stage
+  // spans the round view's width: the stage's box has two children, the first (a strip) across
+  // the whole width, the second on the left (3/5) beside the info column (2/5) under the strip;
+  // on a phone the stage at its own height under the bar, then the info line, the list and the
+  // dock (Seasonal Mind Games, owner decision O97, T351).
+  readonly layout?: 'board' | 'split';
   // True: a round can have 20 players or more, so the list and the Players panel give each
   // player their tag and marker (`marksOf`), the game gets them as `marks`, and a row and the
   // game's board highlight the same player (O62).
   readonly playerTags?: true;
+  // True: the game's reveal is the result's whole first part, its headline and every player's
+  // result included; the platform adds no headline, margin, placings or team line, and shows
+  // the match standings with this round's points beside the page's next-round box (Seasonal
+  // Mind Games, owner decision O97, T352).
+  readonly ownResult?: true;
+  // A phased game's panel in the waiting area for the viewer's own value (its pre-picks, 04
+  // §4.8 rule 8); the platform shows it to the match's players and saves what it hands back.
+  readonly Prefs?: ComponentType<PrefsPanelProps>;
+  // The game's own settings of the round just ended, from its result view, for the next round's
+  // form (T338); without it the form keeps only the platform's.
+  readonly kept?: (resultView: unknown) => Readonly<Record<string, SettingValue>>;
+  // How the host form and the Quick Test show one of the game's settings now, from the form's
+  // values and whether it sets up the match's first round (02e §3, T335, T344); null keeps the
+  // definition's.
+  readonly fieldState?: (
+    key: string,
+    values: Readonly<Record<string, SettingValue>>,
+    firstRound: boolean,
+  ) => FieldState | null;
 }
 
 export const GAME_SCREENS: Readonly<Record<string, GameWeb>> = {
@@ -75,4 +103,5 @@ export const GAME_SCREENS: Readonly<Record<string, GameWeb>> = {
   safecracker: safecrackerWeb,
   'bomb-defusal': bombDefusalWeb,
   'seasonal-target': seasonalTargetWeb,
+  'mind-games': mindGamesWeb,
 };

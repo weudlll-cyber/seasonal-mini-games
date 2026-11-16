@@ -20,13 +20,20 @@
  * Used by:        ./HostMenu, ../shell/QuickTest
  * Spec:           docs/spec/08-admin-settings.md §1, §3; docs/spec/03-seasonal-specials.md §3, §4
  */
+import { GAME_SCREENS, type GameWeb } from '@smg-game/registry/web';
 import type {
   MatchDetailsView,
   RoundStateView,
   SeasonName,
   SeasonsCurrentView,
 } from '@smg/contracts';
-import { effectiveBounds, settingIssue, type SettingDef, type SettingValue } from '@smg/game-sdk';
+import {
+  type FieldState,
+  effectiveBounds,
+  settingIssue,
+  type SettingDef,
+  type SettingValue,
+} from '@smg/game-sdk';
 import { useEffect, useState, type ReactElement } from 'react';
 
 import { ChoiceField, NumberField, plain, SwitchField } from '../components/fields.js';
@@ -65,22 +72,36 @@ export const setupProblems = (error: unknown, shown: readonly string[]): FormPro
 // shown); the bounds are the document's when there is one, else the definition's. A number
 // is checked with the setting's own check, its sentence under the field (O74); `problem` is
 // the server's for this field.
+// A field's words and value with the game's word on it (T335).
+function shownOf(p: {
+  def: SettingDef;
+  value: SettingValue;
+  problem?: string | undefined;
+  state?: FieldState | null | undefined;
+}) {
+  const help = p.state?.help ?? p.def.help;
+  const common = { label: p.def.label, help, problem: p.problem, disabled: p.state?.disabled };
+  return { common, value: p.state?.value ?? p.value };
+}
+
 export function Field(p: {
   def: SettingDef;
   doc?: Doc;
   value: SettingValue;
   set: (v: SettingValue) => void;
   problem?: string | undefined;
+  // The game's word on how the field shows now (T335).
+  state?: FieldState | null | undefined;
 }): ReactElement | null {
   const { def } = p;
-  const common = { label: def.label, help: def.help, problem: p.problem };
+  const { common, value } = shownOf(p);
   if (def.kind === 'bool')
-    return <SwitchField {...common} checked={p.value === true} onChange={p.set} />;
+    return <SwitchField {...common} checked={value === true} onChange={p.set} />;
   if (def.kind === 'enum')
     return (
       <ChoiceField
         {...common}
-        value={String(p.value)}
+        value={String(value)}
         options={plain(def.options)}
         onChange={p.set}
       />
@@ -92,7 +113,7 @@ export function Field(p: {
   return (
     <NumberField
       {...common}
-      value={Number(p.value)}
+      value={Number(value)}
       min={b.min}
       max={b.max}
       step={step}
@@ -110,7 +131,10 @@ export function SeasonControls(p: {
   setSeason: (s: SeasonName | 'inSeason') => void;
   halving: boolean;
   setHalving: (h: boolean) => void;
-}): ReactElement {
+  shows: boolean;
+}): ReactElement | null {
+  // Nothing about a season for a game whose rounds show none (O93).
+  if (!p.shows) return null;
   const inSeason = p.now?.inSeason ?? null;
   const options = [
     ...(inSeason === null
@@ -145,12 +169,17 @@ export interface SeasonChoice {
   readonly setSeason: (s: SeasonName | 'inSeason') => void;
   readonly halving: boolean;
   readonly setHalving: (h: boolean) => void;
+  // False for a game whose rounds show no season (O93).
+  readonly shows: boolean;
 }
 
 // The round's season as the form stands: the one chosen by hand, or In Season's; null while
-// the feed is not known.
-export const formSeason = (c: SeasonChoice): SeasonName | null =>
-  c.season === 'inSeason' ? (c.now?.inSeason?.season ?? null) : c.season;
+// the feed is not known, and for a game that shows no season (its form has no season's own
+// fields, O93).
+export const formSeason = (c: SeasonChoice): SeasonName | null => {
+  if (!c.shows) return null;
+  return c.season === 'inSeason' ? (c.now?.inSeason?.season ?? null) : c.season;
+};
 
 // A season's own fields show only for that season: Heatwave's in summer (O63).
 export const forSeason = (key: string, season: SeasonName | null): boolean =>
@@ -168,7 +197,9 @@ export const SEASON_CHOICE = 'round.seasonChoice';
 // make it (a Quick Test's first round, the page loaded again): its season and halving (T209)
 // and its inactivity limit and warning (O75), the round view's own; a round made before O71
 // has no warning and leaves the pair to the document's values.
-export function keptOf(state: RoundStateView): Record<string, SettingValue> {
+export function keptOf(state: RoundStateView, game?: GameWeb): Record<string, SettingValue> {
+  // A game's own settings of the round just ended, where it gives them (T338).
+  const own = state.status === 'ended' && game?.kept !== undefined ? game.kept(state.game) : {};
   const inactivity =
     state.inactivityWarnMs > 0
       ? {
@@ -176,7 +207,7 @@ export function keptOf(state: RoundStateView): Record<string, SettingValue> {
           'round.inactivityWarnS': state.inactivityWarnMs / 1_000,
         }
       : {};
-  return { [SEASON_CHOICE]: state.season, 'round.halving': state.halving, ...inactivity };
+  return { [SEASON_CHOICE]: state.season, 'round.halving': state.halving, ...inactivity, ...own };
 }
 
 const choiceOf = (v: SettingValue | undefined): SeasonName | 'inSeason' | null =>
@@ -187,6 +218,7 @@ const choiceOf = (v: SettingValue | undefined): SeasonName | 'inSeason' | null =
 // halving as last time, else off (`GET /seasons/current`).
 export function useSeasonChoice(
   last?: Readonly<Record<string, SettingValue>> | null,
+  shows = true,
 ): SeasonChoice {
   const kept = choiceOf(last?.[SEASON_CHOICE]);
   const [season, setSeason] = useState<SeasonName | 'inSeason'>(kept ?? 'inSeason');
@@ -199,8 +231,25 @@ export function useSeasonChoice(
       if (s.inSeason === null) setSeason((was) => (was === 'inSeason' ? 'spring' : was));
     });
   }, []);
-  return { now, season, setSeason, halving, setHalving };
+  return { now, season, setSeason, halving, setHalving, shows };
 }
+
+// The game's word on its fields (02e §3, T335), from the form's values: the host form's and
+// the Quick Test's alike (T344); none for a game without it.
+export const gameFieldState = (
+  gameId: string,
+  values: Readonly<Record<string, SettingValue>>,
+  firstRound: boolean,
+) => {
+  const state = GAME_SCREENS[gameId]?.fieldState;
+  return state === undefined ? undefined : (key: string) => state(key, values, firstRound);
+};
+
+// The host form's: a series' first round has no series yet.
+export const fieldStateOf = (
+  match: MatchDetailsView,
+  values: Readonly<Record<string, SettingValue>>,
+) => gameFieldState(match.gameId, values, match.series == null);
 
 // The host's fields of the round's season: Heatwave's only for summer (O63).
 // The settings document's bounds in force where there is one (the host menu); the Quick Test
@@ -213,6 +262,8 @@ export function HostFields(p: {
   readonly set: (key: string, v: SettingValue) => void;
   // The server's sentence per field after a refused round setup (O74).
   readonly problems?: FormProblems['fields'];
+  // A game's word on how one of its fields shows now (T335); none keeps every definition's.
+  readonly fieldState?: ((key: string) => FieldState | null) | undefined;
 }): ReactElement {
   return (
     <>
@@ -225,6 +276,7 @@ export function HostFields(p: {
             {...(p.doc === undefined ? {} : { doc: p.doc })}
             value={p.values[d.key] ?? d.default}
             problem={p.problems?.[d.key]}
+            state={p.fieldState?.(d.key)}
             set={(v) => {
               p.set(d.key, v);
             }}

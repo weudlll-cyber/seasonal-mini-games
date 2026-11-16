@@ -7,7 +7,8 @@
  *                 the page background with its four token glows (the root's background, sized
  *                 to the whole page, so it covers every height), type, a visible accent focus
  *                 ring on every control, buttons as pills (primary solid, secondary glass with
- *                 a hairline, disabled muted on the second surface) and fields at least 44 px high (--hit-target), panels as
+ *                 a hairline, disabled muted on the second surface) and fields at least 44 px high (--hit-target), a disabled
+ *                 field locked in look (muted fill and text, dashed edge, not-allowed cursor, O97), panels as
  *                 translucent cards with the card radius, chips and the LIVE badge; a number field
  *                 that allows negatives has the square ± button beside it (./SignToggle) and its
  *                 help line turns to the danger colour while the value is out of range. Layout
@@ -179,6 +180,47 @@ a {
   background: var(--color-surface);
   color: var(--color-text);
   font: inherit;
+}
+
+/* A field that cannot be changed now (it follows another value, or holds for the match): it
+   looks locked as well as being so (O97): a muted fill, muted text (6.6:1 light, 8.0:1 dark,
+   as a disabled button's), a dashed edge and the not-allowed cursor; the form's padlock mark
+   beside the label says it in words. */
+.smg-input:disabled,
+.smg-select:disabled {
+  border-style: dashed;
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  -webkit-text-fill-color: var(--color-text-muted);
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+input[type='checkbox']:disabled {
+  cursor: not-allowed;
+}
+
+/* At the top right of its field, in the label's row (the field is a grid, ../fields). */
+.smg-field:has(> .smg-field-lock) {
+  position: relative;
+}
+
+.smg-field-lock {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-body);
+}
+
+.smg-field-lock svg {
+  width: 0.85em;
+  height: 0.85em;
 }
 
 /* Placeholders (e.g. a default value shown in an empty field) stay readable: 4.5:1 */

@@ -145,8 +145,14 @@ describe('the inactivity limit in a real round (O71)', () => {
     const out = await until(id, (st) => st.roster.filter((r) => r.timedOut).length === 2);
     expect(out.status).toBe('open');
     expect(out.roster.filter((r) => r.timedOut).map((r) => r.playerKey)).not.toContain(p1Key);
-    const log = await kit.harness.built.runtime.store.log(id);
-    const timedOut = log.filter((e) => e.type === 'PlayerTimedOut');
+    // The view shows the timeouts as soon as the round has them; the log once their batch
+    // committed, which a busy machine may take a moment longer for.
+    let timedOut: Awaited<ReturnType<typeof kit.harness.built.runtime.store.log>> = [];
+    for (let tries = 0; tries < 50 && timedOut.length < 2; tries += 1) {
+      const log = await kit.harness.built.runtime.store.log(id);
+      timedOut = log.filter((e) => e.type === 'PlayerTimedOut');
+      if (timedOut.length < 2) await new Promise((r) => setTimeout(r, 100));
+    }
     expect(timedOut.map((e) => (e.event as { at: number }).at)).toEqual([
       idle.outAt + INACTIVITY_GRACE_MS,
       idle.outAt + INACTIVITY_GRACE_MS,

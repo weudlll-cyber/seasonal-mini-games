@@ -8,7 +8,8 @@
  *                 of two layouts set on the container (`data-view`, ./useRoundView). A desktop:
  *                 the slim bar (./focus.css) over the stage on the left (a list game's guesses
  *                 with the action dock at its bottom, a board game's board, square, the column
- *                 beside it taking the rest) and the 340 px info
+ *                 beside it taking the rest; a split game's in ./roundSplit.css, T351) and the
+ *                 340 px info
  *                 column on the right (the special line, the game's compact panel, then "Your
  *                 guesses" or a board game's list with the dock); an open panel on demand is a
  *                 third column that pushes the game aside (O48). A phone: the bar, the info line

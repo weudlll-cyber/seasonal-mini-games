@@ -6,10 +6,12 @@
  * Responsibility: one request for the list every screen that names a game shares — the
  *                 create-match form's game choice, the Play list, the Quick Test form, the
  *                 match page and its summary, and the profile's rounds (O41) — and the name for
- *                 an id, the id itself while the list loads or for a game no longer installed.
+ *                 an id, the id itself while the list loads or for a game no longer installed;
+ *                 whether a game's rounds show a season (O93) and a secret mode (T347), and
+ *                 whether its match chat is docked under the round (O97).
  * Depends on:     react, @smg/contracts (GameInfoView), ../shell/http
  * Used by:        ./Lobby, ../shell/QuickTest, ../match/MatchSummary, ../match/MatchPage,
- *                 ../boards/ProfilePage
+ *                 ../boards/ProfilePage, ../round/RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §2 (owner decision 41); docs/spec/06-data-model-api-realtime.md §3.1
  */
 import type { GameInfoView } from '@smg/contracts';
@@ -48,3 +50,35 @@ export function useGames(): readonly GameInfoView[] {
 
 export const gameName = (games: readonly GameInfoView[], id: string): string =>
   games.find((g) => g.id === id)?.name ?? id;
+
+// Whether the game's rounds show a season (O93); true until the list has loaded, as for every
+// guess game.
+export const showsSeason = (games: readonly GameInfoView[], id: string): boolean =>
+  games.find((g) => g.id === id)?.seasons !== false;
+
+// The same for one game, where nothing else of the list is needed (the host form).
+export const useShowsSeason = (id: string): boolean => showsSeason(useGames(), id);
+
+// Whether the game has a secret whose mode the round bar names, "Shared" or "Individual": not
+// a game without secret modes (the module's `meta.secretModes`, DECISIONS T347); true until
+// the list has loaded, as for every guess game.
+export const showsMode = (games: readonly GameInfoView[], id: string): boolean =>
+  games.find((g) => g.id === id)?.secretModes.length !== 0;
+
+// How a running round names its game (../round/RoundScreen): `noSeason` the game's name when
+// its rounds show no season, the intro's heading then (O93), else null; `mode` per showsMode.
+export function useRoundLook(id: string): {
+  readonly noSeason: string | null;
+  readonly mode: boolean;
+} {
+  const games = useGames();
+  return {
+    noSeason: showsSeason(games, id) ? null : gameName(games, id),
+    mode: showsMode(games, id),
+  };
+}
+
+// Whether the game docks its match chat under the round view and the result (the module's
+// `meta.chatDock`, O97); false until the list has loaded, as for every guess game.
+export const docksChat = (games: readonly GameInfoView[], id: string): boolean =>
+  games.find((g) => g.id === id)?.chatDock === 'below';

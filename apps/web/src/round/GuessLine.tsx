@@ -174,6 +174,13 @@ function Who(p: RowProps): ReactElement | null {
   );
 }
 
+// A phased round's row tells its age, counting on ("· 30 s ago", 02e §6.1; DECISIONS T328):
+// its time is when the server received it, and the room saw it one delay later.
+function Age(p: { readonly at: number; readonly now: number }): ReactElement {
+  const s = Math.max(0, Math.floor((p.now - p.at) / 1_000));
+  return <span className="round-age">· {s} s ago</span>;
+}
+
 export function GuessLine(p: RowProps): ReactElement {
   const { guess, state } = p;
   const comment = p.bare ? null : guess.comment;
@@ -182,6 +189,7 @@ export function GuessLine(p: RowProps): ReactElement {
       <Who {...p} />
       <Value guess={guess} />
       <Answer guess={guess} state={state} now={p.now} />
+      {state.plan === undefined ? null : <Age at={guess.at} now={p.now} />}
     </>
   );
   // `data-own` says whose row it is (the tests find the viewer's rows by it); `data-solo`

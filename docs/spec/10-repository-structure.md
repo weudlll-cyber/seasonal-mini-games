@@ -33,7 +33,8 @@ seasonal-mini-games/
 │  │  └─ web/              GameScreen.tsx, RangeBar.tsx, CooldownRing.tsx, GuessList.tsx, strings.ts
 │  ├─ safecracker/         02b; src/ and web/ as above, on the guess engine
 │  ├─ bomb-defusal/        02c; likewise
-│  └─ seasonal-target/     02d; likewise
+│  ├─ seasonal-target/     02d; likewise
+│  └─ mind-games/          02e; src/ and web/, timing class phased, not on the guess engine (src/ built in MG-1, web/ in MG-2, 11 §4)
 ├─ apps/
 │  ├─ server/src/          main.ts, cli.ts, config/, http/, auth/, realtime/ (gateway, intents, inOrder),
 │  │                       round/ (actor host, pgRoundStore, pgScheduler), seasons/ (feed client), db/, dev/
@@ -41,7 +42,7 @@ seasonal-mini-games/
 │  │                       leaderboard/, chat/, embed/
 │  ├─ admin/  embed-loader/                                  as Bingo
 ├─ e2e/                    Playwright specs (journeys of 09 §4)
-├─ load/                   guessStorm.mjs (09 §5)
+├─ load/                   guessStorm.mjs, mindStorm.mjs (09 §5)
 ├─ ops/                    install.sh, smg, lib/, compose.yml, compose.website.yml, compose.website-nginx.yml,
 │                          compose.dev.yml, Caddyfile, pull-backups.sh/.ps1, examples/, test/ (as Bingo, renamed)
 └─ docs/

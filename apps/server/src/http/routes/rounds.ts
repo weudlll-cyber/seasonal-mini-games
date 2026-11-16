@@ -20,7 +20,8 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 
 import { displayNames, findMatch, matchById, type MatchRow } from '../../match/matches.js';
-import { PlayError, type Play } from '../../match/play.js';
+import type { Play } from '../../match/play.js';
+import { PlayError } from '../../match/playError.js';
 import { playerSteps } from '../../match/playerSteps.js';
 import { forViewer, toPublic } from '../../match/publicIds.js';
 import type { GuessLimits } from '../../round/guessLimits.js';
@@ -77,7 +78,8 @@ async function roundOr404(deps: RoundRouteDeps, request: FastifyRequest, reply: 
 }
 
 // The match's host runs its rounds (DECISIONS T48): opening a match needs match.create.
-async function hostOf(request: FastifyRequest, reply: FastifyReply, match: MatchRow | null) {
+// The signed-in host of the match, or null once a refusal is sent (also ./series).
+export async function hostOf(request: FastifyRequest, reply: FastifyReply, match: MatchRow | null) {
   const accountId = request.session?.accountId ?? null;
   if (accountId === null) {
     await reply.status(401).send({ code: 'SIGN_IN_REQUIRED' });

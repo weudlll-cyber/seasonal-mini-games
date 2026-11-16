@@ -25,6 +25,8 @@ const posted: unknown[] = [];
 vi.mock('../shell/http.js', () => ({
   api: (path: string, init?: { body?: unknown }) => {
     if (path === '/seasons/current') return Promise.resolve({ inSeason: null, halvingToday: null });
+    // The game list, for whether the game shows a season (O93): a guess game's does.
+    if (path === '/games') return Promise.resolve({ games: [] });
     posted.push(init?.body);
     return Promise.resolve({});
   },

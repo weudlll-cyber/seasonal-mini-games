@@ -5,7 +5,8 @@
  *
  * Responsibility: start one database per test file, migrate it and build the app with
  *                 test settings (overridable, e.g. NODE_ENV=production or feature flags);
- *                 `buildOn` builds a second app on the same database. Every test file
+ *                 `buildOn` builds a second app on the same database; a test may install the
+ *                 phased fixture beside the registry's games. Every test file
  *                 stops its own container (Bingo 12 §7: data created by a test is removed),
  *                 also when a test failed.
  * Depends on:     @testcontainers/postgresql, ../src/index
@@ -13,6 +14,7 @@
  * Spec:           Bingo 12 §2, §7
  */
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
+import type { InstalledGame } from '@smg-game/registry';
 import { vi } from 'vitest';
 
 import { buildApp, createPool, loadEnv, migrate, type App, type DbPool } from '../src/index.js';
@@ -37,6 +39,8 @@ export async function buildOn(
   pool: DbPool,
   url: string,
   overrides: Record<string, string> = {},
+  // The installed games: the registry's unless a test adds the phased fixture (09 §4.2).
+  games?: readonly InstalledGame[],
 ): Promise<App> {
   const env = loadEnv({
     NODE_ENV: 'test',
@@ -49,16 +53,19 @@ export async function buildOn(
     DATABASE_URL: url,
     ...overrides,
   });
-  const built = await buildApp({ env, pool });
+  const built = await buildApp({ env, pool, ...(games === undefined ? {} : { games }) });
   await built.fastify.ready();
   return built;
 }
 
-export async function startHarness(overrides: Record<string, string> = {}): Promise<Harness> {
+export async function startHarness(
+  overrides: Record<string, string> = {},
+  games?: readonly InstalledGame[],
+): Promise<Harness> {
   const container = await new PostgreSqlContainer('postgres:17-alpine').start();
   const pool = createPool(container.getConnectionUri());
   const applied = await migrate(pool);
-  const built = await buildOn(pool, container.getConnectionUri(), overrides);
+  const built = await buildOn(pool, container.getConnectionUri(), overrides, games);
   return { container, pool, built, applied };
 }
 

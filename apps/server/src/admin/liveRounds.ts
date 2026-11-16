@@ -4,7 +4,9 @@
  * @brief  What staff see of running rounds, and the removal of one round result.
  *
  * Responsibility: the live list (06 §3.2): every running round with its match, host, mode and
- *                 counts — roster, connected players, guesses, times — never a secret or a
+ *                 counts — roster, connected players, guesses (none for a phased round, which
+ *                 counts none, T342, T348), times; no mode for a game without a secret
+ *                 (T354) — never a secret or a
  *                 seed; the removed results of a round; removing a result (reason required):
  *                 one row in smg.round_result_removals, then the match and team standings
  *                 recomputed without it and the league awards of the match replaced, all in
@@ -32,6 +34,7 @@ interface LiveRow {
   season: string;
   secret_mode: 'shared' | 'individual';
   halving: boolean;
+  game_id: string;
 }
 
 interface CountsView {
@@ -39,6 +42,8 @@ interface CountsView {
   readonly opensAt: number | null;
   readonly endsAt: number | null;
   readonly roster: readonly { readonly guesses: number }[];
+  // A phased round's plan (04 §4.8); absent for the guess games.
+  readonly plan?: unknown;
 }
 
 const RUNNING = new Set(['created', 'countdown', 'open']);
@@ -46,10 +51,17 @@ const RUNNING = new Set(['created', 'countdown', 'open']);
 export async function liveRounds(pool: DbPool, play: Play): Promise<LiveRoundView[]> {
   const r = await pool.query<LiveRow>(
     `SELECT r.id::text AS round_id, m.id::text AS match_id, m.code, m.title,
-            a.display_name AS host, r.season, r.secret_mode, r.halving
+            a.display_name AS host, r.season, r.secret_mode, r.halving, r.game_id
      FROM smg.rounds r JOIN smg.matches m ON m.id = r.match_id
      LEFT JOIN smg.accounts a ON a.id = m.created_by
      WHERE r.status IN ('created', 'countdown', 'open') ORDER BY r.created_at`,
+  );
+  // A game without secret modes has no mode to name (its rounds store 'shared', T354).
+  const secretless = new Set(
+    play.rounds
+      .games()
+      .filter((g) => g.secretModes.length === 0)
+      .map((g) => g.id),
   );
   const out: LiveRoundView[] = [];
   for (const row of r.rows) {
@@ -65,11 +77,11 @@ export async function liveRounds(pool: DbPool, play: Play): Promise<LiveRoundVie
       host: row.host,
       status: v.status as LiveRoundView['status'],
       season: row.season,
-      secretMode: row.secret_mode,
+      secretMode: secretless.has(row.game_id) ? null : row.secret_mode,
       halving: row.halving,
       roster: v.roster.length,
       connected: play.presence.connected(row.match_id).size,
-      guesses: v.roster.reduce((n, p) => n + p.guesses, 0),
+      guesses: v.plan === undefined ? v.roster.reduce((n, p) => n + p.guesses, 0) : null,
       opensAt: v.opensAt,
       endsAt: v.endsAt,
     });

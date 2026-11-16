@@ -1,12 +1,12 @@
 /**
  * @file   packages/application/src/round/roundSession.test.ts
  * @module application/round
- * @brief  Round settings, a round session from creation to result, recovery and the proof.
+ * @brief  A round session from creation to result, recovery and the proof.
  *
- * Responsibility: host choices are taken only for host keys inside their bounds, the
- *                 inactivity warning below the limit (O71) and the game's own rule; a session commits to its seed, derives secrets once the
+ * Responsibility: a session commits to its seed, derives secrets once the
  *                 roster is frozen, shows a result only after the end and reveals the seed
- *                 there; recovery from the log continues where the live session was; the
+ *                 there, and its results as RoundEnded gave them (T340); recovery from the log
+ *                 continues where the live session was; the
  *                 fairness proof checks out, and a wrong seed or a round without proof fails.
  * Depends on:     vitest, @smg/game-sdk/crypto, ./fakes, ./roundSession, ./roundSettings, ./verify
  * Spec:           docs/spec/02-game-guess-the-number.md §4, §10; docs/spec/04-software-architecture.md §5.3, §5.4
@@ -15,9 +15,9 @@ import type { RoundEvent } from '@smg/domain';
 import { commitSeed, SEED_BYTES } from '@smg/game-sdk/crypto';
 import { describe, expect, it } from 'vitest';
 
-import { findGame } from './fakes.js';
+import { findGame, pickGame } from './fakes.js';
 import { RoundSession } from './roundSession.js';
-import { chooseRoundSettings, gameSettingsDefs } from './roundSettings.js';
+import { chooseRoundSettings } from './roundSettings.js';
 import { verifyRound } from './verify.js';
 
 const seed = new Uint8Array(SEED_BYTES).fill(3);
@@ -40,84 +40,6 @@ function session(choices: Record<string, unknown> = {}) {
   };
   return { s, log, run };
 }
-
-describe('round settings', () => {
-  it('take host choices inside the bounds and refuse everything else', () => {
-    expect(gameSettingsDefs(findGame).at(-1)?.key).toBe('find.max');
-    const chosen = chooseRoundSettings(
-      findGame,
-      { 'round.cooldownS': { max: 20 } },
-      { 'round.cooldownS': 15 },
-    );
-    expect(chosen.platform.cooldownMs).toBe(15_000);
-    expect(chosen.game).toEqual({ max: 10 });
-    const refused = [
-      [{ 'round.cooldownS': { max: 20 } }, { 'round.cooldownS': 25 }],
-      [{}, { 'points.sharedWinner': 5 }],
-      [{}, { nope: 1 }],
-      [{}, { 'find.max': 13 }],
-    ] as const;
-    for (const [overrides, choices] of refused) {
-      expect(() => chooseRoundSettings(findGame, overrides, choices)).toThrow(
-        expect.objectContaining({ code: 'ROUND_SETTINGS_INVALID' }),
-      );
-    }
-  });
-});
-
-describe("Heatwave's numbers per round (O63)", () => {
-  it("use the host's step and interval over the admin's defaults, inside the bounds", () => {
-    const defaults = chooseRoundSettings(findGame, {}, {});
-    expect(defaults.platform.specials.heatwave).toEqual({ stepMs: 1_000, intervalMs: 10_000 });
-    const chosen = chooseRoundSettings(
-      findGame,
-      { 'summer.stepIntervalS': { value: 30 } },
-      { 'summer.stepS': 4, 'summer.stepIntervalS': 20 },
-    );
-    expect(chosen.platform.specials.heatwave).toEqual({ stepMs: 4_000, intervalMs: 20_000 });
-    for (const choices of [{ 'summer.stepS': 11 }, { 'summer.stepIntervalS': 4 }]) {
-      expect(() => chooseRoundSettings(findGame, {}, choices)).toThrow(
-        expect.objectContaining({ code: 'ROUND_SETTINGS_INVALID' }),
-      );
-    }
-  });
-});
-
-describe('the inactivity limit per round (O71)', () => {
-  it("takes the host's limit and warning over the admin's defaults, and 0 as off", () => {
-    const defaults = chooseRoundSettings(findGame, {}, {}).platform;
-    expect([defaults.inactivityLimitMs, defaults.inactivityWarnMs]).toEqual([60_000, 30_000]);
-    const chosen = chooseRoundSettings(
-      findGame,
-      { 'round.inactivityLimitS': { value: 120 } },
-      { 'round.inactivityWarnS': 90 },
-    ).platform;
-    expect([chosen.inactivityLimitMs, chosen.inactivityWarnMs]).toEqual([120_000, 90_000]);
-    const off = chooseRoundSettings(findGame, {}, { 'round.inactivityLimitS': 0 }).platform;
-    expect(off.inactivityLimitMs).toBe(0);
-  });
-
-  it('refuses a warning not below the limit, also against the admin default', () => {
-    const pair = 'The warning must be shorter than the limit.';
-    const range = 'Must be between 20 and 600, or 0 for off.';
-    // Each refusal names the field it belongs to, with its sentence (O74).
-    const refused = [
-      [{}, { 'round.inactivityLimitS': 30, 'round.inactivityWarnS': 30 }, 'Warn', pair],
-      [{}, { 'round.inactivityLimitS': 25 }, 'Warn', pair],
-      [{ 'round.inactivityWarnS': { value: 50 } }, { 'round.inactivityLimitS': 40 }, 'Warn', pair],
-      [{}, { 'round.inactivityLimitS': 10 }, 'Limit', range],
-    ] as const;
-    for (const [overrides, choices, field, message] of refused) {
-      expect(() => chooseRoundSettings(findGame, overrides, choices)).toThrow(
-        expect.objectContaining({
-          code: 'ROUND_SETTINGS_INVALID',
-          field: `round.inactivity${field}S`,
-          message,
-        }),
-      );
-    }
-  });
-});
 
 describe('a round session', () => {
   it('commits to its seed, finds a winner and reveals the seed and secrets at the end', () => {
@@ -209,5 +131,76 @@ describe('the fairness proof', () => {
     expect(verifyRound(findGame, [...noProof, ...off.log.slice(1)])).toMatchObject({
       problem: /no fairness proof/,
     });
+  });
+});
+
+describe('the result view (DECISIONS T324)', () => {
+  it("builds a phased game's result without a secret, and only once it has ended", () => {
+    const settings = chooseRoundSettings(pickGame, {}, { 'round.countdownS': 3 });
+    const { session: s } = RoundSession.create(pickGame, {
+      roundId: 'r2',
+      settings,
+      season: 'winter',
+      seed,
+    });
+    s.handle({
+      type: 'startCountdown',
+      at: 0,
+      roster: [{ playerId: 'a', team: null }],
+      minPlayers: 1,
+    });
+    s.handle({ type: 'open', at: 3_000 });
+    s.handle({ type: 'guess', playerId: 'a', receivedAt: 3_100, action: { value: 'x' } });
+    expect(s.result()).toBeNull();
+    s.handle({ type: 'end', at: 4_000, reason: 'host' });
+    expect(s.state.status).toBe('ended');
+    expect(s.result()).toEqual({ picks: { a: 'x' } });
+  });
+
+  it("keeps a guess game's rule: no result view while it runs or before its secrets exist", () => {
+    const { s, run } = session();
+    expect(s.result()).toBeNull();
+    run({ type: 'startCountdown', at: 0, roster: [{ playerId: 'a', team: null }], minPlayers: 1 });
+    run({ type: 'end', at: 1_000, reason: 'host' });
+    expect(s.result()).not.toBeNull();
+  });
+});
+
+describe('the results of an ended round (DECISIONS T340)', () => {
+  const endedOf = (events: readonly { type: string }[]) =>
+    events.find((e) => e.type === 'RoundEnded') as { results: unknown; teams: unknown } | undefined;
+
+  it("are a guess round's RoundEnded results, and none before the end", () => {
+    const { s, log, run } = session();
+    run({ type: 'startCountdown', at: 0, roster: [{ playerId: 'a', team: null }], minPlayers: 1 });
+    expect(s.results()).toBeNull();
+    run({ type: 'end', at: 4_000, reason: 'host' });
+    const ended = endedOf(log);
+    expect(s.results()).toEqual({ results: ended?.results, teams: ended?.teams });
+  });
+
+  it("are a phased round's results from the game's rule, with its points", () => {
+    const settings = chooseRoundSettings(pickGame, {}, { 'round.countdownS': 3 });
+    const { session: s } = RoundSession.create(pickGame, {
+      roundId: 'r3',
+      settings,
+      season: 'winter',
+      seed,
+    });
+    s.handle({
+      type: 'startCountdown',
+      at: 0,
+      roster: [{ playerId: 'a', team: null }],
+      minPlayers: 1,
+    });
+    s.handle({ type: 'open', at: 3_000 });
+    s.handle({ type: 'guess', playerId: 'a', receivedAt: 3_100, action: { value: 'x' } });
+    expect(s.results()).toBeNull();
+    const ended = endedOf(s.handle({ type: 'end', at: 4_000, reason: 'host' }).events);
+    // The roster places nobody: rebuilt from it, the points were 0 (the defect T340 fixes).
+    expect(s.results()).toEqual({ results: ended?.results, teams: [] });
+    expect(s.results()?.results.map((r) => [r.playerId, r.points, r.won])).toEqual([
+      ['a', 1, true],
+    ]);
   });
 });

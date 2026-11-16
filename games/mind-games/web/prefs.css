@@ -1,0 +1,85 @@
+/*
+ * @file   games/mind-games/web/prefs.css
+ * @module games/mind-games/web
+ * @brief  Styles of Seasonal Mind Games' pre-picks panel (./PrefsPanel).
+ *
+ * Responsibility: the owner's reference of 2026-11-15 (MG-N8): the title (15 px bold) with its
+ *                 short line (13 px muted); one row per round still to play, the label at the left
+ *                 and a select 170 px wide and at least 44 px high at the right, the list the only
+ *                 part that scrolls when the box is short; "Hide my switches" at the foot. On a
+ *                 phone the rounds two to a row, the label above its select. In the waiting area
+ *                 and the next round's box alike (02e §7, §11). Colours only from the tokens.
+ * Spec:           docs/spec/02e-game-mind-games.md §7, §11
+ */
+/* Your pre-picks: the title's line, the rounds, the box at the foot. */
+.mg-prefs {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mg-prefs-head {
+  margin: 0;
+  font-size: 15px;
+}
+
+.mg-prefs-what {
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+.mg-prefs-rounds {
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+/* The label at the left, its select at the right. */
+.mg-prefs-round {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 15px;
+}
+
+.mg-prefs-round select {
+  flex: none;
+  width: 170px;
+  min-height: var(--hit-target);
+}
+
+.mg-prefs-note {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+/* "Hide my switches" at the foot of its box. */
+.mg-prefs > .mg-hide {
+  margin-top: auto;
+}
+
+/* A phone: two rounds to a row, the label above its select. */
+@media (max-width: 899px), (orientation: portrait) {
+  .mg-prefs-rounds {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+
+  .mg-prefs-round {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    color: var(--color-text-muted);
+    font-size: 13px;
+  }
+
+  .mg-prefs-round select {
+    width: auto;
+  }
+}

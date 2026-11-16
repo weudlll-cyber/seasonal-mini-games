@@ -11,9 +11,13 @@
  *                 changed lock or slow mode), tells its caller of each message arriving live
  *                 (for an unread count, ./chatArrivals), sends with `chat.send` and leaves when
  *                 the screen goes. After a refusal the room is loaded again, so "may I write"
- *                 stays true.
+ *                 stays true. A viewer without any session (not signed in, not a guest) is told
+ *                 to sign in without asking the server, which would only answer 401 (the
+ *                 lobby's chat opened signed out, T370); while the session loads nothing is
+ *                 asked, and once it changes the room is asked again.
  *                 The server decides every refusal; the client only words it.
- * Depends on:     react, @smg/contracts (views), ../shell/http, ../live/socket, ./chatText
+ * Depends on:     react, @smg/contracts (views), ../shell/http, ../shell/session, ../live/socket,
+ *                 ./chatText
  * Used by:        ./ChatPanel, ../match/MatchPage
  * Spec:           docs/spec/07-integration.md §2; Bingo 06 §7
  */
@@ -29,6 +33,7 @@ import {
 
 import { gameSocket, intent } from '../live/socket.js';
 import { api, ApiError } from '../shell/http.js';
+import { useSession } from '../shell/session.js';
 import { chatCodeText } from './chatText.js';
 
 const PROVIDERS = new Set(['none', 'builtin', 'hostEmbed']);
@@ -124,6 +129,8 @@ function useRoomFrames(
 
 const nobody = (): void => undefined;
 
+const SIGN_IN = 'Sign in, or watch as a guest, to read the chat.';
+
 export function useChatRoom(
   target: ChatTarget,
   onLive: (m: ChatMessageView) => void = nobody,
@@ -132,22 +139,29 @@ export function useChatRoom(
   const [room, setRoom] = useState<ChatRoomView | null>(null);
   const [messages, setMessages] = useState<readonly ChatMessageView[]>([]);
   const [problem, setProblem] = useState<string | null>(null);
+  // Whether the viewer's session has loaded, and whether there is none at all (T370).
+  const { session } = useSession();
+  const known = session !== null;
+  const none = session?.kind === null;
   const load = useCallback(async () => {
     try {
       setRoom(await api<ChatRoomView>(path));
       setProblem(null);
     } catch (error) {
       const signedOut = error instanceof ApiError && error.status === 401;
-      setProblem(
-        signedOut
-          ? 'Sign in, or watch as a guest, to read the chat.'
-          : 'The chat is not available.',
-      );
+      setProblem(signedOut ? SIGN_IN : 'The chat is not available.');
     }
   }, [path]);
   useEffect(() => {
+    if (!known) return;
+    // No session at all: the server would only answer 401, so ask nothing.
+    if (none) {
+      setRoom(null);
+      setProblem(SIGN_IN);
+      return;
+    }
     void load();
-  }, [load]);
+  }, [load, known, none]);
   const roomId = room?.id ?? null;
   useRoomFrames(roomId, setRoom, setMessages, onLive);
   const send = useCallback(

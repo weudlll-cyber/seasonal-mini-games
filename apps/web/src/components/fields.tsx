@@ -16,14 +16,19 @@
  *                 A setting's off value outside the bounds (the inactivity limit's 0, O71) is
  *                 the browser's lower bound then, so between it and the bounds only the check
  *                 refuses. Every field shows a problem the server named for it under its help
- *                 line, announced as an alert (O74). Same pattern as
+ *                 line, announced as an alert (O74). A field that cannot be changed now (it
+ *                 follows another value, or holds for the match) is disabled and shows a padlock
+ *                 and "locked" beside its label, with the shared locked look of @smg/ui
+ *                 base.css (O97). Same pattern as
  *                 ../account/formParts AccountField.
- * Depends on:     react, @smg/ui (sign toggle)
+ * Depends on:     react, @smg/ui (sign toggle), ./LockMark
  * Used by:        ../lobby/Lobby, ../match/HostMenu, ../shell/QuickTest
  * Spec:           Bingo 01 §13 (forms); docs/spec/02-game-guess-the-number.md §12 (keyboard play)
  */
 import { flipSign, SignToggle } from '@smg/ui';
 import { cloneElement, useId, useState, type ReactElement, type ReactNode } from 'react';
+
+import { LockMark } from './LockMark.js';
 
 interface Base {
   readonly label: string;
@@ -31,6 +36,8 @@ interface Base {
   readonly testId?: string;
   // The server's sentence for this field after a refused save (O74), shown under the help.
   readonly problem?: string | undefined;
+  // Shown but not changeable (a value that follows another, or holds for the match, T335).
+  readonly disabled?: boolean | undefined;
 }
 
 // The label names the control; the help line and a problem line describe it
@@ -43,6 +50,7 @@ function Labelled({
   problem,
   alert = true,
   after,
+  disabled,
   children,
 }: Base & {
   readonly alert?: boolean;
@@ -59,6 +67,8 @@ function Labelled({
         <span>{label}</span>
         {described === '' ? children : cloneElement(children, { 'aria-describedby': described })}
       </label>
+      {/* Outside the label, so the field's name stays its label alone. */}
+      {disabled === true ? <LockMark /> : null}
       {after}
       {help === undefined ? null : (
         <small id={helpId} className="smg-muted">
@@ -88,13 +98,14 @@ export function TextField(
   },
 ): ReactElement {
   return (
-    <Labelled label={p.label} help={p.help} problem={p.problem}>
+    <Labelled label={p.label} help={p.help} problem={p.problem} disabled={p.disabled}>
       <input
         className="smg-input"
         value={p.value}
         maxLength={p.maxLength}
         placeholder={p.placeholder}
         data-testid={p.testId}
+        disabled={p.disabled}
         onChange={(e) => {
           p.onChange(e.target.value);
         }}
@@ -176,6 +187,7 @@ export function NumberField(p: NumberProps): ReactElement {
       problem={problem}
       alert={p.problem !== undefined}
       after={sign}
+      disabled={p.disabled}
     >
       <input
         className="smg-input"
@@ -187,6 +199,7 @@ export function NumberField(p: NumberProps): ReactElement {
         value={text}
         aria-invalid={problem !== undefined}
         data-testid={p.testId}
+        disabled={p.disabled}
         onChange={(e) => {
           edit(e.target.value);
         }}
@@ -204,11 +217,12 @@ export function ChoiceField<T extends string>(
   },
 ): ReactElement {
   return (
-    <Labelled label={p.label} help={p.help} problem={p.problem}>
+    <Labelled label={p.label} help={p.help} problem={p.problem} disabled={p.disabled}>
       <select
         className="smg-select"
         value={p.value}
         data-testid={p.testId}
+        disabled={p.disabled}
         onChange={(e) => {
           p.onChange(e.target.value as T);
         }}
@@ -227,11 +241,12 @@ export function SwitchField(
   p: Base & { readonly checked: boolean; readonly onChange: (v: boolean) => void },
 ): ReactElement {
   return (
-    <Labelled label={p.label} help={p.help} problem={p.problem}>
+    <Labelled label={p.label} help={p.help} problem={p.problem} disabled={p.disabled}>
       <input
         type="checkbox"
         checked={p.checked}
         data-testid={p.testId}
+        disabled={p.disabled}
         onChange={(e) => {
           p.onChange(e.target.checked);
         }}

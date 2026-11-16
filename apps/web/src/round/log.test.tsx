@@ -203,3 +203,19 @@ describe('colour dots', () => {
     expect(dots[0]?.style.getPropertyValue('--swatch')).toBe('#d32f2f');
   });
 });
+
+describe('the age of a row (DECISIONS T328)', () => {
+  const ages = () =>
+    [...screen.getByTestId('guess-list').querySelectorAll('.round-age')].map((a) => a.textContent);
+  const plan = { entryEndMs: 60_000, actionsEndMs: 90_000, endMs: 120_000, viewDelayMs: 30_000 };
+
+  it('shows none in a guess round', () => {
+    show();
+    expect(ages()).toEqual([]);
+  });
+
+  it('counts on in a phased round', () => {
+    show({ state: { ...open, plan }, now: 33_400 });
+    expect(ages()).toEqual(['· 30 s ago', '· 31 s ago', '· 32 s ago']);
+  });
+});

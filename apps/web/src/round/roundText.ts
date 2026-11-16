@@ -5,7 +5,9 @@
  *
  * Responsibility: every platform code a player can meet in plain English (02 §12), the
  *                 solved player's notice (O25), the inactivity countdown line (O71), the
- *                 result's headline ("Walter found it first — after 9 guesses", 02 §9), the
+ *                 result's headline ("Walter found it first — after 9 guesses", 02 §9; a phased
+ *                 round's "The round is over.", 02e §9), a round's action words (guesses, or a
+ *                 phased round's choices, T332), the
  *                 winning margin, and one event row of the round's list per platform event (a
  *                 solve, a timeout, Heatwave's announcement at its first step only (O47),
  *                 Spring Herald, the round opening and ending), and the banner of a platform
@@ -72,7 +74,28 @@ const allSolvedText = (state: RoundStateView): string =>
     ? 'Everyone still in the round found their number.'
     : 'Everyone found their number.';
 
+// The words of a round's actions: a phased round's are choices (02e §5), a guess round's
+// guesses (DECISIONS T332).
+export const actionWords = (state: RoundStateView) =>
+  state.plan === undefined
+    ? { one: 'guess', many: 'guesses', Many: 'Guesses' }
+    : { one: 'choice', many: 'choices', Many: 'Choices' };
+
+export const actionCount = (state: RoundStateView, n: number): string => {
+  const w = actionWords(state);
+  return `${String(n)} ${n === 1 ? w.one : w.many}`;
+};
+
+// A phased round's end in plain words (02e §9): the round ran its time, or nobody chose.
+function phasedEnd(state: RoundStateView): string | null {
+  if (state.plan === undefined) return null;
+  if (state.endReason === 'timeUp') return 'The round is over.';
+  return state.endReason === 'noPlayers' ? 'Nobody chose this round.' : null;
+}
+
 export function endHeadline(state: RoundStateView): string {
+  const phased = phasedEnd(state);
+  if (phased !== null) return phased;
   const names = state.names;
   const winner = state.winner === null ? null : nameOf(names, state.winner);
   const guesses = state.roster.find((r) => r.playerKey === state.winner)?.guesses ?? 0;

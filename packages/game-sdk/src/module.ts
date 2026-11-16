@@ -10,14 +10,17 @@
  *                 never hold one (05 §3). Checks a game owns run in `validate`, before the
  *                 platform's cooldown check (02 §5.1 order; DECISIONS T29). An accepted
  *                 decision may lengthen the guesser's cooldown (`extraCooldownMs`, T120).
- * Depends on:     zod (schemas), ./random, ./settings
+ *                 A `phased` game (04 §4.8) has no cooldown and gives its plan and its own
+ *                 result rule in `phased` instead (./phased).
+ * Depends on:     zod (schemas), ./phased, ./random, ./settings
  * Used by:        ./index, packages/domain (round engine), games/*
- * Spec:           docs/spec/04-software-architecture.md §4, docs/spec/02-game-guess-the-number.md §5.1
+ * Spec:           docs/spec/04-software-architecture.md §4, §4.8; docs/spec/02-game-guess-the-number.md §5.1
  */
 import type { ZodType } from 'zod';
 
+import type { PhasedHooks } from './phased.js';
 import type { RoundRng } from './random.js';
-import type { SettingDef, SettingValue } from './settings.js';
+import type { SettingDef, SettingIssue, SettingValue } from './settings.js';
 
 export type SecretMode = 'shared' | 'individual';
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
@@ -27,18 +30,33 @@ export interface GameMeta {
   readonly id: string;
   readonly name: string;
   readonly contractVersion: 1;
-  readonly timing: 'cooldown';
+  // 'cooldown': the guess games (04 §4.3); 'phased': fixed phases, no cooldown (04 §4.8).
+  readonly timing: 'cooldown' | 'phased';
+  // A phased game may have none: its rounds are stored as 'shared'.
   readonly secretModes: readonly SecretMode[];
   // Supports season teams (shared mode).
   readonly teams: boolean;
+  // False: the game's rounds show no season, neither in the round bar, on the intro, in the
+  // host form nor in the Quick Test; a round still stores one (owner decision O93). Absent: the
+  // season shows, as in every guess game.
+  readonly seasons?: false;
+  // 'below': on a desktop the match chat is docked under the round view and the result, full
+  // width, and the round bar has no Chat button; on a phone a bottom bar opens it as a sheet
+  // (owner decision O97). Absent: the chat is a panel from the round bar, as in every guess game.
+  readonly chatDock?: 'below';
+  // 'shared-by-name': equal match totals share a place, and a place lists its players by
+  // display name; round wins and the earliest win do not count (owner decision O100). Absent:
+  // equal points are ordered by round wins, then by the earliest win, as in every guess game.
+  readonly standingsTies?: 'shared-by-name';
 }
 
 // The game's own keys of its settings document, and how frozen values become its config.
 export interface GameSettings<Cfg> {
   readonly defs: readonly SettingDef[];
   readonly read: (values: Readonly<Record<string, SettingValue>>) => Cfg;
-  // A rule across keys (e.g. a range at least 10 wide); null when the values fit.
-  readonly problem: (cfg: Cfg) => string | null;
+  // A rule across keys (e.g. a range at least 10 wide); null when the values fit. It may name
+  // the setting its sentence belongs under (`SettingIssue`, DECISIONS T335).
+  readonly problem: (cfg: Cfg) => string | SettingIssue | null;
   // False when this round's values rule out a halving round; the round then runs as a
   // normal season round (Guess The Number with a hidden range, DECISIONS T55).
   readonly halvingAllowed?: (cfg: Cfg) => boolean;
@@ -146,6 +164,8 @@ export interface GameModule<S, A, E, Cfg, Sec> {
   };
   // A season whose special the game does not implement runs without it (04 §4.4).
   readonly specials?: Partial<SpecialHooks<S, E, Sec>>;
+  // Present exactly when meta.timing is 'phased' (04 §4.8).
+  readonly phased?: PhasedHooks<S, A, Cfg>;
   // The secret in a few words for the chat's round-end line ("the number was 42", O32), from
   // the result view and the winner's key; null, or no hook, names no value.
   readonly reveal?: (result: unknown, winner: string | null) => string | null;
@@ -167,9 +187,15 @@ export interface ConformanceKit<A, Cfg, Sec> {
 // null when it has nothing to do; `pick(n)` is a uniform integer in [0, n).
 export type DevBot<A> = (playerView: unknown, pick: (n: number) => number) => A | null;
 
+// A development bot's pre-picks for a phased game's match (Quick Test, 09 §4.2), or null for a
+// bot that plays in person; `pick(n)` is the bot's seeded uniform integer in [0, n).
+export type DevPrefs = (pick: (n: number) => number, rounds: number) => unknown;
+
 // One registry line: a module, its conformance kit and its development bot.
 export interface GameEntry<S, A, E, Cfg, Sec> {
   readonly module: GameModule<S, A, E, Cfg, Sec>;
   readonly conformance: ConformanceKit<A, Cfg, Sec>;
   readonly devBot: DevBot<A>;
+  // A phased game with prefs: some development bots fix their picks in advance.
+  readonly devPrefs?: DevPrefs;
 }

@@ -6,7 +6,9 @@
  * Responsibility: the match routes of 06 §3.1 with their permissions (`match.create` to
  *                 open, `match.join` to join, the match's host for close and abort), every body
  *                 validated with zod. The host joins their own match as a player when opening
- *                 it, and plays along (O16). A summary tells the viewer whether they host or
+ *                 it, and plays along (O16); a game without season teams gets a match without
+ *                 them (04 §4.8 rule 3), a series' host routes (./series) and a player's own
+ *                 pre-picks (./prefs, `myPrefs` in the details). A summary tells the viewer whether they host or
  *                 play and whether their team is fixed (O26), names the players, gives the
  *                 team standings, gives the host the next round's defaults (the host-chosen
  *                 keys of the game's document), and once the match ended its summary (O27);
@@ -33,7 +35,11 @@ import {
   type MatchRow,
 } from '../../match/matches.js';
 import { matchStandings } from '../../league/boards.js';
-import { PlayError, type Play } from '../../match/play.js';
+import type { Play } from '../../match/play.js';
+import type { SeriesRunner } from '../../match/series.js';
+import { registerPrefsRoutes } from './prefs.js';
+import { registerSeriesRoutes } from './series.js';
+import { PlayError } from '../../match/playError.js';
 import { playerSteps, withSteps } from '../../match/playerSteps.js';
 import { forViewer } from '../../match/publicIds.js';
 import { matchEnd } from '../../match/summary.js';
@@ -61,6 +67,7 @@ const abortBody = z.object({ reason: z.string().trim().min(1).max(200) }).strict
 
 export interface MatchRouteDeps {
   readonly play: Play;
+  readonly series: SeriesRunner;
   readonly settings: SettingsService;
   readonly pool: Parameters<typeof findMatch>[0];
 }
@@ -85,8 +92,25 @@ async function matchOr404(deps: MatchRouteDeps, code: string, reply: FastifyRepl
   return match;
 }
 
+// A phased game's parts of the details: a series' rounds, those played and the end of a pause
+// (04 §4.8 rule 7), and the viewer's own pre-picks when they play in it, nobody else's (rule 8).
+async function phasedParts(
+  deps: MatchRouteDeps,
+  match: MatchRow,
+  who: { readonly viewer: string | null; readonly youPlayer: boolean },
+) {
+  const { viewer, youPlayer } = who;
+  return {
+    series: await deps.series.state(match),
+    myPrefs: youPlayer && viewer !== null ? await deps.play.prefs.own(match, viewer) : null,
+  };
+}
+
 export function registerMatchRoutes(app: FastifyInstance, deps: MatchRouteDeps): void {
   app.get('/api/v1/games', () => ({ games: deps.play.rounds.games() }));
+  // A series' next round (04 §4.8 rule 7, ./series), a player's own pre-picks (rule 8, ./prefs).
+  registerSeriesRoutes(app, deps);
+  registerPrefsRoutes(app, deps);
 
   app.get('/api/v1/matches', async (request, reply) => {
     const q = listQuery.safeParse(request.query);
@@ -105,7 +129,9 @@ export function registerMatchRoutes(app: FastifyInstance, deps: MatchRouteDeps):
     const limit = (await deps.settings.values('matchmaking'))['match.maxPlayers'] as number;
     if (body.data.maxPlayers > limit)
       return reply.status(422).send({ code: 'MATCH_TOO_LARGE', limit });
-    const match = await deps.play.open({ ...body.data, hostId: actor.accountId });
+    // A game without season teams makes matches without them (04 §4.8 rule 3).
+    const teamMatch = body.data.teamMatch && deps.play.rounds.teams(body.data.gameId);
+    const match = await deps.play.open({ ...body.data, teamMatch, hostId: actor.accountId });
     // The host plays along in their own match (O16).
     await deps.play.join(match, { key: actor.accountId, accountId: actor.accountId });
     return reply.status(201).send(summaryOf(match));
@@ -166,6 +192,7 @@ async function matchDetails(
     standings: await matchStandings(deps.pool, match.id),
     nextRoundDefaults: youHost ? await deps.settings.view(`game.${match.gameId}`, []) : null,
     ended: await matchEnd(deps.pool, match),
+    ...(await phasedParts(deps, match, { viewer, youPlayer })),
   };
   // Players by their number in the match; `you` is the viewer's own (T104).
   return forViewer(details, await deps.play.numbers.ready(match.id), viewer);

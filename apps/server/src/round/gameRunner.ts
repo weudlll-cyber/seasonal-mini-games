@@ -8,12 +8,14 @@
  *                 sealed row with RoundCreated), recovering one from the database (snapshot
  *                 and tail, or the whole log), and a LiveRound whose actions are parsed with
  *                 the game's action schema before they enter the queue. Everything outside
- *                 sees unknown views and opaque events.
+ *                 sees unknown views and opaque events. A phased round (04 §4.8) gets a delayed
+ *                 room (./delayedRoom): every committed batch passes it first, its releases go
+ *                 to `released`, and a recovered round hands it the whole log.
  * Depends on:     node:crypto, @smg/application (round session, settings, verify),
  *                 @smg/domain (types), @smg/game-sdk (GameEntry), ./actor, ./pgRoundStore,
- *                 ./views, ./liveRound
+ *                 ./delayedRoom, ./liveRound
  * Used by:        ./rounds
- * Spec:           docs/spec/04-software-architecture.md §4, §5; docs/spec/06-data-model-api-realtime.md §3.1
+ * Spec:           docs/spec/04-software-architecture.md §4, §4.8, §5; docs/spec/06-data-model-api-realtime.md §3.1
  */
 import { randomUUID } from 'node:crypto';
 
@@ -22,6 +24,7 @@ import type { RoundEvent, RoundState } from '@smg/domain';
 import type { GameEntry, PlatformRoundConfig, Season, SettingOverride } from '@smg/game-sdk';
 
 import { RoundActor, type ActorOptions, type Delivery } from './actor.js';
+import { DelayedRoom, type Released } from './delayedRoom.js';
 import { liveRound, type LiveRound } from './liveRound.js';
 import type { LoadedRound, PgRoundStore, StoredEvent } from './pgRoundStore.js';
 
@@ -58,6 +61,8 @@ export interface RunnerDeps {
   readonly store: PgRoundStore;
   readonly options: ActorOptions;
   readonly committed: (round: LiveRound, events: readonly StoredEvent[], how: Delivery) => void;
+  // A phased round's delayed room released frames (04 §4.8 rule 5).
+  readonly released: (round: LiveRound, released: Released) => void;
 }
 
 export class GameRunner<S, A, E, Cfg, Sec> {
@@ -101,14 +106,13 @@ export class GameRunner<S, A, E, Cfg, Sec> {
     return this.live({ id, matchId: round.matchId }, session, 1);
   }
 
-  recover(loaded: LoadedRound): LiveRound {
+  // `log`: a phased round's whole log, for its delayed room (null for the guess games).
+  recover(loaded: LoadedRound, log: readonly StoredEvent[] | null): LiveRound {
     const { session, lastSeq } = this.sessionFrom(loaded);
-    return this.live(
-      { id: loaded.id, matchId: loaded.matchId },
-      session,
-      lastSeq,
-      loaded.undelivered,
-    );
+    return this.live({ id: loaded.id, matchId: loaded.matchId }, session, lastSeq, {
+      undelivered: loaded.undelivered,
+      log: log ?? [],
+    });
   }
 
   private sessionFrom(loaded: LoadedRound) {
@@ -130,15 +134,21 @@ export class GameRunner<S, A, E, Cfg, Sec> {
     ids: { readonly id: string; readonly matchId: string },
     session: RoundSession<S, A, E, Cfg, Sec>,
     lastSeq: number,
-    undelivered: readonly StoredEvent[] = [],
+    restored: { undelivered: readonly StoredEvent[]; log: readonly StoredEvent[] } = {
+      undelivered: [],
+      log: [],
+    },
   ): LiveRound {
     const { store, options } = this.deps;
     let round: LiveRound | null = null;
+    let delayed: DelayedRoom | null = null;
     const { id, matchId } = ids;
     const actor = new RoundActor({ roundId: id, matchId }, session, lastSeq, {
       store,
       options,
       committed: (events, how) => {
+        // The delayed room first: its numbers are those the players' own frames carry.
+        delayed?.add(events);
         if (round !== null) this.deps.committed(round, events, how);
       },
       reload: async () => {
@@ -147,8 +157,21 @@ export class GameRunner<S, A, E, Cfg, Sec> {
         return this.sessionFrom(loaded);
       },
     });
-    round = liveRound(this.entry, actor);
-    actor.restoreHeld(undelivered);
+    const plan = session.state.plan;
+    if (plan !== undefined) {
+      const room = new DelayedRoom(
+        plan.viewDelayMs,
+        options.now,
+        () => actor.current.result(),
+        (r) => {
+          if (round !== null) this.deps.released(round, r);
+        },
+      );
+      room.restore(restored.log);
+      delayed = room;
+    }
+    round = liveRound(this.entry, actor, delayed);
+    actor.restoreHeld(restored.undelivered);
     return round;
   }
 }

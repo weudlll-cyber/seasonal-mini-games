@@ -6,7 +6,8 @@
  * Responsibility: the round seed's commitment at creation (fairness proof on), the secrets
  *                 derived from the seed as soon as the roster is frozen and kept only in
  *                 memory (05 §3), every command through the pure round rules, recovery by
- *                 replaying the log or from a snapshot and the log's tail, and the result view once the round has ended. The round
+ *                 replaying the log or from a snapshot and the log's tail, and the result view and the
+ *                 results (as RoundEnded gave them) once the round has ended. The round
  *                 actor (queue, group commit, delivery) wraps one session.
  * Depends on:     @smg/domain (round rules), @smg/game-sdk (module, crypto entry)
  * Used by:        ../index, apps/server (round actor)
@@ -19,6 +20,7 @@ import {
   replayRound,
   roundInput,
   rosterPlayers,
+  roundResults,
   stepRound,
   type RoundCommand,
   type RoundEvent,
@@ -64,6 +66,8 @@ export class RoundSession<S, A, E, Cfg, Sec> {
       gameConfig: round.settings.game,
       season: round.season,
       commitment: round.settings.platform.commitReveal ? hex(commitSeed(round.seed)) : null,
+      // A phased round's plan is part of its creation (04 §4.8 rule 1).
+      ...(round.settings.plan === undefined ? {} : { plan: round.settings.plan }),
     });
     return { session: new RoundSession(module, round.seed, state), event };
   }
@@ -104,11 +108,23 @@ export class RoundSession<S, A, E, Cfg, Sec> {
     return result;
   }
 
-  // The result view, only once the round has ended (never while it runs, 02 §11).
+  // The result view, only once the round has ended (never while it runs, 02 §11). A guess
+  // game's needs its derived secrets; a phased game may have none (`deriveSecrets` gives null,
+  // 04 §4.8), and its result view is built all the same (DECISIONS T324).
   result(): unknown {
     const { status, game } = this.current;
-    if (status !== 'ended' || game === null || this.secrets === null) return null;
-    return this.module.views.result(game, this.secrets);
+    if (status !== 'ended' || game === null) return null;
+    if (this.secrets === null && this.module.meta.timing !== 'phased') return null;
+    return this.module.views.result(game, this.secrets as Sec);
+  }
+
+  // An ended round's results and team results, the same RoundEnded gave (DECISIONS T340);
+  // null before the end.
+  results(): Omit<ReturnType<typeof roundResults>, 'nobody'> | null {
+    const s = this.current;
+    if (s.status !== 'ended' || s.endedAt === null) return null;
+    const { results, teams } = roundResults(s, this.module, s.endedAt);
+    return { results, teams };
   }
 
   // When the round next has to run without any player action (open, special, timeout, end).

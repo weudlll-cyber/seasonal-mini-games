@@ -39,6 +39,8 @@ export function endText(status: MatchDetailsView['status'], end: MatchEndView): 
   if (status === 'aborted') {
     return end.reason === null ? 'The match was aborted.' : `The match was aborted: ${end.reason}.`;
   }
+  // A series closes itself after its last round (04 §4.8 rule 7).
+  if (end.reason === 'complete') return `All ${String(end.roundsPlayed)} rounds are played.`;
   if (end.reason === 'idle') {
     const n = end.idleMinutes ?? 0;
     return `The match closed after ${String(n)} ${n === 1 ? 'minute' : 'minutes'} without a round.`;
@@ -61,6 +63,22 @@ function Teams({ match }: { readonly match: MatchDetailsView }): ReactElement | 
         ))}
       </ul>
     </section>
+  );
+}
+
+// A phased match's rounds with what won in the game's words (02e §9, DECISIONS T333); the
+// guess games' summaries have none.
+function RoundWords(p: { readonly end: MatchEndView | null }): ReactElement | null {
+  const rounds = p.end?.rounds;
+  if (rounds === undefined || rounds.length === 0) return null;
+  return (
+    <ol className="match-summary-rounds" data-testid="match-round-words">
+      {rounds.map((r) => (
+        <li key={r.index}>
+          Round {r.index}: {r.words ?? 'nobody won'}.
+        </li>
+      ))}
+    </ol>
   );
 }
 
@@ -98,6 +116,7 @@ export function MatchSummary({
           <p data-testid="match-rounds">
             {formatNumber(rounds)} {rounds === 1 ? 'round' : 'rounds'} played.
           </p>
+          <RoundWords end={end} />
           <Teams match={match} />
           <p>
             <a className="smg-btn smg-btn--primary" href={hrefOf({ name: 'lobby' })}>

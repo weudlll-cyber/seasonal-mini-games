@@ -5,15 +5,19 @@
  *
  * Responsibility: the shapes the round rules work on, serialisable as JSON so a snapshot is
  *                 the state itself. The state never holds a secret: secrets travel beside it
- *                 in RoundDeps (05 §3). Game state and game events are opaque here.
+ *                 in RoundDeps (05 §3). Game state and game events are opaque here. A
+ *                 `phased` round (04 §4.8) adds its plan and, per roster player, whether they
+ *                 are a match player and when they entered; the guess games' shapes stay as
+ *                 they were, so their events and snapshots do not change.
  * Depends on:     @smg/game-sdk (contract types, round config)
  * Used by:        ./*, ../index, packages/application (round session)
- * Spec:           docs/spec/02-game-guess-the-number.md §4–§9 (§5.3 inactivity), docs/spec/04-software-architecture.md §5,
+ * Spec:           docs/spec/02-game-guess-the-number.md §4–§9 (§5.3 inactivity), docs/spec/04-software-architecture.md §4.8, §5,
  *                 docs/spec/06-data-model-api-realtime.md §2.7
  */
 import type {
   Audience,
   GameModule,
+  PhasePlan,
   PlatformRoundConfig,
   RosterPlayer,
   RoundRng,
@@ -40,6 +44,10 @@ export interface RosterEntry {
   readonly solvedSeq: number | null;
   readonly solvedAt: number | null;
   readonly place: number | null;
+  // A phased round only (04 §4.8 rules 2–3): an active match player now, and when their first
+  // accepted action put them in the round (null before).
+  readonly member?: boolean;
+  readonly enteredAt?: number | null;
 }
 
 // The specials that fire at intervals after the open (03 §1 rule 2), in the order they run
@@ -79,6 +87,8 @@ export interface RoundState<S, Cfg> {
   readonly specialsOver: readonly IntervalSpecial[];
   // Created when the roster is frozen; null before the countdown.
   readonly game: S | null;
+  // A phased round's plan (04 §4.8); absent for the guess games.
+  readonly plan?: PhasePlan;
 }
 
 export interface PlayerResult {
@@ -92,6 +102,8 @@ export interface PlayerResult {
   readonly points: number;
   // Listed as "timed out", never placed (O71).
   readonly timedOut: boolean;
+  // A phased round's own rule (04 §4.8 rule 6); the guess games win with place 1.
+  readonly won?: boolean;
 }
 
 export interface TeamResult {
@@ -109,6 +121,7 @@ export type RoundEvent<E, A, Cfg> =
       readonly gameConfig: Cfg;
       readonly season: Season;
       readonly commitment: string | null;
+      readonly plan?: PhasePlan;
     }
   | {
       readonly type: 'CountdownStarted';
@@ -175,7 +188,17 @@ export type RoundEvent<E, A, Cfg> =
   | { readonly type: 'PlayerTimedOut'; readonly playerId: string; readonly at: number }
   // Frost: every held event up to this log seq has reached its audience (06 §2.7). Written by
   // the round actor, which numbers the log; it changes no state.
-  | { readonly type: 'HeldDelivered'; readonly upTo: number; readonly at: number };
+  | { readonly type: 'HeldDelivered'; readonly upTo: number; readonly at: number }
+  // A phased round: the player's first accepted action put them in the round (04 §4.8 rule 2).
+  | { readonly type: 'PlayerEntered'; readonly playerId: string; readonly at: number }
+  // A phased round: a player joined the match, or left or was removed from it, while the round
+  // ran (rule 3); only an active match player may act.
+  | {
+      readonly type: 'MemberChanged';
+      readonly playerId: string;
+      readonly active: boolean;
+      readonly at: number;
+    };
 
 export type RoundCommand<A> =
   | {
@@ -195,7 +218,14 @@ export type RoundCommand<A> =
     }
   | { readonly type: 'timeUp'; readonly at: number }
   | { readonly type: 'end'; readonly at: number; readonly reason: 'host' | 'noPlayers' }
-  | { readonly type: 'abort'; readonly at: number; readonly reason: string; readonly by: string };
+  | { readonly type: 'abort'; readonly at: number; readonly reason: string; readonly by: string }
+  // A phased round: a match player joined, or left or was removed (04 §4.8 rule 3).
+  | {
+      readonly type: 'member';
+      readonly at: number;
+      readonly playerId: string;
+      readonly active: boolean;
+    };
 
 // Platform rejection codes (06 §4.3), plus lifecycle ones for host and scheduler commands.
 export type RoundCode =
@@ -205,6 +235,9 @@ export type RoundCode =
   | 'TIMED_OUT'
   | 'ALREADY_SOLVED'
   | 'COOLDOWN_ACTIVE'
+  // A phased round's windows (04 §4.8 rule 2).
+  | 'PLAY_OVER'
+  | 'JOIN_CLOSED'
   | 'NOT_ENOUGH_PLAYERS'
   | 'ROUND_STATE_INVALID';
 

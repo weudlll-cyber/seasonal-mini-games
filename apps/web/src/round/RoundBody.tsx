@@ -6,7 +6,8 @@
  * Responsibility: one arrangement for every game (T141), only what matters for the next guess
  *                 in this round (O54). A desktop: the stage on the left, for a list game the
  *                 round's guesses (./RoundLog `main`) with the action dock at its bottom, for a
- *                 board game (Seasonal Target) its board (the input's `stage` box, O51); the
+ *                 board game (Seasonal Target) its board (the input's `stage` box, O51), for a
+ *                 split game (Seasonal Mind Games) its strip and its main part (T351); the
  *                 info column on the right, top to bottom the special line, the game's compact
  *                 panel, then for a list game "Your guesses" (in shared mode; in individual mode
  *                 the stage already holds only the viewer's guesses, T141), for a board game
@@ -27,6 +28,7 @@
  */
 import type { GameWeb } from '@smg-game/registry/web';
 import type { RoundStateView } from '@smg/contracts';
+import type { OwnMatchPart } from '@smg/game-sdk';
 import { useState, type ReactElement } from 'react';
 
 import type { RoundLive } from '../live/useRound.js';
@@ -37,6 +39,7 @@ import { roundMarks } from './playerMarks.js';
 import { RoundLog } from './RoundLog.js';
 import { OthersPanel } from './RoundSide.js';
 import { bannerOf, eventBanner } from './SpecialBanner.js';
+import { actionWords } from './roundText.js';
 import type { Panels } from './usePanels.js';
 
 export interface BodyProps {
@@ -49,6 +52,8 @@ export interface BodyProps {
   readonly phone: boolean;
   // The special's sentence, in the game's words where it has its own (T119).
   readonly rule: string;
+  // A phased game's: the viewer's own part of the match, for their input (T327).
+  readonly own?: OwnMatchPart | undefined;
 }
 
 // Where the game's parts go: a roster player's game (or null for a spectator), whether it is
@@ -56,7 +61,8 @@ export interface BodyProps {
 // who watches on the stage).
 function partsOf(state: RoundStateView, game: GameWeb | null) {
   const playing = state.role === 'player' && game !== null ? game : null;
-  const board = game?.layout === 'board';
+  // A board or split game draws into the stage (T123, T351); the rest is the same.
+  const board = game?.layout === 'board' || game?.layout === 'split';
   const watching = playing === null ? <GamePart state={state} game={game} /> : null;
   const panel =
     playing !== null ? <GamePart state={state} game={playing} /> : board ? null : watching;
@@ -94,11 +100,12 @@ function useParts(p: BodyProps) {
         now={p.now}
         reload={p.live.reload}
         stage={board ? stage : null}
+        own={p.own}
       />
     );
   const all = (
     <FocusPanel
-      title="Guesses and events"
+      title={`${actionWords(state).Many} and events`}
       open={more.open}
       onClose={panels.close}
       testId="list-sheet"
@@ -127,7 +134,10 @@ function Others(p: BodyProps): ReactElement | null {
 export function RoundBody(p: BodyProps): ReactElement {
   const { board, panel, stageBox, dock, all, main, own } = useParts(p);
   const mainBox = (
-    <section className="smg-panel round-main" aria-label="This round's guesses">
+    <section
+      className="smg-panel round-main"
+      aria-label={`This round's ${actionWords(p.state).many}`}
+    >
       {main}
     </section>
   );

@@ -46,6 +46,10 @@ export interface FocusShellProps {
   readonly state: RoundStateView;
   readonly now: number;
   readonly rule: string;
+  // False in a game that shows no season: the bar has no season pill (O93).
+  readonly season?: boolean;
+  // False in a game without a secret: the bar names no secret mode (T347).
+  readonly mode?: boolean;
   readonly view: RoundView;
   readonly style: CSSProperties;
   readonly layout: string;
@@ -144,6 +148,8 @@ export function FocusShell(p: FocusShellProps): ReactElement {
             state={p.state}
             now={p.now}
             rule={p.rule}
+            season={p.season !== false}
+            mode={p.mode !== false}
             phone={p.view === 'phone'}
             panels={panels}
             chat={p.chat !== null}

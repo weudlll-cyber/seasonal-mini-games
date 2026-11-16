@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Seasonal Mind Games — screen reference (owner-approved, 2026-11-15)</title>
+<!--
+  Design reference for Seasonal Mind Games. Not product code.
+  Open in a browser from docs/design/ so the icons resolve (../../assets/seasons/*.svg).
+  1  Desktop, during a round (1440 x 900) - already built and approved; keep as is.
+  2A Desktop, result and pause, one winner, 5 players (1440 x 900).
+  2B Desktop, result and pause, 36 winners, 160 players, long names (1440 x 900).
+  3  Phone, during a round (390 x 844).
+  4a Phone, result and pause, 36 winners, 160 players, first screen (390 x 844).
+  4b The same phone screen scrolled down to the standings.
+  On the phone the screen is split: the page content scrolls above, the chat bar is the fixed bottom part below it
+  (newest line, unread count, message input with Send) and never covers content. The standings are part of the page
+  (no box that scrolls on its own) and start with the viewer's own line;
+  tapping the newest line opens the full chat as a sheet.
+  Rules that a static file cannot show: winner chips at most 4 rows, then "+N more"; the standings
+  panel scrolls and opens with the viewer's row in view; on the desktop the page itself never scrolls.
+-->
+<style>
+  body { margin: 0; background: #050a1f; font-family: system-ui, sans-serif; color: #f1f4fa; }
+  .label { padding: 24px 28px 8px; font-size: 20px; font-weight: 700; color: #ffd27a; }
+  .page { width: 1440px; height: 900px; box-sizing: border-box; overflow: hidden; margin: 0 0 40px;
+    background: radial-gradient(circle at 15% 0%, rgb(175 184 78 / 22%), transparent 40%),
+      radial-gradient(circle at 95% 15%, rgb(4 170 247 / 24%), transparent 45%),
+      radial-gradient(circle at 85% 100%, rgb(224 110 34 / 20%), transparent 45%), #0a1233;
+    padding: 20px 28px; display: flex; flex-direction: column; gap: 16px; }
+  .bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .pill { padding: 4px 12px; border-radius: 999px; background: rgb(255 255 255 / 10%); font-size: 14px; }
+  .btn { font: inherit; font-size: 14px; color: #f1f4fa; background: rgb(255 255 255 / 6%);
+    border: 1px solid rgb(255 255 255 / 16%); border-radius: 999px; padding: 0 16px; min-height: 44px; }
+  .head { display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap; }
+  .head h1 { margin: 0; font-size: 36px; }
+  .head span { font-size: 16px; color: #c8d0e0; }
+  .main { flex: 1; min-height: 0; display: flex; gap: 20px; align-items: stretch; }
+  .left { flex: 999 1 640px; min-width: 0; min-height: 0; display: flex; flex-direction: column; gap: 14px; }
+  .winners { border-radius: 18px; background: rgb(74 203 138 / 14%); border: 2px solid #4acb8a;
+    padding: 12px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .winners strong { font-size: 16px; color: #4acb8a; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 4px 12px;
+    border-radius: 999px; background: #4acb8a; color: #0a1233; font-size: 14px; font-weight: 700; }
+  .more { font: inherit; font-size: 14px; font-weight: 700; color: #4acb8a; background: transparent;
+    border: 1px solid #4acb8a; border-radius: 999px; padding: 0 12px; min-height: 30px; }
+  .cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+  .card { display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: 20px;
+    background: rgb(16 26 66 / 45%); border: 2px solid rgb(255 255 255 / 12%); }
+  .card .top { display: flex; align-items: center; gap: 10px; }
+  .card img { width: 36px; height: 36px; }
+  .card .name { font-size: 18px; font-weight: 700; }
+  .card .count { margin-left: auto; font-size: 36px; font-weight: 700; line-height: 1; }
+  .card .why { font-size: 14px; color: #c8d0e0; }
+  .card.win { border: 4px solid var(--c); box-shadow: 0 0 0 3px #4acb8a, 0 0 34px var(--c); transform: translateY(-4px);
+    background: linear-gradient(160deg, color-mix(in srgb, var(--c) 33%, transparent), rgb(16 26 66 / 90%) 70%); }
+  .tag { align-self: flex-start; font-size: 16px; font-weight: 700; padding: 4px 14px; border-radius: 999px;
+    background: #4acb8a; color: #0a1233; letter-spacing: 0.04em; }
+  .panel { border-radius: 18px; background: rgb(16 26 66 / 72%); border: 1px solid rgb(255 255 255 / 12%); }
+  .standings { flex: 1; min-height: 120px; overflow-y: auto; padding: 14px 18px; display: flex; flex-direction: column; gap: 6px; }
+  .standings .h { display: flex; justify-content: space-between; align-items: baseline; }
+  .standings h2 { margin: 0; font-size: 17px; }
+  .muted { color: #b3bcd0; font-size: 14px; }
+  .rows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; }
+  .row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; font-size: 15px; border-top: 1px solid rgb(255 255 255 / 8%); }
+  .row .pl { width: 22px; color: #b3bcd0; }
+  .row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .rd { width: 44px; text-align: right; color: #b3bcd0; }
+  .row .tt { width: 36px; text-align: right; font-weight: 700; }
+  .row.me { font-weight: 700; color: #ffd27a; }
+  .next { flex: 1 1 340px; max-width: 420px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+  .next .r1 { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+  .next .r1 strong { font-size: 18px; }
+  .start { font: inherit; font-size: 15px; font-weight: 700; color: #0a1233; background: #04aaf7; border: 0; border-radius: 999px; padding: 0 18px; min-height: 44px; }
+  .track { height: 6px; border-radius: 999px; background: rgb(255 255 255 / 12%); overflow: hidden; }
+  .track div { width: 15%; height: 100%; background: #04aaf7; }
+  .pick { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 15px; }
+  .pick select { width: 170px; font: inherit; font-size: 15px; color: #f1f4fa; background: rgb(255 255 255 / 6%);
+    border: 1px solid rgb(255 255 255 / 18%); border-radius: 10px; padding: 0 10px; min-height: 44px; }
+  .hide { display: flex; align-items: center; gap: 10px; font-size: 15px; min-height: 44px; margin-top: auto; }
+  .chat { height: 190px; flex: none; box-sizing: border-box; padding: 12px 16px; display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
+  .chat .in { margin-top: auto; display: flex; gap: 8px; }
+  .chat input { flex: 1; font: inherit; color: #f1f4fa; background: rgb(255 255 255 / 6%); border: 1px solid rgb(255 255 255 / 16%); border-radius: 12px; padding: 0 12px; min-height: 44px; }
+  .send { font: inherit; font-weight: 700; color: #0a1233; background: #04aaf7; border: 0; border-radius: 12px; padding: 0 18px; min-height: 44px; }
+
+  /* round view */
+  .strip { display: grid; gap: 6px; }
+  .seg { border-radius: 12px; border: 1px solid rgb(255 255 255 / 14%); padding: 10px 14px; display: flex; justify-content: space-between; align-items: baseline; color: #c8d0e0; position: relative; overflow: hidden; }
+  .seg.now { border: 2px solid #f1f4fa; color: #f1f4fa; }
+  .seg.now::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: var(--p); background: rgb(255 255 255 / 14%); }
+  .seg > * { position: relative; }
+  .rcard { font: inherit; color: #f1f4fa; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 18px 10px 14px; border-radius: 24px; background: rgb(16 26 66 / 80%); border: 3px solid var(--c); }
+  .rcard.mine { border-width: 4px; box-shadow: 0 0 0 4px rgb(255 255 255 / 85%), 0 0 26px var(--c); }
+  .rcard img { width: 64px; height: 64px; }
+  .yc { font-size: 14px; font-weight: 700; padding: 4px 12px; border-radius: 999px; background: #f1f4fa; color: #0a1233; }
+  .feed li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 10px; border-radius: 10px; background: rgb(255 255 255 / 5%); font-size: 15px; }
+  /* phone */
+  .phone { width: 390px; box-sizing: border-box; position: relative; margin: 0 0 40px 28px;
+    background: radial-gradient(circle at 15% 0%, rgb(175 184 78 / 22%), transparent 30%), radial-gradient(circle at 95% 10%, rgb(4 170 247 / 24%), transparent 35%), #0a1233;
+    height: 844px; display: flex; flex-direction: column; overflow: hidden; border-radius: 28px; outline: 2px solid rgb(255 255 255 / 18%); }
+  .pscroll { flex: 1; min-height: 0; overflow-y: auto; padding: 12px 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+  .pchat { flex: none; margin: 0 10px 10px; box-shadow: 0 -8px 24px rgb(0 0 0 / 45%); border-radius: 16px; background: rgb(16 26 66 / 96%); border: 1px solid rgb(255 255 255 / 16%); padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; }
+  .pchat .last { font: inherit; color: #f1f4fa; background: transparent; border: 0; padding: 0; min-height: 36px; display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 14px; text-align: left; }
+  .badge { padding: 2px 9px; border-radius: 999px; background: #04aaf7; color: #0a1233; font-weight: 700; font-size: 13px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  const ICON = (s) => '../../assets/seasons/' + s + '.svg';
+  const COLORS = { spring: '#afb84e', summer: '#e06e22', autumn: '#f9a825', winter: '#04aaf7' };
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  function page(st) {
+    const cards = st.cards.map((c) => `
+      <div class="card ${c.win ? 'win' : ''}" style="--c:${COLORS[c.id]}">
+        <div class="top"><img src="${ICON(c.id)}" alt=""><span class="name">${c.name}</span><span class="count">${c.count}</span></div>
+        ${c.win ? '<span class="tag">✓ WINNER</span>' : `<span class="why">${c.why}</span>`}
+      </div>`).join('');
+    const chips = st.winners.slice(0, st.shownChips).map((w) => `<span class="chip" title="${esc(w)}">${esc(w)}</span>`).join('');
+    const more = st.winners.length > st.shownChips ? `<button class="more" type="button">+${st.winners.length - st.shownChips} more</button>` : '';
+    const rows = st.rows.map((r) => `<div class="row ${r.me ? 'me' : ''}"><span class="pl">${r.place}</span><span class="nm" title="${esc(r.name)}">${esc(r.name)}</span><span class="rd">${r.round}</span><span class="tt">${r.total}</span></div>`).join('');
+    const picks = st.picks.map((p) => `<label class="pick">${p}<select><option>none</option></select></label>`).join('');
+    return `
+    <div class="label">${st.label}</div>
+    <div class="page">
+      <div class="bar"><div style="display:flex;gap:12px;align-items:center"><strong>Seasonal Mind Games</strong><span class="pill">${st.round}</span></div>
+        <div style="display:flex;gap:8px"><button class="btn" type="button">Every line</button><button class="btn" type="button">Host</button></div></div>
+      <div class="head"><h1>${st.headline}</h1><span>${st.sub}</span></div>
+      <div class="main">
+        <section class="left">
+          <section class="winners"><strong>${st.winTitle}</strong><div class="chips">${chips}${more}</div></section>
+          <div class="cards">${cards}</div>
+          <section class="panel standings"><div class="h"><h2>Standings after round 1</h2><span class="muted">${st.rows.length > 10 ? st.total + ' players' : st.rows.length + ' players'}</span></div><div class="rows">${rows}</div></section>
+        </section>
+        <aside class="panel next">
+          <div class="r1"><strong>Round 2 in 0:21</strong><button class="start" type="button">Start now</button></div>
+          <div class="track"><div></div></div>
+          <div><strong style="font-size:15px">Your pre-picks</strong> <span class="muted" style="font-size:13px">play for you while you are away</span></div>
+          ${picks}
+          <label class="hide"><input type="checkbox" style="width:22px;height:22px"> Hide my switches</label>
+        </aside>
+      </div>
+      ${chatDesk('Round 1: ' + st.chatLine)}
+    </div>`;
+  }
+
+
+  function chatDesk(line) {
+    return `<section class="panel chat"><p style="margin:0"><strong>dev-admin</strong> <span style="color:#c8d0e0">this is a test about the chat</span></p>
+      <p style="margin:0;color:#c8d0e0;font-style:italic">${line}</p>
+      <div class="in"><input placeholder="Write a message…" aria-label="Message"><button class="send" type="button">Send</button></div></section>`;
+  }
+  function pchat(last, n, pos) {
+    return `<div class="pchat" style="${pos || ''}"><button class="last" type="button"><span><strong>Chat</strong> <span style="color:#c8d0e0">· ${last}</span></span><span class="badge">${n}</span></button>
+      <div style="display:flex;gap:6px"><input placeholder="Write a message…" aria-label="Message" style="flex:1;font:inherit;font-size:14px;color:#f1f4fa;background:rgb(255 255 255 / 6%);border:1px solid rgb(255 255 255 / 16%);border-radius:12px;padding:0 10px;min-height:44px"><button class="send" type="button">Send</button></div></div>`;
+  }
+  const SEASONS = [
+    { id: 'spring', name: 'Spring' }, { id: 'summer', name: 'Summer' }, { id: 'autumn', name: 'Autumn' }, { id: 'winter', name: 'Winter' },
+  ];
+  function round() {
+    const counts = { spring: 1, summer: 2, autumn: 0, winter: 1 };
+    const cards = SEASONS.map((x) => `<button type="button" class="rcard ${x.id === 'summer' ? 'mine' : ''}" style="--c:${COLORS[x.id]}" aria-pressed="${x.id === 'summer'}">
+      <img src="${ICON(x.id)}" alt=""><span style="font-size:20px;font-weight:700">${x.name}</span>
+      ${x.id === 'summer' ? '<span class="yc">✓ Your choice</span>' : '<span class="yc" style="visibility:hidden">.</span>'}
+      <span style="font-size:48px;font-weight:700;line-height:1">${counts[x.id]}</span><span class="muted" style="font-size:13px">players, 10 s ago</span></button>`).join('');
+    const feed = [['bot-03 chose Summer', '10 s ago'], ['You chose Winter', '27 s ago'], ['bot-02 chose Spring', '29 s ago'], ['bot-01 chose Summer', '29 s ago']]
+      .map(([t, a]) => `<li><span>${t}</span><span class="muted" style="white-space:nowrap">${a}</span></li>`).join('');
+    return `<div class="label">1 — Desktop, during a round (1440 × 900) — already built and approved, keep</div>
+    <div class="page">
+      <div class="bar"><strong>0:10 left</strong><div style="display:flex;gap:8px"><button class="btn" type="button">Players</button><button class="btn" type="button">Host</button><button class="btn" type="button">Full screen</button></div></div>
+      <div class="strip" style="grid-template-columns:2fr 1fr 1fr">
+        <div class="seg"><strong>Join</strong><span>until 0:20</span></div>
+        <div class="seg now" style="--p:90%"><strong>Play · now</strong><span>until 0:30</span></div>
+        <div class="seg" style="border-style:dashed"><strong>Reveal</strong><span>until 0:40</span></div></div>
+      <div style="font-size:15px">You see the round 10 s late · <strong>Choices close in 0:01</strong></div>
+      <div class="main">
+        <section class="left"><div class="cards">${cards}</div>
+          <label class="hide" style="margin-top:0"><input type="checkbox" style="width:22px;height:22px"> Hide my switches</label></section>
+        <aside class="panel next" style="max-width:560px;flex:1 1 480px"><div style="display:flex;justify-content:space-between"><strong style="font-size:17px">10 seconds ago · 4 players</strong><button class="btn" type="button">Log (5)</button></div>
+          <ul class="feed" style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px">${feed}</ul></aside>
+      </div>
+      ${chatDesk('Round 1: Spring and Summer were the least chosen (2 players).')}
+    </div>`;
+  }
+  function phoneRound() {
+    const cards = SEASONS.map((x) => `<button type="button" class="rcard ${x.id === 'summer' ? 'mine' : ''}" style="--c:${COLORS[x.id]};padding:10px 2px;gap:4px;border-radius:16px;border-width:2px" aria-label="${x.name}">
+      <img src="${ICON(x.id)}" alt="" style="width:36px;height:36px"><span style="font-size:12px;font-weight:700">${x.name}</span><span style="font-size:26px;font-weight:700;line-height:1">${{ spring: 1, summer: 2, autumn: 0, winter: 1 }[x.id]}</span></button>`).join('');
+    const feed = [['bot-03 chose Summer', '10 s'], ['You chose Winter', '27 s'], ['bot-02 chose Spring', '29 s'], ['bot-01 chose Summer', '29 s']]
+      .map(([t, a]) => `<div style="display:flex;justify-content:space-between;gap:8px;font-size:14px;padding:6px 0;border-top:1px solid rgb(255 255 255 / 8%)"><span>${t}</span><span class="muted" style="font-size:12px">${a}</span></div>`).join('');
+    return `<div class="label">3 — Phone, during a round (390 × 844)</div>
+    <div class="phone"><div class="pscroll">
+      <div class="bar"><span class="muted">Round 1 of 3 · 0:10 left</span><button class="btn" type="button">Menu</button></div>
+      <div class="strip" style="grid-template-columns:2fr 1fr 1fr;gap:4px;font-size:13px">
+        <div class="seg" style="padding:6px 8px">Join</div><div class="seg now" style="--p:90%;padding:6px 8px"><strong>Play · now</strong></div><div class="seg" style="padding:6px 8px;border-style:dashed">Reveal</div></div>
+      <div class="muted" style="font-size:13px">10 s late · <strong style="color:#f1f4fa">choices close in 0:01</strong></div>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">${cards}</div>
+      <div style="text-align:center;font-size:14px">Your choice: <strong style="color:#e06e22">Summer</strong></div>
+      <label class="hide" style="margin-top:0"><input type="checkbox" style="width:22px;height:22px"> Hide my switches</label>
+      <section class="panel" style="padding:12px 14px;display:flex;flex-direction:column;gap:4px"><strong style="font-size:15px">10 seconds ago</strong>${feed}</section></div>
+      ${pchat('dev-admin: this is a test about the chat', 1)}
+    </div>`;
+  }
+  function phoneResult(st, scrolled) {
+    const chips = st.winners.slice(0, 6).map((w) => `<span class="chip" title="${esc(w)}" style="max-width:150px;font-size:13px;padding:3px 10px">${esc(w)}</span>`).join('');
+    const cards = st.cards.map((c) => `<div class="card ${c.win ? 'win' : ''}" style="--c:${COLORS[c.id]};align-items:center;gap:4px;padding:8px 2px;border-radius:14px;${c.win ? 'border-width:3px;box-shadow:0 0 0 2px #4acb8a,0 0 18px ' + COLORS[c.id] + ';transform:none' : ''}">
+      <img src="${ICON(c.id)}" alt="" style="width:28px;height:28px"><span style="font-size:12px;font-weight:700">${c.name}</span><span style="font-size:24px;font-weight:700;line-height:1">${c.count}</span>
+      ${c.win ? '<span class="tag" style="font-size:13px;padding:1px 10px;align-self:center">✓</span>' : '<span style="font-size:13px;visibility:hidden">.</span>'}</div>`).join('');
+    const rows = st.rows.map((r) => `<div class="row ${r.me ? 'me' : ''}" style="font-size:14px;padding:6px 4px"><span class="pl">${r.place}</span><span class="nm" title="${esc(r.name)}">${esc(r.name)}</span><span class="rd" style="width:30px">${r.round}</span><span class="tt" style="width:26px">${r.total}</span></div>`).join('');
+    const me = st.rows.find((r) => r.me);
+    const label = scrolled
+      ? '4b — Phone, result and pause, scrolled down to the standings (390 × 844). The whole page scrolls; the standings are part of the page, not a box of their own. The chat bar never moves.'
+      : '4a — Phone, result and pause, first screen (390 × 844). The chat bar is the bottom part of the screen and never covers content.';
+    return `<div class="label">${label}</div>
+    <div class="phone"><div class="pscroll" ${scrolled ? 'data-scroll="standings"' : ''}>
+      <div class="bar"><span class="muted">Mind Games · Round 1 of 3</span><button class="btn" type="button">Menu</button></div>
+      <div><h1 style="margin:0;font-size:26px">${st.headline}</h1><span class="muted">${st.sub}</span></div>
+      <section class="winners" style="padding:10px 12px;gap:6px"><strong style="font-size:15px">${st.winTitle}</strong><div class="chips" style="gap:5px">${chips}<button class="more" type="button" style="font-size:13px;min-height:28px">+${st.winners.length - 6} more</button></div></section>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px">${cards}</div>
+      <section class="panel" style="padding:12px 14px;display:flex;flex-direction:column;gap:10px;flex:none">
+        <div class="r1" style="display:flex;justify-content:space-between;align-items:center"><strong style="font-size:16px">Round 2 in 0:21</strong><button class="start" type="button">Start now</button></div>
+        <div class="track"><div></div></div>
+        <div><strong style="font-size:14px">Your pre-picks</strong> <span class="muted" style="font-size:12px">play for you while you are away</span></div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">${['Round 2', 'Round 3'].map((p) => `<label style="display:flex;flex-direction:column;gap:4px;font-size:13px;color:#c8d0e0">${p}<select style="font:inherit;font-size:14px;color:#f1f4fa;background:rgb(255 255 255 / 6%);border:1px solid rgb(255 255 255 / 18%);border-radius:10px;padding:0 8px;min-height:44px"><option>none</option></select></label>`).join('')}</div>
+        <label class="hide" style="margin-top:0"><input type="checkbox" style="width:22px;height:22px"> Hide my switches</label></section>
+      <section class="panel" id="${scrolled ? 'standings-b' : ''}" style="padding:10px 12px;display:flex;flex-direction:column;gap:4px;flex:none">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><h2 style="margin:0;font-size:15px">Standings after round 1</h2><span class="muted" style="font-size:12px">160 players</span></div>
+        <div class="row me" style="font-size:14px;padding:8px 4px;border-bottom:2px solid rgb(255 210 122 / 40%)"><span class="pl">${me.place}</span><span class="nm">You · place ${me.place}</span><span class="rd" style="width:30px">${me.round}</span><span class="tt" style="width:26px">${me.total}</span></div>
+        ${rows}</section></div>
+      ${pchat('Round 1: Winter was the least chosen…', 1)}
+    </div>`;
+  }
+  const longNames = ['Doc Shea the Seasonal Healer', 'ULTIMATE-DRAGON-WHALE-MUM', 'JD', 'Seasonal Fisher of Winter', 'monke42',
+    'Captain Autumn Leaves 2026', 'Luna', 'Kai', 'Mira the Token Holder', 'Tom', 'Zoe', 'Ben', 'Ivy', 'Max', 'Ada',
+    'Farmer Joe the Patient', 'Snowflake Queen', 'Rex', 'Investor Level 4 Mike', 'Bea', 'Halving Hunter', 'Nox', 'Pia',
+    'Winter is Coming 99', 'Ola', 'Gus', 'Sol', 'Uma', 'Vic', 'Wes', 'Yara', 'Zed', 'Kim', 'Lou', 'Mo', 'Ned'];
+
+  const A = {
+    label: '2A — Desktop, result and pause, one winner, 5 players (1440 × 900)',
+    round: 'Round 1 of 3 · result', headline: 'Autumn wins!', sub: 'Least chosen season · 5 players',
+    winTitle: '1 winner · +1', winners: ['bot-04'], shownChips: 28,
+    cards: [
+      { id: 'spring', name: 'Spring', count: 2, why: 'not least chosen' },
+      { id: 'summer', name: 'Summer', count: 2, why: 'not least chosen' },
+      { id: 'autumn', name: 'Autumn', count: 1, win: true },
+      { id: 'winter', name: 'Winter', count: 0, why: 'not chosen' },
+    ],
+    rows: [
+      { place: 1, name: 'bot-04', round: '+1', total: 1 }, { place: 2, name: 'You', round: '0', total: 0, me: true },
+      { place: 2, name: 'bot-01', round: '0', total: 0 }, { place: 2, name: 'bot-02', round: '0', total: 0 },
+      { place: 2, name: 'bot-03', round: '0', total: 0 },
+    ],
+    picks: ['Round 2', 'Round 3'], chatLine: 'Autumn was the least chosen (1 player).',
+  };
+  const B = {
+    label: '2B — Desktop, result and pause, 36 winners, 160 players, long names (1440 × 900); chips at most 4 rows, standings scroll',
+    round: 'Round 1 of 3 · result', headline: 'Winter wins!', sub: 'Least chosen season · 160 players',
+    winTitle: '36 winners · +1 each', winners: longNames, shownChips: 28, total: 160,
+    cards: [
+      { id: 'spring', name: 'Spring', count: 44, why: 'not least chosen' },
+      { id: 'summer', name: 'Summer', count: 42, why: 'not least chosen' },
+      { id: 'autumn', name: 'Autumn', count: 38, why: 'not least chosen' },
+      { id: 'winter', name: 'Winter', count: 36, win: true },
+    ],
+    rows: longNames.map((n) => ({ place: 1, name: n, round: '+1', total: 1 }))
+      .concat(['You', 'Alexander the Great Farmer', 'Sam', 'Nina', 'Olli', 'Pat', 'Rae', 'Sid', 'Tia']
+        .map((n) => ({ place: 37, name: n, round: '0', total: 0, me: n === 'You' }))),
+    picks: ['Round 2', 'Round 3'], chatLine: 'Winter was the least chosen (36 players).',
+  };
+  document.getElementById('root').innerHTML = round() + page(A) + page(B) + phoneRound() + phoneResult(B) + phoneResult(B, true);
+  const sb = document.getElementById('standings-b'); sb.parentElement.scrollTop = sb.offsetTop - sb.parentElement.offsetTop - 8;
+</script>
+</body>
+</html>

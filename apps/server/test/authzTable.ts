@@ -11,7 +11,7 @@
  *                 closing, a target that does not exist. Routes of one auth mode say so (O66).
  *                 Adapted from Bingo's matrix tables.
  * Depends on:     ./authzRoles
- * Used by:        ./authzMatrix.integration.test, ./authzSetup
+ * Used by:        ./authzMatrix.integration.test, ./authzSetup, ./authzChecks
  * Spec:           docs/spec/05-security-threat-model.md §1; docs/spec/09-testing-strategy.md §6;
  *                 docs/spec/06-data-model-api-realtime.md §3, §4.3; docs/DECISIONS.md S10
  */
@@ -139,6 +139,9 @@ export const ROUTES: readonly RouteCase[] = [
   { method: 'GET', path: '/api/v1/matches/:code', allow: ALL },
   // A round runs in the match: the host's call is answered ROUND_RUNNING.
   { method: 'POST', path: '/api/v1/matches/:code/rounds', body: { season: 'spring' }, allow: HOST },
+  // A series' host routes (04 §4.8 rule 7): the match is no series, so the host gets NOT_A_SERIES.
+  { method: 'PUT', path: '/api/v1/matches/:code/next-round', body: { settings: {} }, allow: HOST },
+  { method: 'POST', path: '/api/v1/matches/:code/next-round/start', body: {}, allow: HOST },
   { method: 'POST', path: '/api/v1/matches/:code/close', body: {}, allow: HOST, on: 'spare' },
   {
     method: 'POST',
@@ -151,6 +154,9 @@ export const ROUTES: readonly RouteCase[] = [
   { method: 'POST', path: '/api/v1/matches/:code/leave', body: {}, allow: JOINERS, on: 'spare' },
   // Teams are locked while the round runs.
   { method: 'POST', path: '/api/v1/matches/:code/team', body: { team: 'spring' }, allow: JOINERS },
+  // A player's own pre-picks (04 §4.8 rule 8): a guess game has none, its players get PREFS_OFF.
+  { method: 'GET', path: '/api/v1/matches/:code/prefs', allow: ROSTER },
+  { method: 'PUT', path: '/api/v1/matches/:code/prefs', body: { prefs: {} }, allow: ROSTER },
   { method: 'POST', path: '/api/v1/rounds/:id/start', body: {}, allow: HOST },
   { method: 'POST', path: '/api/v1/rounds/:id/end', body: {}, allow: HOST },
   { method: 'POST', path: '/api/v1/rounds/:id/abort', body: {}, allow: HOST },
@@ -256,6 +262,7 @@ export const INTENTS: Readonly<
   'time.sync': { data: () => ({}), allow: SESSION },
   guess: { data: ({ live }) => ({ roundId: live, value: 1_000_001 }), allow: ROSTER },
   'team.choose': { data: ({ code }) => ({ code, team: 'spring' }), allow: JOINERS },
+  'match.prefs': { data: ({ code }) => ({ code, prefs: {} }), allow: ROSTER },
   'round.start': { data: ({ round }) => ({ roundId: round }), allow: HOST },
   'round.end': { data: ({ round }) => ({ roundId: round }), allow: HOST },
   // Without a reason: the host's call is answered VALIDATION_FAILED.
@@ -265,36 +272,3 @@ export const INTENTS: Readonly<
   'chat.leave': { data: () => ({ roomId: NO_ONE }), allow: SESSION },
   'chat.send': { data: () => ({ roomId: NO_ONE, text: 'authz' }), allow: JOINERS },
 };
-
-// The refusals: HTTP status with its code; an intent answers the code alone.
-export const REFUSALS: Readonly<Record<string, number>> = {
-  SIGN_IN_REQUIRED: 401,
-  FORBIDDEN: 403,
-  NOT_THE_HOST: 403,
-  CSRF_INVALID: 403,
-  NOT_IN_ROUND: 409,
-  UNTRUSTED_PROXY: 403,
-};
-
-// One write of each route group, refused without the session's CSRF token or with another's.
-export const CSRF_WRITES: readonly RouteCase[] = ROUTES.filter((r) =>
-  [
-    'POST /api/v1/auth/logout',
-    'DELETE /api/v1/me',
-    'POST /api/v1/me/password',
-    'POST /api/v1/dev/quicktest',
-    'PUT /api/v1/admin/settings/:id',
-    'POST /api/v1/admin/accounts/:id/suspend',
-    'POST /api/v1/matches',
-    'POST /api/v1/matches/:code/rounds',
-    'POST /api/v1/matches/:code/team',
-    'POST /api/v1/rounds/:id/start',
-    'POST /api/v1/rounds/:id/guesses',
-    'POST /api/v1/admin/halving-days',
-    'POST /api/v1/admin/leaderboard-adjustments',
-    'POST /api/v1/chat/messages/:id/report',
-    'POST /api/v1/admin/chat/sanctions',
-    'POST /api/v1/admin/embed-origins',
-    'POST /api/v1/admin/webhooks',
-  ].includes(`${r.method} ${r.path}`),
-);

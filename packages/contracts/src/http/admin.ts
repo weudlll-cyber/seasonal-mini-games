@@ -143,11 +143,14 @@ export interface LiveRoundView {
   readonly host: string | null;
   readonly status: 'created' | 'countdown' | 'open';
   readonly season: string;
-  readonly secretMode: 'shared' | 'individual';
+  // Null for a game without a secret (the module's `meta.secretModes` empty, T354): no mode,
+  // and no season either, to name.
+  readonly secretMode: 'shared' | 'individual' | null;
   readonly halving: boolean;
   readonly roster: number;
   readonly connected: number;
-  readonly guesses: number;
+  // Null for a phased round, which counts no guesses (04 §4.8, DECISIONS T342, T348).
+  readonly guesses: number | null;
   readonly opensAt: number | null;
   readonly endsAt: number | null;
 }

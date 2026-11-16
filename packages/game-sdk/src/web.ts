@@ -13,7 +13,8 @@
  *                 page the game words the line about the best of the rest (`runnerUp`, O22).
  *                 A game whose guesses are not numbers gives them and their answers in words
  *                 (`text`, `answer`) or as colour dots (`swatches`, T143), and words its own special
- *                 (`specialRule`, T119). The
+ *                 (`specialRule`, T119). A phased game's panels also get the round's timing and
+ *                 the viewer's own part of the match (T327). The
  *                 panels learn the cooldown's seconds left and the players' names and colours,
  *                 and `buttonText` words every send button during the cooldown (T125).
  * Depends on:     ./module
@@ -21,6 +22,7 @@
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/02-game-guess-the-number.md §12
  */
 import type { Season } from './module.js';
+import type { PhasePlan } from './phased.js';
 import type { PlayerMark } from './marks.js';
 
 export interface ActReply {
@@ -28,6 +30,34 @@ export interface ActReply {
   readonly code?: string;
   readonly until?: number;
   readonly cooldownEndsAt?: number;
+}
+
+// How the host form shows one of the game's own settings now (02e §3; DECISIONS T335): a value
+// it follows from the others, the field off, a help line of its own; what is left out keeps
+// the setting's own.
+export interface FieldState {
+  readonly value?: number | boolean | string;
+  readonly disabled?: boolean;
+  readonly help?: string;
+}
+
+// A phased round's public timing (04 §4.8): when it opened and its plan, so the game shows its
+// phases and counts down to them, and the server's time (corrected by the measured offset, 06
+// §4.1); the server enforces the phases. Absent for the guess games.
+export interface PhasedTiming {
+  readonly opensAt: number;
+  readonly plan: PhasePlan;
+  readonly now: () => number;
+}
+
+// The viewer's own part of a phased game's match (04 §4.8 rule 8), on their own page only: the
+// running round's number in the match, their match value with a way to save it, and the code of
+// their pre-pick refused at this round's opening as it arrived (`prefs.refused`), else null.
+export interface OwnMatchPart {
+  readonly roundIndex: number;
+  readonly prefs: unknown;
+  readonly save: (prefs: unknown) => Promise<{ readonly ok: boolean; readonly code?: string }>;
+  readonly refusedPrePick: string | null;
 }
 
 export interface PlayerPanelProps {
@@ -55,10 +85,15 @@ export interface PlayerPanelProps {
   // the viewer's own key; absent for the other games.
   readonly marks?: Readonly<Record<string, PlayerMark>> | undefined;
   readonly viewerKey?: string | null | undefined;
+  // A phased round's timing and the viewer's own part of its match (DECISIONS T327).
+  readonly timing?: PhasedTiming | undefined;
+  readonly own?: OwnMatchPart | undefined;
 }
 
 export interface SpectatorPanelProps {
   readonly view: unknown;
+  // A phased round's timing (DECISIONS T327).
+  readonly timing?: PhasedTiming | undefined;
   readonly names: Readonly<Record<string, string>>;
   readonly colors: Readonly<Record<string, string>>;
   readonly marks?: Readonly<Record<string, PlayerMark>> | undefined;
@@ -167,4 +202,15 @@ export interface GameText {
   // that is not in the code falls out."), for the intro screen and the top bar's note; null,
   // or no hook, keeps the platform's sentence (T119).
   readonly specialRule?: (season: Season) => string | null;
+}
+
+// A phased game's panel in the waiting area (04 §4.8 rule 8; Mind Games' pre-picks): the
+// viewer's own value (null before the first save), the series' rounds and those played, and a
+// way to save a new value, which the server checks against the game's schema.
+export interface PrefsPanelProps {
+  readonly prefs: unknown;
+  // The series' rounds, or null before its first round (the game's form knows its default).
+  readonly rounds: number | null;
+  readonly played: number;
+  readonly save: (prefs: unknown) => Promise<{ readonly ok: boolean; readonly code?: string }>;
 }

@@ -1,0 +1,270 @@
+/*
+ * @file   games/mind-games/web/mind.css
+ * @module games/mind-games/web
+ * @brief  Styles of Seasonal Mind Games' round: the stage and the choice cards.
+ *
+ * Responsibility: colours only from the design tokens (light and dark) and the seasons' own
+ *                 tokens; the stage's two parts, the strip and the main part, which the
+ *                 platform's split layout places on a desktop (the strip across the width, the
+ *                 cards on the left 3/5 beside the feed, ../../../apps/web/src/round/round.css),
+ *                 never by viewport arithmetic, so the round stays one screen at 1280 × 720 and
+ *                 1920 × 1080 with the chat docked under it and at 390 × 844 (02e §11, O97).
+ *                 The current phase by its frame, its fill and "· now"; the cards in one row
+ *                 with their frames behind the buttons, the flight band and the counts, the own
+ *                 choice's frame strong and its pill, never by colour alone; touch targets of
+ *                 at least 44 px (a phone's card at least 66 px wide and 72 px tall, also with
+ *                 All). The phone layout is the platform's (a landscape viewport under 900 px
+ *                 or any portrait one, the same media query here): the strip compact, the cards
+ *                 with icon, name and count, and the line "Your choice: Autumn". The phase strip
+ *                 is styled in ./strip.css, the pre-picks in ./prefs.css, the result in
+ *                 ./result.css, the flights in ./flights.css. Classes are prefixed
+ *                 `mg-`.
+ * Spec:           docs/spec/02e-game-mind-games.md §11
+ */
+.mg-stage {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.mg-stage > * {
+  flex: none;
+}
+
+.mg-main {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+/* The cards: frames behind three rows, the buttons, the flight band and the counts. */
+.mg-choices {
+  position: relative;
+  display: grid;
+}
+
+.mg-frames,
+.mg-buttons,
+.mg-counts {
+  display: grid;
+  grid-template-columns: repeat(var(--mg-options), minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+.mg-frames {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.mg-frame {
+  background: var(--color-surface);
+  border: 2px solid var(--mg-color);
+  border-radius: var(--radius-card);
+}
+
+.mg-frame[data-choice='all'] {
+  border-color: var(--color-border-strong);
+}
+
+/* The own choice: a strong frame in its colour (All's in the text colour) on a tint. */
+.mg-frame[data-own='true'] {
+  background: color-mix(in srgb, var(--mg-color) 22%, var(--color-surface));
+  border-width: 5px;
+}
+
+.mg-frame[data-choice='all'][data-own='true'] {
+  border-color: var(--color-text);
+}
+
+.mg-buttons,
+.mg-counts,
+.mg-choices > .mg-band {
+  position: relative;
+}
+
+.mg-choice {
+  min-width: 0;
+  min-height: 72px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.3rem;
+  padding: var(--space-2) var(--space-1) 0;
+  color: var(--color-text);
+  font: inherit;
+  font-weight: var(--font-weight-strong);
+  background: none;
+  border: 0;
+  border-radius: var(--radius-card);
+  cursor: pointer;
+}
+
+.mg-choice:disabled {
+  cursor: default;
+}
+
+/* Off: the icon fades, the words keep their contrast. */
+.mg-choice:disabled .mg-icons {
+  opacity: 0.6;
+}
+
+.mg-choice:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: -3px;
+}
+
+.mg-icons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px;
+}
+
+.mg-icons img {
+  width: 64px;
+  height: 64px;
+}
+
+/* All's four icons in a square of the same size. */
+.mg-choice[data-choice='all'] .mg-icons {
+  width: 64px;
+}
+
+.mg-choice[data-choice='all'] .mg-icons img {
+  width: 31px;
+  height: 31px;
+}
+
+.mg-yours {
+  padding: 0.1rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-solid);
+  color: var(--color-on-solid);
+  font-size: var(--font-size-small);
+  white-space: nowrap;
+}
+
+.mg-count {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-bottom: var(--space-1);
+  text-align: center;
+}
+
+.mg-count-n {
+  font-size: 2rem;
+  font-weight: var(--font-weight-heading);
+  line-height: 1.1;
+}
+
+.mg-count-ago {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.mg-counts--waiting {
+  min-height: 3.7rem;
+}
+
+/* The phone's line naming the choice; a desktop has the pill instead. */
+.mg-yourline {
+  display: none;
+  margin: 0;
+  font-weight: var(--font-weight-strong);
+}
+
+.mg-hide {
+  align-self: flex-start;
+  min-height: var(--hit-target);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  cursor: pointer;
+}
+
+.mg-hide input {
+  width: 22px;
+  height: 22px;
+}
+
+.mg-head,
+.mg-line {
+  margin: 0;
+  font-weight: var(--font-weight-strong);
+}
+
+.mg-line {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* The dock's line in the info column: the refusal's place, kept even when empty, so the dock
+   takes its own room in the column and the list above it gives way. */
+.mg-input {
+  min-height: 1.5em;
+}
+
+.mg-refusal {
+  margin: 0;
+  color: var(--color-danger);
+}
+
+/* The phone layout (the platform's: under 900 px or upright): the cards with icon, name and
+   count, the choice in a line of its own. */
+@media (max-width: 899px), (orientation: portrait) {
+  .mg-icons img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .mg-choice[data-choice='all'] .mg-icons {
+    width: 32px;
+  }
+
+  .mg-choice[data-choice='all'] .mg-icons img {
+    width: 15px;
+    height: 15px;
+  }
+
+  .mg-choice {
+    gap: 2px;
+    padding-top: var(--space-1);
+    font-size: var(--font-size-small);
+  }
+
+  .mg-yours {
+    display: none;
+  }
+
+  .mg-count-n {
+    font-size: 1.5rem;
+  }
+
+  /* Read out, not shown: the card has no room for it. */
+  .mg-count-ago {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .mg-counts--waiting {
+    min-height: 2.6rem;
+  }
+
+  .mg-yourline {
+    display: block;
+  }
+}

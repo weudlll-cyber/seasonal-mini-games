@@ -10,7 +10,9 @@
  *                 the bot's own player view, and send it through the round's queue like any
  *                 guess; `delayMs` more after each guess slows the bots below the round's
  *                 cooldown (a busy round for the screenshots, T154). A bot stops when it has
- *                 nothing to do or the round is over.
+ *                 nothing to do or the round is over. In a phased game's Quick Test (09 §4.2)
+ *                 the bots draw from their seeded `plan` and make their first move at a seeded
+ *                 time after the opening.
  * Depends on:     node:crypto, @smg/game-sdk (DevBot), ../round/liveRound
  * Used by:        ./quickTest
  * Spec:           docs/spec/09-testing-strategy.md §5; docs/spec/11-roadmap.md (Quick Test)
@@ -23,12 +25,20 @@ import type { LiveRound } from '../round/liveRound.js';
 
 const pause = () => 200 + randomInt(1_301);
 
+// A phased game's Quick Test (09 §4.2): each bot's seeded draws, and when it first moves.
+export interface BotPlan {
+  readonly pick: (key: string) => (n: number) => number;
+  readonly firstAfterMs: (key: string) => number;
+}
+
 export function runBots(
   round: LiveRound,
   keys: readonly string[],
   bot: DevBot<unknown>,
-  delayMs = 0,
+  options: { readonly delayMs?: number; readonly plan?: BotPlan } = {},
 ): void {
+  const { delayMs = 0, plan } = options;
+  const started = new Set<string>();
   // A bot never keeps the process alive; after shutdown its round refuses it anyway.
   const later = (key: string, ms: number): void => {
     setTimeout(() => {
@@ -44,12 +54,18 @@ export function runBots(
       later(key, 250);
       return;
     }
+    // A phased round: the bot's first move comes at its own time inside the entry window.
+    if (plan !== undefined && !started.has(key)) {
+      started.add(key);
+      later(key, plan.firstAfterMs(key));
+      return;
+    }
     const wait = Math.max(0, (round.cooldownEndsAt(key) ?? 0) - Date.now());
     if (wait > 0) {
       later(key, wait + pause());
       return;
     }
-    const action = bot(view, (n) => randomInt(n));
+    const action = bot(view, plan?.pick(key) ?? ((n) => randomInt(n)));
     if (action === null) return;
     void round.guess(key, action).then(() => {
       later(key, delayMs + pause());

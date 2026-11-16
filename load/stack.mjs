@@ -10,7 +10,7 @@
  *                 (3910, database smg) and a browser-test run (3940, smg_test) are never used
  *                 or touched (docs/spec/09-testing-strategy.md §1.1, DECISIONS T345).
  * Depends on:     node:child_process, node:fs, ops/.env.dev.example, apps/server (test-server)
- * Used by:        ./guessStorm, ./http
+ * Used by:        ./guessStorm, ./mindStorm, ./http
  * Spec:           docs/spec/09-testing-strategy.md §1.1, §5
  */
 import { spawn } from 'node:child_process';

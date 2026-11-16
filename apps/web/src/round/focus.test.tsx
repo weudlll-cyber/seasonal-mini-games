@@ -40,7 +40,7 @@ function FakeChat(): ReactElement {
   return (
     <div>
       <input aria-label="Message" />
-      <button type="button" onClick={() => arrived?.()}>
+      <button type="button" onClick={() => arrived?.({ author: 'Anna', text: 'Hello' })}>
         A message arrives
       </button>
     </div>

@@ -30,6 +30,13 @@ export interface GameInfoView {
   readonly name: string;
   readonly secretModes: readonly string[];
   readonly teams: boolean;
+  // The timing class (04 §4.8): the forms leave out what a phased round does not have (T334).
+  readonly timing: 'cooldown' | 'phased';
+  // False for a game whose rounds show no season (the module's `meta.seasons`, O93).
+  readonly seasons: boolean;
+  // Where the match chat sits around a round (the module's `meta.chatDock`, O97): 'panel'
+  // from the round bar, or 'below', docked under the round view and the result.
+  readonly chatDock: 'panel' | 'below';
 }
 
 export interface MatchSummaryView {
@@ -50,10 +57,14 @@ export interface MatchSummaryView {
 export interface MatchEndView {
   readonly roundsPlayed: number;
   readonly by: 'host' | 'system' | null;
-  // `idle` for the idle close (O28), the host's reason for an abort, else null.
+  // `idle` for the idle close (O28), `complete` for a series after its last round (04 §4.8
+  // rule 7), the host's reason for an abort, else null.
   readonly reason: string | null;
   // Idle close only: the minutes without a round before it closed.
   readonly idleMinutes: number | null;
+  // A phased game's match: every ended round with what won in the game's words, or null
+  // when nobody won (02e §9; DECISIONS T333). Absent for the guess games.
+  readonly rounds?: readonly { readonly index: number; readonly words: string | null }[];
 }
 
 export interface MatchDetailsView extends MatchSummaryView {
@@ -82,6 +93,15 @@ export interface MatchDetailsView extends MatchSummaryView {
   readonly nextRoundDefaults: SettingsDocumentView | null;
   // Once the match is closed or aborted, its summary; null before.
   readonly ended: MatchEndView | null;
+  // A series of rounds (04 §4.8 rule 7): its number of rounds, those played, and the server
+  // time its pause ends (null outside a pause); null for a match that is no series.
+  // The viewer's own value for a phased game's match (its pre-picks, rule 8); null without one.
+  readonly myPrefs?: unknown;
+  readonly series?: {
+    readonly rounds: number;
+    readonly played: number;
+    readonly nextAt: number | null;
+  } | null;
 }
 
 // A player's inactivity deadlines (O71), absolute server times like `cooldownEndsAt`: the
@@ -112,6 +132,8 @@ export interface PlayerResultView {
   readonly guesses: number;
   readonly team: TeamName | null;
   readonly points: number;
+  // A phased round's own rule (04 §4.8 rule 6); absent for the guess games.
+  readonly won?: boolean;
   // Listed as "timed out", without a place and without points (O71).
   readonly timedOut: boolean;
 }
@@ -163,6 +185,15 @@ export interface RoundStateView {
   // another player's (O73). Null for spectators and results, and while the limit cannot
   // run out for the viewer: off, the round not open, solved or timed out.
   readonly ownInactivity: InactivityView | null;
+  // A phased round's plan in milliseconds after `opensAt` (04 §4.8): the client shows its
+  // phases, the server enforces them. Absent for the guess games. In a phased round `seq` is
+  // its release sequence and the roster lists only players whose entry is one delay old.
+  readonly plan?: {
+    readonly entryEndMs: number;
+    readonly actionsEndMs: number;
+    readonly endMs: number;
+    readonly viewDelayMs: number;
+  };
 }
 
 // One committed event in a frame; `null` where the event is not for this room (06 §4.4).

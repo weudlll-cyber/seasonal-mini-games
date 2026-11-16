@@ -5,7 +5,7 @@
 ## 1. Principles (adopted)
 
 - The admin app, its navigation model, and forms generated from the same zod schemas the server validates with (defaults, bounds and help text from schema metadata) are as in Bingo 11 §1.
-- The host's round form and the development Quick Test show every field's help as one line under the field, in the words of the setting's definition (DECISIONS T64).
+- The host's round form and the development Quick Test show every field's help as one line under the field, in the words of the setting's definition (DECISIONS T64). A field that cannot be changed now (it follows another value, as a delay following the total, or holds for the match) looks locked, not only disabled: a muted fill and muted text, a dashed edge, the not-allowed cursor and a padlock with "locked" beside its label, in light and dark (owner decision O97, DECISIONS T354).
 - Every change is a new version of its settings document, with history, diff and rollback, and is audited ([05](05-security-threat-model.md) §8). Confirm dialogs and 2FA step-up apply as in Bingo 11 §1.
 - Bingo's settings documents `security`, `rate_limits`, `branding`, `theme`, `notifications`, `features` and `chat` are adopted with their keys (Bingo 11 §4). This catalogue lists only the keys that are new or different.
 - Definitions with their defaults live in `packages/contracts/src/settings/` (platform) and `games/guess-the-number/src/settings/` (game). The tables below are the specification of those files. A document stores only what an admin changed: per key a new default and, for numbers, narrowed bounds (never wider than the table).
@@ -97,11 +97,32 @@ Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.in
 | `halving.minCells` | 16 | 4 | 32 | proposal: halving stops once the target area has this many tiles or fewer (02d §8.4); at most 32, so an 8 × 8 grid is halved at least once (O45) | game admin | frozen |
 | Closeness tier table (way off, cold, cool, warm, hot above 48 / 32 / 20 / 12 / 6 % of the diagonal and above a minimum of n = 61 / 40 / 20 / 13 / 8, n the squared distance in tiles; touching = just missed) | — | — | — | proposal, not a setting: Leaf Fall's `closeness` candidates depend on it (02d §7; `games/seasonal-target/src/geometry.ts`) | — | — |
 
+### 3.4 Seasonal Mind Games (document `game.mind-games`, [02e](02e-game-mind-games.md))
+
+Platform round keys used: `round.countdownS`, `round.seasonSource` (the round's season, which changes no rule, 02e §12). Not used by this game, because the `phased` class has no cooldown, specials, inactivity limit, secret or proof ([04](04-software-architecture.md) §4.8): `round.secretMode`, `round.cooldownS`, `round.inactivityLimitS`, `round.inactivityWarnS`, `round.maxDurationMin` (the plan's end replaces it), `round.marginWindowS`, `round.specialOn`, `round.teamsOn`, `round.halving`, every shared guess key, `spring.*`, `summer.*`, `autumn.*`, `winter.*`, `halving.*`, `points.*`, `fairness.commitReveal`.
+
+| Key | Default | Min | Max | Status | Who | Running rounds |
+|---|---|---|---|---|---|---|
+| `mind.totalS` | 120 | 30 | 600 | default: owner (O78); bounds: *proposal* | host | frozen |
+| `mind.delayAuto` | true | — | — | owner (O96): the delay is a quarter of the total, rounded down, and follows it; off: `mind.delayS` applies | host | frozen |
+| `mind.delayS` | 30 | 5 | 120 | default: owner (O78); bounds and the rule 2 × delay + 10 ≤ total: *proposal* (02e §3); used only with `mind.delayAuto` off | host | frozen |
+| `mind.joinAuto` | true | — | — | owner (O78): the join time is half the total, rounded down, and follows it; off: `mind.joinS` applies | host | frozen |
+| `mind.joinS` | 60 | 10 | 590 | owner (O78); bounds: *proposal*; at most total − delay; used only with `mind.joinAuto` off | host | frozen |
+| `mind.allOption` | false | — | — | owner (O77): the fifth choice "All" | host | frozen |
+| `mind.switchVisibility` | `perPlayer` | — | — (`hidden`, `visible`, `perPlayer`) | owner (O82) | host | frozen |
+| `mind.winnerPlace` | 1 | 1 | 5 | owner (O83): 1 the least chosen; 5 only with `mind.allOption` on | host | frozen |
+| `mind.rounds` | 6 | 1 | 20 | default: owner (O85); bounds: *proposal*; the first round's value holds for the match (04 §4.8 rule 7) | host (first round of a match) | frozen for the match |
+| `mind.pauseS` | 15 | 5 | 120 | default: owner (O86); bounds: *proposal*; the host's Start next round now ends it early | host (first round of a match) | frozen for the match |
+| Points for a winning final choice | 1; All 2 | — | — | owner (O84, not a setting) | — | — |
+| Feed lines in a view | newest 60 | — | — | *proposal*, not a setting (02e §6.1) | — | — |
+
+The cross-key rules are the game's `problem` (owner decision 74; 02e §3), with the delay in force (a quarter of the total while `mind.delayAuto` is on): the delay at most (total − 10 s) / 2; with `mind.joinAuto` off the join time at most total − delay; `mind.winnerPlace` 5 only with All on. With the defaults the delay is 30 s, the join time 60 s and choices close at 90 s.
+
 ## 4. Match settings (document `matchmaking`)
 
 | Key | Default | Min | Max | Status | Who | Running rounds |
 |---|---|---|---|---|---|---|
-| `match.minPlayersPerRound` | 2 | 1 | 50 | owner (O15) | game admin | next: read when a countdown starts |
+| `match.minPlayersPerRound` | 2 | 1 | 50 | owner (O15); in a series of a `phased` game only for its first round (04 §4.8 rule 7) | game admin | next: read when a countdown starts |
 | `match.maxPlayers` | 500 | 2 | 1 000 | owner (O15) | game admin (host picks up to it) | next: read on join |
 | `match.lobbyIdleCloseMin` | 60 | 10 | 1 440 | owner (O15, O28): a match with no round for this long closes itself, counted from the later of its creation and its last round's creation or end; checked every minute and on server start ([02](02-game-guess-the-number.md) §2) | game admin | immediate |
 | `match.maxConcurrentRounds` | 20 | 1 | 100 | technical (per server) | game admin | next: read at round creation |

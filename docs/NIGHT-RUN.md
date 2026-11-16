@@ -2,6 +2,798 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Chain MG-N10 (2026-11-16): the round-end line test, the merge, no flaky tests, slower flights
+
+Status, piece by piece.
+
+| Piece                                                                                                       | State                                                                                         |
+| ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| 1. The round-end line test; merge `feat/mind-games` (PR #11)                                                | test examined (below): no failure in 112 runs, cause not found, left unchanged; merge running |
+| 2. No flaky tests (`fix/flaky-tests`)                                                                       | open                                                                                          |
+| 3. Mind Games: flights of about 1.2 s, the phone bar's game name whole (`feat/mg-flight-speed`, not merged) | coding done in a work tree (T371, T372); tests, play-through open                             |
+| 4. Morning handover                                                                                         | open                                                                                          |
+| Needs the owner's word                                                                                      | open until the pieces end                                                                     |
+
+### Piece 1: the round-end line test
+
+The test is `apps/server/test/chat.integration.test.ts` "the round-end line": it failed once in CI (run 43773071288, attempt 1, `verify`, head `7e7b4c2`: `condition not met in time` at line 256, the wait for the line; the guess before it was accepted after about 3 s, the test took 9.2 s) and passed on the re-run of the same commit.
+
+- **Relative to `master`, the branch changed the line** (`apps/server/src/chat/roundLines.ts`, commits `17dff8a`, `e00f743`): a round whose results carry `won` gets the phased line. A guess round's results never carry it: `playerResults` (`packages/domain/src/round/results.ts`) has no `won`, only `phasedResults` sets it, and nothing on the server adds it to the RoundEnded event (`won ?? place === 1` is only the stored row's, `pgResults.ts`). So a guess round cannot get the phased line.
+- **Counts, this machine (14 logical cores), each run on its own Testcontainers database:**
+  - only this test (`-t "round-end line"`): `feat/mind-games` 20/20 passed, `master` (`dc78140`) 20/20 passed;
+  - the whole chat file, as CI runs it (the mutes, the ban, the lock before the round): 30/30 passed;
+  - the whole server integration suite: 6 runs on 10 workers, 3 on 2 workers as CI (with a second suite of `master` on 6 workers beside it): the round-end line passed every time (the authorization matrix timed out in 5 of these 9 runs, the inactivity test once on `master`; both piece 2).
+- **Timing, measured** (a diagnostic in the test, not committed): from the guess's acceptance to the line on the watcher's socket 100–207 ms in 34 runs, against the test's 6 s wait; the round opened 2.98–3.33 s after the secret was read.
+- **Candidates ruled out:** the phased line (above); a line later than the wait (100–207 ms, also under load); the wait starting after the line (the watcher's socket records every frame from its join, `socketOpener`); a held end (Frost holds only in winter with specials; this round is spring, specials off); a listener throwing (the guess would have been answered INTERNAL, not ok); `post` throwing (its `console.error` would show in the failed test's output in CI, and there is none); the socket dropping (pings 20 s / 20 s, no server-side disconnect).
+- **Result:** the cause is not found and the failure did not recur; following the rule for a flake that cannot be made to fail, the test stays unchanged; piece 2 lists it with these counts (BACKLOG part one).
+
+## Task MG-MERGE (2026-11-16): T369 accepted (O102), `feat/mind-games` merged into `master`, the sweep
+
+Status. The owner approved the merge on 2026-11-16.
+
+| Part                                                   | State                               |
+| ------------------------------------------------------ | ----------------------------------- |
+| O102: T369 accepted; DECISIONS, BACKLOG, OPEN          | done                                |
+| Merge `feat/mind-games` into `master` (a merge commit) | continued in chain MG-N10, piece 1  |
+| CI on the merge commit                                 | continued in chain MG-N10, piece 1  |
+| Sweep: `feat/mind-games`, `shots/mg-n8`                | continued in chain MG-N10, piece 1  |
+| Handover on `master`                                   | replaced by chain MG-N10's handover |
+
+## Task MG-N9 (2026-11-15): equal totals share a place (O100), T367 accepted (O101), the console's 401s
+
+Status. `feat/mind-games` is not merged.
+
+| Part                                                                    | State                                               |
+| ----------------------------------------------------------------------- | --------------------------------------------------- |
+| O101: T367 accepted, no code change                                     | done                                                |
+| O100: equal totals share a place, listed by name (`meta.standingsTies`) | done (`0427f70`)                                    |
+| The console's 401s for `/chat/rooms/lobby`                              | done: the request without a session removed (T370)  |
+| Tests, play-through, handover                                           | done; CI on the final head reported in the handover |
+| Needs the owner's word                                                  | none: T369 accepted (O102, 2026-11-16)              |
+
+### The shared places (O100, T369)
+
+- **Contract:** `meta.standingsTies?: 'shared-by-name'` in `packages/game-sdk/src/module.ts`; Mind Games sets it. Absent, today's rule.
+- **Domain:** the one ranking, `standings` in `packages/domain/src/round/results.ts`, takes the rule (`StandingsTies`): with 'shared-by-name' equal points alone share a rank; the numbering is today's (1, 1, 3), so nothing about places changed but who shares them.
+- **Server:** new `apps/server/src/league/standingsTies.ts` (`tiesOf` by the match's game, `byRankThenName` for a shared place); `round/pgResults.ts` passes the rule to `standings` when it recomputes; `league/boards.ts` `matchStandings` lists a shared place by display name (the result's standings and the closed match's summary both read it). The leaderboards' awards keep each match's stored rank.
+- **Tests:** a domain test (`results.test.ts`: four players on 10 points with different wins share rank 1, the next is 5) and `apps/server/test/standingsTies.integration.test.ts`: a Mind Games series of three real rounds where the host wins with All (+2) and player-1 and player-2 win twice (+1, +1) shares place 1 among the three, listed dev-host, dev-player-1, dev-player-2, after the last round and in the closed match's summary, player-3 4th; a Guess The Number match with player-2 winning first, then player-1, keeps places 1 and 2 by the earlier win.
+
+### The console's 401s (T370)
+
+- **When and why:** only the lobby page asks for the lobby's chat room (`apps/web/src/lobby/Lobby.tsx` → `ChatPanel` → `useChatRoom`, `apps/web/src/chat/useChat.ts`); a match page never does. The server answers it 401 exactly when the request has no session (`reader` in `apps/server/src/http/routes/chat.ts`). Reproduced in Chromium (`tmp/mg9-console.mjs`): signed in, a match page opened directly, no request; the lobby opened signed out, two requests, both 401 (React's development double effect), and the browser's console keeps them after the page moves on to the match; signed in, the lobby, two answers 200. So the owner's errors came from the lobby opened before signing in, not from the match page.
+- **What was done:** asking for a room without any session is provably useless, so `useChatRoom` now waits for the session and, without one, shows "Sign in, or watch as a guest, to read the chat." without asking; it asks once the viewer signs in. A guest and a signed-in viewer are unchanged. `chat.test.tsx` checks both: no request without a session, the request for a guest.
+
+### Tests and the play-through
+
+- **Tests:** while working the domain's, the web chat's and the new server file's; `pnpm verify` green on the second run (846 + 99 + 173; the first stopped on the formatting of the domain test). Journeys 38–41 and 43 in Chromium: 6/6.
+- **Play-through** (`tmp/mg9-play.mjs`, the log in `reports/mg-n9/play-through.txt`): seed `maple`, 20 bots, total 40 s, 3 rounds, pause 30 s, All on in round 1, winner place 2 in round 3; the badge "Mini Games · dev · feat/mind-games · 0427f70 · 2026-11-15".
+  - **After round 1** ("Winter wins!", 2 winners): bot-09 and bot-13 share place 1; the other 19 share place 3.
+  - **After round 2** ("Autumn and Winter win!", 6 winners): eight players on 1 point share place 1 (bot-06, bot-07, bot-08, bot-09, …); 13 on 0 share place 9.
+  - **After round 3** ("Spring and Winter win!", 10 winners) and **in the summary:** bot-06, bot-09, bot-10, bot-20 on 2 share place 1; ten on 1 share place 5 (bot-02, bot-05, bot-07, bot-08, bot-11, bot-12, bot-13, bot-17, bot-18, dev-host); seven on 0 share place 15. Every shared place alphabetical, every place counting everyone above it. In this run equal totals always had equal wins (no All winner); the server test covers a shared place of different wins.
+  - **Console:** no error on the match page at 1440 × 900 or 390 × 844.
+
+### Noticed, left alone
+
+- The browser keeps console errors across the hash routes of one page, so an error of an earlier page (the lobby) shows while a later one (a match) is open.
+
+## Task MG-N8 (2026-11-15): the result and the phone chat bar built to the owner's reference (O99)
+
+Status. `feat/mind-games` is not merged. The reference is `docs/design/mind-games-screens.html` (committed unchanged; there was no older `mind-games-result.html`).
+
+| Part                                                                                          | State                                                          |
+| --------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Desktop result 2A/2B: headline row, winners panel, cards without names, standings, next round | done                                                           |
+| Phone 3/4a/4b: one scrolling area, the chat bar with its own field                            | done                                                           |
+| Tests, journey 43, play-through, handover                                                     | done; CI on the final head reported in the handover            |
+| Needs the owner's word                                                                        | none: T367 accepted (O101), T368 decided (O100), both in MG-N9 |
+
+### The build
+
+- **Mind Games:** new `WinnersPanel.tsx` (chips, at most 4/3/2 rows, "+N more" opening every winner, T359) and `winners.css`; `ResultPanel.tsx` the headline row, the winners, the cards without names; `result.css` rewritten to the reference (`display: contents`, so the platform's grid places the parts); `words.ts` `resultLine` "<place> season · N players" and `winnersTitle`; `PrefsPanel.tsx` and `prefs.css` one row per round, the short line, the box at the foot; `CardPlayers.tsx` removed.
+- **Platform:** `ResultScreen.tsx` one grid (headline row across, the left column, the next round on the right); `RoundStandings.tsx` the plain ranking in two columns, the own row in amber and scrolled into view, the phone's own line first (T361, T362); `resultOwn.css` rewritten; `useRowsFit.ts` and the "All N players" sheet removed; `SeriesStatus.tsx` "Round 2 in 0:21"; `ChatDock.tsx` and `chatDock.css` the phone bar in the layout with the room's own field (`Writer`, offered through `ChatComposerSlot`, T363), the sheet above it, the desktop strip 190/150 px; `DockedMatch.tsx` the visible viewport's height on a phone (T364); `docked.css` the reference's page padding, the phone's single scrolling area, the round view at its own height there; `ChatRoom.tsx` exports `Writer` and offers its room; `chatArrivals.ts` `ChatComposerSlot`.
+- **Removed:** `CardPlayers.tsx` and its styles, `useRowsFit.ts`, the standings' sheet and "All N players…", the old card and countdown styles, the info icon of the pre-picks, the phone chat's fixed sheet between the bars.
+
+### Tests and the play-through
+
+- **Tests:** while working, Mind Games 87/87 and the web's round, match and chat tests 159/159, among them the 160-player component tests (`winners.test.tsx`: four chip rows on a desktop, three on a phone, "+N more" opening all 36, no name in a card; `ownResult.test.tsx`: 160 rows in a desktop panel scrolled to the viewer's row, the phone's own line first) and the phone bar's sending (`chatDock.test.tsx`). `pnpm verify` green on the second run (843 + 99 + 171; the first stopped at a type error in the new test). Journeys 38–41 and the new 43 in Chromium: 6/6.
+- **Fit** (the play-through with 51 players, light and dark): 1280 × 720: the chat 150 px, one or two chip rows, 4–5 standings rows, the countdown and the first pre-pick shown; 1440 × 900: 11 rows; 1900 × 860: 10 rows; 1920 × 1080: 19 rows; no page scroll anywhere, only the standings' panel (and at 150 px the chat's own message list) scroll. With 160 players and 36 long-named winners (inflated in the browser, `tmp/mg8-look.mjs`): 1280 × 720 two chip rows and "+N more", 6 standings rows; 1440 × 900 four chip rows, all 36; 1900 × 860 and 1920 × 1080 three chip rows. Phones 390 × 844 and 360 × 740: the winners, the cards and the countdown above the chat bar on the first screen, three chip rows at most, one scrolling area, the last standings row whole above the bar at the end.
+- **Play-through** (`tmp/mg8-play.mjs`, the log in `reports/mg-n8/play-through.txt`): seed `maple`, 50 bots (the Quick Test's most), total 40 s, 3 rounds, pause 90 s, All on in round 1, winner place 2 in round 2; the badge "Mini Games · dev · feat/mind-games · b0a6717 · 2026-11-15"; "hello from the phone bar" sent from the phone bar's field arrived ("Chat · dev-host: hello from the phone bar") with the sheet closed.
+  - **Round 1** (All on, 51 players): "Autumn wins!" / "Least chosen season · 51 players" / "6 winners · +1 each". Cards Spring 11, Summer 9, Autumn 6 ✓ WINNER, Winter 14, All 11. The 6 chips (bot-11, bot-21, bot-30, bot-05, bot-08, bot-27) = Autumn's count; each "+1" the standings' This round, every other player "0".
+  - **Round 2** (winner place 2, 49 players in the round): "Autumn wins!" / "2nd least chosen season · 49 players" / "11 winners · +1 each". Cards Spring 12, Summer 18, Autumn 11 ✓, Winter 8; 11 chips = Autumn's count; This round and totals agree (bot-21 and bot-27 2, the round's other winners 1; bot-14 "—", not in the round).
+  - **Round 3:** "Summer wins!" / "Least chosen season · 49 players" / "5 winners · +1 each". Cards Spring 9, Summer 5 ✓, Autumn 21, Winter 14; 5 chips = Summer's count.
+  - **Summary:** bot-08, bot-21, bot-27 2 points (place 1), bot-06, bot-32 2 (place 4), then 1 point… every Total the rounds' sum after each round; no page errors. The server's places show the tie-break by wins and the earliest win (T368): in round 2 players on 1 point were placed 3 or 7.
+- **Screenshots:** 8 on the orphan branch `shots/mg-n8` (the phone round, the result at 1280 × 720 and 1900 × 860 light and dark, the phone result at the top and at the standings, the 160-player state beside reference 2B); `shots/mg-n7` deleted.
+
+### Differences from the reference
+
+- "Every line" sits at the right of the headline row, as the task says, not in the top bar as the reference draws it; the top bar is the existing result bar (title, game, code, Host, Play).
+- The desktop chat keeps the platform's look (its Send a plain button, its placeholder "Write a message"), which every game shares; the phone bar's field says "Write a message…" as the reference does.
+- The standings' title stays at the top of its panel while the rows scroll (T366); the reference's title scrolls away.
+- On the light theme the green title and the amber own row use AA colours of their own (T360, T362); the reference is drawn in dark only.
+- The places are the server's ranks (T368), so equal totals can differ in place.
+
+### Noticed, left alone
+
+- The standings' scroll to the viewer's row happens on the first render only, as asked; after a window resize the panel keeps its scroll position, so the row can leave the view.
+- The phone's result bar keeps its title chip ("Seasonal Mind Ga…"), cut at 390 px.
+
+## Task MG-N7 (2026-11-15): the result and pause view rebuilt to the owner's measured design (O98)
+
+Status. `feat/mind-games` is not merged.
+
+| Part                                                                     | State                                               |
+| ------------------------------------------------------------------------ | --------------------------------------------------- |
+| The rebuild (headline, cards, standings, next round, pre-picks, fitting) | done                                                |
+| "replay" in the total's help                                             | done                                                |
+| Tests, play-through, handover                                            | done; CI on the final head reported in the handover |
+| Needs the owner's word                                                   | the proposals T355–T358                             |
+
+### The rebuild
+
+- **Mind Games:** `words.ts` the design's line (T355); `ResultPanel.tsx` the card stack; new `CardPlayers.tsx` (three names, "You" first, "+N more" opening every player, T356); `result.css` rewritten to the design's measures with the short-window steps (T357); `PrefsPanel.tsx` and `prefs.css` the title's line with the info icon and the box, the selects in one row of up to six under their labels; `settings.ts` "the reveal of its last part".
+- **Platform:** `RoundStandings.tsx` "Standings after round N", the rows that fit (new `useRowsFit.ts`), "All N players…" as a sheet (T358); `ResultScreen.tsx` no panel around the game's part, the round's number passed through `RoundScreen` from `MatchPage`; `NextRound.tsx` no heading; `SeriesStatus.tsx` the countdown as the box's first row with a blue Start now and the bar; `resultOwn.css` the panels; `docked.css` the row, button and bar in place of the old countdown block; `chatDock.css` 150 px under 760 px.
+- **Removed:** the panels' inner scrolling and the standings' "Top 5" toggle, the old countdown block and its `match-countdown` styles, the cards' scrolling players' list and their grid layout, the pre-picks' sentence line (now the icon's tooltip).
+- **Found on the way:** the new players' button first reused the class `mg-more`, which the flight band's "+8" tag already has (absolutely placed); renamed `mg-names-more`. The docked result had kept `match.css`'s `align-items: start`, which shrank it to its content's width.
+
+### Tests and the play-through
+
+- **Tests:** Mind Games 82/82 and the web's round and match tests 143/143 while working; `pnpm verify` once: green (835 + 99 + 171). Journeys 38–41 in Chromium: 4/5 at first (journey 38 still read the old result line), fixed (`99d86f7`), journey 38 green again.
+- **Fit at 1280 × 720:** every shrink step applies (icon 40 px, count 32 px, padding 10 × 12 px, headline 26 px, the tighter gaps) and the chat is 150 px; the headline, the five cards, the standings (2 rows: the leader and the viewer, or the viewer and the next, with "All N players…") and the next round's box with every select show, and nothing scrolls. At 1920 × 1080 the chat is 180 px and the standings show all 5 rows.
+- **Play-through** (`tmp/mg7-play.mjs`, the log in `reports/mg-n7/play-through.txt`): seed `maple`, 4 bots, total 40 s (delay following, 10 s), 3 rounds, pause 25 s, All on in round 1, winner place 2 in round 2; the badge "Mini Games · dev · feat/mind-games · 99d86f7 · 2026-11-15". On every result at 1280 × 720 and 1920 × 1080 in light and dark: no page, card, standings or next-round box scrolls and every pre-pick select shows; on the phone the cards and the boxes never scroll (the result area does, 135 px, above the chat bar).
+  - **Round 1** (All on): "Spring, Summer and All win!" / "Least chosen season · 3 players win 1 point · +2 for All". Cards Spring 1 (bot-02 +1), Summer 1 (bot-01 +1), Autumn 2, not least chosen (bot-03, bot-04), Winter 0, All 1 (You +2). Standings after round 1: you 2 | 2, bot-01 1 | 1, bot-02 1 | 1, bot-03 0 | 0, bot-04 0 | 0.
+  - **Round 2** (winner place 2): "Spring and Autumn win!" / "2nd least chosen season · 4 players win 1 point". Cards Spring 2 (You +1, bot-02 +1), Summer 1, not 2nd least chosen (bot-01), Autumn 2 (bot-03 +1, bot-04 +1), Winter 0. Totals you 3, bot-02 2, bot-01 1, bot-03 1, bot-04 1.
+  - **Round 3:** "Autumn and Winter win!" / "Least chosen season · 2 players win 1 point". Cards Spring 3, not least chosen (You, bot-04, bot-03), Summer 0, Autumn 1 (bot-01 +1), Winter 1 (bot-02 +1). Totals bot-02 3, you 3, bot-01 2, bot-03 1, bot-04 1.
+  - **Summary:** bot-02 3 (3 wins), dev-host 3 (2), bot-01 2 (2), bot-03 1 (1), bot-04 1 (1); every count equals its players, every "+N" the standings' This round, every total and the summary the rounds' sums; the chat kept its typed text from the round to the result; no page errors.
+- **Screenshots:** 5 (the result at 1280 × 720 light and dark, at 1920 × 1080, on the phone, the summary) on the orphan branch `shots/mg-n7`; `shots/mg-n6` deleted.
+
+### Noticed, left alone
+
+- On a phone the standings' "This round" and "Total" headers nearly touch.
+- A dimmed card at opacity 0.6, as the design gives it, takes its muted reason ("not least chosen") under 4.5:1 against the page.
+- The 150 px chat applies to any desktop window under 760 px high, so the round view there has it too.
+
+## Task MG-N6 (2026-11-15): the new Mind Games layout (owner-approved design, O97) and small fixes
+
+Status, updated after every piece. `feat/mind-games` is not merged.
+
+| Piece                                                                   | State                                               |
+| ----------------------------------------------------------------------- | --------------------------------------------------- |
+| 1 — the chat docked below (`meta.chatDock`)                             | done                                                |
+| 2 — the round view                                                      | done                                                |
+| 3 — the result and pause view                                           | done                                                |
+| 4 — small fixes (locked fields, the live list's Mode, 02c §9's heading) | done                                                |
+| Play-through and handover                                               | done; CI on the final head reported in the handover |
+| Needs the owner's word                                                  | the proposals T350–T354                             |
+
+### Piece 1 — the chat docked below
+
+- **The flag:** `meta.chatDock?: 'below'` in the game-module contract (04 §4), the game list's `chatDock` (`'panel'` by default); Mind Games sets it. The other four games have no flag and keep the round bar's Chat panel and the chat beside the result.
+- **The page:** `apps/web/src/match/DockedMatch.tsx` holds the round view, the loading line and the result in one box with `ChatDock` under each, so the chat is mounted once (T350); `JoinLeave` moved out of `MatchPage.tsx` into its own file. A desktop gets the chat as a strip of 180 px; a phone a bar with the newest message and the unread count that opens a sheet. The arrivals context now passes the message itself.
+- **Checks:** `chatDock.test.tsx` (typed text kept from the round to the result and the next round; desktop without a bar; the phone's bar, unread, Escape and Close; no dock without a chat).
+
+### Piece 2 — the round view
+
+- **Platform:** a game layout `split` (`games/registry/web` `GameWeb.layout`, T351): `RoundBody` treats it like `board` (the input draws into the stage); `round.css` makes the stage a subgrid across both columns, the strip on top, the cards on the left 3/5, the info column on the right 2/5; on a phone the stage, the info line, the list, the dock. The four other games keep `board` or the list layout.
+- **Mind Games:** `PhaseStrip.tsx` (Join, Play, Reveal; "· now", a fill, one line under the strip), `ChoiceButtons.tsx` (cards with frames behind the buttons, the band and the counts; "✓ Your choice"), `MindInput.tsx` ("Your choice: Autumn" on a phone), `FeedPanels.tsx` (the spectator's main part), `phases.ts` (Reveal), `text.ts` ("10 seconds ago · 4 players"), `mind.css` rewritten for the cards and the strip.
+- **Checks:** the game's web tests 34/34 and the round's 101/101 with the new words; the author's look at 1280 × 720, 1920 × 1080 and 390 × 844, light and dark: one screen each, no overlap of the chat or the band, the five cards in one row with All on.
+
+### Piece 3 — the result and pause view
+
+- **Platform:** a game flag `ownResult` (T352): `ResultScreen` gives such a game's reveal the whole first part with "Every line" at its top right, then `RoundStandings` (new) beside the page's `next` box; `RoundScreen` passes `next` through. The docked page builds `NextRound` (new: Join/Leave, the countdown `SeriesCountdown` with its bar and Start now, the waiting area's line outside a pause, the pre-picks) and drops the side column (`AfterView`). `SeriesStatus.tsx` shares `useSeriesPause` between the waiting area's line and the countdown; `FocusBar`'s `clockText` is reused for "0:11"; `WaitingArea`'s `stateText` is exported for the box. New `resultOwn.css`.
+- **Mind Games:** `words.ts` `resultTitle`, `resultLine`, `whyNot` replace `headline`; `ResultPanel.tsx` heads the result and draws the cards in one row; `result.css` rewritten (the auto-fit grid is gone); `PrefsPanel.tsx` only the rounds still to play, none after the last.
+- **Removed:** the result's placings table and team line for a game with `ownResult` (the four other games keep theirs), Mind Games' `headline`, the pre-pick panel's locked rounds, the auto-fit grid.
+- **Checks:** the game's tests 81/81, the web's match and round tests 142/142; the author's look at the three sizes in light and dark: no page scrollbar, nothing over the chat; the typed chat text kept from the round to the result.
+
+### Piece 4 — small fixes
+
+- **Locked fields** (T354): `packages/ui/src/base.css` gives a disabled field a muted fill and text, a dashed edge and the not-allowed cursor; `apps/web/src/components/fields.tsx` adds `LockMark` (a padlock and "locked") at the field's top right, outside the label. This is the one visible change outside Mind Games: every game's disabled form fields.
+- **The live list's Mode** (T354): `liveRounds.ts` sends `secretMode: null` for a game without secret modes (the game list's `secretModes`); `LivePage.tsx` shows "—". Guess games keep "shared, spring".
+- **02c §9:** the sentence fused into the heading is now its own paragraph.
+- **Checks:** the web's component, match and shell tests 75/75 (a new locked-field test), the admin's live list 3/3, the server's `adminLive.integration.test.ts` 6/6 (a guess round "shared", a Mind Games round null).
+
+### Tests, e2e and the play-through
+
+- **Verify per piece:** 1: unit and web green, 14 server files failed to start Docker under load, then 170/171 alone and `phased.integration.test.ts` green alone (a timing test, see Noticed); 2: green but `authzMatrix.integration.test.ts` timed out at 150 s, green alone; 3 and 4: fully green (833/834 + 99 + 171).
+- **e2e in Chromium:** journeys 38–42 5/6 (journey 40 still read "Round 1 of 3"; fixed, `7e1313b`, then green), then the full suite once: 54/54 (main and timing).
+- **Play-through** (`tmp/mg6-play.mjs`, the log in `reports/mg-n6/play-through.txt`): seed `maple`, 4 bots, total 40 s (delay following, 10 s, locked with its padlock), 3 rounds, pause 25 s, All on in rounds 1 and 3, winner place 2 in round 2; the badge "Mini Games · dev · feat/mind-games · 7e1313b · 2026-11-15". Round view and result at 1280 × 720, 1920 × 1080 and 390 × 844 in light and dark: one screen, nothing over the chat, no target under 44 px; no Chat button in the bar; five cards in one row with All on (round and result); the strip "Join · now … Reveal …"; "Your choice: Winter" on the phone; the typed chat text kept from the round to the result.
+  - **Round 1:** "Spring and Summer win!" / "Least chosen · 2 players win · +1 each". Cards Spring 1 (bot-02 +1), Summer 1 (bot-01 +1), Autumn 0, Winter 0, All 3, not least chosen (You, bot-03, bot-04). Standings bot-01 1 | 1, bot-02 1 | 1, the rest 0 | 0. Pause "Round 2 starts in 0:20".
+  - **Round 2** (winner place 2, no All): "Spring and Summer win!" / "2nd least chosen · 4 players win · +1 each". Cards Spring 2 (bot-02 +1, You +1), Summer 2 (bot-01 +1, bot-04 +1), Autumn 1, not 2nd least chosen (bot-03), Winter 0. Totals bot-01 2, bot-02 2, bot-04 1, dev-host 1, bot-03 0.
+  - **Round 3** (All on): "Autumn, Winter and All win!" / "Least chosen · 3 players win · +1 each, All +2". Cards Spring 2, not least chosen (bot-04, bot-03), Summer 0, Autumn 1 (bot-01 +1), Winter 1 (bot-02 +1), All 1 (You +2). Totals bot-01 3, bot-02 3, dev-host 3, bot-04 1, bot-03 0.
+  - **Summary:** bot-01 3 (3 wins), bot-02 3 (3), dev-host 3 (2), bot-04 1 (1), bot-03 0; each count equals its players, each "+N" the standings' This round, each Total and the summary the rounds' sums. No page errors.
+- **Screenshots:** 8, light and dark, on the orphan branch `shots/mg-n6`; `shots/mg-n5` deleted.
+- **After the play-through:** `mind.css` (401 lines) and `round.css` (324) were over the 300-line limit, which lint does not count for CSS: the phase strip moved to `strip.css` (90), the pre-picks to `prefs.css` (66), the split layout to `roundSplit.css` (64); `mind.css` 270, `round.css` 271. The author's look again at the three sizes, light and dark: unchanged.
+
+### Noticed, left alone
+
+- At 1280 × 720 the Next round panel's pre-pick selects and the standings' "All N players…" lie just under their panels' fold (they scroll inside the panel); at 1920 × 1080 everything shows.
+- `phased.integration.test.ts` and `authzMatrix.integration.test.ts` failed once each inside a full `pnpm verify` (a join window closed, a 150 s timeout) and passed alone: the server's integration tests still need a quiet machine.
+- The phone's result scrolls inside its part above the chat bar (about 140 px); the design does not say whether it should.
+- The match summary page has no docked chat (it never had a chat); unchanged.
+- The dev servers of the previous task outlived their stopped shell: `TaskStop` ended the shell, not the watcher's children, so the next `pnpm dev` found its ports taken; they were stopped by process id.
+
+## Task MG-N5 (2026-11-14): test isolation and a build badge, then small Mind Games fixes
+
+Status, updated after every piece. `feat/mind-games` is not merged.
+
+| Piece                                                                                                                                              | State                                                                                                                                                                                                  |
+| -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| A — test isolation, the dev database's clean start, the build badge (`chore/test-isolation`)                                                       | done: merged into `master` by PR #10 (merge `dc78140`); master's CI run 43592343594 for the merge green in every job (e2e in all three browsers); `chore/test-isolation` deleted on origin and locally |
+| Master merged into `feat/mind-games`                                                                                                               | done (`2e92aa1`, a normal merge)                                                                                                                                                                       |
+| B — the delay follows the total (O96), no "Shared" without a secret (T347), no guess total for a phased round (T348), `roundSession.test.ts` split | done (`310f1f8`)                                                                                                                                                                                       |
+| Play-through and handover                                                                                                                          | done; CI on the final head reported in the handover                                                                                                                                                    |
+| Needs the owner's word                                                                                                                             | the proposals T345–T349                                                                                                                                                                                |
+
+### Piece A
+
+- **What each suite used before:** unit and component tests no database; the server's integration tests a Testcontainers PostgreSQL per file (unchanged); Playwright the developer's database `smg` and the ports of `pnpm dev` (3910, 5410, 5411), reusing a running dev server; the load check the dev server on 3910.
+- **Now (09 §1.1, T345):** Playwright its own server on 3940 with `smg_test` (recreated empty and migrated at every run by `apps/server/tools/testServer.ts`), the client on 5440, the admin app on 5441, no server reused; journey 36 its own `smg_e2e_website`, recreated at every run, server on 3960; the load check its own server on 3950 with `smg_load` (`load/stack.mjs`).
+- **The dev database's clean start:** `pnpm dev:reset-db` (`apps/server/tools/resetDevDatabase.ts`).
+- **The build badge (T346):** `apps/web/src/shell/BuildBadge.tsx` in the page's flow under the screen; journey 42.
+- **Found on the way:** journey 36's database, kept between runs, held this branch's migrations 0016–0019; and another project (`seasonal-spirits`) now listens on 3930, so journey 36's server moved to 3960.
+- **Checks:** `pnpm verify`'s full run broke in the server integration tests under load (three Docker health checks past 120 s, while piece B's tests ran beside it); format, lint, typecheck and 696 + 94 unit tests green; the server's 161 integration tests green alone. Full e2e in Chromium: the main project 13/14 (journey 36, then fixed and green), the timing project 35/35. During the run the dev server on 3910 logged only my own two `readyz` checks. PR #10's CI green in every job.
+
+### Piece B
+
+- **The delay follows the total (O96, T349):** `mind.delayAuto` (default on) before `mind.delayS`; `delayOf` in `games/mind-games/src/settings.ts` gives the delay in force (a quarter of the total, rounded down), used by the plan and the cross-key rules; `mindFieldState` shows it off with "Follows the total: a quarter of it. …" in the host form and the Quick Test alike. Journey 38 sets its delay by hand (box off), journey 41 now follows the total (40 → 10); the API tests that set `mind.delayS` turn the box off.
+- **No "Shared" without a secret (T347):** `showsMode` and `useRoundLook` in `apps/web/src/lobby/games.ts` read the game list's `secretModes`; `FocusBar` gets `mode`. Guess games unchanged (their bar still says Shared/Individual; `seasonless.test.tsx` checks both).
+- **No guess total for a phased round (T348):** `LiveRoundView.guesses` null when the round's view has a plan; the live list shows "—". `adminLive.integration.test.ts` checks a guess round (0) and a Mind Games round (null); `livePage.test.tsx` the cells.
+- **`roundSession.test.ts` 301 → 206:** its round-settings tests are now `roundSettings.test.ts` (110), beside `roundSettings.ts`.
+- **Checks:** `pnpm verify`: format, lint, typecheck green; 828 + 99 unit tests; the server's integration tests 138 passed with four files failing to start their Docker database under load (health check past 120 s, hooks past 180 s), all four green alone (33 tests). Full e2e in Chromium (piece B touches the round bar every game uses): 14/14 and timing 40/40, journeys 38–41 and 42 among them.
+
+### Play-through (`tmp/mg5-play.mjs`, the full log in `reports/mg-n5/play-through.txt`)
+
+- **Dev database:** recreated with `pnpm dev:reset-db` (19 migrations), then `pnpm dev` started fresh; the script refused while `pnpm dev` answered on 3910.
+- **Quick Test form:** total 40 → delay 10 (off), join 20; total 120 → delay 30 (off), join 60; back to 40 → 10; the box off → the delay set to 8; the box on again → 10. No season field.
+- **Badge:** "Mini Games · dev · feat/mind-games · 310f1f8 · 2026-11-14", the head then.
+- **Match** (seed `frost`, 4 bots, total 40, delay following = 10 s, 3 rounds, pause 20, All on in rounds 1 and 3, winner place 2 in round 2): every intro said "everyone sees the round 10 s late"; the bar "0:37 left Chat Players Host Full screen", no Shared, on a desktop and a phone; the admin's live list `guesses: null`; the host form in the pause: delay 10, off.
+  - **Round 1** (Winter → Autumn hidden → All): All least chosen, 1 winner. Cards Spring 2 (bot-03, bot-02), Summer 0, Autumn 0, Winter 2 (bot-01, bot-04), All 1 (You +2). Table dev-host 2, the bots 0. Standings dev-host 2.
+  - **Round 2** (winner place 2; Winter → Spring): Spring and Winter share the 2nd least chosen, 4 winners. Cards Spring 2 (You +1, bot-03 +1), Summer 0, Autumn 1 (bot-02), Winter 2 (bot-01 +1, bot-04 +1). Table bot-01 1, bot-03 1, bot-04 1, dev-host 1, bot-02 0. Standings dev-host 3, bot-01 1, bot-03 1, bot-04 1, bot-02 0.
+  - **Round 3** (Winter → All): Spring, Winter and All share the least chosen, 3 winners. Cards Spring 1 (bot-01 +1), Summer 0, Autumn 2 (bot-03, bot-04), Winter 1 (bot-02 +1), All 1 (You +2). Table bot-01 1, bot-02 1, dev-host 2, bot-03 0, bot-04 0. Standings dev-host 5 (3 wins), bot-01 2, bot-03 1, bot-04 1, bot-02 1.
+  - **Summary:** the same totals; every count equals its players, every "+N" the table, the standings the rounds' sums (each within 0.81 s of the result). No page errors.
+- **Screenshots:** 4, light mode, on the orphan branch `shots/mg-n5`; `shots/mg-n4` deleted.
+
+### Noticed, left alone
+
+- A disabled field that follows the total (delay, join time) looks like an editable one: only its help line says it is off.
+- The admin live list's Mode column says "shared, spring" for a Mind Games round (the stored values).
+- The verification page still names a proof's mode; a Mind Games round has no proof page.
+- `pnpm verify`'s server integration tests need the machine quiet: in both full runs Docker's health checks timed out while other work ran.
+
+## Task MG-N4 (2026-11-13): fixes from the owner's first play-test
+
+Status, updated after every piece. Branch `feat/mind-games` is not merged. Platform code may change; the four existing games must behave exactly as before.
+
+### Final report
+
+- **Done:** all five pieces, pushed; `feat/mind-games` is not merged.
+- **Piece 1, where the points were lost:** the ended round's view rebuilt its results from the roster, which places nobody in a phased round, so every row got 0. RoundEnded, `round_results`, the standings, the summary and the boards always had the right points.
+  - **Why the earlier tests missed it:** the server test checked the rows and the standings, never the view's `results`. The table's web tests use fixtures that already hold points. The journeys checked the cards' "+1", never the table.
+  - **Fix:** one `roundResults` for both (T340). On the way, the delayed room's end frame now goes out unwrapped (T341).
+- **The existing games are unchanged.** Every changed platform function has a test with a guess game and a phased one:
+  - `RoundSession.results()`: `roundSession.test.ts`.
+  - The end frame: `delayedRoom.test.ts`.
+  - The domain's count: `phased.test.ts`, and the guess rounds' own tests.
+  - The table: `phasedWords.test.tsx`.
+  - The admin's panel: `roundPanel.test.tsx`.
+  - The Quick Test fields: `quickTest.test.tsx`.
+  - The season flag: `seasonless.test.tsx`, and the server's game list in `phasedPoints.integration.test.ts`.
+
+  The guess games' golden test and conformance P1–P6 pass in every verify. Their only test change is the Heatwave test's API mock, which now answers the game list the host form asks for (its assertions are unchanged).
+
+- **`pnpm verify`, one per piece:** format, lint and typecheck green every time. Tests 815 + 99 + 168, 817 + 99 + 168, 818 + 99 + 168, 818 + 99 + 167 and 822 + 99 + 169 passed. In each run the authorization matrix's HTTP test ran past its timeout under the full run's load, 330–394 s against 30–36 s alone. **Not raised; an OPEN candidate, as in MG-N3.** Load problems on the way:
+  - Other projects' test suites on this machine broke one run.
+  - `shell.test.tsx` failed once and the DRBG chi-square smoke test once; both passed alone.
+  - P7's sabotage check failed once (7.5 s for its file under load) and passed alone; reported, not changed.
+  - The phased server test had a real race, fixed in its test.
+- **Journeys 38–41 in Chromium:** all five tests pass, on the fresh dev stack. A first run lost three of them at sign-in, while the two dev servers this session had left running restarted against each other.
+- **Full e2e in Chromium:**
+  - The timing project passed: 40 of 40 in 22.0 min, all the guess games' journeys and 38–41 included.
+  - The main project's first run had 8 passed and 5 failed with "TypeError: fetch failed". It ran a few minutes after the fresh dev stack started, and the timing run that followed cleared the failures' details from `test-results/`. Run again alone, it passed 13 of 13 in 1.6 min. I can't name the five or their cause; reported, not changed.
+- **Play-through:** `tmp/mg4-shots.mjs`, seed `frost`, 4 bots, total 40 s, delay 5 s, 3 rounds, pause 20 s, played by clicking; the full log is in `reports/mg-n4/play-through.txt`.
+  - **The Quick Test form:** the join time shows 20 (half of 40), off; no season field; no season in the countdown's help.
+  - **Round 1** (All on, winner place 1). I clicked Winter, switched to Autumn with Hide my switches ticked, then to All. "Spring, Summer and All share the least chosen place — 3 players win."
+    - Cards: Spring 1 (bot-02 +1), Summer 1 (bot-03 +1), Autumn 0, Winter 2 (bot-01, bot-04), All 1 (You +2).
+    - Table: bot-02 1, bot-03 1, dev-host 2, bot-01 0, bot-04 0.
+    - Standings: dev-host 2, bot-02 1, bot-03 1, bot-01 0, bot-04 0.
+  - **Round 2** (winner place 2, All off). I clicked Winter, then Spring. "Spring and Winter share the 2nd least chosen place — 4 players win."
+    - Cards: Spring 2 (You +1, bot-03 +1), Summer 0, Autumn 1 (bot-02), Winter 2 (bot-01 +1, bot-04 +1).
+    - Table: bot-01 1, bot-03 1, bot-04 1, dev-host 1, bot-02 0.
+    - Standings: dev-host 3, bot-03 2, bot-02 1, bot-01 1, bot-04 1.
+  - **Round 3** (All on). I clicked Winter, then All. "All was the least chosen — 1 player wins."
+    - Cards: Summer 2, Winter 2, All 1 (You +2).
+    - Table: dev-host 2, the rest 0.
+    - Standings: dev-host 5 (3 wins), bot-03 2, bot-02 1, bot-01 1, bot-04 1.
+  - **Summary:** the same totals, and each round's words.
+  - **Agreement:** every count equals its players; every "+N" equals the table; the standings are the rounds' sums.
+  - **Shown nowhere:** a season (pill, intro, "No special", host form, Quick Test) or anyone's count of choices (the table, the Players panel, the Others line).
+  - **The phase strip:** looked at in Join at 1280 × 720 and in Play at 390 × 844.
+  - **Page errors:** none.
+- **Found in the play-through:**
+  - **Fixed:** the countdown's help line named the season in Mind Games' forms (piece 5).
+  - **Noticed, left alone:**
+    - The match standings come with the match's reload, which the server sends at most once a second per match. A result can show before its new standings: within 0.8 s in the final run's three rounds; in an earlier run, more than 0.8 s once. The guess games have always worked this way. A phased round's page now learns of the end from the end frame (T341), where before it learned it from that same reload.
+    - The round bar shows "Shared" in a game without a secret.
+    - The Quick Test's sentences "the same seed gives the same secret and the same season" stay, and are still true.
+    - After a Quick Test the next round's countdown starts from the document's 10 s, as in MG-N3.
+    - The admin's live list sums a phased round's guesses to 0.
+    - A server test's afterAll closes the pool while a chat line is still posting (a logged error, no failure).
+- **Decisions:**
+  - O91: the phased table and no count anywhere (owner).
+  - O92: the phase strip (the planner's proposal; the owner may revise it after the next test).
+  - O93: no season in Mind Games (the planner's proposal; the owner may revise it after the next test).
+  - T340: one place for a round's results.
+  - T341: the end frame unwrapped.
+  - T342: no action count computed.
+  - T343: no count or place in a phased round's tables.
+  - T344: the Quick Test asks the game about its fields.
+
+  Every T-entry is "(proposal, MG-N4)".
+
+- **Screenshots:** 8 in light mode, with `play-through.txt`, on the orphan branch `shots/mg-n4`; `shots/mg-n3` is deleted.
+- **CI on `7f38216` (run 43542971276):** docs, verify and security green; e2e failed on journey 41, "no frame or answer … younger than the delay": the round ended between the host's check and the admin's, and the admin check counted an ended round as a failure. That race is in the journey since MG-N3; this task's changes do not touch it. Fixed in the journey: the admin's check now ends the loop like the host's and the guest's. Both journey 41 tests passed locally after the fix. The CI run on the final head follows below.
+- **Handover:**
+  - **Stack:** every old Mini Games dev process is stopped (the two server watchers, the server, the client and admin Vite servers; the other projects' processes are untouched). `pnpm dev` runs fresh on `feat/mind-games`.
+  - **Where:** http://localhost:5410 (server on port 3910, admin on port 5411).
+  - **Build badge: none shows.** The `DevBadge` component (`apps/web/src/components/DevBadge.tsx`, "Mini Games · dev · <port>", 08 §1.1) is mounted nowhere, on this branch and on `master` alike. MG-N3's handover said the badge reads "Mini Games · dev · 5410"; that was wrong. Reported, not changed.
+  - **Quick Test:** Dev sign-in → host, then Quick Test. Game Seasonal Mind Games, Start from the lobby on, Seed `frost`, Bots 4, Total length 40, Delay 5, Rounds 3, Pause 20, All ticked; the rest as it is. The join time shows 20 and is off.
+  - **Then:** Host → Start round, and click your own first choice. With these settings, my play-through ended round 1 with All a winner (+2). Before round 2, set Winner to 2 and All off in the Host menu.
+
+| Piece                                                                | State            |
+| -------------------------------------------------------------------- | ---------------- |
+| 1 — points never reach the table                                     | **done**, pushed |
+| 2 — the result table of a phased round, no per-player count anywhere | **done**, pushed |
+| 3 — the Quick Test form's join time                                  | **done**, pushed |
+| 4 — the phase strip                                                  | **done**, pushed |
+| 5 — no season in Mind Games                                          | **done**, pushed |
+
+### Piece 5 — no season in Mind Games
+
+- **Owner decision O93** (2026-11-13, the planner's proposal; the owner may revise it after the next test). Season specials for Mind Games stay an owner question, OPEN (af) 1.
+- **Through the game-module contract, not the game's id:**
+  - `GameMeta.seasons?: false` (`packages/game-sdk/src/module.ts`; 04 §4); Mind Games sets it (`games/mind-games/src/module.ts`).
+  - The server passes it on as `GameInfoView.seasons` (`packages/contracts/src/http/play.ts`, `apps/server/src/round/rounds.ts`). The server's own copy of that shape is now an alias of the contract's.
+  - The web reads it from the game list: `showsSeason`, `useShowsSeason` and `useSeasonless` (`apps/web/src/lobby/games.ts`).
+- **What is gone for such a game:**
+  - The round bar's season pill (`FocusShell.tsx` → `FocusBar.tsx`).
+  - On the intro (`RoundIntro.tsx`, split into `IntroHead` and `IntroSpecial`): the season's icon and name and the special block with "No special this round.". The heading is the game's name.
+  - The screen's season colour, now a neutral border colour (`RoundScreen.tsx`).
+  - The host form's season controls and the season's own fields (`SeasonControls` and `formSeason` know `shows`, `apps/web/src/match/roundFields.tsx`; `HostMenu.tsx`).
+  - The Quick Test's season field (`apps/web/src/shell/QuickTest.tsx`, which now takes the chosen game's list entry).
+  - The countdown's help line, "The intro screen with the season and its special…", in the host form and the Quick Test: Mind Games words it through its `fieldState`, "The intro screen with the round's rule and times, before it opens." (`games/mind-games/web/formFields.ts`, its test). Found in the play-through.
+  - A round still stores a season.
+- **Guess games:** unchanged. Their list entries say `seasons: true`, and every view and form takes the path it took before.
+- **Tests:**
+  - `apps/web/src/round/seasonless.test.tsx` (new): the pill, the intro and the host form's season parts, for a game that shows its season and one that does not.
+  - `apps/server/test/phasedPoints.integration.test.ts`: the game list's flag for Mind Games and the four guess games.
+  - Journey 38 (`e2e/mindGames.spec.ts`) checks the intro's heading (the game's name), that the bar has no season pill, and the strip's current phase with its delay line (O92).
+- **Docs:** 02e §12 and 04 §4.
+- **Test fixture adjusted:** the host form now asks for the game list. The Heatwave test's API mock (`apps/web/src/match/heatwave.test.tsx`) answers `/games` with an empty list, as for a guess game. Without that, the list came back undefined and the new call would have shifted the test's recorded posts. Its assertions are unchanged.
+- **A race in an existing test, fixed:** `apps/server/test/phased.integration.test.ts` read the round's stored results as soon as the round's view said it had ended. The view runs ahead of the log by the batches still being written, which is why the proof route drains first. Under the full run's load (now with this task's points test beside it) the rows were sometimes not written yet: "expected [] to deeply equal [[true, 1], [true, 1]]", seen in pieces 4 and 5. The test now reads the rows once they are there, at most 5 s. No timeout is raised, and the guess games' tests are unchanged.
+- **Also fixed:** the web registry's comment on `kept` sat between `fieldState`'s comment and its field (`games/registry/web/index.ts`, from MG-N3).
+
+- **`pnpm verify`** (worktree, at the race fix's commit): format, lint and typecheck green; tests 822 + 99 + 169 passed, 1 failed: the authorization matrix's timeout (330 s; not raised). Earlier runs on the way caught the Heatwave test's mock (fixed above). One run failed `games/registry/src/phased.conformance.test.ts` › "P7 catches a spectator view that shows one live count" (the file took 7.5 s under load); it passed alone and in every other run. It is a property check with random inputs and the default per-test timeout, reported, not changed.
+
+### Piece 4 — the phase strip
+
+- **Owner decision O92** (2026-11-13, the planner's proposal; the owner may revise it after the next test).
+- **`games/mind-games/web/PhaseStrip.tsx`:**
+  - Removed: the "now" and "feed" markers (`Markers`, `along`).
+  - The part the round is in (`PartItem`) has a frame of its own and `aria-current="step"`. For a screen reader its name reads "Join (now)". A bar along its foot fills as the part runs (`filled`); the other parts stay plain.
+  - Under the strip: "You see the round 10 s late." (the plan's delay, also without the round's timing), then the next-change line as before.
+- **`games/mind-games/web/mind.css`:** the markers' rules are gone. New: the current part's frame and its 4 px fill bar, and the delay line styled with the next change. Replay keeps its dashed frame while it is not the current part.
+- **Tests:** `web/phases.test.tsx` checks the current part during Join (36 s of 60: 60 % filled, one bar, "Join (now)", no markers) and during Replay. `web/panels.test.tsx` checks the spectator's strip text with the delay sentence.
+- **02e §11** describes the strip as built.
+
+- **`pnpm verify`** (worktree): format, lint and typecheck green; tests 818 + 99 + 167 passed, 2 failed: the authorization matrix's timeout (354 s), and `apps/server/test/phased.integration.test.ts`, which passed alone (the race found and fixed in piece 5, below).
+
+### Piece 3 — the Quick Test form's join time
+
+- **The defect:** the Quick Test form showed `mind.joinS` as an editable 60 while "Join time follows the total" was on. The host form asked the game how to show its fields (`fieldState`, T335); the Quick Test's `SettingFields` did not.
+- **Fix** (T344): one mechanism for both forms. `gameFieldState(gameId, values, firstRound)` in `apps/web/src/match/roundFields.tsx` is extracted from `fieldStateOf`, which now calls it. The Quick Test passes it to `SettingFields` through `fieldStateFor` (`apps/web/src/shell/quickTestSettings.tsx`): the form's values, each setting's default where the form has none yet, as a match's first round. While the box is on, the join time shows half the total, off, with its help line. The guess games give no word, so their fields stay the definitions' own.
+- **Test** (`apps/web/src/shell/quickTest.test.tsx`): a guess game's Cooldown field stays on. For Mind Games with the total at 40, the join time shows 20, off, with "Follows the total: half of it"; with the box off it is the field's own 60, on.
+- **Reused:** the host form's `Field`, which already took a `state`, and the game's `mindFieldState`.
+
+- **`pnpm verify`** (run in a separate worktree at the piece's commit, so the next piece could be built meanwhile): format, lint and typecheck green; tests 818 + 99 + 168 passed, 1 failed: the authorization matrix's timeout under load (335 s; not raised). The first run there stopped at `apps/web/src/shell/shell.test.tsx` ("offers the quick sign-in only in development", 7.5 s for the file under load), which passed alone (7 tests); that run never reached the server tests, so it was run again.
+
+### Piece 2 — the result table of a phased round, no per-player count anywhere
+
+- **Owner decision O91** (2026-11-13), built as T342 and T343.
+- **Where the count reached, and what changed:**
+  - **The game contract:** `OutcomeRow.actions` is gone (`packages/game-sdk/src/phased.ts`, 04 §4.8). Mind Games (`games/mind-games/src/rules.ts`) and the phased fixture (`games/registry/src/phasedFixture.ts`) no longer count.
+  - **The domain:** a phased round's roster counts no action (`packages/domain/src/round/evolve.ts`), and a phased result row's `guesses` is 0 (`packages/domain/src/round/results.ts`).
+  - **What reads that 0:** RoundEnded and its room frame, `round_results.guesses` (NOT NULL), and the ended view all carry 0, never a count.
+  - **The result's placings** (`apps/web/src/round/ResultParts.tsx`): a phased round shows Player and Points, sorted by the new `byWin`. The game's "won" cell is gone with the Place column.
+  - **The admin's round panel** (`apps/admin/src/live/RoundPanel.tsx`): Player, Points and Action.
+- **Places checked that carry no count:**
+  - the webhooks, which send places and points only;
+  - the public queries;
+  - the chat line, worded from `won`;
+  - the summary and the boards, which hold points and wins;
+  - the proof route, which refuses a round without a commitment (`NO_PROOF`), as every phased round is.
+- **Tests:**
+  - P7's suite (`games/registry/src/phased.conformance.test.ts`) and MG5 (`games/mind-games/src/properties.test.ts`): an outcome row holds only `playerId`, `won` and `points`.
+  - The domain's phased test: a player switches; the roster and RoundEnded show 0.
+  - `apps/web/src/round/phasedWords.test.tsx`: a guess round's table is unchanged, and a phased round's has two columns, in winner-then-name order, with no count.
+  - `apps/admin/src/live/roundPanel.test.tsx` (new): both kinds of round.
+  - `apps/server/test/phasedPoints.integration.test.ts`: player-1 switches. No `guesses` above 0 appears in the round view's results or roster, the RoundEnded frame, or the rows.
+- **`pnpm verify`:** format, lint and typecheck green; tests 817 + 99 + 168 passed, 1 failed: the authorization matrix's HTTP test ran past its timeout under load (394 s; not raised). A first run broke because other projects on this machine were running their own test suites at the same time: vitest could not start its workers (110 of 144 unit files ran) and the DRBG's chi-square smoke test failed. The second run is the one counted.
+- **Reused:** the round fakes `ended` and the table's own `byPlace` shape for `byWin`; the admin tests' stubbed `fetch`.
+- **Noticed, left alone:** the admin's live list (`apps/admin/src/live/LivePage.tsx`) shows a round's total of guesses, the sum over its roster. For a phased round that is always 0: a total, not a per-player count, but a meaningless number there.
+
+### Piece 1 — points never reach the table
+
+- **Where the points were lost:** the ended round's view (`apps/server/src/round/views.ts`) built its `results` again from the roster with `playerResults(state)`, the guess games' placings. A phased round places nobody, so every row got 0 points. RoundEnded, the `round_results` rows, the match standings, the summary and the boards had the right points all along: they come from the event, not from the view. The placings table reads the view.
+- **Why the earlier tests missed it:** the phased server test (`apps/server/test/phased.integration.test.ts`) checked the stored rows, the standings and the game's result view, never the round view's `results`. The web tests of the table use fixtures that already hold points. Journeys 38–41 checked the option cards' "+1", never the table.
+- **Fix** (T340): one function gives a round's results, `roundResults` in `packages/domain/src/round/lifecycle.ts` (RoundEnded uses it as before); `RoundSession.results()` (`packages/application/src/round/roundSession.ts`) gives an ended round's results from it, and the view takes them from there. `playerResults` and `teamResults` are no longer exported from the domain's entry: nothing outside it uses them.
+- **Found on the way, fixed** (T341): the delayed room sent a phased round's RoundEnded to the room wrapped in its own `{ room, host, delayed }` record, so a client never saw its `type` (`apps/server/src/round/delayedRoom.ts`). The room now gets the end's own public form; `delayedRoom.test.ts` checks it. The embed's "round ended" message to the host page (`apps/web/src/embed/embedHost.ts`) depends on that type.
+- **Tests:** `RoundSession.results()` for a guess round and a phased one (`packages/application/src/round/roundSession.test.ts`); the end frame's own form (`apps/server/src/round/delayedRoom.test.ts`); `apps/server/test/phasedPoints.integration.test.ts` (new): one Mind Games round with All on, played by four accounts: All, Winter, Winter and Spring. All and Spring are the least chosen. The test checks the same points (+2 for All, +1 for Spring, 0 for the rest) in the game's result view, the round view's results, the RoundEnded frame, the `round_results` rows, the match standings, the closed match's summary, and the season and all-time boards. Journey 38 now checks that the option cards' points equal the placings table and the match standings (`e2e/mindGames.spec.ts`, the helper `resultPoints` in `e2e/mindGames.ts`). It also records the winners' light-up as it happens: with the end frame unwrapped (T341), the result shows at the round's end, and its 2 s light could be over before the journey looked.
+
+## Chain MG-N3 (2026-11-13): the platform gaps G1–G13, then the handover
+
+Status, updated after every piece. Branch `feat/mind-games` is not merged. This chain may change `packages/` and `apps/`; the four existing games must behave exactly as before.
+
+- **`pnpm verify`:** format, lint and typecheck green; tests 815 + 99 + 168 passed, 1 failed: the authorization matrix's HTTP test ran past its 150 s timeout under the full run's load (393 s this time; 30–36 s alone), as in every MG-N3 run. Not raised. The existing games' golden test and conformance P1–P6 are among the passing ones.
+- **Journey 38** in Chromium: passed (1.6 min).
+- **Reused:** the phased server test's sockets and its frame reading (`kit.frames`); the league test's board reading.
+
+### Final report
+
+- **Done:** pieces 1–5. G1–G13 are closed. Seasonal Mind Games is playable as specified: a player's first choice is a click, the phases and countdowns show, the result shows its winners with the light-up, and the summary lists each round's winners. `feat/mind-games` is not merged.
+- **The existing games are unchanged.** Every changed platform function has a test that covers a guess game (unchanged) and a phased game:
+  - the session's result view: `roundSession.test.ts`;
+  - the chat line: `roundLines.test.ts`;
+  - the dock: `dock.test.tsx`;
+  - the rows' age: `log.test.tsx`;
+  - the own part: `prefs.test.tsx`;
+  - the words: `phasedWords.test.tsx`;
+  - the summary: `summary.test.tsx`, `series` and `matchFlow` integration;
+  - the Quick Test form: `quickTest.test.tsx`;
+  - the host form and `keptOf`: `fieldState.test.tsx`;
+  - a cross-key rule's field: `roundSession.test.ts`;
+  - a Quick Test match's seats: `prefs.integration.test.ts`.
+
+  The guess games' golden test and conformance P1–P6 pass in every verify. Their e2e journeys pass in the full Chromium run, apart from the one race below.
+
+- **`pnpm verify`, one per piece:** format, lint and typecheck green each time. Tests 790 + 99 + 166, 800 + 99 + 166, 811 + 99 + 167, 811 + 99 + 167 and 813 + 99 + 167 passed. Each run had the same one failure: the authorization matrix's HTTP test ran past its 150 s timeout under the full run's load. Alone it takes 30–36 s. I did not raise the timeout. **It is an OPEN candidate.**
+- **Journeys 38–41 in Chromium:** all four passed after their completion. Journey 38 needed two fixes first: no count while the feed is empty (T339), and its own regex for a shared place.
+- **Full e2e in Chromium:**
+  - The main project passed: 13 tests in 2.6 min.
+  - The timing project: 39 passed and 1 failed in 33.2 min. The failure was journey 25 (Safecracker in focus mode): the round's view left the screen during a panel check. Run once more alone, it passed (57 s). It is a race in that journey, not a change of the game. Reported, not changed.
+- **CI on `feat/mind-games`:** every run green except one: the run on `8aac804` failed in the e2e job's timing project on journey 12 (the Quick Test through the lobby, "element(s) not found"). That journey passed in the next run (`85cfa39`) and in my local full run. The run on `1248ff1` was green in every job (verify with coverage, e2e, docs, security). The run on this sheet's own commit is reported in the chat.
+- **My play-through:** described in piece 5's section. Fixed from it: the next round's form after a Quick Test round (T338), and the counts before the feed has anything (T339). Left alone:
+  - the countdown is not kept after a Quick Test, for any game;
+  - a disabled field looks almost like an enabled one.
+- **New T-entries:**
+  - T324: the result view without a secret.
+  - T325: the chat line of a phased round from `won` and the game's words.
+  - T326: the input for every match player of a phased round.
+  - T327: the panels' `timing` and `own`.
+  - T328: the rows' age.
+  - T329: Mind Games' phases on screen.
+  - T330: the round's box in the prefs.
+  - T331: the refused pre-pick's notice.
+  - T332: the platform's words in a phased round.
+  - T333: the summary's rounds with what won (migration 0019).
+  - T334: the game's timing class in the game list; the Quick Test form.
+  - T335: a cross-key rule under its field; the game's word on its fields.
+  - T336: a Quick Test match's seats.
+  - T337: the planner's decision on the admin's round view.
+  - T338: the next round's form keeps a game's own settings.
+  - T339: no count before the feed has one.
+
+  Every entry is "(proposal, chain MG-N3)", except T337, which is the planner's decision.
+
+- **Screenshots:** 9 in light mode, with `play-through.txt`, on the orphan branch `shots/mg-n3`; `shots/mg-n2` is deleted.
+- **Handover:**
+  - **Stack:** I stopped every old Mini Games dev process, including the Vite pair from 10 November on ports 5410 and 5411. `pnpm dev` runs fresh on `feat/mind-games`.
+  - **Where:** http://localhost:5410 (server on port 3910). The badge in the bottom-right corner reads "Mini Games · dev · 5410".
+  - **Quick Test:** Dev sign-in → host, then Quick Test with these settings:
+    - Game: Seasonal Mind Games; Start from the lobby on.
+    - Seed `frost`, Bots 7.
+    - Total length 60, Delay 10, Rounds 3, Pause 15; the rest as it is.
+  - **Then:** Host → Start round, and make your own first choice by clicking a season. With `frost`, bot-05 and bot-06 pre-pick and stay away.
+
+| Piece                                                                                                    | State            |
+| -------------------------------------------------------------------------------------------------------- | ---------------- |
+| 1 — G1, G11, G3: the input for every match player, the result view without a secret, the chat line       | **done**, pushed |
+| 2 — G2, G5, G7, G8: the phase times, the lines' ages, the round's box in the prefs, the refused pre-pick | **done**, pushed |
+| 3 — G4, G6, G9, G10: the words and the forms of a phased round                                           | **done**, pushed |
+| 4 — G12, G13: seats in a Quick Test match, the admin's round view                                        | **done**, pushed |
+| 5 — the journeys completed, the play-through, the handover                                               | **done**, pushed |
+
+### Piece 5 — the journeys completed, the play-through, the handover
+
+- **Journeys** (every step of 09 §4 now): 38 plays the first choice by a click, the empty feed's countdown with no count, the rows' ages, a second browser joining after the join time (buttons off, the reason, `JOIN_CLOSED`), "every change now is a switch" from 40 s, the buttons off and the replay's sentence from 50 s, and the result's least chosen option lit with its winners and the viewer's line (`e2e/mindGames.spec.ts` 163 → 210); 39 adds the third player who joins in round 2's join time and chooses by a click (`e2e/mindGamesSeries.spec.ts` 94 → 106); 40 adds the reconnect and its notice (`e2e/mindGamesPrePicks.spec.ts` 81 → 88); 41 and the helper lose their notes on the gaps (`e2e/mindGamesDelay.spec.ts` 199 → 197, `e2e/mindGames.ts` 83 → 81). Removed: the pre-pick-only entry in journey 38.
+- **Found by the journeys and the play-through, fixed:** the choice row showed "10 s ago: 0" before the feed had anything (T339; `web/ChoiceButtons.tsx` 146 → 151, `web/mind.css` 275 → 279, a test in `web/input.test.tsx`); the next round's form after a Quick Test round offered the document's defaults instead of the last round's values (T338; the result view's settings, `src/views.ts` 146 → 163; the web half's `kept`, `web/index.ts` 46 → 48, `games/registry/web/index.ts` 93 → 96; `keptOf`, `apps/web/src/match/roundFields.tsx` 270 → 272, `MatchPage.tsx` 260 → 262; tests in `apps/web/src/match/fieldState.test.tsx` and `src/views.test.ts`).
+- **Play-through** (tmp script, 3 rounds, seed `frost`, 7 bots, total 40, delay 5, pause 20): the Quick Test form with a phased game's fields only; the waiting area with bot-05 and bot-06 away; the intro without a cooldown line; my first choice by a click; the feed's countdown; my line with its age; a switch with Hide my switches ticked (no line) and one with it clear (named, flying); the strip's markers and next change; the Chat panel open at 1280 × 720 and the phone at 390 × 844 without a page scrollbar; dark mode looked at (not kept as a picture); round 1's result with two winning options lit, +1 and my line; the host form in the pause with the join time following the total; winner place 2 in round 2 ("Spring was the 2nd least chosen"); All in round 3, my +2; Start next round now; the summary with each round's words. No page error. Left alone: the next round's countdown starts from the document's 10 s after a Quick Test (the platform keeps it for no game), and a disabled field looks almost like an enabled one (its help line says why).
+- **Screenshots:** 9, light mode, with `play-through.txt`, on the orphan branch `shots/mg-n3`; `shots/mg-n2` deleted on origin.
+
+### Piece 4 — seats in a Quick Test match (G12), the admin's round view (G13)
+
+- **G12** (T336): the Quick Test route reads `match.maxPlayers` and its match gets that many seats, at least the bots and the host (`apps/server/src/http/routes/quickTest.ts`, `apps/server/src/dev/quickTest.ts`, `apps/server/src/http/app.ts` passes the settings). Test: a person joins a Quick Test match beside its bots, in a guess game and in the phased fixture (`apps/server/test/prefs.integration.test.ts`). Journey 38's second browser comes back in piece 5.
+- **`pnpm verify`:** format, lint, typecheck green; tests 811 + 99 + 167 passed, 1 failed: the authorization matrix's HTTP test ran past its timeout under load (not raised).
+- **G13** (T337, the planner's decision of 2026-11-13): no code; the admin's round view stays the delayed spectator view, and 09 §4 journey 41 says so.
+
+### Piece 3 — words and forms (G4, G6, G9, G10)
+
+- **G4, G10, words** (T332): `actionWords` and `actionCount` and a phased round's headline (`apps/web/src/round/roundText.ts`); the list's title, empty line and label (`RoundLog.tsx`), the list panel's title (`RoundBody.tsx`), no cooldown line in the intro (`RoundIntro.tsx`), no counts in the Players panel (`RoundSide.tsx`), the placings' column and a winner's "won" (`ResultParts.tsx`); `won` in the results' view (`packages/contracts/src/http/play.ts`).
+- **G10, the summary's rounds** (T333): migration `0019_round_words.sql` (new); `recordWords` and the ended match's `rounds` (`apps/server/src/match/summary.ts`), written at each phased round's end (`apps/server/src/round/runtime.ts`) with the chat line's wording, now shared (`phasedWords`, `apps/server/src/chat/roundLines.ts`); the summary's list (`apps/web/src/match/MatchSummary.tsx`).
+- **G9** (T334): the game's timing in the game list (`GameInfoView`, `apps/server/src/round/rounds.ts`); a phased game's Quick Test fields (`apps/web/src/shell/QuickTest.tsx`, `PhasedFields`).
+- **G6** (T335): a cross-key rule may name its setting (`packages/game-sdk/src/module.ts`, `packages/application/src/round/roundSettings.ts`); a field may be off (`apps/web/src/components/fields.tsx`); the game's word on its fields (`FieldState` in the SDK, `fieldState` in the registry's `GameWeb`, `fieldStateOf` and `Field` in `apps/web/src/match/roundFields.tsx`, the host form in `HostMenu.tsx`); Mind Games' rules under their fields (`games/mind-games/src/settings.ts`) and its fields (`games/mind-games/web/formFields.ts`, new).
+- **Tests, each with a guess game and a phased one:** `apps/web/src/round/phasedWords.test.tsx` (new: words, headline, intro, placings); `apps/web/src/match/summary.test.tsx` (the rounds' list, none for a guess match); `apps/web/src/shell/quickTest.test.tsx` (the fields per game); `apps/web/src/match/fieldState.test.tsx` (new: a field as the game words it, unchanged without); `packages/application/src/round/roundSession.test.ts` (a rule's sentence for the form or under its field); `apps/server/test/series.integration.test.ts` (the rounds in a phased summary) and `matchFlow.integration.test.ts` (none in a guess match's); `games/mind-games/web/formFields.test.ts` (new) and the game's settings test (the sentences with their fields).
+- **`pnpm verify`:** format, lint, typecheck green; tests 811 + 99 + 167 passed, 1 failed: the authorization matrix's HTTP test ran past its timeout under load (not raised).
+- **Reused:** the chat line's wording for the summary (`phasedWords`), `useGames` for the timing class, the form's existing per-field problem routing (`setupProblems`), the number field's following of a changed value.
+
+### Piece 2 — what the game's screens need (G2, G5, G7, G8)
+
+- **Platform:** the panels' props `timing` and `own` (`packages/game-sdk/src/web.ts` 181 → 207, `index.ts` 99 → 101; T327); `timingOf` and the timing for the game's panel and the phone's line (`apps/web/src/round/InfoParts.tsx` 127 → 136), for the input with `own` (`InputRow.tsx` 144 → 150), `own` passed through `RoundBody.tsx` 169 → 173 and `RoundScreen.tsx` 114 → 118 from `MatchPage.tsx` 257 → 260; `useOwnPart` with the page's `prefs.refused` listener and the save shared with the waiting area's panel (`apps/web/src/match/GamePrefs.tsx` 39 → 79); a phased row's age (`GuessLine.tsx` 243 → 251; T328).
+- **Game:** the round's phases and their words (`web/phases.ts`, new, 71; T329); the strip's markers, next change and announcement (`web/PhaseStrip.tsx` 43 → 86); the feed's sentence under the head and on the phone's line (`web/FeedPanels.tsx` 58 → 78); the player held after the join time, the box in the prefs (T330), the refused pre-pick's notice (T331) (`web/MindInput.tsx` 81 → 126); the waiting area's saving moved to a hook both use (`web/useSavedPrefs.ts`, new, 63, extracted from `web/PrefsPanel.tsx` 152 → 108); styles (`web/mind.css` 236 → 275).
+- **Tests:** `games/mind-games/web/phases.test.tsx` (new, 123: the words of every phase, the feed's sentences, the markers, the hold after the join time, the box from and into the prefs, the notice live and after a reconnect); `apps/web/src/round/log.test.tsx` 205 → 221 (no age in a guess round, ages counting on in a phased one); `dock.test.tsx` 106 → 107 (the opening against the page's clock); `apps/web/src/match/prefs.test.tsx` 105 → 145 (no own part for a guess game or a spectator; the round's number, the value, its saving, a refusal for this round only). The game's tests: 75.
+- **`pnpm verify`:** format, lint, typecheck green; tests 800 + 99 + 166 passed, 1 failed: the authorization matrix's HTTP test ran past its timeout under load again (not raised).
+- **Reused:** `serverNow` for the timing's clock, the waiting area's `PUT …/prefs` call (now `savePrefs`, shared), the panel's saving (now `useSavedPrefs`, shared), the game's `clock`, `CHOICE_NAMES` and `mindText.code`.
+
+### Piece 1 — the two blockers (G1, G11) and the chat line (G3)
+
+- **G11** (`packages/application/src/round/roundSession.ts` 133 → 136): `result()` builds a phased game's result view also when its secrets are null; a guess game's rule is unchanged (T324). Tests (`roundSession.test.ts` 213 → 245, a secret-less phased fake `pickGame` in `fakes.ts` 76 → 118): the phased round's result exists only after its end; a guess round's result exists once its secrets do. The server's phased test now also checks the fixture's result view at the end (`apps/server/test/phased.integration.test.ts` 185 → 188); the fixture already derives no secret, so it needs no change.
+- **G3** (`apps/server/src/chat/roundLines.ts` 66 → 94, the line's wording extracted into `lineOf`): a phased round's line from `won` and the game's `reveal`, "Round 3: Winter was the least chosen (3 players)." or "Round 3 ended: nobody won." (T325); `roundLines.test.ts` (new, 33) keeps a guess round's line and words a phased one.
+- **G1** (`apps/web/src/round/InputRow.tsx` 122 → 144): every match player of a phased round gets the input, without a ring, acting until the play's end (T326); `dock.test.tsx` (new, 106): a guess round's input only for a roster row and with its ring, a phased round's for a match player before the roster lists them, none after the play's end or for a spectator.
+- **`pnpm verify`:** format, lint, typecheck green; tests 790 + 99 + 166 passed, 1 failed: the authorization matrix's HTTP test ran past its 150 s timeout under the full run's load, as in chain MG-N2 (not raised). The existing games' golden test and conformance P1–P6 are among the passing ones.
+- **Removed:** the game's guards against a missing result view (`games/mind-games/web/ResultPanel.tsx` 128 → 126, `web/text.ts` 97 → 96, their test in `web/panels.test.tsx`), which G11 made unnecessary.
+- **Reused:** `findGame`'s shape for the phased fake; the round fakes `ended` and the inactivity test's `InputRow` set-up; the phased server test's sockets and end check.
+- **Noticed, left alone:** `GamePart` (`apps/web/src/round/InfoParts.tsx`) hands every game's info-column panel an `act` that does nothing; it predates the phased class (the panels only show), so it is not a gap's workaround and stays.
+
+## Chain MG-N2 (2026-11-13): Seasonal Mind Games itself (MG-1 → MG-5)
+
+Status, updated after every piece. Branch `feat/mind-games` is not merged.
+
+### Final report
+
+- **Done:** pieces 0–5. The game is built in `games/mind-games` (rules, views, screens, animation, pre-picks, Quick Test bots), registered in both registry halves, with journeys 38–41 and the L5 driver. **It is not yet fully playable in the browser:** a player can enter a round only through a pre-pick (G1), and the result page lacks the game's own part (G11); both are platform defects this chain was not allowed to fix. `feat/mind-games` is not merged.
+- **Piece 0:** the defect is real. `DelayedRoom.restore` counted host-only events and re-held what an end had flushed. The test was red before the fix and is green after (piece 0's section).
+- **`pnpm verify`:** pieces 1–4 green except one test each time: the authorization matrix's HTTP test ran past its 150 s timeout under the full run's load. Alone it takes 30–36 s, with and without the game; no timeout was raised. The final run at the end of piece 5 is **all green**: 786 + 97 + 167 tests.
+- **Journeys 38–41, once each in Chromium:** all passed.
+- **Full e2e in Chromium at the end:**
+  - The timing project: 40 passed (27.9 min).
+  - The main project: 10 passed and 3 failed.
+    - Journey 23 failed because its game list did not yet have the fifth game; I updated it.
+    - Journey 28 (Safecracker) and the Trusted Types spec failed with `ECONNREFUSED 127.0.0.1:3910`: the development server had stopped during the run.
+  - With the server running again and journey 23 updated, all three specs passed: 6 tests.
+- **L5 (N = 500 players and 100 spectators, run once, not a gate):**
+  - Acknowledgement p95: 4 109 ms (N = 8 520). The limit is 150 ms: **missed**, through the serial commits on this laptop (OPEN (r)).
+  - Release tick p95: 121 ms (N = 540). The limit is 150 ms: met.
+  - Released steps: all 50 952 add up.
+  - Last step against the result: not checkable (G11).
+- **CI on `feat/mind-games`:** piece 0's run (`5a903d2`) was green. Every run from MG-1 (`e3a8b51`) to `0217576` failed only in the e2e job, on journey 23 (`gameChoice.spec.ts`): its list of games in the create-match form did not have the fifth game. Verify (with coverage), docs and security were green in each of them. I did not watch CI between the pieces and saw it only at the end. The list is fixed in `33b68c1`; the run on the branch head was still running at the handover and is reported afterwards.
+- **Own play-through, fixed before the handover:**
+  - A 9 px page scroll at 1280 × 720.
+  - A blank page at every round's end.
+  - A pressed button hiding its season's icon.
+  - "Replay" cut short in the phase strip.
+
+  Each is described in piece 5's section.
+
+- **Played and seen working:**
+  - A Quick Test from the lobby with 7 bots.
+  - Pre-picks, with bot-05 and bot-06 away under seed `frost`.
+  - The delayed feed, the lines and the counts.
+  - Hide my switches on and off.
+  - The flights, and none with reduced motion.
+  - The Chat panel open at 1280 × 720, and the phone at 390 × 844.
+  - Winner place 2 in round 2 and All in round 3, saved as next-round settings.
+  - Start next round now.
+  - The pause, the automatic next round, and the summary "All 3 rounds are played.".
+- **Not seen working, because of platform gaps:**
+  - A first choice by a click (G1).
+  - The result's options and light-up (G11).
+  - The phase times on screen (G2).
+  - The refused pre-pick's notice (G8).
+- **Screenshots:** 9, light mode, with `play-through.txt`, on the orphan branch `shots/mg-n2` (`5a09500`). It is for the owner to delete after review.
+- **New proposals, every one "(proposal, chain MG-N2)":**
+  - T304: the views, their schemas and the bot are built with the rules in MG-1, since the registry line registers a whole entry.
+  - T305: the action is `{ value: { choice, hide } }`, any name of up to 16 characters (`CHOICE_INVALID` from `validate`); `ChoiceMade` carries `hide`.
+  - T306: the views carry the rules and the plan; lines carry their time; result and outcome rows are in entry order.
+  - T307: the chat line's part is "Winter was the least chosen (3 players)", none when nobody won.
+  - T308: the dev bot's three ways by its first draw; a random bot moves at every third change of its feed; resending the current choice keeps it playing.
+  - T309: pre-picks are `{ picks: { "1"…"20": choice }, hide? }`.
+  - T310: the game is added to the root coverage script and the registry's `package.json`.
+  - T311: the board layout. The stage holds the strip, the buttons and the box; the info column holds the head, the platform's list and the dock.
+  - T312: the feed's lines are the list's rows from the view, the viewer's own as "You"; no age yet.
+  - T313: the game words `PLAY_OVER`, `JOIN_CLOSED`, `NOT_IN_ROUND` and `INVALID_ACTION` itself.
+  - T314: the empty feed without its countdown, and the phase strip without its markers, until G2.
+  - T315: "not chosen" for an option nobody picked; the result's history lists every named line, oldest first.
+  - T316: the seasons' icons are imported from `assets/seasons`.
+  - T317: flights come from the difference of two released views; hidden switches are the counts' unexplained change, in option order.
+  - T318: the flight band is 40 px, a flight 0.8 s, a first choice flies from the right (from below on a phone), and "+N" sits at the right.
+  - T319: the winners light up with the platform's win glow for 2.4 s; nothing with reduced motion.
+  - T320: the pre-picks panel saves 2.1 s after the last change, with the box in the panel and All always offered.
+  - T321: about one bot in four pre-picks every round, any of the five names, with its box.
+  - T322: the journeys play as far as the platform allows. They use pre-picks for entry and matches made by hand for 39 and 40; `JOIN_CLOSED` moves to 41; the admin view is checked against the delay.
+  - T323: the L5 driver `load/mindStorm.mjs` with `load/mindWorker.mjs`.
+- **Needs the owner's word:** the platform gaps G1–G13 below. G1 (no first choice through the page) and G11 (no result view for a game without a secret) block the game; G2 (phase times) and G8 (the refused pre-pick's notice) are the next.
+- **Handover:** the development server runs on this branch at http://localhost:5410 (server on port 3910). The page shows the badge "Mini Games · dev · 5410" in the bottom-right corner. Sign in with Dev sign-in → host, open Quick Test and enter:
+  - Game: Seasonal Mind Games, Start from the lobby on, Seed `frost`, Bots 7.
+  - Total length 60, Delay 10, Rounds 3, Pause 15, the rest as they are.
+
+  With seed `frost`, bot-05 and bot-06 pre-pick and stay away. In the waiting area, set your own pre-pick for each round: a first choice cannot yet be made by a click (G1). Then choose Host → Start round. From the second round on, the Host menu keeps the next round's settings (for example Winner 2, or All).
+
+| Piece                                                | State            |
+| ---------------------------------------------------- | ---------------- |
+| 0 — the delayed room's release count after a restart | **done**, pushed |
+| 1 — MG-1, the rules                                  | open             |
+| 2 — MG-2, the views and the screen                   | open             |
+| 3 — MG-3, the animation                              | open             |
+| 4 — MG-4, pre-picks                                  | open             |
+| 5 — MG-5, the Quick Test and the journeys            | open             |
+
+### Piece 0 — the delayed room's release count after a restart
+
+- **The defect is real.** `DelayedRoom.restore` counted one release for every due item, `emit` only for those with a room form; a host-only `Game` event (room form `null`) therefore moved the sequence after a restart and not live. A second gap of the same kind: a log that already holds the round's end re-held the items the live end had flushed, and did not count them.
+- **Test** (`apps/server/src/round/delayedRoom.test.ts`, new, 115 lines, 3 cases, all red before the fix): a live room with host-only and room events against a room restored from the same log at the same time (same `seq()`); the next release numbered the same live and after the restart (same `rs`, same frames); a log with `RoundEnded` before the delay passed (all held counted).
+- **Fix** (`apps/server/src/round/delayedRoom.ts` 145 → 147): `restore` counts room frames only, as `emit` does, and counts a log with the end as released whole.
+
+### Piece 1 — MG-1, the rules (02e §2–§9, 11 §4)
+
+- **Built** (`games/mind-games/src`, all new): the settings of 08 §3.4 with the three cross-key sentences of 02e §3, the plan (join, choices close, end, delay; the join time following the total) and the series (`settings.ts`); the five choices, the counts, the dense places and the winning options, the points 1 and 2 (`choices.ts`); the state, the action `{ choice, hide }` and the events `ChoiceMade` (to the chooser) and `ChoiceFed` (to the room, with the counts and entrants right after it) (`state.ts`); checks 5–7, the first choice and the switch named or only counted as the round's switches and the chooser's box say, the fold, the outcome rows in entry order, the pre-picks' schema and action (`rules.ts`); the views (the feed as of `releasedBefore`, at most 60 lines, no hidden switch; the viewer's own choice and box live; the result) with their schemas (`views.ts`); the headline and the chat line's part (`words.ts`); the module, the conformance kit and the development bot with its three ways (`module.ts`, `conformance.ts`, `devBot.ts`, `index.ts`); the registry's `src` line.
+- **Tests** (`games/mind-games/src`, 45): every row of 02e §8.1 and MG4 against a brute-force reference over every count vector of four and five options (counts 0–4) and every place; the plan's defaults 60/90/120/30 and the join time following the total or not; the three sentences; `validate`'s order and codes; the events of a first choice and of a switch per visibility and box; the outcome rows; the pre-picks per round and All refused where it is off; the views at a cut, the 60-line cap, the result; the headline's and the chat line's words; MG2, MG3, MG5 and replay over 200 random rounds of up to 50 players each; the bot's three ways. The registry's conformance suite now runs P1, P3–P5 and P7 for `mind-games` too (green). Coverage of the game's `src`: 96 % of statements, 94 % of branches without the registry's run.
+- **`pnpm verify`:** format, lint, typecheck green; tests 761 + 97 + 166 passed, 1 failed: `apps/server/test/authzMatrix.integration.test.ts` ("lets through exactly the callers each route allows") timed out at 150 s under the full run's load, as once in night MG-N1; alone it passed (14 tests, 180 s). It does not touch the games; left as it is (no timeout raised), reported. The action's wire shape was corrected to `{ value: { choice, hide } }` (what the `guess` intent hands on) before this run.
+- **Sabotage, done and undone:** the spectator's counts taken from every move instead of those before the cut turned P7 red for `mind-games`; green again after the revert.
+- **Lines** (all new): `choices.ts` 57, `conformance.ts` 34, `devBot.ts` 52, `fakes.ts` 57, `index.ts` 14, `module.ts` 48, `rules.ts` 118, `settings.ts` 191, `state.ts` 75, `views.ts` 143, `words.ts` 59; tests `choices.test.ts` 84, `devBot.test.ts` 81, `properties.test.ts` 128, `rules.test.ts` 170, `settings.test.ts` 79, `views.test.ts` 90, `words.test.ts` 69; `package.json` 20, `tsconfig.json` 17. Registry `src/index.ts` 46 → 48, `package.json` 25 → 26; root `package.json` (the coverage list, T310) unchanged in length.
+- **Reused:** the phased fixture's shape (the own event folded, the room event a copy with its counts; the cut filter) and the guess games' layout (`settings.ts`, `conformance.ts`, `devBot.ts`, `fakes.ts`); the registry's conformance suite as it is.
+- **Noticed, left alone (platform, see "Needs the owner's word"):** the browser cannot let a phased round's player make a first choice (G1); a game's panels learn neither the opening nor the plan (G2); the chat's round-end line of a phased round always starts "nobody found it" (G3).
+
+### Piece 2 — MG-2, the views and the screen (02e §6, §9–§11)
+
+- **Built:** the view marks the viewer's own lines (`own`), so the platform's list says "You" (`src/views.ts` 143 → 147); `games/mind-games/web` (all new): the phase strip with Join, Play and Replay in proportion and the time each ends (`PhaseStrip.tsx` 43); the choice row as a radio group (arrow keys, one tab stop, Enter or Space), each button in its season's colour with its original icon and name, All in the neutral colour with the four icons, the current choice pressed with "✓ Your choice", choosing it again sends nothing, a tooltip on each, and under each the feed's count "30 s ago: 7" with its bar (`ChoiceButtons.tsx` 140); the player's stage drawn into the platform's stage with the box Hide my switches in `perPlayer` rounds, a click sending `{ value: { choice, hide } }` at once and a refusal said in the game's words (`MindInput.tsx` 75); the feed's head and the empty feed's sentence in the info column and as the phone's line, and a spectator's stage without choosing (`FeedPanels.tsx` 58); the result's options with icon, count, place, "✓ wins" and the players with +1 or +2, the viewer's own highlighted, and the history of every named line (`ResultPanel.tsx` 101); the codes, the list's rows, the head, the intro and the headline (`text.ts` 96); the icons and colours (`seasons.ts` 31); the styles from the tokens only, light and dark (`mind.css` 266); `index.ts` 35, `tsconfig.json` 18; the registry's `web` line (`games/registry/web/index.ts` 82 → 84); `package.json` 20 → 29 (the web half's React, react-dom and test dependencies, as the other games have).
+- **Tests** (`web/input.test.tsx` 101, `web/panels.test.tsx` 117, with real views from `web/fixtures.ts` 53): 14 cases; the game's tests now 59, all green.
+- **`pnpm verify`:** format, lint, typecheck green; tests 775 + 97 + 166 passed, 1 failed: the authorization matrix's HTTP test timed out at 150 s under the full run's load again. Measured alone: 30 s with the game registered, 36 s with its registry line taken out (locally, not committed), so the game does not cause it; the full run makes it about five times slower. Reported, nothing changed (no timeout raised); an OPEN candidate for the owner.
+- **Reused:** the platform's board layout (stage, info column, dock), its one list for the feed's lines (`GuessRow`s with `text`), its result page (the headline in the place of the best-of-the-rest line, its placings and standings), the seasons' original icons and colour tokens, the list's own-row convention (`playerId` null), Seasonal Target's portal into the stage.
+- **Not built, waiting for the owner (G2):** the phase strip's markers and next-change words, the empty feed's countdown, "Every change now is a switch", the replay's sentence with its countdown, the buttons disabled by phase, the screen reader's phase announcements. The lines' ages wait for G5. The call view's space belongs to the platform's chat column; nothing of it is built (02e §11).
+- **Noticed, left alone (platform):** G4–G6 below.
+
+### Piece 3 — MG-3, the animation (02e §11.1, owner decision 90)
+
+- **Built** (`games/mind-games/web`): the wave of a released step from the difference of two delayed views, each new line a flight, the counts' change no line explains as nameless hidden switches, at most 12 and the rest as "+N" (`flights.ts`, new, 87; T317); the flight band between the buttons and the counts, icons moving between the columns and turning into the new season's, a first choice flying in with its name (from the right on a desktop, from below on a phone), `aria-hidden`, no flight with reduced motion, each wave cleared after 0.9 s (`FlightBand.tsx`, new, 106; `flights.css`, new, 118; T318); the winners' light-up with the platform's win glow for 2.4 s, not with reduced motion (`ResultPanel.tsx` 101 → 126; T319). `ChoiceButtons.tsx` 140 → 146 (the band in the row, the names), `MindInput.tsx` 75 → 81 and `FeedPanels.tsx` 58 (the names passed on); `mind.css` 266 → 197 with the result's styles moved to `result.css` (new, 81) to stay under 300 lines; `index.ts` 35 → 37.
+- **Tests** (`web/animation.test.tsx`, new, 6 cases, the game's tests now 65): views fed one by one, no flight before its step and none for a step that brings nothing; a first choice with its name, a named switch from → to, a hidden switch without a name; 20 switches as 12 icons and "+8" with the step's exact counts at once; the wave gone after its flight; reduced motion without flights and with the counts in place; the winners lit for 2.4 s, not with reduced motion. The band's boxes against the buttons, the lines and the chat at 1280 × 720 and 390 × 844 need a real layout: journey 38 (MG-5).
+- **`pnpm verify`:** format, lint, typecheck green; tests 781 + 97 + 166 passed, 1 failed: the authorization matrix's HTTP test timed out under the full run's load, as in piece 2 (not caused by the game, measured there).
+- **Reused:** the platform's win glow `smg-anim-win` (`@smg/ui` motion.css) and its global reduced-motion rule; the seasons' icons (`seasons.ts`); the delayed views as they are.
+- **Noticed, left alone:** the platform's `useReducedMotion` hook lives in `apps/web` and is not shared with games, so the game reads the media query itself in two places (`FlightBand.tsx`, `ResultPanel.tsx`), one line each.
+
+### Piece 4 — MG-4, the pre-picks (02e §7)
+
+- **Built:** the Your pre-picks panel (`web/PrefsPanel.tsx`, new, 152): a select per round of the series, played rounds locked, a tooltip on each, the box Hide my switches for every round, the line "Pre-picks play for you when you are away. If you are here, you can still switch.", saving 2.1 s after the last change (T320); registered as the web half's `Prefs` (`web/index.ts` 37 → 42); its styles, two columns on a phone (`web/mind.css` 197 → 230); `DEFAULT_CONFIG` exported for the panel (`src/index.ts`). The prefs schema with the box and the pre-pick's action came with MG-1 (T309), the platform's saving, applying and refusing with MG-C3.
+- **Tests** (`web/prefs.test.tsx`, new, 76 lines, 3 cases, the game's tests now 68): the selects per round and the default before the first round, played rounds locked, the tooltip and the line; one save 2.1 s after the last change with a value the game's schema takes (none removes a pick, the box rides along); a refusal in words.
+- **`pnpm verify`:** format, lint, typecheck green (after a typecheck fix in the new test, a mock typed without its parameter); tests 784 + 97 + 166 passed, 1 failed: the authorization matrix's HTTP test timed out under load, as in pieces 1–3.
+- **Reused:** the platform's slot and `save` (MG-C3), the game's prefs schema for the test, the box's class and words of the round screen.
+- **Not built, waiting for the owner:** the round's own notice "Your pre-pick All was not offered in round 3." (G8) and the round screen's box kept through the prefs (G7).
+
+### Piece 5 — MG-5, the Quick Test and the journeys (09 §4 journeys 38–41, §4.2, §5 L5)
+
+- **Built:** the Quick Test's pre-picking bots, about one in four (`src/devBot.ts` 52 → 66, `src/devBot.test.ts` 72 → 91; the registry's line gives `devPrefs`, `games/registry/src/index.ts` 48 → 58; T321); the four journeys (`e2e/mindGames.ts` 83, `e2e/mindGames.spec.ts` 163, `e2e/mindGamesSeries.spec.ts` 94, `e2e/mindGamesPrePicks.spec.ts` 81, `e2e/mindGamesDelay.spec.ts` 199, all new; `e2e/playwright.config.ts` 130 → 135, the four in the timing project; T322); the L5 driver (`load/mindStorm.mjs` 166, `load/mindWorker.mjs` 98, new; T323; 09 §5 and 10 §1 name it).
+- **Found by playing, and fixed:** (1) at 1280 × 720 the page scrolled by 9 px once the dock appeared: the game's input lives in the stage, so the dock in the info column held nothing but the platform's hidden inactivity announcement, which ended below the screen; the dock now keeps the refusal's line (`web/mind.css`); (2) the page went blank at every round's end (`TypeError … 'rules'`): the result view is null (G11), and the game's headline and result panel now draw nothing for it (`web/text.ts` 96 → 97, `web/ResultPanel.tsx` 126 → 128, one test more in `web/panels.test.tsx`); (3) the pressed choice filled with its season's colour hid the season's own icon: a tint and a thicker border now (`web/mind.css`); (4) the phase strip cut "Replay" to "Repla…" ("Re…" on a phone): each part has its name and time on two lines now (`web/mind.css` 230 → 236). The game's tests: 70, green.
+- **Journeys, once each in Chromium (timing project):** 38 passed (1.4 min), 39 passed (2.3 min), 40 passed (2.2 min), 41 passed (1.2 min and 0.5 min). Each spec's header names the steps of 09 §4 it cannot play yet (T322).
+- **L5 `mind-500`, once on this laptop (not a gate):** 500 players, 100 spectators, defaults 120/30/60, switches every 2–2.5 s: acknowledgement p50 1 512 ms, p95 4 109 ms, p99 4 664 ms (N = 8 520; limit p95 < 150 ms: **missed**); the release tick's distance from a whole second p50 23 ms, p95 121 ms, p99 211 ms (N = 540 gaps; limit p95 < 150 ms: met); every one of 50 952 released steps' counts adds up to its entrants; the last step against the result's counts could not be compared, the result view being null (G11); server CPU peak 0.77 cores, mean 0.34, RSS peak 754 MiB, event-loop lag p99 peak 205 ms; no HTTP problem, no refusal. The acknowledgements queue behind the round's serial commits, as the guess games' did on this laptop (OPEN (r): measure on the reference VPS).
+- **Reused:** the e2e helpers (`person`, `call`, `attempt`, `visit`, `playerRow`, `fitsScreen`, `hostMenu`, `roundOpen`, `abortMatch`, `closeAll`), journey 9's axe check, the load driver's `http.mjs` and `measure.mjs` (`signIn`, `call`, `inGroups`, `metricsSampler`, `spread`) and its worker layout.
+
+### Needs the owner's word (chain MG-N2)
+
+Platform gaps the game cannot close inside `games/mind-games` (the chain changes no file in `packages/` or `apps/`):
+
+- **G1 — no first choice in the browser.** `apps/web/src/round/InputRow.tsx` draws the game's input only for a viewer with a row in `state.roster`; a phased round's roster lists a player only once their entry is one delay old (04 §4.8 rule 5, `apps/server/src/round/views.ts` `rosterPart`). So a match player who has not chosen yet gets no input and can never make a first choice; the game's `Player` panel gets an `act` that does nothing. Needs: the dock for every match player of a phased round (the server's `role: 'player'` already says so), with the roster still delayed.
+- **G2 — no phase times in the game's screens.** `PlayerPanelProps` and `SpectatorPanelProps` (packages/game-sdk `web.ts`) carry neither the round's `opensAt` nor its plan, and the game's state never learns the opening. The phase strip's marker for now and for the feed, "Joining closes in 0:24", "The first choices show in 12 s", "Every change now is a switch", the replay's "result in 0:18" and the buttons disabled by phase (02e §6, §11) need them. Needs: `opensAt` and `plan` in the panels' props.
+- **G3 — the chat line of a phased round.** `apps/server/src/chat/roundLines.ts` takes the winner as the row with `place` 1; a phased round has `place` NULL for everyone (04 §4.8 rule 6), so the line is always "Round 3 ended: nobody found it", and with the game's `reveal` "Round 3 ended: nobody found it — Winter was the least chosen (3 players)". Needs: the line of a phased round from `won` and the game's words (02e §9: "Round 3: Winter was the least chosen (3 players).").
+- **G4 — the result page's words for a phased round.** `apps/web/src/round/roundText.ts` `endHeadline` says "Time is up." for a round that ran its time (02e §9: "The round is over."), and the placings table's column is "Guesses" (the game's actions there are choices). The game's headline shows in the header below it (T311).
+- **G5 — the list's rows show no age.** `GameText.guesses` gets no clock and the list draws a row's time only for Frost's held answers, so the feed's lines read "Anna chose Summer" without "· 30 s ago" (02e §6.1).
+- **G6 — the host form's rules of 02e §3.** The platform's round form shows every key of the game's document as it is: the join time does not show half the total while "Join time follows the total" is on, the rounds and the pause stay editable after the first round (the server keeps the first round's anyway, 04 §4.8 rule 7), and a cross-key sentence shows for the form as a whole, not under its field.
+- **G7 — the round screen's box and the prefs.** The game's input gets neither the player's prefs nor a way to save them, so Hide my switches in a round starts from the player's last choice in that round (the view's own) and is not kept for the next rounds; only the box in the pre-picks panel is (02e §6.3: "kept by the server with the player's pre-picks").
+- **G8 — no notice of a refused pre-pick.** The server sends `prefs.refused` to the player's own room (MG-C3, T301), but the player client listens to it nowhere and the game's panels get no refusals, so "Your pre-pick All was not offered in round 3." (02e §7) shows nowhere.
+- **G9 — the Quick Test form of a phased game.** The form still shows the guess games' fields (Secret, Cooldown, Inactivity limit, Inactivity warning, Fast specials, Team match) beside the game's own; the server drops them for a phased game (T302), so they do nothing.
+- **G10 — the platform's words in a phased round.** The intro says "Cooldown 0.0 s between guesses"; the round's list is headed "2 guesses" and "No guesses yet."; the placings say "took part –" under "Guesses"; the match summary lists no round's winning options (02e §9).
+- **G11 — no result view for a game without a secret (blocks the result).** `packages/application/src/round/roundSession.ts` `result()` returns null when the round's secrets are null, and a game without a secret derives null (the phased fixture too, so the server tests never saw it). The result page shows only the platform's placings and standings: none of the game's options, counts, winners, players with +1/+2 or light-up (02e §9, §11.1), and the chat's `reveal` has nothing to word.
+- **G12 — a Quick Test match has seats for its bots and the host only** (`maxPlayers: bots + 1`), so journey 38's second browser cannot join it; its `JOIN_CLOSED` is checked in journey 41 in a match made by hand.
+- **G13 — the admin's round view.** `GET /admin/rounds/:id` is the delayed spectator view (counts, entrants and lines as of now − D), while 09 §4 journey 41 says the admin round view shows no count until the end. Nothing in it is younger than the delay (checked), so 05 §3.2 holds; the spec's stricter words and the platform differ.
+- **The authorization matrix's timeout:** in every full `pnpm verify` of this chain its HTTP test ran past its 150 s timeout under load (alone 30–36 s, with and without the game). An OPEN candidate.
+- **New proposals:** T304–T323 (DECISIONS), one line each in the final report.
+
+## Night MG-N1 (2026-11-12/13): docs cleanup, then the `phased` contract (MG-C1 → MG-C3)
+
+Status, updated after every piece. Branch `feat/mind-games` is not merged tonight; only piece 0 is.
+
+### Final report
+
+- **Done:** all four pieces. Piece 0 merged into `master` (PR #9, merge `c3b8a69`, CI green, branch deleted); pieces 1–3 (MG-C1 → MG-C3, the whole `phased` contract of 04 §4.8) on `feat/mind-games`, not merged.
+- **Branch heads on origin:** `master` `c3b8a69`; `feat/mind-games` at this sheet's commit (the code at `0979b4f`); `docs/cleanup-2026-11-13` deleted.
+- **The four existing games:** unchanged. Their golden test, conformance P1–P6, every existing unit and integration test and the whole e2e suite pass as before; the migration 0016 test proves the same standings, team standings, awards and board entries for existing rows; every new field of an event, a state or a view is present only in a phased round.
+- **Security (05 §3.2, S11):** P7 Delay in the conformance suite with the phased fixture (200 cases) and a permanent check that a leaking variant fails it; the server test checks frames, state answers, the round's player list, acknowledgements and the host's and a guest's views against the delay. Sabotage, done and undone: a live count in the fixture's spectator view turned P7 red; the server's views without their cut turned the integration test red; both green again after removal.
+- **`pnpm verify`:** green at the end of each piece (piece 1 on its second run, see its section): 703 + 94 + 163, 708 + 94 + 165, 711 + 94 + 167 tests.
+- **Full e2e, Chromium, at the end of the chain:** `pnpm e2e --project=chromium` 13 passed (1.3 min), then `--project=chromium-timing --no-deps` 35 passed (15.1 min); nothing flaky, nothing skipped.
+- **CI on `feat/mind-games`:** the runs of pieces 1 and 2 failed in CI's coverage step (`pnpm test:coverage`, not part of `pnpm verify`): `packages/game-sdk` branches 86.71 % against 90 %, `planIssue`'s refusals untested; fixed in `0979b4f` (`phased.test.ts`). The run of piece 3 failed once in `test/webhooks.integration.test.ts` (expected 3 deliveries, got 2, then 3 instead of 1 in the next test: its webhooks are queued without waiting and the test counts what is pending, a race on a busy runner); it passed locally three times in a row and in CI on `0979b4f`. The run on `0979b4f` (43345781693): verify (with coverage), e2e Chromium, docs, security green. Reported, not changed: the webhooks test's count may race (OPEN candidate).
+- **CI for piece 0's merge commit** `c3b8a69`: green (CI 41 min 26 s, CodeQL).
+- **New T-entries, every one "(proposal, night MG-N1)":** T288–T303, one line each under "Needs the owner's word" below.
+- **Noticed, left alone (all pieces):** `apps/server/test/league.integration.test.ts` is 324 lines, over 300 before tonight; the inactivity test's log read raced under load (made to wait for the committed log, a test-only change, piece 1); the webhooks test's pending count may race (above); the per-account limits, the new pre-pick one included, live in each process's memory; the client words no sentence yet for `PLAY_OVER`, `JOIN_CLOSED` and `prefs.refused` (the game's screens, MG-2 and MG-4); the chat's round-end line names a phased round's winner only once its game's `reveal` words it (MG-1).
+
+| Piece                                               | State                                                                                                                                                                 |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0 — docs cleanup                                    | **done**: PR #9 merged into `master` (`c3b8a69`, CI green: CI 41 min, CodeQL); branch deleted on origin and locally; master merged into `feat/mind-games` (`f0112f4`) |
+| 1 — MG-C1, the `phased` class and the round engine  | **done**, pushed on `feat/mind-games`                                                                                                                                 |
+| 2 — MG-C2, series and joining a running round       | **done**, pushed on `feat/mind-games`                                                                                                                                 |
+| 3 — MG-C3, per-player match data and the Quick Test | **done**, pushed on `feat/mind-games`                                                                                                                                 |
+
+### Piece 0 — docs cleanup (`docs/cleanup-2026-11-13`, PR #9)
+
+Each line checked against the tree or git history before it changed:
+
+- BACKLOG part one: the inactivity limit (O71–O75) closed, merged in PR #4 (`59fd076`); OPEN's stale bullet "On `feat/inactivity`, not merged" removed.
+- BACKLOG part two: the hostEmbed chat row gets "Branch feat/website-mode (piece 2, `787e595`; DECISIONS T236–T240)" and 2026-11-05 (`git log -S` on the row and on T236).
+- 08 §3.3: the code (`games/seasonal-target/src/geometry.ts`, its tier table) has 48 / 32 / 20 / 12 / 6 % of the diagonal with minimums n > 61 / 40 / 20 / 13 / 8, as 02d §7 says; 08's row (40 / 25 / 12 / 6 / 3 %) was the one wrong and now says what the code has.
+- GAME-IDEAS §2 and 01 §1: Target, Safecracker and Bomb Defusal are designed and built (O38, O65).
+- 02b §8: the sentence fused into the heading moved to the end of the closest-miss paragraph.
+- 09 §4: journeys in numeric order (24–27 and 30–32 stay blocks; no number changed).
+- Checks: prettier and the offline link check (lychee, 322 links, 0 errors); PR checks green (docs, verify, e2e Chromium, security, image, CodeQL).
+- Merging master into `feat/mind-games`: BACKLOG and OPEN conflicted; both sides kept (the inactivity row from master and the design row from the branch; master's removal of the stale bullet and the branch's Mind Games bullet).
+
+### Piece 1 — MG-C1, the `phased` class and the round engine (04 §4.8 rules 1–6, 9)
+
+- **Contract** (`packages/game-sdk/src/phased.ts`, `module.ts`): `timing: 'cooldown' | 'phased'`, `phased?: { plan, outcome }`, `PhasePlan`, `OutcomeRow`, `planIssue`; `series` and `prefs` come with pieces 2 and 3.
+- **Settings** (`packages/application/src/round/roundSettings.ts`): a phased game's document holds only `round.countdownS` and `round.seasonSource` of the platform keys; its other platform values are fixed off, its longest time is the plan's end, the plan travels with the settings into `RoundCreated` (T288).
+- **Domain** (`packages/domain/src/round/phased.ts`, `types.ts`, `evolve.ts`, `lifecycle.ts`, `results.ts`, `step.ts`): the check order of rule 2 with `PLAY_OVER` and `JOIN_CLOSED` at the receive time, no cooldown, Frost, timeout or solve, a reply `{ ok: true }` without a receive number, `PlayerEntered` before a player's first action, the command `member` and the event `MemberChanged` (T289), the end with the game's own results: nobody placed, `won`, winners' `solve_at` the end (T290), "no players left" for an empty round. The guess games' events and state keep their shapes (every new field is present only in a phased round).
+- **Server:** the delayed room (`apps/server/src/round/delayedRoom.ts`): room and host events held for the delay, released once a second in one frame with their own release sequence; lifecycle events at once; the end releases everything; restart counts what was due (T292, T293). Views at the room's cut, the round's list of players only once their entry is one delay old, no action counts, the plan in the round state; the players' own frames numbered by the release number (T291); the gateway sends a phased round's room frames only from the delayed room; `Play` tells a running phased round of players who join (after the anti-multi rules) or leave, starts it with every active match player, and lets it play on when players leave; a game without teams gets matches without them (T295); the guess intent takes a record of up to 4 short strings, numbers or booleans (06 §4.3).
+- **Results:** `round_results.won` (migration 0016, idempotent), written as `won ?? place = 1`; the match standings count `won`.
+- **Tests:** `packages/domain/src/round/phased.test.ts` (6: the windows to the millisecond, the order of the codes, no cooldown, `PlayerEntered` once, joining and leaving, the results, "no players left", replay equals live); `games/registry/src/phased.conformance.test.ts` (P1, P3–P5, P7 with 200 cases, and a permanent check that a fixture leaking one live count fails P7); `apps/server/test/phased.integration.test.ts` (frames, state answers and the round's list delayed for another player, a guest and the host; release numbers gap-free and equal to the state's `seq`; `{ ok: true }`; a match player who joins while it runs enters; `JOIN_CLOSED` and `PLAY_OVER`; the results and standings); `apps/server/test/resultWon.integration.test.ts` (real Guess The Number rounds, shared and individual: every row's `won` is its place 1; the rows set back to false, migration 0016 run again: match standings, team standings, league awards and board entries are equal).
+- **Sabotage, twice:** the fixture's spectator view given the live counts → `P7 Delay holds for sides-fixture` failed; restored → green. The server's views given no cut (`cut: Infinity` in `liveRound.ts`) → the integration test failed (`expected [ { playerKey: 'p2', … } ] to deeply equal []`, a player in the round's list before the delay); restored → green.
+- **The four existing games unchanged:** the golden test of Guess The Number, the conformance suite P1–P6 for all four, and every existing server test pass unchanged.
+- **`pnpm verify`:** the first run had 3 failures, all under the full run's load: the new phased test (a join came after the fixture's 4 s window: the plan is now 6/8/10 s), the authorization matrix (timed out; passes alone) and the inactivity test (it read the log right after the view showed the timeouts, before their batch committed; passes alone, three times; the test now waits for the committed log, a test-only change). The second run: green (format, lint, typecheck, 703 + 94 + 163 tests).
+- **Lines before → after:** game-sdk `module.ts` 175 → 182, `index.ts` 88 → 90, `phased.ts` new 53; domain `types.ts` 229 → 262, `evolve.ts` 204 → 228, `lifecycle.ts` 179 → 187, `results.ts` 119 → 139, `step.ts` 39 → 43, `phased.ts` new 100, `phased.test.ts` new 222; application `roundSettings.ts` 80 → 129, `roundSession.ts` 131 → 133; contracts `play.ts` 206 → 215; server `app.ts` 229 → 235, `routes/matches.ts` 249 → 253, `routes/quickTest.ts` 100 → 101, `routes/rounds.ts` 219 → 220, `match/play.ts` 300 → 265, `match/playError.ts` new 32, `match/roundCreation.ts` new 93, `realtime/gateway.ts` 226 → 256, `realtime/intents.ts` 241 → 244, `round/delayedRoom.ts` new 145, `round/gameRunner.ts` 154 → 177, `round/liveRound.ts` 118 → 168, `round/pgResults.ts` 123 → 128, `round/rounds.ts` 146 → 170, `round/runtime.ts` 103 → 116, `round/views.ts` 173 → 229, migration `0016_result_won.sql` new 14; tests `harness.ts` 69 → 76, `socketKit.ts` 188 → 191, `phased.integration.test.ts` new 185, `resultWon.integration.test.ts` new 143, `inactivity.integration.test.ts` +7; registry `index.ts` 50 → 51, `phasedFixture.ts` new 165, `testing.ts` new 18, `phased.conformance.test.ts` new 190, `package.json` (zod 4.6.7, already used by every game; a new export `./testing`).
+- **Extracted:** `match/playError.ts` (the use cases' error type) and `match/roundCreation.ts` (season, settings and the new round) out of `play.ts`, which was at 300 lines; `readers` in `liveRound.ts` and `sendReleased` in the gateway to keep their functions under 60 lines.
+- **Reused:** `ViewCtx.releasedBefore` (Frost's cut) as the delayed cut; `roomForm` for the phased lifecycle events; `toPublic` for the released frames; `roomFrames` merging for them; the existing `round_time_up` end at the round's longest time, set to the plan's end; `catchUp`, `fail`, `withEntry`, `freshEntry`; the test harness's `until`-style waits and `socketKit`.
+- **Noticed, left alone:** `scheduled_actions.kind` has no `match_autostart`, though 06 §2.5 names it (piece 2 adds it); `apps/server/test/league.integration.test.ts` is 324 lines (over 300 before tonight); the host form always sends `round.halving`, which a phased game's document does not hold (piece 2, where the host form changes); the client words no sentence for `PLAY_OVER` and `JOIN_CLOSED` yet (the game's screen, MG-2); the chat's round-end line takes the winner from place 1 (`chat/roundLines.ts`), so a phased round's line names nobody until its game's `reveal` words it (MG-1).
+
+### Piece 2 — MG-C2, a series of rounds (04 §4.8 rule 7)
+
+- **Contract:** `series(cfg) → { rounds, pauseMs } | null` in `PhasedHooks` (`packages/game-sdk/src/phased.ts`); the fixture plays two rounds 3 s apart.
+- **Server** (`apps/server/src/match/series.ts`): after each round of a series a `match_autostart` row is due at its end plus the pause: the next round from `matches.next_settings` (the host's last choices and season, or what `PUT …/next-round` saved), started at once without the minimum of players; after the last round the close with reason `complete`. The row is claimed once (timer or the host's click). A start-up sweep writes a next step a stop missed (T296, T297). Migration 0017: `matches.next_settings`, and the kind CHECK of `scheduled_actions` replaced by the same list plus `match_autostart` (06 §2.5 named it; the table never had it), inside the migration's transaction, never off.
+- **Routes** (`apps/server/src/http/routes/series.ts`, registered with the match routes): `PUT …/next-round` (the round body without `startNow`, the per-setting check, 422 with field and sentence), `POST …/next-round/start` (409 `ROUND_RUNNING` outside a pause), both host only, `NOT_A_SERIES` otherwise; `GET /matches/:code` carries `series` (`rounds`, `played`, `nextAt`).
+- **Client** (T298): `apps/web/src/match/SeriesStatus.tsx` in the waiting area ("Round 3 of 6 · Next round in 12 s", "The match ends in 5 s", the host's Start next round now with its tooltip); the waiting area's sentence in a pause ("The next round starts by itself."); the Host menu's request in `apps/web/src/match/roundRequest.ts`: `round.halving` only where the document has it (a phased game's has none), and in a pause the settings kept for the next round; the summary's "All N rounds are played.".
+- **Tests:** `apps/server/test/series.integration.test.ts` (the pause in the details, a refused next setting with its field, the saved season and countdown in the next round, Start next round now by the host only and at once with a player gone, then `ROUND_RUNNING`, the close `complete` after the last pause; a guess game's match is no series); `apps/web/src/match/series.test.tsx` (the series line, the countdown, the host's button and its request, the last round, no series; the form's request in and outside a pause, with and without halving); the summary test's "All 6 rounds are played.".
+- **`pnpm verify`:** green (format, lint, typecheck, 708 + 94 + 165 tests).
+- **Lines before → after:** game-sdk `phased.ts` 53 → 64, `index.ts` 90 → 96; domain `phased.test.ts` 222 → 223; contracts `play.ts` 215 → 223; server `routes/matches.ts` 253 → 260, `routes/rounds.ts` 220 → 221 (`hostOf` exported), `routes/series.ts` new 83, `match/play.ts` 265 → 273, `match/series.ts` new 166, `round/rounds.ts` 170 → 198, `round/runtime.ts` 116 → 137, `round/scheduler.ts` 100 → 105, migration `0017_series.sql` new 17; tests `authzTable.ts` 300 → 270, `authzChecks.ts` new 46, `authzMatrix.integration.test.ts` 278 → 279, `series.integration.test.ts` new 136; web `HostMenu.tsx` 297 → 295, `WaitingArea.tsx` 153 → 162, `MatchSummary.tsx` 111 → 113, `SeriesStatus.tsx` new 65, `roundRequest.ts` new 51, `series.test.tsx` new 100, `summary.test.tsx` 140 → 144; registry `phasedFixture.ts` 165 → 177.
+- **Extracted:** `authzChecks.ts` (the refusals and the CSRF writes) out of `authzTable.ts`, which the two new route rows would have taken over 300 lines; `roundRequest.ts` out of `HostMenu.tsx` (at 297); `roundsOf` and `seriesOf` in `runtime.ts` to keep `createRoundRuntime` under 60 lines.
+- **Reused:** `createRoundBody` and `settingsRefusal` for the next round's settings, `hostOf` of the round routes, `chooseRoundSettings` for the check, `Play.createRound` and `Play.startRound` for the next round, `Play.close` with a `MatchEnd` for the close, the existing scheduler loop and lease, `useTicker` and `serverNow` for the countdown.
+- **Noticed, left alone:** the result page's own next-round box and the Host menu still offer Next round in a series pause too (it saves the settings there, T298); a dedicated pause view on the result page is the game's screen (MG-2).
+
+### Piece 3 — MG-C3, a player's own match value (pre-picks) and the Quick Test of a phased game (04 §4.8 rule 8, 09 §4.2)
+
+- **Contract:** `prefs?: { schema, action(prefs, roundIndex, cfg) }` in `PhasedHooks` (now `PhasedHooks<S, A, Cfg>`), `DevPrefs` on a registry entry, `PrefsPanelProps` for the web half's optional `Prefs` panel; the fixture's pre-picks per round number, with a side `x` its rounds refuse (as Mind Games refuses All when it is off).
+- **Server** (`apps/server/src/match/prefs.ts`, `apps/server/src/http/routes/prefs.ts`, migration 0018): `GET`/`PUT …/prefs` and the intent `match.prefs` for a player's own value only (`FORBIDDEN` for anyone not in the match, then `PREFS_OFF`, `PREFS_INVALID` after the game's schema and 2 KiB, `RATE_LIMITED` beyond one save every 2 s); `myPrefs` in the match details, the viewer's own; deleted on leave and kick; applied at each opening of a phased round, after its batch committed, in join order, as the first choice received at `opensAt` and only for a player not yet in the round (`LiveRound.prePick`, the check and the queue in one step, T300); a refusal goes to that player's room alone as `prefs.refused` (T301); the logger redacts `prefs`, `choice` and `counts` (T303).
+- **Quick Test** (`apps/server/src/dev/phasedBots.ts`, `quickTest.ts`, `bots.ts`; T302): a phased game gets only its document's keys (the form's platform keys it lacks are dropped; for the guess games every key stays as before) and a match without teams; each bot's draws and first move per round from the Quick Test's seed (the first move inside the entry window), and once per match whether it pre-picks (the game's `devPrefs`); a pre-picking bot joins without being connected and plays by its pre-picks.
+- **Web** (`apps/web/src/match/GamePrefs.tsx`): the game's `Prefs` panel in the waiting area for the match's players, with `myPrefs`, the series' rounds and those played, saving through `PUT …/prefs` and handing a refusal's code back.
+- **Tests:** `apps/server/test/prefs.integration.test.ts` (a value outside the schema 422, a second save within 2 s 429, `myPrefs` the viewer's own only, the host's `GET` its own null, a non-player 403; round 1 played by the away player's pick, entered at `opensAt`; round 2's refused pick told only to its player as `prefs.refused` with round 2 and `CHOICE_UNAVAILABLE`; leaving deletes the value; two Quick Tests with seed `frost` and 7 bots: the same pre-picking bots, bot-05 and bot-06, with the same picks, neither connected, no teams); `apps/web/src/match/prefs.test.tsx` (the panel's props, its save and a refusal's code, nothing for a spectator or a game without it); the authorization matrix's rows for `GET`/`PUT …/prefs` and `match.prefs` (the match's players only).
+- **`pnpm verify`:** green (format, lint, typecheck, 711 + 94 + 167 tests).
+- **Lines before → after:** game-sdk `phased.ts` 64 → 77, `module.ts` 182 → 188, `index.ts` 96 → 99, `web.ts` 170 → 181; contracts `play.ts` 223 → 225; server `app.ts` 235 → 244 (the redaction list), `routes/matches.ts` 260 → 276, `routes/prefs.ts` new 74, `match/play.ts` 273 → 281, `match/prefs.ts` new 101, `realtime/gateway.ts` 256 → 261, `realtime/intents.ts` 244 → 260, `round/rounds.ts` 198 → 236, `round/liveRound.ts` 168 → 194, `round/runtime.ts` 137 → 140, `dev/bots.ts` 59 → 75, `dev/quickTest.ts` 180 → 231, `dev/phasedBots.ts` new 48, migration `0018_player_prefs.sql` new 17; tests `authzTable.ts` 270 → 274, `prefs.integration.test.ts` new 165; web `WaitingArea.tsx` 162 → 165, `GamePrefs.tsx` new 39, `prefs.test.tsx` new 105; registry `web/index.ts` 78 → 82, `phasedFixture.ts` 177 → 207.
+- **Extracted:** `phasedParts` in `routes/matches.ts` (the details stayed under the complexity limit), `prePickOf` in `liveRound.ts` (under 60 lines), the phased bots' plan in `dev/phasedBots.ts`.
+- **Reused:** `RateLimiter` (auth), `activePlayers`, the round queue for pre-picks as ordinary actions, `roundRng` (the platform's DRBG) for the bots' plans, `quickTestSeed`, the existing `match:<id>:player:<key>` room for the refusal, the authorization matrix's `ROSTER` callers.
+- **Noticed, left alone:** the per-account save limit is in memory per process, like the other per-account limits (gone after a restart); the result page in a pause has no pre-pick panel of its own (the waiting area beside it has it); the client wording for `prefs.refused` is the game's (MG-4).
+
+### Needs the owner's word
+
+Every decision below was built as written (the reading that changes no existing game); each is a T-entry in DECISIONS marked "(proposal, night MG-N1)":
+
+- T288: a phased round keeps the default cooldown in its stored config and `rounds.cooldown_ms` (the table's CHECK); never used, shown as 0.
+- T289: joining, leaving or being removed while a phased round runs is the command `member` and the event `MemberChanged`; the round starts with every admitted match player, the minimum counting those connected; it plays on when players leave.
+- T290: a phased round's winners get `solve_at` = the round's end for the earliest-win tie order; no solves.
+- T291: a phased round's own player frames carry the room's current release number as `s`.
+- T292: a phased round's views use the delayed room's last tick minus the delay as their cut.
+- T293: a phased room never hears `GuessAccepted`, `MemberChanged` or own events; `PlayerEntered` after the delay; lifecycle events at once.
+- T294: `Rounds`, the runtime and `buildApp` take an optional list of games; the fixture `sides-fixture` is installed only by tests (`@smg-game/registry/testing`).
+- T295: a game without teams gets matches without teams and no `round.teamsOn` choice.
+- T296: a series' next step is a `match_autostart` row on the ended round, written after its end commits, claimed once; migration 0017 widens the kind CHECK by that one value.
+- T297: a series counts its ended rounds; an aborted round schedules nothing (the host starts the next by hand); the automatic round is made by the host's account from the saved settings.
+- T298: the series line and Start next round now in the waiting area; in a pause the Host menu keeps the next round's settings; `round.halving` only where the document has it.
+- T299: pre-picks in `match_player_prefs` (at most 2 KiB), `FORBIDDEN` for a non-player before `PREFS_OFF`, one save every 2 s per account kept in memory, deleted on leave and kick.
+- T300: pre-picks applied after the opening commits, in join order, received at `opensAt`, only for players not yet in the round; a restart in between loses them for that round.
+- T301: a refused pre-pick is the Socket.IO event `prefs.refused` in the player's own room.
+- T302: the Quick Test of a phased game: only its document's keys, no teams, seeded per-round bot plans (`quicktest/<round>/<bot>/pick|entry`) and per-match pre-picks (`quicktest/prefs/<bot>`, up to 20 rounds), pre-picking bots not connected.
+- T303: the web half's optional `Prefs` panel in the waiting area; `myPrefs` the viewer's own; the logger redacts `prefs`, `choice` and `counts`.
+
 ## Dress rehearsal of the live install (2026-11-06)
 
 The website's real installer and ours ran together on a fresh systemd Ubuntu 24.04 container with its own Docker (`smg-rehearsal-*`). The machine had a test DNS for `example.org` and the website's own test ACME server (Pebble). It ran in nginx mode first, then on a reset machine in the website's own-Caddy mode. The browser was Chromium with `--host-resolver-rules`, so the origin was exactly `https://example.org`. The machine and every test account are deleted. The screenshots are on the orphan branch `shots/rehearsal`: 35 images and `play-through.txt`.

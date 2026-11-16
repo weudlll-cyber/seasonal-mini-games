@@ -3,7 +3,7 @@
  * @module e2e
  * @brief  Journey 23: the host chooses the game (O41); every screen names the match's game.
  *
- * Responsibility: the create-match form offers the four games with a help line and opens a
+ * Responsibility: the create-match form offers the five games with a help line and opens a
  *                 public match of the chosen one; the match page and the Play list name its
  *                 game; ended at once, its summary names it too. The Quick
  *                 Test form shows only the chosen game's own settings (Guess The Number's range
@@ -20,6 +20,7 @@ const GAMES = [
   'Seasonal Safecracker',
   'Seasonal Bomb Defusal',
   'Seasonal Target',
+  'Seasonal Mind Games',
 ];
 
 test('journey 23: the game is chosen when the match is opened, and named everywhere', async ({
@@ -31,7 +32,7 @@ test('journey 23: the game is chosen when the match is opened, and named everywh
   const title = `e2e game choice ${String(Date.now())}`;
   let code = '';
   try {
-    // The create-match form: the four games, a help line, the chosen one opened.
+    // The create-match form: the five games, a help line, the chosen one opened.
     await p.page.goto('./');
     const form = p.page.getByTestId('open-match');
     const choice = form.getByTestId('match-game');

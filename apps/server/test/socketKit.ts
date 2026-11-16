@@ -18,7 +18,7 @@
  *                 connectedOf: a website-mode harness of its own), and the other socket suites
  * Spec:           docs/spec/06-data-model-api-realtime.md §4; docs/spec/09-testing-strategy.md §2
  */
-import { GAMES } from '@smg-game/registry';
+import { GAMES, type InstalledGame } from '@smg-game/registry';
 import { initialRound, roundInput, type RoundEvent } from '@smg/domain';
 import { roundRng } from '@smg/game-sdk/crypto';
 import { io as connect, type Socket } from 'socket.io-client';
@@ -138,8 +138,11 @@ export async function listening(harness: Harness) {
   return { io, url: `http://127.0.0.1:${String(port)}/play` };
 }
 
-export async function startSocketKit(overrides: Record<string, string> = {}): Promise<SocketKit> {
-  const harness = await startHarness(overrides);
+export async function startSocketKit(
+  overrides: Record<string, string> = {},
+  games?: readonly InstalledGame[],
+): Promise<SocketKit> {
+  const harness = await startHarness(overrides, games);
   const { io, url } = await listening(harness);
   const app = harness.built.fastify;
   const clients = {

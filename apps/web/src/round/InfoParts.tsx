@@ -19,6 +19,7 @@
  */
 import type { GameWeb } from '@smg-game/registry/web';
 import type { RoundStateView } from '@smg/contracts';
+import type { PhasedTiming } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
 import { serverNow } from '../live/socket.js';
@@ -27,6 +28,12 @@ import { FocusPanel } from './FocusPanel.js';
 import { colorsOf } from './RoundSide.js';
 import type { Panels } from './usePanels.js';
 import { roundMarks } from './playerMarks.js';
+
+// A phased round's timing for the game's panels (04 §4.8), public facts; none for a guess round.
+export const timingOf = (state: RoundStateView): PhasedTiming | undefined =>
+  state.plan === undefined || state.opensAt === null
+    ? undefined
+    : { opensAt: state.opensAt, plan: state.plan, now: serverNow };
 
 // The game's panel: a roster player's (it only shows; guesses go through the dock), or the
 // spectator's.
@@ -46,6 +53,7 @@ export function GamePart(p: {
     viewerKey: state.you ?? null,
     season: state.season,
     specialOn: state.specialOn,
+    timing: timingOf(state),
   };
   if (state.role !== 'player') return <game.Spectator {...shared} />;
   return (
@@ -89,6 +97,7 @@ export function PhoneLine(p: {
         colors={colorsOf(state)}
         season={state.season}
         specialOn={state.specialOn}
+        timing={timingOf(state)}
       />
     );
   return (
