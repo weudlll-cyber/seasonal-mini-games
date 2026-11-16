@@ -2,6 +2,17 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Night chain MG-N11 (2026-11-16/17): the flights merged, browser runs, docs and code cleaned
+
+Status, piece by piece (updated after every piece).
+
+- **1. Merge `feat/mg-flight-speed`** (T371, T372, T376, T377): running. MG-FLIGHT-CLEAN: no brief for it reached this session and nothing of that name is in the repository; not started (see "needs the owner's word").
+- **2. Browser tests:** Chromium on every push and the merge gate, Firefox and WebKit nightly: open.
+- **3. Docs:** current, short, lists instead of padded tables: open.
+- **4. Code and tests:** dead code, files over the limit, tests that check nothing current: open.
+- **5. Morning handover:** open.
+- **Needs the owner's word:** the MG-FLIGHT-CLEAN brief (never received; `shots/mg-flight-3` from MG-FLIGHT-3 kept instead for the morning look); from MG-FLIGHT-3: names of neighbouring flights overlap on a phone (proposal: a name only on a lone named flight in its card, or names cut to 8 characters).
+
 ## Morning of 2026-11-16 (chain MG-N10, continued): the two remaining flakes (`fix/flaky-tests-2`)
 
 The owner tested `feat/mg-flight-speed` meanwhile; these runs used the test databases and test ports only. Master's CI for PR #14's merge `5cea5ff`: CI success (verify, docs, security, e2e, image), CodeQL success.
@@ -20,10 +31,10 @@ Status, piece by piece.
 | Piece                                                                                                       | State                                                                                                                                       |
 | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1. The round-end line test; merge `feat/mind-games` (PR #11)                                                | done: test examined (below), no failure in 112 runs, cause not found, left unchanged; merged as `fc044ab`, CI green per job; branches swept |
-| 2. No flaky tests (`fix/flaky-tests`)                                                                       | done: the focus journeys' bot fixed (T373); the rest not reproduced or not fixed, in BACKLOG part one                                       |
-| 3. Mind Games: flights of about 1.2 s, the phone bar's game name whole (`feat/mg-flight-speed`, not merged) | coding done in a work tree (T371, T372); tests, play-through open                                                                           |
-| 4. Morning handover                                                                                         | open                                                                                                                                        |
-| Needs the owner's word                                                                                      | open until the pieces end                                                                                                                   |
+| 2. No flaky tests (`fix/flaky-tests`)                                                                       | done: the focus journeys' bot fixed (T373); the rest not reproduced or not fixed, in BACKLOG part one; merged as `5cea5ff` (morning)        |
+| 3. Mind Games: flights of about 1.2 s, the phone bar's game name whole (`feat/mg-flight-speed`, not merged) | done (T371, T372); tests and play-through green; `master` merged in                                                                         |
+| 4. Morning handover                                                                                         | done in the morning (below)                                                                                                                 |
+| Needs the owner's word                                                                                      | T371, T372 (proposals); the flights' overlapping name labels (noticed)                                                                      |
 
 ### Piece 1: the round-end line test
 
@@ -60,7 +71,30 @@ The list: every failed job of this repository's CI since 2026-11-02 (47 failed o
 
 **Why T373.** The four focus journeys start a Quick Test round with one bot at a 3 s cooldown (`direct`, seed `acorn`). The bot plays like a player and opened Safecracker's code in 5 tries; the journey checks two screen sizes with a reload each, panels, Escape and Close, so on a slow machine the round ended under it, and the cooldown, the panels or the player's own row it waited for were gone. The journey's own comment asked for a bot too slow to end the round; `botDelayS: 60` (the Quick Test's own field, at most 120) makes that hold however slow the machine. The journeys check room on the screen, not the bot's rows, so nothing else changes.
 
-**Noticed, left alone.** The two `renovate/*` branches on origin are the dependency bot's. The dev server's build badge read "master · dc78140" during the night although it was started on `feat/mind-games`; piece 4 restarts it and checks the badge. T373 is on `master` while T371 and T372 wait on `feat/mg-flight-speed` (piece 3), so `master` skips two numbers until that branch is merged.
+**Noticed, left alone.** The two `renovate/*` branches on origin are the dependency bot's. The dev server's build badge read "master · dc78140" during the night although it was started on `feat/mind-games`; piece 4 restarts it and checks the badge. T373 is on `master` while T371 and T372 wait on `feat/mg-flight-speed` (piece 3), so `master` skips two numbers until that branch is merged; the branch has all three in order.
+
+### Piece 3: slower flights, the phone bar's game name (`feat/mg-flight-speed`, not merged)
+
+- **Measured before:** a flight lasted 0.8 s: `FLIGHT_MS = 800` (`games/mind-games/web/FlightBand.tsx`), the CSS's three animations 0.8 s each (`flights.css`), a wave cleared 100 ms after; and a new step's wave replaced the running one, so icons still in the air were removed mid-flight.
+- **Now (T371, proposal):** `FLIGHT_MS = 1 200`, the easing kept; the CSS reads the length as `--mg-flight`, set from `FLIGHT_MS` on the band, so there is one constant and no setting. Each wave leaves at its own end and a step during a wave starts its own at once, the old flights finishing where they are (their elements are never restarted); the "+N" tag is the newest wave's; at most 12 icons a wave; the counts are the step's exact counts at once; reduced motion flies nothing.
+- **The phone bar (T372, proposal):** "Seasonal Mind Games" needs 167 px in its chip; beside the code and the buttons the bar leaves it 169 px at 390 × 844 (cut with a slightly wider font, as the owner saw) and 138 px at 360 × 740. The chip now breaks between its words onto a second line where one line has no room, instead of an ellipsis; the text is unchanged, the bar stays one row of 44 px.
+- **Tests:** the animation unit test 8/8, two of them new (a flight lasts `FLIGHT_MS`, 1 200 ms, the CSS taking it; a step during a wave keeps the old flight's element and both waves end at their own time), both failing on the old component; journeys 38–41 and 43 in Chromium: 6/6.
+- **Play-through** (`tmp/mg10-play.mjs`, `play-through.txt` on `shots/mg-n10`): seed `swift`, 40 bots, countdown 5 s, total 60 s, 1 round, at 1440 × 900 and then 390 × 844; badge "Mini Games · dev · feat/mg-flight-speed · f7cb2ee · 2026-11-16". 57 flights, every one animating 1.2 s and removed 1 266–1 323 ms after it appeared (its 1.2 s and the 100 ms clear: none cut short), at most 9 at once; the counts read at each wave's start and end. The result bar: at 390 × 844 the chip one line, 169 × 24 px; at 360 × 740 two lines, 140 × 41 px; the bar 44 px, nothing scrolls sideways.
+- **Screenshots** (`shots/mg-n10`, 4): a frame mid-flight at 1440 × 900 and at 390 × 844, the phone result bar at 390 × 844 and 360 × 740.
+- **Noticed, left alone:** in the desktop frame two first choices' names overlap in the band (a flying Winter icon over "bot-31") and "bot-3…" is cut at the band's right edge; the positions are as before, but at 1.2 s an overlap lasts half as long again.
+- **Files:** `FlightBand.tsx` 106 → 124 lines, `flights.css` 118 → 119, `animation.test.tsx` 157 → 211, `apps/web/src/match/match.css` 275 → 277, `ResultBar.tsx` 46 → 48. Removed: the single shown wave and its one timer (`useWave`), the ellipsis of the phone chip. Reused: `waveOf` (`./flights`), the band's markup and keys.
+
+### Piece 4: the handover (2026-11-16, morning)
+
+The night's session ended at about 06:25 before the merge of PR #14 and the handover; both were done in the morning on the owner's word.
+
+- **PR #14 merged** with a merge commit, **`5cea5ff`** (all its checks green on `51f36b6`; the pull request's first `verify` had failed on the webhooks flake, the commit after it only added that failure to BACKLOG); `fix/flaky-tests` deleted. CI on `master` for `5cea5ff`: in the morning report and in the next branch's NIGHT-RUN.
+- **`feat/mg-flight-speed`** has `master` merged in (DECISIONS in order T371, T372, T373) and is not merged: the owner looks at it.
+- **Dev server**, started fresh on this branch's pushed head: <http://127.0.0.1:5410/>; the build badge names `feat/mg-flight-speed` and the head commit.
+- **Quick Test:** Seasonal Mind Games, seed `swift`, 40 bots, countdown 5 s, total 60 s, 3 rounds, All ticked; everything else as the form opens.
+- **Look at:** the switches flying for about 1.2 s, a new wave starting while the last one still lands, the counts after each wave; on a phone (390 × 844 and 360 × 740) the result bar's game name whole. T372 changes the shared result bar, so on a phone every game's name breaks onto a second line in its chip where one line has no room, not only Seasonal Mind Games'.
+- **Needs the owner's word:** T371 (flights of 1.2 s) and T372 (the phone bar's game name wrapping), both proposals; the noticed overlap of two flights' name labels in the band (piece 3).
+- **Next, while the owner tests:** the webhooks flake and the authorization matrix on `fix/flaky-tests-2`, on the test database and test ports only.
 
 ## Task MG-MERGE (2026-11-16): T369 accepted (O102), `feat/mind-games` merged into `master`, the sweep
 

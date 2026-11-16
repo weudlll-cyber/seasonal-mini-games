@@ -3,7 +3,8 @@
  * @module games/mind-games
  * @brief  TypeScript settings for the Seasonal Mind Games module.
  *
- * Responsibility: extend the shared strict base and limit the program to src/. node types
+ * Responsibility: extend the shared strict base and limit the program to src/ and the
+ *                 game's Vitest config (one stylesheet read as text, T376). node types
  *                 are included for the tests, which build round randomness with the SDK's
  *                 crypto entry; the module itself only receives a RoundRng.
  * Spec:           docs/spec/10-repository-structure.md §2
@@ -13,5 +14,5 @@
   "compilerOptions": {
     "types": ["node"]
   },
-  "include": ["src"]
+  "include": ["src", "vitest.config.ts"]
 }

@@ -8,7 +8,8 @@
  *                 `buildOn` builds a second app on the same database; a test may install the
  *                 phased fixture beside the registry's games. Every test file
  *                 stops its own container (Bingo 12 §7: data created by a test is removed),
- *                 also when a test failed.
+ *                 also when a test failed; while it stops, the server's "terminating
+ *                 connection" to a client the pool is still ending is expected, not an error.
  * Depends on:     @testcontainers/postgresql, ../src/index
  * Used by:        ./*.integration.test.ts
  * Spec:           Bingo 12 §2, §7
@@ -69,8 +70,16 @@ export async function startHarness(
   return { container, pool, built, applied };
 }
 
+// The server's "terminating connection due to administrator command": what a client the
+// pool is still ending hears when its container stops (CI, MG-N11: two unhandled errors after
+// a green authorization matrix). That is the shutdown itself; any other error still throws.
+const SHUTDOWN = '57P01';
+
 export async function stopHarness(h: Harness): Promise<void> {
   await h.built.fastify.close();
+  h.pool.on('error', (e: Error & { code?: string }) => {
+    if (e.code !== SHUTDOWN) throw e;
+  });
   await h.pool.end();
   await h.container.stop();
 }
