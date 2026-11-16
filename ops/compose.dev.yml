@@ -11,10 +11,13 @@
 #   docker compose --env-file ops/.env.dev.example -f ops/compose.dev.yml up -d
 # Personal overrides (ignored by git) go in a second, later --env-file ops/.env.dev.
 # Every value comes from the env file; ":?" stops Compose if it was not passed.
+# Both services restart unless stopped: after a Docker or machine restart the dev database is
+# back without a new "up"; "docker compose ... stop" (or "down") keeps them stopped.
 name: smg-dev
 
 services:
   postgres:
+    restart: unless-stopped
     image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
     environment:
       POSTGRES_USER: ${POSTGRES_USER:?pass --env-file ops/.env.dev.example}
@@ -32,6 +35,7 @@ services:
 
   # Catches every outgoing mail of the dev server.
   mailpit:
+    restart: unless-stopped
     image: axllent/mailpit:v1.31.6@sha256:23fe39e81bde596a918000b3135c0f85dc8bb4c9ea6be274b051143f3e300387
     ports:
       - '127.0.0.1:${SMG_DEV_MAILPIT_SMTP_PORT:?pass --env-file ops/.env.dev.example}:1025'
