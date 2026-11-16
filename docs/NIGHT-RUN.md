@@ -2,6 +2,17 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Night chain MG-N11 (2026-11-16/17): the flights merged, browser runs, docs and code cleaned
+
+Status, piece by piece (updated after every piece).
+
+- **1. Merge `feat/mg-flight-speed`** (T371, T372, T376, T377): running. MG-FLIGHT-CLEAN: no brief for it reached this session and nothing of that name is in the repository; not started (see "needs the owner's word").
+- **2. Browser tests:** Chromium on every push and the merge gate, Firefox and WebKit nightly: open.
+- **3. Docs:** current, short, lists instead of padded tables: open.
+- **4. Code and tests:** dead code, files over the limit, tests that check nothing current: open.
+- **5. Morning handover:** open.
+- **Needs the owner's word:** the MG-FLIGHT-CLEAN brief (never received; `shots/mg-flight-3` from MG-FLIGHT-3 kept instead for the morning look); from MG-FLIGHT-3: names of neighbouring flights overlap on a phone (proposal: a name only on a lone named flight in its card, or names cut to 8 characters).
+
 ## Morning of 2026-11-16 (chain MG-N10, continued): the two remaining flakes (`fix/flaky-tests-2`)
 
 The owner tested `feat/mg-flight-speed` meanwhile; these runs used the test databases and test ports only. Master's CI for PR #14's merge `5cea5ff`: CI success (verify, docs, security, e2e, image), CodeQL success.
