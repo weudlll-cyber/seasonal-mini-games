@@ -17,8 +17,9 @@
  *                 has room for its game's rows at each size (T142: Guess The Number 22 and 10,
  *                 Safecracker 20 and 10, Bomb Defusal 18 and 6), Seasonal Target's 20 × 20
  *                 tiles at least 30 px and 18 px apart (T144);
- *                 Seasonal Target is played on the phone through the loupe. The matches are
- *                 aborted.
+ *                 Seasonal Target is played on the phone through the loupe. The round's bot
+ *                 waits 60 s after each of its tries, so it cannot end the round while the
+ *                 journey runs, however slow the machine (T373). The matches are aborted.
  * Depends on:     @playwright/test, ./guessGames, ./play, ./screens
  * Spec:           docs/spec/09-testing-strategy.md §4 (journeys 24–27); docs/spec/02-game-guess-the-number.md §12
  */
@@ -116,15 +117,17 @@ async function focusJourney(
   browser: Browser,
   gameId: string,
   play: Play,
-  // The sizes to reach, and the round's own settings: slow enough that the bot does not end
-  // the round before the player.
+  // The sizes to reach, and the round's own settings.
   opts: { readonly targets: Targets; readonly round?: Readonly<Record<string, unknown>> },
 ): Promise<void> {
   const { targets, round = {} } = opts;
   const p = await person(browser, 'player-1', WIDE);
   const codes: string[] = [];
   try {
-    codes.push((await direct(p, { gameId, season: 'summer', ...round })).matchCode);
+    // The bot plays at most one try a minute: at its cooldown alone it opened Safecracker's
+    // code in 5 tries (15 s) and ended the round under a slow journey (T373).
+    const body = { gameId, season: 'summer', botDelayS: 60, ...round };
+    codes.push((await direct(p, body)).matchCode);
     for (const [n, size] of [WIDE, PHONE].entries()) {
       await p.page.setViewportSize(size);
       await p.page.reload();
