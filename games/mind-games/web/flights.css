@@ -3,32 +3,49 @@
  * @module games/mind-games/web
  * @brief  Styles of the flight band: icons flying between the seasons' columns (02e §11.1).
  *
- * Responsibility: the band as a row of the stage's own layout, clipped at its edges; a flight
- *                 moves from its old column's middle to its new one's in about 1.2 s (--mg-flight,
- *                 set from FlightBand's FLIGHT_MS, T371), its icon
- *                 turning into the new season's on the way; a first choice flies in from the
- *                 band's edge beside the lines, on a phone from below, with its name; the "+8"
- *                 tag. Under reduced motion no flight is drawn at all (./FlightBand), and the
- *                 platform switches every animation off as well.
+ * Responsibility: the band as a row of the stage's own layout, 52 px high, clipped at its
+ *                 edges; a flight is its icon's own 26 px box, placed on the icon's centre,
+ *                 moving from its start slot to its landing slot (--mg-from/--mg-y0 to
+ *                 --mg-to/--mg-y1, ./flights placeWave, DECISIONS T376) in about 1.2 s
+ *                 (--mg-flight, set from FlightBand's FLIGHT_MS, T371). Its timeline: the old
+ *                 icon shrinks away from 15 % to 30 % and the new one grows in from 30 % to
+ *                 45 %, so from the middle on only the new season's icon flies; it reaches its
+ *                 slot at 80 % and then shrinks and fades into its column, so it ends invisible.
+ *                 A first choice's name hangs above its icon and fades out from 50 % to 65 %,
+ *                 never moving the icon; a first choice flies in from beside the band's right
+ *                 edge, on a phone from below; the "+8" tag. Under reduced motion no flight is
+ *                 drawn at all (./FlightBand), and the platform switches every animation off
+ *                 as well.
  * Spec:           docs/spec/02e-game-mind-games.md §11.1
  */
 /* The flight band between the buttons and the counts (02e §11.1): a row of the stage's own
-   layout, clipped at its edges, so a flight never covers a button, a line or the chat. */
+   layout, clipped at its edges, so a flight never covers a button, a line or the chat. Its
+   height holds a name (16 px) above an icon (26 px) and the rows' steps (up to 8 px, T376). */
 .mg-band {
   position: relative;
-  height: 40px;
+  height: 52px;
   overflow: hidden;
 }
 
+/* The flight is the icon's box: `left` is the icon's centre, whatever the name's width. */
 .mg-flight {
   position: absolute;
-  top: 4px;
+  top: calc(18px + var(--mg-y1));
   left: var(--mg-to);
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  transform: translateX(-50%);
+  width: 26px;
+  height: 26px;
+  margin-left: -13px;
   animation: mg-fly var(--mg-flight) var(--ease-out) both;
+}
+
+.mg-flight-from,
+.mg-flight-to {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  justify-content: center;
 }
 
 .mg-flight img {
@@ -36,33 +53,36 @@
   height: 26px;
 }
 
+/* All's four icons in a square of the icon's size, as on its button. */
 .mg-flight [data-choice='all'] img {
   width: 13px;
   height: 13px;
 }
 
-.mg-flight-from,
-.mg-flight-to {
-  display: inline-flex;
-}
-
-/* A switch's icon turns into the new season's on the way. */
+/* A switch's icon turns into the new season's within the first half: no two icons over each
+   other, each at half strength, on the way. */
 .mg-flight-from {
-  position: absolute;
-  animation: mg-fade-out var(--mg-flight) linear both;
+  animation: mg-icon-out var(--mg-flight) linear both;
 }
 
 .mg-flight-from + .mg-flight-to {
-  animation: mg-fade-in var(--mg-flight) linear both;
+  animation: mg-icon-in var(--mg-flight) linear both;
 }
 
+/* The name above its icon, centred on it; gone before the landing. */
 .mg-flight-name {
+  position: absolute;
+  bottom: calc(100% + 1px);
+  left: 50%;
   padding: 0 var(--space-1);
   font-size: var(--font-size-small);
   font-weight: var(--font-weight-strong);
+  line-height: 16px;
   white-space: nowrap;
   background: var(--color-surface);
   border-radius: var(--radius-pill);
+  transform: translateX(-50%);
+  animation: mg-name-out var(--mg-flight) linear both;
 }
 
 .mg-more {
@@ -73,42 +93,94 @@
   font-weight: var(--font-weight-strong);
 }
 
+/* To its slot by 80 %, then into its column: smaller, a little lower, gone. */
 @keyframes mg-fly {
-  from {
+  0% {
+    top: calc(18px + var(--mg-y0));
     left: var(--mg-from);
   }
-  to {
+
+  80% {
+    top: calc(18px + var(--mg-y1));
     left: var(--mg-to);
+    opacity: 1;
+    transform: none;
+    animation-timing-function: ease-in;
+  }
+
+  100% {
+    top: calc(18px + var(--mg-y1));
+    left: var(--mg-to);
+    opacity: 0;
+    transform: translateY(6px) scale(0.3);
   }
 }
 
-/* A first choice flies in from below on a phone (its lines are below the stage). */
+/* A first choice on a phone rises from below into its slot (its lines are below the stage). */
 @keyframes mg-rise {
-  from {
-    top: 40px;
+  0% {
+    top: 52px;
+    left: var(--mg-to);
     opacity: 0;
   }
-  to {
-    top: 4px;
+
+  20% {
     opacity: 1;
+  }
+
+  80% {
+    top: calc(18px + var(--mg-y1));
+    left: var(--mg-to);
+    opacity: 1;
+    transform: none;
+    animation-timing-function: ease-in;
+  }
+
+  100% {
+    top: calc(18px + var(--mg-y1));
+    left: var(--mg-to);
+    opacity: 0;
+    transform: translateY(6px) scale(0.3);
   }
 }
 
-@keyframes mg-fade-out {
-  from {
+@keyframes mg-icon-out {
+  0%,
+  15% {
     opacity: 1;
+    transform: scale(1);
   }
-  to {
+
+  30%,
+  100% {
     opacity: 0;
+    transform: scale(0.2);
   }
 }
 
-@keyframes mg-fade-in {
-  from {
+@keyframes mg-icon-in {
+  0%,
+  30% {
     opacity: 0;
+    transform: scale(0.2);
   }
-  to {
+
+  45%,
+  100% {
     opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes mg-name-out {
+  0%,
+  50% {
+    opacity: 1;
+  }
+
+  65%,
+  100% {
+    opacity: 0;
   }
 }
 

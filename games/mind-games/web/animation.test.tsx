@@ -10,8 +10,8 @@
  *                 hidden switch without a name; a flight lasts FLIGHT_MS (1.2 s, T371), the CSS
  *                 taking it; a step during a wave starts its own, the old flights finishing
  *                 where they are; a step with 20 switches flies 12 icons with a
- *                 "+8" tag and shows the step's exact counts at once; a wave is gone after its
- *                 flight; with reduced motion nothing flies and the counts change in place; the
+ *                 "+8" tag and shows the step's exact counts at once; a wave is gone at the
+ *                 end of its flight (slots, icon change and landing: ./landing.test); with reduced motion nothing flies and the counts change in place; the
  *                 result's winners light up for about 2 s, not with reduced motion. That the
  *                 band overlaps no button, line or chat panel at 1280 × 720 and 390 × 844 needs
  *                 a real layout: journey 38 checks it in the browser.
@@ -80,12 +80,12 @@ describe('Mind Games flights (02e §11.1)', () => {
     step(500);
     expect(flights()).toEqual([{ from: '', to: 'summer', name: 'Anna' }]);
     act(() => {
-      vi.advanceTimersByTime(FLIGHT_MS + 100);
+      vi.advanceTimersByTime(FLIGHT_MS);
     });
     step(1_500);
     expect(flights()).toEqual([{ from: 'summer', to: 'winter', name: null }]);
     act(() => {
-      vi.advanceTimersByTime(FLIGHT_MS + 100);
+      vi.advanceTimersByTime(FLIGHT_MS);
     });
     expect(flights()).toEqual([]);
     // The same step again flies nothing.
@@ -100,15 +100,32 @@ describe('Mind Games flights (02e §11.1)', () => {
     const band = screen.getByTestId('flight-band');
     expect(band.style.getPropertyValue('--mg-flight')).toBe('1200ms');
     act(() => {
-      vi.advanceTimersByTime(FLIGHT_MS);
+      vi.advanceTimersByTime(FLIGHT_MS - 1);
     });
     expect(flights()).toHaveLength(1);
+    // Removed at its end, nothing lingering (T376).
     act(() => {
-      vi.advanceTimersByTime(100);
+      vi.advanceTimersByTime(1);
     });
     expect(flights()).toEqual([]);
   });
 
+  it('flies a hidden switch without any name, as the counts show it', () => {
+    const step = feed([
+      ['anna', 'summer'],
+      ['anna', 'autumn', true],
+    ]);
+    step(500);
+    act(() => {
+      vi.advanceTimersByTime(FLIGHT_MS);
+    });
+    step(1_500);
+    expect(flights()).toEqual([{ from: 'summer', to: 'autumn', name: null }]);
+    expect(screen.getByTestId('count-autumn').textContent).toBe('1 player, 30 s ago');
+  });
+});
+
+describe('Mind Games waves and reduced motion (02e §11.1)', () => {
   it('starts a step’s wave while the last one flies; the old flights finish where they are', () => {
     const step = feed(
       [
@@ -130,7 +147,7 @@ describe('Mind Games flights (02e §11.1)', () => {
     // The same element flies on: nothing restarts or jumps.
     expect(screen.getByTestId('flight-band').querySelector('.mg-flight')).toBe(first);
     act(() => {
-      vi.advanceTimersByTime(FLIGHT_MS / 2 + 100);
+      vi.advanceTimersByTime(FLIGHT_MS / 2);
     });
     expect(flights()).toEqual([{ from: 'summer', to: 'winter', name: null }]);
     act(() => {
@@ -139,22 +156,6 @@ describe('Mind Games flights (02e §11.1)', () => {
     expect(flights()).toEqual([]);
   });
 
-  it('flies a hidden switch without any name, as the counts show it', () => {
-    const step = feed([
-      ['anna', 'summer'],
-      ['anna', 'autumn', true],
-    ]);
-    step(500);
-    act(() => {
-      vi.advanceTimersByTime(FLIGHT_MS + 100);
-    });
-    step(1_500);
-    expect(flights()).toEqual([{ from: 'summer', to: 'autumn', name: null }]);
-    expect(screen.getByTestId('count-autumn').textContent).toBe('1 player, 30 s ago');
-  });
-});
-
-describe('Mind Games waves and reduced motion (02e §11.1)', () => {
   it('caps a wave at 12 icons with "+8", and shows the step’s exact counts at once', () => {
     const players = Array.from({ length: 20 }, (_, i) => `p${String(i)}`);
     const step = feed(
@@ -166,7 +167,7 @@ describe('Mind Games waves and reduced motion (02e §11.1)', () => {
     );
     step(20_000);
     act(() => {
-      vi.advanceTimersByTime(FLIGHT_MS + 100);
+      vi.advanceTimersByTime(FLIGHT_MS);
     });
     step(40_000);
     expect(flights()).toHaveLength(12);
