@@ -1,17 +1,17 @@
 # 02c — Game Design: Seasonal Bomb Defusal
 
 > Part of the Seasonal Mini Games specification. Index: [README](README.md).
-> Game id `bomb-defusal`, name "Seasonal Bomb Defusal" (owner, decision 38). Everything not written here is as in [02](02-game-guess-the-number.md) and comes from the shared guess engine ([04](04-software-architecture.md) §4.7). Every game rule below was proposed by the architect on 2026-11-01 and is built as written: it is marked *(proposal)* and listed in [OPEN](../OPEN.md) to confirm after the owner has played. Every number is a setting with a default, a minimum and a maximum ([08](08-admin-settings.md)); the value shown is the default.
+> Game id `bomb-defusal`, name "Seasonal Bomb Defusal" (owner, decision 38). Everything not written here is as in [02](02-game-guess-the-number.md) and comes from the shared guess engine ([04](04-software-architecture.md) §4.7). Its game rules were proposed by the architect and confirmed by the owner after playing (O65); the *(proposal)* marks left in section headings are confirmed too. Every number is a setting with a default, a minimum and a maximum ([08](08-admin-settings.md)); the value shown is the default.
 
 ## 1. The game in one paragraph
 
-A bomb has a few wires of different colours. The server picks a secret **order** in which some of them must be cut. A player sends a whole cutting sequence at once; the server answers how many cuts **from the start** were right ("The first 2 cuts were right"). If even the first cut was wrong, the bomb **explodes**: the screen shows an explosion and the player waits a little longer before the next sequence (owner, decision 40). The timing is fast mode with a per-player cooldown (02 §1, owner decision 3); the secret is shared or individual, and the first correct sequence received wins (owner, decisions 4 and 5) *(proposal for every rule of this game)*.
+A bomb has a few wires of different colours. The server picks a secret **order** in which some of them must be cut. A player sends a whole cutting sequence at once; the server answers how many cuts **from the start** were right ("The first 2 cuts were right"). If even the first cut was wrong, the bomb **explodes**: the screen shows an explosion and the player waits a little longer before the next sequence (owner, decision 40). The timing is fast mode with a per-player cooldown (02 §1, owner decision 3); the secret is shared or individual, and the first correct sequence received wins (owner, decisions 4 and 5).
 
 ## 2. Matches and rounds
 
 - A match is always one game, chosen by the host when creating the match (owner, decision 41). The match lifecycle, its end, the waiting area, the Quick Test, the roster, team matches and the host playing along are those of 02 §2 and §4 (owner, decisions 16, 23, 24, 26–28, 34, 36).
 - The explosion penalty is chosen on the match form and holds for every round of the match (owner, decision 40); all other settings are chosen per round (§3).
-- **Dev bot** *(proposal)*: keeps the sequences still consistent with its own answers and sends one of them, chosen with the round's randomness, when its cooldown ends, with the human-like delay of [09](09-testing-strategy.md) §5.
+- **Dev bot**: keeps the sequences still consistent with its own answers and sends one of them, chosen with the round's randomness, when its cooldown ends, with the human-like delay of [09](09-testing-strategy.md) §5.
 
 ## 3. Round settings
 
@@ -19,15 +19,15 @@ Inherited unchanged from 02 §3: secret mode, cooldown, inactivity limit and war
 
 | Setting | Values | Default | Source |
 |---|---|---|---|
-| Wires `bomb.wires` | 4 – 8: the first N colours of the palette red, blue, yellow, green, white, black, orange, purple, in that order | 6 | *proposal* |
-| Cuts `bomb.cuts` | 3 – 6, at most the number of wires | 4 | *proposal* |
-| Explosion penalty `bomb.explosionPenaltyS` | 0 s – 30 s, whole seconds, per match | 5 s | 0 s allowed and the host chooses: owner, decision 40; default and maximum *proposal* |
+| Wires `bomb.wires` | 4 – 8: the first N colours of the palette red, blue, yellow, green, white, black, orange, purple, in that order | 6 | O65 |
+| Cuts `bomb.cuts` | 3 – 6, at most the number of wires | 4 | O65 |
+| Explosion penalty `bomb.explosionPenaltyS` | 0 s – 30 s, whole seconds, per match | 5 s | 0 s allowed and the host chooses: owner, decision 40; default and maximum: O65 |
 
-**Secret** *(proposal)*: an ordered choice of `cuts` different wires of the round, uniform over all such orders (6 wires, 4 cuts: 360 orders), drawn with the round DRBG under `secret/shared` or `secret/<playerId>` (04 §5.4). **Intro line**: "Shared bomb: 6 wires, 4 cuts" / "Everyone defuses their own bomb: 6 wires, 4 cuts".
+**Secret**: an ordered choice of `cuts` different wires of the round, uniform over all such orders (6 wires, 4 cuts: 360 orders), drawn with the round DRBG under `secret/shared` or `secret/<playerId>` (04 §5.4). **Intro line**: "Shared bomb: 6 wires, 4 cuts" / "Everyone defuses their own bomb: 6 wires, 4 cuts".
 
 ## 4. Guessing
 
-The action is the shared guess intent with `{ value: ["red", "blue", "green", "white"] }` (zod-validated, [05](05-security-threat-model.md)); nothing is sent per tap. A sequence is accepted only if all of these hold, in this order; the first failure decides the code (02 §5.1) *(proposal)*:
+The action is the shared guess intent with `{ value: ["red", "blue", "green", "white"] }` (zod-validated, [05](05-security-threat-model.md)); nothing is sent per tap. A sequence is accepted only if all of these hold, in this order; the first failure decides the code (02 §5.1):
 
 | # | Check | Code | The player reads |
 |---|---|---|---|
@@ -58,11 +58,11 @@ For an accepted sequence `g` and the guesser's secret `s`, the answer is `{ corr
 
 ### 5.2 The explosion (owner, decision 40)
 
-- **When:** exactly when `correct = 0`. With Spring Herald (§8.1) a player who cuts the hinted wire first never explodes *(proposal)*.
-- **Penalty:** the server adds `bomb.explosionPenaltyS` to that guess's cooldown through the accepted decision's `extraCooldownMs` (04 §4): `cooldownEndsAt = receivedAt + cooldown in force + penalty`. The same amount for every player, decided by the answer alone; with 0 s there is an explosion but no extra wait. Heatwave changes only the cooldown, never the penalty, and its 3 s floor applies to the cooldown (03 §2.2) *(proposal)*.
-- **Frost:** the penalty is not delayed, because the cooldown is not (03 §2.4): it is added at once, as one platform cooldown end sent with the acceptance (DECISIONS T120); no special case for this game. **Residual risk** *(proposal, OPEN)*: under Frost the guesser's own cooldown ring shows the penalty before the answer arrives, so that player alone knows of a wrong first cut up to `winter.delayS` early; and where the platform shows other players' cooldown state (02 §11), a longer cooldown of another player may be noticed.
-- **Animation** *(proposal)*: on the guesser's screen only, when the answer arrives: about 1 s of flash and shake over the main area with the explosion icon and "Boom!", then the row in the list. Never more than three flashes a second (WCAG 2.3.1). With `prefers-reduced-motion`: one static flash frame (tinted panel, icon, "Boom!") for about 1 s, no movement. Meaning is carried by the icon and the words, never by colour alone. Sound off by default (02 §12).
-- **What others see** *(proposal)*: an explosion is feedback, so others see it exactly where they see the answer (§6): under `full` the row reads "Anna: blue → red → yellow → white — Boom!" with the explosion icon and its comment, without animation; under `own` and `numbers`, and in individual mode, no sign of it (the roster stays as 02 §11; see the residual risk above).
+- **When:** exactly when `correct = 0`. With Spring Herald (§8.1) a player who cuts the hinted wire first never explodes.
+- **Penalty:** the server adds `bomb.explosionPenaltyS` to that guess's cooldown through the accepted decision's `extraCooldownMs` (04 §4): `cooldownEndsAt = receivedAt + cooldown in force + penalty`. The same amount for every player, decided by the answer alone; with 0 s there is an explosion but no extra wait. Heatwave changes only the cooldown, never the penalty, and its 3 s floor applies to the cooldown (03 §2.2).
+- **Frost:** the penalty is not delayed, because the cooldown is not (03 §2.4): it is added at once, as one platform cooldown end sent with the acceptance (DECISIONS T120); no special case for this game. **Residual risk** (accepted, O65): under Frost the guesser's own cooldown ring shows the penalty before the answer arrives, so that player alone knows of a wrong first cut up to `winter.delayS` early; and where the platform shows other players' cooldown state (02 §11), a longer cooldown of another player may be noticed.
+- **Animation**: on the guesser's screen only, when the answer arrives: about 1 s of flash and shake over the main area with the explosion icon and "Boom!", then the row in the list. Never more than three flashes a second (WCAG 2.3.1). With `prefers-reduced-motion`: one static flash frame (tinted panel, icon, "Boom!") for about 1 s, no movement. Meaning is carried by the icon and the words, never by colour alone. Sound off by default (02 §12).
+- **What others see**: an explosion is feedback, so others see it exactly where they see the answer (§6): under `full` the row reads "Anna: blue → red → yellow → white — Boom!" with the explosion icon and its comment, without animation; under `own` and `numbers`, and in individual mode, no sign of it (the roster stays as 02 §11; see the residual risk above).
 
 ## 6. What others learn
 
@@ -93,7 +93,12 @@ Platform feature, unchanged (03 §2.2). The explosion penalty is added on top of
 
 ### 8.3 Autumn — Leaf Fall (owner, decision 42)
 
-Every `autumn.intervalS` **one** wire that is not part of the sequence is **marked harmless**, chosen uniformly with the round DRBG under `leafFall/<k>` from the **candidates**: the round's wires minus the wires already marked and minus every wire in any secret of the round (shared: the one sequence; individual: every roster player's), so no secret wire is ever marked. Whether anyone has cut a wire, and every answer, play no part (decision 42 replaces the decision-37 candidate rule for this game). `autumn.count` and `autumn.minRemaining` do not apply, and the game has no setting for the number of wires per fall. The fall that marks the last candidate also adds one event row "Leaf Fall: every harmless wire is marked." and the falls end; the line appears only then. With a shared secret of 6 wires and 4 cuts there are two harmless wires in all, marked by the first two falls. In individual mode, with several players, there is often no wire that is in no bomb from the start: then no fall marks anything and no line appears *(proposal)*. One set of marks for everyone, at one moment (03 §1). A sequence with a marked wire is refused at no cost (`WIRE_HARMLESS`); the client says so without sending it. Banner and row: "Leaf Fall: the orange wire is harmless." on the season's tint with the season icon (02 §12).
+Every `autumn.intervalS` **one** wire that is not part of the sequence is **marked harmless**, chosen uniformly with the round DRBG under `leafFall/<k>` from the **candidates**.
+
+- **Candidates:** the round's wires minus the wires already marked and minus every wire in any secret of the round (shared: the one sequence; individual: every roster player's), so no secret wire is ever marked. Whether anyone has cut a wire, and every answer, play no part (decision 42; the decision-37 candidate rule does not apply in this game). `autumn.count` and `autumn.minRemaining` do not apply, and the game has no setting for the number of wires per fall.
+- **The last mark:** the fall that marks the last candidate also adds one event row "Leaf Fall: every harmless wire is marked." and the falls end; the line appears only then. With a shared secret of 6 wires and 4 cuts there are two harmless wires in all, marked by the first two falls. In individual mode, with several players, there is often no wire that is in no bomb from the start: then no fall marks anything and no line appears.
+- One set of marks for everyone, at one moment (03 §1). A sequence with a marked wire is refused at no cost (`WIRE_HARMLESS`); the client says so without sending it.
+- Banner and row: "Leaf Fall: the orange wire is harmless." on the season's tint with the season icon (02 §12).
 
 ### 8.4 Winter — Frost
 
@@ -101,7 +106,7 @@ Platform feature, unchanged (03 §2.4): answers, comments and explosions arrive 
 
 ### 8.5 Halving
 
-None. On a halving day this game runs a normal season round of that season, as owner decision 29 does for a hidden range; the host form does not offer the option *(proposal)*.
+None. On a halving day this game runs a normal season round of that season, as owner decision 29 does for a hidden range; the host form does not offer the option.
 
 ## 9. Winning, closest miss and the result page
 
@@ -109,21 +114,24 @@ A time-up result without a winner shows the round's closest guess instead, "Clos
 
 - Winning, placings, end conditions, winning margin, points, leaderboard and fairness proof are 02 §8–§10. The seed reproduces every secret, the Spring hints and the Leaf Fall marks.
 - **Reveal:** the secret sequence as numbered wire chips (swatch and name) that wrap as wholes within the column, never scrolling sideways or cutting a colour at 1280 × 720, 1920 × 1080 or 390 × 844 (DECISIONS T193); in individual mode every player's sequence in the result.
-- **Closest miss** (owner, decision 22; shared mode with a winner and no margin line): the other player's wrong sequence with the longest correct start, the earlier receive order on a tie: "Closest miss besides the winner: Anna, the first 3 cuts right (red → blue → yellow → black)." With a best start of 0 there is no line: an explosion is not a near miss *(proposal)*.
+- **Closest miss** (owner, decision 22; shared mode with a winner and no margin line): the other player's wrong sequence with the longest correct start, the earlier receive order on a tie: "Closest miss besides the winner: Anna, the first 3 cuts right (red → blue → yellow → black)." With a best start of 0 there is no line: an explosion is not a near miss.
 
 ## 10. Spectator view
 
-As 02 §11, with these differences *(proposal)*: visible are the wires of the round, the number of cuts, the marked harmless wires, the explosion penalty, and the round's list at the visibility of §6; a roster row shows the number of cuts and "cooling down" or "ready" as 02 §11. Never visible before the end: any secret sequence, any answer or explosion outside shared `full`, and individual Spring hints.
+As 02 §11, with these differences: visible are the wires of the round, the number of cuts, the marked harmless wires, the explosion penalty, and the round's list at the visibility of §6; a roster row shows the number of cuts and "cooling down" or "ready" as 02 §11. Never visible before the end: any secret sequence, any answer or explosion outside shared `full`, and individual Spring hints.
 
 ## 11. Player screen
 
-Inherited from 02 §12: intro card, top bar, banner above the list, the one list, host menu, team tiles, chat, plain English, WCAG 2.2 AA. Own *(proposal)*:
+Inherited from 02 §12: intro card, top bar, banner above the list, the one list, host menu, team tiles, chat, plain English, WCAG 2.2 AA. Own:
 
 - **Bomb block** (desktop: top of the right column; phone: compact line under the top bar): "6 wires, cut 4 in the right order", the explosion penalty ("Wrong first cut: +5 s"), the free hint, and the harmless wires as chips with a crossed swatch and a struck name.
 - **Help line:** one short line above the picker, always in view: "Tap colours in cutting order: they fill 1 → 6. Tap a filled box to empty it; Clear starts over." ("2 → 6" while the hint holds slot 1); one line on a desktop, at most two on a phone (DECISIONS T193).
 - **Sequence slots:** `cuts` numbered slots ("1", "2", …) above the wires, at least 44 px tall; a filled slot shows swatch and colour name and is a button that empties just that slot ("red in place 2, take it out"); with Spring Herald, slot 1 holds the hint's colour from `opensAt`, outlined and tinted in the season colour, named "hint: red in place 1", and nothing empties it (owner decision 60).
 - **Wire buttons:** one per wire, colour swatch plus colour name, at least 44 × 44 px, in palette order. Tapping fills the first empty slot. A wire already in the slots is disabled and shows its slot number; a harmless wire is disabled with a crossed, dimmed swatch, a struck name and the accessible label "red, harmless" (no word "harmless" inside the button, so nothing overflows). Swatches have a border of 3:1 against the background (white and black included); every label meets 4.5:1 in light and dark. Never colour alone: every wire, chip and list entry carries its name.
-- **Undo** empties the last filled slot, **Clear** empties all (the locked hint stays in both), **Cut** sends the whole sequence, which the server checks whole; Cut is enabled only with every slot filled, the cooldown over and no cut on its way, and reads "Wait 6 s" during the cooldown (DECISIONS T125). A wire marked harmless while in the slots stays there, marked, with "The orange wire is harmless now — take it out." The sequence survives the round opening and is cleared only when its answer arrives (as DECISIONS T76). Keyboard: Tab and Space, keys 1–8 for the wires in order, Backspace = Undo, Escape = Clear, Enter = Cut.
+- **Undo** empties the last filled slot, **Clear** empties all (the locked hint stays in both), **Cut** sends the whole sequence, which the server checks whole; Cut is enabled only with every slot filled, the cooldown over and no cut on its way, and reads "Wait 6 s" during the cooldown (DECISIONS T125).
+  - A wire marked harmless while in the slots stays there, marked, with "The orange wire is harmless now — take it out."
+  - The sequence survives the round opening and is cleared only when its answer arrives (as DECISIONS T76).
+  - Keyboard: Tab and Space, keys 1–8 for the wires in order, Backspace = Undo, Escape = Clear, Enter = Cut.
 - **List rows:** name, the sequence as colour dots in order, each with its colour's name as accessible text and tooltip (DECISIONS T143), "First 2 cuts right" ("First cut right") in text on the same line (or the explosion icon and "Boom!"), the comment under it; own rows tinted as 02 §12.
 - **Desktop 1280 × 720:** the list fills the main area (at least 14 rows with 6 wires, owner decisions 35 and 50); under it the input area: slots, wire buttons in one row (two rows of four with 8 wires), and the cooldown ring with Undo, Clear and Cut; the right column holds the bomb block only (02 §12).
 - **Phone 390 × 844:** top bar, bomb line, the list filling the height left (the only thing that scrolls), team tiles and Chat, then pinned at the bottom: slots in one row, wire buttons (at least 44 px tall) in two even rows of up to four (3 + 3 with six wires, 4 + 4 with eight, 3 + 2 with five, 4 + 3 with seven; one row with four), and a row with the ring, Undo, Clear and Cut.

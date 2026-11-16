@@ -38,7 +38,7 @@
 | visibility | text | `public`, `unlisted` |
 | max_players | int | within `match.maxPlayers` bounds |
 | counts_for_leaderboard | bool | default true |
-| team_match | bool | default true: the season teams play (owner decision 34; migration 0012) |
+| team_match | bool | default true: the season teams play (owner decision 34) |
 | created_by | uuid FK accounts | the host |
 | created_at, closed_at | timestamptz | |
 | aborted_reason, aborted_by | text NULL | as Bingo D17 (`host` or `system`); for a closed match how it closed: the host with no reason, or `system` with `idle` (owner decisions 27, 28; DECISIONS T83) or with `complete`, a series whose last round is played ([04](04-software-architecture.md) §4.8 rule 7) |
@@ -75,7 +75,7 @@
 | opens_at, ended_at | timestamptz NULL | |
 | end_reason | text NULL | `solved`, `allSolved`, `timeUp`, `host`, `noPlayers` |
 | aborted_reason, aborted_by | text NULL | |
-| outcome_words | text NULL | a phased round only: what won in the game's words once it has ended, an empty text when nobody won (migration 0019; DECISIONS T333); NULL for every guess round |
+| outcome_words | text NULL | a phased round only: what won in the game's words once it has ended, an empty text when nobody won (DECISIONS T333); NULL for every guess round |
 | created_by | uuid FK | |
 
 **round_events** — `round_id`, `seq bigint`, `type text`, `payload jsonb`, `occurred_at`, `actor_account_id NULL`. PK `(round_id, seq)`. **Append-only** by trigger: UPDATE and DELETE are rejected for every role. Payload schemas per type live in `packages/contracts/src/events/` (platform) and `games/<game>/src/events.ts` (game). Matches and rounds made by tests are aborted, never deleted.
@@ -84,7 +84,10 @@
 
 ### 2.4 `round_results`
 
-`round_id`, `player_key` (account id, or `bot-NN` in development), `place int NULL` (NULL = took part / not solved; always NULL in a `phased` round, whose winners share the win), `won bool` (a round win: `place = 1` in the guess games, the game's `outcome` in a `phased` one; added with the phased class, existing rows from `place = 1`), `solved bool`, `solve_receive_seq bigint NULL`, `solve_at timestamptz NULL`, `guesses int`, `team text NULL`, `points int`. No secret column: the result view and `/rounds/:id/verify` derive every player's secret from the sealed seed, as everything else does ([05](05-security-threat-model.md) §3; DECISIONS T265). PK `(round_id, player_key)`. UNIQUE `(round_id, place)` WHERE `place IS NOT NULL`, so two players can never share a place. Written in the transaction that appends `RoundEnded`.
+- **Columns:** `round_id`, `player_key` (account id, or `bot-NN` in development), `place int NULL` (NULL = took part / not solved; always NULL in a `phased` round, whose winners share the win), `won bool` (a round win: `place = 1` in the guess games, the game's `outcome` in a `phased` one), `solved bool`, `solve_receive_seq bigint NULL`, `solve_at timestamptz NULL`, `guesses int`, `team text NULL`, `points int`.
+- **No secret column:** the result view and `/rounds/:id/verify` derive every player's secret from the sealed seed, as everything else does ([05](05-security-threat-model.md) §3; DECISIONS T265).
+- **Keys:** PK `(round_id, player_key)`. UNIQUE `(round_id, place)` WHERE `place IS NOT NULL`, so two players can never share a place.
+- Written in the transaction that appends `RoundEnded`.
 
 **round_team_results** — `round_id`, `team`, `members int`, `points int`, `won bool`. PK `(round_id, team)`.
 
@@ -104,9 +107,21 @@
 
 ### 2.7 Round event types (platform)
 
-`RoundCreated` (settings, commitment), `CountdownStarted` (roster, teams, `opensAt`), `RoundOpened`, `GuessAccepted` (`playerKey`, `receiveSeq`, `receivedAt`, `value`, `cooldownEndsAt`), `SpecialFired` (special, index, effect summary), `CooldownChanged` (new value), `PlayerSolved` (`playerKey`, `receiveSeq`, `place`), `PlayerTimedOut` (`playerKey`, `at`: the player's inactivity limit, owner decision 71, [02](02-game-guess-the-number.md) §5.3; stamped with the limit's time, never the time the server noticed it, so a late timer or a restart writes the same event, DECISIONS T267), `HeldDelivered` (Frost: `upTo`, the last log seq delivered; written by the round actor, DECISIONS T41), `RoundEnded` (reason, placings, team results, seed when revealed), `RoundAborted` (reason, by), `PlayerEntered` (`playerKey`, `at`: a `phased` round's first accepted action of that player, [04](04-software-architecture.md) §4.8 rule 2), `MemberChanged` (`playerKey`, `active`, `at`: a match player joined, left or was removed while a `phased` round ran, rule 3; DECISIONS T289), `MarginNoted` (`playerKey`, `ms`: the first would-be correct guess after a shared win inside `round.marginWindowS`, [02](02-game-guess-the-number.md) §9). A game event is logged as `Game` (`audience`, `feedback`, `event`).
+- `RoundCreated` (settings, commitment), `CountdownStarted` (roster, teams, `opensAt`), `RoundOpened`.
+- `GuessAccepted` (`playerKey`, `receiveSeq`, `receivedAt`, `value`, `cooldownEndsAt`), `SpecialFired` (special, index, effect summary), `CooldownChanged` (new value), `PlayerSolved` (`playerKey`, `receiveSeq`, `place`).
+- `PlayerTimedOut` (`playerKey`, `at`: the player's inactivity limit, owner decision 71, [02](02-game-guess-the-number.md) §5.3; stamped with the limit's time, never the time the server noticed it, so a late timer or a restart writes the same event, DECISIONS T267).
+- `HeldDelivered` (Frost: `upTo`, the last log seq delivered; written by the round actor, DECISIONS T41).
+- `RoundEnded` (reason, placings, team results, seed when revealed), `RoundAborted` (reason, by).
+- `PlayerEntered` (`playerKey`, `at`: a `phased` round's first accepted action of that player, [04](04-software-architecture.md) §4.8 rule 2), `MemberChanged` (`playerKey`, `active`, `at`: a match player joined, left or was removed while a `phased` round ran, rule 3; DECISIONS T289).
+- `MarginNoted` (`playerKey`, `ms`: the first would-be correct guess after a shared win inside `round.marginWindowS`, [02](02-game-guess-the-number.md) §9).
+- A game event is logged as `Game` (`audience`, `feedback`, `event`).
 
-Game events of Guess The Number: `FeedbackGiven` (`playerKey`, `receiveSeq`, `receivedAt`, `value`, `feedback`, `comment`; to the guesser, marked `feedback: true`), `GuessFed` (`playerKey`, `guesses`, plus `value` and `feedback` as the visibility allows, and `comment` exactly where `feedback` is; to the room, marked `feedback: true` when it carries an answer). `comment` is the closeness comment ([02](02-game-guess-the-number.md) §6.3): `tier`, the line's `text`, and its `pool` and `index` in the catalogue, or null when the round has the comments off (owner decision 21, DECISIONS T73). No event carries a narrowed range (owner decision 17), `HintGiven` (Spring Herald: `playerKey` or null for the shared hint, `hint`), `NumbersRemoved` (Leaf Fall: `index`, `numbers`), `RangeHalved` (`index`, `playerKey` or null, `range` or null, `size`: the shared window, a player's own range, or the room's line with the size).
+Game events of Guess The Number:
+
+- `FeedbackGiven` (`playerKey`, `receiveSeq`, `receivedAt`, `value`, `feedback`, `comment`; to the guesser, marked `feedback: true`).
+- `GuessFed` (`playerKey`, `guesses`, plus `value` and `feedback` as the visibility allows, and `comment` exactly where `feedback` is; to the room, marked `feedback: true` when it carries an answer).
+- `comment` is the closeness comment ([02](02-game-guess-the-number.md) §6.3): `tier`, the line's `text`, and its `pool` and `index` in the catalogue, or null when the round has the comments off (owner decision 21, DECISIONS T73). No event carries a narrowed range (owner decision 17).
+- `HintGiven` (Spring Herald: `playerKey` or null for the shared hint, `hint`), `NumbersRemoved` (Leaf Fall: `index`, `numbers`), `RangeHalved` (`index`, `playerKey` or null, `range` or null, `size`: the shared window, a player's own range, or the room's line with the size).
 
 Game events of Seasonal Mind Games ([02e](02e-game-mind-games.md)): `ChoiceMade` (`playerKey`, `receivedAt`, `choice`, `from` or null for a first choice, `hidden`, `hide`: the chooser's box, DECISIONS T305; to the chooser), `ChoiceFed` (to the room, so held for the delay: `kind` `first` with `player` and `choice`, `switch` with `player`, `from` and `choice`, or `counts` for a hidden switch without either; always `counts` per option and `entrants` right after it, so the client never counts).
 
@@ -189,7 +204,13 @@ As Bingo 05 §3 for dashboard, settings, integrations, accounts, moderation, upl
 
 ### 4.4 Server → client events
 
-On the wire, committed events arrive as `events` frames (Bingo 06 §4, as built; DECISIONS T35). The match room gets `{ roundId, s, events: [{ s, at, event }] }` with every seq of the batch, so a gap means a missed frame; an event not meant for the room is `null` there. A player's room gets `{ roundId, events }` with only that player's own events, the host room likewise. A `phased` round with a delay sends the match room `{ roundId, rs, events }` instead: only events released once `D` old, numbered by the round's release sequence `rs`, without any `null` place holder, so no number counts what is not released yet ([04](04-software-architecture.md) §4.8 rule 5); the frame's field is `s` as for every round, holding `rs`. Its player frames carry the player's own events at once, each with the current `rs` as its `s` (DECISIONS T291). The `event` values are the projected public or per-player forms below:
+On the wire, committed events arrive as `events` frames (Bingo 06 §4, as built; DECISIONS T35):
+
+- The match room gets `{ roundId, s, events: [{ s, at, event }] }` with every seq of the batch, so a gap means a missed frame; an event not meant for the room is `null` there.
+- A player's room gets `{ roundId, events }` with only that player's own events, the host room likewise.
+- A `phased` round with a delay sends the match room `{ roundId, rs, events }` instead: only events released once `D` old, numbered by the round's release sequence `rs`, without any `null` place holder, so no number counts what is not released yet ([04](04-software-architecture.md) §4.8 rule 5); the frame's field is `s` as for every round, holding `rs`. Its player frames carry the player's own events at once, each with the current `rs` as its `s` (DECISIONS T291).
+
+The `event` values are the projected public or per-player forms below:
 
 | Event | Room | Data |
 |---|---|---|
@@ -226,4 +247,6 @@ Budget at 500 players and a 3 s cooldown: about 170 accepted guesses a second fo
 
 ### 4.6 Metrics (in addition to Bingo 06 §10)
 
-`smg_guess_total{result}`, `smg_guess_ack_seconds`, `smg_round_queue_depth`, `smg_round_batch_seconds`, `smg_special_lag_seconds`, `smg_frost_delivery_lag_seconds`, `smg_ws_rtt_seconds` (as the client measured it at its previous clock sync), `smg_rounds{status}`, `smg_season_feed_age_seconds` (−1 before the first good answer). From Bingo 08 §6: `smg_http_requests_total{method,route,status}`, `smg_http_duration_seconds{method}`, `smg_ws_connections`, `smg_ws_intents_total{type,result}`. Labels are route patterns and codes, never match codes or accounts (DECISIONS T96).
+- `smg_guess_total{result}`, `smg_guess_ack_seconds`, `smg_round_queue_depth`, `smg_round_batch_seconds`, `smg_special_lag_seconds`, `smg_frost_delivery_lag_seconds`, `smg_ws_rtt_seconds` (as the client measured it at its previous clock sync), `smg_rounds{status}`, `smg_season_feed_age_seconds` (−1 before the first good answer).
+- From Bingo 08 §6: `smg_http_requests_total{method,route,status}`, `smg_http_duration_seconds{method}`, `smg_ws_connections`, `smg_ws_intents_total{type,result}`.
+- Labels are route patterns and codes, never match codes or accounts (DECISIONS T96).

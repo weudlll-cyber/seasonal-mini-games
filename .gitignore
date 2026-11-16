@@ -16,15 +16,12 @@ logs/
 night-task.md
 # One-off scripts of a run, deleted when the step is done
 tmp/
-# Screenshots of the latest browser-test run (e2e/screens.ts and the specs write them)
-reports/screens/latest/
-# Screenshots never enter a working branch: a run's images go to an orphan branch
-# shots/<night> (DECISIONS T146); text reports under reports/ stay tracked.
-reports/**/*.png
-reports/**/*.jpg
-reports/**/*.jpeg
-reports/**/*.webp
-reports/**/*.gif
+# Local outputs: screenshots of the latest browser-test run (e2e/screens.ts and the specs
+# write them to reports/screens/latest/), play-throughs, load and scan results. Nothing under
+# reports/ is tracked: a run's images and its play-through go to an orphan branch
+# shots/<night> (DECISIONS T146); the reports tracked until 2026-11-16 are in the tag
+# archive/reports-2026-11-16.
+reports/
 # Editor and OS noise
 .DS_Store
 Thumbs.db

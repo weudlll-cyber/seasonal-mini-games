@@ -1,7 +1,7 @@
 # 11 — Roadmap
 
 > Part of the Seasonal Mini Games specification. Index: [README](README.md).
-> Phases are ordered by dependency. Each phase ends with something the owner can see in the browser, except Phase 0. Work packages with acceptance criteria are written per phase when that phase starts, as Bingo's 15 did for Bingo. The owner answered the first draft's questions on 2026-10-24 (DECISIONS O8–O15). New proposals are built as written unless the owner changes them ([OPEN.md](../OPEN.md)).
+> Phases are ordered by dependency. Each phase ends with something the owner can see in the browser, except Phase 0. Work packages with acceptance criteria are written per phase when that phase starts, as Bingo's 15 did for Bingo. The first draft's questions are answered in DECISIONS O8–O15. New proposals are built as written unless the owner changes them ([OPEN.md](../OPEN.md)).
 
 ## 1. Phases
 
@@ -54,13 +54,13 @@ Listed in the order of the vision. Each one starts only after an owner decision 
 5. Seasonal Higher Or Lower
 6. Seasonal Mystery Object
 
-Seasonal Target, Seasonal Safecracker and Seasonal Bomb Defusal are the next games (owner, decision 38): their designs are [02d](02d-game-seasonal-target.md), [02b](02b-game-safecracker.md) and [02c](02c-game-bomb-defusal.md), with the architect's rules as proposals to confirm once the owner has played. They and Guess The Number share one guess engine ([04](04-software-architecture.md) §4.7, DECISIONS T117, which closes T21).
+Seasonal Target, Seasonal Safecracker and Seasonal Bomb Defusal are the next games (owner, decision 38): their designs are [02d](02d-game-seasonal-target.md), [02b](02b-game-safecracker.md) and [02c](02c-game-bomb-defusal.md); the owner confirmed their rules after playing them (O65). They and Guess The Number share one guess engine ([04](04-software-architecture.md) §4.7, DECISIONS T117, which closes T21).
 
-Seasonal Mind Games is designed (owner, decisions 76–90, 2026-11-12; [02e](02e-game-mind-games.md)). It is not a guess game: it needs the timing class `phased` ([04](04-software-architecture.md) §4.8), which is built first as a contract change of its own. Its work packages are §4.
+Seasonal Mind Games is designed (owner decisions 76–90; [02e](02e-game-mind-games.md)). It is not a guess game: it needs the timing class `phased` ([04](04-software-architecture.md) §4.8), a contract change of its own. Its work packages are §4.
 
 ## 4. Seasonal Mind Games: work packages
 
-In dependency order; each is one block of work with its own commit, push and report (CLAUDE.md). Sizes: **S** a small block, **M** a normal one, **L** a full one. The three MG-C packages change platform code and nothing in `games/`; the five MG packages change only `games/mind-games/`, the two registry lines and the docs (04 §4.6). Branch `feat/mind-games` for all of them; merged only when a task allows it.
+In dependency order; all eight are done and on `master`. Sizes: **S** a small block, **M** a normal one, **L** a full one. The three MG-C packages change platform code and nothing in `games/`; the five MG packages change only `games/mind-games/`, the two registry lines and the docs (04 §4.6).
 
 | # | Package | Contents | Needs | Size |
 |---|---|---|---|---|
@@ -72,5 +72,3 @@ In dependency order; each is one block of work with its own commit, push and rep
 | MG-3 | Animation | The round view's flights from the delayed feed only (02e §11.1): first choices, switches with and without a name, waves with their cap, the winners lighting up at the end, reduced motion without flights, the flight band inside the stage; component tests and the checks of 09 §4.2 (owner decision 90) | MG-2 | M |
 | MG-4 | Pre-picks | The prefs schema (pre-picks per round and the box), the Your pre-picks panel in the waiting area, the own notice for a refused pre-pick, the box kept through prefs; tests of MG6 | MG-3 | S |
 | MG-5 | Quick Test and journeys | The dev bot (its three ways to play from its own view), the game's Quick Test fields, e2e journeys 38–41 once in Chromium, the L5 scenario in the load driver run once on the development machine, at most about 10 screenshots for the owner (O70), one `pnpm verify` | MG-4 | M |
-
-**Night chains:** MG-C1 → MG-C2 → MG-C3 run in one night chain (platform only, each needs the one before); MG-1 → MG-2 → MG-3 → MG-4 → MG-5 run in a second night chain, after the first chain's report has been read, since the game is built on the contract as it then stands. MG-3 is a package of its own so that the animation is built and reviewed apart from the views; MG-5 ends with a Quick Test the owner plays along with (09 §4.2).

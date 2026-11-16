@@ -34,7 +34,7 @@ seasonal-mini-games/
 │  ├─ safecracker/         02b; src/ and web/ as above, on the guess engine
 │  ├─ bomb-defusal/        02c; likewise
 │  ├─ seasonal-target/     02d; likewise
-│  └─ mind-games/          02e; src/ and web/, timing class phased, not on the guess engine (src/ built in MG-1, web/ in MG-2, 11 §4)
+│  └─ mind-games/          02e; src/ and web/, timing class phased, not on the guess engine
 ├─ apps/
 │  ├─ server/src/          main.ts, cli.ts, config/, http/, auth/, realtime/ (gateway, intents, inOrder),
 │  │                       round/ (actor host, pgRoundStore, pgScheduler), seasons/ (feed client), db/, dev/
@@ -90,27 +90,47 @@ Every port of this repository differs from every port used in the Bingo reposito
 | App port inside its container | **3100** | 3000 |
 | Test host page for e2e journey 8 (development only) | **5420** | — |
 | Browser tests' own server, player client and admin app ([09](09-testing-strategy.md) §1.1) | **3940**, **5440**, **5441** | — |
-| Journey 36's website-mode server and stand-in website | **3960** (3930 until 2026-11-14, now taken by another project), **5430** | — |
+| Journey 36's website-mode server and stand-in website | **3960**, **5430** | — |
 | Load check's own server ([09](09-testing-strategy.md) §1.1) | **3950** | — |
 | Metrics port inside its container | **9465** | 9464 |
 
 Container-side ports of the third-party images (PostgreSQL 5432, Mailpit 1025 and 8025) are not bound on the host and are the same in both repositories.
 
-**Off-limits** (used by other projects on the development machine, as listed in Bingo 08 §1.1 and Bingo `ops/.env.dev.example`): 3800, 5380, 7880, 7881, 3478, 5349, 50000–50499 (Seasonal Entertainment), 4000, 5173, 4173 (race game), 5273, 8000 (mining game), and all Bingo ports above. Before starting anything on a port, check that it is free. If a port of this project is held by an earlier run of this project, stop that process first.
+**Off-limits** (used by other projects on the development machine, as listed in Bingo 08 §1.1 and Bingo `ops/.env.dev.example`): 3800, 5380, 7880, 7881, 3478, 5349, 50000–50499 (Seasonal Entertainment), 4000, 5173, 4173 (race game), 5273, 8000 (mining game), 3930 (another project), and all Bingo ports above. Before starting anything on a port, check that it is free. If a port of this project is held by an earlier run of this project, stop that process first.
 
-The development PostgreSQL holds the developer's database `smg` and the automated runs' own `smg_test` and `smg_load` ([09](09-testing-strategy.md) §1.1). `pnpm dev:reset-db` gives the developer's database a clean start: it drops and creates `smg` and runs the migrations (`apps/server/tools/resetDevDatabase.ts`). It refuses anything but the settings of `apps/server/dev.env` (development mode, `SMG_DEV=1`, the database `smg` on 127.0.0.1:5510) and refuses while a server answers on 3910; everything in that database is lost. No row is deleted past a trigger or constraint: the whole database is replaced (owner, 2026-11-13; DECISIONS O94, T345).
+The development PostgreSQL holds the developer's database `smg` and the automated runs' own `smg_test` and `smg_load` ([09](09-testing-strategy.md) §1.1). `pnpm dev:reset-db` gives the developer's database a clean start: it drops and creates `smg` and runs the migrations (`apps/server/tools/resetDevDatabase.ts`). It refuses anything but the settings of `apps/server/dev.env` (development mode, `SMG_DEV=1`, the database `smg` on 127.0.0.1:5510) and refuses while a server answers on 3910; everything in that database is lost. No row is deleted past a trigger or constraint: the whole database is replaced (DECISIONS O94, T345).
 
-Every page of the player client ends with a small **build badge** at its bottom right, in every build (owner, 2026-11-14; DECISIONS O95, T346): "Mini Games · &lt;short commit&gt; · &lt;build date&gt;", and in a development build "Mini Games · dev · &lt;branch&gt; · &lt;commit&gt; · &lt;date&gt;" (the values of the dev server's start). It stands in the page's flow, under the screen, so it covers nothing. A Docker build has no `.git`: the installer and CI pass the commit as the build argument `SMG_BUILD_COMMIT`. Development features need `SMG_DEV=1`, which the server refuses unless `SMG_PUBLIC_URL` is a localhost address (fail closed, as Bingo).
+- Every page of the player client ends with a small **build badge** at its bottom right, in every build (DECISIONS O95, T346): "Mini Games · &lt;short commit&gt; · &lt;build date&gt;", and in a development build "Mini Games · dev · &lt;branch&gt; · &lt;commit&gt; · &lt;date&gt;" (the values of the dev server's start). It stands in the page's flow, under the screen, so it covers nothing. A Docker build has no `.git`: the installer and CI pass the commit as the build argument `SMG_BUILD_COMMIT`.
+- Development features need `SMG_DEV=1`, which the server refuses unless `SMG_PUBLIC_URL` is a localhost address (fail closed, as Bingo).
 
 ## 5. DevOps (adopted)
 
-Bingo 08 applies with the names of [04](04-software-architecture.md) §2.2: environments (§1), branching and release flow (§2), CI jobs including e2e on every push and the `load` job before a release (§3), containers (§4: multi-stage, non-root uid 10001, read-only root FS, healthcheck `/healthz`, image ≤ 250 MB), runtime configuration through validated env vars (§5), observability with the metrics of [06](06-data-model-api-realtime.md) §4.6 (§6), dependency and patch policy (§7), and developer experience (§8: `pnpm dev` starts server and both clients; PostgreSQL and Mailpit through `docker compose --env-file ops/.env.dev.example -f ops/compose.dev.yml up -d`; `pnpm verify` runs CI's blocking checks).
+Bingo 08 applies with the names of [04](04-software-architecture.md) §2.2:
+
+- environments (§1);
+- branching and release flow (§2);
+- CI jobs including e2e on every push and the `load` job before a release (§3);
+- containers (§4: multi-stage, non-root uid 10001, read-only root FS, healthcheck `/healthz`, image ≤ 250 MB);
+- runtime configuration through validated env vars (§5);
+- observability with the metrics of [06](06-data-model-api-realtime.md) §4.6 (§6);
+- dependency and patch policy (§7);
+- developer experience (§8: `pnpm dev` starts server and both clients; PostgreSQL and Mailpit through `docker compose --env-file ops/.env.dev.example -f ops/compose.dev.yml up -d`; `pnpm verify` runs CI's blocking checks).
 
 No CI exists until the first code work package (decision 7: specification first).
 
 ## 6. Deployment (adopted, with differences)
 
-Bingo 09 applies with the names of [04](04-software-architecture.md) §2.2: single VPS with Docker Compose (§1), files on the server (§2), the one-command installer with both install types and every answer as a flag (§3), the `smg` CLI with `status`, `update`, `confirm`, `rollback`, `backup`, `restore`, `logs`, `admin create-super` (standalone; a website install promotes a website account with `admin promote-super`, DECISIONS T243), `maintenance` (§4), bootstrap (§5), age-encrypted backups pulled to the operator's machine (§6), one environment per server (§7), variants (§8), and the hardening checklist (§9).
+Bingo 09 applies with the names of [04](04-software-architecture.md) §2.2:
+
+- single VPS with Docker Compose (§1);
+- files on the server (§2);
+- the one-command installer with both install types and every answer as a flag (§3);
+- the `smg` CLI with `status`, `update`, `confirm`, `rollback`, `backup`, `restore`, `logs`, `admin create-super` (standalone; a website install promotes a website account with `admin promote-super`, DECISIONS T243), `maintenance` (§4);
+- bootstrap (§5);
+- age-encrypted backups pulled to the operator's machine (§6);
+- one environment per server (§7);
+- variants (§8);
+- the hardening checklist (§9).
 
 Differences:
 
@@ -118,7 +138,10 @@ Differences:
 - **Website install type (O66):** players sign in only through the website's login, as in Bingo (`SMG_AUTH_MODE=website`). `SMG_BASE_PATH=/games/mini-games/`. The installer does the whole setup and never edits a website file (DECISIONS T230–T234):
   - It detects the website's mode: its own Caddy (compose project `seasonal-site`) or host nginx in front of the site container. It reads what the website's installer prepared: the routes folder (`/etc/seasonal/routes/` for nginx; for Caddy, the host folder mounted at `/etc/caddy/routes` in the website's Caddy container), the site's local port (`/etc/seasonal/site-local-port`, nginx) and the sync token (`/etc/seasonal/games-sync-token`).
   - It probes `/api/games/mini-games/authorize` from the server. A 404, or a missing token, means the website has Mini Games switched off: the installer stops and names the website's command, `cd <website checkout> && sudo ./deploy/install.sh --update --mini-games`.
-  - It writes the game's own route file, mode 0600 because it holds the proxy secret: `/etc/seasonal/routes/mini-games.conf` (nginx) or `mini-games.caddy` in the website's Caddy routes folder. The route sends `/games/mini-games/` (HTTP and WebSocket) to the app and clears client-sent `X-Acting-User*`, `X-Acting-Guest` and `X-Smg-Proxy-Secret` on every path. Only the sign-in route `/games/mini-games/auth/website` asks the website's authorize endpoint (`auth_request` / `forward_auth`, with `X-Original-Method`) and passes its identity headers. The secret is added only after that call. A refusal goes to `/games/mini-games/auth/website/login` with the same query, and `/games/mini-games/metrics` answers 404. The website's session cookie (`__Host-se.sid`, `se.sid`) goes to the authorize call with the browser's Cookie but never to the app (HTTP and WebSocket); the game's own cookies pass (DECISIONS T281).
+  - It writes the game's own route file, mode 0600 because it holds the proxy secret: `/etc/seasonal/routes/mini-games.conf` (nginx) or `mini-games.caddy` in the website's Caddy routes folder.
+    - The route sends `/games/mini-games/` (HTTP and WebSocket) to the app and clears client-sent `X-Acting-User*`, `X-Acting-Guest` and `X-Smg-Proxy-Secret` on every path.
+    - Only the sign-in route `/games/mini-games/auth/website` asks the website's authorize endpoint (`auth_request` / `forward_auth`, with `X-Original-Method`) and passes its identity headers. The secret is added only after that call. A refusal goes to `/games/mini-games/auth/website/login` with the same query, and `/games/mini-games/metrics` answers 404.
+    - The website's session cookie (`__Host-se.sid`, `se.sid`) goes to the authorize call with the browser's Cookie but never to the app (HTTP and WebSocket); the game's own cookies pass (DECISIONS T281).
   - It checks the proxy's configuration (`nginx -t`, `caddy validate`). On a failure it puts the earlier file back and stops; otherwise it reloads the proxy.
   - It ends with a check through the website: `/games/mini-games/` answers, the sign-in route without a session ends at the website's `/login?next=…`, and `/embed/chat?room=mini-games` answers.
   - The app joins the website's Docker network as `smg-mini-games-<env>:3100` in both modes. It reads the account-changes feed there (`SMG_WEBSITE_LOCAL_URL=http://site:3800`). Behind host nginx it also publishes `127.0.0.1:3920` on its own edge network `172.30.250.0/24`.
