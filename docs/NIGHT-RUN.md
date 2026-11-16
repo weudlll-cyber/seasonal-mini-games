@@ -6,8 +6,8 @@
 
 Status, piece by piece (updated after every piece).
 
-- **1. Merge `feat/mg-flight-speed`** (T371, T372, T376, T377): running. MG-FLIGHT-CLEAN: no brief for it reached this session and nothing of that name is in the repository; not started (see "needs the owner's word").
-- **2. Browser tests:** Chromium on every push and the merge gate, Firefox and WebKit nightly: open.
+- **1. Merge `feat/mg-flight-speed`** (T371, T372, T376, T377): done, PR #17 merged as `297bb59`; its required checks green in the PR run and the push run; the branch deleted on origin and locally. The first runs found two defects, fixed before the merge (`69bfa7f`): a phone's All card shrank All's icons to 10.7 px (a card now shows at most what fits at 82 % of an icon's size, the rest joins "+N", T377), and two unhandled 57P01 errors after a green authorization matrix (the harness now expects its container's shutdown). Journey 12 failed once in a push run (known flake, BACKLOG). MG-FLIGHT-CLEAN: no brief for it reached this session and nothing of that name is in the repository; not started.
+- **2. Browser tests:** Chromium on every push and the merge gate, Firefox and WebKit nightly: running on `chore/cleanup`.
 - **3. Docs:** current, short, lists instead of padded tables: open.
 - **4. Code and tests:** dead code, files over the limit, tests that check nothing current: open.
 - **5. Morning handover:** open.
