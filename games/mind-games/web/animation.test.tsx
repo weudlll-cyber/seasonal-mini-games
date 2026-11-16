@@ -61,11 +61,20 @@ function feed(moves: Moves, cfg?: Parameters<typeof spectatorView>[2]) {
 beforeEach(() => {
   vi.useFakeTimers();
   reducedMotion(false);
+  // jsdom lays nothing out: each card 190 px wide, 10 px apart, so a card has room for icons.
+  vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+    const i = ['spring', 'summer', 'autumn', 'winter', 'all'].indexOf(
+      this.getAttribute('data-choice') ?? '',
+    );
+    const card = this.classList.contains('mg-frame') && i >= 0;
+    return DOMRect.fromRect({ x: card ? i * 200 : 0, width: card ? 190 : 0 });
+  });
 });
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 describe('Mind Games flights (02e §11.1)', () => {

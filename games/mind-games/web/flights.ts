@@ -12,7 +12,8 @@
  *                 counts no new line explains: each option that lost a player sends a nameless
  *                 icon to one that gained one, in option order. One step's moves with the same
  *                 from → to fly as one icon, "×N" from two on and without a name (DECISIONS
- *                 T377); at most 12 icons in a wave, the players of the rest as "+8". Nothing is
+ *                 T377); at most 12 icons in a wave and, in one card, at most as many as fit at
+ *                 82 % of their size; the players of the rest as "+8". Nothing is
  *                 counted for display: the counts shown are always the step's own. Each icon
  *                 gets its points (`placeWave`): the icons landing in one card spread
  *                 symmetrically around the card's measured middle, a lone one on it, one icon's
@@ -197,21 +198,44 @@ export type Claim = readonly [string, Spot];
 // The points in use, by the icons of the waves still near them.
 export type Taken = ReadonlyMap<string, readonly Spot[]>;
 
+// The most icons of `size` a card shows at once: as many as fit a fifth's overlap apart at
+// SMALLEST of their size; never so many that they turn tiny (All's four in a phone's card).
+const SMALLEST = 0.82;
+const fitOf = (column: Column, size: number): number =>
+  Math.max(1, Math.floor(1 + (column.room / (size * SMALLEST) - 1) / LEAST));
+
+// The wave's icons a card can show, in wave order, and the players of the rest (for "+N").
+function fitting(flights: readonly Flight[], columnOf: (c: Choice) => Column) {
+  const shown = new Map<Choice, number>();
+  const kept: Flight[] = [];
+  let rest = 0;
+  for (const f of flights) {
+    const n = shown.get(f.to) ?? 0;
+    if (n < fitOf(columnOf(f.to), sizeOf(f.to))) {
+      shown.set(f.to, n + 1);
+      kept.push(f);
+    } else rest += f.count;
+  }
+  return { kept, rest };
+}
+
 // A wave's icons placed: those landing in one card spread around its middle, those leaving
-// one card around its middle, clear of the points other waves hold; the points it takes.
+// one card around its middle, clear of the points other waves hold; the points it takes, and
+// the players of the icons no card had room for (they join "+N").
 export function placeWave(
   wave: Wave,
   options: readonly Choice[],
   layout: Layout,
   taken: Taken,
-): { readonly placed: Placed[]; readonly claims: Claim[] } {
+): { readonly placed: Placed[]; readonly claims: Claim[]; readonly rest: number } {
   const columnOf = (c: Choice | null) =>
     (c === null ? layout.edge : layout.columns[options.indexOf(c)]) ?? layout.edge;
+  const { kept, rest } = fitting(wave.flights, columnOf);
   const claims: Claim[] = [];
   // Each end's points, per column, in wave order.
   const points = (end: 'from' | 'to', choiceOf: (f: Flight) => Choice | null) => {
     const by = new Map<string, Flight[]>();
-    for (const f of wave.flights) {
+    for (const f of kept) {
       const c = choiceOf(f);
       const name = `${end}:${c ?? 'edge'}`;
       by.set(name, [...(by.get(name) ?? []), f]);
@@ -234,10 +258,10 @@ export function placeWave(
   };
   const starts = points('from', (f) => f.from);
   const ends = points('to', (f) => f.to);
-  const placed = wave.flights.map((flight) => ({
+  const placed = kept.map((flight) => ({
     flight,
     start: starts.get(flight) ?? { x: 0, scale: 1 },
     end: ends.get(flight) ?? { x: 0, scale: 1 },
   }));
-  return { placed, claims };
+  return { placed, claims, rest };
 }

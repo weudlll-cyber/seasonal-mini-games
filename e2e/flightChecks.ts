@@ -125,16 +125,41 @@ export function overlap(a: DOMRect, b: DOMRect): number {
   return w > 0 && h > 0 ? (w * h) / Math.min(a.width * a.height, b.width * b.height) : 0;
 }
 
-// The landing moment: centres on the cards and no icons over each other.
+// The visible icons' boxes of a flight.
+export function iconBoxes(f: Element): DOMRect[] {
+  return [...f.querySelectorAll('.mg-flight-from, .mg-flight-to')]
+    .filter((i) => opacity(i) > 0.15)
+    .map((i) => i.getBoundingClientRect());
+}
+
+// The other waves' icons as they will be when this wave lands (80 % of its flight from now):
+// those then near or at their own landing (60 % on), set to that moment, measured and put
+// back; those gone by then are left out.
+export function othersAtLanding(p: Probe, others: readonly Element[]): DOMRect[] {
+  return others.flatMap((f) => {
+    const anims = [f, ...f.querySelectorAll('*')].flatMap((e) => e.getAnimations());
+    const now = Number(anims[0]?.currentTime ?? p.ms);
+    const then = now + 0.8 * p.ms;
+    if (then < 0.6 * p.ms || then >= p.ms) return [];
+    const saved = anims.map((a) => [a, Number(a.currentTime ?? 0)] as const);
+    for (const [a] of saved) a.currentTime = then;
+    const boxes = iconBoxes(f);
+    for (const [a, at] of saved) a.currentTime = at;
+    return boxes;
+  });
+}
+
+// The landing moment: centres on the cards (a card another wave started within 40 % of the
+// flight lands in too may be shifted aside, 45 % for the moment the probe sees a wave start)
+// and no icons over each other, this wave's or the others' at that moment.
 export function landing(
   p: Probe,
   wave: readonly Element[],
   all: readonly Element[],
   t0: number,
 ): void {
-  const near = all.filter(
-    (f) => !wave.includes(f) && Math.abs((p.born.get(f) ?? 0) - t0) < 0.4 * p.ms,
-  );
+  const others = all.filter((f) => !wave.includes(f));
+  const near = others.filter((f) => Math.abs((p.born.get(f) ?? 0) - t0) < 0.45 * p.ms);
   for (const [to, xs] of landings(p, wave)) {
     const card = document.querySelector(`.mg-frame[data-choice="${to}"]`)?.getBoundingClientRect();
     if (card === undefined || near.some((f) => f.getAttribute('data-to') === to)) continue;
@@ -146,11 +171,7 @@ export function landing(
         `${String(xs.length)} into ${to}: ${r1(off)} px off the card's middle`,
       );
   }
-  const boxes = [...wave, ...near].flatMap((f) =>
-    [...f.querySelectorAll('.mg-flight-from, .mg-flight-to')]
-      .filter((i) => opacity(i) > 0.15)
-      .map((i) => i.getBoundingClientRect()),
-  );
+  const boxes = [...wave.flatMap(iconBoxes), ...othersAtLanding(p, others)];
   boxes.forEach((a, i) => {
     for (const b of boxes.slice(i + 1)) {
       const share = overlap(a, b);

@@ -8,8 +8,8 @@
  *                 from beside the band's right edge (from below on a phone); one player's icon
  *                 with the name above it when the feed names them (a first choice or a visible
  *                 switch), a hidden switch without one; one step's moves with the same
- *                 from → to as one icon with "×N" (DECISIONS T377); at most 12 icons in a wave
- *                 and "+8" for the rest. The cards are measured at each wave's start (so every
+ *                 from → to as one icon with "×N" (DECISIONS T377); at most 12 icons in a wave,
+ *                 and in a card no more than fit without turning tiny; "+8" counts the rest. The cards are measured at each wave's start (so every
  *                 wave after a resize uses the new layout), and each icon placed on its centre
  *                 at points of its own (`placeWave`): a lone icon lands on its card's middle.
  *                 The name is centred over its icon wherever it flies, moved aside only as far
@@ -129,11 +129,11 @@ function useWaves(
     if (wave.flights.length === 0 || reducedMotion()) return;
     const options = optionsOf(view.rules.allOption);
     const layout = layoutOf(band.current, options, names);
-    const { placed, claims } = placeWave(wave, options, layout, taken.current);
+    const { placed, claims, rest } = placeWave(wave, options, layout, taken.current);
     hold(taken.current, claims, true);
     last.current += 1;
     const id = last.current;
-    setShown((s) => [...s, { id, placed, more: wave.more, width: layout.width }]);
+    setShown((s) => [...s, { id, placed, more: wave.more + rest, width: layout.width }]);
     const timer = window.setTimeout(() => {
       timers.current.delete(timer);
       hold(taken.current, claims, false);

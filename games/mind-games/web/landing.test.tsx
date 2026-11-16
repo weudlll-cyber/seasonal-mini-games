@@ -194,6 +194,19 @@ describe('Mind Games crowded cards and lines (T377)', () => {
     }
   });
 
+  it('shows no more icons in a card than fit unshrunk past 82 %; the rest join "+N"', () => {
+    // A phone's All card: 60 px for three groups of All's 36 px square.
+    const phone: Layout = { ...layout, columns: [{ middle: 30, room: 60 }] };
+    const all = (from: Flight['from'], count: number): Flight => ({ ...one(from, 'all'), count });
+    const wave = { flights: [all('spring', 3), all('summer', 2), all(null, 4)], more: 0 };
+    const { placed, rest } = placeWave(wave, ['all'], phone, new Map());
+    expect(placed.map((p) => p.flight.from)).toEqual(['spring', 'summer']);
+    expect(rest).toBe(4);
+    for (const p of placed) expect(p.end.scale).toBeGreaterThanOrEqual(0.82);
+  });
+});
+
+describe('Mind Games names in one card and lines (T377)', () => {
   it('keeps two named icons in one card as far apart as their names need', () => {
     const named = (from: Flight['from'], player: string): Flight => ({
       ...one(from, 'winter'),
