@@ -68,9 +68,9 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 32. Animation: with the device's reduced-motion setting there are no flights and no light-up; the counts change in place.
 33. The phone result bar: where the game's name has no room on one line (360 × 740, or wider fonts at 390 × 844), it breaks between its words onto a second line inside its chip instead of being cut with an ellipsis; the bar stays one row (MG-N10, T372).
 
-## Firefox/WebKit findings (O69 batch)
+## Firefox/WebKit findings (O103 batch)
 
-Failures that master's Firefox and WebKit runs find (O69) are listed here until a batch fixes them; the website's session asked for this list on 2026-11-10.
+Failures that the nightly Firefox and WebKit run on master finds (O103, `.github/workflows/browsers.yml`) are listed here until a batch fixes them; the website's session asked for this list on 2026-11-10.
 
 1. **Journey 37, the inactivity countdown on a phone, light (WebKit; run 42855398617 on `e3cfd56`).** Reported as text below 4.5:1; the texts were the round bar's (Chat, Players, Host, Log) at 1.17:1 on black, not the countdown line (body text on the warning surface: `#14171c` on `#fff4d6` 16.39:1 light, `#f1f4fa` on `#3a2e10` 12.08:1 dark, unchanged). Cause: after the switch from 1280 × 720 to the phone, WebKit's iPhone emulation kept the page laid out and painted 720 px tall, and the canvas reads the unpainted part as black. Fixed in `cff407f`: the check reloads after the resize, as the other phone checks do, and designTokens.test checks the countdown's colours in both themes.
 

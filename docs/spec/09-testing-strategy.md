@@ -12,6 +12,8 @@
 | Test data and determinism (fixed seeds, failing seeds turned into regression tests, shared builders, tests remove their accounts and abort their matches, timing specs in their own Playwright projects, fixed local ports) | Bingo 12 §7 | Ports from [10](10-repository-structure.md) §4. Builders: `aRound().shared().withPlayers(500)`. |
 | Manual acceptance by the owner with a Quick Test seed | Bingo 12 §8 | The Quick Test plays rounds against bots (§5), through the waiting area or started at once (owner decision 24). |
 
+**Browsers in CI (owner decision O103, amending O69).** The merge gate and every push, master included, run the Playwright suite in Chromium only (`.github/workflows/ci.yml`, job `e2e`). Firefox and WebKit (at a phone's viewport) run on master every night at 02:30 UTC and when started by hand (`.github/workflows/browsers.yml`); nobody waits for them, and a failure there is listed in OPEN's "Firefox/WebKit findings" and fixed later in a batch.
+
 ### 1.1 Databases and ports of the automated tests
 
 No automated test uses the developer's database (`smg` in the development PostgreSQL on 5510) or the ports of `pnpm dev` (server 3910, player client 5410, admin app 5411); starting or stopping a run never starts, stops or restarts `pnpm dev` (DECISIONS T345).
