@@ -9,7 +9,9 @@
  *                 match's title, cut with an ellipsis, its game, the match code, the host's menu
  *                 where the viewer hosts, and "Play", the way back to the lobby, which the
  *                 hidden header held. A phone leaves the title out and shows the code without
- *                 its label, so the game's name and the code are never cut (T150).
+ *                 its label, so the game's name and the code are never cut (T150); a game's
+ *                 name too long for one line there breaks between its words onto a second
+ *                 line inside its chip, the bar staying one row (./match.css, T372).
  * Depends on:     react, ../shell/router, ./match.css
  * Used by:        ./MatchPage, ./MatchSummary
  * Spec:           docs/spec/02-game-guess-the-number.md §9, §12

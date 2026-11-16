@@ -4,7 +4,8 @@
  * @brief  Styles of the flight band: icons flying between the seasons' columns (02e §11.1).
  *
  * Responsibility: the band as a row of the stage's own layout, clipped at its edges; a flight
- *                 moves from its old column's middle to its new one's in about 0.8 s, its icon
+ *                 moves from its old column's middle to its new one's in about 1.2 s (--mg-flight,
+ *                 set from FlightBand's FLIGHT_MS, T371), its icon
  *                 turning into the new season's on the way; a first choice flies in from the
  *                 band's edge beside the lines, on a phone from below, with its name; the "+8"
  *                 tag. Under reduced motion no flight is drawn at all (./FlightBand), and the
@@ -27,7 +28,7 @@
   align-items: center;
   gap: 2px;
   transform: translateX(-50%);
-  animation: mg-fly 0.8s var(--ease-out) both;
+  animation: mg-fly var(--mg-flight) var(--ease-out) both;
 }
 
 .mg-flight img {
@@ -48,11 +49,11 @@
 /* A switch's icon turns into the new season's on the way. */
 .mg-flight-from {
   position: absolute;
-  animation: mg-fade-out 0.8s linear both;
+  animation: mg-fade-out var(--mg-flight) linear both;
 }
 
 .mg-flight-from + .mg-flight-to {
-  animation: mg-fade-in 0.8s linear both;
+  animation: mg-fade-in var(--mg-flight) linear both;
 }
 
 .mg-flight-name {

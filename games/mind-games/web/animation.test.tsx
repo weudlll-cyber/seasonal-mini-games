@@ -7,7 +7,9 @@
  * Responsibility: 09 §4.2's animation checks (owner decision 90): the band is fed views one by
  *                 one; no flight before its step arrives and none without one; a first choice
  *                 flies in with its name, a named switch from its old season to its new one, a
- *                 hidden switch without a name; a step with 20 switches flies 12 icons with a
+ *                 hidden switch without a name; a flight lasts FLIGHT_MS (1.2 s, T371), the CSS
+ *                 taking it; a step during a wave starts its own, the old flights finishing
+ *                 where they are; a step with 20 switches flies 12 icons with a
  *                 "+8" tag and shows the step's exact counts at once; a wave is gone after its
  *                 flight; with reduced motion nothing flies and the counts change in place; the
  *                 result's winners light up for about 2 s, not with reduced motion. That the
@@ -77,6 +79,9 @@ describe('Mind Games flights (02e §11.1)', () => {
     expect(flights()).toEqual([]);
     step(500);
     expect(flights()).toEqual([{ from: '', to: 'summer', name: 'Anna' }]);
+    act(() => {
+      vi.advanceTimersByTime(FLIGHT_MS + 100);
+    });
     step(1_500);
     expect(flights()).toEqual([{ from: 'summer', to: 'winter', name: null }]);
     act(() => {
@@ -88,12 +93,61 @@ describe('Mind Games flights (02e §11.1)', () => {
     expect(flights()).toEqual([]);
   });
 
+  it('lasts about 1.2 s a flight, the CSS taking its length from FLIGHT_MS (T371)', () => {
+    const step = feed([['anna', 'summer']]);
+    step(500);
+    expect(FLIGHT_MS).toBe(1_200);
+    const band = screen.getByTestId('flight-band');
+    expect(band.style.getPropertyValue('--mg-flight')).toBe('1200ms');
+    act(() => {
+      vi.advanceTimersByTime(FLIGHT_MS);
+    });
+    expect(flights()).toHaveLength(1);
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(flights()).toEqual([]);
+  });
+
+  it('starts a step’s wave while the last one flies; the old flights finish where they are', () => {
+    const step = feed(
+      [
+        ['anna', 'summer'],
+        ['anna', 'winter'],
+      ],
+      { switchVisibility: 'visible' },
+    );
+    step(500);
+    const first = screen.getByTestId('flight-band').querySelector('.mg-flight');
+    act(() => {
+      vi.advanceTimersByTime(FLIGHT_MS / 2);
+    });
+    step(1_500);
+    expect(flights()).toEqual([
+      { from: '', to: 'summer', name: 'Anna' },
+      { from: 'summer', to: 'winter', name: null },
+    ]);
+    // The same element flies on: nothing restarts or jumps.
+    expect(screen.getByTestId('flight-band').querySelector('.mg-flight')).toBe(first);
+    act(() => {
+      vi.advanceTimersByTime(FLIGHT_MS / 2 + 100);
+    });
+    expect(flights()).toEqual([{ from: 'summer', to: 'winter', name: null }]);
+    act(() => {
+      vi.advanceTimersByTime(FLIGHT_MS / 2);
+    });
+    expect(flights()).toEqual([]);
+  });
+
   it('flies a hidden switch without any name, as the counts show it', () => {
     const step = feed([
       ['anna', 'summer'],
       ['anna', 'autumn', true],
     ]);
     step(500);
+    act(() => {
+      vi.advanceTimersByTime(FLIGHT_MS + 100);
+    });
     step(1_500);
     expect(flights()).toEqual([{ from: 'summer', to: 'autumn', name: null }]);
     expect(screen.getByTestId('count-autumn').textContent).toBe('1 player, 30 s ago');

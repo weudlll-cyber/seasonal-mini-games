@@ -131,16 +131,18 @@
     white-space: nowrap;
   }
 
-  /* The game's name whole where the bar has room; on a narrower screen, or another font's
-     wider letters (CI's Linux runner), it gives way first with an ellipsis, its full name
-     in its title, so the code and the buttons stay whole and nothing scrolls (T206). */
+  /* The game's name always whole (T372): on one line where the bar has room; on a narrower
+     screen, or another font's wider letters (CI's Linux runner), it gives way first by
+     breaking between its words onto a second line inside the chip, never by an ellipsis, so
+     the code and the buttons stay whole, the bar stays one row and nothing scrolls (T206).
+     Two lines of 1.15 and the chip's padding stay inside the bar's 44 px. */
   .result-bar-game {
     flex: 0 1 auto;
-    min-width: 0;
-    display: block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    min-width: min-content;
+    white-space: normal;
+    line-height: 1.15;
+    text-align: center;
+    text-wrap: balance;
   }
 
   /* Slimmer sides, so the longest game's name, the code and both buttons fit 390 px. */
