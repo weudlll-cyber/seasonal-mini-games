@@ -63,9 +63,10 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 27. Animation (O90): flights run in a band between the choice buttons and their counts, from count to count, clipped to the stage, never over a button, a feed line or the chat.
 28. Animation: a first choice's icon flies from the player's name line into the season, with the name on it.
 29. Animation: a hidden switch (switches hidden, or "Hide my switches" ticked) still flies from the old season to the new one, without a name.
-30. Animation: all switches of one feed step fly as one wave, at most 12 icons at once with a "+8" tag for the rest, about 0.8 s a flight; the counts are always the step's exact counts.
+30. Animation: all switches of one feed step fly as one wave, at most 12 icons a wave with a "+8" tag for the rest, about 1.2 s a flight (MG-N10, T371; was 0.8 s), a new wave starting while an old one finishes; the counts are always the step's exact counts.
 31. Animation: at the round end the winning season or seasons light up for about 2 s on the result, beside their check and "wins".
 32. Animation: with the device's reduced-motion setting there are no flights and no light-up; the counts change in place.
+33. The phone result bar: where the game's name has no room on one line (360 × 740, or wider fonts at 390 × 844), it breaks between its words onto a second line inside its chip instead of being cut with an ellipsis; the bar stays one row (MG-N10, T372).
 
 ## Firefox/WebKit findings (O69 batch)
 
