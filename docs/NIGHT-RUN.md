@@ -2,17 +2,42 @@
 
 **2026-11-01:** the night branches are merged into `master` (merge `fd8ef34`, CI green) and deleted: `feat/guess-the-number` (last `b21469d`) and `night/2026-10-27` (last `b59083a`).
 
+## Chain MG-N10 (2026-11-16): the round-end line test, the merge, no flaky tests, slower flights
+
+Status, piece by piece.
+
+| Piece                                                                                                       | State                                                                                         |
+| ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| 1. The round-end line test; merge `feat/mind-games` (PR #11)                                                | test examined (below): no failure in 112 runs, cause not found, left unchanged; merge running |
+| 2. No flaky tests (`fix/flaky-tests`)                                                                       | open                                                                                          |
+| 3. Mind Games: flights of about 1.2 s, the phone bar's game name whole (`feat/mg-flight-speed`, not merged) | coding done in a work tree (T371, T372); tests, play-through open                             |
+| 4. Morning handover                                                                                         | open                                                                                          |
+| Needs the owner's word                                                                                      | open until the pieces end                                                                     |
+
+### Piece 1: the round-end line test
+
+The test is `apps/server/test/chat.integration.test.ts` "the round-end line": it failed once in CI (run 43773071288, attempt 1, `verify`, head `7e7b4c2`: `condition not met in time` at line 256, the wait for the line; the guess before it was accepted after about 3 s, the test took 9.2 s) and passed on the re-run of the same commit.
+
+- **Relative to `master`, the branch changed the line** (`apps/server/src/chat/roundLines.ts`, commits `17dff8a`, `e00f743`): a round whose results carry `won` gets the phased line. A guess round's results never carry it: `playerResults` (`packages/domain/src/round/results.ts`) has no `won`, only `phasedResults` sets it, and nothing on the server adds it to the RoundEnded event (`won ?? place === 1` is only the stored row's, `pgResults.ts`). So a guess round cannot get the phased line.
+- **Counts, this machine (14 logical cores), each run on its own Testcontainers database:**
+  - only this test (`-t "round-end line"`): `feat/mind-games` 20/20 passed, `master` (`dc78140`) 20/20 passed;
+  - the whole chat file, as CI runs it (the mutes, the ban, the lock before the round): 30/30 passed;
+  - the whole server integration suite: 6 runs on 10 workers, 3 on 2 workers as CI (with a second suite of `master` on 6 workers beside it): the round-end line passed every time (the authorization matrix timed out in 5 of these 9 runs, the inactivity test once on `master`; both piece 2).
+- **Timing, measured** (a diagnostic in the test, not committed): from the guess's acceptance to the line on the watcher's socket 100–207 ms in 34 runs, against the test's 6 s wait; the round opened 2.98–3.33 s after the secret was read.
+- **Candidates ruled out:** the phased line (above); a line later than the wait (100–207 ms, also under load); the wait starting after the line (the watcher's socket records every frame from its join, `socketOpener`); a held end (Frost holds only in winter with specials; this round is spring, specials off); a listener throwing (the guess would have been answered INTERNAL, not ok); `post` throwing (its `console.error` would show in the failed test's output in CI, and there is none); the socket dropping (pings 20 s / 20 s, no server-side disconnect).
+- **Result:** the cause is not found and the failure did not recur; following the rule for a flake that cannot be made to fail, the test stays unchanged; piece 2 lists it with these counts (BACKLOG part one).
+
 ## Task MG-MERGE (2026-11-16): T369 accepted (O102), `feat/mind-games` merged into `master`, the sweep
 
 Status. The owner approved the merge on 2026-11-16.
 
-| Part                                                   | State   |
-| ------------------------------------------------------ | ------- |
-| O102: T369 accepted; DECISIONS, BACKLOG, OPEN          | done    |
-| Merge `feat/mind-games` into `master` (a merge commit) | running |
-| CI on the merge commit                                 | open    |
-| Sweep: `feat/mind-games`, `shots/mg-n8`                | open    |
-| Handover on `master`                                   | open    |
+| Part                                                   | State                               |
+| ------------------------------------------------------ | ----------------------------------- |
+| O102: T369 accepted; DECISIONS, BACKLOG, OPEN          | done                                |
+| Merge `feat/mind-games` into `master` (a merge commit) | continued in chain MG-N10, piece 1  |
+| CI on the merge commit                                 | continued in chain MG-N10, piece 1  |
+| Sweep: `feat/mind-games`, `shots/mg-n8`                | continued in chain MG-N10, piece 1  |
+| Handover on `master`                                   | replaced by chain MG-N10's handover |
 
 ## Task MG-N9 (2026-11-15): equal totals share a place (O100), T367 accepted (O101), the console's 401s
 
