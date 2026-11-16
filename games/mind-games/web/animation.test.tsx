@@ -6,12 +6,13 @@
  *
  * Responsibility: 09 §4.2's animation checks (owner decision 90): the band is fed views one by
  *                 one; no flight before its step arrives and none without one; a first choice
- *                 flies in with its name, a named switch from its old season to its new one, a
- *                 hidden switch without a name; a flight lasts FLIGHT_MS (1.2 s, T371), the CSS
+ *                 flies in with its name, a visible switch from its old season to its new one
+ *                 with its name too, a hidden switch without one; a flight lasts FLIGHT_MS (1.2 s, T371), the CSS
  *                 taking it; a step during a wave starts its own, the old flights finishing
- *                 where they are; a step with 20 switches flies 12 icons with a
- *                 "+8" tag and shows the step's exact counts at once; a wave is gone at the
- *                 end of its flight (slots, icon change and landing: ./landing.test); with reduced motion nothing flies and the counts change in place; the
+ *                 where they are; a step with 16 icons flies 12 with a "+4" tag and shows
+ *                 the step's exact counts at once; a wave is gone at the end of its flight
+ *                 (groups, landing points, icon change and landing: ./landing.test); with
+ *                 reduced motion nothing flies and the counts change in place; the
  *                 result's winners light up for about 2 s, not with reduced motion. That the
  *                 band overlaps no button, line or chat panel at 1280 × 720 and 390 × 844 needs
  *                 a real layout: journey 38 checks it in the browser.
@@ -83,7 +84,8 @@ describe('Mind Games flights (02e §11.1)', () => {
       vi.advanceTimersByTime(FLIGHT_MS);
     });
     step(1_500);
-    expect(flights()).toEqual([{ from: 'summer', to: 'winter', name: null }]);
+    // A visible switch flies with the player's name too (DECISIONS T377).
+    expect(flights()).toEqual([{ from: 'summer', to: 'winter', name: 'Anna' }]);
     act(() => {
       vi.advanceTimersByTime(FLIGHT_MS);
     });
@@ -142,38 +144,46 @@ describe('Mind Games waves and reduced motion (02e §11.1)', () => {
     step(1_500);
     expect(flights()).toEqual([
       { from: '', to: 'summer', name: 'Anna' },
-      { from: 'summer', to: 'winter', name: null },
+      { from: 'summer', to: 'winter', name: 'Anna' },
     ]);
     // The same element flies on: nothing restarts or jumps.
     expect(screen.getByTestId('flight-band').querySelector('.mg-flight')).toBe(first);
     act(() => {
       vi.advanceTimersByTime(FLIGHT_MS / 2);
     });
-    expect(flights()).toEqual([{ from: 'summer', to: 'winter', name: null }]);
+    expect(flights()).toEqual([{ from: 'summer', to: 'winter', name: 'Anna' }]);
     act(() => {
       vi.advanceTimersByTime(FLIGHT_MS / 2);
     });
     expect(flights()).toEqual([]);
   });
+});
 
-  it('caps a wave at 12 icons with "+8", and shows the step’s exact counts at once', () => {
-    const players = Array.from({ length: 20 }, (_, i) => `p${String(i)}`);
+describe('Mind Games crowded waves and reduced motion (02e §11.1)', () => {
+  it('caps a wave at 12 icons with "+4", and shows the step’s exact counts at once', () => {
+    // Twelve players, three in each season; then each switches to another season, the three
+    // of a season to three different ones, and four newcomers choose: 16 icons of one each.
+    const seasons = ['spring', 'summer', 'autumn', 'winter'] as const;
+    const players = Array.from({ length: 12 }, (_, i) => `p${String(i)}`);
     const step = feed(
       [
-        ...players.map((p) => [p, 'spring'] as const),
-        ...players.map((p) => [p, 'summer'] as const),
+        ...players.map((p, i) => [p, seasons[i % 4] ?? 'spring'] as const),
+        ...players.map(
+          (p, i) => [p, seasons[(i + 1 + Math.floor(i / 4)) % 4] ?? 'spring'] as const,
+        ),
+        ...seasons.map((c, i) => [`n${String(i)}`, c] as const),
       ],
       { switchVisibility: 'visible' },
     );
-    step(20_000);
+    step(12_000);
     act(() => {
       vi.advanceTimersByTime(FLIGHT_MS);
     });
-    step(40_000);
+    step(28_000);
     expect(flights()).toHaveLength(12);
-    expect(screen.getByText('+8')).toBeTruthy();
-    expect(screen.getByTestId('count-summer').textContent).toBe('20 players, 30 s ago');
-    expect(screen.getByTestId('count-spring').textContent).toBe('0 players, 30 s ago');
+    expect(screen.getByText('+4')).toBeTruthy();
+    for (const c of seasons)
+      expect(screen.getByTestId(`count-${c}`).textContent).toBe('4 players, 30 s ago');
   });
 
   it('flies nothing with reduced motion; the counts change in place', () => {

@@ -2,16 +2,19 @@
 /**
  * @file   games/mind-games/web/landing.test.tsx
  * @module games/mind-games/web
- * @brief  Where Mind Games flights start and land, and how they change their icon and land.
+ * @brief  Where Mind Games flights start and land, how crowds group, how the icon changes.
  *
- * Responsibility: DECISIONS T376 (02e §11.1): flights into one column land at distinct points,
- *                 also across two waves in the air at once, and start at distinct points; the
- *                 slots are one icon's room apart where the column has it, rows a few px apart
- *                 where it has not; a named and a nameless flight on the same path fly the same
- *                 line, the flight's box being its icon's and the name hanging off it; after
- *                 FLIGHT_MS nothing of a wave is drawn, its icon and name having faded out;
- *                 from the middle of a flight on only the new season's icon shows. jsdom runs
- *                 no CSS animation: the timeline is read from flights.css itself.
+ * Responsibility: DECISIONS T377 (02e §11.1): one step's moves with the same from → to fly as
+ *                 one nameless icon "×N"; a lone icon lands on its card's measured middle,
+ *                 several symmetric around it, one icon's room apart where the card has it,
+ *                 never closer than a fifth's overlap, smaller where even that does not
+ *                 fit; two waves near each other keep clear of each other's points; a named
+ *                 and a nameless flight on the same path fly the same line, the flight's box
+ *                 being its icon's and the name hanging off it, with no fade of its own; after
+ *                 FLIGHT_MS nothing of a wave is drawn; the icon flips, never faint, and from
+ *                 the middle on only the new season's shows. jsdom lays nothing out: the cards
+ *                 are given boxes; it runs no CSS animation: the timeline is read from
+ *                 flights.css itself.
  * Depends on:     vitest, @testing-library/react, ./ChoiceButtons, ./fixtures, ./FlightBand,
  *                 ./flights, ./flights.css (raw text, ../vitest.config.ts)
  * Spec:           docs/spec/02e-game-mind-games.md §11.1; docs/spec/09-testing-strategy.md §4.2
@@ -24,7 +27,7 @@ import { ChoiceButtons } from './ChoiceButtons.js';
 import { names, spectatorView } from './fixtures.js';
 import { FLIGHT_MS } from './FlightBand.js';
 import css from './flights.css?raw';
-import { placeWave, SLOT_PX, spotOf, type Flight } from './flights.js';
+import { ICON_PX, placeWave, spread, type Flight, type Layout } from './flights.js';
 
 type Moves = Parameters<typeof spectatorView>[0];
 
@@ -48,7 +51,7 @@ function stopsOf(name: string, prop: string): [number, number][] {
   expect(at, name).toBeGreaterThan(-1);
   const body = css.slice(css.indexOf('{', at) + 1, css.indexOf('\n}', at));
   const stops: [number, number][] = [];
-  for (const [, keys = '', decls = ''] of body.matchAll(/([\w%,\s]+)\{([^}]*)\}/g)) {
+  for (const [, keys = '', decls = ''] of body.matchAll(/([\w%.,\s]+)\{([^}]*)\}/g)) {
     const value = new RegExp(`(?:^|[;\\s])${prop}:\\s*([\\d.]+)`).exec(decls)?.[1];
     if (value === undefined) continue;
     for (const k of keys.split(',').map((s) => s.trim())) {
@@ -71,11 +74,13 @@ function valueAt(name: string, prop: string, t: number): number {
 
 const animationOf = (selector: string) => rule(selector)['animation']?.split(' ')[0] ?? '';
 
-// Each flight's start and landing point as drawn: its CSS variables.
-const points = () =>
+// The band's flights as drawn: landing point, name and count.
+const drawn = () =>
   [...screen.getByTestId('flight-band').querySelectorAll<HTMLElement>('.mg-flight')].map((f) => ({
-    start: `${f.style.getPropertyValue('--mg-from')} ${f.style.getPropertyValue('--mg-y0')}`,
-    end: `${f.style.getPropertyValue('--mg-to')} ${f.style.getPropertyValue('--mg-y1')}`,
+    to: f.getAttribute('data-to'),
+    end: f.style.getPropertyValue('--mg-to'),
+    name: f.querySelector('.mg-flight-name')?.textContent ?? null,
+    count: f.querySelector('.mg-flight-count')?.textContent ?? null,
   }));
 
 function feed(moves: Moves) {
@@ -88,15 +93,33 @@ function feed(moves: Moves) {
   };
 }
 
-// Players p0, p1, … choosing one season, a second apart.
-const choosing = (from: number, count: number, season: string): Moves =>
-  Array.from({ length: count }, (_, i) => [`p${String(from + i)}`, season] as const);
+const one = (from: Flight['from'], to: Flight['to'], key = `${from ?? 'edge'}>${to}`): Flight => ({
+  key,
+  from,
+  to,
+  player: null,
+  count: 1,
+});
+
+// Four cards 190 px wide, 10 px apart, in a band 790 px wide.
+const options = optionsOf(false);
+const layout: Layout = {
+  width: 790,
+  columns: options.map((_, i) => ({ middle: i * 200 + 95, room: 200 })),
+  edge: { middle: 850, room: 100 },
+  labelPx: () => 60,
+};
 
 beforeEach(() => {
   vi.useFakeTimers();
   vi.stubGlobal('matchMedia', () => ({ matches: false }));
-  // jsdom lays nothing out: the band is 800 px wide, room for six slots a column of four.
-  vi.spyOn(Element.prototype, 'clientWidth', 'get').mockReturnValue(800);
+  // jsdom lays nothing out: the cards get the boxes above, the band its width.
+  vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+    const i = options.indexOf(this.getAttribute('data-choice') as (typeof options)[number]);
+    const card = this.classList.contains('mg-frame') && i >= 0;
+    const band = this.classList.contains('mg-band');
+    return DOMRect.fromRect({ x: card ? i * 200 : 0, width: card ? 190 : band ? 790 : 0 });
+  });
 });
 afterEach(() => {
   cleanup();
@@ -105,89 +128,127 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe('Mind Games flight slots (T376)', () => {
-  it('lands the flights of one wave into one column at distinct points, starting apart too', () => {
-    const step = feed(choosing(0, 6, 'summer'));
+describe('Mind Games crowds (T377)', () => {
+  it('flies one step’s first choices into one season as one nameless icon "×N"', () => {
+    const step = feed(Array.from({ length: 6 }, (_, i) => [`p${String(i)}`, 'summer'] as const));
     step(5_500);
-    const drawn = points();
-    expect(drawn).toHaveLength(6);
-    expect(new Set(drawn.map((d) => d.end)).size).toBe(6);
-    expect(new Set(drawn.map((d) => d.start)).size).toBe(6);
+    expect(drawn()).toEqual([{ to: 'summer', end: '295px', name: null, count: '×6' }]);
   });
 
-  it('keeps the slots distinct across two waves in the air at once', () => {
-    const step = feed(choosing(0, 12, 'summer'));
-    step(5_500);
-    act(() => {
-      vi.advanceTimersByTime(FLIGHT_MS / 2);
-    });
-    step(11_500);
-    const drawn = points();
-    expect(drawn).toHaveLength(12);
-    expect(new Set(drawn.map((d) => d.end)).size).toBe(12);
-    expect(new Set(drawn.map((d) => d.start)).size).toBe(12);
+  it('lands a lone icon on its card’s measured middle', () => {
+    const step = feed([['anna', 'winter']]);
+    step(500);
+    expect(drawn()).toEqual([{ to: 'winter', end: '695px', name: 'Anna', count: null }]);
   });
 });
 
-describe('Mind Games slot geometry (T376)', () => {
-  it('spaces slots one icon apart where the column has room, rows where it has not', () => {
-    // 1 440 wide, four seasons: one row of slots at least an icon apart.
-    const wide = [0, 1, 2, 3, 4, 5].map((j) => spotOf(1, 4, 826, j).x * 826).sort((a, b) => a - b);
-    for (let i = 1; i < wide.length; i += 1)
-      expect((wide[i] ?? 0) - (wide[i - 1] ?? 0)).toBeGreaterThanOrEqual(26);
-    // More flights than slots: six rows on six times the slots' points, with two slots a
-    // column (a phone, five options) and with five (1 440 wide, five options).
-    const point = (s: { x: number; y: number }) => `${String(s.x)} ${String(s.y)}`;
-    for (const [band, per] of [
-      [362, 2],
-      [826, 5],
-    ] as const) {
-      const spots = Array.from({ length: 6 * per }, (_, j) => spotOf(3, 5, band, j));
-      expect(new Set(spots.map(point)).size).toBe(6 * per);
-      for (const s of spots) expect(s.x).toBeGreaterThan(3 / 5);
-      for (const s of spots) expect(s.x).toBeLessThan(4 / 5);
+describe('Mind Games landing points (T377)', () => {
+  it('spreads several icons symmetrically around the middle, apart, and starts them apart', () => {
+    const wave = {
+      flights: [one('spring', 'winter'), one('summer', 'winter'), one(null, 'winter')],
+      more: 0,
+    };
+    const { placed } = placeWave(wave, options, layout, new Map());
+    const xs = placed.map((p) => p.end.x).sort((a, b) => a - b);
+    expect((xs[0] ?? 0) + (xs[2] ?? 0)).toBe(2 * 695);
+    expect(xs[1]).toBe(695);
+    expect((xs[1] ?? 0) - (xs[0] ?? 0)).toBe(ICON_PX + 4);
+  });
+
+  it('keeps clear of the points a wave just before holds', () => {
+    const first = placeWave(
+      { flights: [one('spring', 'winter')], more: 0 },
+      options,
+      layout,
+      new Map(),
+    );
+    const taken = new Map([['to:winter', first.claims.map(([, s]) => s)]]);
+    const second = placeWave(
+      { flights: [one('summer', 'winter')], more: 0 },
+      options,
+      layout,
+      taken,
+    );
+    const gap = Math.abs((second.placed[0]?.end.x ?? 0) - (first.placed[0]?.end.x ?? 0));
+    expect(gap).toBeGreaterThanOrEqual(Math.ceil(ICON_PX * 0.8));
+  });
+});
+
+describe('Mind Games crowded cards and lines (T377)', () => {
+  it('closes up to a fifth’s overlap in a narrow card, then shrinks the icons to fit', () => {
+    const narrow = { middle: 35, room: 70 };
+    const three = spread(narrow, 3, ICON_PX);
+    expect(three.map((s) => [s.x, s.scale])).toEqual([
+      [13, 1],
+      [35, 1],
+      [57, 1],
+    ]);
+    // Six into a phone's card: smaller, all inside it, overlapping by at most a fifth.
+    const six = spread(narrow, 6, ICON_PX);
+    const size = ICON_PX * (six[0]?.scale ?? 1);
+    expect(size).toBeLessThan(ICON_PX);
+    for (const [i, s] of six.entries()) {
+      expect(s.x - size / 2).toBeGreaterThanOrEqual(0);
+      expect(s.x + size / 2).toBeLessThanOrEqual(70);
+      if (i > 0) expect(s.x - (six[i - 1]?.x ?? 0)).toBeGreaterThanOrEqual(0.8 * size - 1e-9);
     }
-    expect(SLOT_PX).toBeGreaterThanOrEqual(26);
+  });
+
+  it('keeps two named icons in one card as far apart as their names need', () => {
+    const named = (from: Flight['from'], player: string): Flight => ({
+      ...one(from, 'winter'),
+      player,
+    });
+    const wave = { flights: [named('spring', 'anna'), named('summer', 'bo')], more: 0 };
+    const xs = placeWave(wave, options, layout, new Map()).placed.map((p) => p.end.x);
+    expect(Math.abs((xs[1] ?? 0) - (xs[0] ?? 0))).toBe(64);
+    expect(((xs[0] ?? 0) + (xs[1] ?? 0)) / 2).toBe(695);
   });
 
   it('flies a named and a nameless flight on the same path along the same line', () => {
-    const options = optionsOf(false);
-    const one = (player: string | null): Flight => ({
-      key: 'k',
-      from: 'summer',
-      to: 'winter',
-      player,
-    });
-    const named = placeWave({ flights: [one('anna')], more: 0 }, options, 800, new Map());
-    const nameless = placeWave({ flights: [one(null)], more: 0 }, options, 800, new Map());
+    const named = placeWave(
+      { flights: [{ ...one('summer', 'winter'), player: 'anna' }], more: 0 },
+      options,
+      layout,
+      new Map(),
+    );
+    const nameless = placeWave(
+      { flights: [one('summer', 'winter')], more: 0 },
+      options,
+      layout,
+      new Map(),
+    );
     expect(named.placed[0]?.start).toEqual(nameless.placed[0]?.start);
     expect(named.placed[0]?.end).toEqual(nameless.placed[0]?.end);
     // The box is the icon's, placed on its centre; the name hangs off it, moving nothing.
     const box = rule('.mg-flight');
     expect([box['width'], box['height'], box['margin-left']]).toEqual(['26px', '26px', '-13px']);
-    expect(box['transform']).toBeUndefined();
     expect(rule('.mg-flight-name')['position']).toBe('absolute');
   });
 });
 
-describe('Mind Games icon change and landing (T376)', () => {
-  it('draws nothing of a wave after FLIGHT_MS: its icon and its name have faded out', () => {
-    const step = feed(choosing(0, 1, 'summer'));
+describe('Mind Games icon change and landing (T377)', () => {
+  it('draws nothing of a wave after FLIGHT_MS; the name fades only with its icon', () => {
+    const step = feed([['anna', 'summer']]);
     step(500);
-    expect(points()).toHaveLength(1);
+    expect(drawn()).toHaveLength(1);
     act(() => {
       vi.advanceTimersByTime(FLIGHT_MS);
     });
-    expect(points()).toEqual([]);
+    expect(drawn()).toEqual([]);
     for (const name of [animationOf('.mg-flight'), 'mg-rise'])
       expect(valueAt(name, 'opacity', 1)).toBe(0);
-    // The name is gone before the landing (80 %).
-    expect(valueAt(animationOf('.mg-flight-name'), 'opacity', 0.8)).toBe(0);
+    // The name is part of the flight: no fade of its own, so it shows exactly as its icon.
+    expect(rule('.mg-flight-name')['animation']).toBeUndefined();
   });
 
-  it('shows only the new season’s icon from the middle of a flight on', () => {
+  it('flips the icon, never faint, and shows only the new season’s from the middle on', () => {
     const old = animationOf('.mg-flight-from');
     const next = animationOf('.mg-flight-from + .mg-flight-to');
+    for (let t = 0; t <= 1; t += 0.01)
+      expect(Math.max(valueAt(old, 'opacity', t), valueAt(next, 'opacity', t))).toBeGreaterThan(
+        0.95,
+      );
     for (const t of [0.5, 0.65, 0.8, 1]) {
       expect(valueAt(old, 'opacity', t), `old icon at ${String(t)}`).toBe(0);
       expect(valueAt(next, 'opacity', t), `new icon at ${String(t)}`).toBe(1);

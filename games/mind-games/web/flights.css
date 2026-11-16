@@ -1,37 +1,49 @@
 /*
  * @file   games/mind-games/web/flights.css
  * @module games/mind-games/web
- * @brief  Styles of the flight band: icons flying between the seasons' columns (02e §11.1).
+ * @brief  Styles of the flight band: icons flying between the seasons' cards (02e §11.1).
  *
- * Responsibility: the band as a row of the stage's own layout, 52 px high, clipped at its
- *                 edges; a flight is its icon's own 26 px box, placed on the icon's centre,
- *                 moving from its start slot to its landing slot (--mg-from/--mg-y0 to
- *                 --mg-to/--mg-y1, ./flights placeWave, DECISIONS T376) in about 1.2 s
- *                 (--mg-flight, set from FlightBand's FLIGHT_MS, T371). Its timeline: the old
- *                 icon shrinks away from 15 % to 30 % and the new one grows in from 30 % to
- *                 45 %, so from the middle on only the new season's icon flies; it reaches its
- *                 slot at 80 % and then shrinks and fades into its column, so it ends invisible.
- *                 A first choice's name hangs above its icon and fades out from 50 % to 65 %,
- *                 never moving the icon; a first choice flies in from beside the band's right
- *                 edge, on a phone from below; the "+8" tag. Under reduced motion no flight is
- *                 drawn at all (./FlightBand), and the platform switches every animation off
- *                 as well.
+ * Responsibility: the band as a row of the stage's own layout, 56 px high, clipped at its
+ *                 edges; a flight is its icon's own 26 px box (All's square of four 36 px
+ *                 around it), placed on the icon's centre, moving from its start point to its
+ *                 landing point (--mg-from to --mg-to in px, at the scales --mg-s0 and
+ *                 --mg-s1, ./flights placeWave, DECISIONS T377) in about 1.2 s
+ *                 (--mg-flight, set from FlightBand's FLIGHT_MS, T371). Its timeline: the old icon flips away from
+ *                 15 % to 25 % and the new one flips in from 25 % to 35 %, so the icon never
+ *                 goes faint and from the middle on only the new season's flies; it reaches
+ *                 its point at 80 % and then shrinks and fades into its card, so it ends
+ *                 invisible. The name hangs above its icon, part of the flight, so it is seen
+ *                 exactly as long and as strongly as its icon; centred over it wherever it is
+ *                 (the icon's centre --mg-x is an animated registered property the name reads)
+ *                 and moved aside only as far as keeps it whole inside the band. A group's "×3" at its icon's foot. A first
+ *                 choice flies in from beside the band's right edge, on a phone from below; the
+ *                 "+8" tag. Under reduced motion no flight is drawn at all (./FlightBand), and
+ *                 the platform switches every animation off as well.
  * Spec:           docs/spec/02e-game-mind-games.md §11.1
  */
 /* The flight band between the buttons and the counts (02e §11.1): a row of the stage's own
    layout, clipped at its edges, so a flight never covers a button, a line or the chat. Its
-   height holds a name (16 px) above an icon (26 px) and the rows' steps (up to 8 px, T376). */
+   height holds a name (16 px) above All's icon (36 px) and its landing's drop (6 px). */
 .mg-band {
   position: relative;
-  height: 52px;
+  height: 56px;
   overflow: hidden;
+}
+
+/* The icon's centre on its way, animated (so its name can follow it, below). */
+@property --mg-x {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 0px;
 }
 
 /* The flight is the icon's box: `left` is the icon's centre, whatever the name's width. */
 .mg-flight {
+  --mg-x: var(--mg-to);
+
   position: absolute;
-  top: calc(18px + var(--mg-y1));
-  left: var(--mg-to);
+  top: 22px;
+  left: var(--mg-x);
   width: 26px;
   height: 26px;
   margin-left: -13px;
@@ -53,14 +65,19 @@
   height: 26px;
 }
 
-/* All's four icons in a square of the icon's size, as on its button. */
-.mg-flight [data-choice='all'] img {
-  width: 13px;
-  height: 13px;
+/* All's four icons in a square as on its button (31 px each in 64 px), 36 px around the box. */
+.mg-flight [data-choice='all'] {
+  inset: -5px;
+  gap: 2px;
 }
 
-/* A switch's icon turns into the new season's within the first half: no two icons over each
-   other, each at half strength, on the way. */
+.mg-flight [data-choice='all'] img {
+  width: 17px;
+  height: 17px;
+}
+
+/* A switch's icon flips into the new season's within the first half: never two icons over
+   each other, never a faint one. */
 .mg-flight-from {
   animation: mg-icon-out var(--mg-flight) linear both;
 }
@@ -69,10 +86,13 @@
   animation: mg-icon-in var(--mg-flight) linear both;
 }
 
-/* The name above its icon, centred on it; gone before the landing. */
+/* The name above its icon (and above All's larger square), centred on it wherever the icon
+   is, moved aside only as far as keeps it whole inside the band (--mg-w its width and
+   --mg-band the band's, set by FlightBand); it has no fade of its own: it fades with its
+   flight. */
 .mg-flight-name {
   position: absolute;
-  bottom: calc(100% + 1px);
+  bottom: calc(100% + 6px);
   left: 50%;
   padding: 0 var(--space-1);
   font-size: var(--font-size-small);
@@ -81,8 +101,31 @@
   white-space: nowrap;
   background: var(--color-surface);
   border-radius: var(--radius-pill);
-  transform: translateX(-50%);
-  animation: mg-name-out var(--mg-flight) linear both;
+  transform: translateX(
+    calc(
+      -50% +
+        clamp(
+          calc(2px + var(--mg-w) / 2 - var(--mg-x)),
+          0px,
+          calc(var(--mg-band) - 2px - var(--mg-w) / 2 - var(--mg-x))
+        )
+    )
+  );
+}
+
+/* A group's count at its icon's lower right. */
+.mg-flight-count {
+  position: absolute;
+  right: -16px;
+  bottom: -6px;
+  padding: 0 3px;
+  font-size: 11px;
+  font-weight: var(--font-weight-strong);
+  line-height: 13px;
+  white-space: nowrap;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
 }
 
 .mg-more {
@@ -93,35 +136,39 @@
   font-weight: var(--font-weight-strong);
 }
 
-/* To its slot by 80 %, then into its column: smaller, a little lower, gone. */
+/* To its point by 80 %, at its scale there (smaller only in a crowded card), then into its
+   card: smaller, a little lower, gone. */
 @keyframes mg-fly {
   0% {
-    top: calc(18px + var(--mg-y0));
-    left: var(--mg-from);
+    --mg-x: var(--mg-from);
+
+    transform: scale(var(--mg-s0, 1));
   }
 
   80% {
-    top: calc(18px + var(--mg-y1));
-    left: var(--mg-to);
+    --mg-x: var(--mg-to);
+
     opacity: 1;
-    transform: none;
+    transform: scale(var(--mg-s1, 1));
     animation-timing-function: ease-in;
   }
 
   100% {
-    top: calc(18px + var(--mg-y1));
-    left: var(--mg-to);
+    --mg-x: var(--mg-to);
+
     opacity: 0;
-    transform: translateY(6px) scale(0.3);
+    transform: translateY(6px) scale(calc(0.3 * var(--mg-s1, 1)));
   }
 }
 
-/* A first choice on a phone rises from below into its slot (its lines are below the stage). */
+/* A first choice on a phone rises from below into its point (its lines are below the stage). */
 @keyframes mg-rise {
   0% {
-    top: 52px;
-    left: var(--mg-to);
+    --mg-x: var(--mg-to);
+
+    top: 56px;
     opacity: 0;
+    transform: scale(var(--mg-s1, 1));
   }
 
   20% {
@@ -129,58 +176,59 @@
   }
 
   80% {
-    top: calc(18px + var(--mg-y1));
-    left: var(--mg-to);
+    --mg-x: var(--mg-to);
+
+    top: 22px;
     opacity: 1;
-    transform: none;
+    transform: scale(var(--mg-s1, 1));
     animation-timing-function: ease-in;
   }
 
   100% {
-    top: calc(18px + var(--mg-y1));
-    left: var(--mg-to);
+    --mg-x: var(--mg-to);
+
+    top: 22px;
     opacity: 0;
-    transform: translateY(6px) scale(0.3);
+    transform: translateY(6px) scale(calc(0.3 * var(--mg-s1, 1)));
   }
 }
 
+/* A coin's flip: the old face narrows to its edge, the new one widens from it. */
 @keyframes mg-icon-out {
   0%,
   15% {
     opacity: 1;
-    transform: scale(1);
+    transform: scaleX(1);
   }
 
-  30%,
+  25% {
+    opacity: 1;
+    transform: scaleX(0);
+  }
+
+  25.1%,
   100% {
     opacity: 0;
-    transform: scale(0.2);
+    transform: scaleX(0);
   }
 }
 
 @keyframes mg-icon-in {
   0%,
-  30% {
+  25% {
     opacity: 0;
-    transform: scale(0.2);
+    transform: scaleX(0);
   }
 
-  45%,
+  25.1% {
+    opacity: 1;
+    transform: scaleX(0);
+  }
+
+  35%,
   100% {
     opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes mg-name-out {
-  0%,
-  50% {
-    opacity: 1;
-  }
-
-  65%,
-  100% {
-    opacity: 0;
+    transform: scaleX(1);
   }
 }
 

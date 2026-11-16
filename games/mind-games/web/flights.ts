@@ -6,17 +6,20 @@
  * Responsibility: the animation's data (02e §11.1), from the delayed view only: the screens
  *                 get each released step as a new view, never an event of their own, so a
  *                 wave is the difference between the view shown and the next one. Each new
- *                 line is a flight: a first choice flies in with the player's name to its
- *                 season, a named switch from the old season to the new one. A switch the feed
- *                 shows only in its counts (02e §6.3) is the change of the counts no new line
- *                 explains: each option that lost a player sends a nameless icon to one that
- *                 gained one, in option order. Nothing is counted for display: the counts shown
- *                 are always the step's own. At most 12 icons fly at once, the rest is "+8".
- *                 Each flight gets a slot of its own where it starts and where it lands
- *                 (`placeWave`, DECISIONS T376): slots spread across the column one icon's
- *                 room apart, the middle first; where a column has more flights than slots,
- *                 rows 4 px lower, every second a quarter slot aside; never a slot a flight
- *                 still in the air holds, starts and landings counted apart.
+ *                 line is one player's move the feed names: a first choice from the band's edge
+ *                 or a visible switch from the old season, both with the player's name. A
+ *                 switch the feed shows only in its counts (02e §6.3) is the change of the
+ *                 counts no new line explains: each option that lost a player sends a nameless
+ *                 icon to one that gained one, in option order. One step's moves with the same
+ *                 from → to fly as one icon, "×N" from two on and without a name (DECISIONS
+ *                 T377); at most 12 icons in a wave, the players of the rest as "+8". Nothing is
+ *                 counted for display: the counts shown are always the step's own. Each icon
+ *                 gets its points (`placeWave`): the icons landing in one card spread
+ *                 symmetrically around the card's measured middle, a lone one on it, one icon's
+ *                 room apart where the card has it (named ones as far apart as their names
+ *                 need), closer down to a fifth's overlap, smaller where even that does not
+ *                 fit; the icons leaving one card the same way; never a point an icon of
+ *                 another wave still holds there.
  * Depends on:     @smg-game/mind-games (options, views)
  * Used by:        ./FlightBand, ./landing.test
  * Spec:           docs/spec/02e-game-mind-games.md §11.1; docs/spec/09-testing-strategy.md §4.2
@@ -35,13 +38,16 @@ export interface Flight {
   // Null: a first choice, flying in from the band's edge.
   readonly from: Choice | null;
   readonly to: Choice;
-  // The player's key on a first choice's flight; null on a switch, named or hidden.
+  // The player's key when one player flies and the feed names them (a first choice or a
+  // visible switch); null on a hidden switch and on a group.
   readonly player: string | null;
+  // The players flying as this one icon ("×3" from two on).
+  readonly count: number;
 }
 
 export interface Wave {
   readonly flights: readonly Flight[];
-  // The flights beyond the cap ("+8").
+  // The players of the icons beyond the cap ("+8").
   readonly more: number;
 }
 
@@ -71,6 +77,17 @@ function hiddenMoves(
   return losses.slice(0, gains.length).map((from, i) => ({ from, to: gains[i] ?? from }));
 }
 
+// One icon per from → to, in the order each first appears; a group of two or more is nameless.
+function grouped(moves: readonly Flight[]): Flight[] {
+  const groups = new Map<string, Flight>();
+  for (const m of moves) {
+    const id = `${m.from ?? 'edge'}>${m.to}`;
+    const g = groups.get(id);
+    groups.set(id, g === undefined ? m : { ...g, player: null, count: g.count + 1 });
+  }
+  return [...groups.values()];
+}
+
 // The wave from the view shown to the next released one; none on the first view.
 export function waveOf(prev: SpectatorView | null, next: SpectatorView): Wave {
   if (prev === null) return { flights: [], more: 0 };
@@ -79,48 +96,92 @@ export function waveOf(prev: SpectatorView | null, next: SpectatorView): Wave {
     key: `l:${lineKey(l)}`,
     from: l.from,
     to: l.choice,
-    player: l.from === null ? l.playerKey : null,
+    player: l.playerKey,
+    count: 1,
   }));
   const hidden: Flight[] = hiddenMoves(prev, next, lines).map((m, i) => ({
     key: `h:${String(next.lines[0]?.at ?? 0)}:${String(i)}:${m.from}:${m.to}`,
     from: m.from,
     to: m.to,
     player: null,
+    count: 1,
   }));
-  const all = [...named, ...hidden];
-  return { flights: all.slice(0, WAVE_CAP), more: Math.max(0, all.length - WAVE_CAP) };
+  const all = grouped([...named, ...hidden]);
+  const rest = all.slice(WAVE_CAP).reduce((n, f) => n + f.count, 0);
+  return { flights: all.slice(0, WAVE_CAP), more: rest };
 }
 
-// The room an icon (26 px) needs beside the next one in a column, and the rows' vertical
-// steps where a column has more flights than slots (DECISIONS T376).
-export const SLOT_PX = 30;
-const ROW_PX = 4;
-const ROWS = 3;
+// An icon's size in flight (All's square of four is larger, DECISIONS T377), its room beside
+// the next one where the card has it, and the least: two icons overlap by less than a fifth
+// of their width (82 % of it apart). A card with more icons than fit that close shrinks
+// them until they do.
+export const ICON_PX = 26;
+const ALL_PX = 36;
+const sizeOf = (c: Choice | null): number => (c === 'all' ? ALL_PX : ICON_PX);
+const LEAST = 0.82;
 
-// Where a flight's icon starts or lands: its centre as a share of the band's width, and its
-// step down from the icons' line in px.
+// Where an icon starts or lands: its centre in px from the band's left, and its scale there
+// (1 but in a crowded card).
 export interface Spot {
   readonly x: number;
-  readonly y: number;
+  readonly scale: number;
 }
 
-// A column's slots, the middle first: [2, 1, 3, 0, 4] for five, so a lone flight lands in the
-// middle and the next ones spread out to both sides.
-const middleOut = (per: number): number[] =>
-  Array.from({ length: per }, (_, i) => i).sort(
-    (a, b) => Math.abs(a - (per - 1) / 2) - Math.abs(b - (per - 1) / 2) || a - b,
-  );
+// A card as measured: its middle in px from the band's left, and the room its icons may
+// spread over (the card's width inside its frame).
+interface Column {
+  readonly middle: number;
+  readonly room: number;
+}
 
-// Slot j of a column: `column` of `columns` across a band `bandPx` wide (`columns` itself is
-// the strip just past the band's right edge, where a first choice comes from). As many slots
-// as fit one SLOT_PX apart; past them more rows, each one 4 px lower than the last (three
-// steps) and every second one a quarter of a slot to the right, so six rows meet on no point.
-export function spotOf(column: number, columns: number, bandPx: number, j: number): Spot {
-  const per = Math.max(1, Math.floor(bandPx / columns / SLOT_PX));
-  const row = Math.floor(j / per);
-  const slot = middleOut(per)[j % per] ?? 0;
-  const within = (slot + (row % 2 === 1 ? 0.75 : 0.5)) / per;
-  return { x: (column + within) / columns, y: (row % ROWS) * ROW_PX };
+// The band's measure: its width, a column per option (in option order), and the strip past
+// the band's right edge a first choice comes from.
+export interface Layout {
+  readonly width: number;
+  readonly columns: readonly Column[];
+  readonly edge: Column;
+  // A player's name label's width in px, as near as known before it is drawn.
+  readonly labelPx: (player: string) => number;
+}
+
+// `k` icons of `size` around a column's middle, symmetric, one icon's room apart (its size
+// and 4 px, or `apart` where names above them need more) where the column allows, closer
+// down to a fifth's overlap, and smaller where even that does not fit (never under 0.3);
+// `shift` moves them all aside. A lone icon sits on the middle.
+export function spread(
+  column: Column,
+  k: number,
+  size: number,
+  more: { readonly shift?: number; readonly apart?: number } = {},
+): Spot[] {
+  const { shift = 0, apart = 0 } = more;
+  const scale =
+    k < 2 ? 1 : Math.min(1, Math.max(0.3, column.room / (size * (1 + LEAST * (k - 1)))));
+  const s = size * scale;
+  const step = k < 2 ? 0 : Math.min(Math.max(s + 4, apart), (column.room - s) / (k - 1));
+  return Array.from({ length: k }, (_, j) => ({
+    x: column.middle + shift + (j - (k - 1) / 2) * step,
+    scale,
+  }));
+}
+
+// The first spread, centred if it can be, clear of the points other waves hold: shifted by
+// half an icon's room at a time, to the right first; centred anyway if none is clear.
+function clearOf(
+  column: Column,
+  want: { readonly k: number; readonly size: number; readonly apart: number },
+  held: readonly Spot[],
+): Spot[] {
+  const { k, size, apart } = want;
+  const clear = (a: Spot, b: Spot) =>
+    Math.abs(a.x - b.x) >= LEAST * size * Math.min(a.scale, b.scale);
+  const half = (size + 4) / 2;
+  for (let i = 0; i <= 2 * Math.ceil(column.room / half); i += 1) {
+    const shift = (i % 2 === 1 ? 1 : -1) * Math.ceil(i / 2) * half;
+    const spots = spread(column, k, size, { shift, apart });
+    if (spots.every((p) => held.every((h) => clear(p, h)))) return spots;
+  }
+  return spread(column, k, size, { apart });
 }
 
 export interface Placed {
@@ -129,39 +190,54 @@ export interface Placed {
   readonly end: Spot;
 }
 
-// A slot held by a flight in the air: ['to:winter', 2] where it lands, ['from:summer', 0] or
-// ['from:edge', 0] (a first choice) where it starts. Starts and landings are counted apart: a
-// flight leaves its start at once and reaches its landing only at the end.
-export type Claim = readonly [string, number];
+// A point held by an icon of a wave in the air: ['to:winter', spot] where it lands,
+// ['from:summer', spot] or ['from:edge', spot] (a first choice) where it starts.
+export type Claim = readonly [string, Spot];
 
-// The slots in use, by the flights still in the air.
-export type Taken = ReadonlyMap<string, ReadonlySet<number>>;
+// The points in use, by the icons of the waves still near them.
+export type Taken = ReadonlyMap<string, readonly Spot[]>;
 
-// A wave's flights placed, each in a slot of its own where it starts and where it lands, in
-// wave order and around every slot still held by an earlier wave; the slots it takes.
+// A wave's icons placed: those landing in one card spread around its middle, those leaving
+// one card around its middle, clear of the points other waves hold; the points it takes.
 export function placeWave(
   wave: Wave,
   options: readonly Choice[],
-  bandPx: number,
+  layout: Layout,
   taken: Taken,
 ): { readonly placed: Placed[]; readonly claims: Claim[] } {
-  const used = new Map([...taken].map(([c, s]) => [c, new Set(s)]));
+  const columnOf = (c: Choice | null) =>
+    (c === null ? layout.edge : layout.columns[options.indexOf(c)]) ?? layout.edge;
   const claims: Claim[] = [];
-  const claim = (end: 'from' | 'to', column: Choice | null): Spot => {
-    const name = `${end}:${column ?? 'edge'}`;
-    const held = used.get(name) ?? new Set<number>();
-    used.set(name, held);
-    let j = 0;
-    while (held.has(j)) j += 1;
-    held.add(j);
-    claims.push([name, j]);
-    const index = column === null ? options.length : options.indexOf(column);
-    return spotOf(index, options.length, bandPx, j);
+  // Each end's points, per column, in wave order.
+  const points = (end: 'from' | 'to', choiceOf: (f: Flight) => Choice | null) => {
+    const by = new Map<string, Flight[]>();
+    for (const f of wave.flights) {
+      const c = choiceOf(f);
+      const name = `${end}:${c ?? 'edge'}`;
+      by.set(name, [...(by.get(name) ?? []), f]);
+    }
+    const at = new Map<Flight, Spot>();
+    for (const [name, flights] of by) {
+      const c = choiceOf(flights[0] as Flight);
+      // Two names or more above one card's icons: as far apart as the widest name needs.
+      const named = flights.flatMap((f) => (f.player === null ? [] : [layout.labelPx(f.player)]));
+      const apart = named.length < 2 ? 0 : Math.max(...named) + 4;
+      const want = { k: flights.length, size: sizeOf(c), apart };
+      const spots = clearOf(columnOf(c), want, taken.get(name) ?? []);
+      flights.forEach((f, i) => {
+        const s = spots[i] ?? { x: 0, scale: 1 };
+        at.set(f, s);
+        claims.push([name, s]);
+      });
+    }
+    return at;
   };
+  const starts = points('from', (f) => f.from);
+  const ends = points('to', (f) => f.to);
   const placed = wave.flights.map((flight) => ({
     flight,
-    start: claim('from', flight.from),
-    end: claim('to', flight.to),
+    start: starts.get(flight) ?? { x: 0, scale: 1 },
+    end: ends.get(flight) ?? { x: 0, scale: 1 },
   }));
   return { placed, claims };
 }
