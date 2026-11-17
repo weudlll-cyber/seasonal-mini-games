@@ -5,20 +5,24 @@
  *
  * Responsibility: 02e §11.1. Each released view that moves someone starts one wave
  *                 (./flights): the cards and the labels are measured as it starts, every flight
- *                 placed, and the wave drawn until LIFE_MS after it is on the page, then removed;
- *                 a new wave never cuts an earlier one short, but where it lands it makes a coin
- *                 of an earlier wave still standing there fade at once. A flight is the coin of
+ *                 placed, its times taken from what is left before the result screen (the
+ *                 round's public end, ./phases; shortened near it), and the wave drawn until it
+ *                 has flown, stood and faded, then removed; a new wave never cuts an earlier one
+ *                 short, but where it lands it makes a coin of an earlier wave still standing
+ *                 there fade at once. A flight is the coin of
  *                 its old season (none for a first choice), the coin of its new one and above
  *                 it its name or its "×N"; a card's "+N" in its last slot counts the players it
  *                 had no room for. The motion is ./flights.css's, its times ./flights'. Hidden
  *                 from screen readers and from the pointer: the lines and counts say the same in
  *                 words, and a click goes through to the card. With the device's reduced-motion
  *                 setting nothing flies.
- * Depends on:     react, @smg-game/mind-games (options, views), ./flights, ./seasons
+ * Depends on:     react, @smg/game-sdk (PhasedTiming), @smg-game/mind-games (options, views),
+ *                 ./flights, ./phases, ./seasons
  * Used by:        ./ChoiceButtons
  * Spec:           docs/spec/02e-game-mind-games.md §11.1
  */
 import { optionsOf, type Choice, type SpectatorView } from '@smg-game/mind-games';
+import type { PhasedTiming } from '@smg/game-sdk';
 import {
   useCallback,
   useEffect,
@@ -31,12 +35,10 @@ import {
 
 import {
   FADE_MS,
-  FLIGHT_MS,
   GONE_MS,
   landed,
-  LIFE_MS,
   placeWave,
-  STAND_MS,
+  timesFor,
   waveOf,
   type Flight,
   type Layout,
@@ -44,6 +46,7 @@ import {
   type Placed,
   type Timed,
 } from './flights.js';
+import { sinceOpening } from './phases.js';
 import { iconsOf } from './seasons.js';
 
 // The platform's phone layout (./mind.css): no names, first choices rise from below.
@@ -55,6 +58,10 @@ const matches = (query: string): boolean =>
 
 const px = (n: number): string => `${String(n)}px`;
 const ms = (n: number): string => `${String(n)}ms`;
+
+// What is left before the result screen, by the round's public plan; without it, all the time.
+const leftOf = (t: PhasedTiming | undefined): number =>
+  t === undefined ? Infinity : t.plan.endMs - sinceOpening(t);
 
 // What a flight's label says, and its class.
 const labelOf = (f: Flight, names: Readonly<Record<string, string>>) =>
@@ -112,7 +119,10 @@ function useWaves(
   view: SpectatorView,
   band: RefObject<HTMLDivElement | null>,
   names: Readonly<Record<string, string>>,
+  timing: PhasedTiming | undefined,
 ) {
+  const clock = useRef(timing);
+  clock.current = timing;
   const prev = useRef<SpectatorView | null>(null);
   const last = useRef(0);
   const [waves, setWaves] = useState<readonly Wave[]>([]);
@@ -126,7 +136,8 @@ function useWaves(
     last.current += 1;
     const id = last.current;
     const cards = [...new Set([...placed.map((p) => p.flight.to), ...more.map((m) => m.to)])];
-    const wave: Wave = { id, start: performance.now(), cards, gone: [], placed, more };
+    const times = timesFor(leftOf(clock.current));
+    const wave: Wave = { id, start: performance.now(), ...times, cards, gone: [], placed, more };
     setWaves((w) => [...w, wave]);
   }, [view, band, names]);
   const land = useCallback((id: number) => {
@@ -148,9 +159,15 @@ function Coin(p: { readonly choice: Choice; readonly className: string }): React
   );
 }
 
+// A wave's own times for the CSS.
+const timesOf = (w: Timed) => ({
+  ['--mg-fly' as string]: ms(w.fly),
+  ['--mg-fade-at' as string]: ms(w.fly + w.stand),
+});
+
 function Flying(p: {
   readonly placed: Placed;
-  readonly gone: boolean;
+  readonly wave: Wave;
   readonly names: Readonly<Record<string, string>>;
 }): ReactElement {
   const { flight: f, from, to, scale } = p.placed;
@@ -161,8 +178,9 @@ function Flying(p: {
       data-first={f.from === null}
       data-from={f.from ?? ''}
       data-to={f.to}
-      data-gone={p.gone}
+      data-gone={p.wave.gone.includes(f.to)}
       style={{
+        ...timesOf(p.wave),
         ['--mg-from' as string]: px(from),
         ['--mg-to' as string]: px(to),
         ['--mg-s' as string]: String(scale),
@@ -175,8 +193,7 @@ function Flying(p: {
   );
 }
 
-// One wave: it lands FLIGHT_MS after it is on the page and is removed LIFE_MS after, when
-// everything of it has faded.
+// One wave: it lands when it has flown and is removed when it has stood and faded.
 function Airborne(p: {
   readonly wave: Wave;
   readonly land: (id: number) => void;
@@ -188,24 +205,22 @@ function Airborne(p: {
     const timers = [
       window.setTimeout(() => {
         land(wave.id);
-      }, FLIGHT_MS),
-      window.setTimeout(() => {
-        end(wave.id);
-      }, LIFE_MS),
+      }, wave.fly),
+      window.setTimeout(
+        () => {
+          end(wave.id);
+        },
+        wave.fly + wave.stand + FADE_MS,
+      ),
     ];
     return () => {
       for (const t of timers) window.clearTimeout(t);
     };
-  }, [wave.id, land, end]);
+  }, [wave.id, wave.fly, wave.stand, land, end]);
   return (
     <>
       {wave.placed.map((one) => (
-        <Flying
-          key={one.flight.key}
-          placed={one}
-          gone={wave.gone.includes(one.flight.to)}
-          names={p.names}
-        />
+        <Flying key={one.flight.key} placed={one} wave={wave} names={p.names} />
       ))}
       {wave.more.map(({ to, at, scale, n }) => (
         <span
@@ -213,7 +228,11 @@ function Airborne(p: {
           className="mg-more"
           data-to={to}
           data-gone={wave.gone.includes(to)}
-          style={{ ['--mg-to' as string]: px(at), ['--mg-s' as string]: String(scale) }}
+          style={{
+            ...timesOf(wave),
+            ['--mg-to' as string]: px(at),
+            ['--mg-s' as string]: String(scale),
+          }}
         >
           +{n}
         </span>
@@ -225,9 +244,10 @@ function Airborne(p: {
 export function FlightBand(p: {
   readonly view: SpectatorView;
   readonly names: Readonly<Record<string, string>>;
+  readonly timing?: PhasedTiming | undefined;
 }): ReactElement {
   const band = useRef<HTMLDivElement>(null);
-  const { waves, land, end } = useWaves(p.view, band, p.names);
+  const { waves, land, end } = useWaves(p.view, band, p.names, p.timing);
   return (
     <div
       ref={band}
@@ -235,8 +255,6 @@ export function FlightBand(p: {
       aria-hidden="true"
       data-testid="flight-band"
       style={{
-        ['--mg-fly' as string]: ms(FLIGHT_MS),
-        ['--mg-fade-at' as string]: ms(FLIGHT_MS + STAND_MS),
         ['--mg-fade' as string]: ms(FADE_MS),
         ['--mg-gone' as string]: ms(GONE_MS),
       }}

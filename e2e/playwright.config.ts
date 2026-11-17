@@ -81,6 +81,8 @@ const TIMING = [
   'mindGamesFlights.spec.ts',
   // Journey 45: a click anywhere in a Mind Games card chooses, until choices close.
   'mindGamesCards.spec.ts',
+  // Journey 46: the last switch the server accepts shows before the result (T380).
+  'mindGamesLastMove.spec.ts',
 ];
 // Specs that run in Chromium only: journey 36 starts its own server and nginx container, and
 // proves the server and the proxy, not the browser (DECISIONS T241).

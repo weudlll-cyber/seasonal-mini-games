@@ -152,7 +152,8 @@ async function windows(s: Sockets, id: string, opensAt: number): Promise<void> {
 
 // The end: the game's results, nobody placed, every winner's win in the standings (rule 6).
 async function results(id: string, opensAt: number): Promise<void> {
-  await sleep(opensAt + SIDES_PLAN.endMs - Date.now() + 500);
+  // The time-up comes a settle of 1 s after the plan's end (DECISIONS T380).
+  await sleep(opensAt + SIDES_PLAN.endMs + 1_000 - Date.now() + 500);
   const ended = await stateOf('player-2', id);
   expect(ended.role).toBe('result');
   // The game's result view, although the fixture has no secret (DECISIONS T324).

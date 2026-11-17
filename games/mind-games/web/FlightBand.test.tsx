@@ -6,8 +6,9 @@
  *
  * Responsibility: ./FlightBand in the stage's choice row, fed a played round's views step by
  *                 step (02e §11.1): a wave per released step, never cut short by the next, the
- *                 times handed to the CSS, a standing coin fading at once where the next step's
- *                 coin lands beside it, nothing left after LIFE_MS, nothing with reduced motion.
+ *                 times handed to the CSS, shortened near the round's result screen, a standing
+ *                 coin fading at once where the next step's coin lands beside it, nothing left
+ *                 after a wave's life, nothing with reduced motion.
  *                 jsdom lays nothing out: the cards are given boxes. The rules: ./flights.test.
  * Depends on:     vitest, @testing-library/react, ./ChoiceButtons, ./fixtures, ./flights
  * Spec:           docs/spec/02e-game-mind-games.md §11.1; docs/spec/09-testing-strategy.md §4.2
@@ -17,12 +18,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChoiceButtons } from './ChoiceButtons.js';
 import { names, spectatorView } from './fixtures.js';
-import { FLIGHT_MS, LIFE_MS } from './flights.js';
+import { FLIGHT_MS } from './flights.js';
 
 type Moves = Parameters<typeof spectatorView>[0];
 type Cfg = Parameters<typeof spectatorView>[2];
 
 const VISIBLE: Cfg = { switchVisibility: 'visible' };
+// A normal wave's life: its flight, its stand and its fade.
+const LIFE = 2_400;
 const SEASONS = ['spring', 'summer', 'autumn', 'winter', 'all'];
 
 // Every media query false but those `on` names.
@@ -38,8 +41,26 @@ const drawn = () =>
     gone: f.getAttribute('data-gone'),
   }));
 
-// The stage's choice row, fed the round's views at the cuts given, one by one.
-function feed(moves: Moves, cfg?: Cfg) {
+// The CSS times of the band's first flight and of the band.
+const cssTimes = () => {
+  const f = screen.getByTestId('flight-band').querySelector<HTMLElement>('.mg-flight')?.style;
+  const band = screen.getByTestId('flight-band').style;
+  return [f?.getPropertyValue('--mg-fly'), f?.getPropertyValue('--mg-fade-at')].concat(
+    band.getPropertyValue('--mg-fade'),
+  );
+};
+
+// The stage's choice row, fed the round's views at the cuts given, one by one; `left`: the
+// time before the result screen, by the round's timing.
+function feed(moves: Moves, cfg?: Cfg, left?: number) {
+  const timing =
+    left === undefined
+      ? undefined
+      : {
+          opensAt: 0,
+          now: () => 60_000 - left,
+          plan: { entryEndMs: 30_000, actionsEndMs: 45_000, endMs: 60_000, viewDelayMs: 15_000 },
+        };
   const row = (cut: number) => (
     <ChoiceButtons
       view={spectatorView(moves, cut, cfg)}
@@ -47,6 +68,7 @@ function feed(moves: Moves, cfg?: Cfg) {
       choose={null}
       canAct
       names={names}
+      timing={timing}
     />
   );
   const r = render(row(0));
@@ -94,16 +116,11 @@ describe('Mind Games flights in the band', () => {
     expect(drawn()).toEqual([]);
     step(500);
     expect(drawn()).toEqual([{ to: 'summer', at: '295px', name: 'Anna', gone: 'false' }]);
-    const band = screen.getByTestId('flight-band').style;
-    expect(['--mg-fly', '--mg-fade-at', '--mg-fade'].map((v) => band.getPropertyValue(v))).toEqual([
-      '1600ms',
-      '2100ms',
-      '300ms',
-    ]);
+    expect(cssTimes()).toEqual(['1600ms', '2100ms', '300ms']);
     later(1_000);
     step(1_500);
     expect(drawn()).toHaveLength(2);
-    later(LIFE_MS - 1_000);
+    later(LIFE - 1_000);
     expect(drawn()).toEqual([{ to: 'winter', at: '695px', name: 'Anna', gone: 'false' }]);
     later(1_000);
     expect(drawn()).toEqual([]);
@@ -123,6 +140,19 @@ describe('Mind Games flights in the band', () => {
     expect(drawn().map((f) => f.gone)).toEqual(['false', 'false']);
     later(1);
     expect(drawn().map((f) => f.gone)).toEqual(['true', 'false']);
+  });
+
+  it('shortens a wave near the result screen, or shows its coin landed at once', () => {
+    const near = feed([['anna', 'summer']], VISIBLE, 1_000);
+    near(500);
+    expect(cssTimes()).toEqual(['700ms', '1000ms', '300ms']);
+    later(1_300);
+    expect(drawn()).toEqual([]);
+    cleanup();
+    const last = feed([['anna', 'summer']], VISIBLE, 250);
+    last(500);
+    expect(cssTimes()).toEqual(['0ms', '500ms', '300ms']);
+    expect(drawn()).toEqual([{ to: 'summer', at: '295px', name: 'Anna', gone: 'false' }]);
   });
 
   it('flies nothing with reduced motion; the counts change in place', () => {

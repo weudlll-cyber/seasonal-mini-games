@@ -7,10 +7,11 @@
  *                 flight never covers a button, a line or the chat, and never catching a click
  *                 (it goes through to the card). A flight is its coin's 26 px box, moved by its
  *                 centre from --mg-from to --mg-to (px from the band's left, ./flights) over
- *                 --mg-fly (FLIGHT_MS), reaching its landing at its scale there (--mg-s); it
- *                 stands still until --mg-fade-at, then shrinks and fades into its card over
- *                 --mg-fade. Marked gone (a newer coin landed beside it) it fades at once over
- *                 --mg-gone. In the first half of the flight the old season's coin turns over
+ *                 --mg-fly (its wave's own, ./flights timesFor: shortened near the round's end,
+ *                 0 for a coin that appears at its landing), reaching its landing at its scale
+ *                 there (--mg-s); it stands still until --mg-fade-at, then shrinks and fades
+ *                 into its card over --mg-fade. Marked gone (a newer coin landed beside it) it
+ *                 fades at once over --mg-gone. In the first half of the flight the old season's coin turns over
  *                 like a coin into the new one's. The name or the "×N" sits centred above the
  *                 coin; both are part of the flight, so they move, shrink and fade with it. On
  *                 the phone layout a first choice rises from below. A card's "+N" stands in its

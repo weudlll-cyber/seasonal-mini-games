@@ -26,8 +26,9 @@ import { mindQuickTest, startRound } from './mindGames.js';
 import { abortMatch, closeAll, person, visit, type Person } from './play.js';
 import { PHONE } from './screens.js';
 
-// A flight's times (games/mind-games/web/flights.ts FLIGHT_MS, STAND_MS, FADE_MS, GONE_MS).
-const TIMES = { fly: 1_600, stand: 500, fade: 300, gone: 150 };
+// A flight's fixed times (games/mind-games/web/flights.ts FADE_MS, GONE_MS); the probe reads
+// each wave's flight and stand from its CSS, shortened near the round's end.
+const TIMES = { fade: 300, gone: 150 };
 const SIZES = [{ width: 1440, height: 900 }, { width: 1280, height: 720 }, PHONE] as const;
 const CHECKS = [
   'groups',

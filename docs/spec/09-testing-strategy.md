@@ -161,8 +161,9 @@ A browser-test run starts its own stack and reuses none: a port already taken st
     - the coin is never faint and from 40 % of the flight on shows only the new season; a name or "×N" label is whole, above its coin, centred on it (±2 px) and as visible as it (within 0.05);
     - at the landing a lone coin is on its card's middle (±2 px), several (with a "+N") symmetric around it, no two overlapping by more than a fifth, none under 82 % of its full size; every coin, label and "+N" inside its card's frame;
     - during the stand each coin stays where it landed, fully shown; a coin still standing where a newer one lands has faded 0.15 s later;
-    - nothing of a wave is left after 2.4 s (flight, stand, fade) and no wave is removed early.
+    - nothing of a wave is left after its flight, stand and fade (2.4 s, shorter near the end, each wave's own times read from its CSS) and no wave is removed early.
 45. Seasonal Mind Games' cards choose anywhere (DECISIONS T379; `e2e/mindGamesCards.spec.ts`): in a Quick Test round with All on, every card clicked at its top, its middle (the flight band) and its bottom (the count) chooses its season, at 1280 × 800 and then 390 × 844, the clicks paced to the 4 choices a second an account may send; after choices close, a click in a card's middle changes nothing.
+46. Seasonal Mind Games' last move (DECISIONS T380; `e2e/mindGamesLastMove.spec.ts`, Chromium): in a Quick Test round (total 30 s) the player switches every 0.26 s until the server refuses; before the result screen the stage's newest own line is the last accepted switch and its counts equal the result's, and that switch's coin has landed or appeared by then; the run logs whether the last feed step was released between the ticks (the case the end used to swallow).
 
 Journeys 1–19 are Guess The Number's and run unchanged on the guess engine (DECISIONS T117).
 
@@ -225,13 +226,13 @@ Journeys 1, 10, 11, 16, 20–22, 24–27 and 38 also check that the round view f
 - **Property:** MG2–MG5 over random action sequences of up to 50 players; `evolve` replay equals the live state (P5); views at `releasedBefore` independent of later actions (P7 at the game's level).
 - **Platform (`packages/domain`, `packages/application`, `apps/server`):**
   - the `phased` check order and codes at the window edges (a choice 1 ms before `T − D` accepted, at it refused; the same for `J`); no cooldown, special, inactivity or `receiveSeq` in a phased round;
-  - the release tick (one frame a second, release numbers gap-free, the same releases after a restart with a fake clock); the state answer at `now − D`; `PlayerEntered` and the delayed list of players in the round;
+  - the release tick (one frame a second, release numbers gap-free, the same releases after a restart with a fake clock; near the time-up each event at its own time, before the end, never earlier, T380); the state answer at `now − D`; `PlayerEntered` and the delayed list of players in the round;
   - `round_results` with `won` and no place, standings and boards from `won`; a series (next round at end plus pause, Start next round now, saved next settings, `complete`);
   - `match_player_prefs` (own read and write, size and schema, deleted on leave and kick, applied at the opening in join order, refusal to its owner only); the authz rows of the new routes and intent (§6).
 - **Animation** (owner decision 90, 02e §11.1; component tests in `games/mind-games/web`):
   - a flight starts only from a released feed step (the component is fed steps one by one; no flight begins before its step arrives, none without one), with that step's from and to;
   - one flight per from → to in a step, "×N" without a name from two on; a name on a single first choice or visible switch, never on a hidden switch or the phone layout;
-  - a lone flight lands on its card's middle, several evenly around it inside the card's frame, shrinking down to 82 % at most with a fifth's overlap, the rest as the "+N" in the card's last slot; a name only where its label fits the card; a new wave never cuts an earlier one short, a coin standing where a newer one lands fades at once, and nothing is left after 2.4 s;
+  - a lone flight lands on its card's middle, several evenly around it inside the card's frame, shrinking down to 82 % at most with a fifth's overlap, the rest as the "+N" in the card's last slot; a name only where its label fits the card; a new wave never cuts an earlier one short, a coin standing where a newer one lands fades at once, and nothing is left after 2.4 s; near the round's end a wave flies in what is left less 0.3 s (at least 0.4 s), and with less than 0.4 s left its coin appears at its landing;
   - the winners light up after the end only; with reduced motion no flight runs and the counts change in place;
   - at 1280 × 720 with the Chat panel open and at 390 × 844 the flight band's box overlaps no choice button, no feed line and no chat panel.
 - **Conformance:** P1–P5 and P7 with the game's kit (a round input, actions over the five choices with and without `hide`, prefs); P2 and P6 hold trivially.

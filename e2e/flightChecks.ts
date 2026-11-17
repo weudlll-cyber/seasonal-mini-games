@@ -27,12 +27,20 @@ export interface Line {
   used: boolean;
 }
 
-// A flight's times in ms (games/mind-games/web/flights.ts).
+// A flight's fixed times in ms (games/mind-games/web/flights.ts FADE_MS, GONE_MS); its flight
+// and stand are its wave's own, shortened near the round's end (`own`).
 export interface Times {
-  readonly fly: number;
-  readonly stand: number;
   readonly fade: number;
   readonly gone: number;
+}
+
+// An element's own flight and the end of its stand, from its CSS times.
+export function own(e: Element): { readonly fly: number; readonly standEnd: number } {
+  const style = (e as HTMLElement).style;
+  return {
+    fly: parseFloat(style.getPropertyValue('--mg-fly')),
+    standEnd: parseFloat(style.getPropertyValue('--mg-fade-at')),
+  };
 }
 
 // The probe's state in the page.

@@ -15,7 +15,8 @@
  *                 than a fifth and never below 82 % of their size; those that would not fit join
  *                 the card's "+N" in its last slot. A name whose label would not lie wholly
  *                 inside the card, clear of its neighbours' labels, is dropped for the whole
- *                 flight. The times: the flight, its standing at the landing, its fade; a coin
+ *                 flight. The times: the flight, its standing at the landing, its fade, shortened
+ *                 for a wave too close to the result screen to fly and stand in full; a coin
  *                 still standing where a newer wave lands fades at once.
  * Depends on:     @smg-game/mind-games (options, views)
  * Used by:        ./FlightBand, ./flights.test, ./FlightBand.test
@@ -217,29 +218,46 @@ export function placeWave(
 
 // A flight's times in ms (02e §11.1 point 7): it flies, stands still at its landing, then
 // shrinks and fades into its card; a coin still standing where a newer one lands fades at
-// once, in GONE_MS. A wave is removed LIFE_MS after it starts.
+// once, in GONE_MS. Near the result screen a wave is shortened (`timesFor`).
 export const FLIGHT_MS = 1_600;
 export const STAND_MS = 500;
 export const FADE_MS = 300;
 export const GONE_MS = 150;
-export const LIFE_MS = FLIGHT_MS + STAND_MS + FADE_MS;
+const SHORTEST_MS = 400;
 
-// A wave on the page: when it started (ms), the cards it lands in, those it has left at once.
+// A wave's flight and stand when it starts `left` ms before the round's result screen (the
+// plan's end; the result follows a settle later, T380): the normal ones while both fit; else
+// it flies in what is left less FADE_MS, at least SHORTEST_MS and never longer than
+// FLIGHT_MS, and stands for the rest; with less than SHORTEST_MS left (or none: a step shown
+// in the settle) the coin appears at its landing at once and stands STAND_MS, until the
+// result replaces it (owner, 2026-11-17, T380).
+export function timesFor(left: number): { readonly fly: number; readonly stand: number } {
+  if (left >= FLIGHT_MS + STAND_MS) return { fly: FLIGHT_MS, stand: STAND_MS };
+  if (left < SHORTEST_MS) return { fly: 0, stand: STAND_MS };
+  const fly = Math.min(FLIGHT_MS, Math.max(SHORTEST_MS, left - FADE_MS));
+  return { fly, stand: left - fly };
+}
+
+// A wave on the page: when it started (ms), its times, the cards it lands in, those it has
+// left at once.
 export interface Timed {
   readonly id: number;
   readonly start: number;
+  readonly fly: number;
+  readonly stand: number;
   readonly cards: readonly Choice[];
   readonly gone: readonly Choice[];
 }
 
-// The waves once wave `id` lands: every earlier one still standing in one of its cards then
-// fades there at once; one already fading goes on as it is.
+// The waves once wave `id` lands: every earlier one standing then in one of its cards fades
+// there at once; one still flying or already fading goes on as it is.
 export function landed<W extends Timed>(waves: readonly W[], id: number): W[] {
   const lands = waves.find((w) => w.id === id);
   if (lands === undefined) return [...waves];
-  const at = lands.start + FLIGHT_MS;
+  const at = lands.start + lands.fly;
   return waves.map((w) => {
-    if (w.start >= lands.start || at - w.start >= FLIGHT_MS + STAND_MS) return w;
+    const age = at - w.start;
+    if (w.start >= lands.start || age < w.fly || age >= w.fly + w.stand) return w;
     const gone = lands.cards.filter((c) => w.cards.includes(c) && !w.gone.includes(c));
     return gone.length === 0 ? w : { ...w, gone: [...w.gone, ...gone] };
   });

@@ -21,10 +21,11 @@ import {
   FLIGHT_MS,
   ICON_PX,
   landed,
-  LIFE_MS,
+  FADE_MS,
   placeWave,
   spread,
   STAND_MS,
+  timesFor,
   waveOf,
   type Flight,
   type Layout,
@@ -185,26 +186,53 @@ describe('Mind Games flights: names at the landing', () => {
 });
 
 describe('Mind Games flights: their times', () => {
-  const at = (id: number, start: number, cards: Timed['cards']): Timed => ({
+  const at = (id: number, start: number, cards: Timed['cards'], fly = FLIGHT_MS): Timed => ({
     id,
     start,
+    fly,
+    stand: STAND_MS,
     cards,
     gone: [],
   });
 
-  it('flies 1.6 s, stands 0.5 s, fades 0.3 s', () => {
-    expect([FLIGHT_MS, STAND_MS, LIFE_MS]).toEqual([1_600, 500, 2_400]);
+  it('flies 1.6 s and stands 0.5 s while both fit before the result, then fades 0.3 s', () => {
+    expect([FADE_MS, timesFor(Infinity), timesFor(2_100)]).toEqual([
+      300,
+      { fly: 1_600, stand: 500 },
+      { fly: 1_600, stand: 500 },
+    ]);
+  });
+
+  it('flies in what is left less 0.3 s near the result, at least 0.4 s, and stands the rest', () => {
+    expect(timesFor(2_000)).toEqual({ fly: 1_600, stand: 400 });
+    expect(timesFor(1_800)).toEqual({ fly: 1_500, stand: 300 });
+    expect(timesFor(1_000)).toEqual({ fly: 700, stand: 300 });
+    expect(timesFor(600)).toEqual({ fly: 400, stand: 200 });
+    expect(timesFor(400)).toEqual({ fly: 400, stand: 0 });
+  });
+
+  it('lets the coin appear at its landing at once with less than 0.4 s left, standing 0.5 s', () => {
+    // It stands the normal time: the result screen replaces it, also when the step comes in
+    // the settle after the plan's end.
+    expect(timesFor(399)).toEqual({ fly: 0, stand: 500 });
+    expect(timesFor(0)).toEqual({ fly: 0, stand: 500 });
+    expect(timesFor(-200)).toEqual({ fly: 0, stand: 500 });
   });
 
   it('fades a coin still standing where a newer one lands, in that card only', () => {
     const waves = [at(1, 0, ['summer', 'winter']), at(2, 300, ['summer'])];
     expect(landed(waves, 2).map((w) => w.gone)).toEqual([['summer'], []]);
+    // A shortened wave landing beside a coin that has stood since before it started.
+    const short = [at(1, 0, ['summer']), at(2, 1_700, ['summer'], 0)];
+    expect(landed(short, 2).map((w) => w.gone)).toEqual([['summer'], []]);
   });
 
-  it('leaves a coin that is already fading, and one landing after it, as they are', () => {
+  it('leaves a coin still flying, already fading, or landing later as it is', () => {
     const fading = [at(1, 0, ['summer']), at(2, STAND_MS, ['summer'])];
     expect(landed(fading, 2).map((w) => w.gone)).toEqual([[], []]);
     const newer = [at(1, 0, ['summer']), at(2, 300, ['summer'])];
     expect(landed(newer, 1).map((w) => w.gone)).toEqual([[], []]);
+    const flying = [at(1, 0, ['summer']), at(2, 500, ['summer'], 400)];
+    expect(landed(flying, 2).map((w) => w.gone)).toEqual([[], []]);
   });
 });

@@ -112,6 +112,7 @@ export function MindInput(p: MindInputProps): ReactElement {
           choose={choose}
           canAct={p.canAct && !shut}
           names={p.names}
+          timing={p.timing}
         />
         {/* The phone's words for the pressed card (a desktop has its pill, ./mind.css). */}
         {mine === null ? null : <p className="mg-yourline">Your choice: {CHOICE_NAMES[mine]}</p>}

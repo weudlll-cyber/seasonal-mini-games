@@ -73,7 +73,14 @@ export function MindSpectator(p: SpectatorPanelProps): ReactElement {
       <PhaseStrip view={view} timing={p.timing} />
       <div className="mg-main">
         <FeedHead view={view} timing={p.timing} />
-        <ChoiceButtons view={view} own={null} choose={null} canAct={false} names={p.names} />
+        <ChoiceButtons
+          view={view}
+          own={null}
+          choose={null}
+          canAct={false}
+          names={p.names}
+          timing={p.timing}
+        />
       </div>
     </div>
   );

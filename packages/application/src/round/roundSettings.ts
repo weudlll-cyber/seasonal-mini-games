@@ -13,8 +13,9 @@
  *                 game that rules halving out for the chosen values gets a normal season
  *                 round instead (DECISIONS T55). A `phased` game's document holds only the
  *                 platform keys it uses (the countdown and the season's source); its other
- *                 platform values are fixed off, its longest time is its plan's end, and the
- *                 plan travels with the settings (04 §4.8 rules 1 and 4).
+ *                 platform values are fixed off, its time-up is its plan's end and a settle
+ *                 of 1 s (the last moves shown before the result, T380), and the plan travels
+ *                 with the settings (04 §4.8 rules 1 and 4).
  * Depends on:     @smg/game-sdk (definitions, checks, round keys)
  * Used by:        ./roundSession tests, ../index, apps/server (round creation, settings service)
  * Spec:           docs/spec/08-admin-settings.md §1, §3, §3.4; docs/spec/06-data-model-api-realtime.md §3.1;
@@ -69,6 +70,11 @@ export interface RoundSettings<Cfg> {
   readonly plan?: PhasePlan;
 }
 
+// A phased round's time-up comes this long after its plan's end (DECISIONS T380): the last
+// moves of play are released up to the plan's end, and each player's page then loads the
+// state that shows them (a frame asks for it 250 ms later) before the result replaces it.
+const PHASED_SETTLE_MS = 1_000;
+
 // A phased round: the plan from the game's config; the platform values its document does
 // not hold are their defaults, with everything a phased round does not have switched off.
 // The cooldown keeps its default, which the round never uses: the rounds table's CHECK wants
@@ -88,7 +94,7 @@ function phasedSettings<S, A, E, Cfg, Sec>(
     secretMode: 'shared',
     inactivityLimitMs: 0,
     inactivityWarnMs: 0,
-    maxDurationMs: plan.endMs,
+    maxDurationMs: plan.endMs + PHASED_SETTLE_MS,
     marginWindowMs: 0,
     specialOn: false,
     teamsOn: false,

@@ -36,6 +36,7 @@ import {
   slotsIn,
   standing,
   take,
+  own,
   type Probe,
   type Times,
 } from './flightChecks.js';
@@ -92,8 +93,10 @@ function measure(p: Probe, wave: readonly Element[]): void {
   const set = (ms: number) => {
     for (const [a] of saved) a.currentTime = ms;
   };
-  for (const t of [...MOMENTS, 1]) {
-    set(t * p.times.fly);
+  const { fly, standEnd } = own(wave[0] ?? document.body);
+  // A coin that appears at its landing (no flight) is looked at only there.
+  for (const t of fly > 0 ? [...MOMENTS, 1] : [1]) {
+    set(t * fly);
     for (const f of flights) {
       coin(p, f, t);
       label(p, f, t);
@@ -106,7 +109,7 @@ function measure(p: Probe, wave: readonly Element[]): void {
       return box === undefined ? [] : [[f, box] as const];
     }),
   );
-  set(p.times.fly + 0.8 * p.times.stand);
+  set(fly + 0.8 * (standEnd - fly));
   standing(p, landed);
   const spent = performance.now() - t0;
   for (const [a, at] of saved) a.currentTime = at + spent;
@@ -114,22 +117,22 @@ function measure(p: Probe, wave: readonly Element[]): void {
 
 // As a wave born at `at` lands: earlier coins still standing in its cards have faded at once.
 function replaced(p: Probe, wave: readonly Element[], at: number): void {
-  const lands = at + p.times.fly;
+  const lands = at + own(wave[0] ?? document.body).fly;
   const cards = new Set(wave.map((f) => f.getAttribute('data-to')));
   for (const [f, t] of p.born) {
     const age = lands - t;
+    const { fly, standEnd } = own(f);
     if (t >= at || !cards.has(f.getAttribute('data-to'))) continue;
-    if (age < p.times.fly + 50 || age > p.times.fly + p.times.stand - 50) continue;
+    if (age < fly + 50 || age > standEnd - 50) continue;
     p.out.replaced += 1;
     if (opacity(f) > 0.05)
       bad(p, 'standing', `a coin into ${f.getAttribute('data-to') ?? ''} stays beside a newer one`);
   }
 }
 
-// One render's records: flights removed (never early), lines seen, a wave started.
-function onRender(p: Probe, records: readonly MutationRecord[]): void {
+// The flights a render removed, none before its life's end; the flights it added.
+function removed(p: Probe, records: readonly MutationRecord[]): Element[] {
   const wave: Element[] = [];
-  const life = p.times.fly + p.times.stand + p.times.fade;
   for (const r of records) {
     for (const n of r.addedNodes)
       if (n instanceof Element && ['mg-flight', 'mg-more'].some((c) => n.classList.contains(c)))
@@ -137,11 +140,17 @@ function onRender(p: Probe, records: readonly MutationRecord[]): void {
     for (const n of r.removedNodes) {
       if (!(n instanceof Element) || !p.born.has(n)) continue;
       const lived = performance.now() - (p.born.get(n) ?? 0);
-      if (lived < life - 30)
+      if (lived < own(n).standEnd + p.times.fade - 30)
         bad(p, 'leftover', `a flight removed after ${String(Math.round(lived))} ms`);
       p.born.delete(n);
     }
   }
+  return wave;
+}
+
+// One render's records: flights removed (never early), lines seen, a wave started.
+function onRender(p: Probe, records: readonly MutationRecord[]): void {
+  const wave = removed(p, records);
   const now = linesNow();
   const at = performance.now();
   for (const text of added(p.lines, now)) p.log.push({ text, seen: at, used: false });
@@ -161,7 +170,7 @@ function onRender(p: Probe, records: readonly MutationRecord[]): void {
     () => {
       replaced(p, wave, at);
     },
-    p.times.fly + p.times.gone + 80,
+    own(wave[0] ?? document.body).fly + p.times.gone + 80,
   );
 }
 
@@ -179,11 +188,10 @@ function install(times: Times, visible: boolean): void {
     onRender(p, records);
   }).observe(document.body, { childList: true, subtree: true });
   // Nothing of a wave is left in the band after its life (and a little room for the timer).
-  const life = times.fly + times.stand + times.fade;
   window.setInterval(() => {
     for (const [f, t] of p.born) {
       const lived = performance.now() - t;
-      if (lived <= life + 400) continue;
+      if (lived <= own(f).standEnd + times.fade + 400) continue;
       bad(
         p,
         'leftover',
@@ -198,6 +206,7 @@ function install(times: Times, visible: boolean): void {
 // The probe as one script for page.evaluate: its constants and functions, then the install.
 export function probeScript(times: Times, visible: boolean): string {
   const parts = [
+    own,
     bad,
     linesNow,
     added,
@@ -221,7 +230,7 @@ export function probeScript(times: Times, visible: boolean): string {
     `const MOMENTS = ${JSON.stringify(MOMENTS)}, PAIR_MS = ${String(PAIR_MS)};`,
     `const PHONE = ${JSON.stringify(PHONE)};`,
     `const r1 = ${r1.toString()}, keyOf = ${keyOf.toString()};`,
-    ...[...parts, names, measure, replaced, onRender, install].map((f) => f.toString()),
+    ...[...parts, names, measure, replaced, removed, onRender, install].map((f) => f.toString()),
     `install(${JSON.stringify(times)}, ${String(visible)});`,
     '})();',
   ].join('\n');

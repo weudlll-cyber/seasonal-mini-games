@@ -16,14 +16,15 @@
  *                 name and the count, and one line under the row names the choice ("Your
  *                 choice: Autumn", ./mind.css). Every button has its tooltip (O89). Between the
  *                 buttons and the counts, inside the cards' frames, runs the flight band
- *                 (./FlightBand, 02e §11.1), which no button overlaps. A spectator gets the same
- *                 row without choosing.
- * Depends on:     react, @smg-game/mind-games (options, names, views), ./FlightBand, ./seasons,
- *                 ./text
+ *                 (./FlightBand, 02e §11.1, given the round's timing), which no button
+ *                 overlaps. A spectator gets the same row without choosing.
+ * Depends on:     react, @smg/game-sdk (PhasedTiming), @smg-game/mind-games (options, names,
+ *                 views), ./FlightBand, ./seasons, ./text
  * Used by:        ./MindInput, ./FeedPanels
  * Spec:           docs/spec/02e-game-mind-games.md §6.1, §11
  */
 import { CHOICE_NAMES, optionsOf, type Choice, type SpectatorView } from '@smg-game/mind-games';
+import type { PhasedTiming } from '@smg/game-sdk';
 import { useRef, useState, type KeyboardEvent, type ReactElement } from 'react';
 
 import { FlightBand } from './FlightBand.js';
@@ -38,6 +39,8 @@ export interface ChoiceButtonsProps {
   readonly choose: ((c: Choice) => void) | null;
   readonly canAct: boolean;
   readonly names: Readonly<Record<string, string>>;
+  // The round's public timing: the flights shorten near its end (02e §11.1).
+  readonly timing?: PhasedTiming | undefined;
 }
 
 const STEP: Readonly<Record<string, number>> = {
@@ -152,7 +155,7 @@ export function ChoiceButtons(p: ChoiceButtonsProps): ReactElement {
           </button>
         ))}
       </div>
-      <FlightBand view={view} names={p.names} />
+      <FlightBand view={view} names={p.names} timing={p.timing} />
       <Counts view={view} options={options} />
     </div>
   );
