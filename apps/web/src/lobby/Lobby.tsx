@@ -7,8 +7,9 @@
  *                 to go to a match by its code, each match with its game (O41), for hosts
  *                 (`match.create`) a form to open a match of the game they choose (O41), with
  *                 its title, players at most, and whether it is a team match (O34), and in
- *                 development builds the way to the Quick
- *                 Test, and the lobby's chat room (07 §2). Signed-out visitors are asked to
+ *                 development builds the way to the Quick Test, also for hosts only (the
+ *                 greeting offers opening a match to them alone), and the lobby's chat room
+ *                 (07 §2). Signed-out visitors are asked to
  *                 sign in or register; in website mode only to sign in, through the website
  *                 (O66, ../account/SignIn SignInLink).
  * Depends on:     react, @smg/contracts, ../account/SignIn, ../chat/ChatPanel, ../shell/*,
@@ -162,6 +163,20 @@ function SignInLine({ website }: { readonly website: boolean }): ReactElement {
   );
 }
 
+// Signed out: the way in; signed in: the welcome, offering to open a match to hosts only.
+function Greeting(p: {
+  readonly name: string | null;
+  readonly host: boolean;
+  readonly website: boolean;
+}) {
+  if (p.name === null) return <SignInLine website={p.website} />;
+  return (
+    <p>
+      Welcome, {p.name}. Join a match below{p.host ? ', or open one' : ''}.
+    </p>
+  );
+}
+
 export function Lobby({ dev }: { readonly dev: boolean }): ReactElement {
   const { session, can } = useSession();
   const games = useGames();
@@ -176,17 +191,15 @@ export function Lobby({ dev }: { readonly dev: boolean }): ReactElement {
       });
   }, []);
   const name = session?.account?.displayName ?? null;
+  // Opening a match, and the Quick Test that opens one, are for hosts (`match.create`).
+  const host = can('match.create');
   return (
     <div className="smg-stack" data-testid="lobby">
       <section className="smg-panel smg-stack">
         <h1>Seasonal Mini Games</h1>
-        {name === null ? (
-          <SignInLine website={session?.authMode === 'website'} />
-        ) : (
-          <p>Welcome, {name}. Join a match below, or open one.</p>
-        )}
+        <Greeting name={name} host={host} website={session?.authMode === 'website'} />
         <ByCode />
-        {dev && QuickTestLink !== null ? (
+        {dev && host && QuickTestLink !== null ? (
           <Suspense fallback={null}>
             <QuickTestLink />
           </Suspense>
@@ -211,7 +224,7 @@ export function Lobby({ dev }: { readonly dev: boolean }): ReactElement {
           </ul>
         )}
       </section>
-      {can('match.create') ? <OpenMatch /> : null}
+      {host ? <OpenMatch /> : null}
       <ChatPanel target={LOBBY} />
     </div>
   );
