@@ -43,20 +43,20 @@ Installer and `smg` CLI (both install types, beside Bingo on one server), backup
 
 Scale step 1 (Redis, match-sticky routing, [04](04-software-architecture.md) §5.6), passkeys, Kubernetes chart, other identity providers, languages other than English, and long-running games with their own timing (owner, decision 3).
 
-## 3. Later games (roadmap only, no design work now: owner, decision 2)
+## 3. Later games (owner, decision 2)
 
 Listed in the order of the vision. Each one starts only after an owner decision on its design, gets its own spec section, and must pass the conformance suite ([04](04-software-architecture.md) §4.5). Candidates and the criteria they are checked against are in [GAME-IDEAS.md](../GAME-IDEAS.md).
 
-1. Seasonal Target
-2. Seasonal Safecracker
-3. Seasonal Bomb Defusal
+1. Seasonal Target (built)
+2. Seasonal Safecracker (built)
+3. Seasonal Bomb Defusal (built)
 4. Seasonal Prediction
 5. Seasonal Higher Or Lower
 6. Seasonal Mystery Object
 
-Seasonal Target, Seasonal Safecracker and Seasonal Bomb Defusal are the next games (owner, decision 38): their designs are [02d](02d-game-seasonal-target.md), [02b](02b-game-safecracker.md) and [02c](02c-game-bomb-defusal.md); the owner confirmed their rules after playing them (O65). They and Guess The Number share one guess engine ([04](04-software-architecture.md) §4.7, DECISIONS T117, which closes T21).
+Seasonal Target, Seasonal Safecracker and Seasonal Bomb Defusal are built and registered (owner, decision 38): their designs are [02d](02d-game-seasonal-target.md), [02b](02b-game-safecracker.md) and [02c](02c-game-bomb-defusal.md); the owner confirmed their rules after playing them (O65). They and Guess The Number share one guess engine ([04](04-software-architecture.md) §4.7, DECISIONS T117, which closes T21).
 
-Seasonal Mind Games is designed (owner decisions 76–90; [02e](02e-game-mind-games.md)). It is not a guess game: it needs the timing class `phased` ([04](04-software-architecture.md) §4.8), a contract change of its own. Its work packages are §4.
+Seasonal Mind Games is built and registered (owner decisions 76–90; [02e](02e-game-mind-games.md)). It is not a guess game: it uses the timing class `phased` ([04](04-software-architecture.md) §4.8), a contract change of its own. Its work packages are §4.
 
 ## 4. Seasonal Mind Games: work packages
 

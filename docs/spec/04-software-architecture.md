@@ -106,7 +106,7 @@ interface GameModule<S, A, E, Cfg, Sec> {
     id: string;                 // 'guess-the-number' — URL- and DB-safe, never reused
     name: string;               // 'Guess The Number'
     contractVersion: 1;         // the game-sdk contract version it implements
-    timing: 'cooldown';         // §4.3; 'phased' joins with Seasonal Mind Games (§4.8)
+    timing: 'cooldown' | 'phased';  // §4.3; 'phased' for Seasonal Mind Games (§4.8)
     secretModes: ReadonlyArray<'shared' | 'individual'>;  // none: the round bar names no mode (T347)
     teams: boolean;             // supports season teams (shared mode)
     seasons?: false;            // false: the rounds show no season (Mind Games, O93); absent: shown
@@ -170,7 +170,7 @@ The registry lists each game as one entry `{ module, conformance, devBot }`, whe
 
 - `cooldown`: the platform enforces the per-player cooldown of owner decision 3 (range 3–60 s, the same for all, no global tick) after the game's `validate` and before a `PlayerAction` reaches its `decide` (§4.2; a guess out of range during a cooldown is answered `OUT_OF_RANGE`, DECISIONS T29, T263). Heatwave and Frost apply automatically.
 - `own`: for games designed as long-running (owner, decision 3). The game will declare its timers (`ownTimers`), and the platform schedules them. There is no cooldown, Heatwave or Frost. No v1 game uses this class, so it joins the contract with the first long-running game, as a contract change of its own (§4.6).
-- `phased`: rounds with fixed phases that the game declares and the platform schedules and enforces; players act freely inside them, the room may see the round one delay late, and the game's own rule decides the result. No cooldown, Heatwave, Frost or inactivity limit. Specified in §4.8 for Seasonal Mind Games ([02e](02e-game-mind-games.md)), not built yet; a long-running game may later build `own` on the same phase plan.
+- `phased`: rounds with fixed phases that the game declares and the platform schedules and enforces; players act freely inside them, the room may see the round one delay late, and the game's own rule decides the result. No cooldown, Heatwave, Frost or inactivity limit. Specified in §4.8 and built for Seasonal Mind Games ([02e](02e-game-mind-games.md)); a long-running game may later build `own` on the same phase plan.
 
 ### 4.4 Specials
 
@@ -306,7 +306,7 @@ Platform commands on a round: `createRound`, `startCountdown`, `openRound`, `sub
 
 - At `createRound` the platform draws a 256-bit **round seed** from the `SecureRandom` port (`crypto.randomBytes`, a CSPRNG).
 - All round randomness comes from an HMAC-SHA256 counter DRBG keyed by that seed with domain-separation labels, as Bingo's per-match DRBG (Bingo 01 §9, Bingo `packages/domain/src/draw/drbg.ts`).
-  - The labels are `secret/shared`, `secret/<playerId>`, `spring`, `leafFall/<k>`, `halving/<k>/<playerId|shared>` and `teams/tiebreak`.
+  - The labels are `secret/shared`, `secret/<playerId>`, `spring`, `leafFall/<k>`, `halving/<k>/<playerId|shared>`, `comment/<receiveSeq>` (the comment line of a guess game, §4.7) and `teams/tiebreak`.
   - The last one only breaks ties when the round engine itself places a roster player given without a team; in a team match the server has already placed every such player in the match's smallest team before the round starts, ties broken by a hash of the round id and the player key ([03](03-seasonal-specials.md) §5; DECISIONS T82, T264).
 - Uniform integers use rejection sampling, never a modulo.
 - The seed is stored encrypted (AES-256-GCM, key from `SMG_ROUND_KEY`) and decrypted only inside the round engine. Secrets are **derived** from the seed when needed and are never stored as a column ([05](05-security-threat-model.md) §3).

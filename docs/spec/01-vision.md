@@ -8,14 +8,14 @@ Seasonal Mini Games is a platform for short multiplayer games that people play *
 
 The platform comes first and the games plug into it. Accounts, matches, rounds, timing, ordering, seasons, teams, leaderboards, chat, embedding and administration are platform features. A game supplies only its own rules and its own screen (the game-module contract, [04](04-software-architecture.md) §4).
 
-The first game is **Guess The Number** ([02](02-game-guess-the-number.md)). Seasonal Safecracker, Seasonal Bomb Defusal and Seasonal Target followed (owner, decision 38; [02b](02b-game-safecracker.md)–[02d](02d-game-seasonal-target.md)). The other later games are listed in the [roadmap](11-roadmap.md) §3 and in [GAME-IDEAS.md](../GAME-IDEAS.md); they have no design yet (owner, decision 2).
+The first game is **Guess The Number** ([02](02-game-guess-the-number.md)). Seasonal Safecracker, Seasonal Bomb Defusal and Seasonal Target followed (owner, decision 38; [02b](02b-game-safecracker.md)–[02d](02d-game-seasonal-target.md)), then Seasonal Mind Games (owner, decisions 76–90; [02e](02e-game-mind-games.md)); all five are built. The other later games are listed in the [roadmap](11-roadmap.md) §3 and in [GAME-IDEAS.md](../GAME-IDEAS.md); they have no design yet (owner, decision 2).
 
 ## 2. Fixed product facts
 
 | Fact | Source |
 |---|---|
 | The platform foundation is adopted from Seasonal Bingo Royale: stack, layering, working rules, installer, identity adapters, embedding, chat providers, file header and size limits. | Owner, 2026-10-24 (decision 1) |
-| The first game is Guess The Number. The other vision games are in the roadmap only. | Owner, 2026-10-24 (decision 2) |
+| The first game is Guess The Number. Each other vision game waits for an owner decision on its design; Safecracker, Bomb Defusal, Seasonal Target and Seasonal Mind Games have one and are built. | Owner, 2026-10-24 (decision 2; decisions 38, 76–90) |
 | Specification first, code afterwards. | Owner, 2026-10-24 (decision 7) |
 | No prizes of monetary value: no payouts, wagers, purchases, wallets or token transfers. Players compete for placings and leaderboard rank. The data model has no currency, balance or wallet fields. | Owner, 2026-10-24 (decision 14; as Bingo 01 §1.1) |
 | Standalone product that can also be embedded in the Seasonal Entertainment website. | Owner, 2026-10-24 (decision 14; as Bingo 01 §1.1, Bingo 07) |
