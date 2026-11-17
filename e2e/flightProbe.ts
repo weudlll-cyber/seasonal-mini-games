@@ -6,11 +6,13 @@
  * Responsibility: installed in a page before the round (`probeScript`: its functions and
  *                 ./flightChecks' as one script), it watches the flight band. When a wave starts
  *                 (flights added in one render) it sets the wave's animations to chosen moments
- *                 of the flight, runs ./flightChecks' coin and label checks at each and the landing
- *                 checks at 80 %, and puts the animations back, so the wave plays on unchanged.
- *                 A second later it hands the wave the feed lines that showed within PAIR_MS of
- *                 it (the list renders apart from the band) for the name and group checks. A
- *                 flight removed before FLIGHT_MS, or still in the band after it, is a problem
+ *                 of the flight, runs ./flightChecks' coin and label checks at each, the landing
+ *                 checks at its end and the standing check during the stand, and puts the
+ *                 animations back, so the wave plays on unchanged. A second later it hands the
+ *                 wave the feed lines that showed within PAIR_MS of it (the list renders apart
+ *                 from the band) for the name and group checks. When the wave lands, an earlier
+ *                 coin still standing in one of its cards must have faded at once. A flight
+ *                 removed before its life's end, or still in the band after it, is a problem
  *                 too. Problems by check in window.__flightProbe.
  * Used by:        ./mindGamesFlights.spec
  * Spec:           docs/spec/02e-game-mind-games.md §11.1; docs/spec/09-testing-strategy.md §4
@@ -18,29 +20,38 @@
  */
 import {
   bad,
-  flightOf,
-  landing,
   coin,
+  fits,
+  flightOf,
+  inner,
+  inside,
   label,
+  landing,
   named,
+  nameless,
   names,
   opacity,
   overlap,
   r1,
+  slotsIn,
+  standing,
   take,
   type Probe,
+  type Times,
 } from './flightChecks.js';
 
 export interface ProbeResult {
   readonly waves: number;
   readonly flights: number;
   readonly named: number;
+  readonly dropped: number;
   readonly groups: number;
+  readonly replaced: number;
   readonly problems: Readonly<Record<string, readonly string[]>>;
 }
 
-const MOMENTS = [0.05, 0.2, 0.3, 0.5, 0.65, 0.8, 0.9, 0.97];
-const LAND = 0.8;
+// Moments of the flight, as shares of it.
+const MOMENTS = [0.05, 0.2, 0.3, 0.5, 0.65, 0.9];
 const PAIR_MS = 1_000;
 // The platform's phone layout (games/mind-games/web/FlightBand PHONE).
 const PHONE = '(max-width: 899px), (orientation: portrait)';
@@ -70,36 +81,64 @@ function added(before: readonly string[], now: readonly string[]): string[] {
   return [...now];
 }
 
-// A new wave at its moments, then back where it was.
+// A new wave at its moments, its landing and its stand, then back where it was.
 function measure(p: Probe, wave: readonly Element[]): void {
   const t0 = performance.now();
   for (const f of wave) p.born.set(f, t0);
+  const flights = wave.filter((f) => f.classList.contains('mg-flight'));
   const saved = wave
     .flatMap((f) => [f, ...f.querySelectorAll('*')].flatMap((e) => e.getAnimations()))
     .map((a) => [a, Number(a.currentTime ?? 0)] as const);
-  for (const t of MOMENTS) {
-    for (const [a] of saved) a.currentTime = t * p.ms;
-    for (const f of wave) {
+  const set = (ms: number) => {
+    for (const [a] of saved) a.currentTime = ms;
+  };
+  for (const t of [...MOMENTS, 1]) {
+    set(t * p.times.fly);
+    for (const f of flights) {
       coin(p, f, t);
       label(p, f, t);
     }
-    if (t === LAND) landing(p, wave);
   }
+  landing(p, wave);
+  const landed = new Map(
+    flights.flatMap((f) => {
+      const box = f.querySelector('.mg-flight-to')?.getBoundingClientRect();
+      return box === undefined ? [] : [[f, box] as const];
+    }),
+  );
+  set(p.times.fly + 0.8 * p.times.stand);
+  standing(p, landed);
   const spent = performance.now() - t0;
   for (const [a, at] of saved) a.currentTime = at + spent;
+}
+
+// As a wave born at `at` lands: earlier coins still standing in its cards have faded at once.
+function replaced(p: Probe, wave: readonly Element[], at: number): void {
+  const lands = at + p.times.fly;
+  const cards = new Set(wave.map((f) => f.getAttribute('data-to')));
+  for (const [f, t] of p.born) {
+    const age = lands - t;
+    if (t >= at || !cards.has(f.getAttribute('data-to'))) continue;
+    if (age < p.times.fly + 50 || age > p.times.fly + p.times.stand - 50) continue;
+    p.out.replaced += 1;
+    if (opacity(f) > 0.05)
+      bad(p, 'standing', `a coin into ${f.getAttribute('data-to') ?? ''} stays beside a newer one`);
+  }
 }
 
 // One render's records: flights removed (never early), lines seen, a wave started.
 function onRender(p: Probe, records: readonly MutationRecord[]): void {
   const wave: Element[] = [];
+  const life = p.times.fly + p.times.stand + p.times.fade;
   for (const r of records) {
     for (const n of r.addedNodes)
-      if (n instanceof Element && n.classList.contains('mg-flight')) wave.push(n);
+      if (n instanceof Element && ['mg-flight', 'mg-more'].some((c) => n.classList.contains(c)))
+        wave.push(n);
     for (const n of r.removedNodes) {
       if (!(n instanceof Element) || !p.born.has(n)) continue;
-      const life = performance.now() - (p.born.get(n) ?? 0);
-      if (life < p.ms - 30)
-        bad(p, 'leftover', `a flight removed after ${String(Math.round(life))} ms`);
+      const lived = performance.now() - (p.born.get(n) ?? 0);
+      if (lived < life - 30)
+        bad(p, 'leftover', `a flight removed after ${String(Math.round(lived))} ms`);
       p.born.delete(n);
     }
   }
@@ -118,14 +157,20 @@ function onRender(p: Probe, records: readonly MutationRecord[]): void {
       at,
     );
   }, PAIR_MS + 10);
+  window.setTimeout(
+    () => {
+      replaced(p, wave, at);
+    },
+    p.times.fly + p.times.gone + 80,
+  );
 }
 
-function install(ms: number, visible: boolean): void {
+function install(times: Times, visible: boolean): void {
   const p: Probe = {
-    ms,
+    times,
     visible,
     phone: window.matchMedia(PHONE).matches,
-    out: { waves: 0, flights: 0, named: 0, groups: 0, problems: {} },
+    out: { waves: 0, flights: 0, named: 0, dropped: 0, groups: 0, replaced: 0, problems: {} },
     born: new Map(),
     log: [],
     lines: linesNow(),
@@ -133,23 +178,25 @@ function install(ms: number, visible: boolean): void {
   new MutationObserver((records) => {
     onRender(p, records);
   }).observe(document.body, { childList: true, subtree: true });
-  // Nothing of a wave is left in the band after FLIGHT_MS (and a little room for the timer).
+  // Nothing of a wave is left in the band after its life (and a little room for the timer).
+  const life = times.fly + times.stand + times.fade;
   window.setInterval(() => {
-    for (const [f, t] of p.born)
-      if (performance.now() - t > ms + 400) {
-        bad(
-          p,
-          'leftover',
-          `a flight still in the band ${String(Math.round(performance.now() - t))} ms after its start`,
-        );
-        p.born.delete(f);
-      }
+    for (const [f, t] of p.born) {
+      const lived = performance.now() - t;
+      if (lived <= life + 400) continue;
+      bad(
+        p,
+        'leftover',
+        `a flight still in the band ${String(Math.round(lived))} ms after its start`,
+      );
+      p.born.delete(f);
+    }
   }, 200);
   (window as unknown as { __flightProbe: Probe['out'] }).__flightProbe = p.out;
 }
 
 // The probe as one script for page.evaluate: its constants and functions, then the install.
-export function probeScript(flightMs: number, visible: boolean): string {
+export function probeScript(times: Times, visible: boolean): string {
   const parts = [
     bad,
     linesNow,
@@ -158,18 +205,24 @@ export function probeScript(flightMs: number, visible: boolean): string {
     coin,
     label,
     overlap,
+    inner,
+    inside,
+    slotsIn,
     landing,
+    standing,
     flightOf,
     take,
+    fits,
+    nameless,
     named,
   ];
   return [
     '(() => {',
-    `const MOMENTS = ${JSON.stringify(MOMENTS)}, LAND = ${String(LAND)}, PAIR_MS = ${String(PAIR_MS)};`,
+    `const MOMENTS = ${JSON.stringify(MOMENTS)}, PAIR_MS = ${String(PAIR_MS)};`,
     `const PHONE = ${JSON.stringify(PHONE)};`,
     `const r1 = ${r1.toString()}, keyOf = ${keyOf.toString()};`,
-    ...[...parts, names, measure, onRender, install].map((f) => f.toString()),
-    `install(${String(flightMs)}, ${String(visible)});`,
+    ...[...parts, names, measure, replaced, onRender, install].map((f) => f.toString()),
+    `install(${JSON.stringify(times)}, ${String(visible)});`,
     '})();',
   ].join('\n');
 }

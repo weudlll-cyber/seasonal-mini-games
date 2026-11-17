@@ -6,7 +6,8 @@
  * Responsibility: one row of cards (owner decision O97), each in its season's colour (All in
  *                 the neutral colour with the four icons): on top the button with the season's
  *                 original icon and its name, a radio group (the arrow keys move between them,
- *                 Enter or Space chooses, 02e §11); at the foot the count as the feed shows it,
+ *                 Enter or Space chooses, 02e §11), whose click area is the whole card, its band
+ *                 and its count included (./mind.css); at the foot the count as the feed shows it,
  *                 in large type, with "players, 10 s ago" under it; the count is the view's,
  *                 never a live one, and the client counts nothing; while the feed is still
  *                 empty there is no count at all (09 §4 journey 38). The viewer's current choice

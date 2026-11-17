@@ -145,7 +145,8 @@ async function switches(p: Person): Promise<void> {
   // The icon flies once the switch reaches the feed, 10 s later, with its line.
   await expect(flight).toHaveCount(1, { timeout: 15_000 });
   await expect(list(page)).toContainText(/You\s*switched Autumn → Spring/, { timeout: 15_000 });
-  await expect(list(page)).not.toContainText(/switched Winter/);
+  // The own hidden switch has no line (a bot's switch from Winter may have one).
+  await expect(list(page)).not.toContainText(/You\s*switched Winter/);
 }
 
 // After the join time a second browser joins the match: it may not enter the round.

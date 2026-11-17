@@ -79,6 +79,8 @@ const TIMING = [
   'mindGamesPhone.spec.ts',
   // Journey 44: Mind Games' flights measured wave by wave (Chromium).
   'mindGamesFlights.spec.ts',
+  // Journey 45: a click anywhere in a Mind Games card chooses, until choices close.
+  'mindGamesCards.spec.ts',
 ];
 // Specs that run in Chromium only: journey 36 starts its own server and nginx container, and
 // proves the server and the proxy, not the browser (DECISIONS T241).

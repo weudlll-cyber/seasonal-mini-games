@@ -15,7 +15,7 @@ The authoritative list. `OPEN.md` is the short page over it and is aligned after
 
 ### Seasonal Mind Games (owner decisions O76–O90, spec/02e)
 
-- The game is complete and on `master` (spec/02e; the `phased` contract, spec/04 §4.8; settings, spec/08 §3.4; tests, spec/09 §3, §4.2, journeys 38–41, 43, 44). Still open: the owner's answers to OPEN (af) and to the proposals among DECISIONS T288–T344 and T371–T377.
+- The game is complete and on `master` (spec/02e; the `phased` contract, spec/04 §4.8; settings, spec/08 §3.4; tests, spec/09 §3, §4.2, journeys 38–41, 43–45). Still open: the owner's answers to OPEN (af) and to the proposals among DECISIONS T288–T344 and T379 (T371–T377 are superseded by T378).
 
 ### Flaky tests (owner request of 2026-11-16, chain MG-N10)
 
@@ -198,3 +198,4 @@ For Phase 7:
 - 2026-11-17: Mind Games flights rebuilt to the owner's final behaviour (MG-FLIGHT-CLEAN): OPEN (af) 27–30 closed. _Closed by:_ DECISIONS T378 (supersedes T371, T376, T377), branch `feat/mg-flight-clean`
 - 2026-11-17: The settings O65 confirmed (Safecracker, Bomb Defusal, Seasonal Target) are owner settings, the explosion penalty per round. _Closed by:_ DECISIONS O104, branch `feat/mg-flight-clean`
 - 2026-11-17: Docs corrected to the code: spec 10 (existing files, the CI), 01 and 11 (the built games), 04 (`phased` built, the `comment/<receiveSeq>` label), 03 §6 (the special's banner), 02e §8.2 (O102's name order), 02d §3 (a closed OPEN link). _Closed by:_ branch `feat/mg-flight-clean`
+- 2026-11-17: The owner's findings on the flights and cards (MG-FLIGHT-CLEAN-2): a click anywhere in a Mind Games card chooses it (journey 45), a larger "×N", names only where they fit the card, everything inside the card's frame, 1.6 s flight with 0.5 s standing and a standing coin replaced at once; what a late switch shows before the result is OPEN (af) 35. _Closed by:_ DECISIONS T379 (amends T378), branch `feat/mg-flight-clean`

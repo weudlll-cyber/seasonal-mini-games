@@ -59,6 +59,8 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 31. Animation: at the round end the winning season or seasons light up for about 2 s on the result, beside their check and "wins".
 32. Animation: with the device's reduced-motion setting there are no flights and no light-up; the counts change in place.
 33. The phone result bar: where the game's name has no room on one line (360 × 740, or wider fonts at 390 × 844), it breaks between its words onto a second line inside its chip instead of being cut with an ellipsis; the bar stays one row (T372).
+34. The flights' times and look of DECISIONS T379 (MG-FLIGHT-CLEAN-2): 1.6 s flight, 0.5 s standing, 0.3 s fade, a replaced coin fading in 0.15 s; the "×N" at 15 px above its coin; the "+N" as a pill in the card's last slot.
+35. A switch at the round's end (T379 (f)): the last switches of play are released in the feed's last steps, about 0.5–1.5 s before the result replaces the stage, so their flights are cut off (a 0.4 s-before-close switch was shown for 450 ms of its 1.6 s, never landing). Proposal: within the game, a flight released less than its full time (1.6 s + 0.5 s) before the round's end flies faster, so it lands and stands before the end, at least 0.4 s long; the alternative, holding the result screen until the last wave has landed, would change the platform.
 
 ## Firefox/WebKit findings (O103 batch)
 
