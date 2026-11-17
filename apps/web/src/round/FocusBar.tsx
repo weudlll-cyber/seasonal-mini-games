@@ -32,7 +32,7 @@ export function clockText(ms: number): string {
 }
 
 // The time left of an open round, "9:30"; null before it opens.
-export function timeText(state: RoundStateView, now: number): string | null {
+function timeText(state: RoundStateView, now: number): string | null {
   if (state.status !== 'open' || state.endsAt === null) return null;
   return clockText(Math.max(0, state.endsAt - now));
 }

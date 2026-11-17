@@ -26,7 +26,7 @@ import { useListed } from './useListed.js';
 const at = (p: IdentityProviderView) => `/admin/identity-providers/${p.id}`;
 
 // The provider with `enabled` turned over; without `pinnedPublicKey`, so a pinned key stays.
-export function switched(p: IdentityProviderView): Record<string, unknown> {
+function switched(p: IdentityProviderView): Record<string, unknown> {
   return {
     name: p.name,
     issuer: p.issuer,

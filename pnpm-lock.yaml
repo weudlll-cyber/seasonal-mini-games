@@ -372,9 +372,6 @@ importers:
       '@smg/guess-engine':
         specifier: workspace:*
         version: link:../../packages/guess-engine
-      '@smg/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       react:
         specifier: 19.3.1
         version: 19.3.1
@@ -520,9 +517,6 @@ importers:
       '@smg/guess-engine':
         specifier: workspace:*
         version: link:../../packages/guess-engine
-      '@smg/ui':
-        specifier: workspace:*
-        version: link:../../packages/ui
       react:
         specifier: 19.3.1
         version: 19.3.1
@@ -610,9 +604,6 @@ importers:
         specifier: workspace:*
         version: link:../game-sdk
     devDependencies:
-      fast-check:
-        specifier: 4.10.2
-        version: 4.10.2
       zod:
         specifier: 4.6.7
         version: 4.6.7

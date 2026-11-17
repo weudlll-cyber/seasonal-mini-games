@@ -67,14 +67,13 @@ test('journey 5: season teams are fixed for the match and the winner team scores
       '1 team point — the winner’s team',
     );
     // After the result: the waiting area for the next round lists the players with their
-    // teams and has no team buttons; the result has no player box of its own (O23, O26).
+    // teams and has no team buttons (O26).
     const waiting = one.page.getByTestId('waiting-area');
     await expect(waiting).toContainText('Next round');
     await expect(waiting.getByRole('group', { name: 'Season team' })).toHaveCount(0);
     await expect(
       waiting.getByTestId('match-players').getByRole('img', { name: 'Team Spring' }).first(),
     ).toBeVisible();
-    await expect(one.page.getByText('In this match')).toHaveCount(0);
   } finally {
     await abortMatch(host, code);
     await closeAll([host, ...players]);

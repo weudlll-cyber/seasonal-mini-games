@@ -13,7 +13,7 @@
 
 ## 2. How to read the tables
 
-- **Status:** *owner (On)* = decided by the owner on 2026-10-24, with its decision number in [DECISIONS.md](../DECISIONS.md) §1; *proposal* = a value the owner has not given yet, listed as an owner question in [OPEN.md](../OPEN.md); *technical* = a technical choice ([DECISIONS.md](../DECISIONS.md)).
+- **Status:** *owner (On)* = decided by the owner, with its decision number in [DECISIONS.md](../DECISIONS.md) §1; *proposal* = a value the owner has not given yet, listed as an owner question in [OPEN.md](../OPEN.md); *technical* = a technical choice ([DECISIONS.md](../DECISIONS.md)).
 - **Who:** *host* = the match's host chooses it per round, inside the bounds; *game admin* = permission `settings.game.edit` (role `game_admin`) sets the default and may narrow the min/max shown here, never widen them; *security admin* = role `security_admin`; *season admin* = permission `season.manage`.
 - **Running rounds:** *frozen* = copied into the round at creation, so a change affects only rounds created afterwards; *immediate* = takes effect at once, also in running rounds; *next* = used the next time the value is read (stated per row).
 
@@ -28,7 +28,7 @@
 | `round.rangeLow` | 1 | −1 000 000 | 1 000 000 | owner (O18); `rangeHigh` ≥ `rangeLow` + 9 | host | frozen |
 | `round.rangeHigh` | 1 000 | −1 000 000 | 1 000 000 | owner (O18); `rangeHigh` ≥ `rangeLow` + 9 | host | frozen |
 | `round.rangeVisible` | true | — | — | owner (O19): off hides the range until the end (02 §3) | host | frozen |
-| `round.countdownS` | 10 | 3 | 30 | *proposal* (OPEN (ab)): long enough to read the round's intro screen (owner decision 36); was 5 (O15) | host | frozen |
+| `round.countdownS` | 10 | 3 | 30 | *proposal* (OPEN (ab)): long enough to read the round's intro screen (owner decision 36) | host | frozen |
 | `round.maxDurationMin` | 10 | 1 | 60 | owner (O15) | host | frozen |
 | `round.feedbackVisibility` | `full` | — | — (`own`, `numbers`, `full`) | owner (O8) | host (shared mode) | frozen |
 | `round.comments` | true | — | — | owner (O21): a closeness comment on every guess, seen exactly where its answer is seen (02 §6.3) | host | frozen |
@@ -60,7 +60,9 @@
 | `fairness.commitReveal` | true | — | — | owner (O9) | game admin | frozen |
 | Team points per round win | 1 | — | — | owner (O12, not a setting) | — | — |
 
-The host form shows each host-chosen value with its default preselected and refuses values outside the bounds with a plain sentence. The server validates again (`ROUND_SETTINGS_INVALID`). The sentence comes from the setting's own check, one wording for the host form, the Quick Test, the admin's settings table and the server's answers, and stands under the field it belongs to; a refused pair names the warning ("The warning must be shorter than the limit.", owner decision 74; DECISIONS T276). The inactivity limit and warning are offered wherever a round is set up, the Quick Test included (owner decision 75).
+- The host form shows each host-chosen value with its default preselected and refuses values outside the bounds with a plain sentence. The server validates again (`ROUND_SETTINGS_INVALID`).
+- The sentence comes from the setting's own check, one wording for the host form, the Quick Test, the admin's settings table and the server's answers, and stands under the field it belongs to; a refused pair names the warning ("The warning must be shorter than the limit.", owner decision 74; DECISIONS T276).
+- The inactivity limit and warning are offered wherever a round is set up, the Quick Test included (owner decision 75).
 
 ### 3.1 Seasonal Safecracker (document `game.safecracker`, [02b](02b-game-safecracker.md))
 
@@ -82,7 +84,7 @@ Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.in
 | `bomb.wires` | 6 | 4 | 8 | proposal: the first N colours of red, blue, yellow, green, white, black, orange, purple (02c §3) | host | frozen |
 | `bomb.cuts` | 4 | 3 | 6 | proposal; at most `bomb.wires` | host | frozen |
 | `bomb.explosionPenaltyS` | 5 | 0 | 30 | owner (O40): host chooses, 0 allowed; default and max: proposal. Added to the cooldown on a wrong first cut (02c §5.2) | host (per match) | frozen (copied from the match into each round) |
-| `autumn.wiresPerFall` | — | — | — | removed by owner decision 42 (2026-11-02): each Leaf Fall marks one wire (02c §8.3) | — | — |
+| `autumn.wiresPerFall` | — | — | — | removed by owner decision 42: each Leaf Fall marks one wire (02c §8.3) | — | — |
 | Tier rule | fixed | — | — | proposal, not a setting: k = 1 … cuts − 2 spread evenly over cold … burning (02c §7) | — | — |
 
 ### 3.3 Seasonal Target (document `game.seasonal-target`, [02d](02d-game-seasonal-target.md))
@@ -91,15 +93,17 @@ Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.in
 
 | Key | Default | Min | Max | Status | Who | Running rounds |
 |---|---|---|---|---|---|---|
-| `target.size` | 20 | 8 | 30 | owner (O45, amends the map of O38 and O43): the square tile grid's side in tiles; row 1 is north (02d §3). Replaced `map.width` and `map.height` (50, 20–100); migration 0013 wrote a version without their stored overrides | host | frozen |
-| `target.feedback` | `closeness` | — | — (`direction`, `distance`, `closeness`) | owner (O43, amends O39; default O53): distance and direction, distance only, warm/cold only (default since O53; a stored explicit value keeps its value); the host's round setting, chosen in the round form; the next round's form keeps the last choice (02d §3, §5) | host | frozen |
+| `target.size` | 20 | 8 | 30 | owner (O45): the square tile grid's side in tiles; row 1 is north (02d §3) | host | frozen |
+| `target.feedback` | `closeness` | — | — (`direction`, `distance`, `closeness`) | owner (O43; default O53): distance and direction, distance only, warm/cold only (a stored explicit value keeps its value); the host's round setting, chosen in the round form; the next round's form keeps the last choice (02d §3, §5) | host | frozen |
 | `autumn.minCellsLeft` | 10 | 2 | 50 | proposal: Leaf Fall stops when fewer candidate tiles would remain (02d §8.3); at most 50, so tiles can fall on an 8 × 8 grid (O45) | game admin | frozen |
 | `halving.minCells` | 16 | 4 | 32 | proposal: halving stops once the target area has this many tiles or fewer (02d §8.4); at most 32, so an 8 × 8 grid is halved at least once (O45) | game admin | frozen |
 | Closeness tier table (way off, cold, cool, warm, hot above 48 / 32 / 20 / 12 / 6 % of the diagonal and above a minimum of n = 61 / 40 / 20 / 13 / 8, n the squared distance in tiles; touching = just missed) | — | — | — | proposal, not a setting: Leaf Fall's `closeness` candidates depend on it (02d §7; `games/seasonal-target/src/geometry.ts`) | — | — |
 
 ### 3.4 Seasonal Mind Games (document `game.mind-games`, [02e](02e-game-mind-games.md))
 
-Platform round keys used: `round.countdownS`, `round.seasonSource` (the round's season, which changes no rule, 02e §12). Not used by this game, because the `phased` class has no cooldown, specials, inactivity limit, secret or proof ([04](04-software-architecture.md) §4.8): `round.secretMode`, `round.cooldownS`, `round.inactivityLimitS`, `round.inactivityWarnS`, `round.maxDurationMin` (the plan's end replaces it), `round.marginWindowS`, `round.specialOn`, `round.teamsOn`, `round.halving`, every shared guess key, `spring.*`, `summer.*`, `autumn.*`, `winter.*`, `halving.*`, `points.*`, `fairness.commitReveal`.
+Platform round keys used: `round.countdownS`, `round.seasonSource` (the round's season, which changes no rule, 02e §12).
+
+Not used by this game, because the `phased` class has no cooldown, specials, inactivity limit, secret or proof ([04](04-software-architecture.md) §4.8): `round.secretMode`, `round.cooldownS`, `round.inactivityLimitS`, `round.inactivityWarnS`, `round.maxDurationMin` (the plan's end replaces it), `round.marginWindowS`, `round.specialOn`, `round.teamsOn`, `round.halving`, every shared guess key, `spring.*`, `summer.*`, `autumn.*`, `winter.*`, `halving.*`, `points.*`, `fairness.commitReveal`.
 
 | Key | Default | Min | Max | Status | Who | Running rounds |
 |---|---|---|---|---|---|---|

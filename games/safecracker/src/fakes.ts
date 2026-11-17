@@ -20,7 +20,7 @@ import { safecracker } from './module.js';
 import type { ScConfig } from './settings.js';
 import type { ScEvent, ScState } from './state.js';
 
-export const defaultConfig: ScConfig = {
+const defaultConfig: ScConfig = {
   codeLength: 4,
   codeDigits: 10,
   digitsPerFall: 1,

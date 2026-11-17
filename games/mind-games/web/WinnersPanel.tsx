@@ -41,7 +41,7 @@ export function chipRows(width: number, height: number): number {
 const ROW_SLACK = 4;
 
 // The middle of each row, from the items' middles.
-export function rowMiddles(tops: readonly number[]): readonly number[] {
+function rowMiddles(tops: readonly number[]): readonly number[] {
   const rows: number[] = [];
   for (const t of [...tops].sort((a, b) => a - b)) {
     const last = rows.at(-1);

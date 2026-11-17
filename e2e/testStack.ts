@@ -29,7 +29,7 @@ export const SERVER_URL = `http://127.0.0.1:${String(SERVER_PORT)}`;
 export const CLIENT_URL = `http://127.0.0.1:${String(CLIENT_PORT)}`;
 export const ADMIN_URL = `http://127.0.0.1:${String(ADMIN_PORT)}`;
 // The run's database; the test server recreates it empty, so every run starts clean.
-export const TEST_DATABASE = 'smg_test';
+const TEST_DATABASE = 'smg_test';
 // Development only: the test host site that embeds the game (./host-page, journey 8).
 export const HOST_PAGE_URL = 'http://127.0.0.1:5420';
 // Journey 36 (T241): a server in website mode, reached only through the stand-in website's

@@ -1,7 +1,7 @@
 # 03 — Seasonal Specials
 
 > Part of the Seasonal Mini Games specification. Index: [README](README.md).
-> The specials, their names and their basic effect are owner decisions (decision 6, 2026-10-24). How each one works in detail is written here. The owner accepted these details as written (decision 15, 2026-10-24). Every number is a setting ([08](08-admin-settings.md) §3).
+> The specials, their names and their basic effect are owner decisions (decision 6). How each one works in detail is written here. The owner accepted these details as written (decision 15). Every number is a setting ([08](08-admin-settings.md) §3).
 
 ## 1. Principles (how every special stays equal)
 
@@ -25,7 +25,11 @@ Every round belongs to exactly one of the four seasons (owner). The season is ch
 
 With the special off, the round still carries its season for visuals and teams, but plays by the plain rules of [02](02-game-guess-the-number.md).
 
-This section words Spring Herald, Leaf Fall and halving for Guess The Number. The other games give them their own form (a revealed digit, wire colour or the tinted quarter of the tile grid; fallen digits, harmless wires or hatched fallen tiles; Seasonal Target's dimmed tiles outside the halved area, owner decision 45), each in its own section ([02b](02b-game-safecracker.md), [02c](02c-game-bomb-defusal.md), [02d](02d-game-seasonal-target.md)), under the same principles (§1) and the same candidate rule of owner decision 37 (§2.3). Heatwave and Frost are the platform's and apply to every game unchanged. Safecracker and Bomb Defusal have no halving; a halving day runs a normal season round for them, as owner decision 29 does for a hidden range.
+This section words Spring Herald, Leaf Fall and halving for Guess The Number.
+
+- The other games give them their own form (a revealed digit, wire colour or the tinted quarter of the tile grid; fallen digits, harmless wires or hatched fallen tiles; Seasonal Target's dimmed tiles outside the halved area, owner decision 45), each in its own section ([02b](02b-game-safecracker.md), [02c](02c-game-bomb-defusal.md), [02d](02d-game-seasonal-target.md)), under the same principles (§1) and the same candidate rule of owner decision 37 (§2.3).
+- Heatwave and Frost are the platform's and apply to every game unchanged.
+- Safecracker and Bomb Defusal have no halving; a halving day runs a normal season round for them, as owner decision 29 does for a hidden range.
 
 ### 2.1 Spring — Spring Herald
 
@@ -34,7 +38,7 @@ This section words Spring Herald, Leaf Fall and halving for Guess The Number. Th
 
 | Type | Hint |
 |---|---|
-| `lastDigit` | "Free hint: the number ends in 7." The digit as written, so −27 ends in 7. Shown from `opensAt` in the game panel and the phone's info line ("Hint: ends in 7"), highlighted in the season colour (owner decision 56). The odd/even hint is removed. |
+| `lastDigit` | "Free hint: the number ends in 7." The digit as written, so −27 ends in 7. Shown from `opensAt` in the game panel and the phone's info line ("Hint: ends in 7"), highlighted in the season colour (owner decision 56). |
 | `half` | "The number is in the lower half (1–500)." / "… upper half (501–1 000)." The lower half runs from the low end to `floor((low + high) / 2)`. With the range hidden ([02](02-game-guess-the-number.md) §3) the hint is `lastDigit`, because a half names numbers of the range (DECISIONS T56). |
 
 - **Shared mode:** one hint, the same text for everyone. It is shown to spectators too.
@@ -91,7 +95,9 @@ This section words Spring Herald, Leaf Fall and halving for Guess The Number. Th
 
 ## 5. Season teams
 
-- **Team match** (owner, decision 34): when opening a match the host chooses whether it is a team match (**Team match**, per match, default on; the host's match form and the Quick Test each with a help line). Without teams no view shows a team: no team buttons, no team or "no team yet" in the player rows (names and online or away only), no team tiles, no team result, no team standing in the match summary, and no team points on any board for that match; the server refuses a team choice with `TEAMS_OFF` and runs the match's rounds with **Season teams** off whatever the round form says (DECISIONS T108).
+- **Team match** (owner, decision 34): when opening a match the host chooses whether it is a team match (**Team match**, per match, default on; the host's match form and the Quick Test each with a help line).
+  - Without teams no view shows a team: no team buttons, no team or "no team yet" in the player rows (names and online or away only), no team tiles, no team result, no team standing in the match summary, and no team points on any board for that match.
+  - The server refuses a team choice with `TEAMS_OFF` and runs the match's rounds with **Season teams** off whatever the round form says (DECISIONS T108).
 - **Where:** shared mode only, in a team match, when the round setting **Season teams** is on (default on; the host's round form leaves it out in a match without teams). The owner decided teams for shared mode. Individual mode has no teams in v1.
 - **Joining:** in the match's waiting area before their first round ([02](02-game-guess-the-number.md) §2, owner decisions 23 and 26) every player picks one of four teams: Spring, Summer, Autumn or Winter, once, and keeps it for the whole match; there is no switching between rounds. A roster player without a team when their first round starts is put in the smallest team of the match, and that team is then fixed; ties between teams are broken with a hash of the round id and the player key (DECISIONS T82). While a round counts down or runs, a newcomer cannot pick a team either (`TEAMS_LOCKED`).
 - **Effect on play:** none. Team members play by the same rules, the same cooldown and the same feedback visibility as everyone else. The team does not change any player's information.
@@ -103,4 +109,8 @@ This section words Spring Herald, Leaf Fall and halving for Guess The Number. Th
 - Every round uses its token's original colours and icon (owner): the season's Seasonal Tokens icon and season colour on the round banner, the range bar accent, the team badges and the result screen.
 - Assets as in Bingo: the season icons `assets/seasons/*.svg`, the font `assets/fonts/luxora-grotesk-*.woff2`, the emblem `assets/brand/emblem.webp`, and the colours from `assets/brand/colors.md` (Spring `#afb84e`, Summer `#e06e22`, Autumn `#f9a825`, Winter `#04aaf7`; text and icons on a season colour `#12161c`). They are copied from the Bingo repository into this repository's `assets/` with their manifest and licence note (Bingo `assets/README.md`) when the client is built. They are not covered by the AGPL licence.
 - The Seasonal Entertainment look in light and dark (Bingo 01 §13) is adopted unchanged: theme logic, glows, pill buttons, headings in Luxora Grotesk Bold. Colour is never the only carrier of meaning: every season also shows its icon and name.
-- A halving round adds a halving badge to the season pill of the round's bar ([02](02-game-guess-the-number.md) §12). Each special announces itself in one quiet event row of the round's guess list when it happens ("Leaf Fall: 12, 57 and 300 fell"; owner decision 20), and since owner decision 35 also, for about 3 s, in a banner in the season colour above the list ("Leaf Fall: 3 numbers fell."); while the banner shows an event, that event's row waits, so one view never says it twice, and on a phone the event rows stand only in the "All" sheet (owner decisions 47 and 49, DECISIONS T135); the round's intro screen names the special and what it does before the round opens (owner decision 36), and the round bar's season pill names it and opens its sentence (owner decision 46) ([02](02-game-guess-the-number.md) §12; DECISIONS T109, T110). The sentences: Spring Herald "Everyone gets one free hint when the round opens.", Heatwave "The waiting time between guesses gets shorter as the round goes on.", Leaf Fall "Every so often, some wrong numbers fall out of the game.", Frost "Answers arrive a few seconds late."; with the special off "No special this round." A few closeness comments belong to one season and come up only in its rounds ("Found it — snow problem!").
+- A halving round adds a halving badge to the season pill of the round's bar ([02](02-game-guess-the-number.md) §12).
+- Each special announces itself in one quiet event row of the round's guess list when it happens ("Leaf Fall: 12, 57 and 300 fell"; owner decision 20), and, by owner decision 35, also, for about 3 s, in a banner in the season colour above the list ("Leaf Fall: 3 numbers fell."); while the banner shows an event, that event's row waits, so one view never says it twice, and on a phone the event rows stand only in the "All" sheet (owner decisions 47 and 49, DECISIONS T135).
+- The round's intro screen names the special and what it does before the round opens (owner decision 36), and the round bar's season pill names it and opens its sentence (owner decision 46) ([02](02-game-guess-the-number.md) §12; DECISIONS T109, T110).
+- The sentences: Spring Herald "Everyone gets one free hint when the round opens.", Heatwave "The waiting time between guesses gets shorter as the round goes on.", Leaf Fall "Every so often, some wrong numbers fall out of the game.", Frost "Answers arrive a few seconds late."; with the special off "No special this round."
+- A few closeness comments belong to one season and come up only in its rounds ("Found it — snow problem!").

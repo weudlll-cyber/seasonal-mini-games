@@ -1,0 +1,54 @@
+# @file   .github/workflows/browsers.yml
+# @module ci
+# @brief  The Playwright suite in Firefox and WebKit on master, every night and on demand.
+#
+# Responsibility: the merge gate and every push run the browser tests in Chromium only
+#                 (./ci.yml, job `e2e`); Firefox and WebKit (at a phone's viewport) run here,
+#                 on master, at 02:30 UTC every night (03:30 in Vienna in winter, 04:30 in
+#                 summer, outside 06:00–09:00) and when started by hand (owner decision O103,
+#                 amending O69). Their specs first, then the timing specs one browser after the
+#                 other: some change platform-wide settings, so two browsers never run them at
+#                 once. A failure is listed in OPEN's "Firefox/WebKit findings"; nothing waits
+#                 for this run.
+# Depends on:     .github/actions/setup, e2e/
+# Spec:           docs/spec/09-testing-strategy.md §1
+name: Browsers
+
+on:
+  schedule:
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: browsers
+  cancel-in-progress: false
+
+jobs:
+  firefox-webkit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: master
+      - uses: ./.github/actions/setup
+      - name: Playwright browsers (Firefox, WebKit)
+        run: pnpm exec playwright install --with-deps firefox webkit
+      # The run's own stack, as in ./ci.yml (e2e/playwright.config.ts, 09 §1.1).
+      - name: Firefox and WebKit, their specs
+        run: pnpm e2e --project=firefox --project=webkit-mobile
+      - name: Firefox, the timing specs
+        if: success() || failure()
+        run: pnpm e2e --project=firefox-timing --no-deps
+      - name: WebKit, the timing specs
+        if: success() || failure()
+        run: pnpm e2e --project=webkit-mobile-timing --no-deps
+      # On a failure: the traces and page snapshots of the failed tests, for a week.
+      - if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: playwright-results-firefox-webkit
+          path: test-results
+          retention-days: 7

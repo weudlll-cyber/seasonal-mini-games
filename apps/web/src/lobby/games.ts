@@ -53,7 +53,7 @@ export const gameName = (games: readonly GameInfoView[], id: string): string =>
 
 // Whether the game's rounds show a season (O93); true until the list has loaded, as for every
 // guess game.
-export const showsSeason = (games: readonly GameInfoView[], id: string): boolean =>
+const showsSeason = (games: readonly GameInfoView[], id: string): boolean =>
   games.find((g) => g.id === id)?.seasons !== false;
 
 // The same for one game, where nothing else of the list is needed (the host form).
@@ -62,7 +62,7 @@ export const useShowsSeason = (id: string): boolean => showsSeason(useGames(), i
 // Whether the game has a secret whose mode the round bar names, "Shared" or "Individual": not
 // a game without secret modes (the module's `meta.secretModes`, DECISIONS T347); true until
 // the list has loaded, as for every guess game.
-export const showsMode = (games: readonly GameInfoView[], id: string): boolean =>
+const showsMode = (games: readonly GameInfoView[], id: string): boolean =>
   games.find((g) => g.id === id)?.secretModes.length !== 0;
 
 // How a running round names its game (../round/RoundScreen): `noSeason` the game's name when

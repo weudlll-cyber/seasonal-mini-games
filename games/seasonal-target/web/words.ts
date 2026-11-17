@@ -76,7 +76,7 @@ export const ARROWS: Readonly<Record<Compass, string>> = {
 };
 
 // The tier as the answer of `closeness` mode (02d §5).
-export const TIER_WORDS: Readonly<Record<string, string>> = {
+const TIER_WORDS: Readonly<Record<string, string>> = {
   wayOff: 'Way off',
   cold: 'Cold',
   cool: 'Cool',

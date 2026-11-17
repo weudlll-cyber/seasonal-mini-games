@@ -98,7 +98,7 @@ apps/admin            Admin client (as Bingo). apps/embed-loader: embed.js (as B
 
 ## 4. The game-module contract
 
-A game is one object that implements `GameModule` from `packages/game-sdk` (`packages/game-sdk/src/module.ts`). The shape below is the one built in the first work package (night run P3, DECISIONS T29). Any change to it is a spec change.
+A game is one object that implements `GameModule` from `packages/game-sdk` (`packages/game-sdk/src/module.ts`). The shape below is the contract (DECISIONS T29). Any change to it is a spec change.
 
 ```ts
 interface GameModule<S, A, E, Cfg, Sec> {
@@ -159,7 +159,12 @@ The registry lists each game as one entry `{ module, conformance, devBot }`, whe
   - `RoundShouldEnd { reason }`: for game-specific end conditions.
 - Rejections come in the order of [02](02-game-guess-the-number.md) §5.1: the platform's codes for state, roster and solved (`ROUND_NOT_OPEN`, `ROUND_OVER`, `NOT_IN_ROUND`, `TIMED_OUT`, `ALREADY_SOLVED`), then the game's `validate` (for example `OUT_OF_RANGE`, `NUMBER_REMOVED`), then the platform's `COOLDOWN_ACTIVE`. `validate` is pure and gives no event. `decide` runs only for an action that passed all of them.
 
-**Winning stays in the platform.** From the `Solved` signals and their receive order, the platform applies the owner's rules: in shared mode the first `Solved` wins and ends the round, and in individual mode solve order is placing order (owner, decisions 4 and 5). The inactivity limit is the platform's too: it times out a roster player without a guess, and a round ends once nobody is left or, in individual mode, once everyone still in has solved (owner, decision 71; [02](02-game-guess-the-number.md) §5.3). Every later game with these modes inherits the rules unchanged. A `phased` game has no Solved signals; its result comes from its own rule (§4.8).
+**Winning stays in the platform.**
+
+- From the `Solved` signals and their receive order, the platform applies the owner's rules: in shared mode the first `Solved` wins and ends the round, and in individual mode solve order is placing order (owner, decisions 4 and 5).
+- The inactivity limit is the platform's too: it times out a roster player without a guess, and a round ends once nobody is left or, in individual mode, once everyone still in has solved (owner, decision 71; [02](02-game-guess-the-number.md) §5.3).
+- Every later game with these modes inherits the rules unchanged.
+- A `phased` game has no Solved signals; its result comes from its own rule (§4.8).
 
 ### 4.3 Timing classes
 
@@ -185,7 +190,15 @@ The platform runs one shared conformance test suite against every module in `gam
 
 ### 4.6 Adding a game
 
-1. Create `games/<game>/` with `src/` (module, settings defaults, tests) and `web/` (screens, strings). The web half gives the player's main area and input row apart (the platform places them and puts its cooldown ring into the row), the spectator and result panels, the rows of the round's one list (`GuessRow`s from its player or spectator view, and `FeedLine`s for its events), which the platform draws (owner decision 20; DECISIONS T62, T74), and the line about the best of the rest that the result page shows where the winning margin goes when there is none (`runnerUp`, owner decision 22; DECISIONS T77), and optionally the round intro's line on the secret (`intro`, owner decision 36; DECISIONS T109). A `FeedLine` marked `special` is a special's own row, which the platform draws on the season's tint with its icon; the panels learn whether the round's special is on (`specialOn`), so a game can show a special's own parts only then (DECISIONS T115). A `GuessRow` whose guess is not a number gives it as `text` ("0427", "red, blue, green, white", "(12, 34)"), and an answer other than higher/lower as `answer` (`text`, a `tone` for its colour and optional `pegs`), which the platform draws in the same row, always with its words (DECISIONS T119). A game whose special works differently from the platform's sentence words it itself (`GameText.specialRule(season)`, used on the intro screen and in the top bar's info note; DECISIONS T119).
+1. Create `games/<game>/` with `src/` (module, settings defaults, tests) and `web/` (screens, strings). The web half gives
+   - the player's main area and input row apart (the platform places them and puts its cooldown ring into the row),
+   - the spectator and result panels,
+   - the rows of the round's one list (`GuessRow`s from its player or spectator view, and `FeedLine`s for its events), which the platform draws (owner decision 20; DECISIONS T62, T74),
+   - and the line about the best of the rest that the result page shows where the winning margin goes when there is none (`runnerUp`, owner decision 22; DECISIONS T77),
+   - and optionally the round intro's line on the secret (`intro`, owner decision 36; DECISIONS T109).
+   - A `FeedLine` marked `special` is a special's own row, which the platform draws on the season's tint with its icon; the panels learn whether the round's special is on (`specialOn`), so a game can show a special's own parts only then (DECISIONS T115).
+   - A `GuessRow` whose guess is not a number gives it as `text` ("0427", "red, blue, green, white", "(12, 34)"), and an answer other than higher/lower as `answer` (`text`, a `tone` for its colour and optional `pegs`), which the platform draws in the same row, always with its words (DECISIONS T119).
+   - A game whose special works differently from the platform's sentence words it itself (`GameText.specialRule(season)`, used on the intro screen and in the top bar's info note; DECISIONS T119).
 2. Add one line to each half of `games/registry` (`src/index.ts` and `web/index.ts`).
 3. Add its settings to [08](08-admin-settings.md) and its rules to a new spec section.
 
@@ -211,7 +224,13 @@ Guess The Number runs on the engine with no change in behaviour: the same events
 
 ### 4.8 Timing class `phased` (contract change for Seasonal Mind Games; DECISIONS T284–T287)
 
-**Status:** specified on 2026-11-12; built first, as its own work packages MG-C1–MG-C3 ([11](11-roadmap.md) §4), before any file of `games/mind-games` exists (§4.6). MG-C1 (night MG-N1, 2026-11-13) built rules 1–6 and 9 (`packages/game-sdk/src/phased.ts`, `packages/domain/src/round/phased.ts`, `apps/server/src/round/delayedRoom.ts`; DECISIONS T288–T295); MG-C2 (the same night) built rule 7 and the `series` hook (`apps/server/src/match/series.ts`, `apps/server/src/http/routes/series.ts`, migration 0017; DECISIONS T296–T298); MG-C3 (the same night) built rule 8, the `prefs` hook and the Quick Test of a phased game (`apps/server/src/match/prefs.ts`, `apps/server/src/http/routes/prefs.ts`, `apps/server/src/dev/phasedBots.ts`, migration 0018; DECISIONS T299–T303). The contract change is complete; a game's `GameEntry` may also give `devPrefs` for the Quick Test's bots. It holds what Seasonal Mind Games ([02e](02e-game-mind-games.md)) needs and nothing else, in terms that a later timed game can use.
+**Status:** built ([11](11-roadmap.md) §4); the contract change is complete.
+
+- Rules 1–6 and 9: `packages/game-sdk/src/phased.ts`, `packages/domain/src/round/phased.ts`, `apps/server/src/round/delayedRoom.ts` (DECISIONS T288–T295).
+- Rule 7 and the `series` hook: `apps/server/src/match/series.ts`, `apps/server/src/http/routes/series.ts`, migration 0017 (DECISIONS T296–T298).
+- Rule 8, the `prefs` hook and the Quick Test of a phased game: `apps/server/src/match/prefs.ts`, `apps/server/src/http/routes/prefs.ts`, `apps/server/src/dev/phasedBots.ts`, migration 0018 (DECISIONS T299–T303); a game's `GameEntry` may also give `devPrefs` for the Quick Test's bots.
+
+It holds what Seasonal Mind Games ([02e](02e-game-mind-games.md)) needs and nothing else, in terms that a later timed game can use.
 
 **Shape added to §4:**
 
@@ -249,9 +268,17 @@ interface PhasePlan {              // milliseconds after opensAt
    - the platform's own parts of the round state follow the same cut: a player is listed in the round, and counted, only once their `PlayerEntered` is older than `D`;
    - `player:<id>` events go to that player at once. After the end the result view shows everything.
    - The player client gives every match player of the round the game's input while the round is open and before the plan's play end, also before the delayed roster lists them; the server decides every action (DECISIONS T326). A phased game's panels get the round's public timing (`timing`: `opensAt`, the plan and the server's time) and the player's input their own part of the match (`own`: the round's number, their match value with its saving, a pre-pick refused at the opening as `prefs.refused` told it); the round's list shows each row's age (DECISIONS T327, T328).
-6. **Round end and result.** At the plan's end, or when the host ends the round, the platform asks `outcome(state)` and writes `round_results` from its rows: `place` NULL for everyone (several players share a win, and the unique place rule stays as it is), `won`, `points`, and `guesses` = the row's `actions`, which the game decides ([06](06-data-model-api-realtime.md) §2.4). The end reason is `host` when the host ended it, `noPlayers` when no row exists, else `timeUp`. Match standings count `won` as a round win; the leaderboard is fed as for every game ([06](06-data-model-api-realtime.md) §2.6). `Solved` and `RoundShouldEnd` are not used. The result view is built at the end also for a game without a secret (its `deriveSecrets` gives null; DECISIONS T324), and the chat's round-end line names the winners from `won` in the game's words (`reveal`; "Round 3: Winter was the least chosen (3 players).", "Round 3 ended: nobody won."; DECISIONS T325).
-7. **Series.** When `series(cfg)` of a match's first round is not null, the match is a series of that many rounds: after each round the platform schedules the next one at its end plus `pauseMs` (`match_autostart`), creates it then from the host's saved next-round settings (else the last round's) and starts its countdown; the host's Start next round now runs that action at once. `match.minPlayersPerRound` applies to the first round only. After the last round's pause the match closes itself with its summary ("All 6 rounds are played.", close reason `complete`, [06](06-data-model-api-realtime.md) §2.1). End match works as always.
-8. **Match-level player data.** A game with `prefs` gets one value per player per match, checked against its `schema`, at most 2 KiB: the player reads and replaces their own (`GET`/`PUT /matches/:code/prefs`, intent `match.prefs`, [06](06-data-model-api-realtime.md) §3.1, §4.3); it is in that player's own match details and nowhere else, and it is deleted when the player leaves the match or is removed. At each round's opening the platform asks `prefs.action` for every active match player who has a value, in join order, and runs each returned action through the round's queue as that player's action received at `opensAt`, with every check of rule 2; a refused one is told to that player alone (`prefs.refused` with its code).
+6. **Round end and result.** At the plan's end, or when the host ends the round, the platform asks `outcome(state)` and writes `round_results` from its rows: `place` NULL for everyone (several players share a win, and the unique place rule stays as it is), `won`, `points`, and `guesses` = the row's `actions`, which the game decides ([06](06-data-model-api-realtime.md) §2.4).
+   - The end reason is `host` when the host ended it, `noPlayers` when no row exists, else `timeUp`.
+   - Match standings count `won` as a round win; the leaderboard is fed as for every game ([06](06-data-model-api-realtime.md) §2.6). `Solved` and `RoundShouldEnd` are not used.
+   - The result view is built at the end also for a game without a secret (its `deriveSecrets` gives null; DECISIONS T324), and the chat's round-end line names the winners from `won` in the game's words (`reveal`; "Round 3: Winter was the least chosen (3 players).", "Round 3 ended: nobody won."; DECISIONS T325).
+7. **Series.** When `series(cfg)` of a match's first round is not null, the match is a series of that many rounds: after each round the platform schedules the next one at its end plus `pauseMs` (`match_autostart`), creates it then from the host's saved next-round settings (else the last round's) and starts its countdown; the host's Start next round now runs that action at once.
+   - `match.minPlayersPerRound` applies to the first round only.
+   - After the last round's pause the match closes itself with its summary ("All 6 rounds are played.", close reason `complete`, [06](06-data-model-api-realtime.md) §2.1). End match works as always.
+8. **Match-level player data.** A game with `prefs` gets one value per player per match, checked against its `schema`, at most 2 KiB:
+   - the player reads and replaces their own (`GET`/`PUT /matches/:code/prefs`, intent `match.prefs`, [06](06-data-model-api-realtime.md) §3.1, §4.3);
+   - it is in that player's own match details and nowhere else, and it is deleted when the player leaves the match or is removed.
+   - At each round's opening the platform asks `prefs.action` for every active match player who has a value, in join order, and runs each returned action through the round's queue as that player's action received at `opensAt`, with every check of rule 2; a refused one is told to that player alone (`prefs.refused` with its code).
 9. **Conformance.** P1, P3–P5 apply as to every game; P2 holds trivially without a secret, P6 without specials. A `phased` module with a view delay must also pass **P7 Delay** ([09](09-testing-strategy.md) §3).
 
 ## 5. The round engine
@@ -278,7 +305,9 @@ Platform commands on a round: `createRound`, `startCountdown`, `openRound`, `sub
 ### 5.4 Randomness and the round seed
 
 - At `createRound` the platform draws a 256-bit **round seed** from the `SecureRandom` port (`crypto.randomBytes`, a CSPRNG).
-- All round randomness comes from an HMAC-SHA256 counter DRBG keyed by that seed with domain-separation labels, as Bingo's per-match DRBG (Bingo 01 §9, Bingo `packages/domain/src/draw/drbg.ts`). The labels are `secret/shared`, `secret/<playerId>`, `spring`, `leafFall/<k>`, `halving/<k>/<playerId|shared>` and `teams/tiebreak`. The last one only breaks ties when the round engine itself places a roster player given without a team; in a team match the server has already placed every such player in the match's smallest team before the round starts, ties broken by a hash of the round id and the player key ([03](03-seasonal-specials.md) §5; DECISIONS T82, T264).
+- All round randomness comes from an HMAC-SHA256 counter DRBG keyed by that seed with domain-separation labels, as Bingo's per-match DRBG (Bingo 01 §9, Bingo `packages/domain/src/draw/drbg.ts`).
+  - The labels are `secret/shared`, `secret/<playerId>`, `spring`, `leafFall/<k>`, `halving/<k>/<playerId|shared>` and `teams/tiebreak`.
+  - The last one only breaks ties when the round engine itself places a roster player given without a team; in a team match the server has already placed every such player in the match's smallest team before the round starts, ties broken by a hash of the round id and the player key ([03](03-seasonal-specials.md) §5; DECISIONS T82, T264).
 - Uniform integers use rejection sampling, never a modulo.
 - The seed is stored encrypted (AES-256-GCM, key from `SMG_ROUND_KEY`) and decrypted only inside the round engine. Secrets are **derived** from the seed when needed and are never stored as a column ([05](05-security-threat-model.md) §3).
 - With the fairness proof on, `sha256(seed)` is published at creation and the seed at the end ([02](02-game-guess-the-number.md) §10).
@@ -287,7 +316,9 @@ Platform commands on a round: `createRound`, `startCountdown`, `openRound`, `sub
 
 - **Cooldown has no timer.** The actor stores `cooldownEndsAt` per player and compares it with `receivedAt` (§5.1 check 7 of [02](02-game-guess-the-number.md)). With 500 players there are no 500 timers. That is the "no global tick" of owner decision 3 in code.
 - **Scheduled:** round open (`opensAt`), each special's due times, longest round time. These are `scheduled_actions` rows, so they are restart-safe.
-- **Inactivity has no timer per player either** (owner, decision 71). Each roster player's limit is a time computed from the state (the open, or their last accepted guess's cooldown end and Frost delivery, [02](02-game-guess-the-number.md) §5.3). The actor's one timer for the round's next due time (`nextDue`: the open, a special, the next limit, the end) runs a tick through the queue; that tick, or any earlier command, first catches the round up, logging each limit whose 2 s grace has passed (owner decision 72) as `PlayerTimedOut` with the limit plus the grace as its time, in time order with the specials (DECISIONS T274). A late timer or a restart therefore writes the same events (DECISIONS T267).
+- **Inactivity has no timer per player either** (owner, decision 71). Each roster player's limit is a time computed from the state (the open, or their last accepted guess's cooldown end and Frost delivery, [02](02-game-guess-the-number.md) §5.3).
+  - The actor's one timer for the round's next due time (`nextDue`: the open, a special, the next limit, the end) runs a tick through the queue; that tick, or any earlier command, first catches the round up, logging each limit whose 2 s grace has passed (owner decision 72) as `PlayerTimedOut` with the limit plus the grace as its time, in time order with the specials (DECISIONS T274).
+  - A late timer or a restart therefore writes the same events (DECISIONS T267).
 - **Frost deliveries** are in-memory timers on the actor (due `receivedAt + delay`). After a restart, every held event that was not delivered is recomputed from the log and sent at its due time, or at once if that time has passed.
 - All times are server-clock milliseconds from the `Clock` port. The client shows times corrected by its measured offset ([06](06-data-model-api-realtime.md) §4.1).
 

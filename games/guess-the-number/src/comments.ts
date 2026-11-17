@@ -14,7 +14,7 @@ import { commentPicker } from '@smg/guess-engine';
 
 import { COMMENT_LINES } from './commentLines.js';
 
-export type { Comment, UsedLines } from '@smg/guess-engine';
+export type { UsedLines } from '@smg/guess-engine';
 
 export const gtnComments = commentPicker(COMMENT_LINES);
 export const { linesOf, noteUsed, pickComment } = gtnComments;

@@ -26,7 +26,7 @@ import {
 import type { BdConfig } from './settings.js';
 import { inPaletteOrder, wiresOf, type Feedback, type Sequence, type Wire } from './wires.js';
 
-export interface PlayerState extends GuessPlayer<Sequence, Feedback> {
+interface PlayerState extends GuessPlayer<Sequence, Feedback> {
   // Individual mode: the first wire of the player's own bomb (Spring Herald).
   readonly hint: Wire | null;
 }

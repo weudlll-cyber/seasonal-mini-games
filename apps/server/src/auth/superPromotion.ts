@@ -22,7 +22,7 @@ import { revokeAccountSessions } from './sessions.js';
 
 export type PromoteTarget = { readonly websiteId: string } | { readonly name: string };
 
-export interface WebsiteMember {
+interface WebsiteMember {
   readonly accountId: string;
   readonly websiteId: string;
   readonly displayName: string;

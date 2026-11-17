@@ -38,7 +38,7 @@ const SEASONS: readonly Season[] = ['spring', 'summer', 'autumn', 'winter'];
 // From the lobby, the bots arrive one after another within about this time.
 const ARRIVAL_MS = 2_000;
 
-export interface QuickTestInput {
+interface QuickTestInput {
   readonly playerId: string;
   readonly gameId: string;
   readonly mode: 'shared' | 'individual';
@@ -68,14 +68,14 @@ export interface QuickTestInput {
   readonly seats: number;
 }
 
-export interface QuickTestStarted {
+interface QuickTestStarted {
   readonly matchCode: string;
   readonly roundId: string;
   readonly season: Season;
   readonly seedText: string;
 }
 
-export function quickTestSeed(seedText: string): Uint8Array {
+function quickTestSeed(seedText: string): Uint8Array {
   return new Uint8Array(createHash('sha256').update(`smg-quicktest:${seedText}`).digest());
 }
 

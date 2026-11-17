@@ -137,7 +137,7 @@ const TIER_TABLE: readonly (readonly [MissTier, number, number])[] = [
 ];
 
 // The squared diagonal D² = (W − 1)² + (H − 1)²: the farthest two cells can be.
-export const diagonal2 = (map: MapSize): number => (map.width - 1) ** 2 + (map.height - 1) ** 2;
+const diagonal2 = (map: MapSize): number => (map.width - 1) ** 2 + (map.height - 1) ** 2;
 
 // The miss tier of a squared distance `n` (n > 0), touching or not. √n / D > p % is decided
 // as 10 000 · n > p² · D², √n > √m as n > m, in integers.

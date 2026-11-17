@@ -21,7 +21,7 @@ import { Counter, Gauge, Histogram, Registry, collectDefaultMetrics } from 'prom
 import type { RoundObserver } from '../../round/actor.js';
 
 // What the scrape reads from the runtime and the season feed.
-export interface MetricSources {
+interface MetricSources {
   readonly rounds: () => {
     readonly byStatus: Readonly<Record<string, number>>;
     readonly queued: number;

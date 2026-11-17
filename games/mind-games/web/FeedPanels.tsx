@@ -35,7 +35,7 @@ const empty = (v: SpectatorView) => v.entrants === 0 && v.lines.length === 0;
 const noteOf = (v: SpectatorView, timing: PhasedTiming | undefined) =>
   timing === undefined ? null : feedNote(timing, v.entrants, empty(v));
 
-export function FeedHead(p: {
+function FeedHead(p: {
   readonly view: SpectatorView;
   readonly timing?: PhasedTiming | undefined;
 }): ReactElement {

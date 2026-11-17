@@ -29,7 +29,7 @@ import { displayNames } from '../match/matches.js';
 import { playerSteps, withSteps } from '../match/playerSteps.js';
 import { byRankThenName, tiesOf } from './standingsTies.js';
 
-export const PAGE = 50;
+const PAGE = 50;
 
 export async function matchStandings(pool: DbPool, matchId: string): Promise<MatchStandingView[]> {
   const r = await pool.query<{

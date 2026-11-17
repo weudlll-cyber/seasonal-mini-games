@@ -29,7 +29,7 @@ import { ruleOf } from './SeasonPill.js';
 import './roundIntro.css';
 
 // Whole seconds until the round opens, never below 0.
-export function opensIn(state: RoundStateView, now: number): number {
+function opensIn(state: RoundStateView, now: number): number {
   return state.opensAt === null ? 0 : Math.max(0, Math.ceil((state.opensAt - now) / 1_000));
 }
 

@@ -69,13 +69,13 @@ function PlaceCell(p: { readonly state: RoundStateView; readonly r: Result }) {
 
 // By the server's place; the players without one after them, more guesses first (a stable
 // sort: equal ones keep the server's order).
-export const byPlace = (results: readonly Result[]): Result[] =>
+const byPlace = (results: readonly Result[]): Result[] =>
   [...results].sort(
     (a, b) => (a.place ?? Infinity) - (b.place ?? Infinity) || b.guesses - a.guesses,
   );
 
 // A phased round's rows: its winners first, then the rest, each in display-name order (T343).
-export const byWin = (results: readonly Result[], names: Readonly<Record<string, string>>) => {
+const byWin = (results: readonly Result[], names: Readonly<Record<string, string>>) => {
   const name = (r: Result) => names[r.playerId] ?? r.playerId;
   return [...results].sort(
     (a, b) =>
@@ -203,7 +203,7 @@ export function Placings(p: {
 }
 
 // The first part's one team line, when teams played.
-export function teamLine(state: RoundStateView): string | null {
+function teamLine(state: RoundStateView): string | null {
   const teams = state.teams ?? [];
   if (teams.length === 0) return null;
   const won = teams.find((t) => t.won);

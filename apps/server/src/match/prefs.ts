@@ -22,12 +22,12 @@ import type { LiveRound } from '../round/liveRound.js';
 import type { Rounds } from '../round/rounds.js';
 import { activePlayers, type MatchRow } from './matches.js';
 
-export const PREFS_MAX_BYTES = 2_048;
+const PREFS_MAX_BYTES = 2_048;
 
 // FORBIDDEN: not a player of the match, who has no value there to read or write.
 export type PrefsCode = 'PREFS_OFF' | 'PREFS_INVALID' | 'RATE_LIMITED' | 'FORBIDDEN';
 
-export interface Refused {
+interface Refused {
   readonly roundIndex: number;
   readonly code: string;
 }

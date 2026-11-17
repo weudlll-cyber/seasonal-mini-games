@@ -21,7 +21,7 @@ import { trendOf, type Tier } from './tiers.js';
 // A tier's lines, or the trend lines for a guess closer or farther than the player's last.
 export type Pool = Tier | 'closer' | 'farther';
 // A line for every round, or one only a round of its season uses.
-export type Line = string | { readonly text: string; readonly season: Season };
+type Line = string | { readonly text: string; readonly season: Season };
 export type CommentLines = Readonly<Record<Pool, readonly Line[]>>;
 
 // The comment a guess got: its tier, the line, and where the line came from.
@@ -35,7 +35,7 @@ export interface Comment {
 // Per pool, the indexes of the lines this round has used since the pool was last full.
 export type UsedLines = Readonly<Partial<Record<Pool, readonly number[]>>>;
 
-export interface CommentRound {
+interface CommentRound {
   readonly used: UsedLines;
   readonly season: Season;
   readonly trendPercent: number;

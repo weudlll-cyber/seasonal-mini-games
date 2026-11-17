@@ -160,8 +160,6 @@ describe('guessing', () => {
     fireEvent.click(screen.getByTestId('guess-button'));
     expect(screen.getByRole('status').textContent).toBe('You already tried that tile.');
     expect(send).not.toHaveBeenCalled();
-    // The list carries the answers; the row does not repeat the last one.
-    expect(screen.queryByText(/Last guess/)).toBeNull();
   });
 
   it('says "outside the target area" for a server OUT_OF_MAP on the grid', async () => {

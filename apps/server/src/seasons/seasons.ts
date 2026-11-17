@@ -45,7 +45,7 @@ export interface FeedState {
 }
 
 // The calendar date of `now` in a time zone, as YYYY-MM-DD; an unknown zone counts as UTC.
-export function dayIn(now: number, timeZone: string): string {
+function dayIn(now: number, timeZone: string): string {
   const format = (zone: string) =>
     new Intl.DateTimeFormat('en-CA', {
       timeZone: zone,

@@ -29,8 +29,7 @@ import { useSavedPrefs } from './useSavedPrefs.js';
 const CHOICES: readonly Choice[] = ['spring', 'summer', 'autumn', 'winter', 'all'];
 
 // What pre-picks do, whole, in the tooltip of the title's short line (the reference of MG-N8).
-export const ABOUT =
-  'Pre-picks play for you when you are away. If you are here, you can still switch.';
+const ABOUT = 'Pre-picks play for you when you are away. If you are here, you can still switch.';
 
 // The box every pre-pick carries into its round (02e §6.3, T309).
 function HideBox(p: { readonly hide: boolean; readonly set: (hide: boolean) => void }) {

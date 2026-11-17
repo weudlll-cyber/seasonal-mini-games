@@ -32,7 +32,7 @@ export interface Hint {
   readonly digit: number;
 }
 
-export interface PlayerState extends GuessPlayer<string, Feedback> {
+interface PlayerState extends GuessPlayer<string, Feedback> {
   // Individual mode: the hint about the player's own code.
   readonly hint: Hint | null;
 }

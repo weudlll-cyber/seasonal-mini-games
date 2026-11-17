@@ -69,7 +69,7 @@ const STEPS: Readonly<Record<string, Step>> = {
 };
 
 // Why a tile cannot be selected (T151), or null: it fell, or it lies outside the target area.
-export const FELL = 'That tile fell.';
+const FELL = 'That tile fell.';
 function unselectable(v: PlayerView, c: Cell): string | null {
   if (!inArea(v.area, c)) return CODES['OUT_OF_AREA'] ?? null;
   return v.fallen.some((f) => sameCell(f, c)) ? FELL : null;

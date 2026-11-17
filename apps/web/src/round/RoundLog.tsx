@@ -55,7 +55,7 @@ function lineOf(event: unknown, game: GameWeb | null, names: RoundStateView['nam
 }
 
 // The compact list's way to the whole list: its panel's state and opening button.
-export interface MoreRows {
+interface MoreRows {
   readonly open: boolean;
   readonly toggle: () => void;
   readonly button: (el: HTMLButtonElement | null) => void;
