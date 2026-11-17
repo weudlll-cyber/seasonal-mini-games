@@ -77,7 +77,7 @@ const TIMING = [
   'mindGamesDelay.spec.ts',
   // Journey 43: Mind Games on a phone, the content above the chat bar (MG-N8).
   'mindGamesPhone.spec.ts',
-  // Journey 44: Mind Games' flights measured wave by wave (Chromium; MG-FLIGHT-3).
+  // Journey 44: Mind Games' flights measured wave by wave (Chromium).
   'mindGamesFlights.spec.ts',
 ];
 // Specs that run in Chromium only: journey 36 starts its own server and nginx container, and

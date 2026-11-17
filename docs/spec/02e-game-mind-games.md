@@ -137,7 +137,8 @@ At the end, count every final choice per option. Only options chosen by at least
 Every player whose final choice is a winning option gets **1 point**; one whose winning final choice is All gets **2** (owner, decision 84). Nobody else scores.
 
 - Points add up over the match's rounds in the match standings; a round's winners each count one round win.
-- Unlike the guess games ([02](02-game-guess-the-number.md) §9), players with the same total share the same place, listed alphabetically by display name (case-insensitive, locale-aware); round wins and the earliest win do not count (O100), after every round and in the final match summary.
+- Unlike the guess games ([02](02-game-guess-the-number.md) §9), players with the same total share the same place, listed by display name in a numeric-aware order (case-insensitive, accents kept, numbers in their numeric order: "bot-9" before "bot-10"; DECISIONS O102, T369); round wins and the earliest win do not count (O100), after every round and in the final match summary.
+- A shared place is carried into the leaderboards' awards: every player of it gets that place (O102).
 - The points are fixed by the owner and are not settings ([08](08-admin-settings.md) §3.4).
 - Players are not placed against each other inside a round: every winner shares the win (§9).
 
@@ -194,19 +195,16 @@ The rules of [02](02-game-guess-the-number.md) §12 apply: focus mode with the r
 The round view is animated, not text only. When a switch reaches the delayed feed, the icon of the season the player leaves flies off, turns into the icon of the season they switch to, and lands there.
 
 - **Only the delayed feed drives it.** Every flight starts from a released feed step (§6.1) that the client already holds: the step's event (`ChoiceFed`, [06](06-data-model-api-realtime.md) §2.7) says from where to where, and its counts say what the options show afterwards. Nothing flies earlier than the feed shows it, and a flight shows nothing the step does not contain; the live-state rule of [05](05-security-threat-model.md) §3.2 holds unchanged. The client computes no count: the counts come with the step.
-- **Where** *(proposal)*: every flight moves in a flight band of the stage between the choice buttons and their counts, from the old season's count to the new one's, and lands on the new count. The band is part of the one-screen layout (§11), so a flight never covers a choice button, the feed lines or the chat panel, and it is clipped at the stage's edges.
-- **A first choice and a visible switch** *(proposal, DECISIONS T377)*: one player's icon flies with the player's name above it, exactly as long as the feed's line names them: a first choice from the player's name line into that season's count (on a desktop it enters the band at the stage's edge beside the lines; on a phone from the band's lower edge, above the lines), a visible switch from the old season to the new one.
-- **A hidden switch** (switches `hidden`, or "Hide my switches" ticked, §6.3) *(proposal)*: an icon still flies from the old season to the new one, without any name, exactly as the counts already show it.
-- **Many at once** *(proposal)*: all switches of one feed step fly as one **wave**:
-  - within it, the moves with the same from → to (and all first choices into the same season) fly as one icon at full size with "×N" from two on and no name (*proposal*, DECISIONS T377);
-  - at most 12 icons in a wave, and in one card no more than fit without shrinking below 82 % of their size; a wave with more shows the first in feed order and a "+8" tag in the band, counting the players of the rest;
-  - a flight lasts about 1.2 s (*proposal*, DECISIONS T371); a step that arrives while a wave still flies starts its own wave at once, and the old flights finish where they are;
-  - the counts always change to the step's exact counts at the step, whatever flies.
-- **Slots and landing** *(proposal, DECISIONS T376, T377)*:
-  - a flight is placed on its icon's centre; its name sits above its icon, centred over it wherever it flies and moved aside only as far as keeps it whole inside the band, and never moves the icon, so a named and a nameless flight on the same path follow the same line;
-  - where they land and start comes from the cards as they are laid out, measured at each wave: a lone icon lands on its card's middle, several spread symmetrically around it one icon's room apart (named ones as far apart as their names need, where the card has room), closer in a narrow card (overlapping by at most a fifth), and smaller where even that does not fit; icons leaving one card start from it the same way; a wave that starts while another's icons are still near their points keeps clear of them;
-  - the icon flips into the new season's within the first half of the flight, never fading on the way, so only the new season's icon arrives; All's icon flies as its square of four at full size;
-  - in the last fifth the icon shrinks and fades into its card, its name with it (the name shows exactly as long as its icon), and nothing of a flight is left in the band after it.
+- **The flights** (owner, 2026-11-16, DECISIONS T378) run in a flight band of the stage between the choice buttons and their counts. The band is part of the one-screen layout (§11), so a flight never covers a choice button, the feed lines or the chat panel, and it is clipped at its edges.
+  1. **Trigger.** Each released feed step that moves someone starts one **wave**. A new wave never cuts an earlier one short.
+  2. **Grouping.** Within one step, all moves with the same from → to fly as one flight; first choices into the same season count as one path. A group of N ≥ 2 shows a count "×N" and no name.
+  3. **Names.** A single flight shows the player's name if it is a first choice or a visible switch. A hidden switch (switches `hidden`, or the player's "Hide my switches", §6.3) never shows one. On the phone layout no flight shows a name; the feed lines show them. Names come only from the released feed.
+  4. **Path.** From the source card's horizontal middle to the target card's, both measured from the cards at the wave's start. A first choice comes in from the band's right edge on a desktop, from below on the phone layout.
+  5. **Look.** The coin is the season's icon at full size; All's is its 2 × 2 square at its button's proportions. In the first half of the flight it turns over like a coin into the new season's icon, so it always arrives as the pure new icon. A name sits centred above its coin, fully readable, and appears and disappears with it.
+  6. **Landing.** A lone flight lands exactly on its card's middle. Several landing in one card at the same time spread evenly and symmetrically around the middle, and shrink only as much as needed (never below 82 % of full size) so that no two overlap by more than a fifth. Flights that would not fit at 82 % join one "+N" in that card. In the last fifth of the flight coin and label shrink and fade into the card; after a flight nothing of it remains.
+  7. **Length.** 1.2 s per flight (`FLIGHT_MS`).
+  8. **Reduced motion.** No flights at all (below).
+- The counts always change to the step's exact counts at the step, whatever flies.
 - **At the round end** *(proposal)*: the winning season or seasons light up for about 2 s on the result's row of options, beside their check and "wins" (§9), so the light is never the only sign.
 - **Reduced motion** *(proposal)*: with the device's reduced-motion setting there are no flights and no light-up: the counts change in place, and the lines say the rest.
 - The flights are hidden from screen readers (`aria-hidden`); the lines and the counts carry the same information in words.

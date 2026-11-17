@@ -4,34 +4,30 @@
  * @brief  Journey 44's probe: every Mind Games flight wave measured in the browser as it starts.
  *
  * Responsibility: installed in a page before the round (`probeScript`: its functions and
- *                 ./flightChecks' as one script, each self-contained but for one another), it
- *                 watches the flight band. When a wave starts (flights added in one render) it
- *                 sets the wave's animations to chosen moments of the flight, runs
- *                 ./flightChecks' label checks at each and the landing checks at 80 %, and puts
- *                 the animations back where they were, so the wave plays on unchanged. It
- *                 hands each wave, a second later, the feed lines that showed within PAIR_MS
- *                 of it (the list is the platform's and renders apart from the band, at times
- *                 hundreds of ms later) for the name and group checks, which match by content; a flight removed before FLIGHT_MS, or still in the band after
- *                 it, is a problem too. Problems by check in window.__flightProbe.
+ *                 ./flightChecks' as one script), it watches the flight band. When a wave starts
+ *                 (flights added in one render) it sets the wave's animations to chosen moments
+ *                 of the flight, runs ./flightChecks' coin and label checks at each and the landing
+ *                 checks at 80 %, and puts the animations back, so the wave plays on unchanged.
+ *                 A second later it hands the wave the feed lines that showed within PAIR_MS of
+ *                 it (the list renders apart from the band) for the name and group checks. A
+ *                 flight removed before FLIGHT_MS, or still in the band after it, is a problem
+ *                 too. Problems by check in window.__flightProbe.
  * Used by:        ./mindGamesFlights.spec
  * Spec:           docs/spec/02e-game-mind-games.md §11.1; docs/spec/09-testing-strategy.md §4
  *                 (journey 44)
  */
 import {
   bad,
-  iconOf,
-  label,
+  flightOf,
   landing,
-  landings,
-  iconBoxes,
-  othersAtLanding,
+  coin,
+  label,
   named,
   names,
-  take,
   opacity,
   overlap,
   r1,
-  within,
+  take,
   type Probe,
 } from './flightChecks.js';
 
@@ -46,6 +42,8 @@ export interface ProbeResult {
 const MOMENTS = [0.05, 0.2, 0.3, 0.5, 0.65, 0.8, 0.9, 0.97];
 const LAND = 0.8;
 const PAIR_MS = 1_000;
+// The platform's phone layout (games/mind-games/web/FlightBand PHONE).
+const PHONE = '(max-width: 899px), (orientation: portrait)';
 const keyOf = (name: string): string => name.toLowerCase();
 
 // The feed's lines as "who|from>to" ("edge>to" for a first choice), one entry per line.
@@ -62,8 +60,8 @@ function linesNow(): string[] {
 }
 
 // The lines `now` shows on top of `before`: the list is newest first and drops its oldest
-// past the feed's 60, so the new ones are the head before `before` continues (a bot's repeat
-// of an old switch reads the same as the line it pushes out: compared by place, not by text).
+// past the feed's 60, so the new ones are the head before `before` continues (compared by
+// place, not by text: a bot's repeat of an old switch reads the same as the line it pushes out).
 function added(before: readonly string[], now: readonly string[]): string[] {
   for (let i = 0; i <= now.length; i += 1) {
     const rest = now.slice(i);
@@ -74,19 +72,18 @@ function added(before: readonly string[], now: readonly string[]): string[] {
 
 // A new wave at its moments, then back where it was.
 function measure(p: Probe, wave: readonly Element[]): void {
-  const band = document.querySelector('[data-testid="flight-band"]');
-  if (band === null) return;
   const t0 = performance.now();
   for (const f of wave) p.born.set(f, t0);
-  const all = [...band.querySelectorAll('.mg-flight')];
   const saved = wave
     .flatMap((f) => [f, ...f.querySelectorAll('*')].flatMap((e) => e.getAnimations()))
     .map((a) => [a, Number(a.currentTime ?? 0)] as const);
-  const rect = band.getBoundingClientRect();
   for (const t of MOMENTS) {
     for (const [a] of saved) a.currentTime = t * p.ms;
-    for (const f of wave) label(p, f, rect, t);
-    if (t === LAND) landing(p, wave, all, t0);
+    for (const f of wave) {
+      coin(p, f, t);
+      label(p, f, t);
+    }
+    if (t === LAND) landing(p, wave);
   }
   const spent = performance.now() - t0;
   for (const [a, at] of saved) a.currentTime = at + spent;
@@ -127,6 +124,7 @@ function install(ms: number, visible: boolean): void {
   const p: Probe = {
     ms,
     visible,
+    phone: window.matchMedia(PHONE).matches,
     out: { waves: 0, flights: 0, named: 0, groups: 0, problems: {} },
     born: new Map(),
     log: [],
@@ -157,25 +155,20 @@ export function probeScript(flightMs: number, visible: boolean): string {
     linesNow,
     added,
     opacity,
+    coin,
     label,
-    landings,
-    iconBoxes,
-    othersAtLanding,
     overlap,
     landing,
-    iconOf,
+    flightOf,
     take,
     named,
-    names,
-    measure,
-    onRender,
-    install,
   ];
   return [
     '(() => {',
     `const MOMENTS = ${JSON.stringify(MOMENTS)}, LAND = ${String(LAND)}, PAIR_MS = ${String(PAIR_MS)};`,
-    `const r1 = ${r1.toString()}, keyOf = ${keyOf.toString()}, within = ${within.toString()};`,
-    ...parts.map((f) => f.toString()),
+    `const PHONE = ${JSON.stringify(PHONE)};`,
+    `const r1 = ${r1.toString()}, keyOf = ${keyOf.toString()};`,
+    ...[...parts, names, measure, onRender, install].map((f) => f.toString()),
     `install(${String(flightMs)}, ${String(visible)});`,
     '})();',
   ].join('\n');

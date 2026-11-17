@@ -155,11 +155,11 @@ A browser-test run starts its own stack and reuses none: a port already taken st
 41. Seasonal Mind Games, nothing early over the wire (`e2e/mindGamesDelay.spec.ts`, Chromium): during a round a guest socket and a second player's socket record every frame and poll `GET …/state` once a second while bots switch; no recorded frame or answer holds a count, line, entrant or player in the round younger than the delay, the release numbers are gap-free, the acknowledgements carry no number; the admin round view, the delayed spectator view, holds nothing younger than the delay, and the public read API shows no count until the end (DECISIONS T337).
 42. The build badge (O95, DECISIONS T346), in every browser: at 1280 × 720 and 390 × 844, in light and dark, the badge "Mini Games · dev · <branch> · <commit> · <date>" shows at the page's right edge on the lobby, in a running Guess The Number round in focus mode (still one screen) with its Chat panel open, and on the round's result page, and on none of them is it drawn over a button, a link, a field, a dialog, the round view or the chat (`e2e/buildBadge.spec.ts`).
 43. Seasonal Mind Games on a phone (O99; `e2e/mindGamesPhone.spec.ts`, Chromium): at 390 × 844 a Quick Test round with 12 bots; during the round and on its result only the content scrolls, the chat bar's top edge lies on or below the content's bottom edge, the page itself never scrolls; a message sent from the bar's field arrives without opening the chat's sheet; on the result the winners and the next round's countdown show above the bar, the standings start with the viewer's own line, and after scrolling to the end the last standings row is whole above the bar.
-44. Seasonal Mind Games' flights measured (DECISIONS T377; `e2e/mindGamesFlights.spec.ts` with its probe `e2e/flightProbe.ts`, Chromium):
+44. Seasonal Mind Games' flights measured (02e §11.1 points 2–6, DECISIONS T378; `e2e/mindGamesFlights.spec.ts` with its probe `e2e/flightProbe.ts`, Chromium):
     - two Quick Test rounds (40 bots with switches `visible`, 12 bots with switches `hidden`, All on) watched at 1440 × 900, 1280 × 720 and 390 × 844; every wave is measured in the browser as it starts, its animations set to moments of the flight and put back;
-    - a lone icon lands on its card's middle (±2 px), several symmetric around it; no two landed icons overlap by more than 20 %;
-    - every name label lies inside the band, centred over its icon (±2 px) unless the band's edge is nearer, whole, above its icon, and exactly as visible as its icon (within 0.05);
-    - a first choice and a visible switch fly with the name, a hidden switch without; one icon per from → to in a step, its "×N" the step's matching lines; All's icon at full size;
+    - one flight per from → to in a step, its "×N" the step's matching lines and no name; a single first choice or visible switch has its player's name, a hidden switch none, and on the phone layout no flight has one;
+    - the coin is never faint and from 40 % of the flight on shows only the new season; a name label is whole, above its coin, centred on it (±2 px) and as visible as it (within 0.05);
+    - at the landing a lone coin is on its card's middle (±2 px), several symmetric around it, no two overlapping by more than a fifth, none under 82 % of its full size;
     - nothing of a wave is left after 1.2 s and no wave is removed early.
 
 Journeys 1–19 are Guess The Number's and run unchanged on the guess engine (DECISIONS T117).
@@ -228,7 +228,8 @@ Journeys 1, 10, 11, 16, 20–22, 24–27 and 38 also check that the round view f
   - `match_player_prefs` (own read and write, size and schema, deleted on leave and kick, applied at the opening in join order, refusal to its owner only); the authz rows of the new routes and intent (§6).
 - **Animation** (owner decision 90, 02e §11.1; component tests in `games/mind-games/web`):
   - a flight starts only from a released feed step (the component is fed steps one by one; no flight begins before its step arrives, none without one), with that step's from and to;
-  - a first choice flies from the name line with the name, a hidden switch flies without a name; a step with 20 switches flies 12 icons at once with a "+8" tag and shows the step's exact counts at once;
+  - one flight per from → to in a step, "×N" without a name from two on; a name on a single first choice or visible switch, never on a hidden switch or the phone layout;
+  - a lone flight lands on its card's middle, several evenly around it, shrinking down to 82 % at most with a fifth's overlap, the rest as the card's "+N"; a new wave never cuts an earlier one short, and nothing is left after 1.2 s;
   - the winners light up after the end only; with reduced motion no flight runs and the counts change in place;
   - at 1280 × 720 with the Chat panel open and at 390 × 844 the flight band's box overlaps no choice button, no feed line and no chat panel.
 - **Conformance:** P1–P5 and P7 with the game's kit (a round input, actions over the five choices with and without `hide`, prefs); P2 and P6 hold trivially.

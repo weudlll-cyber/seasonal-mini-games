@@ -3,15 +3,16 @@
  * @module e2e
  * @brief  Journey 44: Seasonal Mind Games' flights measured in the browser, wave by wave.
  *
- * Responsibility: 09 §4 journey 44 (owner, 2026-11-16, MG-FLIGHT-3), Chromium: two Quick Test
- *                 rounds watched at once at 1440 × 900, 1280 × 720 and 390 × 844 (the host's
- *                 own windows), every wave measured by ./flightProbe as it starts: the landings
- *                 on their cards' middles, the name labels inside the band, centred, whole and
- *                 exactly as visible as their coins, no landed icons over each other, All's icon
- *                 full size, one icon "×N" per from → to with N the step's lines, nothing left
- *                 after a wave. Round one: 40 bots, switches `visible`, All on: every single
- *                 flight has its name. Round two: 12 bots, switches `hidden`: a switch flies
- *                 without a name, a first choice with one.
+ * Responsibility: 09 §4 journey 44, Chromium: 02e §11.1 points 2–6 measured on two Quick
+ *                 Test rounds watched at once at 1440 × 900, 1280 × 720 and 390 × 844 (the
+ *                 host's own windows), every wave by ./flightProbe as it starts: one flight
+ *                 "×N" per from → to with N the step's lines; names on single first choices and
+ *                 visible switches only, none on the phone; the coin turning over into the pure
+ *                 new icon; the label centred above it, whole, as visible as it; the landings on
+ *                 their cards' middles, overlapping by at most a fifth, at 82 % or more; nothing
+ *                 left after a wave. Round one: 40 bots, switches `visible`, All on. Round two:
+ *                 12 bots, switches `hidden`: a switch flies without a name, a first choice
+ *                 with one (on the desktop windows).
  * Depends on:     @playwright/test, ./flightProbe, ./mindGames, ./play, ./screens
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 44); docs/spec/02e-game-mind-games.md §11.1
  */
@@ -25,19 +26,7 @@ import { PHONE } from './screens.js';
 // The flight's length (games/mind-games/web/FlightBand FLIGHT_MS).
 const FLIGHT_MS = 1_200;
 const SIZES = [{ width: 1440, height: 900 }, { width: 1280, height: 720 }, PHONE] as const;
-const CHECKS = [
-  'landing-centre',
-  'label-inside',
-  'label-centred',
-  'label-clipped',
-  'label-above',
-  'label-with-coin',
-  'names',
-  'overlap',
-  'group-count',
-  'all-size',
-  'leftover',
-] as const;
+const CHECKS = ['groups', 'names', 'coin', 'label', 'landing', 'size', 'leftover'] as const;
 
 // One round watched in three windows; each window's probe result.
 async function watchRound(
