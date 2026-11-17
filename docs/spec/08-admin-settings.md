@@ -70,10 +70,10 @@ Platform round keys (`round.secretMode`, `round.cooldownS`, `round.inactivityLim
 
 | Key | Default | Min | Max | Status | Who | Running rounds |
 |---|---|---|---|---|---|---|
-| `code.length` | 4 | 3 | 6 | *proposal*: digits in the secret code (02b §3) | host | frozen |
-| `code.digits` | 10 | 4 | 10 | *proposal*: the digits 0 … digits − 1 are in use; repeats allowed (02b §3) | host | frozen |
-| `autumn.digitsPerFall` | 1 | 1 | 3 | *proposal*: digits that fall per Leaf Fall; replaces `autumn.count` for this game (02b §7.3) | game admin | frozen |
-| Tier score bounds | 0.25 / 0.45 / 0.60 / 0.75 | — | — | *proposal* (not a setting): fixed table of 02b §6 | — | — |
+| `code.length` | 4 | 3 | 6 | owner (O65): digits in the secret code (02b §3) | host | frozen |
+| `code.digits` | 10 | 4 | 10 | owner (O65): the digits 0 … digits − 1 are in use; repeats allowed (02b §3) | host | frozen |
+| `autumn.digitsPerFall` | 1 | 1 | 3 | owner (O65): digits that fall per Leaf Fall; replaces `autumn.count` for this game (02b §7.3) | game admin | frozen |
+| Tier score bounds | 0.25 / 0.45 / 0.60 / 0.75 | — | — | owner (O65), not a setting: fixed table of 02b §6 | — | — |
 
 ### 3.2 Seasonal Bomb Defusal (document `game.bomb-defusal`, [02c](02c-game-bomb-defusal.md))
 
@@ -81,11 +81,11 @@ Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.in
 
 | Key | Default | Min | Max | Status | Who | Running rounds |
 |---|---|---|---|---|---|---|
-| `bomb.wires` | 6 | 4 | 8 | proposal: the first N colours of red, blue, yellow, green, white, black, orange, purple (02c §3) | host | frozen |
-| `bomb.cuts` | 4 | 3 | 6 | proposal; at most `bomb.wires` | host | frozen |
-| `bomb.explosionPenaltyS` | 5 | 0 | 30 | owner (O40): host chooses, 0 allowed; default and max: proposal. Added to the cooldown on a wrong first cut (02c §5.2) | host (per match) | frozen (copied from the match into each round) |
+| `bomb.wires` | 6 | 4 | 8 | owner (O65): the first N colours of red, blue, yellow, green, white, black, orange, purple (02c §3) | host | frozen |
+| `bomb.cuts` | 4 | 3 | 6 | owner (O65); at most `bomb.wires` | host | frozen |
+| `bomb.explosionPenaltyS` | 5 | 0 | 30 | owner (O40, O65): the host chooses it for each round, 0 allowed. Added to the cooldown on a wrong first cut (02c §5.2) | host | frozen |
 | `autumn.wiresPerFall` | — | — | — | removed by owner decision 42: each Leaf Fall marks one wire (02c §8.3) | — | — |
-| Tier rule | fixed | — | — | proposal, not a setting: k = 1 … cuts − 2 spread evenly over cold … burning (02c §7) | — | — |
+| Tier rule | fixed | — | — | owner (O65), not a setting: k = 1 … cuts − 2 spread evenly over cold … burning (02c §7) | — | — |
 
 ### 3.3 Seasonal Target (document `game.seasonal-target`, [02d](02d-game-seasonal-target.md))
 
@@ -95,9 +95,9 @@ Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.in
 |---|---|---|---|---|---|---|
 | `target.size` | 20 | 8 | 30 | owner (O45): the square tile grid's side in tiles; row 1 is north (02d §3) | host | frozen |
 | `target.feedback` | `closeness` | — | — (`direction`, `distance`, `closeness`) | owner (O43; default O53): distance and direction, distance only, warm/cold only (a stored explicit value keeps its value); the host's round setting, chosen in the round form; the next round's form keeps the last choice (02d §3, §5) | host | frozen |
-| `autumn.minCellsLeft` | 10 | 2 | 50 | proposal: Leaf Fall stops when fewer candidate tiles would remain (02d §8.3); at most 50, so tiles can fall on an 8 × 8 grid (O45) | game admin | frozen |
-| `halving.minCells` | 16 | 4 | 32 | proposal: halving stops once the target area has this many tiles or fewer (02d §8.4); at most 32, so an 8 × 8 grid is halved at least once (O45) | game admin | frozen |
-| Closeness tier table (way off, cold, cool, warm, hot above 48 / 32 / 20 / 12 / 6 % of the diagonal and above a minimum of n = 61 / 40 / 20 / 13 / 8, n the squared distance in tiles; touching = just missed) | — | — | — | proposal, not a setting: Leaf Fall's `closeness` candidates depend on it (02d §7; `games/seasonal-target/src/geometry.ts`) | — | — |
+| `autumn.minCellsLeft` | 10 | 2 | 50 | owner (O65): Leaf Fall stops when fewer candidate tiles would remain (02d §8.3); at most 50, so tiles can fall on an 8 × 8 grid (O45) | game admin | frozen |
+| `halving.minCells` | 16 | 4 | 32 | owner (O65): halving stops once the target area has this many tiles or fewer (02d §8.4); at most 32, so an 8 × 8 grid is halved at least once (O45) | game admin | frozen |
+| Closeness tier table (way off, cold, cool, warm, hot above 48 / 32 / 20 / 12 / 6 % of the diagonal and above a minimum of n = 61 / 40 / 20 / 13 / 8, n the squared distance in tiles; touching = just missed) | — | — | — | owner (O65), not a setting: Leaf Fall's `closeness` candidates depend on it (02d §7; `games/seasonal-target/src/geometry.ts`) | — | — |
 
 ### 3.4 Seasonal Mind Games (document `game.mind-games`, [02e](02e-game-mind-games.md))
 

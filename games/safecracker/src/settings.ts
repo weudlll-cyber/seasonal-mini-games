@@ -37,7 +37,8 @@ export interface ScConfig extends GuessConfig {
 const GAME_ADMIN = 'settings.game.edit';
 const host = { editPermission: GAME_ADMIN, hostChooses: true, running: 'frozen' } as const;
 const admin = { editPermission: GAME_ADMIN, hostChooses: false, running: 'frozen' } as const;
-const proposal = { status: 'proposal', spec: '08 §3.1' } as const;
+// Confirmed by the owner after playing the game (O65).
+const confirmed = { status: 'owner', decision: 'O65', spec: '08 §3.1' } as const;
 
 const defs: readonly SettingDef[] = [
   {
@@ -49,7 +50,7 @@ const defs: readonly SettingDef[] = [
     min: 3,
     max: 6,
     unit: 'digits',
-    ...proposal,
+    ...confirmed,
     ...host,
   },
   {
@@ -61,7 +62,7 @@ const defs: readonly SettingDef[] = [
     min: 4,
     max: 10,
     unit: '',
-    ...proposal,
+    ...confirmed,
     ...host,
   },
   visibilityDef(
@@ -79,7 +80,7 @@ const defs: readonly SettingDef[] = [
     min: 1,
     max: 3,
     unit: '',
-    ...proposal,
+    ...confirmed,
     ...admin,
   },
 ];

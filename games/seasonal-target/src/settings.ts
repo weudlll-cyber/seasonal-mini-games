@@ -41,7 +41,8 @@ export interface StConfig extends GuessConfig {
 const GAME_ADMIN = 'settings.game.edit';
 const host = { editPermission: GAME_ADMIN, hostChooses: true, running: 'frozen' } as const;
 const admin = { editPermission: GAME_ADMIN, hostChooses: false, running: 'frozen' } as const;
-const proposal = { status: 'proposal', spec: '08 §3.3' } as const;
+// Confirmed by the owner after playing the game (O65).
+const confirmed = { status: 'owner', decision: 'O65', spec: '08 §3.3' } as const;
 
 const defs: readonly SettingDef[] = [
   // The square grid's side (O45, amending O38's 50 × 50 map): columns from the west edge,
@@ -91,7 +92,7 @@ const defs: readonly SettingDef[] = [
     // The smallest grid has 64 tiles: a higher stop would never let a tile fall there.
     max: 50,
     unit: 'tiles',
-    ...proposal,
+    ...confirmed,
     ...admin,
   },
   {
@@ -104,7 +105,7 @@ const defs: readonly SettingDef[] = [
     // Below the smallest grid's 64 tiles, so halving always runs at least once.
     max: 32,
     unit: 'tiles',
-    ...proposal,
+    ...confirmed,
     ...admin,
   },
 ];

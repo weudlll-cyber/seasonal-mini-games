@@ -3,12 +3,13 @@
  * @module games/bomb-defusal
  * @brief  The game's own keys of document `game.bomb-defusal` and its frozen config.
  *
- * Responsibility: wires, cuts and the explosion penalty (host, 08 §3.2) as setting
- *                 definitions, beside the guess engine's shared ones (feedback visibility,
- *                 comments, trend lines, the repeated-sequence rule) worded for wires; reading frozen values into the
- *                 config; the cross-key rule that cuts never exceed wires; and that this game
- *                 has no halving (02c §8.5): a halving day runs a normal season round. The
- *                 platform's round keys come first in the document (game-sdk).
+ * Responsibility: wires, cuts and the explosion penalty (host settings, chosen per round,
+ *                 08 §3.2) as setting definitions, beside the guess engine's shared ones
+ *                 (feedback visibility, comments, trend lines, the repeated-sequence rule)
+ *                 worded for wires; reading frozen values into the config; the cross-key rule
+ *                 that cuts never exceed wires; and that this game has no halving (02c §8.5): a
+ *                 halving day runs a normal season round. The platform's round keys come first
+ *                 in the document (game-sdk).
  * Depends on:     @smg/game-sdk (SettingDef, GameSettings), @smg/guess-engine (shared keys)
  * Used by:        ./module, ./state, ./index, ./web (forms)
  * Spec:           docs/spec/08-admin-settings.md §3.2; docs/spec/02c-game-bomb-defusal.md §3, §8.5
@@ -32,7 +33,8 @@ export interface BdConfig extends GuessConfig {
 
 const GAME_ADMIN = 'settings.game.edit';
 const host = { editPermission: GAME_ADMIN, hostChooses: true, running: 'frozen' } as const;
-const proposal = { status: 'proposal', spec: '08 §3.2' } as const;
+// Confirmed by the owner after playing the game (O65).
+const confirmed = { status: 'owner', decision: 'O65', spec: '08 §3.2' } as const;
 
 const defs: readonly SettingDef[] = [
   {
@@ -44,7 +46,7 @@ const defs: readonly SettingDef[] = [
     min: 4,
     max: 8,
     unit: '',
-    ...proposal,
+    ...confirmed,
     ...host,
   },
   {
@@ -56,20 +58,21 @@ const defs: readonly SettingDef[] = [
     min: 3,
     max: 6,
     unit: '',
-    ...proposal,
+    ...confirmed,
     ...host,
   },
   {
     key: 'bomb.explosionPenaltyS',
     kind: 'int',
     label: 'Explosion penalty',
-    help: 'Extra waiting time after a wrong first cut, the same for every round of the match. 0: the bomb explodes without extra waiting.',
+    help: 'Extra waiting time after a wrong first cut; the host sets it for each round. 0: the bomb explodes without extra waiting.',
     default: 5,
     min: 0,
     max: 30,
     unit: 's',
     status: 'owner',
-    decision: 'O40',
+    // The host chooses it (O40), for each round (O65).
+    decision: 'O65',
     spec: '08 §3.2',
     ...host,
   },
