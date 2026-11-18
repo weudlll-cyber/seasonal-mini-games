@@ -7,9 +7,10 @@
  * Responsibility: with the round's public timing (the defaults 120/30/60 and the hold of 5 s):
  *                 the next change in words through Join, Play, Reveal and the hold before the
  *                 result (T384); the feed's sentences (the first choices' countdown, every
- *                 change a switch, the reveal, the hold); every countdown showing the seconds of
- *                 the platform's "… left" (its `clockText` of the time to `endsAt`) at x.0, x.4
- *                 and x.9 s left (O107); the screen reader's sentence
+ *                 change a switch, the reveal, the hold); every countdown to the result rounding as
+ *                 the platform's round bar (its `clockText`, whole seconds down; the bar's
+ *                 "Result in 0:04" in the hold, T386) at x.0, x.4 and x.9 s left (O107); the
+ *                 screen reader's sentence
  *                 per phase; the strip's current phase (highlighted, filling, named "now" for a
  *                 screen reader, the others plain), its delay sentence and no markers (O92); the
  *                 buttons off after the join time for a
@@ -51,11 +52,10 @@ describe('Mind Games phases in words (02e §4, §6, §11)', () => {
     // The hold: the stage stands until the result, which the line counts down to (T384).
     expect(nextChange(at(121_000))).toBe('Choices closed · result in 0:04');
     expect(nextChange(at(125_000))).toBe('The round is over.');
-    expect([10_000, 70_000, 100_000, 122_000, 130_000].map((ms) => phaseOf(at(ms)))).toEqual([
+    expect([10_000, 70_000, 100_000, 130_000].map((ms) => phaseOf(at(ms)))).toEqual([
       'join',
       'play',
       'reveal',
-      'hold',
       'over',
     ]);
     expect(announcement('play')).toBe('Joining has closed.');
@@ -78,11 +78,12 @@ describe('Mind Games phases in words (02e §4, §6, §11)', () => {
   });
 });
 
-describe('Mind Games countdowns against the platform’s “… left” (O107)', () => {
-  // The round's bar: the time to `endsAt` through the platform's clockText (apps/web FocusBar).
+describe('Mind Games countdowns against the platform’s rounding (O107)', () => {
+  // The time to the result through the platform's clockText, as the round bar's "Result in"
+  // in the hold (apps/web roundText `barTime`, T386).
   const bar = (t: PhasedTiming) => clockText(Math.max(0, t.endsAt - t.now()));
 
-  it('shows the bar’s seconds in the reveal, the hold and the feed, at x.0, x.4 and x.9 s left', () => {
+  it('rounds as the bar in the reveal, the hold and the feed, at x.0, x.4 and x.9 s left', () => {
     // 23 and 4 seconds and a fraction before the result: in the reveal and in the hold.
     for (const whole of [23_000, 4_000])
       for (const part of [0, 400, 900]) {
@@ -107,7 +108,7 @@ describe('Mind Games input with the round timing (02e §5.2, §11)', () => {
     );
     expect(screen.getByTestId('delay-line').textContent).toBe('You see the round 30 s late');
     const parts = [...document.querySelectorAll('.mg-phase')];
-    expect(parts.map((p) => p.getAttribute('aria-current'))).toEqual(['step', null, null, null]);
+    expect(parts.map((p) => p.getAttribute('aria-current'))).toEqual(['step', null, null]);
     expect(parts[0]?.textContent).toContain('Join · now');
     // 36 s of a 60 s join: 60 % filled; the other parts have no bar.
     expect(document.querySelectorAll('.mg-phase-fill')).toHaveLength(1);
@@ -118,7 +119,7 @@ describe('Mind Games input with the round timing (02e §5.2, §11)', () => {
     cleanup();
     render(<MindInput {...inputProps(playerView([], 0))} timing={at(100_000)} />);
     const later = [...document.querySelectorAll('.mg-phase')];
-    expect(later.map((p) => p.getAttribute('aria-current'))).toEqual([null, null, 'step', null]);
+    expect(later.map((p) => p.getAttribute('aria-current'))).toEqual([null, null, 'step']);
   });
 
   it('holds a player not in the round after the join time, with the reason', () => {

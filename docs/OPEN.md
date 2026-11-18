@@ -62,7 +62,7 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 34. The flights' times and look of DECISIONS T379 (MG-FLIGHT-CLEAN-2): 1.6 s flight, 0.5 s standing, 0.3 s fade, a replaced coin fading in 0.15 s; the "×N" at 15 px above its coin; the "+N" as a pill in the card's last slot.
 35. Closed: a switch at the round's end is decided by O105 (the last flights fly faster; every accepted move shows before the result), built as DECISIONS T380 (BACKLOG part two).
 36. The hold before the result (O106, built as DECISIONS T384): default 5 s, 1–20 s in whole seconds, the host's per round ("Hold before the result"); in it the status line reads "Choices closed · result in 0:04" and the feed "Choices are closed — the result follows in 4 s.".
-37. The phase strip's fourth part "Hold until 1:05" (DECISIONS T385), and that a very short part keeps room for its label rather than its exact share of the width.
+37. The round bar's wording in the hold, "Result in 0:04" (DECISIONS T386; the strip's three parts and the bar counting to the plan's end are the owner's decision), and that in the reveal the line's "Reveal · result in 0:19" counts to the result while the bar counts to the end of Reveal ("0:14 left"). T385's fourth part is gone.
 
 ## Firefox/WebKit findings (O103 batch)
 
