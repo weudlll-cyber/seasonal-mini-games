@@ -77,7 +77,9 @@ describe('Mind Games text (02e §2, §5.2, §6.1)', () => {
   it('words the game’s and the phased codes, and leaves the rest to the platform', () => {
     expect(mindText.code('PLAY_OVER')).toBe('Choices are closed for this round.');
     expect(mindText.code('SAME_CHOICE')).toBe('That is already your choice.');
-    expect(mindText.code('RATE_LIMITED')).toBeNull();
+    // The account's rate in the game's word (T383); the rest stays the platform's.
+    expect(mindText.code('RATE_LIMITED')).toBe('Slow down a little — too many choices at once.');
+    expect(mindText.code('ROUND_BUSY')).toBeNull();
   });
 });
 

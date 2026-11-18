@@ -10,9 +10,12 @@ All on `feat/mg-flight-clean` (from `e29e6b2`), not merged: the owner tests it i
 - **2. The All card's labels under the pill; the refused-for-rate message** (T383, proposal): done. The band is 60 px (was 56) with its coin row 4 px lower: every name and "×N" keeps 4 px clear under the button and its "✓ Your choice"; the counts move those 4 px. Journey 44's probe checks it at all three sizes (jsdom lays nothing out, so no component test can); the pairing checks moved to `e2e/flightLines.ts` (`flightChecks.ts` was at 298 lines). The rate: my MG-FLIGHT-CLEAN-2 report was wrong, the platform did show its line, but as "…too many guesses at once."; Mind Games now says "Slow down a little — too many choices at once." (component test). Journeys 44 and 45 green; journey 45 failed once first on a click at a phone card's bottom: it measured the card, waited 0.3 s, then clicked, so the first counts arriving in between moved the card (now it waits first, then measures and clicks; green after).
 - **3. O102 everywhere** (T382): done. The result rows of a phased round in O102's order; the comparison moved to `@smg/game-sdk` (`compareNames`) and used by the standings and the result rows.
 - **4. Docs provably wrong:** done. Spec 10 §1 (the game-sdk files and the conformance suite as they are), §5 (the CI jobs that exist; no load job); spec 04 §5.4 (`spring/<who>`, `springHerald/<who>`, the Quick Test bots' `quicktest/…`); spec 03 §6 (event rows in the Log, not the main list); `SpecialBanner.tsx`'s header (wraps, T194). Link check: 400 OK, 0 errors.
-- **5. Firefox/WebKit nightly runs** (`browsers.yml`): done for the runs so far: 43986481564 (dispatch, 2026-11-17 00:17 UTC) and 44004176312 (schedule, 02:35 UTC), both green (24 + 41 + 41 passed, 2 and 1 skipped: the Chromium-only specs); no findings. Tonight's run is checked before the handover.
-- **6. Morning handover:** open.
-- **Needs the owner's word:** none yet.
+- **5. Firefox/WebKit nightly runs** (`browsers.yml`): done for the runs so far: 43986481564 (dispatch, 2026-11-17 00:17 UTC) and 44004176312 (schedule, 02:35 UTC), both green (24 + 41 + 41 passed, 2 and 1 skipped: the Chromium-only specs); no findings. Tonight's run (02:30 UTC on 2026-11-18, master unchanged at `bd5f877`) had not started at the handover (01:14 UTC).
+- **Final checks:** `pnpm verify` green (866 + 100 + 173) after one fix: a Mind Games text test used `RATE_LIMITED` as its example of a code left to the platform; it now expects the game's sentence and keeps `ROUND_BUSY` as the example. Journeys 38–46 in Chromium once: 9 of 9 green (journey 46's last step again between the ticks).
+- **6. Morning handover:** done; see the report.
+- **Needs the owner's word:**
+  - The Quick Test on the server needs only a signed-in account (T381): should it need `match.create` too? Unchanged so far.
+  - T383's look: labels 4 px clear under the cards' buttons, the counts 4 px lower.
 
 ## Past nights and tasks
 
