@@ -6,10 +6,11 @@
  * Responsibility: the game-module contract (with the `phased` class's plan and result rows),
  *                 range arithmetic, the one number formatter and name order, the
  *                 random-number types, setting definitions with their checks and the
- *                 platform's round keys; free of node:crypto, so browser code may import it.
+ *                 platform's round keys (a `phased` game's own among them); free of
+ *                 node:crypto, so browser code may import it.
  *                 The DRBG and the commitment are the separate entry @smg/game-sdk/crypto.
- * Depends on:     ./format, ./names, ./module, ./phased, ./range, ./random, ./roundSettings, ./settings,
- *                 ./specialSettings, ./web
+ * Depends on:     ./format, ./names, ./module, ./phased, ./phasedSettings, ./range, ./random,
+ *                 ./roundSettings, ./settings, ./specialSettings, ./web
  * Used by:        packages/domain, packages/contracts, games/*, apps/server, apps/web
  * Spec:           docs/spec/04-software-architecture.md §3, §4
  */
@@ -45,6 +46,7 @@ export {
   type PrefsHooks,
   type Series,
 } from './phased.js';
+export { PHASED_ROUND_SETTINGS, resultHoldMs } from './phasedSettings.js';
 export {
   MARK_COLORS,
   MARK_SHAPES,

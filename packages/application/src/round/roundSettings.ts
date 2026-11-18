@@ -12,10 +12,11 @@
  *                 field, that setting's key: the form shows the sentence under it (O74). A
  *                 game that rules halving out for the chosen values gets a normal season
  *                 round instead (DECISIONS T55). A `phased` game's document holds only the
- *                 platform keys it uses (the countdown and the season's source); its other
- *                 platform values are fixed off, its time-up is its plan's end and a settle
- *                 of 1 s (the last moves shown before the result, T380), and the plan travels
- *                 with the settings (04 §4.8 rules 1 and 4).
+ *                 platform keys it uses (the countdown, the season's source and the hold
+ *                 before the result); its other platform values are fixed off, its time-up is
+ *                 its plan's end and the host's hold (the last moves shown on the game screen
+ *                 before the result, T380, T384), and the plan travels with the settings
+ *                 (04 §4.8 rules 1 and 4).
  * Depends on:     @smg/game-sdk (definitions, checks, round keys)
  * Used by:        ./roundSession tests, ../index, apps/server (round creation, settings service)
  * Spec:           docs/spec/08-admin-settings.md §1, §3, §3.4; docs/spec/06-data-model-api-realtime.md §3.1;
@@ -24,8 +25,10 @@
 import {
   inactivityIssue,
   planIssue,
+  PHASED_ROUND_SETTINGS,
   PLATFORM_ROUND_SETTINGS,
   readPlatformRound,
+  resultHoldMs,
   resolveSettings,
   settingIssue,
   type GameModule,
@@ -47,7 +50,8 @@ export class RoundSettingsError extends Error {
   }
 }
 
-// The platform keys a `phased` game's document holds (04 §4.8 rule 4, 08 §3.4).
+// The guess games' platform keys a `phased` game's document holds; then the hold, which only a
+// phased game has (PHASED_ROUND_SETTINGS) (04 §4.8 rule 4, 08 §3.4).
 const PHASED_PLATFORM_KEYS: ReadonlySet<string> = new Set([
   'round.countdownS',
   'round.seasonSource',
@@ -58,7 +62,10 @@ export function gameSettingsDefs<S, A, E, Cfg, Sec>(
 ): readonly SettingDef[] {
   const platform =
     module.meta.timing === 'phased'
-      ? PLATFORM_ROUND_SETTINGS.filter((d) => PHASED_PLATFORM_KEYS.has(d.key))
+      ? [
+          ...PLATFORM_ROUND_SETTINGS.filter((d) => PHASED_PLATFORM_KEYS.has(d.key)),
+          ...PHASED_ROUND_SETTINGS,
+        ]
       : PLATFORM_ROUND_SETTINGS;
   return [...platform, ...module.settings.defs];
 }
@@ -70,13 +77,11 @@ export interface RoundSettings<Cfg> {
   readonly plan?: PhasePlan;
 }
 
-// A phased round's time-up comes this long after its plan's end (DECISIONS T380): the last
-// moves of play are released up to the plan's end, and each player's page then loads the
-// state that shows them (a frame asks for it 250 ms later) before the result replaces it.
-const PHASED_SETTLE_MS = 1_000;
-
 // A phased round: the plan from the game's config; the platform values its document does
-// not hold are their defaults, with everything a phased round does not have switched off.
+// not hold are their defaults, with everything a phased round does not have switched off. Its
+// time-up is the plan's end and the hold (T384): the last moves of play are released up to the
+// plan's end, each page loads the state that shows them (a frame asks for it 250 ms later), and
+// the game screen stands with them for the hold before the result replaces it.
 // The cooldown keeps its default, which the round never uses: the rounds table's CHECK wants
 // one (DECISIONS T288).
 function phasedSettings<S, A, E, Cfg, Sec>(
@@ -94,7 +99,7 @@ function phasedSettings<S, A, E, Cfg, Sec>(
     secretMode: 'shared',
     inactivityLimitMs: 0,
     inactivityWarnMs: 0,
-    maxDurationMs: plan.endMs + PHASED_SETTLE_MS,
+    maxDurationMs: plan.endMs + resultHoldMs(values),
     marginWindowMs: 0,
     specialOn: false,
     teamsOn: false,

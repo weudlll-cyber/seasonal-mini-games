@@ -101,12 +101,13 @@ Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.in
 
 ### 3.4 Seasonal Mind Games (document `game.mind-games`, [02e](02e-game-mind-games.md))
 
-Platform round keys used: `round.countdownS`, `round.seasonSource` (the round's season, which changes no rule, 02e §12).
+Platform round keys used: `round.countdownS`, `round.seasonSource` (the round's season, which changes no rule, 02e §12), and `round.resultHoldS`, which only a `phased` game's document holds (below).
 
 Not used by this game, because the `phased` class has no cooldown, specials, inactivity limit, secret or proof ([04](04-software-architecture.md) §4.8): `round.secretMode`, `round.cooldownS`, `round.inactivityLimitS`, `round.inactivityWarnS`, `round.maxDurationMin` (the plan's end replaces it), `round.marginWindowS`, `round.specialOn`, `round.teamsOn`, `round.halving`, every shared guess key, `spring.*`, `summer.*`, `autumn.*`, `winter.*`, `halving.*`, `points.*`, `fairness.commitReveal`.
 
 | Key | Default | Min | Max | Status | Who | Running rounds |
 |---|---|---|---|---|---|---|
+| `round.resultHoldS` | 5 | 1 | 20 | owner (O106): the game screen stays this long after the plan's end before the result, so everyone sees the last switches; default and bounds *proposal* (DECISIONS T384), whole seconds; the lower bound is T380's settle; a platform key of every `phased` game, "Hold before the result" in the host form and the Quick Test | host | frozen |
 | `mind.totalS` | 120 | 30 | 600 | default: owner (O78); bounds: *proposal* | host | frozen |
 | `mind.delayAuto` | true | — | — | owner (O96): the delay is a quarter of the total, rounded down, and follows it; off: `mind.delayS` applies | host | frozen |
 | `mind.delayS` | 30 | 5 | 120 | default: owner (O78); bounds and the rule 2 × delay + 10 ≤ total: *proposal* (02e §3); used only with `mind.delayAuto` off | host | frozen |
@@ -120,7 +121,7 @@ Not used by this game, because the `phased` class has no cooldown, specials, ina
 | Points for a winning final choice | 1; All 2 | — | — | owner (O84, not a setting) | — | — |
 | Feed lines in a view | newest 60 | — | — | *proposal*, not a setting (02e §6.1) | — | — |
 
-The cross-key rules are the game's `problem` (owner decision 74; 02e §3), with the delay in force (a quarter of the total while `mind.delayAuto` is on): the delay at most (total − 10 s) / 2; with `mind.joinAuto` off the join time at most total − delay; `mind.winnerPlace` 5 only with All on. With the defaults the delay is 30 s, the join time 60 s and choices close at 90 s.
+The cross-key rules are the game's `problem` (owner decision 74; 02e §3), with the delay in force (a quarter of the total while `mind.delayAuto` is on): the delay at most (total − 10 s) / 2; with `mind.joinAuto` off the join time at most total − delay; `mind.winnerPlace` 5 only with All on. With the defaults the delay is 30 s, the join time 60 s, choices close at 90 s, the plan ends at 120 s and the result shows at 125 s.
 
 ## 4. Match settings (document `matchmaking`)
 

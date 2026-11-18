@@ -9,9 +9,9 @@
  *                 form's own `Field` (with the server's sentence under a refused one, O74) and
  *                 the game's word on them, as in the host form (`gameFieldState`, T344),
  *                 the keys the form shows, and the body of `POST /dev/quicktest` with the
- *                 game's settings and the inactivity pair by key (DECISIONS T121) and, for a
- *                 summer round, Heatwave's step and interval (O63, T208). Development builds
- *                 only, with ./QuickTest.
+ *                 game's settings, the inactivity pair and a phased game's hold before the
+ *                 result by key (DECISIONS T121, T384) and, for a summer round, Heatwave's step
+ *                 and interval (O63, T208). Development builds only, with ./QuickTest.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (definitions), @smg-game/registry/web,
  *                 ../match/roundFields
  * Used by:        ./QuickTest
@@ -20,6 +20,7 @@
 import { GAME_SCREENS } from '@smg-game/registry/web';
 import type { SeasonName } from '@smg/contracts';
 import {
+  PHASED_ROUND_SETTINGS,
   PLATFORM_ROUND_SETTINGS,
   type FieldState,
   type SettingDef,
@@ -49,10 +50,14 @@ export const START: Readonly<Record<string, SettingValue>> = {
 // The inactivity limit and its warning, offered wherever a round is set up (O75); the form
 // sends them by key, starting from the definitions' defaults.
 export const INACTIVITY_KEYS = ['round.inactivityLimitS', 'round.inactivityWarnS'] as const;
+// A phased game's own platform key, the hold before the result (T384); the server leaves it
+// out for a guess game, as it leaves the inactivity pair out for a phased one.
+export const PHASED_KEYS = PHASED_ROUND_SETTINGS.map((d) => d.key);
 
 // The definitions of a game's round: the platform's keys, then the game's own.
 export const defsOf = (gameId: string): readonly SettingDef[] => [
   ...PLATFORM_ROUND_SETTINGS,
+  ...PHASED_ROUND_SETTINGS,
   ...(GAME_SCREENS[gameId]?.settings ?? []),
 ];
 
@@ -78,6 +83,7 @@ export type Values = Readonly<Record<string, SettingValue>>;
 export const shownKeysOf = (extra: Extra): readonly string[] => [
   ...KEYS,
   ...INACTIVITY_KEYS,
+  ...PHASED_KEYS,
   ...gameKeysOf(extra.gameId),
   ...(extra.season === 'summer' ? seasonalDefs(defsOf(extra.gameId)).map((d) => d.key) : []),
 ];
@@ -135,6 +141,8 @@ export function bodyOf(values: Values, extra: Extra) {
       ...Object.fromEntries(gameKeysOf(extra.gameId).map((key) => [key, valueOf(key)])),
       // The inactivity limit and warning, the round's own (O75).
       ...Object.fromEntries(INACTIVITY_KEYS.map((key) => [key, valueOf(key)])),
+      // A phased game's hold before the result (T384).
+      ...Object.fromEntries(PHASED_KEYS.map((key) => [key, valueOf(key)])),
       // Heatwave's step and interval for a summer round (O63, T208).
       ...(extra.season === 'summer'
         ? Object.fromEntries(seasonalDefs(defs).map((d) => [d.key, valueOf(d.key)]))

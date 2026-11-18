@@ -59,6 +59,8 @@ function feed(moves: Moves, cfg?: Cfg, left?: number) {
       : {
           opensAt: 0,
           now: () => 60_000 - left,
+          // The result at the plan's end here, so `left` is what is left before both.
+          endsAt: 60_000,
           plan: { entryEndMs: 30_000, actionsEndMs: 45_000, endMs: 60_000, viewDelayMs: 15_000 },
         };
   const row = (cut: number) => (

@@ -6,7 +6,8 @@
  * Responsibility: 02e §11.1. Each released view that moves someone starts one wave
  *                 (./flights): the cards and the labels are measured as it starts, every flight
  *                 placed, its times taken from what is left before the result screen (the
- *                 round's public end, ./phases; shortened near it), and the wave drawn until it
+ *                 round's time-up: the plan's end and the host's hold; shortened only when
+ *                 that is short), and the wave drawn until it
  *                 has flown, stood and faded, then removed; a new wave never cuts an earlier one
  *                 short, but where it lands it makes a coin of an earlier wave still standing
  *                 there fade at once. A flight is the coin of
@@ -17,7 +18,7 @@
  *                 words, and a click goes through to the card. With the device's reduced-motion
  *                 setting nothing flies.
  * Depends on:     react, @smg/game-sdk (PhasedTiming), @smg-game/mind-games (options, views),
- *                 ./flights, ./phases, ./seasons
+ *                 ./flights, ./seasons
  * Used by:        ./ChoiceButtons
  * Spec:           docs/spec/02e-game-mind-games.md §11.1
  */
@@ -46,7 +47,6 @@ import {
   type Placed,
   type Timed,
 } from './flights.js';
-import { sinceOpening } from './phases.js';
 import { iconsOf } from './seasons.js';
 
 // The platform's phone layout (./mind.css): no names, first choices rise from below.
@@ -59,9 +59,9 @@ const matches = (query: string): boolean =>
 const px = (n: number): string => `${String(n)}px`;
 const ms = (n: number): string => `${String(n)}ms`;
 
-// What is left before the result screen, by the round's public plan; without it, all the time.
+// What is left before the result screen (the round's time-up, T384); without it, all the time.
 const leftOf = (t: PhasedTiming | undefined): number =>
-  t === undefined ? Infinity : t.plan.endMs - sinceOpening(t);
+  t === undefined ? Infinity : t.endsAt - t.now();
 
 // What a flight's label says, and its class.
 const labelOf = (f: Flight, names: Readonly<Record<string, string>>) =>

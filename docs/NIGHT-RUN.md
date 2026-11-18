@@ -14,7 +14,7 @@ All on `feat/mg-flight-clean` (from `e29e6b2`), not merged: the owner tests it i
 - **Final checks:** `pnpm verify` green (866 + 100 + 173) after one fix: a Mind Games text test used `RATE_LIMITED` as its example of a code left to the platform; it now expects the game's sentence and keeps `ROUND_BUSY` as the example. Journeys 38–46 in Chromium once: 9 of 9 green (journey 46's last step again between the ticks).
 - **6. Morning handover:** done; see the report.
 - **Needs the owner's word:**
-  - The Quick Test on the server needs only a signed-in account (T381): should it need `match.create` too? Unchanged so far.
+  - The Quick Test on the server needs only a signed-in account (T381): answered on 2026-11-18, it stays so (DECISIONS O106 (2)).
   - T383's look: labels 4 px clear under the cards' buttons, the counts 4 px lower.
 
 ## Past nights and tasks

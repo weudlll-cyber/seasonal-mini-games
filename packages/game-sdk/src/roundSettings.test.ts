@@ -3,24 +3,27 @@
  * @module game-sdk
  * @brief  The platform round keys: catalogue defaults and their conversion to milliseconds.
  *
- * Responsibility: every key's default fits its own definition, and the defaults read as
+ * Responsibility: every key's default fits its own definition (a phased game's hold too,
+ *                 read as 5 000 ms, T384), and the defaults read as
  *                 the round config of 02 §3 and 02 §9 (10 s cooldown, 5 s countdown,
  *                 10 min, 2 s margin window, points 10 / 10-7-5-3 / 1, proof on); the
  *                 inactivity limit takes 0 (off) or 20–600 s and the warning only below it
  *                 (O71).
- * Depends on:     vitest, ./roundSettings, ./settings
+ * Depends on:     vitest, ./phasedSettings, ./roundSettings, ./settings
  * Spec:           docs/spec/08-admin-settings.md §3
  */
 import { describe, expect, it } from 'vitest';
 
+import { PHASED_ROUND_SETTINGS, resultHoldMs } from './phasedSettings.js';
 import { inactivityIssue, PLATFORM_ROUND_SETTINGS, readPlatformRound } from './roundSettings.js';
 import { resolveSettings, settingProblem } from './settings.js';
 
 describe('platform round settings', () => {
   it('have defaults inside their own bounds', () => {
-    for (const def of PLATFORM_ROUND_SETTINGS) {
+    for (const def of [...PLATFORM_ROUND_SETTINGS, ...PHASED_ROUND_SETTINGS]) {
       expect(settingProblem(def, def.default), def.key).toBeNull();
     }
+    expect(resultHoldMs(resolveSettings(PHASED_ROUND_SETTINGS, {}))).toBe(5_000);
   });
 
   it('read the defaults as the round config of the spec', () => {

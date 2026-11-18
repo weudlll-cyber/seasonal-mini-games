@@ -61,6 +61,7 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 33. The phone result bar: where the game's name has no room on one line (360 × 740, or wider fonts at 390 × 844), it breaks between its words onto a second line inside its chip instead of being cut with an ellipsis; the bar stays one row (T372).
 34. The flights' times and look of DECISIONS T379 (MG-FLIGHT-CLEAN-2): 1.6 s flight, 0.5 s standing, 0.3 s fade, a replaced coin fading in 0.15 s; the "×N" at 15 px above its coin; the "+N" as a pill in the card's last slot.
 35. Closed: a switch at the round's end is decided by O105 (the last flights fly faster; every accepted move shows before the result), built as DECISIONS T380 (BACKLOG part two).
+36. The hold before the result (O106, built as DECISIONS T384): default 5 s, 1–20 s in whole seconds, the host's per round ("Hold before the result"); in it the status line reads "Choices closed · result in 0:04" and the feed "Choices are closed — the result follows in 4 s.".
 
 ## Firefox/WebKit findings (O103 batch)
 

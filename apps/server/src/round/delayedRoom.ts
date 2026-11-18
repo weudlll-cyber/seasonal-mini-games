@@ -12,8 +12,9 @@
  *                 the same sequence and the tick's cut (`cut`, the time up to which actions are
  *                 public), so a state answer never shows more than the frames did. Within two
  *                 seconds of the round's time-up (its countdown's `endsAt`), what falls due
- *                 goes out at its own time, not with the next tick, so the last moves of play
- *                 reach the players in time to be shown before the result (T380). The round's end releases
+ *                 goes out at its own time, not with the next tick, so with a short hold before
+ *                 the result the last moves of play still reach the players in time to be shown
+ *                 (T380, T384). The round's end releases
  *                 everything still held before it. A release writes no event: what is
  *                 released follows from the log and the clock, so after a restart `restore`
  *                 counts what was released and holds the rest again.
@@ -132,9 +133,9 @@ export class DelayedRoom {
   private tick(): void {
     const now = this.now();
     this.releaseUpTo(now);
-    // Within two ticks of the time-up (the plan's last second and the 1 s settle after it,
-    // T380): what falls due before it goes out at its own time, not with a late tick or the
-    // end, whose result would replace it unseen.
+    // Within two ticks of the time-up (with the shortest hold of 1 s, the plan's last second
+    // and the hold, T380, T384): what falls due before it goes out at its own time, not with a
+    // late tick or the end, whose result would replace it unseen.
     if (this.endsAt - now > 2 * TICK_MS || this.last.length > 0) return;
     const dues = new Set(this.held.map((h) => h.releaseAt).filter((t) => t < this.endsAt));
     this.last = [...dues].map((t) =>

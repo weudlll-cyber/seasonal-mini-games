@@ -10,7 +10,8 @@
  *                 with a progress fill as it runs and says "· now" in words (`aria-current`
  *                 too); the others stay plain, so colour is never the only sign (O92). Under
  *                 the strip one line: "You see the round 10 s late · Joining closes in 0:24 ·
- *                 Choices close in 0:54", only the parts that still apply (./phases); a status
+ *                 Choices close in 0:54", only the parts that still apply, and in the hold
+ *                 after the plan "Choices closed · result in 0:04" (./phases, T384); a status
  *                 that a screen reader announces once when the phase changes ("Joining has
  *                 closed.", "Choices are closed."). The server enforces the phases; the strip
  *                 only shows them.

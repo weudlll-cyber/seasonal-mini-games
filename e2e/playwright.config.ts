@@ -81,7 +81,7 @@ const TIMING = [
   'mindGamesFlights.spec.ts',
   // Journey 45: a click anywhere in a Mind Games card chooses, until choices close.
   'mindGamesCards.spec.ts',
-  // Journey 46: the last switch the server accepts shows before the result (T380).
+  // Journey 46: the last switch the server accepts stands for the hold before the result.
   'mindGamesLastMove.spec.ts',
 ];
 // Specs that run in Chromium only: journey 36 starts its own server and nginx container, and

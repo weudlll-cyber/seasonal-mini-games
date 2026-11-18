@@ -9,8 +9,9 @@
  *                 (frames, state answers, the round's list of players), and the release
  *                 numbers are gap-free and never the log's; the windows refuse by the server's
  *                 receive time (JOIN_CLOSED, PLAY_OVER); a match player who joins while the
- *                 round runs may enter; the round ends at its plan with the game's results,
- *                 nobody placed, the winner's `won` counted as a win in the standings.
+ *                 round runs may enter; the round ends the host's hold after its plan (still
+ *                 running before it, T384) with the game's results, nobody placed, the
+ *                 winner's `won` counted as a win in the standings.
  * Depends on:     vitest, socket.io-client, @smg-game/registry (and its testing entry), ./*
  * Spec:           docs/spec/04-software-architecture.md §4.8; docs/spec/05-security-threat-model.md §3.2
  */
@@ -24,6 +25,8 @@ import { startSocketKit, type SocketKit, type Who } from './socketKit.js';
 
 let kit: SocketKit;
 let code = '';
+// The round's hold before the result, in seconds.
+const HOLD_S = 2;
 
 beforeAll(async () => {
   kit = await startSocketKit({}, [...GAMES, SIDES_FIXTURE]);
@@ -95,7 +98,8 @@ async function startedRound(): Promise<{ s: Sockets; id: string; opensAt: number
   await kit.clients['player-2'].post(`/api/v1/matches/${code}/join`, {});
   const s = await watching(['host', 'player-1', 'player-2', 'player-3']);
   const created = await kit.clients.host.post(`/api/v1/matches/${code}/rounds`, {
-    settings: { 'round.countdownS': 3 },
+    // A hold of 2 s, so the end shows it is the host's and not the old settle of 1 s (T384).
+    settings: { 'round.countdownS': 3, 'round.resultHoldS': HOLD_S },
     season: 'summer',
     startNow: true,
   });
@@ -152,8 +156,12 @@ async function windows(s: Sockets, id: string, opensAt: number): Promise<void> {
 
 // The end: the game's results, nobody placed, every winner's win in the standings (rule 6).
 async function results(id: string, opensAt: number): Promise<void> {
-  // The time-up comes a settle of 1 s after the plan's end (DECISIONS T380).
-  await sleep(opensAt + SIDES_PLAN.endMs + 1_000 - Date.now() + 500);
+  // The time-up comes the host's hold after the plan's end (DECISIONS T384): the round still
+  // runs half a second before it, and has ended half a second after it.
+  const timeUp = opensAt + SIDES_PLAN.endMs + HOLD_S * 1_000;
+  await sleep(timeUp - Date.now() - 500);
+  expect((await stateOf('player-2', id)).role).not.toBe('result');
+  await sleep(timeUp - Date.now() + 500);
   const ended = await stateOf('player-2', id);
   expect(ended.role).toBe('result');
   // The game's result view, although the fixture has no secret (DECISIONS T324).

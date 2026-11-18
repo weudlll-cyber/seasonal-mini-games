@@ -225,12 +225,12 @@ export const FADE_MS = 300;
 export const GONE_MS = 150;
 const SHORTEST_MS = 400;
 
-// A wave's flight and stand when it starts `left` ms before the round's result screen (the
-// plan's end; the result follows a settle later, T380): the normal ones while both fit; else
-// it flies in what is left less FADE_MS, at least SHORTEST_MS and never longer than
-// FLIGHT_MS, and stands for the rest; with less than SHORTEST_MS left (or none: a step shown
-// in the settle) the coin appears at its landing at once and stands STAND_MS, until the
-// result replaces it (owner, 2026-11-17, T380).
+// A wave's flight and stand when it starts `left` ms before the round's result screen (its
+// time-up: the plan's end and the host's hold, T384): the normal ones while both fit, as they do
+// with the default hold of 5 s; else it flies in what is left less FADE_MS, at least SHORTEST_MS and
+// never longer than FLIGHT_MS, and stands for the rest; with less than SHORTEST_MS left the
+// coin appears at its landing at once and stands STAND_MS, until the result replaces it
+// (owner, 2026-11-17, T380).
 export function timesFor(left: number): { readonly fly: number; readonly stand: number } {
   if (left >= FLIGHT_MS + STAND_MS) return { fly: FLIGHT_MS, stand: STAND_MS };
   if (left < SHORTEST_MS) return { fly: 0, stand: STAND_MS };
