@@ -12,8 +12,8 @@
  *                 wave the feed lines that showed within PAIR_MS of it (the list renders apart
  *                 from the band) for the name and group checks. When the wave lands, an earlier
  *                 coin still standing in one of its cards must have faded at once. A flight
- *                 removed before its life's end, or still in the band after it, is a problem
- *                 too. Problems by check in window.__flightProbe.
+ *                 removed before its life's end, or still in the band after it (by the page's
+ *                 own timers), is a problem too. Problems by check in window.__flightProbe.
  * Used by:        ./mindGamesFlights.spec
  * Spec:           docs/spec/02e-game-mind-games.md §11.1; docs/spec/09-testing-strategy.md §4
  *                 (journey 44)
@@ -82,10 +82,26 @@ function added(before: readonly string[], now: readonly string[]): string[] {
   return [...now];
 }
 
+// Nothing of a flight is left after its life: judged on the page's own timers, a task after
+// one due 0.2 s past it, so a page held up (by this probe's measuring among others) delays
+// the check just as it delays the band's own removal (measured unprobed: 2.40–2.44 s).
+function overstay(p: Probe, f: Element): void {
+  const life = own(f).standEnd + p.times.fade;
+  window.setTimeout(() => {
+    window.setTimeout(() => {
+      if (f.isConnected)
+        bad(p, 'leftover', `a flight still in the band after its ${String(life)} ms`);
+    }, 0);
+  }, life + 200);
+}
+
 // A new wave at its moments, its landing and its stand, then back where it was.
 function measure(p: Probe, wave: readonly Element[]): void {
   const t0 = performance.now();
-  for (const f of wave) p.born.set(f, t0);
+  for (const f of wave) {
+    p.born.set(f, t0);
+    overstay(p, f);
+  }
   const flights = wave.filter((f) => f.classList.contains('mg-flight'));
   const saved = wave
     .flatMap((f) => [f, ...f.querySelectorAll('*')].flatMap((e) => e.getAnimations()))
@@ -187,19 +203,6 @@ function install(times: Times, visible: boolean): void {
   new MutationObserver((records) => {
     onRender(p, records);
   }).observe(document.body, { childList: true, subtree: true });
-  // Nothing of a wave is left in the band after its life (and a little room for the timer).
-  window.setInterval(() => {
-    for (const [f, t] of p.born) {
-      const lived = performance.now() - t;
-      if (lived <= own(f).standEnd + times.fade + 400) continue;
-      bad(
-        p,
-        'leftover',
-        `a flight still in the band ${String(Math.round(lived))} ms after its start`,
-      );
-      p.born.delete(f);
-    }
-  }, 200);
   (window as unknown as { __flightProbe: Probe['out'] }).__flightProbe = p.out;
 }
 
@@ -230,7 +233,9 @@ export function probeScript(times: Times, visible: boolean): string {
     `const MOMENTS = ${JSON.stringify(MOMENTS)}, PAIR_MS = ${String(PAIR_MS)};`,
     `const PHONE = ${JSON.stringify(PHONE)};`,
     `const r1 = ${r1.toString()}, keyOf = ${keyOf.toString()};`,
-    ...[...parts, names, measure, replaced, removed, onRender, install].map((f) => f.toString()),
+    ...[...parts, names, overstay, measure, replaced, removed, onRender, install].map((f) =>
+      f.toString(),
+    ),
     `install(${JSON.stringify(times)}, ${String(visible)});`,
     '})();',
   ].join('\n');

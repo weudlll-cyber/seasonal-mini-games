@@ -6,7 +6,7 @@ The morning sheet of the current night, and an index of the past ones. The past 
 
 All on `feat/mg-flight-clean` (from `e29e6b2`), not merged: the owner tests it in the morning. Status, piece by piece (updated after every piece).
 
-- **1. Journey 44's unexplained miss** ("bot-11" Autumn → All without its feed line, MG-FLIGHT-END): running.
+- **1. Journey 44's unexplained miss** ("bot-11" Autumn → All without its feed line, MG-FLIGHT-END): done. Not reproduced in 30 runs of journey 44 (10 + 3 + 7 + 10); recorded in BACKLOG part one with the conditions, nothing changed for it. Found instead: the probe's `leftover` check failed in 8 of 17 runs (2 of 7 undisturbed; 6 of 10 while I edited files the test client reloads), flights "still in the band" 2.8–3.0 s after their start, connected, before the result. A probe fault: it compared wall time against a 0.4 s allowance while its own measuring in three windows with 40 bots held the pages up, delaying the band's removal timer too (unprobed: 2.40–2.44 s). Now judged on the page's own timers (a task after one due 0.2 s past the flight's life); after: 10 of 10 runs green.
 - **2. The All card's labels under the pill; the refused-for-rate message:** open.
 - **3. O102 everywhere** (T382): done. The result rows of a phased round in O102's order; the comparison moved to `@smg/game-sdk` (`compareNames`) and used by the standings and the result rows.
 - **4. Docs provably wrong:** done. Spec 10 §1 (the game-sdk files and the conformance suite as they are), §5 (the CI jobs that exist; no load job); spec 04 §5.4 (`spring/<who>`, `springHerald/<who>`, the Quick Test bots' `quicktest/…`); spec 03 §6 (event rows in the Log, not the main list); `SpecialBanner.tsx`'s header (wraps, T194). Link check: 400 OK, 0 errors.

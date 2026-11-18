@@ -23,6 +23,7 @@ Each failed in CI or a local `pnpm verify` and passed on the same code; the coun
 
 - The chat's round-end line (`apps/server/test/chat.integration.test.ts`, CI once): not reproduced in 112 runs, the cause not found; unchanged.
 - Journeys 11 and 12 (CI twice each, journey 12 once more in chain MG-N11: run 43965414477, "closest-miss" not found): not reproduced in 20 runs each under load; unchanged. Journeys 28 and 36 (CI once each) and the specials test's Leaf Fall and Heatwave case (CI twice, changed since in T206): not tried apart; the specials test passed in every one of the night's 25 server suite runs. WebKit's journeys 20 and 21 belong to the Firefox/WebKit batch (O69).
+- Journey 44's names check (chain MG-N12, piece 1): once, in task MG-FLIGHT-END's final run of journeys 38–46 (Chromium, after journeys 38, 45 and 41 in one worker), a named flight "bot-11" Autumn → All found no feed line of its own within the probe's 1 s pairing window; journey 44 alone passed right after. Not reproduced in 30 runs of journey 44 alone on this machine (10 + 3 + 7 + 10, `--repeat-each`), with the probe naming the nearby lines of that path on a miss; the cause not found (the candidates: a group of a wave less than 1 s away taking that line in the pairing, or the line pushed past the list's 60); unchanged.
 
 ### Needed from the website repository
 
