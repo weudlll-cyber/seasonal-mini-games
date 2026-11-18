@@ -75,7 +75,7 @@ A choice is accepted only if all of these hold, checked in this order on the ser
 | 6 | `all` only with All on | `CHOICE_UNAVAILABLE` | "All is not offered in this round." |
 | 7 | Not the player's current choice | `SAME_CHOICE` | "That is already your choice." |
 
-Checks 1–4 are the platform's for every `phased` game ([04](04-software-architecture.md) §4.8), 5–7 the game's `validate`. A refused choice costs nothing, changes nothing and is seen only by the chooser ([02](02-game-guess-the-number.md) §5.1). The buttons are disabled where the client already knows the answer (after play ends, after the join time for someone not in the round, the current choice), but the server decides every case again ([05](05-security-threat-model.md) §3.2, DECISIONS S11).
+Checks 1–4 are the platform's for every `phased` game ([04](04-software-architecture.md) §4.8), 5–7 the game's `validate`. Before them the gateway refuses more than 4 choices a second per account (`RATE_LIMITED`, [05](05-security-threat-model.md) §5), worded "Slow down a little — too many choices at once." (the platform's sentence with this game's word, *proposal*, DECISIONS T383). A refused choice costs nothing, changes nothing and is seen only by the chooser ([02](02-game-guess-the-number.md) §5.1). The buttons are disabled where the client already knows the answer (after play ends, after the join time for someone not in the round, the current choice), but the server decides every case again ([05](05-security-threat-model.md) §3.2, DECISIONS S11).
 
 ### 5.3 First choice and switches
 

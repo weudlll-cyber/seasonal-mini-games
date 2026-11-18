@@ -26,11 +26,13 @@ const radio = (page: Page, c: string) => page.locator(`.mg-choice[data-choice="$
 
 // A click at a card's top, middle or bottom, inside its frame.
 async function clickIn(page: Page, c: string, place: (typeof PLACES)[number]): Promise<void> {
+  // The pause first: the card is measured right before the click, so a layout change in
+  // between (the first counts arriving) cannot move it from under the pointer.
+  await page.waitForTimeout(300);
   const box = await card(page, c).boundingBox();
   expect(box, `${c}'s card`).not.toBeNull();
   const { x, y, width, height } = box ?? { x: 0, y: 0, width: 0, height: 0 };
   const at = { top: y + 8, middle: y + height / 2, bottom: y + height - 5 }[place];
-  await page.waitForTimeout(300);
   await page.mouse.click(x + width / 2, at);
 }
 

@@ -4,42 +4,39 @@
  * @brief  Journey 44's probe: every Mind Games flight wave measured in the browser as it starts.
  *
  * Responsibility: installed in a page before the round (`probeScript`: its functions and
- *                 ./flightChecks' as one script), it watches the flight band. When a wave starts
- *                 (flights added in one render) it sets the wave's animations to chosen moments
- *                 of the flight, runs ./flightChecks' coin and label checks at each, the landing
- *                 checks at its end and the standing check during the stand, and puts the
- *                 animations back, so the wave plays on unchanged. A second later it hands the
- *                 wave the feed lines that showed within PAIR_MS of it (the list renders apart
- *                 from the band) for the name and group checks. When the wave lands, an earlier
- *                 coin still standing in one of its cards must have faded at once. A flight
- *                 removed before its life's end, or still in the band after it (by the page's
- *                 own timers), is a problem too. Problems by check in window.__flightProbe.
+ *                 ./flightChecks' and ./flightLines' as one script), it watches the flight
+ *                 band. When a wave starts (flights added in one render) it sets the wave's
+ *                 animations to chosen moments of the flight, runs ./flightChecks' coin and
+ *                 label checks at each, the landing checks at its end and the standing check
+ *                 during the stand, and puts the animations back, so the wave plays on
+ *                 unchanged. A second later it hands the wave the feed lines that showed within
+ *                 PAIR_MS of it (the list renders apart from the band) for ./flightLines' name
+ *                 and group checks. When the wave lands, an earlier coin still standing in one
+ *                 of its cards must have faded at once. A flight removed before its life's end,
+ *                 or still in the band after it (by the page's own timers), is a problem too.
+ *                 Problems by check in window.__flightProbe.
  * Used by:        ./mindGamesFlights.spec
  * Spec:           docs/spec/02e-game-mind-games.md §11.1; docs/spec/09-testing-strategy.md §4
  *                 (journey 44)
  */
 import {
   bad,
+  clear,
   coin,
-  fits,
-  flightOf,
   inner,
   inside,
   label,
   landing,
-  named,
-  nameless,
-  names,
   opacity,
   overlap,
   r1,
   slotsIn,
   standing,
-  take,
   own,
   type Probe,
   type Times,
 } from './flightChecks.js';
+import { fits, flightOf, named, nameless, names, take } from './flightLines.js';
 
 export interface ProbeResult {
   readonly waves: number;
@@ -218,6 +215,7 @@ export function probeScript(times: Times, visible: boolean): string {
     label,
     overlap,
     inner,
+    clear,
     inside,
     slotsIn,
     landing,

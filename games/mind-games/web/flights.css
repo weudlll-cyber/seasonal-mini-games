@@ -3,7 +3,7 @@
  * @module games/mind-games/web
  * @brief  The flight band and its motion: coins flying between the seasons' cards (02e §11.1).
  *
- * Responsibility: the band, a 56 px row of the stage's own layout, clipped at its edges so a
+ * Responsibility: the band, a 60 px row of the stage's own layout, clipped at its edges so a
  *                 flight never covers a button, a line or the chat, and never catching a click
  *                 (it goes through to the card). A flight is its coin's 26 px box, moved by its
  *                 centre from --mg-from to --mg-to (px from the band's left, ./flights) over
@@ -19,10 +19,11 @@
  *                 nothing is drawn (./FlightBand).
  * Spec:           docs/spec/02e-game-mind-games.md §11.1
  */
-/* Its height holds a label (16 or 17 px) above All's square (36 px). */
+/* Its height holds 4 px clear under the card's button and its "✓ Your choice" pill, a label
+   (16 or 17 px) and All's square (36 px). */
 .mg-band {
   position: relative;
-  height: 56px;
+  height: 60px;
   overflow: hidden;
   pointer-events: none;
 }
@@ -31,7 +32,7 @@
    holds its landing, then fades from --mg-fade-at on. */
 .mg-flight {
   position: absolute;
-  top: 22px;
+  top: 26px;
   left: -13px;
   width: 26px;
   height: 26px;
@@ -95,7 +96,7 @@
 }
 
 /* 17 px tall, 5 px above the coin's box: above All's square too (5 px over the box), inside
-   the band's 22 px over the coin. */
+   the 22 px over the coin below the band's 4 px clear. */
 .mg-flight-count {
   bottom: calc(100% + 5px);
   padding: 0 5px;
@@ -107,7 +108,7 @@
 /* A card's "+N", a coin-sized pill in its last slot. */
 .mg-more {
   position: absolute;
-  top: 22px;
+  top: 26px;
   left: -13px;
   width: 26px;
   height: 26px;

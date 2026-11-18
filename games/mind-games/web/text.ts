@@ -4,7 +4,8 @@
  * @brief  The game's words: refusals, the feed's lines as list rows, the head, the intro.
  *
  * Responsibility: every refusal a choice can meet in the words of 02e §5.2, the platform's
- *                 phased codes included (`PLAY_OVER`, `JOIN_CLOSED`, `NOT_IN_ROUND`), so the
+ *                 phased codes included (`PLAY_OVER`, `JOIN_CLOSED`, `NOT_IN_ROUND`) and the
+ *                 account's rate (`RATE_LIMITED`, at most 4 choices a second), so the
  *                 player reads the game's sentence; the feed's lines as the rows of the round's
  *                 one list, which the platform draws with the name ("You" for the viewer's own):
  *                 "chose Summer", "switched Summer → Winter" (02e §6.1); the feed's head ("30
@@ -37,6 +38,8 @@ const CODES: Readonly<Record<string, string>> = {
   INVALID_ACTION: 'Pick one of the seasons.',
   CHOICE_UNAVAILABLE: 'All is not offered in this round.',
   SAME_CHOICE: 'That is already your choice.',
+  // The platform's sentence (apps/web roundText), in this game's word: choices, not guesses.
+  RATE_LIMITED: 'Slow down a little — too many choices at once.',
 };
 
 // Milliseconds after the opening as "1:30".
