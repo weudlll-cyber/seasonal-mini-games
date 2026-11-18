@@ -21,7 +21,7 @@
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/03-seasonal-specials.md §5
  */
 import type { RoundStateView } from '@smg/contracts';
-import { formatNumber, type PlayerMark } from '@smg/game-sdk';
+import { compareNames, formatNumber, type PlayerMark } from '@smg/game-sdk';
 import { useHighlightRow } from '@smg/ui';
 import { useState, type ReactElement } from 'react';
 
@@ -74,13 +74,12 @@ const byPlace = (results: readonly Result[]): Result[] =>
     (a, b) => (a.place ?? Infinity) - (b.place ?? Infinity) || b.guesses - a.guesses,
   );
 
-// A phased round's rows: its winners first, then the rest, each in display-name order (T343).
+// A phased round's rows: its winners first, then the rest, each in display-name order (T343),
+// numeric-aware as everywhere (O102: "bot-9" before "bot-10").
 const byWin = (results: readonly Result[], names: Readonly<Record<string, string>>) => {
   const name = (r: Result) => names[r.playerId] ?? r.playerId;
   return [...results].sort(
-    (a, b) =>
-      Number(b.won === true) - Number(a.won === true) ||
-      name(a).localeCompare(name(b), 'en', { sensitivity: 'base' }),
+    (a, b) => Number(b.won === true) - Number(a.won === true) || compareNames(name(a), name(b)),
   );
 };
 

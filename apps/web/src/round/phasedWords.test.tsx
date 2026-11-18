@@ -10,7 +10,8 @@
  *                 the same as before; the intro has no cooldown line in a phased round (DECISIONS
  *                 T332). A guess round's placings keep Place, Player, Guesses and Points in place
  *                 order; a phased round's have only Player and Points, its winners first, then
- *                 the rest, each in name order, and no count of anyone's choices (T343).
+ *                 the rest, each in name order ("bot-9" before "bot-10", O102), and no count of
+ *                 anyone's choices (T343).
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./fakes, ./ResultParts,
  *                 ./RoundIntro, ./roundText
  * Spec:           docs/spec/02e-game-mind-games.md §9; docs/spec/04-software-architecture.md §4.8
@@ -79,5 +80,26 @@ describe('the platform words of a phased round (T332)', () => {
     expect(rows().map((r) => r[0]?.replace(/\s+/g, ''))).toEqual(['Anna', 'zed', 'Bo', 'cy']);
     expect(rows().map((r) => r[1])).toEqual(['2', '1', '0', '0']);
     expect(rows().flat().join(' ')).not.toMatch(/[3579]/);
+  });
+});
+
+describe('a phased round’s result rows (O102)', () => {
+  it('lists a phased round’s names in the numeric-aware order of O102', () => {
+    const row = (ended.results ?? [])[0];
+    if (row === undefined) throw new Error('a result');
+    const results = ['b10', 'b9', 'b1'].map((playerId) => ({
+      ...row,
+      playerId,
+      place: null,
+      won: false,
+    }));
+    const names = { b10: 'bot-10', b9: 'bot-9', b1: 'bot-1' };
+    render(<Placings state={{ ...phased, results, names }} viewerKey={null} />);
+
+    const shown = screen
+      .getAllByRole('row')
+      .slice(1)
+      .map((r) => r.querySelector('td')?.textContent);
+    expect(shown.map((t) => t?.replace(/\s+/g, ''))).toEqual(['bot-1', 'bot-9', 'bot-10']);
   });
 });
