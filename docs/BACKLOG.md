@@ -23,6 +23,7 @@ Each failed in CI or a local `pnpm verify` and passed on the same code; the coun
 
 - The chat's round-end line (`apps/server/test/chat.integration.test.ts`, CI once): not reproduced in 112 runs, the cause not found; unchanged.
 - Journeys 11 and 12 (CI twice each, journey 12 once more in chain MG-N11: run 43965414477, "closest-miss" not found): not reproduced in 20 runs each under load; unchanged. Journeys 28 and 36 (CI once each) and the specials test's Leaf Fall and Heatwave case (CI twice, changed since in T206): not tried apart; the specials test passed in every one of the night's 25 server suite runs. WebKit's journeys 20 and 21 belong to the Firefox/WebKit batch (O69).
+- The CLI's `promote-super --name` case (`apps/server/test/superPromotion.integration.test.ts`, task MG-CLOCKS): once, in a local `pnpm verify` on 2026-11-18, it timed out at its 20 s limit; the file alone passed at once (4 of 4, 30 s). Not touched by the change; unchanged.
 - Journey 44's names check (chain MG-N12, piece 1): once, in task MG-FLIGHT-END's final run of journeys 38–46 (Chromium, after journeys 38, 45 and 41 in one worker), a named flight "bot-11" Autumn → All found no feed line of its own within the probe's 1 s pairing window; journey 44 alone passed right after. Not reproduced in 30 runs of journey 44 alone on this machine (10 + 3 + 7 + 10, `--repeat-each`), with the probe naming the nearby lines of that path on a miss; the cause not found (the candidates: a group of a wave less than 1 s away taking that line in the pairing, or the line pushed past the list's 60); unchanged.
 
 ### Needed from the website repository
@@ -204,3 +205,4 @@ For Phase 7:
 - 2026-11-17: The lobby's greeting and its Quick Test link only for accounts with `match.create`. _Closed by:_ DECISIONS T381, branch `feat/mg-flight-clean`
 - 2026-11-18: A configurable hold before a Mind Games result (MG-HOLD): the game screen stands `round.resultHoldS` seconds (default 5, 1–20) after the plan's end with "Choices closed · result in 0:04", replacing the 1 s settle. _Closed by:_ DECISIONS O106 (1), T384, branch `feat/mg-flight-clean`
 - 2026-11-18: Whether the server's Quick Test needs `match.create` (T381): it stays open to any signed-in account, development builds only. _Closed by:_ DECISIONS O106 (2)
+- 2026-11-18: Mind Games' countdowns show the same seconds as the round bar's "… left" (MG-CLOCKS). _Closed by:_ DECISIONS O107, branch `feat/mg-flight-clean`

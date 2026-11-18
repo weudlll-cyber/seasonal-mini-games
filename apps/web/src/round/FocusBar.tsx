@@ -13,23 +13,19 @@
  *                 where the browser offers it (./useFullscreen). The waiting time is not here:
  *                 the cooldown ring and the disabled button at the input show it (O47). Each
  *                 button names itself; a phone shows the icons and reads the words out.
- * Depends on:     react, @smg/contracts, ./FocusIcons, ./SeasonPill, ./useFullscreen, ./usePanels
+ * Depends on:     react, @smg/contracts, @smg/game-sdk (clockText), ./FocusIcons, ./SeasonPill,
+ *                 ./useFullscreen, ./usePanels
  * Used by:        ./FocusShell
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6
  */
 import type { RoundStateView } from '@smg/contracts';
+import { clockText } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
 import { FocusIcon, type IconName } from './FocusIcons.js';
 import { SeasonPill } from './SeasonPill.js';
 import type { Fullscreen } from './useFullscreen.js';
 import type { PanelId, Panels } from './usePanels.js';
-
-// Milliseconds as "9:30", whole seconds down.
-export function clockText(ms: number): string {
-  const secs = Math.floor((ms % 60_000) / 1_000);
-  return `${String(Math.floor(ms / 60_000))}:${String(secs).padStart(2, '0')}`;
-}
 
 // The time left of an open round, "9:30"; null before it opens.
 function timeText(state: RoundStateView, now: number): string | null {

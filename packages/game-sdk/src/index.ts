@@ -4,7 +4,7 @@
  * @brief  Public entry point of @smg/game-sdk: what every game module and the platform share.
  *
  * Responsibility: the game-module contract (with the `phased` class's plan and result rows),
- *                 range arithmetic, the one number formatter and name order, the
+ *                 range arithmetic, the one number and clock formatter and name order, the
  *                 random-number types, setting definitions with their checks and the
  *                 platform's round keys (a `phased` game's own among them); free of
  *                 node:crypto, so browser code may import it.
@@ -36,7 +36,7 @@ export type {
   SpecialHooks,
   ViewCtx,
 } from './module.js';
-export { formatNumber } from './format.js';
+export { clockText, formatNumber } from './format.js';
 export { compareNames } from './names.js';
 export {
   planIssue,

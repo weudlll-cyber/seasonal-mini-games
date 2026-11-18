@@ -7,7 +7,9 @@
  * Responsibility: with the round's public timing (the defaults 120/30/60 and the hold of 5 s):
  *                 the next change in words through Join, Play, Reveal and the hold before the
  *                 result (T384); the feed's sentences (the first choices' countdown, every
- *                 change a switch, the reveal, the hold); the screen reader's sentence
+ *                 change a switch, the reveal, the hold); every countdown showing the seconds of
+ *                 the platform's "… left" (its `clockText` of the time to `endsAt`) at x.0, x.4
+ *                 and x.9 s left (O107); the screen reader's sentence
  *                 per phase; the strip's current phase (highlighted, filling, named "now" for a
  *                 screen reader, the others plain), its delay sentence and no markers (O92); the
  *                 buttons off after the join time for a
@@ -18,7 +20,7 @@
  *                 ./useSavedPrefs
  * Spec:           docs/spec/02e-game-mind-games.md §4, §6, §7, §11; docs/spec/09-testing-strategy.md §4.2
  */
-import type { OwnMatchPart, PhasedTiming } from '@smg/game-sdk';
+import { clockText, type OwnMatchPart, type PhasedTiming } from '@smg/game-sdk';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -72,6 +74,27 @@ describe('Mind Games phases in words (02e §4, §6, §11)', () => {
     const short = { entryEndMs: 30_000, actionsEndMs: 50_000, endMs: 60_000, viewDelayMs: 10_000 };
     const t45 = { opensAt: 0, plan: short, endsAt: 65_000, now: () => 45_000 };
     expect(feedNote(t45, 23, false)).toBe('All 23 players are in. Every change now is a switch.');
+  });
+});
+
+describe('Mind Games countdowns against the platform’s “… left” (O107)', () => {
+  // The round's bar: the time to `endsAt` through the platform's clockText (apps/web FocusBar).
+  const bar = (t: PhasedTiming) => clockText(Math.max(0, t.endsAt - t.now()));
+
+  it('shows the bar’s seconds in the reveal, the hold and the feed, at x.0, x.4 and x.9 s left', () => {
+    // 23 and 4 seconds and a fraction before the result: in the reveal and in the hold.
+    for (const whole of [23_000, 4_000])
+      for (const part of [0, 400, 900]) {
+        const t = at(125_000 - whole - part);
+        const shown = bar(t);
+        expect(shown).toBe(`0:${String(whole / 1_000).padStart(2, '0')}`);
+        expect(nextChange(t).endsWith(`result in ${shown}`), `${String(whole + part)} ms`).toBe(
+          true,
+        );
+        expect(feedNote(t, 6, false)).toContain(
+          `the result follows in ${String(whole / 1_000)} s.`,
+        );
+      }
   });
 });
 

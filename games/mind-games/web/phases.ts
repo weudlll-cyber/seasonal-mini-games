@@ -12,15 +12,15 @@
  *                 (the first choices' countdown, "every change now is a switch" once the feed has
  *                 passed the join time, the reveal and the hold, 02e §6); the one sentence a
  *                 screen reader hears when the phase changes. The result comes at the round's
- *                 time-up (`endsAt`: the plan's end and the host's hold). The server enforces
- *                 every phase; these only show them.
- * Depends on:     @smg/game-sdk (PhasedTiming), ./text
+ *                 time-up (`endsAt`: the plan's end and the host's hold). Every countdown here
+ *                 rounds as the platform's "… left" in the round's bar, whole seconds down, so
+ *                 both show the same seconds (O107). The server enforces every phase; these only
+ *                 show them.
+ * Depends on:     @smg/game-sdk (clockText, PhasedTiming)
  * Used by:        ./PhaseStrip, ./FeedPanels, ./MindInput
  * Spec:           docs/spec/02e-game-mind-games.md §4, §6, §11
  */
-import type { PhasedTiming } from '@smg/game-sdk';
-
-import { clock } from './text.js';
+import { clockText, type PhasedTiming } from '@smg/game-sdk';
 
 export type Phase = 'join' | 'play' | 'reveal' | 'over';
 
@@ -34,7 +34,10 @@ export function phaseOf(t: PhasedTiming): Phase {
   return at < t.plan.endMs ? 'reveal' : 'over';
 }
 
-const left = (to: number, at: number) => clock(Math.max(0, to - at) + 999);
+// What is left until `to`, rounded as the platform's "… left" (whole seconds down, `clockText`),
+// so the two clocks on the round's screen always show the same seconds (owner, O107).
+const left = (to: number, at: number) => clockText(Math.max(0, to - at));
+const secondsLeft = (to: number, at: number) => String(Math.floor(Math.max(0, to - at) / 1_000));
 
 // Milliseconds since the opening at which the result comes (the plan's end and the hold).
 const resultMs = (t: PhasedTiming): number => t.endsAt - t.opensAt;
@@ -64,9 +67,9 @@ export function feedNote(t: PhasedTiming, entrants: number, empty: boolean): str
   const { entryEndMs, actionsEndMs, endMs, viewDelayMs } = t.plan;
   const delay = String(Math.round(viewDelayMs / 1_000));
   if (empty && at < viewDelayMs) {
-    return `The first choices show in ${String(Math.ceil((viewDelayMs - at) / 1_000))} s.`;
+    return `The first choices show in ${secondsLeft(viewDelayMs, at)} s.`;
   }
-  const result = `the result follows in ${String(Math.ceil(Math.max(0, resultMs(t) - at) / 1_000))} s.`;
+  const result = `the result follows in ${secondsLeft(resultMs(t), at)} s.`;
   if (at >= endMs) return `Choices are closed — ${result}`;
   if (at >= actionsEndMs)
     return `Choices are closed. Revealing the last ${delay} s of play — ${result}`;

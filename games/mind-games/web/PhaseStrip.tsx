@@ -15,17 +15,16 @@
  *                 that a screen reader announces once when the phase changes ("Joining has
  *                 closed.", "Choices are closed."). The server enforces the phases; the strip
  *                 only shows them.
- * Depends on:     react, @smg/game-sdk (PhasedTiming), @smg-game/mind-games (views), ./phases,
- *                 ./text
+ * Depends on:     react, @smg/game-sdk (clockText, PhasedTiming), @smg-game/mind-games (views),
+ *                 ./phases
  * Used by:        ./MindInput, ./FeedPanels
  * Spec:           docs/spec/02e-game-mind-games.md §4, §11
  */
 import type { SpectatorView } from '@smg-game/mind-games';
-import type { PhasedTiming } from '@smg/game-sdk';
+import { clockText, type PhasedTiming } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
 import { announcement, nextChange, phaseOf, sinceOpening, type Phase } from './phases.js';
-import { clock } from './text.js';
 
 interface Part {
   readonly name: string;
@@ -56,7 +55,7 @@ function PartItem(p: { readonly part: Part; readonly at: number | null }): React
         {part.name}
         {current ? <span className="mg-phase-now"> · now</span> : null}
       </span>{' '}
-      <span className="mg-phase-time">until {clock(part.to)}</span>
+      <span className="mg-phase-time">until {clockText(part.to)}</span>
     </li>
   );
 }
