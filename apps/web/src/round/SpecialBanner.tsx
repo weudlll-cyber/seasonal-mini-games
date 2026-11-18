@@ -7,10 +7,11 @@
  *                 happened: Leaf Fall's numbers falling and the range halved in the game's words
  *                 (its `banner` hook), Heatwave's new waiting time and Spring Herald's hint in
  *                 the platform's (./roundText); under Frost, for the first 5 s of the round and
- *                 on a phone only (a desktop's special line says it), that answers arrive late (a held own answer is said by its row, "answer
- *                 arriving… 3 s", O47). It takes the place of the list head's title, so it never
- *                 pushes the list down, and is cut with an ellipsis rather than wrapping (T142);
- *                 the event's own line stays in the All list (./RoundLog). Derived from the live
+ *                 on a phone only (a desktop's special line says it), that answers arrive late
+ *                 (a held own answer is said by its row, "answer arriving… 3 s", O47). It takes
+ *                 the place of the list head's title (T142) and wraps rather than being cut
+ *                 (T194, ./roundSpecials.css); the event's own line stays in the Log
+ *                 (./RoundLog). Derived from the live
  *                 feed and the view on every tick, so no timer of its own; the newest event
  *                 wins. A live region announces each new line.
  * Depends on:     react, @smg/contracts, @smg-game/registry/web (types), ../live/useRound

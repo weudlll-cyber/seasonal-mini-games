@@ -306,7 +306,8 @@ Platform commands on a round: `createRound`, `startCountdown`, `openRound`, `sub
 
 - At `createRound` the platform draws a 256-bit **round seed** from the `SecureRandom` port (`crypto.randomBytes`, a CSPRNG).
 - All round randomness comes from an HMAC-SHA256 counter DRBG keyed by that seed with domain-separation labels, as Bingo's per-match DRBG (Bingo 01 §9, Bingo `packages/domain/src/draw/drbg.ts`).
-  - The labels are `secret/shared`, `secret/<playerId>`, `spring`, `leafFall/<k>`, `halving/<k>/<playerId|shared>`, `comment/<receiveSeq>` (the comment line of a guess game, §4.7) and `teams/tiebreak`.
+  - The labels are `secret/shared`, `secret/<playerId>`, `spring/<shared|playerId>` (Seasonal Target's Spring Herald), `springHerald/<shared|playerId>` (Safecracker's), `leafFall/<k>`, `halving/<k>/<playerId|shared>`, `comment/<receiveSeq>` (the comment line of a guess game, §4.7) and `teams/tiebreak`.
+  - The development bots of a Quick Test draw from a generator of the same kind keyed by the Quick Test's own seed (`sha256("smg-quicktest:" + text)`), under `quicktest/<round index>/<bot>/<part>` and `quicktest/prefs/<bot>` (`apps/server/src/dev/phasedBots.ts`); production rounds have no such label.
   - The last one only breaks ties when the round engine itself places a roster player given without a team; in a team match the server has already placed every such player in the match's smallest team before the round starts, ties broken by a hash of the round id and the player key ([03](03-seasonal-specials.md) §5; DECISIONS T82, T264).
 - Uniform integers use rejection sampling, never a modulo.
 - The seed is stored encrypted (AES-256-GCM, key from `SMG_ROUND_KEY`) and decrypted only inside the round engine. Secrets are **derived** from the seed when needed and are never stored as a column ([05](05-security-threat-model.md) §3).

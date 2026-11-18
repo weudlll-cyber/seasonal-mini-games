@@ -2,23 +2,17 @@
 
 The morning sheet of the current night, and an index of the past ones. The past nights' full sheets (their pieces, measurements, play-throughs and what was noticed) are in git history: `git show 592592e:docs/NIGHT-RUN.md` holds every sheet up to chain MG-N10 and this night's first pieces.
 
-## Night chain MG-N11 (2026-11-16/17): the flights merged, browser runs, docs and code cleaned
+## Night chain MG-N12 (2026-11-17/18): the flights' loose ends, O102, docs, browser runs
 
-Status, piece by piece (updated after every piece).
+All on `feat/mg-flight-clean` (from `e29e6b2`), not merged: the owner tests it in the morning. Status, piece by piece (updated after every piece).
 
-- **1. Merge `feat/mg-flight-speed`** (T371, T372, T376, T377): done, PR #17 merged as `297bb59`; its required checks green in the PR run and the push run; the branch deleted on origin and locally. The first runs found two defects, fixed before the merge (`69bfa7f`): a phone's All card shrank All's icons to 10.7 px (a card now shows at most what fits at 82 % of an icon's size, the rest joins "+N", T377), and two unhandled 57P01 errors after a green authorization matrix (the harness now expects its container's shutdown). Journey 12 failed once in a push run (known flake, BACKLOG). MG-FLIGHT-CLEAN: no brief for it reached this session and nothing of that name is in the repository; not started.
-- **2. Browser tests** (O103, amends O69): done on `chore/cleanup`: CI's `e2e` job (a required check, name kept) runs Chromium only everywhere, master included; `.github/workflows/browsers.yml` runs Firefox and WebKit on master at 02:30 UTC every night and on manual dispatch (their specs, then each browser's timing specs one after the other). DECISIONS O103, spec 09 §1, CLAUDE.md and OPEN updated. The nightly run starts once the workflow is on master (piece 4's merge).
-- **3. Docs** (`c7cfe31`): done. Sizes before → after: DECISIONS 1 140 295 → 282 119 bytes (tables → lists, 462 entries, every text unchanged); NIGHT-RUN 466 026 → 3 640; BACKLOG 90 741 → 46 274; OPEN 20 259 → 16 595; `docs/` 2 158 506 → 788 635. The living specs lost their history and long paragraphs (four helpers, one per file group); `reports/` left the tree, archived in the tag `archive/reports-2026-11-16` on `592592e`. Link check: 397 OK, 0 errors.
-- **4. Code and tests** (`d5df850`): done. knip once: 57 names un-exported, an unused hook, type alias and re-export removed, three unused dependencies dropped; the 324-line league test split in three files; three assertions removed that only checked something removed stays absent. `pnpm verify` green (858 + 99 + 173); the full Playwright suite in Chromium green (14 + 42 tests); the docs link check green. PR to `master`: running.
-- **5. Morning handover:** open.
-- **Needs the owner's word:**
-  - MG-FLIGHT-CLEAN: no brief reached this session and nothing of that name is in the repository; not started. `shots/mg-flight-3` (MG-FLIGHT-3's six shots) is kept for the morning look instead of `shots/mg-flight-clean`.
-  - The flights on a phone: names of neighbouring flights overlap (a 66 px card cannot hold two names); proposal: a name only on a lone named flight in its card, or names cut to 8 characters.
-  - O65 confirmed the rules of Safecracker, Bomb Defusal and Seasonal Target, and 02b–02d now say so; their settings still carry the status `proposal` in code (shown in the admin's settings) and in 08 §3.1–§3.3. Switching them to the owner's status changes the admin's display, so it waits for your word.
-  - Bomb Defusal's explosion penalty: O65 makes it a host setting per round; 08 §3.2 and the setting's help text still say "per match".
-  - Tests kept as doubtful: `packages/ui/src/index.test.ts` (a scaffold check that the runner finds the package; `PACKAGE_NAME` exists only for it); `apps/web/src/round/focus.test.tsx` "shows the time left but no waiting time" (checks only the absence; the rule is current, 02 §12); the identical `sentinel.test.tsx` bodies of three games (security, kept; a shared helper later); `base32Decode` in `apps/server/src/auth/totp.ts`, used only by tests.
-  - Specs that no longer match the tree (changed neither): 10 §1 lists existing files as planned and 10 §5 says no CI exists; 01 §1 and 11 §3 call the later games "roadmap only"; 04 §4 and §4.3 call `phased` not built; 03 §6 and 02 §12 differ on the special's banner (3 s above the list vs 5 s in the list head); 04 §5.4's DRBG labels lack `comment/<receiveSeq>`; 02e §8.2 lacks O102's numeric-aware order; 02d §3 links to an OPEN section that is closed; 07 §5 still calls the website contract proposed.
-  - Local `master` holds an old local merge commit (`82f0400`, task MG-MERGE) that never reached origin (the same merge went in as PR #11); not reset (no resets), the night worked from `origin/master`.
+- **1. Journey 44's unexplained miss** ("bot-11" Autumn → All without its feed line, MG-FLIGHT-END): running.
+- **2. The All card's labels under the pill; the refused-for-rate message:** open.
+- **3. O102 everywhere** (T382): done. The result rows of a phased round in O102's order; the comparison moved to `@smg/game-sdk` (`compareNames`) and used by the standings and the result rows.
+- **4. Docs provably wrong:** done. Spec 10 §1 (the game-sdk files and the conformance suite as they are), §5 (the CI jobs that exist; no load job); spec 04 §5.4 (`spring/<who>`, `springHerald/<who>`, the Quick Test bots' `quicktest/…`); spec 03 §6 (event rows in the Log, not the main list); `SpecialBanner.tsx`'s header (wraps, T194). Link check: 400 OK, 0 errors.
+- **5. Firefox/WebKit nightly runs** (`browsers.yml`): done for the runs so far: 43986481564 (dispatch, 2026-11-17 00:17 UTC) and 44004176312 (schedule, 02:35 UTC), both green (24 + 41 + 41 passed, 2 and 1 skipped: the Chromium-only specs); no findings. Tonight's run is checked before the handover.
+- **6. Morning handover:** open.
+- **Needs the owner's word:** none yet.
 
 ## Past nights and tasks
 
@@ -32,3 +26,4 @@ Date, the night or task, and the merge into `master` that carried it.
 - 2026-11-12 and 2026-11-13: night MG-N1, the docs cleanup (PR #9): `c3b8a69`, then the `phased` contract on `feat/mind-games`.
 - 2026-11-13 to 2026-11-16: chains MG-N2 and MG-N3, tasks MG-N4 to MG-N9 (Seasonal Mind Games on `feat/mind-games`); task MG-N5's test isolation (PR #10): `dc78140`; task MG-MERGE (PR #11): `fc044ab`.
 - 2026-11-16: chain MG-N10: the flaky tests (PR #14): `5cea5ff`, (PR #15): `1708cb9`; the dev services' restart (PR #16): `295978b`; the flights MG-N10 piece 3, MG-FLIGHT-2 and MG-FLIGHT-3 (PR #17): `297bb59`.
+- 2026-11-16/17: chain MG-N11: the flights merged (PR #17): `297bb59`; the browser runs, docs and code cleaned (PR #18): `bd5f877`. Tasks MG-FLIGHT-CLEAN, -2 and -END on `feat/mg-flight-clean`, not merged yet.

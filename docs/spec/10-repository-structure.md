@@ -15,8 +15,9 @@ seasonal-mini-games/
 ├─ .vscode/  .github/                                        as Bingo (workflows, shared setup action, PR template)
 ├─ assets/                                                   copied from Bingo assets/ with its manifest (03 §6)
 ├─ packages/
-│  ├─ game-sdk/src/        contract.ts (GameModule and its types), random.ts, settings.ts, range.ts,
-│  │                       crypto.ts (entry @smg/game-sdk/crypto: drbg.ts, commitment.ts), conformance/
+│  ├─ game-sdk/src/        module.ts (GameModule, its types and the ConformanceKit), phased.ts, web.ts,
+│  │                       random.ts, settings.ts, range.ts, sentinel.ts, crypto.ts (entry
+│  │                       @smg/game-sdk/crypto: drbg.ts, commitment.ts)
 │  ├─ guess-engine/src/    the shared guess engine (04 §4.7): secrets, state, rules, comments, tiers,
 │  │                       views, candidates, closestMiss, settings, module (guessModule)
 │  ├─ domain/src/          match/, round/ (lifecycle, roster, cooldown, order, placings), specials/
@@ -26,7 +27,8 @@ seasonal-mini-games/
 │  ├─ contracts/src/       http/, ws/, events/, settings/ (schemas and defaults/), errors.ts
 │  └─ ui/                  shared React components, design tokens (as Bingo)
 ├─ games/
-│  ├─ registry/            src/index.ts (modules), web/index.ts (screens): the installed games (04 §3)
+│  ├─ registry/            src/index.ts (modules), web/index.ts (screens): the installed games (04 §3);
+│  │                       src/conformance.test.ts, phased.conformance.test.ts: the conformance suite
 │  ├─ guess-the-number/
 │  │  ├─ src/              module.ts, feedback.ts, hints.ts, leafFall.ts, halving.ts, views.ts, events.ts,
 │  │  │                    settings/ (schema.ts, defaults.ts), *.test.ts
@@ -109,7 +111,7 @@ Bingo 08 applies with the names of [04](04-software-architecture.md) §2.2:
 
 - environments (§1);
 - branching and release flow (§2);
-- CI jobs including e2e on every push and the `load` job before a release (§3);
+- CI (`.github/workflows/ci.yml`) on every push: `verify`, `security`, `docs`, the e2e journeys in Chromium and the `image` job; Firefox and WebKit every night on master (`browsers.yml`, O103); no CI job runs the load scenarios (`load/`, 09 §5), which are run by hand (§3);
 - containers (§4: multi-stage, non-root uid 10001, read-only root FS, healthcheck `/healthz`, image ≤ 250 MB);
 - runtime configuration through validated env vars (§5);
 - observability with the metrics of [06](06-data-model-api-realtime.md) §4.6 (§6);
