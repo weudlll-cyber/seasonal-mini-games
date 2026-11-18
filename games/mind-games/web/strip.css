@@ -1,16 +1,16 @@
 /*
  * @file   games/mind-games/web/strip.css
  * @module games/mind-games/web
- * @brief  Styles of Seasonal Mind Games' phase strip: Join, Play and Reveal, and its line.
+ * @brief  Styles of Seasonal Mind Games' phase strip: Join, Play, Reveal and Hold, and its line.
  *
- * Responsibility: the three parts as segments in proportion to their lengths (./PhaseStrip);
+ * Responsibility: the parts as segments in proportion to their lengths (./PhaseStrip);
  *                 the current one by a strong frame, a fill as it runs and "· now", never by
- *                 colour alone (O92, O97); a dashed Reveal while it is not current; the line
+ *                 colour alone (O92, O97); a dashed Reveal and Hold while not current; the line
  *                 under the strip; on a phone the names only. Colours only from the design
  *                 tokens, light and dark.
  * Spec:           docs/spec/02e-game-mind-games.md §11
  */
-/* The phase strip: the three parts in proportion to their lengths, the line under them. */
+/* The phase strip: the parts in proportion to their lengths, the line under them. */
 .mg-timeline {
   display: grid;
   gap: 0.25rem;
@@ -63,7 +63,8 @@
   font-weight: var(--font-weight-strong);
 }
 
-.mg-phase[data-phase='reveal'][data-current='false'] {
+.mg-phase[data-phase='reveal'][data-current='false'],
+.mg-phase[data-phase='hold'][data-current='false'] {
   background: var(--color-surface);
   border: 2px dashed var(--color-border-strong);
 }

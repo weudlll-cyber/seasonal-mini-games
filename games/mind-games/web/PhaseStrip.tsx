@@ -1,11 +1,14 @@
 /**
  * @file   games/mind-games/web/PhaseStrip.tsx
  * @module games/mind-games/web
- * @brief  The phase strip: the round's timeline with Join, Play and Reveal, the phase it is in.
+ * @brief  The phase strip: the round's timeline with Join, Play, Reveal and the hold, the phase
+ *         it is in.
  *
  * Responsibility: one row across the round view's width (02e §11, owner decision O97): the
- *                 three parts of the plan as segments in proportion to their lengths, each with
- *                 its name and the time it ends ("until 1:00"; on a phone the names only). With
+ *                 three parts of the plan and, with the round's timing, the hold before the
+ *                 result ("Hold until 1:05", T385) as segments in proportion to their lengths,
+ *                 each with its name and the time it ends ("until 1:00"; on a phone the names
+ *                 only), so the strip ends where the round bar's "… left" does. With
  *                 the round's timing, the part the round is in now has a strong frame, fills
  *                 with a progress fill as it runs and says "· now" in words (`aria-current`
  *                 too); the others stay plain, so colour is never the only sign (O92). Under
@@ -24,7 +27,7 @@ import type { SpectatorView } from '@smg-game/mind-games';
 import { clockText, type PhasedTiming } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
-import { announcement, nextChange, phaseOf, sinceOpening, type Phase } from './phases.js';
+import { announcement, nextChange, phaseOf, resultMs, sinceOpening, type Phase } from './phases.js';
 
 interface Part {
   readonly name: string;
@@ -69,6 +72,11 @@ export function PhaseStrip(p: {
     { name: 'Join', phase: 'join', from: 0, to: plan.entryEndMs },
     { name: 'Play', phase: 'play', from: plan.entryEndMs, to: plan.actionsEndMs },
     { name: 'Reveal', phase: 'reveal', from: plan.actionsEndMs, to: plan.endMs },
+    // The hold before the result (T384), known from the round's timing: the strip then ends
+    // at the round's time-up, as the bar's "… left" does (T385).
+    ...(p.timing === undefined
+      ? []
+      : [{ name: 'Hold', phase: 'hold' as const, from: plan.endMs, to: resultMs(p.timing) }]),
   ];
   const now = p.timing === undefined ? null : phaseOf(p.timing);
   const at = p.timing === undefined ? 0 : sinceOpening(p.timing);

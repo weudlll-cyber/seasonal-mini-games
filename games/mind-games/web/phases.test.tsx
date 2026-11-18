@@ -51,10 +51,11 @@ describe('Mind Games phases in words (02e §4, §6, §11)', () => {
     // The hold: the stage stands until the result, which the line counts down to (T384).
     expect(nextChange(at(121_000))).toBe('Choices closed · result in 0:04');
     expect(nextChange(at(125_000))).toBe('The round is over.');
-    expect([10_000, 70_000, 100_000, 130_000].map((ms) => phaseOf(at(ms)))).toEqual([
+    expect([10_000, 70_000, 100_000, 122_000, 130_000].map((ms) => phaseOf(at(ms)))).toEqual([
       'join',
       'play',
       'reveal',
+      'hold',
       'over',
     ]);
     expect(announcement('play')).toBe('Joining has closed.');
@@ -106,7 +107,7 @@ describe('Mind Games input with the round timing (02e §5.2, §11)', () => {
     );
     expect(screen.getByTestId('delay-line').textContent).toBe('You see the round 30 s late');
     const parts = [...document.querySelectorAll('.mg-phase')];
-    expect(parts.map((p) => p.getAttribute('aria-current'))).toEqual(['step', null, null]);
+    expect(parts.map((p) => p.getAttribute('aria-current'))).toEqual(['step', null, null, null]);
     expect(parts[0]?.textContent).toContain('Join · now');
     // 36 s of a 60 s join: 60 % filled; the other parts have no bar.
     expect(document.querySelectorAll('.mg-phase-fill')).toHaveLength(1);
@@ -117,7 +118,7 @@ describe('Mind Games input with the round timing (02e §5.2, §11)', () => {
     cleanup();
     render(<MindInput {...inputProps(playerView([], 0))} timing={at(100_000)} />);
     const later = [...document.querySelectorAll('.mg-phase')];
-    expect(later.map((p) => p.getAttribute('aria-current'))).toEqual([null, null, 'step']);
+    expect(later.map((p) => p.getAttribute('aria-current'))).toEqual([null, null, 'step', null]);
   });
 
   it('holds a player not in the round after the join time, with the reason', () => {
