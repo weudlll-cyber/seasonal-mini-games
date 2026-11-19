@@ -6,7 +6,9 @@
  * Responsibility: the guess rows come from the game's view of this viewer (so they survive a
  *                 reload and follow the round's visibility and Frost, DECISIONS T74), the event
  *                 rows from the live frames; newest at the top, in a box that fills the height
- *                 it gets and scrolls only inside itself. Only this round, nothing of earlier
+ *                 it gets and scrolls only inside itself; on a list game's desktop stage in two
+ *                 columns instead, newest first down the left one, then on in the right one,
+ *                 the older rows past them in the Log (O109). Only this round, nothing of earlier
  *                 rounds or the match (O54). Three kinds (T141, T142, T150):
  *                 `main`, the round's guesses (own rows highlighted), under a one-line head
  *                 with their count ("12 guesses"), the event banner in the count's place for
@@ -24,7 +26,7 @@
  *                 on a row shows or hides its own.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (rows), @smg-game/registry/web (types),
  *                 ../live/useRound, ./GuessLine, ./PlayerName, ./RoundSide (guessCount),
- *                 ./SpecialBanner, ./roundText, ./roundLog.css
+ *                 ./SpecialBanner, ./roundText, ./roundColumns.css, ./roundLog.css
  * Used by:        ./RoundBody
  * Spec:           docs/spec/02-game-guess-the-number.md §6.2, §6.3, §12; docs/spec/03-seasonal-specials.md §2.4;
  *                 docs/spec/07-integration.md §7
@@ -41,6 +43,7 @@ import { roundMarks } from './playerMarks.js';
 import { guessCount } from './RoundSide.js';
 import { SpecialBanner } from './SpecialBanner.js';
 import { actionCount, actionWords, platformLine } from './roundText.js';
+import './roundColumns.css';
 import './roundLog.css';
 
 type Row =
@@ -72,6 +75,9 @@ export interface LogProps {
   // The main list's banner line (./SpecialBanner) and its way to the All panel.
   readonly banner?: string | null;
   readonly more?: MoreRows;
+  // A list game's stage on a desktop: the rows in two columns, newest first down the left one,
+  // then on in the right one (O109, ./roundColumns.css).
+  readonly columns?: boolean;
 }
 
 // The guesses a list shows: in individual mode, and in "Your guesses", the viewer's own only.
@@ -198,7 +204,11 @@ export function RoundLog(p: LogProps): ReactElement {
       {rows.length === 0 ? (
         <p className="smg-muted round-log-empty">No {actionWords(p.state).many} yet.</p>
       ) : (
-        <ol data-testid={LIST_IDS[p.kind]} aria-live="polite">
+        <ol
+          data-testid={LIST_IDS[p.kind]}
+          data-columns={p.columns === true ? '2' : undefined}
+          aria-live="polite"
+        >
           {rows.map((row) =>
             row.kind === 'guess' ? (
               <GuessLine

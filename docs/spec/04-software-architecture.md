@@ -110,8 +110,11 @@ interface GameModule<S, A, E, Cfg, Sec> {
     secretModes: ReadonlyArray<'shared' | 'individual'>;  // none: the round bar names no mode (T347)
     teams: boolean;             // supports season teams (shared mode)
     seasons?: false;            // false: the rounds show no season (Mind Games, O93); absent: shown
-    chatDock?: 'below';         // the match chat docked under the round and the result (O97);
-                                // absent: a panel from the round bar
+    chatDock?: 'below';         // the match chat docked under the round and the result (O97,
+                                // O109: Mind Games and the three list games); absent: a panel
+                                // from the round bar (Seasonal Target)
+    chatBar?: 'line';           // with the dock, the phone's bar is one line whose tap opens the
+                                // chat with its field (O109); absent: the bar holds the field (T363)
     standingsTies?: 'shared-by-name'; // equal totals share a place, listed by name (O100);
                                 // absent: ties by round wins, then the earliest win (02 §9)
   };

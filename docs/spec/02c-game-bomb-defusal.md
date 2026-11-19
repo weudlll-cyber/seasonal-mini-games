@@ -122,7 +122,7 @@ As 02 §11, with these differences: visible are the wires of the round, the numb
 
 ## 11. Player screen
 
-Inherited from 02 §12: intro card, top bar, banner above the list, the one list, host menu, team tiles, chat, plain English, WCAG 2.2 AA. Own:
+Inherited from 02 §12: intro card, top bar, banner above the list, the one list (on a desktop in two columns, O109), host menu, team tiles, the chat docked under the round (O109; the design reference [docs/design/list-games-screens.html](../design/list-games-screens.html)), plain English, WCAG 2.2 AA. Own:
 
 - **Bomb block** (desktop: top of the right column; phone: compact line under the top bar): "6 wires, cut 4 in the right order", the explosion penalty ("Wrong first cut: +5 s"), the free hint, and the harmless wires as chips with a crossed swatch and a struck name.
 - **Help line:** one short line above the picker, always in view: "Tap colours in cutting order: they fill 1 → 6. Tap a filled box to empty it; Clear starts over." ("2 → 6" while the hint holds slot 1); one line on a desktop, at most two on a phone (DECISIONS T193).
@@ -133,8 +133,8 @@ Inherited from 02 §12: intro card, top bar, banner above the list, the one list
   - The sequence survives the round opening and is cleared only when its answer arrives (as DECISIONS T76).
   - Keyboard: Tab and Space, keys 1–8 for the wires in order, Backspace = Undo, Escape = Clear, Enter = Cut.
 - **List rows:** name, the sequence as colour dots in order, each with its colour's name as accessible text and tooltip (DECISIONS T143), "First 2 cuts right" ("First cut right") in text on the same line (or the explosion icon and "Boom!"), the comment under it; own rows tinted as 02 §12.
-- **Desktop 1280 × 720:** the list fills the main area (at least 14 rows with 6 wires, owner decisions 35 and 50); under it the input area: slots, wire buttons in one row (two rows of four with 8 wires), and the cooldown ring with Undo, Clear and Cut; the right column holds the bomb block only (02 §12).
-- **Phone 390 × 844:** top bar, bomb line, the list filling the height left (the only thing that scrolls), team tiles and Chat, then pinned at the bottom: slots in one row, wire buttons (at least 44 px tall) in two even rows of up to four (3 + 3 with six wires, 4 + 4 with eight, 3 + 2 with five, 4 + 3 with seven; one row with four), and a row with the ring, Undo, Clear and Cut.
+- **Desktop 1280 × 720:** the list fills the main area in two columns (at least 14 rows with 6 wires, owner decisions 35 and 50; at least 28 at 1440 × 900, O109); under it the input area: slots, wire buttons in one row (two rows of four with 8 wires), and the cooldown ring with Undo, Clear and Cut; the right column holds the bomb block only (02 §12).
+- **Phone 390 × 844:** top bar, bomb line, the list filling the height left (the only thing that scrolls, at least 11 rows, O109), team tiles in the bar, then pinned at the bottom above the chat's one-line bar (O109): slots in one row, wire buttons (at least 44 px tall) in two even rows of up to four (3 + 3 with six wires, 4 + 4 with eight, 3 + 2 with five, 4 + 3 with seven; one row with four), and a row with the ring, Undo, Clear and Cut.
 - Both sizes fit one screen without a page scrollbar, light and dark, with every necessary item visible.
 
 ## Decided while building (night 4, proposals)

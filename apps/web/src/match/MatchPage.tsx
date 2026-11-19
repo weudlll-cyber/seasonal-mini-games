@@ -8,7 +8,10 @@
  *                 plays along; the host's controls and the match chat are panels from its bar,
  *                 ../round/FocusShell). The result keeps the app header hidden: the slim
  *                 result bar (./ResultBar) over the result, the next round's box and the chat
- *                 beside it on a desktop and under it on a phone (T145, replacing T128).
+ *                 beside it on a desktop and under it on a phone (T145, replacing T128). A game
+ *                 that docks its chat (O97, O109) has it under the round and the result instead
+ *                 (./DockedMatch); with a result of its own (Seasonal Mind Games) the next
+ *                 round's box is in that result, else the waiting area stays beside it.
  *                 Otherwise
  *                 the match lobby of 02 §2: title, the match's game (O41), code and status with
  *                 the host menu; join or
@@ -28,7 +31,7 @@
  * Spec:           docs/spec/02-game-guess-the-number.md §2, §4, §11; docs/spec/03-seasonal-specials.md §5
  */
 import { GAME_SCREENS } from '@smg-game/registry/web';
-import type { MatchDetailsView } from '@smg/contracts';
+import type { GameInfoView, MatchDetailsView } from '@smg/contracts';
 import { useState, type ReactElement } from 'react';
 
 import { ChatPanel } from '../chat/ChatPanel.js';
@@ -36,7 +39,7 @@ import { useChatConfig } from '../chat/useChat.js';
 import { useMatch } from '../live/useMatch.js';
 import { useRound, type RoundLive } from '../live/useRound.js';
 import { RoundChat } from '../round/RoundChat.js';
-import { docksChat, gameName, useGames } from '../lobby/games.js';
+import { chatBarOf, docksChat, gameName, useGames } from '../lobby/games.js';
 import { RoundScreen } from '../round/RoundScreen.js';
 import { DockedMatch } from './DockedMatch.js';
 import { HostConsole, HostMenu, hosts, type Values } from './HostMenu.js';
@@ -101,6 +104,17 @@ const nextBox = (match: MatchDetailsView, live: RoundLive, reload: () => void) =
   <NextRound match={match} since={live.state?.endedAt ?? null} reload={reload} />
 );
 
+// Where the chat sits in this phase. A game that docks its chat under the round (O97, O109) has
+// one chat for the round and the result, with its phone bar's form; docked with a result of its
+// own (Seasonal Mind Games) the next round's box is in the result instead of the waiting area
+// beside it, while the platform's result (the list games, O109) keeps the waiting area beside
+// it, the chat docked under both.
+function chatPlace(games: readonly GameInfoView[], gameId: string, phase: Phase) {
+  const docked = docksChat(games, gameId) && phase !== 'waiting';
+  const ownAfter = docked && GAME_SCREENS[gameId]?.ownResult === true;
+  return { docked, ownAfter, bar: chatBarOf(games, gameId) };
+}
+
 // The round view alone while a round runs, else the lobby with the last result and the
 // waiting area.
 function MatchView(p: {
@@ -123,8 +137,7 @@ function MatchView(p: {
   const menu = { match, roundStatus: status, reload: refresh, last: kept, setLast };
   const hostMenu = <HostMenu {...menu} />;
   const phase = phaseOf(match, status);
-  // A game that docks its chat under the round (O97): one chat for the round and the result.
-  const docked = docksChat(useGames(), match.gameId) && phase !== 'waiting';
+  const { docked, ownAfter, bar } = chatPlace(useGames(), match.gameId, phase);
   // Mounted only by the phases that show a round (./PhaseBody: live and after).
   const round = (
     <RoundScreen
@@ -139,16 +152,18 @@ function MatchView(p: {
       // neither: ./DockedMatch holds it under both.
       chat={phase === 'live' && !docked ? chat : null}
       own={own}
-      // Docked, the next round's box goes beside the standings under the result (O97).
-      next={docked ? nextBox(match, live, refresh) : undefined}
+      // Docked with its own result, the next round's box goes beside the standings (O97).
+      next={ownAfter ? nextBox(match, live, refresh) : undefined}
       roundNo={playedOf(match)}
     />
   );
   const lobby = { match, viewerKey: viewer, refresh, hostMenu, chat: docked ? null : chat };
   if (phase === 'waiting') return <LobbyView {...lobby} />;
-  const body = <PhaseBody {...lobby} phase={phase} docked={docked} round={round} />;
+  const body = (
+    <PhaseBody {...lobby} phase={phase} docked={docked} ownAfter={ownAfter} round={round} />
+  );
   return docked ? (
-    <DockedMatch phase={phase} chat={chat}>
+    <DockedMatch phase={phase} chat={chat} bar={bar}>
       {body}
     </DockedMatch>
   ) : (
@@ -162,6 +177,7 @@ function PhaseBody(
   p: LobbyProps & {
     readonly phase: 'live' | 'loading' | 'after';
     readonly docked: boolean;
+    readonly ownAfter: boolean;
     readonly round: ReactElement;
   },
 ): ReactElement {
@@ -206,8 +222,9 @@ function AfterView(
     readonly round: ReactElement | null;
     // The box's class and, outside the docked page, the page's test id.
     readonly outer: { readonly className: string };
-    // Docked (O97): no column beside the result; its next-round box is in the result.
-    readonly docked: boolean;
+    // Docked with the game's own result (O97): no column beside it; its next-round box is in
+    // the result. Otherwise the waiting area beside it, without the chat when it is docked.
+    readonly ownAfter: boolean;
   },
 ): ReactElement {
   const games = useGames();
@@ -219,9 +236,9 @@ function AfterView(
         code={p.match.code}
         host={p.hostMenu}
       />
-      <div className={p.docked ? 'match-after match-after--docked' : 'match-after'}>
+      <div className={p.ownAfter ? 'match-after match-after--docked' : 'match-after'}>
         {p.round}
-        {p.docked ? null : <Side {...p} after />}
+        {p.ownAfter ? null : <Side {...p} after />}
       </div>
     </div>
   );

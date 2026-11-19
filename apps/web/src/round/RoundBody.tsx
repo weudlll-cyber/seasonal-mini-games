@@ -5,7 +5,8 @@
  *
  * Responsibility: one arrangement for every game (T141), only what matters for the next guess
  *                 in this round (O54). A desktop: the stage on the left, for a list game the
- *                 round's guesses (./RoundLog `main`) with the action dock at its bottom, for a
+ *                 round's guesses (./RoundLog `main`, in two columns, O109) with the action dock
+ *                 at its bottom, for a
  *                 board game (Seasonal Target) its board (the input's `stage` box, O51), for a
  *                 split game (Seasonal Mind Games) its strip and its main part (T351); the
  *                 info column on the right, top to bottom the special line, the game's compact
@@ -114,6 +115,10 @@ function useParts(p: BodyProps) {
     </FocusPanel>
   );
   const main = <RoundLog {...log} phone={p.phone} kind="main" banner={banner} more={more} />;
+  // A list game's stage on a desktop: the same list in two columns (O109).
+  const columns = (
+    <RoundLog {...log} phone={false} kind="main" banner={banner} more={more} columns />
+  );
   // "Your guesses" beside a list game's stage, in shared mode only (individual: the same rows).
   const own =
     playing !== null && !board && state.secretMode === 'shared' ? (
@@ -121,7 +126,7 @@ function useParts(p: BodyProps) {
         <RoundLog {...log} phone={false} kind="own" />
       </section>
     ) : null;
-  return { board, panel, stageBox, dock, all, main, own };
+  return { board, panel, stageBox, dock, all, main, columns, own };
 }
 
 // Individual mode: the other players in the column, a desktop's place for the phone's line.
@@ -132,7 +137,7 @@ function Others(p: BodyProps): ReactElement | null {
 }
 
 export function RoundBody(p: BodyProps): ReactElement {
-  const { board, panel, stageBox, dock, all, main, own } = useParts(p);
+  const { board, panel, stageBox, dock, all, main, columns, own } = useParts(p);
   const mainBox = (
     <section
       className="smg-panel round-main"
@@ -156,7 +161,7 @@ export function RoundBody(p: BodyProps): ReactElement {
     <>
       {stageBox ?? (
         <section className="smg-panel round-stage round-stage--list" aria-label="This round">
-          {main}
+          {columns}
           {dock}
         </section>
       )}

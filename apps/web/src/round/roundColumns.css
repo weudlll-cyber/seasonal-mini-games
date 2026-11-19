@@ -1,0 +1,29 @@
+/*
+ * @file   apps/web/src/round/roundColumns.css
+ * @module web/round
+ * @brief  A list game's guesses on a desktop's stage in two columns (owner decision O109).
+ *
+ * Responsibility: the main list (./RoundLog with `columns`, `data-columns` 2) as two equal
+ *                 columns 28 px apart, filled in reading order: the newest row at the top of the
+ *                 left column, down to its foot, then on at the top of the right one (the design
+ *                 reference docs/design/list-games-screens.html). A column holds as many rows as
+ *                 its height takes, each row its height of one line as in one column; a row is
+ *                 never split between the columns. Rows past the two columns are not shown here
+ *                 ("Log (N)" has them all), so the list does not scroll. Each row keeps its parts
+ *                 and T150 (./roundLog.css: the comment gives way first, then the name).
+ * Spec:           docs/spec/02-game-guess-the-number.md §12
+ */
+.round-log ol[data-columns='2'] {
+  display: block;
+  column-count: 2;
+  column-gap: 28px;
+  /* The left column fills to its foot before the right one starts. */
+  column-fill: auto;
+  overflow: hidden;
+}
+
+/* A row whole in one column, with the one-column list's spacing under it. */
+.round-log ol[data-columns='2'] > li {
+  break-inside: avoid;
+  margin-bottom: 0.08rem;
+}

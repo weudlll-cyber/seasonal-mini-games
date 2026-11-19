@@ -13,10 +13,11 @@
  *                 sign-in route to the website's login and back to the match, signed in as the
  *                 member the website names; the member joins, shows its Discord step beside its
  *                 name, plays a guess in a round the host starts and ends, during which the round
- *                 bar's closed Chat panel tells the website's chat it is hidden, the chat's two
- *                 `unread` messages show "2" on the Chat badge, and opening the panel tells it
- *                 visible and clears the badge (T237); the website deletes
- *                 the member and changes the host's rights, the server's next poll of the
+ *                 chat, docked under the round (O109), tells the website's chat on a phone that
+ *                 it is hidden while the bar's sheet is closed, the chat's two `unread` messages
+ *                 show "2" on the bar, opening the sheet tells it visible and clears the count,
+ *                 and back on a desktop the dock in sight tells it visible (T237); the website
+ *                 deletes the member and changes the host's rights, the server's next poll of the
  *                 account feed ends both sessions, the host's reload signs in again through the
  *                 website without a form, back on the match page (T282), and shows "Deleted
  *                 player" in the member's place. The match is aborted and
@@ -43,7 +44,7 @@ import {
   type Person,
   type Who,
 } from './play.js';
-import { DESKTOP } from './screens.js';
+import { DESKTOP, PHONE } from './screens.js';
 import { startWebsiteStack, type WebsiteStack } from './websiteStack.js';
 import type { StubMember } from './websiteStub.js';
 
@@ -120,11 +121,13 @@ async function signInFromChat(guest: Person, site: WebsiteStack['site'], code: s
   expect((await sessionOf(guest.ctx)).account?.displayName).toBe(PLAYER.name);
 }
 
-// The website's chat behind the round bar (T237): told hidden while its panel is closed, its
-// unread count on the Chat badge, told visible (and the badge gone) once the panel opens.
+// The website's chat docked under the round (T237, O109): on a phone, told hidden while the
+// bar's sheet is closed, its unread count on the bar, told visible (and the count gone) once
+// the sheet opens; back on a desktop the dock is in sight, so it is told visible.
 async function chatBadge(player: Person): Promise<void> {
   const page = player.page;
-  const chat = page.frameLocator('[data-testid="chat-drawer"] [data-testid="chat-frame"]');
+  await page.setViewportSize(PHONE);
+  const chat = page.frameLocator('[data-testid="chat-dock"] [data-testid="chat-frame"]');
   const sight = chat.getByTestId('stub-chat-sight');
   await expect(sight).toHaveText('hidden');
   for (let i = 0; i < 2; i += 1) {
@@ -132,12 +135,14 @@ async function chatBadge(player: Person): Promise<void> {
       (window as unknown as { arrive: () => void }).arrive();
     });
   }
-  await expect(page.getByTestId('chat-unread')).toHaveText('2 unread');
-  await page.getByTestId('focus-chat').click();
+  await expect(page.getByTestId('chat-dock-unread')).toHaveText('2 unread');
+  await page.getByTestId('chat-dock-bar').click();
   await expect(sight).toHaveText('visible');
-  await expect(page.getByTestId('chat-unread')).toHaveCount(0);
-  await page.getByTestId('focus-chat').click();
+  await expect(page.getByTestId('chat-dock-unread')).toHaveCount(0);
+  await page.getByTestId('chat-dock-bar').click();
   await expect(sight).toHaveText('hidden');
+  await page.setViewportSize(DESKTOP);
+  await expect(sight).toHaveText('visible');
 }
 
 // A shared round the host starts; the member's one guess comes back; the host ends the round.

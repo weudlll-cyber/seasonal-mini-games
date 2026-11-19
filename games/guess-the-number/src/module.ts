@@ -6,7 +6,9 @@
  * Responsibility: put the game's parts (meta, settings, the whole-number input, the uniform
  *                 secret, state, rules, comment lines, its own events, views and specials)
  *                 together through `guessModule` (04 §4.7), so the platform runs it behind the
- *                 contract of 04 §4 without knowing anything else about it.
+ *                 contract of 04 §4 without knowing anything else about it. Its match chat is
+ *                 docked under the round view and the result, with a one-line bar on a phone
+ *                 (`chatDock` 'below', `chatBar` 'line', owner decision O109).
  * Depends on:     zod, @smg/game-sdk (GameModule), @smg/guess-engine (guessModule), ./comments,
  *                 ./rules, ./secrets, ./settings, ./specials, ./state, ./views
  * Used by:        ./index, games/registry
@@ -33,6 +35,10 @@ export const guessTheNumber: GameModule<GtnState, GuessAction, GtnEvent, GtnConf
       timing: 'cooldown',
       secretModes: ['shared', 'individual'],
       teams: true,
+      // The match chat docked under the round and the result, a one-line bar on a phone
+      // (owner decision O109, 02 §12).
+      chatDock: 'below',
+      chatBar: 'line',
     },
     settings: gtnSettings,
     // A whole number the input takes (DECISIONS T53); whether it is in the range is check 4.

@@ -37,6 +37,9 @@ export interface GameInfoView {
   // Where the match chat sits around a round (the module's `meta.chatDock`, O97): 'panel'
   // from the round bar, or 'below', docked under the round view and the result.
   readonly chatDock: 'panel' | 'below';
+  // The docked chat's phone bar (the module's `meta.chatBar`, O109): 'field', the bar with the
+  // room's field (T363), or 'line', one line whose tap opens the chat with its field.
+  readonly chatBar: 'field' | 'line';
 }
 
 export interface MatchSummaryView {

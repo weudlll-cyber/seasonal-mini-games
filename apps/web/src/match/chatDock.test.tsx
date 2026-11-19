@@ -11,10 +11,14 @@
  *                 message and the count of others' messages that arrived while the sheet was
  *                 closed, which opening clears; the sheet's Close and Escape close it and the
  *                 focus returns to the bar; the bar's own field sends without opening the sheet
- *                 (MG-N8). Without a chat (the provider `none`) there is no dock.
+ *                 (MG-N8). Without a chat (the provider `none`) there is no dock. The list games'
+ *                 one-line bar (`bar` 'line', O109): the newest line and the count, no field of
+ *                 its own; a tap opens the sheet with the chat and its field; on a desktop the
+ *                 same dock as with the field.
  * Depends on:     vitest, @testing-library/react, ../chat/chatArrivals, ../round/fakes,
  *                 ./DockedMatch
- * Spec:           docs/spec/02e-game-mind-games.md §11; docs/spec/07-integration.md §2
+ * Spec:           docs/spec/02e-game-mind-games.md §11; docs/spec/02-game-guess-the-number.md §12;
+ *                 docs/spec/07-integration.md §2
  */
 import type { ChatRoomView } from '@smg/contracts';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
@@ -64,8 +68,12 @@ function FakeChat(): ReactElement {
   );
 }
 
-const page = (phase: 'live' | 'loading' | 'after', body: string) => (
-  <DockedMatch phase={phase} chat={<FakeChat />}>
+const page = (
+  phase: 'live' | 'loading' | 'after',
+  body: string,
+  bar: 'field' | 'line' = 'field',
+) => (
+  <DockedMatch phase={phase} chat={<FakeChat />} bar={bar}>
     <p>{body}</p>
   </DockedMatch>
 );
@@ -139,10 +147,48 @@ describe("the docked chat's phone bar (MG-N8)", () => {
   it('has no dock without a chat', () => {
     viewport(1280, 720);
     render(
-      <DockedMatch phase="live" chat={null}>
+      <DockedMatch phase="live" chat={null} bar="field">
         <p>The round</p>
       </DockedMatch>,
     );
     expect(screen.queryByTestId('chat-dock')).toBeNull();
+  });
+});
+
+describe("the list games' one-line phone bar (O109)", () => {
+  it('shows the newest line and the unread count, and no field of its own', () => {
+    viewport(390, 844);
+    render(page('live', 'The round', 'line'));
+    expect(screen.getByTestId('chat-dock').getAttribute('data-bar')).toBe('line');
+    act(() => {
+      screen.getByText('A message arrives', { selector: 'button' }).click();
+    });
+    const bar = screen.getByTestId('chat-dock-bar');
+    expect(bar.textContent).toBe('Chat · bot-01: Winter again?1 unread');
+    // Nothing to write in the bar: the field is the sheet's.
+    expect(screen.queryByPlaceholderText('Write a message…')).toBeNull();
+    // The sheet stays closed until the bar is tapped.
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(bar.getAttribute('aria-expanded')).toBe('false');
+  });
+
+  it('opens the whole chat with its field as a sheet on a tap', () => {
+    viewport(390, 844);
+    render(page('live', 'The round', 'line'));
+    fireEvent.click(screen.getByTestId('chat-dock-bar'));
+    const sheet = screen.getByRole('dialog', { name: 'Chat' });
+    expect(sheet.hidden).toBe(false);
+    // The chat's own field is in the sheet, the bar has none.
+    expect(sheet.contains(screen.getByLabelText('Draft'))).toBe(true);
+    expect(screen.queryByPlaceholderText('Write a message…')).toBeNull();
+    expect(screen.getByTestId('chat-dock-bar').getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('is a dock with the chat itself on a desktop, as the bar with the field is', () => {
+    viewport(1440, 900);
+    render(page('live', 'The round', 'line'));
+    expect(screen.getByTestId('chat-dock').getAttribute('data-view')).toBe('desktop');
+    expect(screen.queryByTestId('chat-dock-bar')).toBeNull();
+    expect(screen.getByLabelText('Draft')).toBeTruthy();
   });
 });

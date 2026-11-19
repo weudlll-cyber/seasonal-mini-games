@@ -12,11 +12,14 @@
  *                 box whatever is above it, so it is mounted once and keeps its room and what
  *                 was typed between the round and the result (07 §2). The layout, desktop or
  *                 phone, is the round view's (../round/useRoundView, T141); on a phone the
- *                 content scrolls alone above the chat bar and the page is the visible viewport's
- *                 height, so the bar stays above the on-screen keyboard (MG-N8, T364).
+ *                 content scrolls alone above the chat bar (a list game's running round fills it
+ *                 instead, its guesses scrolling inside, O109) and the page is the visible
+ *                 viewport's height, so the bar stays above the on-screen keyboard (MG-N8, T364).
+ *                 The bar's form is the game's (./ChatDock, `meta.chatBar`).
  * Depends on:     react, ../round/useRoundView, ./ChatDock, ./docked.css
  * Used by:        ./MatchPage
- * Spec:           docs/spec/02e-game-mind-games.md §11; docs/spec/07-integration.md §2
+ * Spec:           docs/spec/02e-game-mind-games.md §11; docs/spec/02-game-guess-the-number.md §12;
+ *                 docs/spec/07-integration.md §2
  */
 import { useEffect, type ReactElement, type ReactNode } from 'react';
 
@@ -49,6 +52,8 @@ export function DockedMatch(p: {
   readonly phase: 'live' | 'loading' | 'after';
   // The match chat, or null without one (the provider `none`).
   readonly chat: ReactNode;
+  // The phone bar's form, the game's (./ChatDock, O109).
+  readonly bar: 'field' | 'line';
   readonly children: ReactNode;
 }): ReactElement {
   const view = useRoundView();
@@ -61,7 +66,7 @@ export function DockedMatch(p: {
       data-view={view}
     >
       <div className="match-docked-main">{p.children}</div>
-      <ChatDock chat={p.chat} phone={view === 'phone'} />
+      <ChatDock chat={p.chat} phone={view === 'phone'} bar={p.bar} />
     </div>
   );
 }

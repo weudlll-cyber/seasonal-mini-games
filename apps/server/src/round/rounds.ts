@@ -110,6 +110,8 @@ export class Rounds {
         seasons: meta.seasons !== false,
         // The match chat docked under the round on a desktop (O97); a panel by default.
         chatDock: meta.chatDock ?? 'panel',
+        // Its phone bar: one line (O109), or with the room's field (T363) by default.
+        chatBar: meta.chatBar ?? 'field',
       },
       devBot: entry.devBot,
       hostKeys: new Set(entry.module.settings.defs.filter((d) => d.hostChooses).map((d) => d.key)),

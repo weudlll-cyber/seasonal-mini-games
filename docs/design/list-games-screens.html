@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>List games (Guess The Number, Safecracker, Bomb Defusal) — round view reference (draft, 2026-11-19)</title>
+<!--
+  Design reference for the round view of the three list games. Not product code.
+  Owner decisions behind it (2026-11-15): the round's guesses in two columns, the chat docked below
+  like Seasonal Mind Games; Seasonal Target keeps its chat panel and is unchanged.
+  1  Guess The Number, shared, desktop 1440 x 900.
+  2  Guess The Number, shared, desktop 1280 x 720 (the chat 150 px under 760 px window height).
+  3  Seasonal Safecracker, shared, desktop 1440 x 900.
+  4  Seasonal Bomb Defusal, shared, desktop 1440 x 900.
+  5  Guess The Number, individual, desktop 1440 x 900.
+  6  Guess The Number, shared, phone 390 x 844.
+  7  Seasonal Bomb Defusal, shared, phone 390 x 844.
+  Rules a static file cannot show: the list is newest first and fills the left column top to bottom,
+  then the right column; a row's comment gives way first (ellipsis, whole text as tooltip), then the
+  name; the guess and the answer never. "Log (N)" opens the whole list with events as today.
+-->
+<style>
+  body { margin: 0; background: #050a1f; font-family: system-ui, sans-serif; color: #f1f4fa; }
+  .label { padding: 24px 28px 8px; font-size: 20px; font-weight: 700; color: #ffd27a; max-width: 1400px; }
+  .note { padding: 0 28px 10px; font-size: 14px; color: #c8d0e0; max-width: 1400px; }
+  .page { box-sizing: border-box; overflow: hidden; margin: 0 0 40px;
+    background: radial-gradient(circle at 15% 0%, rgb(175 184 78 / 18%), transparent 40%),
+      radial-gradient(circle at 95% 15%, rgb(4 170 247 / 22%), transparent 45%),
+      radial-gradient(circle at 85% 100%, rgb(224 110 34 / 18%), transparent 45%), #0a1233;
+    padding: 8px 32px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .bar { height: 36px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex: none; }
+  .season { padding: 6px 14px; border-radius: 999px; background: #e06e22; color: #0a1233; font-weight: 700; font-size: 14px; }
+  .btn { font: inherit; font-size: 14px; font-weight: 700; color: #f1f4fa; background: rgb(255 255 255 / 6%);
+    border: 1px solid rgb(255 255 255 / 16%); border-radius: 999px; padding: 0 14px; height: 36px; }
+  .main { flex: 1; min-height: 0; display: flex; gap: 10px; }
+  .panel { border-radius: 18px; background: rgb(16 26 66 / 72%); border: 1px solid rgb(255 255 255 / 12%); }
+  .stage { flex: 1; min-width: 0; display: flex; flex-direction: column; padding: 12px 14px; gap: 8px; }
+  .stage .h { display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: #b3bcd0; font-weight: 700; }
+  .list { flex: 1; min-height: 0; overflow: hidden; display: grid; grid-auto-flow: column; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; align-content: start; }
+  .row { height: 23px; display: flex; align-items: center; gap: 7px; font-size: 15px; white-space: nowrap; min-width: 0; border-radius: 8px; padding: 0 4px; }
+  .row .dot { width: 11px; height: 11px; border-radius: 50%; flex: none; }
+  .row .who { font-weight: 700; flex: 0 1 auto; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+  .row .val { font-weight: 700; flex: none; }
+  .row .ans { font-weight: 700; flex: none; }
+  .row .com { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-size: 14px; color: #dfe4ef; }
+  .row.me { background: rgb(175 184 78 / 30%); box-shadow: inset 3px 0 0 #afb84e; }
+  .hi { color: #4fd18b; } .lo { color: #ff7b72; } .ok { color: #4fd18b; } .boom { color: #ff6b6b; }
+  .peg { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 2px; vertical-align: middle; }
+  .peg.f { background: #f1f4fa; } .peg.o { border: 1.5px solid #f1f4fa; width: 6px; height: 6px; }
+  .sw { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 2px; vertical-align: middle; border: 1px solid rgb(255 255 255 / 40%); }
+  .dock { flex: none; display: flex; gap: 10px; align-items: center; }
+  .ring { width: 44px; height: 44px; border-radius: 50%; border: 3px solid #c8d0e0; display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
+  .field { flex: 1; height: 48px; border-radius: 12px; background: rgb(255 255 255 / 4%); border: 1px solid rgb(255 255 255 / 18%); display: flex; align-items: center; padding: 0 14px; font-size: 18px; color: #c8d0e0; }
+  .go { height: 48px; padding: 0 26px; border-radius: 999px; background: #f1f4fa; color: #0a1233; font-weight: 700; font-size: 18px; border: 0; }
+  .col { width: 340px; flex: none; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .special { border: 2px solid #e06e22; border-radius: 18px; padding: 8px 12px; font-size: 13px; }
+  .gpanel { padding: 12px; }
+  .gpanel h3 { margin: 0 0 8px; font-size: 20px; }
+  .own { flex: 1; min-height: 0; padding: 12px; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+  .own .t, .others .t { font-size: 14px; color: #b3bcd0; font-weight: 700; margin-bottom: 4px; }
+  .own .r { height: 23px; display: flex; align-items: center; gap: 8px; font-weight: 700; padding: 0 8px; border-radius: 8px; background: rgb(224 110 34 / 28%); box-shadow: inset 3px 0 0 #e06e22; }
+  .chat { flex: none; box-sizing: border-box; padding: 10px 16px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+  .chat .ln { color: #dfe4ef; } .chat .ln b { color: #f1f4fa; } .chat .sys { color: #b3bcd0; font-style: italic; }
+  .chat .in { margin-top: auto; display: flex; gap: 8px; }
+  .chat .in span { flex: 1; display: flex; align-items: center; color: #8d97ad; background: rgb(255 255 255 / 6%); border: 1px solid rgb(255 255 255 / 16%); border-radius: 12px; padding: 0 12px; min-height: 40px; }
+  .send { font: inherit; font-weight: 700; color: #0a1233; background: #04aaf7; border: 0; border-radius: 12px; padding: 0 18px; min-height: 40px; }
+  .boxes { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+  .boxes span { height: 38px; border: 1px dashed rgb(255 255 255 / 30%); border-radius: 10px; display: flex; align-items: center; padding: 0 10px; font-weight: 700; }
+  .wires { display: grid; grid-template-columns: repeat(8, 1fr); gap: 8px; }
+  .wires span { height: 38px; border-radius: 999px; border: 1px solid rgb(255 255 255 / 16%); background: rgb(255 255 255 / 5%); display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 700; font-size: 14px; }
+  .small { font-size: 13px; color: #c8d0e0; }
+  /* phone */
+  .phone { width: 390px; height: 844px; box-sizing: border-box; margin: 0 0 40px 28px; border-radius: 28px; outline: 2px solid rgb(255 255 255 / 18%); overflow: hidden; display: flex; flex-direction: column; gap: 8px; padding: 8px 10px 10px;
+    background: radial-gradient(circle at 15% 0%, rgb(175 184 78 / 18%), transparent 30%), radial-gradient(circle at 95% 10%, rgb(4 170 247 / 22%), transparent 35%), #0a1233; }
+  .pbar { height: 44px; flex: none; display: flex; align-items: center; gap: 8px; }
+  .ico { width: 40px; height: 40px; border-radius: 50%; background: rgb(255 255 255 / 6%); border: 1px solid rgb(255 255 255 / 16%); flex: none; }
+  .gline { flex: none; height: 40px; border-radius: 14px; background: rgb(16 26 66 / 72%); border: 1px solid rgb(255 255 255 / 12%); display: flex; align-items: center; justify-content: space-between; padding: 0 12px; font-weight: 700; font-size: 14px; }
+  .pstage { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 10px 12px; gap: 6px; }
+  .plist { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+  .plist .row { height: 26px; flex: none; }
+  .pchat { font: inherit; color: #f1f4fa; text-align: left; flex: none; height: 44px; border-radius: 14px; background: rgb(16 26 66 / 96%); border: 1px solid rgb(255 255 255 / 16%); display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 12px; font-size: 14px; }
+  .badge { padding: 2px 9px; border-radius: 999px; background: #04aaf7; color: #0a1233; font-weight: 700; font-size: 13px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  const C = ['#afb84e', '#e06e22', '#f9a825', '#04aaf7'];
+  const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const COMMENTS = ['White hot.', 'Burning! It’s right there!', 'Closer than last time.', 'So close you could almost touch it.',
+    'You’re in the hot seat now.', 'You could throw a pebble and hit it.', 'Warming up nicely.', 'Just a little nudge more.',
+    'The number can feel your breath.', 'Scorching. So, so close.', 'Absolutely scorching.', 'Tantalisingly close.',
+    'Burning up — you’ve got this.', 'That’s an improvement.', 'Searing. Don’t let go now.', 'You’re on fire!',
+    'The number just whispered “please, no”.', 'Hotter than a Heatwave afternoon.'];
+  const NAMES = ['bot-13', 'bot-09', 'bot-22', 'bot-16', 'bot-21', 'Captain Autumn Leaves', 'bot-24', 'bot-14', 'monke42', 'bot-20',
+    'bot-15', 'Seasonal Fisher', 'bot-18', 'bot-17', 'bot-19', 'bot-11', 'bot-03', 'bot-23', 'bot-07', 'bot-04', 'bot-08', 'bot-06',
+    'bot-12', 'bot-05', 'bot-10', 'bot-02', 'bot-01', 'Mira the Token Holder', 'bot-25', 'bot-26'];
+  const pick = (a, i) => a[i % a.length];
+  const meAt = [5, 17];
+
+  function rowsGtn(n, opts = {}) {
+    return Array.from({ length: n }, (_, i) => {
+      const me = !opts.solo && meAt.includes(i);
+      const v = (670000 + ((i * 7919) % 40000)).toLocaleString('en');
+      const up = (i * 13) % 3 !== 0;
+      const who = opts.solo ? '' : `<span class="dot" style="background:${pick(C, i * 3)}"></span><span class="who">${me ? 'You' : esc(pick(NAMES, i))}</span>`;
+      return `<div class="row ${me ? 'me' : ''}">${who}<span class="val">${v}</span><span class="ans ${up ? 'hi' : 'lo'}">${up ? 'higher ↑' : 'lower ↓'}</span><span class="com" title="${esc(pick(COMMENTS, i))}">${esc(pick(COMMENTS, i))}</span></div>`;
+    }).join('');
+  }
+  function rowsSafe(n) {
+    const SC = ['A tiny tick from deep inside.', 'So many clicks. So close.', 'The lock liked your last try better.', 'You have the safe’s attention.',
+      'The lock is clearly impressed.', 'Something rattled. Keep listening.', 'The lock is no longer ignoring you.', 'You’re speaking the safe’s language, sort of.'];
+    return Array.from({ length: n }, (_, i) => {
+      const me = meAt.includes(i);
+      const r = i % 4, w = (i * 3) % 4;
+      const pegs = '<span class="peg f"></span>'.repeat(r) + '<span class="peg o"></span>'.repeat(w);
+      const txt = [r ? `${r} right` : '', w ? `${w} wrong place${w > 1 ? 's' : ''}` : ''].filter(Boolean).join(' · ') || 'no digit right';
+      const code = String(100000 + ((i * 48271) % 900000));
+      return `<div class="row ${me ? 'me' : ''}"><span class="dot" style="background:${pick(C, i * 3)}"></span><span class="who">${me ? 'You' : esc(pick(NAMES, i))}</span><span class="val">${code}</span><span class="ans ${r >= 3 ? 'ok' : ''}">${pegs}${txt}</span><span class="com" title="${esc(pick(SC, i))}">${esc(pick(SC, i))}</span></div>`;
+    }).join('');
+  }
+  const WC = ['#e53935', '#1e5bd8', '#f9d71c', '#2e9e4f', '#f1f4fa', '#111', '#f57c00', '#7e57c2'];
+  function rowsBomb(n, noComment) {
+    const BC = ['Steady work. Keep the pliers moving.', 'Solid cuts. Keep your nerve.', 'That was a sharp sequence.', 'Progress! Keep cutting like that.',
+      'The bomb disagreed. Loudly.', 'You got past the first wire. Nice.', 'The confetti was not part of the plan.', 'Ears ringing? Totally normal. Go again.'];
+    return Array.from({ length: n }, (_, i) => {
+      const me = meAt.includes(i);
+      const sw = Array.from({ length: 6 }, (_, k) => `<span class="sw" style="background:${WC[(i * 5 + k * 3) % 8]}"></span>`).join('');
+      const k = i % 5;
+      const ans = k === 4 || k === 2 && i % 3 === 0 ? '<span class="ans boom">✷ Boom!</span>' : `<span class="ans ${k === 3 ? 'ok' : ''}">First ${k === 0 ? 'cut' : (k + 1) + ' cuts'} right</span>`;
+      return `<div class="row ${me ? 'me' : ''}"><span class="dot" style="background:${pick(C, i * 3)}"></span><span class="who">${me ? 'You' : esc(pick(NAMES, i))}</span><span class="val">${sw}</span>${ans}${noComment ? '' : `<span class="com">${esc(pick(BC, i))}</span>`}</div>`;
+    }).join('');
+  }
+  function chatBox(h) {
+    return `<section class="panel chat" style="height:${h}px">
+      <div class="sys">Round 1 started: Summer · Heatwave.</div>
+      <div class="ln"><b>dev-admin</b> good luck everyone</div>
+      <div class="ln"><b>monke42</b> it’s somewhere around 680k I bet</div>
+      <div class="in"><span>Write a message</span><button class="send" type="button">Send</button></div></section>`;
+  }
+  function bar(mode, left) {
+    return `<div class="bar"><div style="display:flex;gap:14px;align-items:center"><span class="season">☀ Summer · Heatwave</span><strong>${mode}</strong><strong>${left}</strong></div>
+      <div style="display:flex;gap:8px"><button class="btn" type="button">Players</button><button class="btn" type="button">Host</button><button class="btn" type="button">Full screen</button></div></div>`;
+  }
+  function desktop(o) {
+    return `<div class="label">${o.label}</div><div class="note">${o.note}</div>
+    <div class="page" style="width:${o.w}px;height:${o.h}px">
+      ${bar(o.mode || 'Shared', o.left || '9:31 left')}
+      <div class="main">
+        <section class="panel stage"><div class="h"><span>${o.count}</span><button class="btn" type="button" style="height:32px">Log (${o.log})</button></div>
+          <div class="list" style="grid-template-rows:repeat(${o.perCol}, 23px)">${o.rows}</div>
+          ${o.dock}</section>
+        <aside class="col">
+          <div class="special"><b>Heatwave:</b> The waiting time between guesses gets shorter as the round goes on.</div>
+          <div class="panel gpanel">${o.game}</div>
+          ${o.side}
+        </aside>
+      </div>
+      ${chatBox(o.chat)}
+    </div>`;
+  }
+  const gtnDock = `<div class="dock"><span class="ring">✓</span><span class="field">Your guess</span><button class="go" type="button">Guess</button></div>`;
+  const gtnGame = `<h3>The number is somewhere between 1 and 1,000,000</h3><div style="height:16px;border-radius:999px;background:#e06e22"></div>`;
+  const ownGtn = `<div class="panel own"><div class="t">Your guesses</div><div class="r">400,777 <span class="hi">higher ↑</span></div><div class="r">300,777 <span class="hi">higher ↑</span></div><div class="r">200,777 <span class="hi">higher ↑</span></div></div>`;
+  const scDock = `<div class="dock"><span class="ring">✓</span>${[6, 7, 8, 9, 0, 1].map((d) => `<span class="field" style="flex:none;width:44px;justify-content:center;color:#f1f4fa">${d}</span>`).join('')}<button class="go" type="button" style="background:rgb(255 255 255 / 8%);color:#f1f4fa;border:1px solid rgb(255 255 255 / 16%)">Try code</button></div>`;
+  const scGame = `<h3>6-digit code, digits 0–9</h3><div style="display:flex;gap:4px;margin-bottom:8px">${[...'0123456789'].map((d) => `<span style="width:26px;height:26px;border-radius:50%;border:2px solid #e06e22;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700">${d}</span>`).join('')}</div><div class="small"><b>right</b> = right digit, right place · <b>wrong place</b> = right digit in the wrong place</div>`;
+  const ownSc = `<div class="panel own"><div class="t">Your guesses</div><div class="r">678901 <span class="peg o"></span><span class="peg o"></span> 2 wrong places</div><div class="r">345678 <span class="peg f"></span><span class="peg f"></span><span class="peg o"></span> 2 right · 1 wrong place</div></div>`;
+  const bdDock = `<div style="display:flex;flex-direction:column;gap:8px;flex:none"><div class="small">Tap colours in cutting order: they fill 1 → 6. Tap a filled box to empty it; Clear starts over.</div>
+    <div class="boxes">${[1, 2, 3, 4, 5, 6].map((n) => `<span>${n}</span>`).join('')}</div>
+    <div class="wires">${['red', 'blue', 'yellow', 'green', 'white', 'black', 'orange', 'purple'].map((c, i) => `<span><i class="sw" style="background:${WC[i]}"></i>${c}</span>`).join('')}</div>
+    <div class="dock"><span class="ring" style="border-color:#e06e22">9 s</span><button class="btn" type="button">Undo</button><button class="btn" type="button">Clear</button><span class="field" style="justify-content:center;font-weight:700">Wait 9 s</span></div></div>`;
+  const bdGame = `<h3>8 wires, cut 6 in the right order</h3><div class="small">Wrong first cut: +10 s</div>`;
+  const ownBd = `<div class="panel own"><div class="t">Your guesses</div><div class="r">${rowsBomb(1, true).replace(/<span class="dot.*?<\/span><span class="who">.*?<\/span>/, '')}</div></div>`;
+  const others = `<div class="panel own others"><div class="t">Other players</div>${Array.from({ length: 9 }, (_, i) => `<div style="height:30px;display:flex;align-items:center;gap:10px"><span class="dot" style="width:11px;height:11px;border-radius:50%;background:${pick(C, i * 3)}"></span><span style="flex:1">bot-0${i + 1}</span><span class="small">14 guesses</span>${i === 4 ? '<span class="ok" style="font-weight:700;font-size:13px">solved</span>' : ''}</div>`).join('')}</div>`;
+
+  function phone(o) {
+    return `<div class="label">${o.label}</div><div class="note">${o.note}</div>
+    <div class="phone">
+      <div class="pbar"><span class="season">☀ Summer</span><strong>9:27</strong><span style="flex:1"></span><span class="ico"></span><span class="ico"></span><span class="ico"></span></div>
+      <div class="gline"><span>${o.line}</span><span>›</span></div>
+      <section class="panel pstage"><div class="h" style="display:flex;justify-content:space-between;align-items:center;font-size:14px;color:#b3bcd0;font-weight:700"><span>${o.count}</span><button class="btn" type="button" style="height:32px">Log (${o.count.split(' ')[0]})</button></div>
+        <div class="plist">${o.rows}</div></section>
+      ${o.dock}
+      <button class="pchat" type="button"><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><strong>Chat</strong> <span style="color:#c8d0e0">· monke42: it’s somewhere around 680k…</span></span><span class="badge">2</span></button>
+    </div>`;
+  }
+
+  const html = [
+    desktop({ label: '1 — Guess The Number, shared, desktop 1440 × 900', w: 1440, h: 900, perCol: 20, count: '63 guesses', log: 63,
+      note: 'The chat moves from the Chat panel into a dock below (190 px, full width), as in Seasonal Mind Games; the Chat button leaves the bar. The guesses fill two columns: about 40 visible instead of 29 today. The right column is unchanged.',
+      rows: rowsGtn(40), dock: gtnDock, game: gtnGame, side: ownGtn, chat: 190 }),
+    desktop({ label: '2 — Guess The Number, shared, desktop 1280 × 720', w: 1280, h: 720, perCol: 14, count: '63 guesses', log: 63,
+      note: 'Under 760 px window height the chat dock is 150 px. About 28 guesses visible instead of 22 today. Comments are cut with "…" where the column is narrow; the whole text is the tooltip.',
+      rows: rowsGtn(28), dock: gtnDock, game: gtnGame, side: ownGtn, chat: 150 }),
+    desktop({ label: '3 — Seasonal Safecracker, shared, desktop 1440 × 900', w: 1440, h: 900, perCol: 20, count: '63 guesses', log: 63,
+      note: 'Safecracker’s rows are the longest (pegs and "1 right · 3 wrong places"): the comment gives way first and is cut; the code and the answer always show whole.',
+      rows: rowsSafe(40), dock: scDock, game: scGame, side: ownSc, chat: 190 }),
+    desktop({ label: '4 — Seasonal Bomb Defusal, shared, desktop 1440 × 900', w: 1440, h: 900, perCol: 15, count: '58 guesses', log: 58,
+      note: 'Bomb Defusal’s input is tall (boxes, wires, Undo/Clear): about 30 guesses visible instead of 24 today.',
+      rows: rowsBomb(30), dock: bdDock, game: bdGame, side: ownBd, chat: 190 }),
+    desktop({ label: '5 — Guess The Number, individual, desktop 1440 × 900', w: 1440, h: 900, perCol: 20, count: '8 guesses', log: 9, mode: 'Individual', left: '9:08 left',
+      note: 'In individual mode the list holds only your own guesses (no dot, no name), also in two columns; "Other players" stays in the right column.',
+      rows: rowsGtn(8, { solo: true }), dock: gtnDock, game: gtnGame, side: others, chat: 190 }),
+    phone({ label: '6 — Guess The Number, shared, phone 390 × 844', line: '1–1,000,000', count: '63 guesses',
+      note: 'One column on the phone. The chat is a one-line bar at the bottom (newest message, unread count); a tap opens the whole chat with its input as a sheet. About 19 guesses visible instead of 24 today.',
+      rows: rowsGtn(20).replace(/<span class="com".*?<\/span>/g, ''), dock: gtnDock }),
+    phone({ label: '7 — Seasonal Bomb Defusal, shared, phone 390 × 844', line: '8 wires · cut 6', count: '58 guesses',
+      note: 'The tallest case: the cut input and the chat bar leave about 12 guesses visible (16 today).',
+      rows: rowsBomb(12, true), dock: bdDock.replace('grid-template-columns: repeat(8, 1fr)', '').replace('class="wires"', 'class="wires" style="grid-template-columns:repeat(4,1fr)"') }),
+  ].join('');
+  document.getElementById('root').innerHTML = html;
+</script>
+</body>
+</html>

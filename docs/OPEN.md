@@ -64,6 +64,12 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 36. Closed: the hold before the result (O106, DECISIONS T384: default 5 s, 1–20 s, the host's per round; "Choices closed · result in 0:04" and the feed's "Choices are closed — the result follows in 4 s.") is accepted as built (O108).
 37. Closed: the strip and the round bar of DECISIONS T386 ("Result in 0:04" in the hold) and the reveal's line "Reveal · result in …" counting to the result are accepted as built (O108).
 
+**(ag) The list games' round view (O109, task RD-1, branch `feat/rd-list-games`, not merged).** Built as DECISIONS T388; for the owner's test:
+
+1. The docked page keeps Seasonal Mind Games' padding (20 × 28 px, 16 px above the chat; 12 px in a window under 760 px), where the design reference has 8 px above, 32 px at the sides, 18 px below and 10 px above the chat. The fitting rules hold with it (40, 30 and 22 rows of Guess The Number at 1440 × 900, 1280 × 720 and on a phone). Keep, or take the reference's?
+2. The result of a list game keeps the waiting area beside it (Next round, the players, Join or Leave, O26), the chat docked under both; on a desktop the two scroll inside the height above the chat. Seasonal Mind Games' result keeps its next-round box instead (O97). Right for the list games?
+3. "No answer from the server" under a guess that the server took but answered after the client's 5 s (DECISIONS T389: the development machine's load, not reproduced within the spec's load gate). Should the client, after that line, load the round again and drop the line when the guess shows as counted?
+
 ## Firefox/WebKit findings (O103 batch)
 
 Failures that the nightly Firefox and WebKit run on master finds (O103, `.github/workflows/browsers.yml`) are listed here until a batch fixes them; the website's session asked for this list on 2026-11-10.

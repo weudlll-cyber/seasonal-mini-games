@@ -12,8 +12,11 @@
  *                 radius 16 px, padding 8 × 10 px): the line "Chat · <newest message>" cut with an
  *                 ellipsis and the unread count (a 44 px target), then the field with Send; the
  *                 open chat a sheet above the bar, opaque as the round's panels are, holding the
- *                 messages only (the bar has the field). Colours only from @smg/ui tokens.
- * Spec:           docs/spec/02e-game-mind-games.md §11; docs/spec/07-integration.md §2
+ *                 messages only (the bar has the field). A game's one-line bar (`data-bar`
+ *                 'line', O109) is that line alone, 44 px high, and its sheet holds the whole
+ *                 chat with the field. Colours only from @smg/ui tokens.
+ * Spec:           docs/spec/02e-game-mind-games.md §11; docs/spec/02-game-guess-the-number.md §12;
+ *                 docs/spec/07-integration.md §2
  */
 .chat-dock {
   --chat-dock-height: 190px;
@@ -128,8 +131,15 @@
   box-shadow: var(--shadow-raised);
 }
 
-.chat-dock[data-view='phone'] > .chat-dock-body .chat-writer {
+.chat-dock[data-view='phone'][data-bar='field'] > .chat-dock-body .chat-writer {
   display: none;
+}
+
+/* The one-line bar (O109, the list games): only the line and the count, 44 px high; the sheet
+   above it holds the whole chat with its field. */
+.chat-dock[data-view='phone'][data-bar='line'] {
+  padding: 0 12px;
+  border-radius: 14px;
 }
 
 .chat-dock[data-view='phone'] .focus-panel-head {

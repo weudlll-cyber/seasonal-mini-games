@@ -6,7 +6,8 @@
  * Responsibility: at 1280 × 720 and 390 × 844, in light and dark, the badge
  *                 ("Mini Games · dev · <branch> · <commit> · <date>", DECISIONS T346) shows at
  *                 the page's right edge on the lobby, in a running round in focus mode (the view
- *                 still one screen) with its Chat panel open, and on the round's result page;
+ *                 still one screen) with its chat in view (docked under the round, on a phone its
+ *                 sheet open, O109), and on the round's result page;
  *                 on none of them is it drawn over a button, a link, a field, the round view or
  *                 the chat (where one of those lies over the badge, the badge covers nothing).
  *                 The match is aborted.
@@ -22,7 +23,7 @@ import { PHONE, setTheme } from './screens.js';
 // The development build's label: dev, the branch (or "detached HEAD"), the commit, the day.
 const LABEL = /^Mini Games · dev · .+ · [0-9a-f]{7} · \d{4}-\d{2}-\d{2}$/;
 const COVERABLE =
-  'button, a, input, select, textarea, [role="button"], [data-testid="round-view"], [role="dialog"], .round-chat';
+  'button, a, input, select, textarea, [role="button"], [data-testid="round-view"], [role="dialog"], .round-chat, [data-testid="chat-dock"]';
 
 // The badge at the right edge, and drawn over none of COVERABLE: for each one its box meets,
 // the topmost element in the middle of the shared part is not the badge.
@@ -70,7 +71,9 @@ test('journey 42: the build badge covers nothing', async ({ browser }) => {
         await setTheme(host.page, theme);
         await fitsScreen(host.page);
         await coversNothing(host.page, `${where} round`);
-        await host.page.getByTestId('focus-chat').click();
+        // The chat docked under the round (O109): in view on a desktop, a sheet from its bar
+        // on a phone.
+        if (size === PHONE) await host.page.getByTestId('chat-dock-bar').click();
         await coversNothing(host.page, `${where} round with Chat`);
         await host.page.keyboard.press('Escape');
       }

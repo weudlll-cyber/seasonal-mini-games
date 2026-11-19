@@ -44,6 +44,10 @@ export interface GameMeta {
   // width, and the round bar has no Chat button; on a phone a bottom bar opens it as a sheet
   // (owner decision O97). Absent: the chat is a panel from the round bar, as in every guess game.
   readonly chatDock?: 'below';
+  // With the chat docked below, the phone's bar: 'line', one line (the newest message and the
+  // unread count) whose tap opens the whole chat with its field as a sheet (owner decision
+  // O109). Absent: the bar holds the room's own field too, the sheet the messages only (T363).
+  readonly chatBar?: 'line';
   // 'shared-by-name': equal match totals share a place, and a place lists its players by
   // display name; round wins and the earliest win do not count (owner decision O100). Absent:
   // equal points are ordered by round wins, then by the earliest win, as in every guess game.

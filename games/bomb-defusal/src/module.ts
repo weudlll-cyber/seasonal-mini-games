@@ -6,7 +6,9 @@
  * Responsibility: put the game's parts (meta, settings, the wire-sequence input, the uniform
  *                 secret order, state, rules with the explosion, comment lines, its own events,
  *                 views and specials) together through `guessModule` (04 §4.7), so the platform
- *                 runs it behind the contract of 04 §4 without knowing anything else about it.
+ *                 runs it behind the contract of 04 §4 without knowing anything else about it. Its
+ *                 match chat is docked under the round view and the result, with a one-line
+ *                 bar on a phone (`chatDock` 'below', `chatBar` 'line', owner decision O109).
  *                 The secret is `cuts` different wires of the round in an order drawn
  *                 uniformly (a partial shuffle, the engine's `pickDistinct`) under
  *                 `secret/shared` or `secret/<playerId>` (02c §3).
@@ -40,6 +42,10 @@ export const bombDefusal: GameModule<
     timing: 'cooldown',
     secretModes: ['shared', 'individual'],
     teams: true,
+    // The match chat docked under the round and the result, a one-line bar on a phone
+    // (owner decision O109, 02 §12).
+    chatDock: 'below',
+    chatBar: 'line',
   },
   settings: bdSettings,
   // Palette names only, at most six (05 §3.1); length and the round's wires are check 4.
