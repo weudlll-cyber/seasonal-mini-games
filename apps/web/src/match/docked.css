@@ -62,6 +62,9 @@
    never behind the chat. */
 @media (min-width: 900px) and (orientation: landscape) {
   .match-docked .match-after:not(.match-after--docked) {
+    /* The containing block of what is placed inside (the visually hidden labels), so nothing
+       of the scrolled result reaches past the screen and scrolls the page. */
+    position: relative;
     flex: 1 1 0;
     min-height: 0;
     overflow-y: auto;
@@ -94,6 +97,9 @@
   }
 
   .match-docked-main {
+    /* The containing block of what is placed inside (the visually hidden labels), so nothing
+       of the scrolled content reaches past the screen and scrolls the page. */
+    position: relative;
     padding: 12px 14px 16px;
     overflow-y: auto;
   }
