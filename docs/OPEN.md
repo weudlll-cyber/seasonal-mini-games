@@ -59,9 +59,9 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 31. Animation: at the round end the winning season or seasons light up for about 2 s on the result, beside their check and "wins".
 32. Animation: with the device's reduced-motion setting there are no flights and no light-up; the counts change in place.
 33. The phone result bar: where the game's name has no room on one line (360 × 740, or wider fonts at 390 × 844), it breaks between its words onto a second line inside its chip instead of being cut with an ellipsis; the bar stays one row (T372).
-34. The flights' times and look of DECISIONS T379 (MG-FLIGHT-CLEAN-2): 1.6 s flight, 0.5 s standing, 0.3 s fade, a replaced coin fading in 0.15 s; the "×N" at 15 px above its coin; the "+N" as a pill in the card's last slot.
+34. Closed: the flights' times and look of DECISIONS T379 (1.6 s flight, 0.5 s standing, 0.3 s fade, a replaced coin fading in 0.15 s; the "×N" at 15 px above its coin; the "+N" as a pill in the card's last slot) are accepted as built (O108).
 35. Closed: a switch at the round's end is decided by O105 (the last flights fly faster; every accepted move shows before the result), built as DECISIONS T380 (BACKLOG part two).
-36. The hold before the result (O106, built as DECISIONS T384): default 5 s, 1–20 s in whole seconds, the host's per round ("Hold before the result"); in it the status line reads "Choices closed · result in 0:04" and the feed "Choices are closed — the result follows in 4 s.".
+36. Closed: the hold before the result (O106, DECISIONS T384: default 5 s, 1–20 s, the host's per round; "Choices closed · result in 0:04" and the feed's "Choices are closed — the result follows in 4 s.") is accepted as built (O108).
 37. Closed: the strip and the round bar of DECISIONS T386 ("Result in 0:04" in the hold) and the reveal's line "Reveal · result in …" counting to the result are accepted as built (O108).
 
 ## Firefox/WebKit findings (O103 batch)

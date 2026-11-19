@@ -50,13 +50,19 @@ interface Details {
 const details = async (code: string) =>
   (await kit.clients.host.get(`/api/v1/matches/${code}`)).json<Details>();
 
+// Once a second: below the API limit's refill of 2 a second for the host's session (120 a
+// minute, a bucket of 120, auth/rateLimit), so the polling through two rounds with their holds
+// never empties it: 54 requests in the file, 190 at 5 a second, which emptied it on CI
+// (MG-MERGE-3).
+const POLL_MS = 1_000;
+
 async function until(code: string, test: (d: Details) => boolean, ms = 30_000): Promise<Details> {
   const end = Date.now() + ms;
   for (;;) {
     const d = await details(code);
     if (test(d)) return d;
     if (Date.now() > end) throw new Error(`timed out: ${JSON.stringify(d)}`);
-    await sleep(200);
+    await sleep(POLL_MS);
   }
 }
 
