@@ -11,7 +11,8 @@
  *                 shows a quarter of the total (O96) and its join time half of it, off, with
  *                 their help lines, while their "… follows the total" is on, and each is the
  *                 field's own once its box is off; a guess game's fields
- *                 stay the definitions' own.
+ *                 stay the definitions' own. A phased game's form has the hold before the
+ *                 result (5 s from its definition), which the body carries (T384).
  * Depends on:     vitest, @testing-library/react, ./QuickTest, ./quickTestSettings
  * Spec:           docs/spec/03-seasonal-specials.md §2.2; docs/spec/11-roadmap.md (Quick Test)
  */
@@ -102,6 +103,22 @@ describe('the fields of the chosen game (DECISIONS T334)', () => {
       expect(labels()).not.toContain(label);
     for (const label of ['Seed', 'Bots', 'Countdown before opening', 'Total length', 'Delay'])
       expect(labels()).toContain(label);
+    // The hold before the result, a phased game's own platform key (T384).
+    expect(field('Hold before the result')?.value).toBe('5');
+  });
+
+  it('sends the hold before the result by key', () => {
+    const extra: Extra = {
+      gameId: 'mind-games',
+      seedText: 'swift',
+      season: '',
+      bots: 5,
+      fast: true,
+      lobby: true,
+      teamMatch: false,
+    };
+    const body = bodyOf({ ...START, 'round.resultHoldS': 1 }, extra);
+    expect(body.settings).toMatchObject({ 'round.resultHoldS': 1 });
   });
 });
 

@@ -27,7 +27,7 @@ Guess The Number's round settings ([02](02-game-guess-the-number.md) §3) apply,
 | Setting | Values | Default | Source |
 |---|---|---|---|
 | Grid size (`target.size`) | 8–30 tiles per side, whole numbers; the grid is square | 20 | Owner, decision 45; the host's round setting, frozen while the round runs. The game's config keeps a width and a height, both the size, so the geometry below is written for `W × H` |
-| Answers (`target.feedback`) | `direction` "distance and direction" (easier), `distance` "distance only", `closeness` "warm/cold only" (harder) | `closeness` | Owner, decision 43, default `closeness` by decision 53 (a host's stored choice keeps its value); built as the host's round setting, chosen in the round form and frozen per round: the next round's form keeps the last choice unless the host changes it ([OPEN](../OPEN.md), spec conflicts) |
+| Answers (`target.feedback`) | `direction` "distance and direction" (easier), `distance` "distance only", `closeness` "warm/cold only" (harder) | `closeness` | Owner, decision 43, default `closeness` by decision 53 (a host's stored choice keeps its value); built as the host's round setting, chosen in the round form and frozen per round: the next round's form keeps the last choice unless the host changes it ([DECISIONS](../DECISIONS.md) O43, which closed O39's "per match", and T59) |
 
 The stops of Leaf Fall (`autumn.minCellsLeft`, default 10, 2–50) and halving (`halving.minCells`, default 16, 4–32) keep their defaults; their maxima lie below the smallest grid's 64 tiles, so on every grid size a fall can remove tiles and halving runs at least once.
 

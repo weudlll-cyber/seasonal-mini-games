@@ -29,11 +29,12 @@ import { colorsOf } from './RoundSide.js';
 import type { Panels } from './usePanels.js';
 import { roundMarks } from './playerMarks.js';
 
-// A phased round's timing for the game's panels (04 §4.8), public facts; none for a guess round.
+// A phased round's timing for the game's panels (04 §4.8), public facts with its result's time
+// (T384); none for a guess round.
 export const timingOf = (state: RoundStateView): PhasedTiming | undefined =>
-  state.plan === undefined || state.opensAt === null
+  state.plan === undefined || state.opensAt === null || state.endsAt === null
     ? undefined
-    : { opensAt: state.opensAt, plan: state.plan, now: serverNow };
+    : { opensAt: state.opensAt, plan: state.plan, endsAt: state.endsAt, now: serverNow };
 
 // The game's panel: a roster player's (it only shows; guesses go through the dock), or the
 // spectator's.

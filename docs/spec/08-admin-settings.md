@@ -70,10 +70,10 @@ Platform round keys (`round.secretMode`, `round.cooldownS`, `round.inactivityLim
 
 | Key | Default | Min | Max | Status | Who | Running rounds |
 |---|---|---|---|---|---|---|
-| `code.length` | 4 | 3 | 6 | *proposal*: digits in the secret code (02b §3) | host | frozen |
-| `code.digits` | 10 | 4 | 10 | *proposal*: the digits 0 … digits − 1 are in use; repeats allowed (02b §3) | host | frozen |
-| `autumn.digitsPerFall` | 1 | 1 | 3 | *proposal*: digits that fall per Leaf Fall; replaces `autumn.count` for this game (02b §7.3) | game admin | frozen |
-| Tier score bounds | 0.25 / 0.45 / 0.60 / 0.75 | — | — | *proposal* (not a setting): fixed table of 02b §6 | — | — |
+| `code.length` | 4 | 3 | 6 | owner (O65): digits in the secret code (02b §3) | host | frozen |
+| `code.digits` | 10 | 4 | 10 | owner (O65): the digits 0 … digits − 1 are in use; repeats allowed (02b §3) | host | frozen |
+| `autumn.digitsPerFall` | 1 | 1 | 3 | owner (O65): digits that fall per Leaf Fall; replaces `autumn.count` for this game (02b §7.3) | game admin | frozen |
+| Tier score bounds | 0.25 / 0.45 / 0.60 / 0.75 | — | — | owner (O65), not a setting: fixed table of 02b §6 | — | — |
 
 ### 3.2 Seasonal Bomb Defusal (document `game.bomb-defusal`, [02c](02c-game-bomb-defusal.md))
 
@@ -81,11 +81,11 @@ Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.in
 
 | Key | Default | Min | Max | Status | Who | Running rounds |
 |---|---|---|---|---|---|---|
-| `bomb.wires` | 6 | 4 | 8 | proposal: the first N colours of red, blue, yellow, green, white, black, orange, purple (02c §3) | host | frozen |
-| `bomb.cuts` | 4 | 3 | 6 | proposal; at most `bomb.wires` | host | frozen |
-| `bomb.explosionPenaltyS` | 5 | 0 | 30 | owner (O40): host chooses, 0 allowed; default and max: proposal. Added to the cooldown on a wrong first cut (02c §5.2) | host (per match) | frozen (copied from the match into each round) |
+| `bomb.wires` | 6 | 4 | 8 | owner (O65): the first N colours of red, blue, yellow, green, white, black, orange, purple (02c §3) | host | frozen |
+| `bomb.cuts` | 4 | 3 | 6 | owner (O65); at most `bomb.wires` | host | frozen |
+| `bomb.explosionPenaltyS` | 5 | 0 | 30 | owner (O40, O65): the host chooses it for each round, 0 allowed. Added to the cooldown on a wrong first cut (02c §5.2) | host | frozen |
 | `autumn.wiresPerFall` | — | — | — | removed by owner decision 42: each Leaf Fall marks one wire (02c §8.3) | — | — |
-| Tier rule | fixed | — | — | proposal, not a setting: k = 1 … cuts − 2 spread evenly over cold … burning (02c §7) | — | — |
+| Tier rule | fixed | — | — | owner (O65), not a setting: k = 1 … cuts − 2 spread evenly over cold … burning (02c §7) | — | — |
 
 ### 3.3 Seasonal Target (document `game.seasonal-target`, [02d](02d-game-seasonal-target.md))
 
@@ -95,18 +95,19 @@ Shared guess keys as in 08 §3 (`round.secretMode`, `round.cooldownS`, `round.in
 |---|---|---|---|---|---|---|
 | `target.size` | 20 | 8 | 30 | owner (O45): the square tile grid's side in tiles; row 1 is north (02d §3) | host | frozen |
 | `target.feedback` | `closeness` | — | — (`direction`, `distance`, `closeness`) | owner (O43; default O53): distance and direction, distance only, warm/cold only (a stored explicit value keeps its value); the host's round setting, chosen in the round form; the next round's form keeps the last choice (02d §3, §5) | host | frozen |
-| `autumn.minCellsLeft` | 10 | 2 | 50 | proposal: Leaf Fall stops when fewer candidate tiles would remain (02d §8.3); at most 50, so tiles can fall on an 8 × 8 grid (O45) | game admin | frozen |
-| `halving.minCells` | 16 | 4 | 32 | proposal: halving stops once the target area has this many tiles or fewer (02d §8.4); at most 32, so an 8 × 8 grid is halved at least once (O45) | game admin | frozen |
-| Closeness tier table (way off, cold, cool, warm, hot above 48 / 32 / 20 / 12 / 6 % of the diagonal and above a minimum of n = 61 / 40 / 20 / 13 / 8, n the squared distance in tiles; touching = just missed) | — | — | — | proposal, not a setting: Leaf Fall's `closeness` candidates depend on it (02d §7; `games/seasonal-target/src/geometry.ts`) | — | — |
+| `autumn.minCellsLeft` | 10 | 2 | 50 | owner (O65): Leaf Fall stops when fewer candidate tiles would remain (02d §8.3); at most 50, so tiles can fall on an 8 × 8 grid (O45) | game admin | frozen |
+| `halving.minCells` | 16 | 4 | 32 | owner (O65): halving stops once the target area has this many tiles or fewer (02d §8.4); at most 32, so an 8 × 8 grid is halved at least once (O45) | game admin | frozen |
+| Closeness tier table (way off, cold, cool, warm, hot above 48 / 32 / 20 / 12 / 6 % of the diagonal and above a minimum of n = 61 / 40 / 20 / 13 / 8, n the squared distance in tiles; touching = just missed) | — | — | — | owner (O65), not a setting: Leaf Fall's `closeness` candidates depend on it (02d §7; `games/seasonal-target/src/geometry.ts`) | — | — |
 
 ### 3.4 Seasonal Mind Games (document `game.mind-games`, [02e](02e-game-mind-games.md))
 
-Platform round keys used: `round.countdownS`, `round.seasonSource` (the round's season, which changes no rule, 02e §12).
+Platform round keys used: `round.countdownS`, `round.seasonSource` (the round's season, which changes no rule, 02e §12), and `round.resultHoldS`, which only a `phased` game's document holds (below).
 
 Not used by this game, because the `phased` class has no cooldown, specials, inactivity limit, secret or proof ([04](04-software-architecture.md) §4.8): `round.secretMode`, `round.cooldownS`, `round.inactivityLimitS`, `round.inactivityWarnS`, `round.maxDurationMin` (the plan's end replaces it), `round.marginWindowS`, `round.specialOn`, `round.teamsOn`, `round.halving`, every shared guess key, `spring.*`, `summer.*`, `autumn.*`, `winter.*`, `halving.*`, `points.*`, `fairness.commitReveal`.
 
 | Key | Default | Min | Max | Status | Who | Running rounds |
 |---|---|---|---|---|---|---|
+| `round.resultHoldS` | 5 | 1 | 20 | owner (O106): the game screen stays this long after the plan's end before the result, so everyone sees the last switches; default and bounds *proposal* (DECISIONS T384), whole seconds; the lower bound is T380's settle; a platform key of every `phased` game, "Hold before the result" in the host form and the Quick Test | host | frozen |
 | `mind.totalS` | 120 | 30 | 600 | default: owner (O78); bounds: *proposal* | host | frozen |
 | `mind.delayAuto` | true | — | — | owner (O96): the delay is a quarter of the total, rounded down, and follows it; off: `mind.delayS` applies | host | frozen |
 | `mind.delayS` | 30 | 5 | 120 | default: owner (O78); bounds and the rule 2 × delay + 10 ≤ total: *proposal* (02e §3); used only with `mind.delayAuto` off | host | frozen |
@@ -120,7 +121,7 @@ Not used by this game, because the `phased` class has no cooldown, specials, ina
 | Points for a winning final choice | 1; All 2 | — | — | owner (O84, not a setting) | — | — |
 | Feed lines in a view | newest 60 | — | — | *proposal*, not a setting (02e §6.1) | — | — |
 
-The cross-key rules are the game's `problem` (owner decision 74; 02e §3), with the delay in force (a quarter of the total while `mind.delayAuto` is on): the delay at most (total − 10 s) / 2; with `mind.joinAuto` off the join time at most total − delay; `mind.winnerPlace` 5 only with All on. With the defaults the delay is 30 s, the join time 60 s and choices close at 90 s.
+The cross-key rules are the game's `problem` (owner decision 74; 02e §3), with the delay in force (a quarter of the total while `mind.delayAuto` is on): the delay at most (total − 10 s) / 2; with `mind.joinAuto` off the join time at most total − delay; `mind.winnerPlace` 5 only with All on. With the defaults the delay is 30 s, the join time 60 s, choices close at 90 s, the plan ends at 120 s and the result shows at 125 s.
 
 ## 4. Match settings (document `matchmaking`)
 

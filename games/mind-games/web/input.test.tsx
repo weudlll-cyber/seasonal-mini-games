@@ -73,6 +73,15 @@ describe('Mind Games input replies and keys (02e §5.2, §11)', () => {
     );
   });
 
+  it('says a choice refused for the account’s rate in the platform’s sentence, with choices', async () => {
+    const act = vi.fn(() => Promise.resolve({ ok: false, code: 'RATE_LIMITED' }));
+    render(<MindInput {...inputProps(playerView([], 0), act)} />);
+    fireEvent.click(screen.getByRole('radio', { name: /Spring/ }));
+    expect((await screen.findByRole('status')).textContent).toBe(
+      'Slow down a little — too many choices at once.',
+    );
+  });
+
   it('shows no count while the feed is empty', () => {
     render(<MindInput {...inputProps(playerView([], 0))} />);
     expect(document.querySelectorAll('.mg-count')).toHaveLength(0);

@@ -10,8 +10,12 @@
  *                 frame. Released events are numbered by a release sequence of their own, never
  *                 by the log's seq, which would count what nobody may see yet; the views use
  *                 the same sequence and the tick's cut (`cut`, the time up to which actions are
- *                 public), so a state answer never shows more than the frames did. The round's
- *                 end releases everything held before it. A release writes no event: what is
+ *                 public), so a state answer never shows more than the frames did. Within two
+ *                 seconds of the round's time-up (its countdown's `endsAt`), what falls due
+ *                 goes out at its own time, not with the next tick, so with a short hold before
+ *                 the result the last moves of play still reach the players in time to be shown
+ *                 (T380, T384). The round's end releases
+ *                 everything still held before it. A release writes no event: what is
  *                 released follows from the log and the clock, so after a restart `restore`
  *                 counts what was released and holds the rest again.
  * Depends on:     ./pgRoundStore (types), ./views (frame events, public forms)
@@ -45,6 +49,10 @@ export class DelayedRoom {
   private cutAt: number;
   private readonly timer: NodeJS.Timeout;
   private over = false;
+  // The round's time-up from its countdown; Infinity before it.
+  private endsAt = Infinity;
+  // The last second's releases, at their own times.
+  private last: NodeJS.Timeout[] = [];
 
   constructor(
     private readonly delayMs: number,
@@ -76,6 +84,7 @@ export class DelayedRoom {
     const now = this.now();
     const ended = log.some((e) => ENDS.has(e.type));
     for (const e of log) {
+      this.note(e);
       const item = this.itemOf(e);
       if (item === null) continue;
       if (!ended && item.releaseAt > now) this.held.push(item);
@@ -87,6 +96,7 @@ export class DelayedRoom {
   // A committed batch: lifecycle events out at once, the rest held; an end releases all.
   add(events: readonly StoredEvent[]): void {
     for (const e of events) {
+      this.note(e);
       if (ENDS.has(e.type)) {
         this.flush(Infinity);
         // The end's own public form, never delayed (it was sent wrapped before, T341).
@@ -113,10 +123,33 @@ export class DelayedRoom {
     return { releaseAt, at: e.at, room: form.room, host: form.host };
   }
 
+  // The countdown names the round's time-up.
+  private note(e: StoredEvent): void {
+    if (e.type !== 'CountdownStarted') return;
+    const endsAt = (e.event as { endsAt?: unknown }).endsAt;
+    if (typeof endsAt === 'number') this.endsAt = endsAt;
+  }
+
   private tick(): void {
     const now = this.now();
-    this.cutAt = now - this.delayMs;
-    this.flush(now);
+    this.releaseUpTo(now);
+    // Within two ticks of the time-up (with the shortest hold of 1 s, the plan's last second
+    // and the hold, T380, T384): what falls due before it goes out at its own time, not with a
+    // late tick or the end, whose result would replace it unseen.
+    if (this.endsAt - now > 2 * TICK_MS || this.last.length > 0) return;
+    const dues = new Set(this.held.map((h) => h.releaseAt).filter((t) => t < this.endsAt));
+    this.last = [...dues].map((t) =>
+      setTimeout(() => {
+        this.releaseUpTo(t);
+      }, t - now),
+    );
+  }
+
+  // Everything due by `t`, and the cut just past what that released: the views show actions
+  // received before the cut, and an action received at t − D is due at t (times in whole ms).
+  private releaseUpTo(t: number): void {
+    this.cutAt = t - this.delayMs + 1;
+    this.flush(t);
   }
 
   private flush(upTo: number): void {
@@ -145,5 +178,6 @@ export class DelayedRoom {
     // After the end everything is public: the views need no cut any more.
     this.cutAt = Infinity;
     clearInterval(this.timer);
+    for (const t of this.last) clearTimeout(t);
   }
 }

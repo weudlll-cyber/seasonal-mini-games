@@ -52,13 +52,17 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 24. Pre-picks travel by `match.prefs`, at most once every 2 s per account.
 25. The Quick Test: 7 bots by default; about one in four pre-picks and stays away; the others enter spread over the join time and stay, switch at random, or lean to the least chosen option in the feed they see.
 26. A load scenario L5: one round with 500 players switching up to every 2 s.
-27. Animation (O90): flights run in a band between the choice buttons and their counts (56 px high, T377), from count to count, clipped to the stage, never over a button, a feed line or the chat; the points come from the cards as measured at each wave: a lone icon lands on its card's middle, several symmetric around it one icon's room apart (named ones as far as their names need), closer in a narrow card (overlapping by at most a fifth), smaller where even that does not fit; starts the same way around the old card; a wave started while another's icons are near their points keeps clear of them (T377).
-28. Animation: a first choice's icon flies from the player's name line into the season, and a visible switch's from the old season to the new one, each with the player's name above the icon (T377); the name is centred over its icon wherever it flies, moved aside only as far as keeps it whole in the band, and shown exactly as long as its icon (T377); the flight is placed on the icon's centre, so the name never moves it (T376).
-29. Animation: a hidden switch (switches hidden, or "Hide my switches" ticked) still flies from the old season to the new one, without a name, along the same line as a named flight on that path (T376); one step's moves with the same from → to (first choices into one season alike) fly as one icon at full size with "×N" and no name (T377).
-30. Animation: all switches of one feed step fly as one wave, at most 12 icons a wave with a "+8" tag for the rest, about 1.2 s a flight (T371), a new wave starting while an old one finishes; the icon flips into the new season's within the first half of the flight, never faint (T377), and, in the last fifth, shrinks and fades into its card with its name, so nothing is left in the band after it, the wave removed only when its flights end (T376, T377); "+8" counts the players beyond the 12 icons and beyond what one card shows at 82 % of an icon's size or more; All flies as its square of four at full size (T377); the counts are always the step's exact counts.
+27. Closed: the flights are the owner's final behaviour (MG-FLIGHT-CLEAN, 2026-11-17), described in [spec/02e §11.1](spec/02e-game-mind-games.md#111-animation-owner-decision-90), DECISIONS T378 (BACKLOG part two).
+28. Closed with 27.
+29. Closed with 27.
+30. Closed with 27.
 31. Animation: at the round end the winning season or seasons light up for about 2 s on the result, beside their check and "wins".
 32. Animation: with the device's reduced-motion setting there are no flights and no light-up; the counts change in place.
 33. The phone result bar: where the game's name has no room on one line (360 × 740, or wider fonts at 390 × 844), it breaks between its words onto a second line inside its chip instead of being cut with an ellipsis; the bar stays one row (T372).
+34. Closed: the flights' times and look of DECISIONS T379 (1.6 s flight, 0.5 s standing, 0.3 s fade, a replaced coin fading in 0.15 s; the "×N" at 15 px above its coin; the "+N" as a pill in the card's last slot) are accepted as built (O108).
+35. Closed: a switch at the round's end is decided by O105 (the last flights fly faster; every accepted move shows before the result), built as DECISIONS T380 (BACKLOG part two).
+36. Closed: the hold before the result (O106, DECISIONS T384: default 5 s, 1–20 s, the host's per round; "Choices closed · result in 0:04" and the feed's "Choices are closed — the result follows in 4 s.") is accepted as built (O108).
+37. Closed: the strip and the round bar of DECISIONS T386 ("Result in 0:04" in the hold) and the reveal's line "Reveal · result in …" counting to the result are accepted as built (O108).
 
 ## Firefox/WebKit findings (O103 batch)
 

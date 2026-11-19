@@ -6,7 +6,8 @@
  * Responsibility: one row of cards (owner decision O97), each in its season's colour (All in
  *                 the neutral colour with the four icons): on top the button with the season's
  *                 original icon and its name, a radio group (the arrow keys move between them,
- *                 Enter or Space chooses, 02e §11); at the foot the count as the feed shows it,
+ *                 Enter or Space chooses, 02e §11), whose click area is the whole card, its band
+ *                 and its count included (./mind.css); at the foot the count as the feed shows it,
  *                 in large type, with "players, 10 s ago" under it; the count is the view's,
  *                 never a live one, and the client counts nothing; while the feed is still
  *                 empty there is no count at all (09 §4 journey 38). The viewer's current choice
@@ -15,19 +16,20 @@
  *                 name and the count, and one line under the row names the choice ("Your
  *                 choice: Autumn", ./mind.css). Every button has its tooltip (O89). Between the
  *                 buttons and the counts, inside the cards' frames, runs the flight band
- *                 (./FlightBand, 02e §11.1), which no button overlaps. A spectator gets the same
- *                 row without choosing.
- * Depends on:     react, @smg-game/mind-games (options, names, views), ./FlightBand, ./seasons,
- *                 ./text
+ *                 (./FlightBand, 02e §11.1, given the round's timing), which no button
+ *                 overlaps. A spectator gets the same row without choosing.
+ * Depends on:     react, @smg/game-sdk (clockText, PhasedTiming), @smg-game/mind-games (options, names,
+ *                 views), ./FlightBand, ./seasons, ./text
  * Used by:        ./MindInput, ./FeedPanels
  * Spec:           docs/spec/02e-game-mind-games.md §6.1, §11
  */
 import { CHOICE_NAMES, optionsOf, type Choice, type SpectatorView } from '@smg-game/mind-games';
+import { clockText, type PhasedTiming } from '@smg/game-sdk';
 import { useRef, useState, type KeyboardEvent, type ReactElement } from 'react';
 
 import { FlightBand } from './FlightBand.js';
 import { colorOf, iconsOf } from './seasons.js';
-import { clock, delayS } from './text.js';
+import { delayS } from './text.js';
 
 export interface ChoiceButtonsProps {
   readonly view: SpectatorView;
@@ -37,6 +39,8 @@ export interface ChoiceButtonsProps {
   readonly choose: ((c: Choice) => void) | null;
   readonly canAct: boolean;
   readonly names: Readonly<Record<string, string>>;
+  // The round's public timing: the flights shorten near its end (02e §11.1).
+  readonly timing?: PhasedTiming | undefined;
 }
 
 const STEP: Readonly<Record<string, number>> = {
@@ -47,7 +51,7 @@ const STEP: Readonly<Record<string, number>> = {
 };
 
 const tooltipOf = (c: Choice, view: SpectatorView): string =>
-  `Choose ${CHOICE_NAMES[c]}. You can switch until ${clock(view.rules.plan.actionsEndMs)}.`;
+  `Choose ${CHOICE_NAMES[c]}. You can switch until ${clockText(view.rules.plan.actionsEndMs)}.`;
 
 const tint = (c: Choice) => ({ ['--mg-color' as string]: colorOf(c) });
 
@@ -151,7 +155,7 @@ export function ChoiceButtons(p: ChoiceButtonsProps): ReactElement {
           </button>
         ))}
       </div>
-      <FlightBand view={view} names={p.names} />
+      <FlightBand view={view} names={p.names} timing={p.timing} />
       <Counts view={view} options={options} />
     </div>
   );

@@ -6,7 +6,8 @@
  * Responsibility: the release sequence counts only room frames; a host-only event is released
  *                 to the host without a number of its own. `restore` from the round's log must
  *                 reach the sequence the live room reached, and go on numbering the same way,
- *                 also when the log already holds the round's end.
+ *                 also when the log already holds the round's end. Near the round's time-up
+ *                 what falls due goes out at its own time, before the end, never earlier (T380).
  * Depends on:     vitest, ./delayedRoom, ./pgRoundStore (types)
  * Spec:           docs/spec/04-software-architecture.md §4.8 rule 5; docs/spec/06-data-model-api-realtime.md §4.4
  */
@@ -114,5 +115,30 @@ describe('DelayedRoom restore after the end (04 §4.8 rule 5)', () => {
     b.restore(log);
     expect(b.seq()).toBe(a.seq());
     expect(a.seq()).toBe(3);
+  });
+});
+
+describe('DelayedRoom near the time-up (T380)', () => {
+  it('releases the last moves at their own time, before the end, never earlier', () => {
+    const live: Released[] = [];
+    const a = room(live);
+    // The plan ends at 10.5 s, the time-up a settle of 1 s later.
+    a.add([stored(0, { type: 'CountdownStarted', at: 0, opensAt: 0, endsAt: 11_500 })]);
+    // Moves 0.8 s and 0.6 s before choices close (8.5 s), due 10.2 s and 10.4 s.
+    a.add([game(8_200, 'room', 1), game(8_400, 'room', 2)]);
+    const games = () => live.flatMap((r) => r.room).filter((f) => f.at >= 8_000);
+    // A second at a time, so each tick sees its own moment.
+    for (let i = 0; i < 10; i += 1) pass(1_000);
+    pass(199);
+    expect(games()).toEqual([]);
+    pass(1);
+    expect(games().map((f) => f.at)).toEqual([8_200]);
+    pass(199);
+    expect(games()).toHaveLength(1);
+    pass(1);
+    expect(games().map((f) => f.at)).toEqual([8_200, 8_400]);
+    // The state answers show what the frames did: actions received before 10.4 s − D + 1 ms.
+    expect(a.cut()).toBe(10_400 - DELAY + 1);
+    a.stop();
   });
 });

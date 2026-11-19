@@ -6,13 +6,15 @@
  * Responsibility: host choices are taken only for host keys inside their bounds; the game's own
  *                 rule across keys is said for the form or under the setting it names (T335);
  *                 Heatwave's step and interval per round (O63); the inactivity limit and its
- *                 warning below it (O71, O74). Split from ./roundSession.test by responsibility.
+ *                 warning below it (O71, O74); a phased round's hold before the result (its
+ *                 default, bounds, the time-up it freezes, none for a guess game, T384). Split
+ *                 from ./roundSession.test by responsibility.
  * Depends on:     vitest, ./fakes, ./roundSettings
- * Spec:           docs/spec/02-game-guess-the-number.md §3; docs/spec/08-admin-settings.md §3
+ * Spec:           docs/spec/02-game-guess-the-number.md §3; docs/spec/08-admin-settings.md §3, §3.4
  */
 import { describe, expect, it } from 'vitest';
 
-import { findGame } from './fakes.js';
+import { findGame, pickGame } from './fakes.js';
 import { chooseRoundSettings, gameSettingsDefs } from './roundSettings.js';
 
 describe('round settings', () => {
@@ -104,6 +106,43 @@ describe('the inactivity limit per round (O71)', () => {
           field: `round.inactivity${field}S`,
           message,
         }),
+      );
+    }
+  });
+});
+
+describe("a phased round's hold before the result (T384)", () => {
+  const HOLD = 'round.resultHoldS';
+  // pickGame's plan ends at 10 s.
+  const timeUp = (choices: Readonly<Record<string, unknown>>, admin = {}) =>
+    chooseRoundSettings(pickGame, admin, choices).platform.maxDurationMs;
+
+  it('is a host setting of a phased game only, 5 s by default, from 1 to 20 s', () => {
+    const def = gameSettingsDefs(pickGame).find((d) => d.key === HOLD);
+    expect(def).toMatchObject({
+      default: 5,
+      min: 1,
+      max: 20,
+      hostChooses: true,
+      running: 'frozen',
+    });
+    expect(gameSettingsDefs(findGame).some((d) => d.key === HOLD)).toBe(false);
+    expect(() => chooseRoundSettings(findGame, {}, { [HOLD]: 5 })).toThrow(/not a setting/);
+  });
+
+  it('puts the time-up the hold after the plan’s end, frozen per round', () => {
+    expect(timeUp({})).toBe(15_000);
+    expect(timeUp({ [HOLD]: 1 })).toBe(11_000);
+    expect(timeUp({ [HOLD]: 20 })).toBe(30_000);
+    // The admin's default for the game's rounds, the host's choice over it.
+    expect(timeUp({}, { [HOLD]: { value: 8 } })).toBe(18_000);
+    expect(timeUp({ [HOLD]: 2 }, { [HOLD]: { value: 8 } })).toBe(12_000);
+  });
+
+  it('refuses a hold outside its bounds or in parts of a second', () => {
+    for (const bad of [0, 21, 2.5]) {
+      expect(() => chooseRoundSettings(pickGame, {}, { [HOLD]: bad })).toThrow(
+        expect.objectContaining({ code: 'ROUND_SETTINGS_INVALID', field: HOLD }),
       );
     }
   });

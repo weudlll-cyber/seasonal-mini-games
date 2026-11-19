@@ -7,19 +7,18 @@
  *                 (on by default, O24), the seed text (the same text gives the same secret and
  *                 season), the secret mode, the season (or the seed's), what others see, the
  *                 bots, the cooldown, the countdown with the round's intro screen (O36), the
- *                 inactivity limit and warning (O75), the chosen game's own host settings and
- *                 only those (Guess The Number: lowest and
- *                 highest number, whether the range is shown, the closeness comments, O21),
- *                 the fast test profile and whether it is a team match (O34); start it
- *                 (`POST /dev/quicktest`, the game's settings by key, T121) and go to the
- *                 match, where the player hosts it: in the waiting area, where the bots join
- *                 and the player starts the round from the host menu, or with the round
- *                 counting down at once. Every field has
- *                 its one-line help under it: the settings with the words and bounds of their
- *                 definitions through the host form's own `Field`, the rest from FORM_HELP, so
- *                 both forms say the same; a refused setting's sentence under its field (O74).
- *                 Development builds only: the shell loads this module
- *                 on demand and a production build leaves it out.
+ *                 inactivity limit and warning (O75; a phased game instead the hold before
+ *                 the result, T384), the chosen game's own host settings and only those (Guess
+ *                 The Number: lowest and highest number, whether the range is shown, the
+ *                 closeness comments, O21), the fast test profile and whether it is a team
+ *                 match (O34); start it (`POST /dev/quicktest`, the game's settings by key,
+ *                 T121) and go to the match, where the player hosts it: in the waiting area,
+ *                 where the bots join and the player starts the round from the host menu, or
+ *                 with the round counting down at once. Every field has its one-line help
+ *                 under it: the settings with the words and bounds of their definitions through
+ *                 the host form's own `Field`, the rest from FORM_HELP, so both forms say the
+ *                 same; a refused setting's sentence under its field (O74). Development builds
+ *                 only: the shell loads it on demand; a production build leaves it out.
  * Depends on:     react, @smg/contracts, @smg-game/registry/web, ./quickTestSettings,
  *                 ./http, ./router, ../season/season, ../components/fields, ../lobby/games,
  *                 ../match/* (and its form grid, ../match/match.css)
@@ -50,6 +49,7 @@ import {
   gameKeysOf,
   INACTIVITY_KEYS,
   KEYS,
+  PHASED_KEYS,
   SettingFields,
   shownKeysOf,
   START,
@@ -164,7 +164,7 @@ function switchFields(p: { readonly extra: Extra; readonly set: (e: Partial<Extr
 }
 
 // A phased game's form (04 §4.8, T334): the game, the lobby, the seed, the season, the bots, the
-// countdown and the game's own settings; no secret, cooldown, inactivity, special or teams.
+// countdown, the hold (T384), the game's own settings; no secret, cooldown, inactivity, teams.
 function PhasedFields(p: {
   readonly more: ReturnType<typeof extraFields>;
   readonly fields: (keys: readonly string[]) => ReactElement;
@@ -180,7 +180,7 @@ function PhasedFields(p: {
       {/* No season for a game whose rounds show none (O93). */}
       {p.seasons ? more.season : null}
       {more.bots}
-      {fields(['round.countdownS', ...gameKeysOf(p.gameId)])}
+      {fields(['round.countdownS', ...PHASED_KEYS, ...gameKeysOf(p.gameId)])}
     </div>
   );
 }

@@ -26,7 +26,7 @@
  */
 import { createHash, randomBytes, randomInt } from 'node:crypto';
 
-import { PLATFORM_ROUND_SETTINGS, type Season } from '@smg/game-sdk';
+import { PHASED_ROUND_SETTINGS, PLATFORM_ROUND_SETTINGS, type Season } from '@smg/game-sdk';
 
 import { currentRoundId, matchById, openMatch, type MatchRow } from '../match/matches.js';
 import type { Play } from '../match/play.js';
@@ -222,12 +222,15 @@ function choicesOf(
     'round.rangeVisible': input.rangeVisible,
     'round.comments': input.comments,
   }).filter(([key]) => docKeys.has(key));
-  // The form sends the platform's inactivity and Heatwave keys for every game; a phased game's
-  // document has none of them. A game's own keys and anything else stay for the check.
+  // The form sends the platform's inactivity, Heatwave and hold keys for every game; a game's
+  // document has only those it uses (a phased game the hold, a guess game the others). A game's
+  // own keys and anything else stay for the check.
   const own = Object.entries(input.settings).filter(
     ([key]) => docKeys.has(key) || !PLATFORM_KEYS.has(key),
   );
   return { ...Object.fromEntries(named), ...Object.fromEntries(own) };
 }
 
-const PLATFORM_KEYS: ReadonlySet<string> = new Set(PLATFORM_ROUND_SETTINGS.map((d) => d.key));
+const PLATFORM_KEYS: ReadonlySet<string> = new Set(
+  [...PLATFORM_ROUND_SETTINGS, ...PHASED_ROUND_SETTINGS].map((d) => d.key),
+);

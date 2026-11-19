@@ -10,10 +10,11 @@
  *                 never by viewport arithmetic, so the round stays one screen at 1280 × 720 and
  *                 1920 × 1080 with the chat docked under it and at 390 × 844 (02e §11, O97).
  *                 The current phase by its frame, its fill and "· now"; the cards in one row
- *                 with their frames behind the buttons, the flight band and the counts, the own
- *                 choice's frame strong and its pill, never by colour alone; touch targets of
- *                 at least 44 px (a phone's card at least 66 px wide and 72 px tall, also with
- *                 All). The phone layout is the platform's (a landscape viewport under 900 px
+ *                 with their frames behind the buttons, the flight band and the counts, each
+ *                 button reaching over its whole card so a click anywhere in the frame chooses,
+ *                 the own choice's frame strong and its pill, never by colour alone; touch
+ *                 targets of at least 44 px (a phone's card at least 66 px wide and 72 px tall,
+ *                 also with All). The phone layout is the platform's (a landscape viewport under 900 px
  *                 or any portrait one, the same media query here): the strip compact, the cards
  *                 with icon, name and count, and the line "Your choice: Autumn". The phase strip
  *                 is styled in ./strip.css, the pre-picks in ./prefs.css, the result in
@@ -42,10 +43,12 @@
   gap: var(--space-1);
 }
 
-/* The cards: frames behind three rows, the buttons, the flight band and the counts. */
+/* The cards: frames behind three rows, the buttons, the flight band and the counts. Clipped at
+   its edges, so each button's reach down its card (below) ends with the cards. */
 .mg-choices {
   position: relative;
   display: grid;
+  overflow: clip;
 }
 
 .mg-frames,
@@ -88,7 +91,13 @@
   position: relative;
 }
 
+/* The counts and the band (./flights.css) let a click through to the button behind them. */
+.mg-counts {
+  pointer-events: none;
+}
+
 .mg-choice {
+  position: relative;
   min-width: 0;
   min-height: 72px;
   display: flex;
@@ -104,6 +113,15 @@
   border: 0;
   border-radius: var(--radius-card);
   cursor: pointer;
+}
+
+/* The whole card chooses: the button reaches down over its band and its count to the cards'
+   clipped foot, the same column as its frame, so a click anywhere in the frame is the button's
+   (same disabled rule, same own-choice rule); keyboard and screen readers keep the button. */
+.mg-choice::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 -100vh;
 }
 
 .mg-choice:disabled {

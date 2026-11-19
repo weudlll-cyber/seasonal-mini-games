@@ -4,7 +4,7 @@
 
 ## 1. Layout
 
-Everything except `README.md`, `CLAUDE.md`, `LICENSE`, `.gitignore` and `docs/` is *planned*. It arrives with the work package that needs it. Files whose role is the same as in Bingo (Bingo 10 §1) are listed by name only.
+Files whose role is the same as in Bingo (Bingo 10 §1) are listed by name only.
 
 ```
 seasonal-mini-games/
@@ -15,8 +15,9 @@ seasonal-mini-games/
 ├─ .vscode/  .github/                                        as Bingo (workflows, shared setup action, PR template)
 ├─ assets/                                                   copied from Bingo assets/ with its manifest (03 §6)
 ├─ packages/
-│  ├─ game-sdk/src/        contract.ts (GameModule and its types), random.ts, settings.ts, range.ts,
-│  │                       crypto.ts (entry @smg/game-sdk/crypto: drbg.ts, commitment.ts), conformance/
+│  ├─ game-sdk/src/        module.ts (GameModule, its types and the ConformanceKit), phased.ts, web.ts,
+│  │                       random.ts, settings.ts, range.ts, sentinel.ts, crypto.ts (entry
+│  │                       @smg/game-sdk/crypto: drbg.ts, commitment.ts)
 │  ├─ guess-engine/src/    the shared guess engine (04 §4.7): secrets, state, rules, comments, tiers,
 │  │                       views, candidates, closestMiss, settings, module (guessModule)
 │  ├─ domain/src/          match/, round/ (lifecycle, roster, cooldown, order, placings), specials/
@@ -26,7 +27,8 @@ seasonal-mini-games/
 │  ├─ contracts/src/       http/, ws/, events/, settings/ (schemas and defaults/), errors.ts
 │  └─ ui/                  shared React components, design tokens (as Bingo)
 ├─ games/
-│  ├─ registry/            src/index.ts (modules), web/index.ts (screens): the installed games (04 §3)
+│  ├─ registry/            src/index.ts (modules), web/index.ts (screens): the installed games (04 §3);
+│  │                       src/conformance.test.ts, phased.conformance.test.ts: the conformance suite
 │  ├─ guess-the-number/
 │  │  ├─ src/              module.ts, feedback.ts, hints.ts, leafFall.ts, halving.ts, views.ts, events.ts,
 │  │  │                    settings/ (schema.ts, defaults.ts), *.test.ts
@@ -48,7 +50,7 @@ seasonal-mini-games/
 └─ docs/
    ├─ spec/                this specification
    ├─ BACKLOG.md  OPEN.md  DECISIONS.md  GAME-IDEAS.md
-   └─ operator-guide.md  code-review-checklist.md            (planned, as Bingo)
+   └─ operator-guide.md  code-review-checklist.md            as Bingo
 ```
 
 ## 2. Size and structure rules (adopted)
@@ -109,14 +111,23 @@ Bingo 08 applies with the names of [04](04-software-architecture.md) §2.2:
 
 - environments (§1);
 - branching and release flow (§2);
-- CI jobs including e2e on every push and the `load` job before a release (§3);
+- CI (`.github/workflows/ci.yml`) on every push: `verify`, `security`, `docs`, the e2e journeys in Chromium and the `image` job; Firefox and WebKit every night on master (`browsers.yml`, O103); no CI job runs the load scenarios (`load/`, 09 §5), which are run by hand (§3);
 - containers (§4: multi-stage, non-root uid 10001, read-only root FS, healthcheck `/healthz`, image ≤ 250 MB);
 - runtime configuration through validated env vars (§5);
 - observability with the metrics of [06](06-data-model-api-realtime.md) §4.6 (§6);
 - dependency and patch policy (§7);
 - developer experience (§8: `pnpm dev` starts server and both clients; PostgreSQL and Mailpit through `docker compose --env-file ops/.env.dev.example -f ops/compose.dev.yml up -d`; `pnpm verify` runs CI's blocking checks).
 
-No CI exists until the first code work package (decision 7: specification first).
+CI in `.github/workflows/` (DECISIONS O103):
+
+- `ci.yml` on every push (except `shots/**`) and every pull request to master; any red job blocks the merge:
+  - `verify`: `pnpm verify` and `pnpm test:coverage`;
+  - `security`: `pnpm audit` (production), osv-scanner, gitleaks (full history), license check;
+  - `docs`: lychee link check of the repository's Markdown, offline;
+  - `e2e`: the browser tests in Chromium (`chromium`, then `chromium-timing`);
+  - `image`: only for pull requests to master and pushes to master: Docker build, Trivy (HIGH/CRITICAL with a fix), the 250 MB size budget.
+- `codeql.yml`: `analyze` on pushes and pull requests to master and weekly.
+- `browsers.yml`: Firefox and WebKit (their specs, then their timing specs) every night on master and when started by hand; nobody waits for it.
 
 ## 6. Deployment (adopted, with differences)
 

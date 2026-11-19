@@ -2,206 +2,31 @@
 /**
  * @file   games/mind-games/web/animation.test.tsx
  * @module games/mind-games/web
- * @brief  The flights come only from released feed steps; the winners light up after the end.
+ * @brief  The result's winners light up for about 2 s, not with reduced motion.
  *
- * Responsibility: 09 §4.2's animation checks (owner decision 90): the band is fed views one by
- *                 one; no flight before its step arrives and none without one; a first choice
- *                 flies in with its name, a visible switch from its old season to its new one
- *                 with its name too, a hidden switch without one; a flight lasts FLIGHT_MS (1.2 s, T371), the CSS
- *                 taking it; a step during a wave starts its own, the old flights finishing
- *                 where they are; a step with 16 icons flies 12 with a "+4" tag and shows
- *                 the step's exact counts at once; a wave is gone at the end of its flight
- *                 (groups, landing points, icon change and landing: ./landing.test); with
- *                 reduced motion nothing flies and the counts change in place; the
- *                 result's winners light up for about 2 s, not with reduced motion. That the
- *                 band overlaps no button, line or chat panel at 1280 × 720 and 390 × 844 needs
- *                 a real layout: journey 38 checks it in the browser.
- * Depends on:     vitest, @testing-library/react, ./ChoiceButtons, ./fixtures, ./FlightBand,
- *                 ./ResultPanel
+ * Responsibility: 09 §4.2's animation check of the result (owner decision 90); the flights'
+ *                 checks are ./flights.test's.
+ * Depends on:     vitest, @testing-library/react, ./fixtures, ./ResultPanel
  * Spec:           docs/spec/02e-game-mind-games.md §11.1; docs/spec/09-testing-strategy.md §4.2
  */
-import { act, cleanup, render, screen } from '@testing-library/react';
+import { act, cleanup, render } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { ChoiceButtons } from './ChoiceButtons.js';
-import { names, resultView, spectatorView } from './fixtures.js';
-import { FLIGHT_MS } from './FlightBand.js';
+import { names, resultView } from './fixtures.js';
 import { LIGHT_MS, ResultPanel } from './ResultPanel.js';
-
-type Moves = Parameters<typeof spectatorView>[0];
 
 function reducedMotion(on: boolean): void {
   vi.stubGlobal('matchMedia', (query: string) => ({ matches: on && query.includes('reduce') }));
 }
 
-const flights = () =>
-  [...screen.getByTestId('flight-band').querySelectorAll('.mg-flight')].map((f) => ({
-    from: f.getAttribute('data-from'),
-    to: f.getAttribute('data-to'),
-    name: f.querySelector('.mg-flight-name')?.textContent ?? null,
-  }));
-
-// The stage's choice row, fed the round's views at the cuts given, one by one.
-function feed(moves: Moves, cfg?: Parameters<typeof spectatorView>[2]) {
-  const row = (cut: number) => (
-    <ChoiceButtons
-      view={spectatorView(moves, cut, cfg)}
-      own={null}
-      choose={null}
-      canAct
-      names={names}
-    />
-  );
-  const r = render(row(0));
-  return (cut: number) => {
-    r.rerender(row(cut));
-  };
-}
-
 beforeEach(() => {
   vi.useFakeTimers();
   reducedMotion(false);
-  // jsdom lays nothing out: each card 190 px wide, 10 px apart, so a card has room for icons.
-  vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
-    const i = ['spring', 'summer', 'autumn', 'winter', 'all'].indexOf(
-      this.getAttribute('data-choice') ?? '',
-    );
-    const card = this.classList.contains('mg-frame') && i >= 0;
-    return DOMRect.fromRect({ x: card ? i * 200 : 0, width: card ? 190 : 0 });
-  });
 });
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
   vi.unstubAllGlobals();
-  vi.restoreAllMocks();
-});
-
-describe('Mind Games flights (02e §11.1)', () => {
-  it('flies only when a step arrives: a first choice in with its name, a switch from → to', () => {
-    const step = feed(
-      [
-        ['anna', 'summer'],
-        ['anna', 'winter'],
-      ],
-      { switchVisibility: 'visible' },
-    );
-    expect(flights()).toEqual([]);
-    step(500);
-    expect(flights()).toEqual([{ from: '', to: 'summer', name: 'Anna' }]);
-    act(() => {
-      vi.advanceTimersByTime(FLIGHT_MS);
-    });
-    step(1_500);
-    // A visible switch flies with the player's name too (DECISIONS T377).
-    expect(flights()).toEqual([{ from: 'summer', to: 'winter', name: 'Anna' }]);
-    act(() => {
-      vi.advanceTimersByTime(FLIGHT_MS);
-    });
-    expect(flights()).toEqual([]);
-    // The same step again flies nothing.
-    step(1_500);
-    expect(flights()).toEqual([]);
-  });
-
-  it('lasts about 1.2 s a flight, the CSS taking its length from FLIGHT_MS (T371)', () => {
-    const step = feed([['anna', 'summer']]);
-    step(500);
-    expect(FLIGHT_MS).toBe(1_200);
-    const band = screen.getByTestId('flight-band');
-    expect(band.style.getPropertyValue('--mg-flight')).toBe('1200ms');
-    act(() => {
-      vi.advanceTimersByTime(FLIGHT_MS - 1);
-    });
-    expect(flights()).toHaveLength(1);
-    // Removed at its end, nothing lingering (T376).
-    act(() => {
-      vi.advanceTimersByTime(1);
-    });
-    expect(flights()).toEqual([]);
-  });
-
-  it('flies a hidden switch without any name, as the counts show it', () => {
-    const step = feed([
-      ['anna', 'summer'],
-      ['anna', 'autumn', true],
-    ]);
-    step(500);
-    act(() => {
-      vi.advanceTimersByTime(FLIGHT_MS);
-    });
-    step(1_500);
-    expect(flights()).toEqual([{ from: 'summer', to: 'autumn', name: null }]);
-    expect(screen.getByTestId('count-autumn').textContent).toBe('1 player, 30 s ago');
-  });
-});
-
-describe('Mind Games waves and reduced motion (02e §11.1)', () => {
-  it('starts a step’s wave while the last one flies; the old flights finish where they are', () => {
-    const step = feed(
-      [
-        ['anna', 'summer'],
-        ['anna', 'winter'],
-      ],
-      { switchVisibility: 'visible' },
-    );
-    step(500);
-    const first = screen.getByTestId('flight-band').querySelector('.mg-flight');
-    act(() => {
-      vi.advanceTimersByTime(FLIGHT_MS / 2);
-    });
-    step(1_500);
-    expect(flights()).toEqual([
-      { from: '', to: 'summer', name: 'Anna' },
-      { from: 'summer', to: 'winter', name: 'Anna' },
-    ]);
-    // The same element flies on: nothing restarts or jumps.
-    expect(screen.getByTestId('flight-band').querySelector('.mg-flight')).toBe(first);
-    act(() => {
-      vi.advanceTimersByTime(FLIGHT_MS / 2);
-    });
-    expect(flights()).toEqual([{ from: 'summer', to: 'winter', name: 'Anna' }]);
-    act(() => {
-      vi.advanceTimersByTime(FLIGHT_MS / 2);
-    });
-    expect(flights()).toEqual([]);
-  });
-});
-
-describe('Mind Games crowded waves and reduced motion (02e §11.1)', () => {
-  it('caps a wave at 12 icons with "+4", and shows the step’s exact counts at once', () => {
-    // Twelve players, three in each season; then each switches to another season, the three
-    // of a season to three different ones, and four newcomers choose: 16 icons of one each.
-    const seasons = ['spring', 'summer', 'autumn', 'winter'] as const;
-    const players = Array.from({ length: 12 }, (_, i) => `p${String(i)}`);
-    const step = feed(
-      [
-        ...players.map((p, i) => [p, seasons[i % 4] ?? 'spring'] as const),
-        ...players.map(
-          (p, i) => [p, seasons[(i + 1 + Math.floor(i / 4)) % 4] ?? 'spring'] as const,
-        ),
-        ...seasons.map((c, i) => [`n${String(i)}`, c] as const),
-      ],
-      { switchVisibility: 'visible' },
-    );
-    step(12_000);
-    act(() => {
-      vi.advanceTimersByTime(FLIGHT_MS);
-    });
-    step(28_000);
-    expect(flights()).toHaveLength(12);
-    expect(screen.getByText('+4')).toBeTruthy();
-    for (const c of seasons)
-      expect(screen.getByTestId(`count-${c}`).textContent).toBe('4 players, 30 s ago');
-  });
-
-  it('flies nothing with reduced motion; the counts change in place', () => {
-    reducedMotion(true);
-    const step = feed([['anna', 'summer']]);
-    step(500);
-    expect(flights()).toEqual([]);
-    expect(screen.getByTestId('count-summer').textContent).toBe('1 player, 30 s ago');
-  });
 });
 
 describe('Mind Games winners light up (02e §11.1)', () => {

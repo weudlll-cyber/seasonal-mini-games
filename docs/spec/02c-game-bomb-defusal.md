@@ -21,7 +21,7 @@ Inherited unchanged from 02 §3: secret mode, cooldown, inactivity limit and war
 |---|---|---|---|
 | Wires `bomb.wires` | 4 – 8: the first N colours of the palette red, blue, yellow, green, white, black, orange, purple, in that order | 6 | O65 |
 | Cuts `bomb.cuts` | 3 – 6, at most the number of wires | 4 | O65 |
-| Explosion penalty `bomb.explosionPenaltyS` | 0 s – 30 s, whole seconds, per match | 5 s | 0 s allowed and the host chooses: owner, decision 40; default and maximum: O65 |
+| Explosion penalty `bomb.explosionPenaltyS` | 0 s – 30 s, whole seconds, per round | 5 s | 0 s allowed and the host chooses: owner, decision 40; default and maximum: O65 |
 
 **Secret**: an ordered choice of `cuts` different wires of the round, uniform over all such orders (6 wires, 4 cuts: 360 orders), drawn with the round DRBG under `secret/shared` or `secret/<playerId>` (04 §5.4). **Intro line**: "Shared bomb: 6 wires, 4 cuts" / "Everyone defuses their own bomb: 6 wires, 4 cuts".
 

@@ -8,18 +8,20 @@
  *                 result's headline ("Walter found it first — after 9 guesses", 02 §9; a phased
  *                 round's "The round is over.", 02e §9), a round's action words (guesses, or a
  *                 phased round's choices, T332), the
- *                 winning margin, and one event row of the round's list per platform event (a
+ *                 winning margin, the round bar's time ("9:30 left"; a phased round's counts
+ *                 to the plan's end, where its phase strip ends, and in the hold before the
+ *                 result says "Result in 0:04", DECISIONS T386), and one event row of the round's list per platform event (a
  *                 solve, a timeout, Heatwave's announcement at its first step only (O47),
  *                 Spring Herald, the round opening and ending), and the banner of a platform
  *                 special (Heatwave, Spring Herald, O35); a game's own rows and banners come
  *                 from the game's text.
- * Depends on:     @smg/contracts (shapes), @smg/game-sdk (FeedLine, formatNumber)
+ * Depends on:     @smg/contracts (shapes), @smg/game-sdk (clockText, FeedLine, formatNumber)
  * Used by:        ./RoundScreen, ./ResultScreen, ./RoundLog, ./SpecialBanner, ./InputRow,
- *                 ./InactivityLine, ../match/HostMenu
+ *                 ./InactivityLine, ./FocusBar, ../match/HostMenu
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §12; docs/spec/03-seasonal-specials.md §2
  */
 import type { RoundStateView } from '@smg/contracts';
-import { formatNumber, type FeedLine } from '@smg/game-sdk';
+import { clockText, formatNumber, type FeedLine } from '@smg/game-sdk';
 
 const CODES: Readonly<Record<string, string>> = {
   ROUND_NOT_OPEN: 'The round has not opened yet.',
@@ -119,6 +121,24 @@ export function endHeadline(state: RoundStateView): string {
 export function solvedText(place: number | null): string {
   const at = place === null ? '' : ` — place ${formatNumber(place)}`;
   return `You found your number${at}. Your guesses stay here while the others play on.`;
+}
+
+// The round bar's time of an open round, null before it opens. A guess round's "9:30" is
+// the time to its end. A phased round's counts to the plan's end (the end of Reveal), so it
+// agrees with the phase strip; in the hold from there to the result it is "Result in 0:04".
+// Whole seconds down, as every countdown on the round's screen (O107).
+export function barTime(
+  state: RoundStateView,
+  now: number,
+): { readonly text: string; readonly left: boolean } | null {
+  if (state.status !== 'open' || state.endsAt === null) return null;
+  const playEnd =
+    state.plan === undefined || state.opensAt === null
+      ? state.endsAt
+      : state.opensAt + state.plan.endMs;
+  if (now < playEnd || playEnd === state.endsAt)
+    return { text: clockText(Math.max(0, playEnd - now)), left: true };
+  return { text: `Result in ${clockText(Math.max(0, state.endsAt - now))}`, left: false };
 }
 
 // The inactivity countdown at the input row (O71): the whole seconds the server's deadline

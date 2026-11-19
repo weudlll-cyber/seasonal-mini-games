@@ -1,53 +1,44 @@
 /*
  * @file   games/mind-games/web/flights.css
  * @module games/mind-games/web
- * @brief  Styles of the flight band: icons flying between the seasons' cards (02e §11.1).
+ * @brief  The flight band and its motion: coins flying between the seasons' cards (02e §11.1).
  *
- * Responsibility: the band as a row of the stage's own layout, 56 px high, clipped at its
- *                 edges; a flight is its icon's own 26 px box (All's square of four 36 px
- *                 around it), placed on the icon's centre, moving from its start point to its
- *                 landing point (--mg-from to --mg-to in px, at the scales --mg-s0 and
- *                 --mg-s1, ./flights placeWave, DECISIONS T377) in about 1.2 s
- *                 (--mg-flight, set from FlightBand's FLIGHT_MS, T371). Its timeline: the old icon flips away from
- *                 15 % to 25 % and the new one flips in from 25 % to 35 %, so the icon never
- *                 goes faint and from the middle on only the new season's flies; it reaches
- *                 its point at 80 % and then shrinks and fades into its card, so it ends
- *                 invisible. The name hangs above its icon, part of the flight, so it is seen
- *                 exactly as long and as strongly as its icon; centred over it wherever it is
- *                 (the icon's centre --mg-x is an animated registered property the name reads)
- *                 and moved aside only as far as keeps it whole inside the band. A group's "×3" at its icon's foot. A first
- *                 choice flies in from beside the band's right edge, on a phone from below; the
- *                 "+8" tag. Under reduced motion no flight is drawn at all (./FlightBand), and
- *                 the platform switches every animation off as well.
+ * Responsibility: the band, a 60 px row of the stage's own layout, clipped at its edges so a
+ *                 flight never covers a button, a line or the chat, and never catching a click
+ *                 (it goes through to the card). A flight is its coin's 26 px box, moved by its
+ *                 centre from --mg-from to --mg-to (px from the band's left, ./flights) over
+ *                 --mg-fly (its wave's own, ./flights timesFor: shortened near the round's end,
+ *                 0 for a coin that appears at its landing), reaching its landing at its scale
+ *                 there (--mg-s); it stands still until --mg-fade-at, then shrinks and fades
+ *                 into its card over --mg-fade. Marked gone (a newer coin landed beside it) it
+ *                 fades at once over --mg-gone. In the first half of the flight the old season's coin turns over
+ *                 like a coin into the new one's. The name or the "×N" sits centred above the
+ *                 coin; both are part of the flight, so they move, shrink and fade with it. On
+ *                 the phone layout a first choice rises from below. A card's "+N" stands in its
+ *                 last slot from the landing on and fades with the coins. Under reduced motion
+ *                 nothing is drawn (./FlightBand).
  * Spec:           docs/spec/02e-game-mind-games.md §11.1
  */
-/* The flight band between the buttons and the counts (02e §11.1): a row of the stage's own
-   layout, clipped at its edges, so a flight never covers a button, a line or the chat. Its
-   height holds a name (16 px) above All's icon (36 px) and its landing's drop (6 px). */
+/* Its height holds 4 px clear under the card's button and its "✓ Your choice" pill, a label
+   (16 or 17 px) and All's square (36 px). */
 .mg-band {
   position: relative;
-  height: 56px;
+  height: 60px;
   overflow: hidden;
+  pointer-events: none;
 }
 
-/* The icon's centre on its way, animated (so its name can follow it, below). */
-@property --mg-x {
-  syntax: '<length>';
-  inherits: true;
-  initial-value: 0px;
-}
-
-/* The flight is the icon's box: `left` is the icon's centre, whatever the name's width. */
+/* The coin's box, its centre on the band's left edge before the motion moves it: it flies,
+   holds its landing, then fades from --mg-fade-at on. */
 .mg-flight {
-  --mg-x: var(--mg-to);
-
   position: absolute;
-  top: 22px;
-  left: var(--mg-x);
+  top: 26px;
+  left: -13px;
   width: 26px;
   height: 26px;
-  margin-left: -13px;
-  animation: mg-fly var(--mg-flight) var(--ease-out) both;
+  animation:
+    mg-fly var(--mg-fly) var(--ease-out) both,
+    mg-fade var(--mg-fade) ease-in var(--mg-fade-at) forwards;
 }
 
 .mg-flight-from,
@@ -65,7 +56,7 @@
   height: 26px;
 }
 
-/* All's four icons in a square as on its button (31 px each in 64 px), 36 px around the box. */
+/* All's four icons in a square at its button's proportions (31 px each in 64 px). */
 .mg-flight [data-choice='all'] {
   inset: -5px;
   gap: 2px;
@@ -76,125 +67,104 @@
   height: 17px;
 }
 
-/* A switch's icon flips into the new season's within the first half: never two icons over
-   each other, never a faint one. */
 .mg-flight-from {
-  animation: mg-icon-out var(--mg-flight) linear both;
+  animation: mg-coin-out var(--mg-fly) linear both;
 }
 
 .mg-flight-from + .mg-flight-to {
-  animation: mg-icon-in var(--mg-flight) linear both;
+  animation: mg-coin-in var(--mg-fly) linear both;
 }
 
-/* The name above its icon (and above All's larger square), centred on it wherever the icon
-   is, moved aside only as far as keeps it whole inside the band (--mg-w its width and
-   --mg-band the band's, set by FlightBand); it has no fade of its own: it fades with its
-   flight. */
-.mg-flight-name {
+/* The labels above the coin, centred on it: a name in small bold type, a group's "×N" larger
+   in a pill (15 px, owner's finding of 2026-11-17). */
+.mg-flight-name,
+.mg-flight-count {
   position: absolute;
-  bottom: calc(100% + 6px);
   left: 50%;
-  padding: 0 var(--space-1);
-  font-size: var(--font-size-small);
   font-weight: var(--font-weight-strong);
-  line-height: 16px;
   white-space: nowrap;
   background: var(--color-surface);
   border-radius: var(--radius-pill);
-  transform: translateX(
-    calc(
-      -50% +
-        clamp(
-          calc(2px + var(--mg-w) / 2 - var(--mg-x)),
-          0px,
-          calc(var(--mg-band) - 2px - var(--mg-w) / 2 - var(--mg-x))
-        )
-    )
-  );
+  transform: translateX(-50%);
 }
 
-/* A group's count at its icon's lower right. */
+.mg-flight-name {
+  bottom: calc(100% + 6px);
+  padding: 0 var(--space-1);
+  font-size: var(--font-size-small);
+  line-height: 16px;
+}
+
+/* 17 px tall, 5 px above the coin's box: above All's square too (5 px over the box), inside
+   the 22 px over the coin below the band's 4 px clear. */
 .mg-flight-count {
+  bottom: calc(100% + 5px);
+  padding: 0 5px;
+  font-size: 15px;
+  line-height: 15px;
+  border: 1px solid var(--color-border-strong);
+}
+
+/* A card's "+N", a coin-sized pill in its last slot. */
+.mg-more {
   position: absolute;
-  right: -16px;
-  bottom: -6px;
-  padding: 0 3px;
-  font-size: 11px;
+  top: 26px;
+  left: -13px;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
   font-weight: var(--font-weight-strong);
-  line-height: 13px;
-  white-space: nowrap;
   background: var(--color-surface);
   border: 1px solid var(--color-border-strong);
   border-radius: var(--radius-pill);
+  transform: translate(var(--mg-to), 0) scale(var(--mg-s));
+  animation:
+    mg-more var(--mg-fly) linear both,
+    mg-fade var(--mg-fade) ease-in var(--mg-fade-at) forwards;
 }
 
-.mg-more {
-  position: absolute;
-  right: var(--space-1);
-  bottom: 2px;
-  font-size: var(--font-size-small);
-  font-weight: var(--font-weight-strong);
-}
-
-/* To its point by 80 %, at its scale there (smaller only in a crowded card), then into its
-   card: smaller, a little lower, gone. */
 @keyframes mg-fly {
   0% {
-    --mg-x: var(--mg-from);
-
-    transform: scale(var(--mg-s0, 1));
-  }
-
-  80% {
-    --mg-x: var(--mg-to);
-
-    opacity: 1;
-    transform: scale(var(--mg-s1, 1));
-    animation-timing-function: ease-in;
+    transform: translate(var(--mg-from), 0) scale(1);
   }
 
   100% {
-    --mg-x: var(--mg-to);
-
-    opacity: 0;
-    transform: translateY(6px) scale(calc(0.3 * var(--mg-s1, 1)));
+    transform: translate(var(--mg-to), 0) scale(var(--mg-s));
   }
 }
 
-/* A first choice on a phone rises from below into its point (its lines are below the stage). */
 @keyframes mg-rise {
   0% {
-    --mg-x: var(--mg-to);
-
-    top: 56px;
     opacity: 0;
-    transform: scale(var(--mg-s1, 1));
+    transform: translate(var(--mg-to), 34px) scale(var(--mg-s));
   }
 
-  20% {
+  25% {
     opacity: 1;
-  }
-
-  80% {
-    --mg-x: var(--mg-to);
-
-    top: 22px;
-    opacity: 1;
-    transform: scale(var(--mg-s1, 1));
-    animation-timing-function: ease-in;
   }
 
   100% {
-    --mg-x: var(--mg-to);
-
-    top: 22px;
-    opacity: 0;
-    transform: translateY(6px) scale(calc(0.3 * var(--mg-s1, 1)));
+    transform: translate(var(--mg-to), 0) scale(var(--mg-s));
   }
 }
 
-/* A coin's flip: the old face narrows to its edge, the new one widens from it. */
-@keyframes mg-icon-out {
+@keyframes mg-fade {
+  0% {
+    opacity: 1;
+    transform: translate(var(--mg-to), 0) scale(var(--mg-s));
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(var(--mg-to), 6px) scale(calc(0.3 * var(--mg-s)));
+  }
+}
+
+/* The coin turning over: the old face narrows to its edge by 25 %, the new one widens from
+   it by 35 %; never two faces at once, never a faint one. */
+@keyframes mg-coin-out {
   0%,
   15% {
     opacity: 1;
@@ -213,7 +183,7 @@
   }
 }
 
-@keyframes mg-icon-in {
+@keyframes mg-coin-in {
   0%,
   25% {
     opacity: 0;
@@ -232,8 +202,27 @@
   }
 }
 
-@media (max-width: 600px) {
-  .mg-flight[data-first='true'] {
-    animation-name: mg-rise;
+/* The "+N" shows as its card's coins land. */
+@keyframes mg-more {
+  0%,
+  75% {
+    opacity: 0;
   }
+
+  100% {
+    opacity: 1;
+  }
+}
+
+/* The phone layout (./mind.css): a first choice rises into its card from below. */
+@media (max-width: 899px), (orientation: portrait) {
+  .mg-flight[data-first='true'] {
+    animation-name: mg-rise, mg-fade;
+  }
+}
+
+/* Gone: a newer coin landed beside it; after the phone's rule, so it wins there too. */
+.mg-flight[data-gone='true'],
+.mg-more[data-gone='true'] {
+  animation: mg-fade var(--mg-gone) ease-in forwards;
 }

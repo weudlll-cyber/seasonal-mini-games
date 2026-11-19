@@ -42,11 +42,13 @@ export interface FieldState {
 }
 
 // A phased round's public timing (04 §4.8): when it opened and its plan, so the game shows its
-// phases and counts down to them, and the server's time (corrected by the measured offset, 06
-// §4.1); the server enforces the phases. Absent for the guess games.
+// phases and counts down to them, when its result comes (its time-up: the plan's end and the
+// host's hold, T384), and the server's time (corrected by the measured offset, 06 §4.1); the
+// server enforces the phases. Absent for the guess games.
 export interface PhasedTiming {
   readonly opensAt: number;
   readonly plan: PhasePlan;
+  readonly endsAt: number;
   readonly now: () => number;
 }
 

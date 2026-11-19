@@ -16,15 +16,15 @@
  *                 last round "The match ends in 0:11", without a button. The server starts the
  *                 round; the page only asks (POST …/next-round/start) and reloads with the match.
  * Depends on:     react, @smg/contracts, ../live/socket (server time), ../live/useTicker,
- *                 ../round/FocusBar (clockText), ../shell/http
+ *                 @smg/game-sdk (clockText), ../shell/http
  * Used by:        ./WaitingArea, ./NextRound
  * Spec:           docs/spec/04-software-architecture.md §4.8 rule 7; docs/spec/02e-game-mind-games.md §2, §9
  */
 import type { MatchDetailsView } from '@smg/contracts';
+import { clockText } from '@smg/game-sdk';
 import { useState, type ReactElement } from 'react';
 
 import { serverNow } from '../live/socket.js';
-import { clockText } from '../round/FocusBar.js';
 import { useTicker } from '../live/useTicker.js';
 import { api } from '../shell/http.js';
 

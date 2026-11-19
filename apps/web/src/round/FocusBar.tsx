@@ -7,13 +7,15 @@
  *                 season pill (./SeasonPill, on a phone with the special's note; a desktop has
  *                 the special's line in the info column, T141), shared or individual (a
  *                 desktop only, and only in a game with a secret, T347), "9:50 left" once the round is open (the countdown's seconds
- *                 are the intro's), then the buttons of the panels on demand (./usePanels):
+ *                 are the intro's; a phased round's counts to the plan's end and then says
+ *                 "Result in 0:04", ./roundText, T386), then the buttons of the panels on demand (./usePanels):
  *                 Chat with the unread count (only with a chat, the provider not `none`),
  *                 Players with the teams, Host (the host only), and the full-screen toggle
  *                 where the browser offers it (./useFullscreen). The waiting time is not here:
  *                 the cooldown ring and the disabled button at the input show it (O47). Each
  *                 button names itself; a phone shows the icons and reads the words out.
- * Depends on:     react, @smg/contracts, ./FocusIcons, ./SeasonPill, ./useFullscreen, ./usePanels
+ * Depends on:     react, @smg/contracts, ./FocusIcons, ./roundText, ./SeasonPill,
+ *                 ./useFullscreen, ./usePanels
  * Used by:        ./FocusShell
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6
  */
@@ -21,21 +23,10 @@ import type { RoundStateView } from '@smg/contracts';
 import type { ReactElement } from 'react';
 
 import { FocusIcon, type IconName } from './FocusIcons.js';
+import { barTime } from './roundText.js';
 import { SeasonPill } from './SeasonPill.js';
 import type { Fullscreen } from './useFullscreen.js';
 import type { PanelId, Panels } from './usePanels.js';
-
-// Milliseconds as "9:30", whole seconds down.
-export function clockText(ms: number): string {
-  const secs = Math.floor((ms % 60_000) / 1_000);
-  return `${String(Math.floor(ms / 60_000))}:${String(secs).padStart(2, '0')}`;
-}
-
-// The time left of an open round, "9:30"; null before it opens.
-function timeText(state: RoundStateView, now: number): string | null {
-  if (state.status !== 'open' || state.endsAt === null) return null;
-  return clockText(Math.max(0, state.endsAt - now));
-}
 
 function PanelButton(p: {
   readonly id: PanelId;
@@ -90,7 +81,7 @@ export interface FocusBarProps {
 
 export function FocusBar(p: FocusBarProps): ReactElement {
   const { state, panels, fullscreen } = p;
-  const time = timeText(state, p.now);
+  const time = barTime(state, p.now);
   return (
     <header className="focus-bar" data-testid="round-banner">
       {p.season ? <SeasonPill state={state} rule={p.rule} note={p.phone} /> : null}
@@ -101,9 +92,9 @@ export function FocusBar(p: FocusBarProps): ReactElement {
       ) : null}
       {time === null ? null : (
         <span className="focus-fact" data-testid="countdown">
-          {time}
+          {time.text}
           {/* A phone shows "9:40" and reads the word out: the bar keeps one row. */}
-          <span className="round-phone-hidden"> left</span>
+          {time.left ? <span className="round-phone-hidden"> left</span> : null}
         </span>
       )}
       <span className="focus-actions">

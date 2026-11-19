@@ -4,9 +4,13 @@
  * @module games/mind-games/web
  * @brief  The round's phases on screen, the round's box in the prefs, a refused pre-pick.
  *
- * Responsibility: with the round's public timing (the defaults 120/30/60): the next change in
- *                 words through Join, Play and Reveal; the feed's sentences (the first choices'
- *                 countdown, every change a switch, the reveal); the screen reader's sentence
+ * Responsibility: with the round's public timing (the defaults 120/30/60 and the hold of 5 s):
+ *                 the next change in words through Join, Play, Reveal and the hold before the
+ *                 result (T384); the feed's sentences (the first choices' countdown, every
+ *                 change a switch, the reveal, the hold); every countdown to the result rounding as
+ *                 the platform's round bar (its `clockText`, whole seconds down; the bar's
+ *                 "Result in 0:04" in the hold, T386) at x.0, x.4 and x.9 s left (O107); the
+ *                 screen reader's sentence
  *                 per phase; the strip's current phase (highlighted, filling, named "now" for a
  *                 screen reader, the others plain), its delay sentence and no markers (O92); the
  *                 buttons off after the join time for a
@@ -17,7 +21,7 @@
  *                 ./useSavedPrefs
  * Spec:           docs/spec/02e-game-mind-games.md §4, §6, §7, §11; docs/spec/09-testing-strategy.md §4.2
  */
-import type { OwnMatchPart, PhasedTiming } from '@smg/game-sdk';
+import { clockText, type OwnMatchPart, type PhasedTiming } from '@smg/game-sdk';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -32,13 +36,22 @@ afterEach(() => {
 });
 
 const plan = { entryEndMs: 60_000, actionsEndMs: 90_000, endMs: 120_000, viewDelayMs: 30_000 };
-const at = (ms: number): PhasedTiming => ({ opensAt: 1_000, plan, now: () => 1_000 + ms });
+// The result 5 s after the plan's end (the default hold, T384).
+const at = (ms: number): PhasedTiming => ({
+  opensAt: 1_000,
+  plan,
+  endsAt: 126_000,
+  now: () => 1_000 + ms,
+});
 
 describe('Mind Games phases in words (02e §4, §6, §11)', () => {
   it('names the next change through every phase', () => {
     expect(nextChange(at(36_000))).toBe('Joining closes in 0:24 · Choices close in 0:54');
     expect(nextChange(at(78_000))).toBe('Choices close in 0:12');
-    expect(nextChange(at(102_000))).toBe('Reveal · result in 0:18');
+    expect(nextChange(at(102_000))).toBe('Reveal · result in 0:23');
+    // The hold: the stage stands until the result, which the line counts down to (T384).
+    expect(nextChange(at(121_000))).toBe('Choices closed · result in 0:04');
+    expect(nextChange(at(125_000))).toBe('The round is over.');
     expect([10_000, 70_000, 100_000, 130_000].map((ms) => phaseOf(at(ms)))).toEqual([
       'join',
       'play',
@@ -53,12 +66,37 @@ describe('Mind Games phases in words (02e §4, §6, §11)', () => {
     expect(feedNote(at(18_000), 0, true)).toBe('The first choices show in 12 s.');
     expect(feedNote(at(40_000), 5, false)).toBeNull();
     expect(feedNote(at(91_000), 23, false)).toBe(
-      'Choices are closed. Revealing the last 30 s of play — the result follows in 29 s.',
+      'Choices are closed. Revealing the last 30 s of play — the result follows in 34 s.',
+    );
+    expect(feedNote(at(121_000), 23, false)).toBe(
+      'Choices are closed — the result follows in 4 s.',
     );
     // Journey 38's timings (60/10/30): the feed passes the join time at 40 s, before play ends.
     const short = { entryEndMs: 30_000, actionsEndMs: 50_000, endMs: 60_000, viewDelayMs: 10_000 };
-    const t45 = { opensAt: 0, plan: short, now: () => 45_000 };
+    const t45 = { opensAt: 0, plan: short, endsAt: 65_000, now: () => 45_000 };
     expect(feedNote(t45, 23, false)).toBe('All 23 players are in. Every change now is a switch.');
+  });
+});
+
+describe('Mind Games countdowns against the platform’s rounding (O107)', () => {
+  // The time to the result through the platform's clockText, as the round bar's "Result in"
+  // in the hold (apps/web roundText `barTime`, T386).
+  const bar = (t: PhasedTiming) => clockText(Math.max(0, t.endsAt - t.now()));
+
+  it('rounds as the bar in the reveal, the hold and the feed, at x.0, x.4 and x.9 s left', () => {
+    // 23 and 4 seconds and a fraction before the result: in the reveal and in the hold.
+    for (const whole of [23_000, 4_000])
+      for (const part of [0, 400, 900]) {
+        const t = at(125_000 - whole - part);
+        const shown = bar(t);
+        expect(shown).toBe(`0:${String(whole / 1_000).padStart(2, '0')}`);
+        expect(nextChange(t).endsWith(`result in ${shown}`), `${String(whole + part)} ms`).toBe(
+          true,
+        );
+        expect(feedNote(t, 6, false)).toContain(
+          `the result follows in ${String(whole / 1_000)} s.`,
+        );
+      }
   });
 });
 

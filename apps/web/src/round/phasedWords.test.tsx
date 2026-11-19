@@ -10,10 +10,13 @@
  *                 the same as before; the intro has no cooldown line in a phased round (DECISIONS
  *                 T332). A guess round's placings keep Place, Player, Guesses and Points in place
  *                 order; a phased round's have only Player and Points, its winners first, then
- *                 the rest, each in name order, and no count of anyone's choices (T343).
+ *                 the rest, each in name order ("bot-9" before "bot-10", O102), and no count of
+ *                 anyone's choices (T343). The round bar's time: a guess round's "… left" to its
+ *                 end; a phased round's (total 60, hold 5) to the plan's end, where its strip
+ *                 ends, then in the hold "Result in 0:04", whole seconds down (O107, T386).
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./fakes, ./ResultParts,
  *                 ./RoundIntro, ./roundText
- * Spec:           docs/spec/02e-game-mind-games.md §9; docs/spec/04-software-architecture.md §4.8
+ * Spec:           docs/spec/02e-game-mind-games.md §4, §9; docs/spec/04-software-architecture.md §4.8
  */
 import type { RoundStateView } from '@smg/contracts';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
@@ -22,7 +25,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { ended } from './fakes.js';
 import { Placings } from './ResultParts.js';
 import { RoundIntro } from './RoundIntro.js';
-import { actionCount, endHeadline } from './roundText.js';
+import { actionCount, barTime, endHeadline } from './roundText.js';
 
 afterEach(() => {
   cleanup();
@@ -79,5 +82,50 @@ describe('the platform words of a phased round (T332)', () => {
     expect(rows().map((r) => r[0]?.replace(/\s+/g, ''))).toEqual(['Anna', 'zed', 'Bo', 'cy']);
     expect(rows().map((r) => r[1])).toEqual(['2', '1', '0', '0']);
     expect(rows().flat().join(' ')).not.toMatch(/[3579]/);
+  });
+});
+
+describe('a phased round’s result rows (O102)', () => {
+  it('lists a phased round’s names in the numeric-aware order of O102', () => {
+    const row = (ended.results ?? [])[0];
+    if (row === undefined) throw new Error('a result');
+    const results = ['b10', 'b9', 'b1'].map((playerId) => ({
+      ...row,
+      playerId,
+      place: null,
+      won: false,
+    }));
+    const names = { b10: 'bot-10', b9: 'bot-9', b1: 'bot-1' };
+    render(<Placings state={{ ...phased, results, names }} viewerKey={null} />);
+
+    const shown = screen
+      .getAllByRole('row')
+      .slice(1)
+      .map((r) => r.querySelector('td')?.textContent);
+    expect(shown.map((t) => t?.replace(/\s+/g, ''))).toEqual(['bot-1', 'bot-9', 'bot-10']);
+  });
+});
+
+describe('the round bar’s time (O107, T386)', () => {
+  const open = { ...ended, status: 'open' as const, opensAt: 0, endsAt: 60_000 };
+  // Total 60 with the hold of 5 s: the plan ends at 60 s, the result comes at 65 s.
+  const sixty = { entryEndMs: 30_000, actionsEndMs: 45_000, endMs: 60_000, viewDelayMs: 15_000 };
+  const held: RoundStateView = { ...open, endsAt: 65_000, plan: sixty };
+
+  it('counts a guess round to its end, whole seconds down', () => {
+    expect(barTime(open, 500)).toEqual({ text: '0:59', left: true });
+    expect(barTime(open, 59_700)).toEqual({ text: '0:00', left: true });
+    expect(barTime(open, 61_000)).toEqual({ text: '0:00', left: true });
+    expect(barTime({ ...open, status: 'countdown' }, 0)).toBeNull();
+  });
+
+  it('counts a phased round to the plan’s end, then says when the result comes', () => {
+    expect(barTime(held, 500)).toEqual({ text: '0:59', left: true });
+    expect(barTime(held, 29_700)).toEqual({ text: '0:30', left: true });
+    expect(barTime(held, 59_700)).toEqual({ text: '0:00', left: true });
+    expect(barTime(held, 60_000)).toEqual({ text: 'Result in 0:05', left: false });
+    expect(barTime(held, 60_300)).toEqual({ text: 'Result in 0:04', left: false });
+    expect(barTime(held, 62_500)).toEqual({ text: 'Result in 0:02', left: false });
+    expect(barTime(held, 66_000)).toEqual({ text: 'Result in 0:00', left: false });
   });
 });
