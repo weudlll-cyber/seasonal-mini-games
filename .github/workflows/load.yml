@@ -1,0 +1,86 @@
+# @file   .github/workflows/load.yml
+# @module ci
+# @brief  The load check (09 §5) on a Linux runner: L1's plain, summer and winter rounds and L5.
+#
+# Responsibility: on demand (workflow_dispatch) and on a push to a `load/**` branch, never on
+#                 master or a pull request, run the existing drivers as 09 §5 documents them,
+#                 500 players and 100 spectators each, every driver its own step that does not
+#                 stop the others. Each driver starts its own server on 3950 with the fresh
+#                 database smg_load in the PostgreSQL 17 container of ops/compose.dev.yml (the
+#                 image the development machine uses, so the numbers compare). While a driver
+#                 runs, the server's /metrics is saved every 2 s, so its batch commit times
+#                 (`smg_round_batch_seconds`) survive the server's stop. Before the runs the
+#                 runner's CPUs, memory and the PostgreSQL version are printed; the drivers'
+#                 JSON, their output with the server's log and the last /metrics of each run
+#                 are kept as the artifact `load-results`. A runner is not the reference VPS:
+#                 the driver and the server share its CPUs.
+# Depends on:     .github/actions/setup, ops/compose.dev.yml, load/
+# Spec:           docs/spec/09-testing-strategy.md §5
+name: Load
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['load/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: load-${{ github.ref_name }}
+  cancel-in-progress: true
+
+env:
+  COMPOSE: docker compose --env-file ops/.env.dev.example -f ops/compose.dev.yml
+
+jobs:
+  load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      # The test server starts this container itself; started here first to print its version.
+      - name: Runner and database
+        run: |
+          echo "CPUs: $(nproc)"
+          free -m
+          $COMPOSE up -d --wait postgres
+          $COMPOSE exec -T postgres psql -U smg -d smg -tAc 'select version()'
+          mkdir -p out
+      # One driver run: its output (with the server's log) to out/<name>.log, the server's
+      # /metrics every 2 s to out/<name>.metrics.txt; the driver's exit code is the step's.
+      - name: Run helper
+        run: |
+          cat > "$RUNNER_TEMP/run.sh" <<'EOF'
+          name="$1"; shift
+          (while true; do
+            curl -sf http://127.0.0.1:3950/metrics -o "out/$name.metrics.tmp" \
+              && mv "out/$name.metrics.tmp" "out/$name.metrics.txt"
+            sleep 2
+          done) &
+          poll=$!
+          set +e
+          "$@" 2>&1 | tee "out/$name.log"
+          code=${PIPESTATUS[0]}
+          kill "$poll"
+          exit "$code"
+          EOF
+      - name: L1 plain, 500 players
+        continue-on-error: true
+        run: bash "$RUNNER_TEMP/run.sh" plain node load/guessStorm.mjs 500 out/plain.json plain
+      - name: L1 summer, 500 players
+        continue-on-error: true
+        run: bash "$RUNNER_TEMP/run.sh" summer node load/guessStorm.mjs 500 out/summer.json summer
+      - name: L1 winter, 500 players
+        continue-on-error: true
+        run: bash "$RUNNER_TEMP/run.sh" winter node load/guessStorm.mjs 500 out/winter.json winter
+      - name: L5 Mind Games, 500 players
+        continue-on-error: true
+        run: bash "$RUNNER_TEMP/run.sh" mind node load/mindStorm.mjs 500 out/mind.json
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: load-results
+          path: out
+          retention-days: 30
