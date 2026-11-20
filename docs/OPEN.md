@@ -69,7 +69,7 @@ The first draft's questions (a)–(p) were answered on 2026-10-24 (DECISIONS O8�
 1. The docked page keeps Seasonal Mind Games' padding (20 × 28 px, 16 px above the chat; 12 px in a window under 760 px), where the design reference has 8 px above, 32 px at the sides, 18 px below and 10 px above the chat. The fitting rules hold with it (40, 30 and 22 rows of Guess The Number at 1440 × 900, 1280 × 720 and on a phone). Keep, or take the reference's?
 2. ~~The result of a list game keeps the waiting area beside it, the chat docked under both?~~ Settled by O110 (2026-11-19): the chat stays docked below on the result; the result and the column beside it are one scrolling area (T390).
 3. "No answer from the server" under a guess that the server took but answered after the client's 5 s (DECISIONS T389: the development machine's load, not reproduced within the spec's load gate). Should the client, after that line, load the round again and drop the line when the guess shows as counted?
-4. Seasonal Target on a 375 × 667 phone (T394): the board keeps the screen's width (the fixed part, O111) and the list shows only its head ("N guesses", "Log (N)"), its rows in Log (N); before, the board lay over the list. Keep, or keep four list rows with a board about 320 px wide instead (as 02d §11's "at least four rows")?
+4. ~~Seasonal Target on a 375 × 667 phone: the board at full width with the list's head only, or four list rows with a smaller board?~~ Settled by O112 (2026-11-20): the board keeps the screen's full width and the list shows its head only, its rows behind Log (N), as built (T394).
 
 ## Firefox/WebKit findings (O103 batch)
 
