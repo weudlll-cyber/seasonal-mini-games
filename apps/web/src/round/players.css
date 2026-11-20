@@ -132,7 +132,8 @@
    its guesses and the input, and the others' line goes; every player stands in the Players
    panel (O111). */
 @media (max-width: 899px) and (max-height: 480px) {
-  .round-log-others {
+  /* Through its list: ./roundLog.css, loaded after this file, sets its display. */
+  .round-log .round-log-others {
     display: none;
   }
 }
