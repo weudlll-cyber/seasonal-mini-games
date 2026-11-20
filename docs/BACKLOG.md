@@ -11,7 +11,7 @@ The authoritative list. `OPEN.md` is the short page over it and is aligned after
 ### Implementation (roadmap phases, spec/11-roadmap.md)
 
 - Phase 7 — Integration, still open: the In Season feed from the website and the run on the Seasonal Entertainment website itself (website tasks, see below)
-- Phase 8 — Production readiness, still open: the security pass on the VPS (a ZAP baseline against a production install behind Caddy; the scans that need no server are done, see part two and [security-pass.md](security-pass.md)), the load gate on the reference VPS (the driver is built; a plain shared round at 500 and at 1 000 players ran once on the development machine, and L1's special and halving rounds are built and ran once there with 200 players, see [OPEN.md](OPEN.md) (r); open: the reference VPS, L2 and L3), and v1.0.0
+- Phase 8 — Production readiness, still open: the security pass on the VPS (a ZAP baseline against a production install behind Caddy; the scans that need no server are done, see part two and [security-pass.md](security-pass.md)), the load gate on the reference VPS (measured on a Linux CI runner on 2026-11-20, [run 44813292485](https://github.com/weudlll-cyber/seasonal-mini-games/actions/runs/44813292485), not the reference VPS: plain, summer and Mind Games at 500 players near the gate, winter's Frost 2–3 s late, see [OPEN.md](OPEN.md) (r); the driver is built; a plain shared round at 500 and at 1 000 players ran once on the development machine, and L1's special and halving rounds are built and ran once there with 200 players, see [OPEN.md](OPEN.md) (r); open: the reference VPS, L2 and L3), and v1.0.0
 
 ### Seasonal Mind Games (owner decisions O76–O90, spec/02e)
 
