@@ -200,12 +200,13 @@ The platform runs one shared conformance test suite against every module in `gam
    - the player's main area and input row apart (the platform places them and puts its cooldown ring into the row),
    - the spectator and result panels,
    - the rows of the round's one list (`GuessRow`s from its player or spectator view, and `FeedLine`s for its events), which the platform draws (owner decision 20; DECISIONS T62, T74),
-   - and the line about the best of the rest that the result page shows where the winning margin goes when there is none (`runnerUp`, owner decision 22; DECISIONS T77),
+   - and optionally the line about the best of the rest that the result page shows where the winning margin goes when there is none (`runnerUp`, owner decision 22; DECISIONS T77; a game with "Closest to winning" gives none, owner decision O111),
    - and optionally the round intro's line on the secret (`intro`, owner decision 36; DECISIONS T109),
    - and, with the module's `closest`, a row of "Closest to winning" in its words (`best(resultView, row)`: the guess as the list draws it, and how close it came, a solve in the game's own word; owner decision O110).
    - A `FeedLine` marked `special` is a special's own row, which the platform draws on the season's tint with its icon; the panels learn whether the round's special is on (`specialOn`), so a game can show a special's own parts only then (DECISIONS T115).
    - A `GuessRow` whose guess is not a number gives it as `text` ("0427", "red, blue, green, white", "(12, 34)"), and an answer other than higher/lower as `answer` (`text`, a `tone` for its colour and optional `pegs`), which the platform draws in the same row, always with its words (DECISIONS T119).
    - A game whose special works differently from the platform's sentence words it itself (`GameText.specialRule(season)`, used on the intro screen and in the top bar's info note; DECISIONS T119).
+   - **Fitting the screen** (owner decision O111): the platform scales a game screen to the space it has with one mechanism (`useFitScale`, apps/web round/useFit). The screen's root names its fixed parts (`data-fit-fixed`) and finds its box (the nearest that clips or scrolls); the scale, the largest value ≤ 1 at which the fixed parts fit (never below 0.6), is the CSS custom property `--fit` on the root, measured anew only when the box's size or the screen's content changes, never in a loop. A game's own CSS inside a scaled screen multiplies its type and spacing by `var(--fit, 1)`, each with its floor (13 px text, 24 px display values, 22 px rows, 40 px touch targets on a phone); at 1 nothing changes.
 2. Add one line to each half of `games/registry` (`src/index.ts` and `web/index.ts`).
 3. Add its settings to [08](08-admin-settings.md) and its rules to a new spec section.
 

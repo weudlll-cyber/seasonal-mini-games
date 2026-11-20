@@ -12,7 +12,7 @@
  *                 `GuessFed`); `evolveGame` folds the hints, falls and halvings.
  * Depends on:     @smg/game-sdk (Range, RoundInput), @smg/guess-engine (state base, events),
  *                 ./closeness, ./feedback, ./settings
- * Used by:        ./module, ./rules, ./views, ./specials, ./leafFall, ./closestMiss
+ * Used by:        ./module, ./rules, ./views, ./specials, ./leafFall
  * Spec:           docs/spec/02-game-guess-the-number.md §5, §6; docs/spec/04-software-architecture.md §4.7;
  *                 docs/spec/06-data-model-api-realtime.md §2.7
  */

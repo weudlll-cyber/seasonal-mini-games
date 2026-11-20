@@ -71,6 +71,8 @@ export function ClosestToWinning(p: {
       className="smg-panel round-closest"
       aria-labelledby="closest-title"
       data-testid="result-closest"
+      // A fixed part of the result's screen: it shows whole at the screen's scale (O111).
+      data-fit-fixed=""
       // The round's season, for a solve's tint (./closest.css).
       style={{ '--season': seasonColor(p.state.season) } as CSSProperties}
     >
@@ -79,7 +81,7 @@ export function ClosestToWinning(p: {
         {total === 0 ? null : (
           <button
             type="button"
-            className="smg-btn round-all-guesses"
+            className="smg-btn round-log-all round-all-guesses"
             aria-expanded={all}
             data-testid="all-guesses"
             onClick={() => {

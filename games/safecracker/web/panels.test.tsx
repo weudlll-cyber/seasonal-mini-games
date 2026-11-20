@@ -7,8 +7,8 @@
  * Responsibility: the code line, the digit strip with a fallen digit labelled and struck, the
  *                 free hint; the result with the code or every player's; the guess rows (code
  *                 as text, answer words with pegs and plurals, "tried a code", own rows pending under
- *                 Frost); refusal words; event lines and the Leaf Fall banner; the closest-miss
- *                 line; the intro line; the special's sentence; the `GameWeb` line.
+ *                 Frost); refusal words; event lines and the Leaf Fall banner; the intro line;
+ *                 the special's sentence; the `GameWeb` line.
  * Depends on:     vitest, @testing-library/react, ./Board, ./ResultPanel, ./text, ./index
  * Spec:           docs/spec/02b-game-safecracker.md §2, §4, §5.2, §7, §8, §10
  */
@@ -93,7 +93,6 @@ describe('the result panel', () => {
         p1: [{ value: '0427', feedback: f(4, 0, true) }],
         p2: [{ value: '1312', feedback: f(0, 1) }],
       },
-      closestMiss: null,
     };
     const props = { view: result, names, colors, viewerKey: 'p2' };
     render(<ResultPanel {...props} part="reveal" />);
@@ -111,7 +110,6 @@ describe('the result panel', () => {
       secret: null,
       secrets: { p1: '012', p2: '345' },
       guesses: { p1: [], p2: [] },
-      closestMiss: null,
     };
     const props = { view: result, names, colors, viewerKey: null };
     render(<ResultPanel {...props} part="reveal" />);
@@ -170,7 +168,7 @@ describe('the text', () => {
 });
 
 describe('the sentences', () => {
-  it('words refusals, events, banners, the closest miss, the intro and the specials', () => {
+  it('words refusals, events, banners, the intro and the specials', () => {
     expect(text.code('DIGIT_REMOVED')).toBe('That digit has fallen.');
     expect(text.code('ALREADY_GUESSED')).toBe('You already tried that code.');
     expect(text.code('CODE_INVALID')).toEqual(expect.any(String));
@@ -191,11 +189,6 @@ describe('the sentences', () => {
     expect(text.event({ type: 'HintGiven', playerId: null, hint: null }, names)).toBeNull();
     expect(text.event({ type: 'HintGiven', playerId: 'p1', hint }, names)).toBeNull();
     expect(text.event({ type: 'GuessFed' }, names)).toBeNull();
-    const miss = { closestMiss: { playerId: 'p1', value: '0427', exact: 3, near: 1 } };
-    expect(text.runnerUp(miss, names, true)).toBe(
-      'Closest miss besides the winner: Anna, 3 right · 1 wrong place (0427).',
-    );
-    expect(text.runnerUp({ closestMiss: null }, names, true)).toBeNull();
     expect(text.intro?.(view, 'shared')).toBe('Shared 4-digit code, digits 0–9');
     expect(text.intro?.(view, 'individual')).toBe(
       'Everyone has their own 4-digit code, digits 0–9',

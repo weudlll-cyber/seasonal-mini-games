@@ -10,11 +10,12 @@
  *                 ("Shared number between 1 and 100", "Hidden range"), the cooldown, and the
  *                 seconds until the round opens. The round bar above it keeps the host's
  *                 controls, the chat and the players (./FocusShell, O46). It fills the space
- *                 under the bar without a page scrollbar on desktop and phone (./roundIntro.css).
+ *                 under the bar without a page scrollbar on desktop and phone, at the screen's
+ *                 scale where it has not the room (./useFit, ./roundIntro.css, O111).
  *                 A game whose rounds show no season (O93) has its name as the heading, with
  *                 no season icon and no special block.
  * Depends on:     react, @smg/contracts, @smg-game/registry/web (types), ../season/*,
- *                 ./roundText, ./SeasonPill (ruleOf), ./roundIntro.css
+ *                 ./roundText, ./SeasonPill (ruleOf), ./useFit, ./roundIntro.css
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §2, §6
  */
@@ -26,6 +27,7 @@ import { SeasonIcon } from '../season/SeasonIcon.js';
 import { NO_SPECIAL, SEASON_NAMES, SPECIALS } from '../season/season.js';
 import { seconds } from './roundText.js';
 import { ruleOf } from './SeasonPill.js';
+import { useFitScale } from './useFit.js';
 import './roundIntro.css';
 
 // Whole seconds until the round opens, never below 0.
@@ -79,8 +81,11 @@ export function RoundIntro(p: {
   const secret =
     state.game === null ? null : (p.game?.text.intro?.(state.game, state.secretMode) ?? null);
   const left = opensIn(state, p.now);
+  // The card fits its space at the screen's scale (O111); its content changes only with these.
+  const fit = useFitScale<HTMLElement>(`${state.roundId}|${String(secret)}|${String(noSeason)}`);
   return (
     <section
+      ref={fit}
       className="round-intro"
       data-season={noSeason === null ? state.season : undefined}
       aria-labelledby="round-intro-season"

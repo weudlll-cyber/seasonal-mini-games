@@ -11,8 +11,7 @@
  *                 answer in words ("First 2 cuts right", "Boom!" with the icon,
  *                 "Defused!") with its tone (T119), and the sequence as colour dots with their
  *                 names (`swatches`, T143; the fills are `WIRE_COLORS`, shared with the
- *                 swatches of ./WireChip); the closest miss on the shared result
- *                 (02c §9); a row of "Closest to winning" (the dots, its correct start or
+ *                 swatches of ./WireChip); a row of the result's "Closest to winning" (the dots, its correct start or
  *                 "defused it", O110); the intro's line on the bomb (02c §3); the season special in this
  *                 game's terms (T119). Server codes never reach the screen as codes.
  * Depends on:     @smg/game-sdk (GameText, GuessRow), @smg-game/bomb-defusal (types, wording)
@@ -32,7 +31,6 @@ import {
 import {
   type BestLine,
   type BestRow,
-  closestLabel,
   type FeedLine,
   type GameText,
   type GuessAnswer,
@@ -175,20 +173,6 @@ function guessRows(view: unknown): readonly GuessRow[] {
   ];
 }
 
-// 02c §9: "Closest: Anna, the first 3 cuts right (red → blue → yellow → black)."
-function runnerUp(
-  view: unknown,
-  names: Readonly<Record<string, string>>,
-  won: boolean,
-): string | null {
-  const miss = (view as Partial<ResultView>).closestMiss ?? null;
-  if (miss === null) return null;
-  const name = names[miss.playerId] ?? miss.playerId;
-  const right =
-    miss.correct === 1 ? 'the first cut right' : `the first ${String(miss.correct)} cuts right`;
-  return `${closestLabel(won)}: ${name}, ${right} (${sequenceText(miss.value)}).`;
-}
-
 // The intro's line (02c §3): "Shared bomb: 6 wires, 4 cuts".
 function intro(view: unknown, secretMode: 'shared' | 'individual'): string | null {
   const v = view as Partial<Pick<PlayerView, 'wires' | 'cuts'>> | null;
@@ -211,7 +195,6 @@ export const bdText: GameText = {
   code: (code) => CODES[code] ?? null,
   event: (event) => eventText(event as BdEvent),
   guesses: guessRows,
-  runnerUp,
   banner,
   intro,
   specialRule,

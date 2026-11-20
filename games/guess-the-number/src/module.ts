@@ -18,7 +18,7 @@ import type { GameModule } from '@smg/game-sdk';
 import { guessModule } from '@smg/guess-engine';
 import { z } from 'zod';
 
-import { numberDistance } from './closestMiss.js';
+import { numberDistance } from './distance.js';
 import { gtnComments } from './comments.js';
 import { GUESS_LIMIT, gtnRules, type GuessAction } from './rules.js';
 import { drawSecret, type Secrets } from './secrets.js';

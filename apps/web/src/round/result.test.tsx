@@ -7,7 +7,8 @@
  * Responsibility: the result gives the headline, the winning margin, placings with "took
  *                 part", the team result, the match standings (./MatchStandings) and the
  *                 fairness proof with the link to the verification page; without a margin the game's
- *                 closest miss stands in its place, and nothing when there is none (O22).
+ *                 closest miss stands in its place, and nothing when there is none (O22), nor in a
+ *                 game with "Closest to winning" (O111).
  * Depends on:     vitest, @testing-library/react, @smg-game/registry/web, ./fakes,
  *                 ./ResultScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/09-testing-strategy.md §2
@@ -69,39 +70,57 @@ describe('the result screen', () => {
 });
 
 describe('the result without a margin', () => {
+  // Seasonal Target's words, without its board (the line is the platform's place for them).
+  const target = GAME_SCREENS['seasonal-target'];
+  const game = target === undefined ? null : { ...target, Result: () => null };
+  const miss = { playerId: 'a', value: { x: 21, y: 31 }, distance: 1, touching: true };
+
   it('gives the game’s closest miss in its place, and nothing when there is none (O22)', () => {
-    const game = GAME_SCREENS['guess-the-number'] ?? null;
+    const state = { ...ended, margin: null, game: { closestMiss: miss } };
+    render(<ResultScreen state={state} game={game} viewerKey="a" standings={[]} />);
+    expect(screen.queryByTestId('margin')).toBeNull();
+    expect(screen.getByTestId('closest-miss').textContent).toBe(
+      'Closest miss besides the winner: Anna, right next to the target (21, 31).',
+    );
+    cleanup();
+    // With a margin, the margin stays and the closest miss is not shown (O13).
+    render(
+      <ResultScreen
+        state={{ ...state, margin: ended.margin }}
+        game={game}
+        viewerKey="a"
+        standings={[]}
+      />,
+    );
+    expect(screen.getByTestId('margin')).toBeTruthy();
+    expect(screen.queryByTestId('closest-miss')).toBeNull();
+    cleanup();
+    const none = { ...state, game: { closestMiss: null } };
+    render(<ResultScreen state={none} game={game} viewerKey="a" standings={[]} />);
+    expect(screen.queryByTestId('closest-miss')).toBeNull();
+  });
+
+  it('has no closest-miss line in a game with "Closest to winning" (O111)', () => {
     const view = {
       range: { low: 1, high: 100 },
       secret: 92,
       secrets: null,
       guesses: { w: [{ value: 92, feedback: 'correct' }], a: [{ value: 93, feedback: 'lower' }] },
-      closestMiss: { playerId: 'a', value: 93, distance: 1 },
     };
-    const state = { ...ended, margin: null, game: view };
-    render(<ResultScreen state={state} game={game} viewerKey="a" standings={[]} />);
-    expect(screen.queryByTestId('margin')).toBeNull();
-    expect(screen.getByTestId('closest-miss').textContent).toBe(
-      'Closest miss besides the winner: Anna, missed by just 1 (93).',
-    );
-    cleanup();
-    const far = { ...view, closestMiss: { playerId: 'a', value: 60, distance: 32 } };
+    const closest = [
+      { playerId: 'w', index: 0, distance: 0 },
+      { playerId: 'a', index: 0, distance: 1 },
+    ];
+    const state = { ...ended, margin: null, game: view, closest };
     render(
-      <ResultScreen state={{ ...state, game: far }} game={game} viewerKey="a" standings={[]} />,
+      <ResultScreen
+        state={state}
+        game={GAME_SCREENS['guess-the-number'] ?? null}
+        viewerKey="a"
+        standings={[]}
+      />,
     );
-    expect(screen.getByTestId('closest-miss').textContent).toBe(
-      'Closest miss besides the winner: Anna, 32 away (60).',
-    );
-    cleanup();
-    // With a margin, the margin stays and the closest miss is not shown (O13).
-    render(
-      <ResultScreen state={{ ...ended, game: view }} game={game} viewerKey="a" standings={[]} />,
-    );
-    expect(screen.getByTestId('margin')).toBeTruthy();
     expect(screen.queryByTestId('closest-miss')).toBeNull();
-    cleanup();
-    const none = { ...state, game: { ...view, closestMiss: null } };
-    render(<ResultScreen state={none} game={game} viewerKey="a" standings={[]} />);
-    expect(screen.queryByTestId('closest-miss')).toBeNull();
+    expect(screen.getByTestId('closest').textContent).toContain('off by 1');
   });
 });

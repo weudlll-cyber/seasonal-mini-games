@@ -9,15 +9,17 @@
  *                 solve on the season's tint. A desktop: two columns of five, 1–5 down the left
  *                 one, 6–10 down the right, 28 px apart as the round's list (../round/
  *                 roundColumns.css); a phone: one column. Every guess in full opens in the same
- *                 box, wrapping, never cut. Colours only from @smg/ui tokens.
+ *                 box, wrapping, never cut. Its sizes follow the screen's scale (`--fit`,
+ *                 ./useFit, O111), rows 22 px and text 13 px at the least; "All guesses (N)" is
+ *                 the size of the round list's "Log (N)". Colours only from @smg/ui tokens.
  * Spec:           docs/spec/02-game-guess-the-number.md §9
  */
 .round-closest {
   display: grid;
-  gap: var(--space-1);
+  gap: calc(var(--fit, 1) * var(--space-1));
   align-content: start;
   min-width: 0;
-  padding: var(--space-2) var(--space-3);
+  padding: calc(var(--fit, 1) * 0.75rem) calc(var(--fit, 1) * var(--space-3));
 }
 
 .round-closest-head {
@@ -30,7 +32,7 @@
 
 .round-closest-head h2 {
   margin: 0;
-  font-size: var(--font-size-lead);
+  font-size: max(14px, calc(var(--fit, 1) * 1.0625rem));
 }
 
 .round-closest-rows {
@@ -55,8 +57,8 @@
   align-items: center;
   gap: 0.5rem;
   min-width: 0;
-  min-height: 1.75rem;
-  padding: 0.1rem 0.4rem;
+  min-height: max(22px, calc(var(--fit, 1) * 1.75rem));
+  padding: 0 0.4rem;
   border-radius: 8px;
   white-space: nowrap;
 }
@@ -65,14 +67,14 @@
   flex: none;
   min-width: 1.25rem;
   color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+  font-size: max(13px, 0.875em);
   font-variant-numeric: tabular-nums;
 }
 
 .round-closest-words {
   flex: none;
   color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+  font-size: max(13px, 0.875em);
 }
 
 /* A solve: the row on the season's tint, its words in the text colour and bold. */

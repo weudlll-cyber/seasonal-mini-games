@@ -93,6 +93,16 @@
   row-gap: 0.25rem;
 }
 
+/* Compact: no empty space between "Next round", its line and "Players" (O111). */
+.match-docked .match-after:not(.match-after--docked) .match-side,
+.match-docked .match-after:not(.match-after--docked) .match-waiting {
+  gap: var(--space-1);
+}
+
+.match-docked .match-after:not(.match-after--docked) .match-waiting p {
+  margin: 0;
+}
+
 /* A desktop: the reference's page padding (the shell's focus mode has 8 px). */
 @media (min-width: 900px) and (orientation: landscape) {
   #root .shell-main.shell-main:has(.match-docked) {
@@ -154,8 +164,6 @@
   .match-docked .match-live:has(> .round-live[data-layout='list']) {
     flex: 1;
     min-height: 0;
-    /* A size container again: the season card fits its height (../round/roundIntro.css). */
-    container-type: size;
   }
 
   .match-docked .round-live[data-layout='list'] .round-main {

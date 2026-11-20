@@ -58,7 +58,6 @@ const gtnView = {
     ],
     a: [{ value: 93, feedback: 'lower' }],
   },
-  closestMiss: { playerId: 'a', value: 93, distance: 1 },
 };
 const gtnRows = [
   { playerId: 'w', index: 1, distance: 0 },
@@ -128,7 +127,6 @@ describe('closest to winning in the other games and its layout', () => {
         w: [{ value: '1234', feedback: { exact: 4, near: 0, solved: true } }],
         a: [{ value: '1243', feedback: { exact: 2, near: 2, solved: false } }],
       },
-      closestMiss: null,
     };
     show('safecracker', { ...ended, game: sc, closest: gtnRows.map((r) => ({ ...r, index: 0 })) });
     expect(rows()).toEqual(['1 Walter 1234 cracked it', '2 Anna 1243 2 right · 2 wrong places']);
@@ -142,7 +140,6 @@ describe('closest to winning in the other games and its layout', () => {
         w: [{ value: ['red', 'blue', 'yellow'], feedback: { correct: 3, defused: true } }],
         a: [{ value: ['red', 'white', 'blue'], feedback: { correct: 1, defused: false } }],
       },
-      closestMiss: null,
     };
     show('bomb-defusal', { ...ended, game: bd, closest: gtnRows.map((r) => ({ ...r, index: 0 })) });
     expect(rows()).toEqual(['1 Walter defused it', '2 Anna first cut right']);

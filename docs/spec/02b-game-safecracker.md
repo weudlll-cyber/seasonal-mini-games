@@ -113,17 +113,11 @@ If fewer candidates remain than `digitsPerFall`, the fall takes all of them; wit
 
 None. Safecracker implements no `halving` hook and sets `halvingAllowed` off, so on a halving day the option is not offered and a normal season round runs, as owner decision 29 does for a hidden range (DECISIONS T55; [04](04-software-architecture.md) §4.4).
 
-## 8. Winning, closest miss and the result page
+## 8. Winning, Closest to winning and the result page
 
 Winning, placings, end conditions, points and the winning margin are [02](02-game-guess-the-number.md) §8 and §9. The reveal shows the code (shared) or every player's code (individual), and the result's secret line reads "Code: 1123 (4 digits, 0–9)" (DECISIONS T150), the code large on a line of its own and its digits under it (owner decision O110).
 
-**Closest to winning** ([02](02-game-guess-the-number.md) §9, owner decision O110): each player's best code, by the most digits in their place, then the most right digits in a wrong place, equal ones by the earlier code; a row reads the code and its counts as the round's list words them ("1243 · 2 right · 2 wrong places"), an opened safe "cracked it". Every code stays behind "All guesses (N)".
-
-**Closest miss**, shared mode with a winner and no second correct guess inside the margin window (owner, decision 22):
-
-- Among the wrong guesses of players other than the winner, the one with the most `exact`, then the most `near`, then the earlier receive order: "Closest miss besides the winner: Anna, 3 right places, 1 right digit, wrong place (0427)." Without such a guess there is no line.
-- It is computed at the round's end and carried only in the result view ([02](02-game-guess-the-number.md) §9, DECISIONS T77).
-- A time-up result without a winner shows the round's closest guess instead, "Closest guess: …" (DECISIONS T145).
+**Closest to winning** ([02](02-game-guess-the-number.md) §9, owner decision O110): each player's best code, by the most digits in their place, then the most right digits in a wrong place, equal ones by the earlier code; a row reads the code and its counts as the round's list words them ("1243 · 2 right · 2 wrong places"), an opened safe "cracked it". Every code stays behind "All guesses (N)". The result has no closest-miss line: the second row says it (owner decision O111).
 
 ## 9. What a spectator sees
 

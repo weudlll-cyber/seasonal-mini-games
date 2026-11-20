@@ -10,7 +10,8 @@
  *                 as plain chips in three rows, the rest behind "+N more" (O58); the range
  *                 block stays compact, so the
  *                 platform's guess list under it keeps the room (O20, O46); on the result the
- *                 number large on a line of its own, the range under it (O110); layouts work
+ *                 number large on a line of its own, the range under it (O110), at the result's
+ *                 scale (`--fit`, O111: 13 px text and 24 px for the number at the least); layouts work
  *                 down to 390 px wide.
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §2.3, §6
  */
@@ -199,14 +200,14 @@
 }
 
 .gtn-secret {
-  font-size: var(--font-size-lead);
+  font-size: max(13px, calc(var(--fit, 1) * var(--font-size-lead)));
   margin: 0;
 }
 
 /* The number large on a line of its own, the range under it (the result's reveal, O110). */
 .gtn-secret strong {
   display: block;
-  font-size: clamp(1.75rem, 1.2rem + 1.2vw, 2.4rem);
+  font-size: max(24px, calc(var(--fit, 1) * clamp(1.75rem, 1.2rem + 1.2vw, 2.4rem)));
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
 }

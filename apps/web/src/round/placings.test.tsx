@@ -101,24 +101,20 @@ describe('the first part', () => {
 
 describe('a time-up result', () => {
   it('labels the closest guess of the round "Closest guess"', () => {
-    const game = GAME_SCREENS['guess-the-number'] ?? null;
-    const view = {
-      range: { low: 1, high: 100 },
-      secret: 92,
-      secrets: null,
-      guesses: { w: [{ value: 80, feedback: 'higher' }], a: [{ value: 95, feedback: 'lower' }] },
-      closestMiss: { playerId: 'a', value: 95, distance: 3 },
-    };
+    // Seasonal Target's words, without its board (the list games show no such line, O111).
+    const target = GAME_SCREENS['seasonal-target'];
+    const game = target === undefined ? null : { ...target, Result: () => null };
+    const miss = { playerId: 'a', value: { x: 17, y: 30 }, distance: 3, touching: false };
     const timeUp = {
       ...ended,
       winner: null,
       margin: null,
       endReason: 'timeUp',
-      game: view,
+      game: { closestMiss: miss },
     } as const;
     render(<ResultScreen state={timeUp} game={game} viewerKey="a" standings={[]} />);
     expect(screen.getByTestId('closest-miss').textContent).toBe(
-      'Closest guess: Anna, 3 away (95).',
+      'Closest guess: Anna, 3 tiles away (17, 30).',
     );
   });
 });

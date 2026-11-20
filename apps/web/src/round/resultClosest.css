@@ -10,7 +10,9 @@
  *                 a desktop the reveal in a narrow column beside the placings instead of a wide
  *                 one, so the first part and "Closest to winning" show whole above the docked
  *                 chat at 1440 × 900; on a phone one column with the fairness proof's
- *                 disclosure under the result's foot. Colours only from @smg/ui tokens.
+ *                 disclosure under the result's foot. Where the screen has not the room, the
+ *                 type, the cells and the spacing shrink with the screen's scale (`--fit`,
+ *                 ./useFit, O111), each with its floor. Colours only from @smg/ui tokens.
  * Spec:           docs/spec/02-game-guess-the-number.md §9, §12
  */
 .round-placings-foot {
@@ -28,9 +30,33 @@
   gap: var(--space-1) var(--space-2);
 }
 
+/* The screen's scale (`--fit`, ./useFit, O111): the type of the whole result follows it from
+   here (13 px at the least), and the sizes below that are not the text's own; at 1 every size
+   is as without it. */
+.round-result[data-closest] {
+  gap: calc(var(--fit, 1) * var(--space-2));
+  font-size: max(13px, calc(var(--fit, 1) * 1rem));
+}
+
 .round-result[data-closest] .round-result-first {
-  gap: var(--space-1);
-  padding: 0.875rem 1.125rem;
+  gap: calc(var(--fit, 1) * var(--space-1));
+  padding: calc(var(--fit, 1) * 0.875rem) calc(var(--fit, 1) * 1.125rem);
+}
+
+.round-result[data-closest] h1 {
+  font-size: max(15px, calc(var(--fit, 1) * clamp(1.25rem, 1rem + 0.6vw, 1.5rem)));
+}
+
+.round-result[data-closest] .round-table th,
+.round-result[data-closest] .round-table td {
+  padding: calc(var(--fit, 1) * var(--space-1));
+}
+
+/* "All placings (N)": the size of the round list's "Log (N)" (../round/roundLog.css). */
+.round-result[data-closest] .round-all-placings {
+  min-height: max(28px, calc(var(--fit, 1) * 2rem));
+  padding-inline: 0.7rem;
+  box-shadow: none;
 }
 
 /* A phone: one column, the fairness proof's disclosure under the result's foot (the head's
@@ -50,9 +76,22 @@
   }
 }
 
+/* A phone: the two buttons are touch targets of 40 px at the least. */
+@media (max-width: 899px) {
+  .round-result[data-closest] .round-all-placings,
+  .round-result[data-closest] .round-all-guesses {
+    min-height: max(40px, calc(var(--fit, 1) * var(--hit-target)));
+  }
+}
+
 @media (min-width: 900px) {
   .round-result[data-closest] .round-result-first {
-    column-gap: var(--space-3);
+    column-gap: calc(var(--fit, 1) * var(--space-3));
     grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr);
+  }
+
+  /* The headline and the proof's disclosure on one row: no closest-miss line under it (O111). */
+  .round-result[data-closest] .round-result-head > .round-proof {
+    grid-row: 1;
   }
 }

@@ -108,14 +108,11 @@ Platform feature, unchanged (03 §2.4): answers, comments and explosions arrive 
 
 None. On a halving day this game runs a normal season round of that season, as owner decision 29 does for a hidden range; the host form does not offer the option.
 
-## 9. Winning, closest miss and the result page
-
-A time-up result without a winner shows the round's closest guess instead, "Closest guess: …" (DECISIONS T145).
+## 9. Winning, Closest to winning and the result page
 
 - Winning, placings, end conditions, winning margin, points, leaderboard and fairness proof are 02 §8–§10. The seed reproduces every secret, the Spring hints and the Leaf Fall marks.
 - **Reveal:** the secret sequence as numbered wire chips (swatch and name) that wrap as wholes within the column, never scrolling sideways or cutting a colour at 1280 × 720, 1920 × 1080 or 390 × 844 (DECISIONS T193); in individual mode every player's sequence in the result.
-- **Closest miss** (owner, decision 22; shared mode with a winner and no margin line): the other player's wrong sequence with the longest correct start, the earlier receive order on a tie: "Closest miss besides the winner: Anna, the first 3 cuts right (red → blue → yellow → black)." With a best start of 0 there is no line: an explosion is not a near miss.
-- **Closest to winning** (02 §9, owner decision O110): each player's best sequence, by the most cuts right from the first, equal ones by the earlier sequence; a row shows the sequence as the round's colour dots and "first 3 cuts right" ("no cut right" for an explosion, "defused it" for a defused bomb). Every sequence stays behind "All guesses (N)".
+- **Closest to winning** (02 §9, owner decision O110): each player's best sequence, by the most cuts right from the first, equal ones by the earlier sequence; a row shows the sequence as the round's colour dots and "first 3 cuts right" ("no cut right" for an explosion, "defused it" for a defused bomb). Every sequence stays behind "All guesses (N)". The result has no closest-miss line: the second row says it (owner decision O111).
 
 ## 10. Spectator view
 

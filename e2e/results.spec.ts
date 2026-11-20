@@ -12,7 +12,10 @@
  *                 above the docked chat, "Closest to winning" follows it with "All guesses",
  *                 which opens every guess; on a desktop the result and the column beside it
  *                 are one scroll area, the column has none of its own and the page never
- *                 scrolls. The matches are aborted.
+ *                 scrolls; at 1536 × 768, 1280 × 720 and 375 × 667 the first part and all of
+ *                 "Closest to winning" show without scrolling at the screen's scale, or the
+ *                 scale stands at its floor, and no closest-miss line shows (O111). The
+ *                 matches are aborted.
  * Depends on:     @playwright/test, ./guessGames, ./play, ./screens
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 28); docs/spec/02-game-guess-the-number.md §9
  */
@@ -67,17 +70,57 @@ async function closestDocked(page: Page, desktop: boolean): Promise<void> {
   await closest.getByTestId('all-guesses').click();
 }
 
+// The screen's scale (O111): at each size the first part and the whole of "Closest to winning"
+// (its head and every row) show inside the result's scroll box without scrolling, or, where
+// they cannot (a small phone), the scale stands at its floor; no closest-miss line.
+const FIT_SIZES = [
+  { width: 1536, height: 768 },
+  { width: 1280, height: 720 },
+  { width: 375, height: 667 },
+];
+
+async function closestInView(page: Page): Promise<void> {
+  for (const size of FIT_SIZES) {
+    await page.setViewportSize(size);
+    await page.reload();
+    await expect(page.getByTestId('result-closest').locator('li').first()).toBeVisible();
+    const m = await page.getByTestId('result').evaluate((res) => {
+      // The result's scroll box: the nearest ancestor that scrolls or clips.
+      let box = res.parentElement as HTMLElement;
+      while (!/(auto|scroll|hidden)/.test(getComputedStyle(box).overflowY))
+        box = box.parentElement as HTMLElement;
+      const closest = res.querySelector('[data-testid="result-closest"]') as HTMLElement;
+      return {
+        scale: Number((res as HTMLElement).dataset['fitScale']),
+        left:
+          box.getBoundingClientRect().top +
+          box.clientHeight -
+          closest.getBoundingClientRect().bottom,
+        page: document.documentElement.scrollHeight - window.innerHeight,
+      };
+    });
+    const at = `${String(size.width)} × ${String(size.height)}`;
+    expect(m.page, `${at}: the page never scrolls`).toBeLessThanOrEqual(0);
+    if (m.scale > 0.6) expect(m.left, `${at}: all of it in view`).toBeGreaterThanOrEqual(-1);
+    await expect(page.getByTestId('closest-miss')).toHaveCount(0);
+  }
+}
+
 for (const gameId of ['guess-the-number', 'safecracker', 'bomb-defusal', 'seasonal-target']) {
   test(`journey 28 (${gameId}): the result's first part fits one screen`, async ({ browser }) => {
     test.setTimeout(90_000);
     const p = await person(browser, 'player-1', WIDE);
     let code = '';
     try {
-      code = (await direct(p, { gameId, season: 'summer', cooldownS: 30 })).matchCode;
-      await roundOpen(p.page);
       const list = gameId !== 'seasonal-target';
-      // The bot's first guess, so "Closest to winning" has a row and "All guesses" a count.
-      if (list) await expect(p.page.getByTestId('guess-list').locator('li').first()).toBeVisible();
+      // A list game with twelve bots: their first guesses fill "Closest to winning" (ten rows).
+      const bots = list ? 12 : 1;
+      code = (await direct(p, { gameId, season: 'summer', cooldownS: 30, bots })).matchCode;
+      await roundOpen(p.page);
+      if (list) {
+        const rows = p.page.getByTestId('guess-list').locator('li');
+        await expect.poll(() => rows.count(), { timeout: 15_000 }).toBeGreaterThanOrEqual(10);
+      }
       await hostMenu(p);
       await p.page.getByTestId('host-console').getByTestId('end-round').click();
       await expect(p.page.getByTestId('result')).toBeVisible({ timeout: 15_000 });
@@ -88,6 +131,7 @@ for (const gameId of ['guess-the-number', 'safecracker', 'bomb-defusal', 'season
       await expect(p.page.getByTestId('result')).toBeVisible({ timeout: 15_000 });
       await firstPartFits(p.page);
       if (list) await closestDocked(p.page, false);
+      if (list) await closestInView(p.page);
     } finally {
       if (code !== '') await abortMatch(p, code);
       await closeAll([p]);

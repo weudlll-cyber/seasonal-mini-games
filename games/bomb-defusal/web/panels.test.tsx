@@ -11,7 +11,7 @@
  *                 with its icon, "First 2 cuts right", "Defused!") and its colour dots (T143), own rows
  *                 pending under Frost,
  *                 hidden sequences as "cut a sequence"; the event lines and the Leaf Fall
- *                 banner; the refusals; the closest miss; the intro; the special's sentence;
+ *                 banner; the refusals; the intro; the special's sentence;
  *                 the web entry has the registry's shape.
  * Depends on:     vitest, @testing-library/react, ./index, ./panels, ./ResultPanel, ./text
  * Spec:           docs/spec/02c-game-bomb-defusal.md §3–§11
@@ -94,7 +94,6 @@ describe('the result panel', () => {
       secret: ['red', 'blue', 'yellow', 'white'],
       secrets: null,
       guesses,
-      closestMiss: null,
     };
     const props = { view: v, names: { a: 'Anna' }, viewerKey: 'b', colors: {} };
     render(<ResultPanel {...props} part="reveal" />);
@@ -117,7 +116,6 @@ describe('the result panel', () => {
       secret: null,
       secrets: { a: ['red', 'blue', 'yellow', 'white'], b: ['white', 'red', 'blue', 'green'] },
       guesses,
-      closestMiss: null,
     };
     render(<ResultPanel view={v} names={{ a: 'Anna' }} viewerKey="a" colors={{}} part="reveal" />);
     expect(screen.queryByTestId('secret')).toBeNull();
@@ -196,17 +194,7 @@ describe('the game text: events and results', () => {
 });
 
 describe('the game text: results, intro and entry', () => {
-  it('words the closest miss, the intro and the special', () => {
-    const miss = (correct: number) => ({
-      closestMiss: { playerId: 'a', value: ['red', 'blue', 'yellow', 'black'], correct },
-    });
-    expect(bdText.runnerUp(miss(3), { a: 'Anna' }, true)).toBe(
-      'Closest miss besides the winner: Anna, the first 3 cuts right (red → blue → yellow → black).',
-    );
-    expect(bdText.runnerUp(miss(1), {}, true)).toBe(
-      'Closest miss besides the winner: a, the first cut right (red → blue → yellow → black).',
-    );
-    expect(bdText.runnerUp({ closestMiss: null }, {}, true)).toBeNull();
+  it('words the intro and the special', () => {
     expect(bdText.intro?.(view, 'shared')).toBe('Shared bomb: 6 wires, 4 cuts');
     expect(bdText.intro?.(view, 'individual')).toBe(
       'Everyone defuses their own bomb: 6 wires, 4 cuts',

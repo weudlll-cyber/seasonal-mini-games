@@ -201,12 +201,13 @@ export const closestLabel = (won: boolean): string =>
 // text is not the game's. `guesses` turns the game's player or spectator view into rows.
 // `runnerUp` words the best of the rest from the result view (`won`: the round has a winner;
 // without one, the closest guess, T145), shown where the winning margin goes when the round
-// has none (O22), or null.
+// has none (O22), or null; no hook, no line (a game with "Closest to winning", `best`, whose
+// second row says the same, O111).
 export interface GameText {
   readonly code: (code: string) => string | null;
   readonly event: (event: unknown, names: Readonly<Record<string, string>>) => FeedLine | null;
   readonly guesses: (view: unknown) => readonly GuessRow[];
-  readonly runnerUp: (
+  readonly runnerUp?: (
     resultView: unknown,
     names: Readonly<Record<string, string>>,
     won: boolean,

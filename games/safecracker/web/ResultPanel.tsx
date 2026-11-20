@@ -9,7 +9,7 @@
  *                 codes with their right and wrong places, in individual mode with the
  *                 player's own code, the viewer's line first (02b §8), "did not guess"
  *                 without one. The platform shows
- *                 placings, points, margin or the closest miss (`text.runnerUp`), teams and the
+ *                 placings, points, margin, "Closest to winning" (`text.best`), teams and the
  *                 fairness proof around it.
  * Depends on:     react, @smg/game-sdk (props), @smg-game/safecracker (types), ./text
  * Used by:        ./index

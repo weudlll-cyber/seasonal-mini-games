@@ -9,8 +9,8 @@
  *                 halving (the hint shows once, in the range block, O47), and the shorter banner when Leaf Fall or
  *                 halving strikes ("Leaf Fall: 10 numbers fell.", O35); the list's guess rows from the player or
  *                 spectator view, own guesses and the others' at the round's visibility, with
- *                 answers and comments as far as the view carries them (O20, O21); and the
- *                 closest miss on the shared result (O22); a row of "Closest to winning" (the
+ *                 answers and comments as far as the view carries them (O20, O21); a row of
+ *                 the result's "Closest to winning" (the
  *                 number, "off by 13" or "found it", O110); the round intro's line on the
  *                 number and its range (O36). Server codes never reach the screen
  *                 as codes; every number is written with thousands separators (formatNumber).
@@ -28,7 +28,6 @@ import {
 import {
   type BestLine,
   type BestRow,
-  closestLabel,
   type FeedLine,
   formatNumber,
   type GameText,
@@ -133,22 +132,6 @@ function guessRows(view: unknown): readonly GuessRow[] {
   ];
 }
 
-// The closest miss on the shared result (O22), naming that the winner is not counted:
-// "Closest miss besides the winner: bot-01, missed by just 1 (92)." up to 2 away.
-function runnerUp(
-  view: unknown,
-  names: Readonly<Record<string, string>>,
-  won: boolean,
-): string | null {
-  const miss = (view as Partial<ResultView>).closestMiss ?? null;
-  if (miss === null) return null;
-  const name = names[miss.playerId] ?? miss.playerId;
-  const n = formatNumber(miss.distance);
-  const guess = formatNumber(miss.value);
-  const how = miss.distance <= 2 ? `missed by just ${n}` : `${n} away`;
-  return `${closestLabel(won)}: ${name}, ${how} (${guess}).`;
-}
-
 // A row of "Closest to winning" (O110): the number and its distance from the server.
 function best(view: unknown, row: BestRow): BestLine | null {
   const g = (view as Partial<ResultView>).guesses?.[row.playerId]?.[row.index];
@@ -172,7 +155,6 @@ export const gtnText: GameText = {
   code: (code) => CODES[code] ?? null,
   event: (event) => eventText(event as GtnEvent),
   guesses: guessRows,
-  runnerUp,
   banner,
   intro,
   best,

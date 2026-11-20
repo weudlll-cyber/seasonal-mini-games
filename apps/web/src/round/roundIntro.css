@@ -6,21 +6,15 @@
  * Responsibility: the intro fills the round's space under the round bar and never scrolls the
  *                 page: a card framed and tinted in the season colour, everything centred, the
  *                 season name in the largest type, the special's name and sentence, the
- *                 facts, and the seconds left; sizes follow the viewport's smaller side (O36)
- *                 and never pass a share of the card's own height, so every part shrinks to
- *                 the space it has (above a docked chat, O110: 1280 × 720 with the chat's
- *                 150 px) and nothing is cut, never larger than without that bound. The
- *                 card's height is the round view's (`.match-live`, a size container,
- *                 ./round.css) less the bar; without such a container (a docked phone page of
- *                 Seasonal Mind Games, where the page scrolls) the viewport's. Colours only
- *                 from @smg/ui tokens, so light and dark both work.
+ *                 facts, and the seconds left; sizes follow the viewport's smaller side (O36).
+ *                 Where the card has not the room (above a docked chat, a small phone), every
+ *                 size shrinks with the screen's scale (`--fit`, ./useFit, O111), each with its
+ *                 floor (13 px text, 24 px display values), never larger than without it.
+ *                 Colours only from @smg/ui tokens, so light and dark both work.
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6
  */
 /* Under the round bar: one card, the rest of the round view (./round.css). */
 .round-intro {
-  /* The card's height: the round view's less the 44 px bar and the gap under it. Each part
-     below is at most its share of it, so the parts add up to less than the card. */
-  --intro-h: calc(100cqh - 44px - var(--space-1));
   grid-column: 1 / -1;
   grid-row: 2 / -1;
   min-height: 0;
@@ -29,8 +23,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: min(clamp(0.5rem, 2.5vmin, 1.5rem), calc(var(--intro-h) * 0.03));
-  padding: min(var(--space-3), calc(var(--intro-h) * 0.04)) var(--space-3);
+  gap: calc(var(--fit, 1) * clamp(0.5rem, 2.5vmin, 1.5rem));
+  padding: calc(var(--fit, 1) * var(--space-3)) var(--space-3);
   border: 3px solid var(--season);
   border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--season) 16%, var(--color-surface));
@@ -40,16 +34,16 @@
 .round-intro-head {
   display: grid;
   justify-items: center;
-  gap: min(var(--space-1), calc(var(--intro-h) * 0.015));
+  gap: calc(var(--fit, 1) * var(--space-1));
 }
 
 /* The token icon on a disc of the page colour, as on the round's season chip. */
 .round-intro-icon {
   display: grid;
   place-items: center;
-  width: min(clamp(4rem, 14vmin, 7.5rem), calc(var(--intro-h) * 0.17));
-  height: min(clamp(4rem, 14vmin, 7.5rem), calc(var(--intro-h) * 0.17));
-  padding: min(0.6rem, calc(var(--intro-h) * 0.014));
+  width: max(2.5rem, calc(var(--fit, 1) * clamp(4rem, 14vmin, 7.5rem)));
+  height: max(2.5rem, calc(var(--fit, 1) * clamp(4rem, 14vmin, 7.5rem)));
+  padding: calc(var(--fit, 1) * 0.6rem);
   border-radius: 50%;
   border: 3px solid var(--season);
   background: var(--color-surface);
@@ -57,7 +51,7 @@
 
 .round-intro-head h1 {
   margin: 0;
-  font-size: min(var(--font-size-ball), calc(var(--intro-h) * 0.145));
+  font-size: max(24px, calc(var(--fit, 1) * var(--font-size-ball)));
   line-height: 1;
 }
 
@@ -76,12 +70,12 @@
 
 .round-intro-special h2 {
   margin: 0;
-  font-size: min(var(--font-size-title), calc(var(--intro-h) * 0.068));
+  font-size: max(16px, calc(var(--fit, 1) * var(--font-size-title)));
 }
 
 .round-intro-special p {
   margin: 0;
-  font-size: min(var(--font-size-lead), calc(var(--intro-h) * 0.036));
+  font-size: max(13px, calc(var(--fit, 1) * var(--font-size-lead)));
 }
 
 .round-intro-facts {
@@ -90,16 +84,16 @@
   list-style: none;
   display: grid;
   gap: 0.15rem;
-  font-size: min(1rem, calc(var(--intro-h) * 0.03));
+  font-size: max(13px, calc(var(--fit, 1) * 1rem));
   font-weight: var(--font-weight-strong);
 }
 
 .round-intro-count {
   margin: 0;
-  font-size: min(var(--font-size-lead), calc(var(--intro-h) * 0.036));
+  font-size: max(13px, calc(var(--fit, 1) * var(--font-size-lead)));
 }
 
 .round-intro-count strong {
-  font-size: min(var(--font-size-title), calc(var(--intro-h) * 0.075));
+  font-size: max(24px, calc(var(--fit, 1) * var(--font-size-title)));
   font-variant-numeric: tabular-nums;
 }

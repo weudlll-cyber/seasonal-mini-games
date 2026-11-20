@@ -8,17 +8,15 @@
  *                 latest codes) and the spectator view (the same without own codes and without
  *                 any individual hint, 02b §9). The guesses, at the round's visibility and with
  *                 Frost's cut, are the guess engine's (04 §4.7; T73, T74). Only `result` takes
- *                 the secrets; it alone carries the closest miss (02b §8, T77): among the wrong
- *                 codes of everyone but the winner the most right place, then the most wrong
- *                 place, then the earlier. `reveal` words the code for the chat's round-end line.
- * Depends on:     zod, @smg/game-sdk (GameViews), @smg/guess-engine (views, closest miss),
- *                 ./feedback, ./rules, ./state
+ *                 the secrets. `codeDistance` measures a code for "Closest to winning" (the
+ *                 most right places, then the most wrong places, O110). `reveal` words the code
+ *                 for the chat's round-end line.
+ * Depends on:     zod, @smg/game-sdk (GameViews), @smg/guess-engine (views), ./rules, ./state
  * Used by:        ./module, ./index, ./devBot
  * Spec:           docs/spec/02b-game-safecracker.md §5.2, §8, §9; docs/spec/05-security-threat-model.md §3.1
  */
 import type { GameViews } from '@smg/game-sdk';
 import {
-  closestMissBy,
   guessSchemas,
   othersGuesses,
   ownGuesses,
@@ -27,7 +25,6 @@ import {
 } from '@smg/guess-engine';
 import { z } from 'zod';
 
-import { feedbackFor } from './feedback.js';
 import { CODE_PATTERN } from './rules.js';
 import type { ScState } from './state.js';
 
@@ -51,10 +48,6 @@ export const viewSchemas = {
       secret: code.nullable(),
       secrets: z.record(z.string(), code).nullable(),
       guesses: guesses.result,
-      closestMiss: z
-        .object({ playerId: z.string(), value: code, exact: count, near: count })
-        .strict()
-        .nullable(),
     })
     .strict(),
 };
@@ -62,24 +55,11 @@ export const viewSchemas = {
 export type PlayerView = z.infer<typeof viewSchemas.player>;
 export type SpectatorView = z.infer<typeof viewSchemas.spectator>;
 export type ResultView = z.infer<typeof viewSchemas.result>;
-export type ClosestMiss = NonNullable<ResultView['closestMiss']>;
 
 // How far a code is from the safe's, in one number (02b §8, O110): fewer digits in their
 // place first, then fewer right digits in a wrong place (near ≤ length − exact); 0 opens it.
 export const codeDistance = (f: { exact: number; near: number }, length: number): number =>
   (length - f.exact) * (length + 1) + (length - f.exact - f.near);
-
-// The best wrong code of anyone but the winner: most exact, then most near, then earlier.
-export function closestMiss(state: ScState, secret: string): ClosestMiss | null {
-  const miss = closestMissBy(
-    state,
-    (f) => f.solved,
-    (g) => codeDistance(g.feedback, state.length),
-  );
-  if (miss === null) return null;
-  const { exact, near } = feedbackFor(miss.value, secret);
-  return { playerId: miss.playerId, value: miss.value, exact, near };
-}
 
 const board0 = (state: ScState) => ({
   length: state.length,
@@ -106,7 +86,6 @@ export const views: GameViews<ScState, Secrets<string>> = {
     secret: secrets.mode === 'shared' ? secrets.value : null,
     secrets: secrets.mode === 'individual' ? secrets.byPlayer : null,
     guesses: resultGuesses(state),
-    closestMiss: secrets.mode === 'shared' ? closestMiss(state, secrets.value) : null,
   }),
 };
 

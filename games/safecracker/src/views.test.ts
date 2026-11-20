@@ -1,16 +1,15 @@
 /**
  * @file   games/safecracker/src/views.test.ts
  * @module games/safecracker
- * @brief  The views per visibility and Frost, the sentinel test, the closest miss and the reveal.
+ * @brief  The views per visibility and Frost, the sentinel test and the reveal.
  *
  * Responsibility: others' codes only under `numbers` and `full`, answers and comments only
  *                 under `full` in shared mode, Frost-held answers in no view; the board (length,
  *                 digits, fallen digits, shared hint) for players and spectators, an individual
  *                 hint only for its player; the sentinel test that no secret reaches a player
  *                 or spectator view or an event of a running round in either mode, while the
- *                 result shows it; the closest miss (exact, then near, then earlier; the winner
- *                 excluded; none) only in the result; the chat's reveal clause; every view
- *                 valid against its schema.
+ *                 result shows it; the chat's reveal clause; every view valid against its
+ *                 schema.
  * Depends on:     vitest, fast-check, ./fakes, ./module, ./views
  * Spec:           docs/spec/02b-game-safecracker.md §5.2, §8, §9; docs/spec/09-testing-strategy.md §4.1
  */
@@ -19,7 +18,7 @@ import { describe, expect, it } from 'vitest';
 
 import { individual, input, shared, Table } from './fakes.js';
 import { safecracker } from './module.js';
-import { closestMiss, reveal, type PlayerView, type SpectatorView } from './views.js';
+import { reveal, type PlayerView, type SpectatorView } from './views.js';
 
 const all = { releasedBefore: Infinity };
 const { views, viewSchemas } = safecracker;
@@ -118,46 +117,18 @@ describe('the sentinel test', () => {
   });
 });
 
-describe('the closest miss and the result', () => {
-  it('picks most exact, then most near, then the earlier, never the winner', () => {
-    const t = new Table(shared('1123'), input('shared', ['a', 'b', 'c']));
-    t.play('a', '1132'); // 2 exact, 2 near
-    t.play('b', '1124'); // 3 exact
-    t.play('c', '1129'); // 3 exact, later
-    t.play('b', '1123'); // b wins
-    t.play('a', '1120'); // 3 exact, after the winner's
-    expect(closestMiss(t.state, '1123')).toEqual({
-      playerId: 'c',
-      value: '1129',
-      exact: 3,
-      near: 0,
-    });
-    const r = new Table(shared('1123'), input('shared', ['a', 'b', 'c']));
-    r.play('a', '2311'); // 0 exact, 4 near
-    r.play('b', '1000'); // 1 exact
-    r.play('c', '1123');
-    expect(closestMiss(r.state, '1123')).toMatchObject({ playerId: 'b', exact: 1, near: 0 });
-  });
-
-  it('is the closest code without a winner (T145), none without another player’s wrong code', () => {
-    const t = new Table(shared('1123'), input('shared', ['a', 'b']));
-    t.play('a', '4567');
-    expect(closestMiss(t.state, '1123')).toMatchObject({ playerId: 'a', value: '4567' });
-    t.play('a', '1123');
-    expect(closestMiss(t.state, '1123')).toBeNull();
-  });
-
+describe('the result', () => {
   it('reveals the code in the result and the chat line', () => {
     const t = new Table(shared('0427'), input('shared', ['a', 'b']));
     t.play('b', '0429');
     t.play('a', '0427');
     const result = views.result(t.state, t.secrets);
     expect(viewSchemas.result.safeParse(result).success).toBe(true);
-    expect(result).toMatchObject({ secret: '0427', secrets: null, closestMiss: { playerId: 'b' } });
+    expect(result).toMatchObject({ secret: '0427', secrets: null });
     expect(reveal(result, 'a')).toBe('the code was 0427');
     const own = new Table(individual({ a: '1111', b: '2222' }), input('individual', ['a', 'b']));
     const r2 = views.result(own.state, own.secrets);
-    expect(r2).toMatchObject({ secret: null, secrets: { a: '1111' }, closestMiss: null });
+    expect(r2).toMatchObject({ secret: null, secrets: { a: '1111' } });
     expect(reveal(r2, 'b')).toBe('their code was 2222');
     expect(reveal(r2, null)).toBeNull();
   });

@@ -199,14 +199,11 @@ describe('result view', () => {
       secret: 412,
       secrets: null,
       guesses: { a: [{ value: 300, feedback: 'higher' }], b: [{ value: 500, feedback: 'lower' }] },
-      // Nobody won: the round's closest guess, 500 is 88 away (T145).
-      closestMiss: { playerId: 'b', value: 500, distance: 88 },
     });
     const ind = played('full', 'individual');
     expect(views.result(ind.state, ind.secrets)).toMatchObject({
       secret: null,
       secrets: { a: 412, b: 77 },
-      closestMiss: null,
     });
     expect(viewSchemas.result.safeParse(r).success).toBe(true);
   });

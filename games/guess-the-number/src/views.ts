@@ -11,10 +11,10 @@
  *                 fallen numbers and the hint. No view holds a range narrowed from the answers
  *                 (O17), and while the range is hidden no view holds the range at all: `range`
  *                 is null until the result reveals it with the secret (O19, T52). Only
- *                 `result` takes the secrets; it alone carries the closest miss (O22).
+ *                 `result` takes the secrets.
  *                 `reveal` words the secret for the chat's round-end line (O32).
  * Depends on:     zod, @smg/game-sdk (GameViews, Range, formatNumber), @smg/guess-engine (views),
- *                 ./closestMiss, ./secrets, ./state
+ *                 ./secrets, ./state
  * Used by:        ./module
  * Spec:           docs/spec/02-game-guess-the-number.md §6, §9, §11, §12; docs/spec/05-security-threat-model.md §3
  */
@@ -22,7 +22,6 @@ import { formatNumber, type GameViews, type Range } from '@smg/game-sdk';
 import { guessSchemas, othersGuesses, ownGuesses, resultGuesses } from '@smg/guess-engine';
 import { z } from 'zod';
 
-import { closestMiss } from './closestMiss.js';
 import type { Secrets } from './secrets.js';
 import type { GtnState } from './state.js';
 
@@ -65,15 +64,6 @@ export const viewSchemas = {
       secret: z.number().int().nullable(),
       secrets: z.record(z.string(), z.number().int()).nullable(),
       guesses: guesses.result,
-      // Shared mode with a winner: the best wrong guess of anyone else (O22).
-      closestMiss: z
-        .object({
-          playerId: z.string(),
-          value: z.number().int(),
-          distance: z.number().int().nonnegative(),
-        })
-        .strict()
-        .nullable(),
     })
     .strict(),
 };
@@ -115,7 +105,6 @@ export const views: GameViews<GtnState, Secrets> = {
     secret: secrets.mode === 'shared' ? secrets.value : null,
     secrets: secrets.mode === 'individual' ? secrets.byPlayer : null,
     guesses: resultGuesses(state),
-    closestMiss: secrets.mode === 'shared' ? closestMiss(state, secrets.value) : null,
   }),
 };
 

@@ -15,7 +15,8 @@
  *                 team line ("Team Spring wins the round (+1 team point)"). Below it, where the
  *                 page may scroll: "Closest to winning" for a game that names best guesses,
  *                 every guess behind its "All guesses" (./ClosestToWinning, O110; the
- *                 first part then compact, ./resultClosest.css), else every player's guesses
+ *                 first part then compact, ./resultClosest.css, both whole on the screen at its
+ *                 scale, ./useFit, O111), else every player's guesses
  *                 in full (the game's history, T150),
  *                 the team result and the match standings (O54). The proof: the
  *                 commitment published at creation, the seed revealed now, and the link to the
@@ -23,7 +24,7 @@
  * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber),
  *                 @smg-game/registry/web (types), ../season/*, ../shell/router,
  *                 ./ClosestToWinning, ./MatchStandings, ./ResultParts, ./RoundSide,
- *                 ./RoundStandings, ./roundText, ./result.css, ./resultBoard.css,
+ *                 ./RoundStandings, ./roundText, ./useFit, ./result.css, ./resultBoard.css,
  *                 ./resultOwn.css, ./resultClosest.css
  *                 A game that draws its own first part (`ownResult`, O97, T352) gets its
  *                 reveal (a headline row, the winners, the cards) with every line behind a
@@ -44,6 +45,7 @@ import { ClosestToWinning } from './ClosestToWinning.js';
 import { colorsOf } from './RoundSide.js';
 import { RoundStandings } from './RoundStandings.js';
 import { endHeadline, marginText } from './roundText.js';
+import { useFitScale } from './useFit.js';
 import './result.css';
 import './resultBoard.css';
 import './resultOwn.css';
@@ -135,8 +137,8 @@ function OwnResult(p: ResultProps & { readonly game: GameWeb }): ReactElement {
   );
 }
 
-// The headline, the margin or, without one, the game's closest miss or guess (O22), and the
-// fairness proof's disclosure.
+// The headline, the margin or, without one, the game's closest miss or guess (O22; none in a
+// game with "Closest to winning", whose rows say it, O111), and the fairness proof's disclosure.
 function ResultHead(p: {
   readonly state: RoundStateView;
   readonly game: GameWeb | null;
@@ -145,7 +147,7 @@ function ResultHead(p: {
   const margin = marginText(state);
   const miss =
     margin === null
-      ? (p.game?.text.runnerUp(state.game, state.names, state.winner !== null) ?? null)
+      ? (p.game?.text.runnerUp?.(state.game, state.names, state.winner !== null) ?? null)
       : null;
   return (
     <header className="round-result-head">
@@ -186,8 +188,11 @@ export function ResultScreen(props: ResultProps): ReactElement {
   );
   // The game names best guesses (O110): "Closest to winning" stands for the full history.
   const closest = game?.text.best !== undefined && state.closest !== undefined ? game : null;
+  // Its first part and "Closest to winning" fit the screen at the screen's scale (O111).
+  const fit = useFitScale<HTMLElement>(`${state.roundId}|${String(state.closest?.length)}`);
   return (
     <section
+      ref={closest === null ? undefined : fit}
       className="round-result"
       data-testid="result"
       // A board game's grid gets the free height of the first part (./resultBoard.css).
@@ -195,7 +200,7 @@ export function ResultScreen(props: ResultProps): ReactElement {
       // A game with "Closest to winning" has the compact first part (./resultClosest.css).
       data-closest={closest !== null || undefined}
     >
-      <div className="smg-panel round-result-first" data-testid="result-first">
+      <div className="smg-panel round-result-first" data-testid="result-first" data-fit-fixed="">
         <ResultHead state={state} game={game} />
         {/* The game's reveal (the secret, a board game's grid): the part that grows. */}
         <div className="round-result-game">{part('reveal')}</div>

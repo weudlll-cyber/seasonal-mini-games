@@ -1,7 +1,7 @@
 /**
  * @file   games/bomb-defusal/src/views.test.ts
  * @module games/bomb-defusal
- * @brief  Views per visibility, mode and Frost; the sentinel test; the result and closest miss.
+ * @brief  Views per visibility, mode and Frost; the sentinel test; the result.
  *
  * Responsibility: the player sees the bomb, their own sequences with answers and comments, and
  *                 the others' at the round's visibility (`own`: that someone cut; `numbers`:
@@ -10,9 +10,8 @@
  *                 included, out of every view until delivered; the individual hint reaches only
  *                 its player, never a spectator; no player view, spectator view, room event or
  *                 rejection of a running round holds a secret sequence (sentinels, both modes);
- *                 the result reveals it with the closest miss (longest start, earlier on a tie,
- *                 none at 0, none without another wrong sequence); `reveal` words it; every
- *                 view validates against its schema.
+ *                 the result reveals it; `reveal` words it; every view validates against its
+ *                 schema.
  * Depends on:     vitest, fast-check, @smg/guess-engine, ./conformance, ./fakes, ./module,
  *                 ./views, ./wires
  * Spec:           docs/spec/02c-game-bomb-defusal.md §5.2, §6, §9, §10; docs/spec/05-security-threat-model.md §3.1
@@ -24,7 +23,7 @@ import { describe, expect, it } from 'vitest';
 import { bombDefusalConformance as kit } from './conformance.js';
 import { input, Table } from './fakes.js';
 import { bombDefusal } from './module.js';
-import { closestMiss, reveal } from './views.js';
+import { reveal } from './views.js';
 import type { Sequence } from './wires.js';
 
 const all = { releasedBefore: Infinity };
@@ -135,37 +134,21 @@ describe('sentinels: no secret in a running round (05 §3.1, P2)', () => {
 });
 
 describe('the result (02c §9)', () => {
-  it('reveals the shared sequence with the closest miss, and words it for the chat', () => {
+  it('reveals the shared sequence and words it for the chat', () => {
     const t = new Table({ mode: 'shared', value: SECRET }, input('shared', ['a', 'b', 'c']));
     t.play('b', ['red', 'blue', 'yellow', 'black'], 1_000);
     t.play('c', ['red', 'blue', 'yellow', 'green'], 2_000);
     t.play('a', SECRET, 3_000);
     const r = views.result(t.state, t.secrets);
     expect(viewSchemas.result.safeParse(r).success).toBe(true);
-    expect(r).toMatchObject({
-      secret: SECRET,
-      secrets: null,
-      closestMiss: { playerId: 'b', correct: 3 },
-    });
+    expect(r).toMatchObject({ secret: SECRET, secrets: null });
     expect(reveal(r, 'a')).toBe('the sequence was red → blue → yellow → white');
-  });
-
-  it('has no closest miss at 0, without a winner, or without another wrong sequence', () => {
-    const t = new Table({ mode: 'shared', value: SECRET }, input('shared', ['a', 'b']));
-    t.play('b', BOOM);
-    expect(closestMiss(t.state)).toBeNull();
-    t.play('a', SECRET);
-    expect(closestMiss(t.state)).toBeNull();
-    const alone = new Table({ mode: 'shared', value: SECRET }, input('shared', ['a', 'b']));
-    alone.play('a', BOOM);
-    alone.play('a', SECRET);
-    expect(closestMiss(alone.state)).toBeNull();
   });
 
   it('reveals every own sequence in individual mode', () => {
     const t = played('full', 'individual');
     const r = views.result(t.state, t.secrets);
-    expect(r).toMatchObject({ secret: null, secrets: { a: SECRET, b: BOOM }, closestMiss: null });
+    expect(r).toMatchObject({ secret: null, secrets: { a: SECRET, b: BOOM } });
     expect(reveal(r, 'b')).toBe('their sequence was blue → red → yellow → white');
     expect(reveal(r, null)).toBeNull();
   });
