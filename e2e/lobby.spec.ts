@@ -7,8 +7,8 @@
  *                 on (O24) and lands in the waiting area (O23); the bots join one after another
  *                 and show as online with a team; the player picks a team, which shows pressed;
  *                 the host menu starts the round with the normal Start; the round runs with the
- *                 bots playing; the result names the closest miss (O22), or the margin when a
- *                 second correct guess came in its window; the waiting area for the next round
+ *                 bots playing; the result shows "Closest to winning" with the winner first
+ *                 (O110) and no closest-miss line of its own (O111); the waiting area for the next round
  *                 follows the result with the player's team kept and no team buttons (O26); a
  *                 second round from the host menu; then End match with its confirm sentence and
  *                 the match summary with both rounds, the players and the way back (O27), on one
@@ -47,15 +47,15 @@ async function summaryFits(page: Page): Promise<void> {
   }
 }
 
-// The result, with the closest miss unless a second correct guess set the margin (O13, O22).
+// The result with "Closest to winning", the winner's row first (O110); the closest miss is its
+// next row, no line of its own any more (O111).
 async function resultShown(page: Page): Promise<void> {
   const result = page.getByTestId('result');
   await expect(result).toBeVisible({ timeout: 60_000 });
-  if ((await result.getByTestId('margin').count()) === 0) {
-    await expect(result.getByTestId('closest-miss')).toHaveText(
-      /^Closest miss besides the winner: .+, (missed by just [12]|\d+ away) \(\d+\)\.$/,
-    );
-  }
+  const closest = result.getByTestId('result-closest');
+  await expect(closest.getByRole('heading', { name: 'Closest to winning' })).toBeVisible();
+  await expect(closest.getByTestId('closest').locator('li').first()).toBeVisible();
+  await expect(result.getByTestId('closest-miss')).toHaveCount(0);
 }
 
 // From the form with "Start from the lobby" on to a team picked; the match code.

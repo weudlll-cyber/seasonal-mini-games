@@ -99,7 +99,7 @@ A browser-test run starts its own stack and reuses none: a port already taken st
 11. Negative bounds (owner decision 18), 390 × 844: the Quick Test form takes "-500" typed key by key into Lowest number and, with "Start from the lobby" off, starts a round from −500 to 500 at once (T69); the range is shown, the ± button makes a typed number negative, the guess is answered, and the round plays to its result; during the round the app header is hidden and the round's bar is one row of at most 64 px (owner decision 46).
 12. Quick Test through the lobby (owner decisions 22–24, 26, 27):
     - the form with "Start from the lobby" on opens the waiting area; the bots appear one after another, online, with their teams; the player ("no team yet") picks a team, which shows pressed;
-    - the host menu's Start starts the round; the round runs with the bots playing; the result names the closest miss (or the margin, when a second correct guess came within its window);
+    - the host menu's Start starts the round; the round runs with the bots playing; the result shows "Closest to winning" with the winner first, the closest miss its next row and no line of its own (owner decisions O110, O111);
     - the waiting area for the next round follows with the team kept and no team buttons; a second round from the host menu;
     - then End match with its confirm sentence, and the match summary with two rounds, the four players and the link back to Play, also after a reload.
     - The chat is docked under the result and "Next round", never inside it (owner decision O109); the summary fits one screen at 1280 × 720 and 390 × 844 (DECISIONS T116).
