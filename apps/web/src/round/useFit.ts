@@ -5,8 +5,10 @@
  *
  * Responsibility: the one platform mechanism by which a game screen fits the space it has.
  *                 `useFitScale`: a screen (its root) names its fixed parts (`[data-fit-fixed]`,
- *                 else all its children); the space they have is the nearest box that clips or
- *                 scrolls (the root itself, or the screen's named scroll area). The scale is the
+ *                 else all its children), each with what any box in it clips or scrolls away;
+ *                 the space they have is the nearest box that clips or scrolls (the root
+ *                 itself, or the screen's named scroll area), or the root's own box for a screen
+ *                 that fills a height of its own (`self`, Seasonal Mind Games' result). The scale is the
  *                 largest value ≤ 1 at which the fixed parts fit that box, never below
  *                 `FIT_FLOOR`; it is set on the root as the CSS custom property `--fit`, which the
  *                 screen's type, row heights, paddings and gaps multiply, each size with its own
@@ -15,7 +17,8 @@
  *                 room the scale is 1 and the screen looks as without it. It is measured anew
  *                 only when the box's size changes (resize, rotation, the on-screen keyboard
  *                 changing the visual viewport) or the screen's content does (`signature`), each
- *                 time from 1 in at most a few passes inside one task (the first before the
+ *                 time from 1 in at most nine measurements inside one task (a proportional
+ *                 guess, then halving) (the first before the
  *                 first paint, a resize's in its next frame): no loop, no React state, no
  *                 visible jump after the first paint. `useFit`: a box of a fixed height that
  *                 never scrolls and never cuts an item shows the items (`[data-fit]`) that fit
@@ -29,8 +32,8 @@ import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
 // Below this scale nothing shrinks further: the screen's scroll area takes the rest.
 export const FIT_FLOOR = 0.6;
 
-// The passes of one fitting: each measures at the scale of the last one.
-const PASSES = 5;
+// The passes of one fitting after the first measurement: each halves the gap left.
+const PASSES = 7;
 
 // The next scale from one measurement: the fixed parts took `used` pixels of `room` at the
 // scale `current`; they shrink about in proportion, so the largest scale ≤ 1 that fits, a
@@ -51,7 +54,19 @@ function boxOf(root: HTMLElement): HTMLElement {
   return document.documentElement;
 }
 
-// How far the fixed parts reach in the box's content, from its top edge, and its room.
+// What a fixed part holds beyond its own box: the most any box in it (itself included) that
+// clips or scrolls has hidden (a fixed part filling a height its content does not fit).
+function hidden(part: Element): number {
+  let most = 0;
+  for (const e of [part, ...part.querySelectorAll('*')]) {
+    const over = e.scrollHeight - e.clientHeight;
+    if (over > 1 && getComputedStyle(e).overflowY !== 'visible') most = Math.max(most, over);
+  }
+  return most;
+}
+
+// How far the fixed parts reach in the box's content, from its top edge (with what they hide),
+// and its room.
 function measure(root: HTMLElement, box: HTMLElement) {
   const marked = root.querySelectorAll<HTMLElement>('[data-fit-fixed]');
   const parts = marked.length > 0 ? [...marked] : [...root.children];
@@ -62,21 +77,33 @@ function measure(root: HTMLElement, box: HTMLElement) {
   for (const part of parts) {
     const r = part.getBoundingClientRect();
     low = Math.min(low, r.top);
-    high = Math.max(high, r.bottom);
+    high = Math.max(high, r.bottom + hidden(part));
   }
   const pad = parseFloat(getComputedStyle(box).paddingBottom) || 0;
   return { used: high - low + pad, room: box.clientHeight };
 }
 
-// One fitting: from 1, a few passes down to the scale at which the fixed parts fit.
+// One fitting: from 1; where the fixed parts do not fit, a proportional first guess, then
+// halving the gap between the largest scale found to fit and the smallest found not to, so
+// the result is the largest that fits (within 1 %) also where some sizes do not shrink.
 export function settle(root: HTMLElement, box: HTMLElement = boxOf(root)): number {
-  let scale = 1;
-  root.style.setProperty('--fit', '1');
-  for (let pass = 0; pass < PASSES; pass += 1) {
+  const fits = (scale: number): boolean => {
+    root.style.setProperty('--fit', String(scale));
     const { used, room } = measure(root, box);
-    const next = nextScale(scale, used, room);
-    if (next >= scale) break;
-    scale = next;
+    return used <= room + 0.5;
+  };
+  let scale = 1;
+  if (!fits(1)) {
+    const first = measure(root, box);
+    let low = FIT_FLOOR;
+    let high = 1;
+    let guess = nextScale(1, first.used, first.room);
+    for (let pass = 0; pass < PASSES && high - low > 0.01; pass += 1) {
+      if (fits(guess)) low = guess;
+      else high = guess;
+      guess = Math.round(((low + high) / 2) * 1000) / 1000;
+    }
+    scale = low;
     root.style.setProperty('--fit', String(scale));
   }
   root.dataset['fitScale'] = String(scale);
@@ -84,12 +111,17 @@ export function settle(root: HTMLElement, box: HTMLElement = boxOf(root)): numbe
 }
 
 // The screen's scale (`--fit` on the element the returned ref is put on), fitted to its box.
-export function useFitScale<T extends HTMLElement>(signature: string): RefObject<T | null> {
+// `self`: the screen fills a height of its own (a grid sharing it out), so its own box is the
+// one its fixed parts must fit, whatever its ancestors do.
+export function useFitScale<T extends HTMLElement>(
+  signature: string,
+  self = false,
+): RefObject<T | null> {
   const ref = useRef<T | null>(null);
   useLayoutEffect(() => {
     const root = ref.current;
     if (root === null) return undefined;
-    const box = boxOf(root);
+    const box = self ? root : boxOf(root);
     settle(root, box);
     // A new size of the box, or of the visual viewport (a phone's keyboard), fits again;
     // the scale's own change of the root's height is not watched, so nothing loops.
@@ -114,7 +146,7 @@ export function useFitScale<T extends HTMLElement>(signature: string): RefObject
       watch?.disconnect();
       window.visualViewport?.removeEventListener('resize', resized);
     };
-  }, [signature]);
+  }, [signature, self]);
   return ref;
 }
 

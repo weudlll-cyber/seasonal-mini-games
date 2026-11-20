@@ -113,8 +113,12 @@ function OwnResult(p: ResultProps & { readonly game: GameWeb }): ReactElement {
   const part = (which: 'reveal' | 'history') => (
     <GamePart state={state} game={p.game} viewerKey={p.viewerKey} part={which} />
   );
+  // The grid fills the height above the chat; its next-round box (the fixed part) shows whole
+  // at the screen's scale (O111).
+  const fit = useFitScale<HTMLElement>(`${state.roundId}|own`, true);
   return (
     <section
+      ref={fit}
       className="round-result round-result--own"
       data-testid="result"
       data-layout={p.game.layout ?? 'list'}

@@ -16,6 +16,9 @@
  *                 theme's success text colour (T360). At 1280 × 720 the headline is 28 px and the
  *                 card's icon and count 28 px (T359); on a phone (the platform's rule) the
  *                 headline 26 px, cards with icon 28 px, name 12 px, count 24 px and a "✓" pill.
+ *                 Where the result's grid has not the room (a desktop under about 1440 × 900),
+ *                 the type and spacing shrink with the screen's scale (`--fit`, O111), 13 px
+ *                 text and 24 px for the headline and the counts at the least.
  * Spec:           docs/spec/02e-game-mind-games.md §9, §11
  */
 .mg-result {
@@ -44,7 +47,7 @@
 
 .mg-result-head h1 {
   margin: 0;
-  font-size: var(--mg-head);
+  font-size: max(24px, calc(var(--fit, 1) * var(--mg-head)));
   font-weight: var(--font-weight-heading);
   line-height: 1.15;
 }
@@ -52,14 +55,14 @@
 .mg-result-head p {
   margin: 0;
   color: var(--color-text-muted);
-  font-size: 16px;
+  font-size: max(13px, calc(var(--fit, 1) * 16px));
 }
 
 /* The cards: one row of equal columns. */
 .mg-options {
   display: grid;
   grid-template-columns: repeat(var(--mg-options), minmax(0, 1fr));
-  gap: 12px;
+  gap: calc(var(--fit, 1) * 12px);
   margin: 0;
   padding: 4px 0 0;
   list-style: none;
@@ -70,8 +73,8 @@
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
-  padding: 14px 16px;
+  gap: calc(var(--fit, 1) * 8px);
+  padding: calc(var(--fit, 1) * 14px) 16px;
   border: 2px solid var(--color-border);
   border-radius: 20px;
   background: color-mix(in srgb, var(--color-surface) 45%, transparent);
@@ -119,7 +122,7 @@
 .mg-option .mg-name {
   min-width: 0;
   overflow: hidden;
-  font-size: 18px;
+  font-size: max(13px, calc(var(--fit, 1) * 18px));
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -128,7 +131,7 @@
   flex: none;
   margin-left: auto;
   white-space: nowrap;
-  font-size: var(--mg-count);
+  font-size: max(24px, calc(var(--fit, 1) * var(--mg-count)));
   font-weight: var(--font-weight-heading);
   line-height: 1;
 }

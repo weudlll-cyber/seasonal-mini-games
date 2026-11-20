@@ -191,6 +191,7 @@ The rules of [02](02-game-guess-the-number.md) §12 apply: focus mode with the r
   - at 1280 × 720, 1440 × 900, 1900 × 860 and 1920 × 1080 nothing scrolls but the standings' own panel, and the headline, the winners, the cards, the next round's countdown and its first pre-pick show with at least three standings rows;
   - a window under 760 px high shows the headline, the cards' icon and count at 28 px, the winners in two rows of chips, the chat at 150 px, and 12 px of page padding and tighter standings rows (O101);
   - on a phone the winners, the cards and the countdown show above the chat bar without scrolling at 390 × 844 and 360 × 740, and nothing ever lies behind the bar.
+  - Fitting the screen ([02](02-game-guess-the-number.md) §12, owner decision O111): the result's grid fills the height above the chat, and its next-round box with the pre-picks is its fixed part, whole at the screen's scale: where the box has not the room for every pre-pick (a desktop under about 1440 × 900 with a series of several rounds), the result's type and spacing shrink together (the headline and the counts 24 px, text 13 px and the pre-pick selects 32 px at the least) instead of the pre-picks scrolling; at 1440 × 900 and larger and on a phone it looks as before. Only the standings' own panel and the open "Every line" scroll. The cards' click reach down each card (journey 45) is clipped with the cards by design.
 
 ### 11.1 Animation (owner, decision 90)
 

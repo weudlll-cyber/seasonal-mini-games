@@ -7,8 +7,9 @@
  * Responsibility: `nextScale` keeps the scale when the fixed parts fit, shrinks it in
  *                 proportion to the room, never above 1 and never below the floor; `settle`
  *                 starts from 1 every time, sets `--fit` and `data-fit-scale` on the root, fits a
- *                 screen whose parts shrink with the scale in its first pass, stops at the floor
- *                 when they cannot fit, and measures a bounded number of times (no loop); a
+ *                 screen at the largest scale that fits (within 1 %, also with a part that does
+ *                 not shrink), stops at the floor when they cannot fit, and measures at most
+ *                 nine times (no loop); a
  *                 screen with room is left at 1, as without the mechanism.
  * Depends on:     vitest, ./useFit
  * Spec:           docs/spec/04-software-architecture.md §4.6
@@ -62,21 +63,24 @@ describe('settle', () => {
   it('shrinks evenly until the fixed parts fit', () => {
     const s = screenOf(500, 0, 400);
     const scale = settle(s.root, s.box);
-    expect(scale).toBeCloseTo(0.795, 3);
+    // The largest that fits, within 1 %.
     expect(500 * scale).toBeLessThanOrEqual(400);
+    expect(scale).toBeGreaterThan(0.79);
   });
 
-  it('reaches the fit with a part that does not shrink, in a few passes', () => {
+  it('finds the largest fitting scale with a part that does not shrink, in few passes', () => {
     const s = screenOf(400, 100, 400);
     const scale = settle(s.root, s.box);
     expect(100 + 400 * scale).toBeLessThanOrEqual(400.5);
-    expect(s.reads()).toBeLessThanOrEqual(5);
+    // Not shrunk further than needed (the proportional guess alone would overshoot).
+    expect(scale).toBeGreaterThan(0.74);
+    expect(s.reads()).toBeLessThanOrEqual(9);
   });
 
   it('stops at the floor when the parts cannot fit, without a loop', () => {
     const s = screenOf(2_000, 0, 400);
     expect(settle(s.root, s.box)).toBe(FIT_FLOOR);
-    expect(s.reads()).toBeLessThanOrEqual(5);
+    expect(s.reads()).toBeLessThanOrEqual(9);
     // A second fitting starts from 1 again: the same result, not a smaller one.
     expect(settle(s.root, s.box)).toBe(FIT_FLOOR);
   });

@@ -175,7 +175,7 @@ As [02](02-game-guess-the-number.md) §11, with the grid: others' tiles at share
 
 Layout, top bar, banner, list, intro and accessibility follow [02](02-game-guess-the-number.md) §12 and the round's focus mode (O46); the grid is the input and takes the round's stage:
 
-- **One screen** without a page scrollbar at 1280 × 720 and 390 × 844, light and dark; only the list scrolls inside its box.
+- **One screen** without a page scrollbar at 1280 × 720 and 390 × 844, light and dark; only the list scrolls inside its box. The intro, the round and the result fit the screen as [02](02-game-guess-the-number.md) §12 (owner decision O111): the round needed no scale at any size swept (the board takes the stage's height by its own measuring, O51); the result is one screen too, its first part (the grid as tall as the box leaves free) under the slim bar and the rest with the waiting area in the result's area under the bar, which scrolls, never the page.
 - **Grid:** one CSS grid of square tiles, as large as the stage allows:
   - the platform hands the input its stage (the left column at full height) and the input draws the grid there through a portal (O51); the grid box is a size container and the grid the smaller of its width and height, square; no viewport arithmetic;
   - on the 20 × 20 grid that is about 30 px a tile at 1280 × 720 and about 48 px at 1920 × 1080; on a phone the grid sits under the info line at the full width minus 8 px a side, about 18.7 px a tile at 390 px, with the list under it keeping at least four rows (DECISIONS T141, T144). The whole grid is always shown (no zoom);

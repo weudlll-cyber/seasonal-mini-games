@@ -8,7 +8,8 @@
  *                 plays along; the host's controls and the match chat are panels from its bar,
  *                 ../round/FocusShell). The result keeps the app header hidden: the slim
  *                 result bar (./ResultBar) over the result, the next round's box and the chat
- *                 beside it on a desktop and under it on a phone (T145, replacing T128). A game
+ *                 beside it on a desktop and under it on a phone (T145, replacing T128), one
+ *                 screen whose area under the bar scrolls, never the page (O111). A game
  *                 that docks its chat (O97, O109) has it under the round and the result instead
  *                 (./DockedMatch); with a result of its own (Seasonal Mind Games) the next
  *                 round's box is in that result, else the waiting area stays beside it.
@@ -190,7 +191,13 @@ function PhaseBody(
     return <div {...outer(p.docked ? 'match-live' : 'match-live one-screen')}>{p.round}</div>;
   }
   if (p.phase === 'loading') return <p {...outer('smg-muted', false)}>Loading the round…</p>;
-  return <AfterView {...p} outer={outer('match-result-page')} />;
+  // The result is one screen too (O111): the page never scrolls, its area under the bar does.
+  return (
+    <AfterView
+      {...p}
+      outer={outer(p.docked ? 'match-result-page' : 'match-result-page one-screen')}
+    />
+  );
 }
 
 interface LobbyProps {
