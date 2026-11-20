@@ -8,7 +8,7 @@
  *                 round's colour dots (their names read out and on hover) with their answers
  *                 in words, in individual mode with the player's own sequence, the viewer's
  *                 line first (02c §9), "did not guess" without one. The
- *                 platform shows placings, points, margin or closest miss, teams and the
+ *                 platform shows placings, points, margin, "Closest to winning", teams and the
  *                 fairness proof around it.
  * Depends on:     react, @smg/game-sdk (props), @smg-game/bomb-defusal (types, wording),
  *                 ./text, ./WireChip, ./result.css

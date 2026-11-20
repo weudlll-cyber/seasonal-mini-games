@@ -113,15 +113,11 @@ If fewer candidates remain than `digitsPerFall`, the fall takes all of them; wit
 
 None. Safecracker implements no `halving` hook and sets `halvingAllowed` off, so on a halving day the option is not offered and a normal season round runs, as owner decision 29 does for a hidden range (DECISIONS T55; [04](04-software-architecture.md) §4.4).
 
-## 8. Winning, closest miss and the result page
+## 8. Winning, Closest to winning and the result page
 
-Winning, placings, end conditions, points and the winning margin are [02](02-game-guess-the-number.md) §8 and §9. The reveal shows the code (shared) or every player's code (individual), and the result's secret line reads "Code: 1123 (4 digits, 0–9)" (DECISIONS T150).
+Winning, placings, end conditions, points and the winning margin are [02](02-game-guess-the-number.md) §8 and §9. The reveal shows the code (shared) or every player's code (individual), and the result's secret line reads "Code: 1123 (4 digits, 0–9)" (DECISIONS T150), the code large on a line of its own and its digits under it (owner decision O110).
 
-**Closest miss**, shared mode with a winner and no second correct guess inside the margin window (owner, decision 22):
-
-- Among the wrong guesses of players other than the winner, the one with the most `exact`, then the most `near`, then the earlier receive order: "Closest miss besides the winner: Anna, 3 right places, 1 right digit, wrong place (0427)." Without such a guess there is no line.
-- It is computed at the round's end and carried only in the result view ([02](02-game-guess-the-number.md) §9, DECISIONS T77).
-- A time-up result without a winner shows the round's closest guess instead, "Closest guess: …" (DECISIONS T145).
+**Closest to winning** ([02](02-game-guess-the-number.md) §9, owner decision O110): each player's best code, by the most digits in their place, then the most right digits in a wrong place, equal ones by the earlier code; a row reads the code and its counts as the round's list words them ("1243 · 2 right · 2 wrong places"), an opened safe "cracked it". Every code stays behind "All guesses (N)". The result has no closest-miss line: the second row says it (owner decision O111).
 
 ## 9. What a spectator sees
 
@@ -141,8 +137,8 @@ The rules of [02](02-game-guess-the-number.md) §12 apply: one screen without a 
   - the player's dot and name ("You" for the viewer), the code in a monospaced face with spaced digits, then **pegs**: one filled disc per exact and one hollow ring per near (a right digit in a wrong place), in the text colour with at least 3:1 against the row, so shape and not colour carries the meaning;
   - then the counts in text ("2 right places, 1 right digit, wrong place"; singular for exactly 1, plural otherwise, everywhere: rows, result, closest miss), and the comment in smaller text;
   - under `numbers` the code without pegs or text; under `own` "Anna tried a code." Own rows on the season tint; under Frost "answer arriving in 2 s".
-- **Desktop (1280 × 720):** the list with the banner above it fills the main area above the input row (at least 14 rows, owner decisions 35 and 50); the right column holds the code block only (the line, the digit strip, the hint, the fallen digits); the teams and the chat are panels from the bar ([02](02-game-guess-the-number.md) §12).
-- **Phone (390 × 844):** the short top bar; the code block compact (the line and the digit strip in one row of chips at least 28 px wide, not interactive); the list of guesses only filling the remaining height, with "All (N)" for the events too (owner decision 49); Players and Chat in the bar; the input row pinned at the bottom on two lines when it does not fit one (the boxes on the first, the ring and **Try code** on the second): six boxes need 6 × 44 px plus gaps, inside 358 px. A history row fits one line for the code and pegs, the text and comment on a second.
+- **Desktop (1280 × 720):** the list with the banner above it fills the main area above the input row in two columns, newest first down the left one and on in the right one (at least 36 rows at 1440 × 900, owner decisions 35, 50 and O109); where a row is short its comment gives way first, the code, the pegs and the counts never; the right column holds the code block (the line, the digit strip, the hint, the fallen digits) and "Your guesses"; the teams are a panel from the bar and the chat is docked under the round, full width ([02](02-game-guess-the-number.md) §12, O109; the design reference [docs/design/list-games-screens.html](../design/list-games-screens.html)).
+- **Phone (390 × 844):** the short top bar; the code block compact (the line and the digit strip in one row of chips at least 28 px wide, not interactive); the list of guesses only filling the remaining height, with "All (N)" for the events too (owner decision 49); Players in the bar; the input row pinned at the bottom, above the chat's one-line bar (O109, 02 §12) on two lines when it does not fit one (the boxes on the first, the ring and **Try code** on the second): six boxes need 6 × 44 px plus gaps, inside 358 px. A history row fits one line for the code and pegs, the text and comment on a second.
 
 ## Decided while building (night 4, proposals)
 

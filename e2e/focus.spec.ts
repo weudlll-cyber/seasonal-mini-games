@@ -6,24 +6,27 @@
  * Responsibility: for Guess The Number (24), Safecracker (25), Bomb Defusal (26) and Seasonal
  *                 Target (27), a shared summer round started at once: at each size the app
  *                 header is hidden and the round's bar is one slim row without a waiting time
- *                 (44 px on a desktop, 52 px on a phone, O47); Chat, Players, the whole list
- *                 ("All") and on a phone the game's panel behind the info line (T141) open as
- *                 panels and close with Escape (the focus back on their button) and with
- *                 Close; while each is open the game's action button (Guess, Cut, Try) is
- *                 visible and enabled or waiting, the panel covers nothing of the game on a
- *                 desktop and ends above the action dock on a phone (O48), and the page has no
- *                 scrollbar;
- *                 one guess is played and comes back as the viewer's own row; the guess list
- *                 has room for its game's rows at each size (T142: Guess The Number 22 and 10,
- *                 Safecracker 20 and 10, Bomb Defusal 18 and 6), Seasonal Target's 20 × 20
- *                 tiles at least 30 px and 18 px apart (T144);
- *                 Seasonal Target is played on the phone through the loupe. The round's bot
+ *                 (44 px on a desktop, 52 px on a phone, O47); the list games' chat is docked
+ *                 under the round without a Chat button (on a desktop the dock with its field
+ *                 under the round view, on a phone the one-line bar under the input row whose
+ *                 tap opens the chat with its field above it, O109), Seasonal Target's is a
+ *                 panel; Chat (Target), Players, the whole list ("All") and on a phone the
+ *                 game's panel behind the info line (T141) open as panels and close with Escape
+ *                 (the focus back on their button) and with Close; while each is open the
+ *                 game's action button (Guess, Cut, Try) is visible and enabled or waiting, the
+ *                 panel covers nothing of the game on a desktop and ends above the action dock
+ *                 on a phone (O48), and the page has no scrollbar; one guess is played and
+ *                 comes back as the viewer's own row; the guess list has room for its game's
+ *                 rows at each size (T142, O109: Guess The Number 26 and 18 in two columns,
+ *                 Safecracker 20 and 10, Bomb Defusal 16 and 11), Seasonal Target's 20 × 20
+ *                 tiles at least 30 px and 18 px apart (T144); Seasonal Target is played on
+ *                 the phone through the loupe. The round's bot
  *                 waits 60 s after each of its tries, so it cannot end the round while the
  *                 journey runs, however slow the machine (T373). The matches are aborted.
  * Depends on:     @playwright/test, ./guessGames, ./play, ./screens
  * Spec:           docs/spec/09-testing-strategy.md §4 (journeys 24–27); docs/spec/02-game-guess-the-number.md §12
  */
-import { expect, test, type Browser, type Page } from '@playwright/test';
+import { expect, test, type Browser, type Locator, type Page } from '@playwright/test';
 
 import { direct, WIDE } from './guessGames.js';
 import { abortMatch, closeAll, fitsScreen, listRoom, ownRows, person, roundOpen } from './play.js';
@@ -69,6 +72,45 @@ async function stillPlayable(page: Page, dialog: Box, size: Size): Promise<void>
     }
   }
   await fitsScreen(page);
+}
+
+// The top and the bottom edge of what a locator shows (0 for nothing).
+async function edges(target: Locator): Promise<{ top: number; bottom: number }> {
+  const box = (await target.boundingBox()) ?? { y: 0, height: 0 };
+  return { top: box.y, bottom: box.y + box.height };
+}
+
+// On a phone the docked chat's one-line bar, no field in it, opens the chat with its field as a
+// sheet above the bar; Escape (focus back on the bar), then Close.
+async function chatSheet(page: Page, barTop: number): Promise<void> {
+  const bar = page.getByTestId('chat-dock-bar');
+  await expect(page.getByTestId('chat-dock').locator(':scope > .chat-writer')).toHaveCount(0);
+  const sheet = page.getByRole('dialog', { name: 'Chat' });
+  await bar.click();
+  await expect(sheet.getByRole('textbox')).toBeVisible();
+  expect((await edges(sheet)).bottom, 'the sheet above the bar').toBeLessThanOrEqual(barTop + 1);
+  await page.keyboard.press('Escape');
+  await expect(sheet).toBeHidden();
+  await expect(bar).toBeFocused();
+  await bar.click();
+  await sheet.getByRole('button', { name: 'Close' }).click();
+  await expect(sheet).toBeHidden();
+}
+
+// The list games' chat, docked under the round (O109): no Chat button; on a desktop the dock
+// with its field under the round view; on a phone the bar under the input row, nothing behind
+// it (./chatSheet).
+async function dockedChat(page: Page, size: Size): Promise<void> {
+  await expect(page.getByTestId('focus-chat')).toHaveCount(0);
+  const dock = page.getByTestId('chat-dock');
+  await expect(dock).toBeVisible();
+  const top = (await edges(dock)).top;
+  const wide = size === WIDE;
+  const above = wide ? page.getByTestId('round-view') : page.locator('.round-input');
+  expect((await edges(above)).bottom, 'the chat under the round').toBeLessThanOrEqual(top + 1);
+  if (!wide) return chatSheet(page, top);
+  await expect(page.getByTestId('chat-dock-bar')).toHaveCount(0);
+  await expect(dock.getByRole('textbox')).toBeVisible();
 }
 
 // A panel from the bar: open (the game still playable), Escape (focus back on its button),
@@ -117,8 +159,13 @@ async function focusJourney(
   browser: Browser,
   gameId: string,
   play: Play,
-  // The sizes to reach, and the round's own settings.
-  opts: { readonly targets: Targets; readonly round?: Readonly<Record<string, unknown>> },
+  // The sizes to reach, the round's own settings, and where the chat is (a list game's docked
+  // under the round, O109; Seasonal Target's a panel from the bar).
+  opts: {
+    readonly targets: Targets;
+    readonly round?: Readonly<Record<string, unknown>>;
+    readonly chat: 'dock' | 'panel';
+  },
 ): Promise<void> {
   const { targets, round = {} } = opts;
   const p = await person(browser, 'player-1', WIDE);
@@ -133,7 +180,8 @@ async function focusJourney(
       await p.page.reload();
       await roundOpen(p.page);
       await slimBar(p.page, size);
-      await panel(p.page, 'focus-chat', 'Chat', size);
+      if (opts.chat === 'dock') await dockedChat(p.page, size);
+      else await panel(p.page, 'focus-chat', 'Chat', size);
       await panel(p.page, 'focus-players', 'Players', size);
       await panel(p.page, 'list-all', 'Guesses and events', size);
       // A phone's game panel lies behind its info line (T141).
@@ -156,7 +204,8 @@ async function focusJourney(
 
 test('journey 24: Guess The Number in focus mode', async ({ browser }) => {
   test.setTimeout(120_000);
-  // Room for 22 guess rows on the stage at 1280 × 720, 10 on a phone (T142).
+  // Room for 26 guess rows in the stage's two columns at 1280 × 720 with the chat docked under
+  // the round, 18 on a phone above the chat's bar (O109; T142's 22 and 10 before).
   await focusJourney(
     browser,
     'guess-the-number',
@@ -164,7 +213,7 @@ test('journey 24: Guess The Number in focus mode', async ({ browser }) => {
       await page.getByTestId('guess-input').fill(n === 0 ? '40' : '60');
       await page.getByTestId('guess-button').click();
     },
-    { targets: { rows: [22, 10] } },
+    { targets: { rows: [26, 18] }, chat: 'dock' },
   );
 });
 
@@ -178,7 +227,7 @@ test('journey 25: Safecracker in focus mode', async ({ browser }) => {
       await page.keyboard.type(n === 0 ? '0123' : '4567');
       await page.getByTestId('guess-button').click();
     },
-    { targets: { rows: [20, 10] } },
+    { targets: { rows: [20, 10] }, chat: 'dock' },
   );
 });
 
@@ -195,9 +244,13 @@ test('journey 26: Bomb Defusal in focus mode', async ({ browser }) => {
       for (const wire of order) await page.getByTestId(`wire-${wire}`).click();
       await page.getByTestId('cut-button').click();
     },
-    // Its wire picker is larger: 6 rows on a phone; the picker's help line takes one row on a
-    // desktop (T193), 17 of the spec's 14 or more.
-    { targets: { rows: [17, 6] }, round: { settings: { 'bomb.wires': 8, 'bomb.cuts': 6 } } },
+    // Its larger picker: 11 rows on a phone above the chat bar (O109); on a desktop, its help line
+    // (T193) and the 150 px chat dock leave two columns of 8, 16 of the spec's 14 or more (02c).
+    {
+      targets: { rows: [16, 11] },
+      round: { settings: { 'bomb.wires': 8, 'bomb.cuts': 6 } },
+      chat: 'dock',
+    },
   );
 });
 
@@ -236,6 +289,7 @@ test('journey 27: Seasonal Target in focus mode, the loupe on a phone', async ({
     // so a bot's solve never ends the player's round.
     {
       targets: { tile: [30, 18] },
+      chat: 'panel',
       round: {
         mode: 'individual',
         cooldownS: 30,

@@ -6,9 +6,11 @@
  * Responsibility: the intro fills the round's space under the round bar and never scrolls the
  *                 page: a card framed and tinted in the season colour, everything centred, the
  *                 season name in the largest type, the special's name and sentence, the
- *                 facts, and the seconds left; sizes follow the viewport's smaller side, so it
- *                 fits 1280 × 720 and 390 × 844 alike (O36). Colours only from @smg/ui tokens,
- *                 so light and dark both work.
+ *                 facts, and the seconds left; sizes follow the viewport's smaller side (O36).
+ *                 Where the card has not the room (above a docked chat, a small phone), every
+ *                 size shrinks with the screen's scale (`--fit`, ./useFit, O111), each with its
+ *                 floor (13 px text, 24 px display values), never larger than without it.
+ *                 Colours only from @smg/ui tokens, so light and dark both work.
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6
  */
 /* Under the round bar: one card, the rest of the round view (./round.css). */
@@ -21,8 +23,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: clamp(0.5rem, 2.5vmin, 1.5rem);
-  padding: var(--space-3);
+  gap: calc(var(--fit, 1) * clamp(0.5rem, 2.5vmin, 1.5rem));
+  padding: calc(var(--fit, 1) * var(--space-3)) var(--space-3);
   border: 3px solid var(--season);
   border-radius: var(--radius-card);
   background: color-mix(in srgb, var(--season) 16%, var(--color-surface));
@@ -32,16 +34,16 @@
 .round-intro-head {
   display: grid;
   justify-items: center;
-  gap: var(--space-1);
+  gap: calc(var(--fit, 1) * var(--space-1));
 }
 
 /* The token icon on a disc of the page colour, as on the round's season chip. */
 .round-intro-icon {
   display: grid;
   place-items: center;
-  width: clamp(4rem, 14vmin, 7.5rem);
-  height: clamp(4rem, 14vmin, 7.5rem);
-  padding: 0.6rem;
+  width: max(2.5rem, calc(var(--fit, 1) * clamp(4rem, 14vmin, 7.5rem)));
+  height: max(2.5rem, calc(var(--fit, 1) * clamp(4rem, 14vmin, 7.5rem)));
+  padding: calc(var(--fit, 1) * 0.6rem);
   border-radius: 50%;
   border: 3px solid var(--season);
   background: var(--color-surface);
@@ -49,7 +51,7 @@
 
 .round-intro-head h1 {
   margin: 0;
-  font-size: var(--font-size-ball);
+  font-size: max(24px, calc(var(--fit, 1) * var(--font-size-ball)));
   line-height: 1;
 }
 
@@ -68,12 +70,12 @@
 
 .round-intro-special h2 {
   margin: 0;
-  font-size: var(--font-size-title);
+  font-size: max(16px, calc(var(--fit, 1) * var(--font-size-title)));
 }
 
 .round-intro-special p {
   margin: 0;
-  font-size: var(--font-size-lead);
+  font-size: max(13px, calc(var(--fit, 1) * var(--font-size-lead)));
 }
 
 .round-intro-facts {
@@ -82,15 +84,16 @@
   list-style: none;
   display: grid;
   gap: 0.15rem;
+  font-size: max(13px, calc(var(--fit, 1) * 1rem));
   font-weight: var(--font-weight-strong);
 }
 
 .round-intro-count {
   margin: 0;
-  font-size: var(--font-size-lead);
+  font-size: max(13px, calc(var(--fit, 1) * var(--font-size-lead)));
 }
 
 .round-intro-count strong {
-  font-size: var(--font-size-title);
+  font-size: max(24px, calc(var(--fit, 1) * var(--font-size-title)));
   font-variant-numeric: tabular-nums;
 }

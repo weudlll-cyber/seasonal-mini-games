@@ -5,7 +5,8 @@
  *
  * Responsibility: the match title with its code and the host menu button; the waiting area
  *                 beside the last result on a desktop, under it on a phone, under the slim
- *                 result bar (T79, T145), with the
+ *                 result bar (T79, T145; the result one screen whose area under the bar
+ *                 scrolls, never the page, O111), with the
  *                 team buttons (the chosen one in its season colour with a check) and the
  *                 player rows (name, team, a filled or hollow connection dot; without teams
  *                 the name and the dot only, O34), and under it the match chat's own panel
@@ -70,6 +71,21 @@
   gap: var(--space-2);
   align-items: start;
   min-width: 0;
+}
+
+/* A game whose chat is a panel (Seasonal Target): the result is one screen as well (O111), the
+   page never scrolls; under the bar the result and the waiting area beside it (under it on a
+   phone) scroll as one area, holding what they place inside (the visually hidden labels). */
+.match-result-page.one-screen {
+  flex: 1;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.match-result-page.one-screen > .match-after {
+  position: relative;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 @media (min-width: 900px) {

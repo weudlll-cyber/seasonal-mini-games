@@ -6,7 +6,9 @@
  * Responsibility: put the game's parts (meta, settings, the code input, the uniform code per
  *                 position, state, rules, the safe's comment lines, its own events, views and
  *                 specials) together through `guessModule` (04 §4.7), so the platform runs it
- *                 behind the contract of 04 §4 without knowing anything else about it.
+ *                 behind the contract of 04 §4 without knowing anything else about it. Its
+ *                 match chat is docked under the round view and the result, with a one-line
+ *                 bar on a phone (`chatDock` 'below', `chatBar` 'line', owner decision O109).
  * Depends on:     zod, @smg/game-sdk (GameModule), @smg/guess-engine (guessModule, picker,
  *                 secrets), ./commentLines, ./rules, ./settings, ./specials, ./state, ./views
  * Used by:        ./index, ./fakes, games/registry
@@ -21,7 +23,7 @@ import { CODE_PATTERN, scRules, type GuessAction } from './rules.js';
 import { scSettings, type ScConfig } from './settings.js';
 import { scSpecials } from './specials.js';
 import { createState, evolveGame, type ScEvent, type ScState } from './state.js';
-import { reveal, views, viewSchemas } from './views.js';
+import { codeDistance, reveal, views, viewSchemas } from './views.js';
 
 // One code: each position a uniform digit in use, repeats allowed (02b §3).
 const drawCode = (rng: Drbg, config: ScConfig): string =>
@@ -41,6 +43,10 @@ export const safecracker: GameModule<
     timing: 'cooldown',
     secretModes: ['shared', 'individual'],
     teams: true,
+    // The match chat docked under the round and the result, a one-line bar on a phone
+    // (owner decision O109, 02 §12).
+    chatDock: 'below',
+    chatBar: 'line',
   },
   settings: scSettings,
   // A string of digits, so leading zeros are kept; the round's length and digits are check 4.
@@ -54,4 +60,6 @@ export const safecracker: GameModule<
   viewSchemas,
   specials: scSpecials,
   reveal,
+  // Closest to winning (O110): most digits in place, then most in a wrong place.
+  distance: (g, _secret, state) => codeDistance(g.feedback, state.length),
 });

@@ -108,7 +108,7 @@ describe('Mind Games result (02e §9)', () => {
     expect(within(card('Spring')).getByText('not chosen')).toBeTruthy();
     // No player names in the cards (O99).
     for (const n of ['Anna', 'Bo', 'Cy', 'You']) expect(options.textContent).not.toContain(n);
-    expect(mindText.runnerUp(r, names, false)).toBe(
+    expect(mindText.runnerUp?.(r, names, false)).toBe(
       'Autumn and All win! Least chosen season · 4 players',
     );
   });

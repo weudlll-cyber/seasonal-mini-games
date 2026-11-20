@@ -18,11 +18,13 @@
  *                 players, one row each with marker, name, guesses and "solved" once they
  *                 found their own secret or "timed out" once out of the round for inactivity
  *                 (O71), all from the roster the server sends (O54: this
- *                 round only); a phone keeps the one "Others" line (./RoundLog).
+ *                 round only), the rows that fit whole, then "+N more", which opens the
+ *                 Players panel (./useFit, O110); a phone keeps the one "Others" line
+ *                 (./OthersLine).
  * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber), ../season/* (teamName, TeamIcon),
- *                 ./PlayerName, ./players.css
+ *                 ./PlayerName, ./useFit, ./players.css
  * Used by:        ./RoundScreen, ./RoundBody, ./FocusShell, ./GuessLine, ./InfoParts,
- *                 ./InputRow, ./RoundLog, ./ResultScreen
+ *                 ./InputRow, ./OthersLine, ./ResultScreen, ./ClosestToWinning
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §5
  */
 import type { RoundStateView, TeamName } from '@smg/contracts';
@@ -34,6 +36,7 @@ import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASONS, seasonColor, teamName } from '../season/season.js';
 import { TeamIcon } from '../season/TeamIcon.js';
 import { PlayerName } from './PlayerName.js';
+import { useFit } from './useFit.js';
 import './players.css';
 
 // A player's colour: their team's when teams play, else a season colour by roster order.
@@ -127,16 +130,21 @@ export function OthersPanel(p: {
   readonly state: RoundStateView;
   readonly viewerKey: string | null;
   readonly marks?: Readonly<Record<string, PlayerMark>> | undefined;
+  // Opens the Players panel, where every player stands (the rows past the panel's room).
+  readonly onMore?: (() => void) | undefined;
 }): ReactElement | null {
   const { state } = p;
   const others = state.roster.filter((r) => r.playerKey !== p.viewerKey);
+  const signature = others.map((r) => `${r.playerKey}:${String(r.guesses)}`).join();
+  const fit = useFit<HTMLUListElement>(others.length, signature);
   if (others.length === 0) return null;
+  const rest = others.length - fit.shown;
   return (
     <section className="smg-panel round-others" aria-label="Other players">
       <h2 className="round-others-title">Other players</h2>
-      <ul className="round-player-list" data-testid="others-panel">
-        {others.map((r) => (
-          <li key={r.playerKey}>
+      <ul ref={fit.ref} className="round-player-list" data-testid="others-panel">
+        {others.slice(0, fit.shown).map((r) => (
+          <li key={r.playerKey} data-fit="">
             <Marker state={state} playerKey={r.playerKey} mark={p.marks?.[r.playerKey]} />
             <PlayerName
               name={state.names[r.playerKey] ?? r.playerKey}
@@ -150,6 +158,13 @@ export function OthersPanel(p: {
             </span>
           </li>
         ))}
+        {rest === 0 ? null : (
+          <li className="round-others-more">
+            <button type="button" className="round-log-more" onClick={p.onMore}>
+              +{rest} more
+            </button>
+          </li>
+        )}
       </ul>
     </section>
   );

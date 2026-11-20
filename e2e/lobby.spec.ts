@@ -7,13 +7,13 @@
  *                 on (O24) and lands in the waiting area (O23); the bots join one after another
  *                 and show as online with a team; the player picks a team, which shows pressed;
  *                 the host menu starts the round with the normal Start; the round runs with the
- *                 bots playing; the result names the closest miss (O22), or the margin when a
- *                 second correct guess came in its window; the waiting area for the next round
+ *                 bots playing; the result shows "Closest to winning" with the winner first
+ *                 (O110) and no closest-miss line of its own (O111); the waiting area for the next round
  *                 follows the result with the player's team kept and no team buttons (O26); a
  *                 second round from the host menu; then End match with its confirm sentence and
  *                 the match summary with both rounds, the players and the way back (O27), on one
- *                 screen at 1280 × 720 and 390 × 844; beside the result the chat is a panel of
- *                 its own, apart from "Next round". Journey 19: the summary of a match of 12
+ *                 screen at 1280 × 720 and 390 × 844; the chat is docked under the result and
+ *                 "Next round", never inside it (O109). Journey 19: the summary of a match of 12
  *                 players fits one screen at both sizes.
  * Depends on:     @playwright/test, ./play
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 12); docs/spec/02-game-guess-the-number.md §2, §9
@@ -47,15 +47,15 @@ async function summaryFits(page: Page): Promise<void> {
   }
 }
 
-// The result, with the closest miss unless a second correct guess set the margin (O13, O22).
+// The result with "Closest to winning", the winner's row first (O110); the closest miss is its
+// next row, no line of its own any more (O111).
 async function resultShown(page: Page): Promise<void> {
   const result = page.getByTestId('result');
   await expect(result).toBeVisible({ timeout: 60_000 });
-  if ((await result.getByTestId('margin').count()) === 0) {
-    await expect(result.getByTestId('closest-miss')).toHaveText(
-      /^Closest miss besides the winner: .+, (missed by just [12]|\d+ away) \(\d+\)\.$/,
-    );
-  }
+  const closest = result.getByTestId('result-closest');
+  await expect(closest.getByRole('heading', { name: 'Closest to winning' })).toBeVisible();
+  await expect(closest.getByTestId('closest').locator('li').first()).toBeVisible();
+  await expect(result.getByTestId('closest-miss')).toHaveCount(0);
 }
 
 // From the form with "Start from the lobby" on to a team picked; the match code.
@@ -107,12 +107,17 @@ async function endMatch(p: Person): Promise<void> {
 }
 
 // The waiting area beside the result: "Next round" with its status and players, and the chat
-// as a panel of its own, not inside it (on a phone behind its "Chat" button).
+// not inside it: docked under the result and the waiting area (O109).
 async function chatApart(page: Page): Promise<void> {
   const waiting = page.getByTestId('waiting-area');
-  await expect(waiting.getByTestId('round-chat')).toHaveCount(0);
-  await expect(page.getByTestId('round-chat')).toBeVisible();
-  await expect(page.getByTestId('round-chat').getByRole('heading', { name: 'Chat' })).toBeVisible();
+  await expect(waiting.getByTestId('chat-dock')).toHaveCount(0);
+  await expect(page.getByTestId('round-chat')).toHaveCount(0);
+  const dock = page.getByTestId('chat-dock');
+  await expect(dock).toBeVisible();
+  const [w, d] = [await waiting.boundingBox(), await dock.boundingBox()];
+  expect(d?.y ?? 0, 'the chat under the waiting area').toBeGreaterThanOrEqual(
+    (w?.y ?? 0) + (w?.height ?? 0) - 1,
+  );
 }
 
 test('journey 12: the Quick Test through the lobby, two rounds, End match and the summary', async ({

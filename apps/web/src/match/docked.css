@@ -6,13 +6,19 @@
  * Responsibility: the owner's reference of 2026-11-15 (MG-N8). A desktop: one screen without a
  *                 page scrollbar, padding 20 × 28 px, 16 px between the view above and the chat
  *                 (./chatDock.css) under it; the result fills exactly the height left (its own
- *                 grid shares it out, ../round/resultOwn.css). A phone (the round view's rule):
+ *                 grid shares it out, ../round/resultOwn.css); the platform's longer result with
+ *                 the waiting area beside it (a list game's, O109) scrolls with it as one area
+ *                 inside that height instead (O110), the waiting area's headings smaller and
+ *                 its players as compact rows. A phone (the round view's rule):
  *                 the screen is two parts, the content, the only part that scrolls (the round view
  *                 or the result at their own height, nothing scrolling inside them), and the chat
- *                 bar under it, in the layout; no fixed or sticky part. The next round's row,
+ *                 bar under it, in the layout; no fixed or sticky part. A list game's running
+ *                 round (O109) is the exception: it fills the content's height as without the
+ *                 dock, its guesses scrolling inside and its input dock right above the chat
+ *                 bar. The next round's row,
  *                 Start now and bar under a game's own result (./NextRound). Colours only from
  *                 @smg/ui tokens.
- * Spec:           docs/spec/02e-game-mind-games.md §11
+ * Spec:           docs/spec/02e-game-mind-games.md §11; docs/spec/02-game-guess-the-number.md §12
  */
 .match-docked {
   flex: 1;
@@ -52,6 +58,51 @@
   flex: 1;
 }
 
+/* A desktop: the platform's result with the waiting area beside it (a list game's, O109) is
+   longer than the screen: it scrolls inside the height above the chat, under the result bar,
+   never behind the chat. */
+@media (min-width: 900px) and (orientation: landscape) {
+  .match-docked .match-after:not(.match-after--docked) {
+    /* The containing block of what is placed inside (the visually hidden labels), so nothing
+       of the scrolled result reaches past the screen and scrolls the page. */
+    position: relative;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  /* The column beside it scrolls with the result, never on its own (O110): no cap of its own
+     height (./match.css caps it to the screen for the chat beside a result). */
+  .match-docked .match-after:not(.match-after--docked) > .match-side {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* The waiting area beside a list game's result (O110, the owner's reference): its headings
+   smaller and its players as compact rows, so more of them show above the chat. */
+.match-docked .match-after:not(.match-after--docked) .match-waiting h2 {
+  font-size: 1.125rem;
+}
+
+.match-docked .match-after:not(.match-after--docked) .match-waiting h3 {
+  font-size: 1rem;
+}
+
+.match-docked .match-after:not(.match-after--docked) .match-players {
+  row-gap: 0.25rem;
+}
+
+/* Compact: no empty space between "Next round", its line and "Players" (O111). */
+.match-docked .match-after:not(.match-after--docked) .match-side,
+.match-docked .match-after:not(.match-after--docked) .match-waiting {
+  gap: var(--space-1);
+}
+
+.match-docked .match-after:not(.match-after--docked) .match-waiting p {
+  margin: 0;
+}
+
 /* A desktop: the reference's page padding (the shell's focus mode has 8 px). */
 @media (min-width: 900px) and (orientation: landscape) {
   #root .shell-main.shell-main:has(.match-docked) {
@@ -78,6 +129,9 @@
   }
 
   .match-docked-main {
+    /* The containing block of what is placed inside (the visually hidden labels), so nothing
+       of the scrolled content reaches past the screen and scrolls the page. */
+    position: relative;
     padding: 12px 14px 16px;
     overflow-y: auto;
   }
@@ -98,6 +152,27 @@
   .match-docked .round-log ol {
     overflow: visible;
   }
+
+  /* A list game's running round (O109): its own screen above the chat bar, as without the
+     dock: the guesses scroll inside their box and the input dock stays right above the bar,
+     so nothing hides behind it. */
+  .match-docked-main:has(.round-live[data-layout='list']) {
+    overflow: hidden;
+    padding: 8px 10px;
+  }
+
+  .match-docked .match-live:has(> .round-live[data-layout='list']) {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .match-docked .round-live[data-layout='list'] .round-main {
+    overflow: hidden;
+  }
+
+  .match-docked .round-live[data-layout='list'] .round-log ol {
+    overflow-y: auto;
+  }
 }
 
 /* The next round's box under a game's own result (./NextRound, the reference of MG-N8): a
@@ -106,8 +181,8 @@
 .next-round {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding: 16px 18px;
+  gap: calc(var(--fit, 1) * 12px);
+  padding: calc(var(--fit, 1) * 16px) 18px;
   overflow: hidden;
 }
 
@@ -126,13 +201,13 @@
 
 .next-round-when {
   margin: 0;
-  font-size: 18px;
+  font-size: max(13px, calc(var(--fit, 1) * 18px));
   font-weight: var(--font-weight-strong);
 }
 
 /* The accent blue of the round's winter and the focus ring, with dark text (8.4:1). */
 .next-round-start {
-  min-height: var(--hit-target);
+  min-height: max(32px, calc(var(--fit, 1) * var(--hit-target)));
   border-color: transparent;
   border-radius: 999px;
   background: var(--color-accent);

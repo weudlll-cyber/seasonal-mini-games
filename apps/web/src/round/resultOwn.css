@@ -24,7 +24,8 @@
   /* The reference's right column: 340 px of content and its padding (T366). */
   grid-template-columns: minmax(0, 1fr) 376px;
   grid-template-rows: auto auto auto minmax(120px, 1fr);
-  gap: 14px 20px;
+  /* The screen's scale (`--fit`, ./useFit, O111): 1 where the grid has the room. */
+  gap: calc(var(--fit, 1) * 14px) calc(var(--fit, 1) * 20px);
 }
 
 :root[data-theme='dark'] .round-result--own {

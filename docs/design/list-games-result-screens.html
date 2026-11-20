@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>List games — season card and result with the chat docked below (draft, 2026-11-19)</title>
+<!--
+  Design reference for the list games (Guess The Number, Safecracker, Bomb Defusal): the round's
+  season card before the round opens and the round's result, with the chat docked below as in the
+  round view (docs/design/list-games-screens.html). Not product code.
+  1  Season card before the round, desktop 1280 x 720 (the smallest desktop case).
+  2  Result, Guess The Number shared, desktop 1440 x 900.
+  3  Result, desktop 1280 x 720 (the chat 150 px).
+  4  Result, phone 390 x 844, scrolled to the top.
+  Closest to winning (owner decisions 2026-11-19): ten rows, each player at most once with their best
+  guess. Shared: the winner first, then the others by how close their best guess came (Guess The Number:
+  the distance to the number; Safecracker: most digits right in place, then most in a wrong place;
+  Bomb Defusal: the most cuts right from the first), equal ones by the earlier guess. Individual: the
+  solvers first in the order they solved, then the others by how close they came to their own secret.
+  Every guess stays reachable behind "All guesses (N)", as "All placings".
+  Rules a static file cannot show: on a desktop the result and the column beside it scroll together
+  as one area above the chat (one scrollbar at its right edge, never one per column); the page
+  itself never scrolls; nothing is cut at any size: the season card shrinks its parts to fit.
+-->
+<style>
+  body { margin: 0; background: #050a1f; font-family: system-ui, sans-serif; color: #f1f4fa; }
+  .label { padding: 24px 28px 8px; font-size: 20px; font-weight: 700; color: #ffd27a; max-width: 1400px; }
+  .note { padding: 0 28px 10px; font-size: 14px; color: #c8d0e0; max-width: 1400px; }
+  .page { box-sizing: border-box; overflow: hidden; margin: 0 0 40px;
+    background: radial-gradient(circle at 15% 0%, rgb(175 184 78 / 18%), transparent 40%),
+      radial-gradient(circle at 95% 15%, rgb(4 170 247 / 22%), transparent 45%),
+      radial-gradient(circle at 85% 100%, rgb(224 110 34 / 18%), transparent 45%), #0a1233;
+    padding: 8px 32px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .bar { height: 36px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex: none; }
+  .season { padding: 6px 14px; border-radius: 999px; background: #e06e22; color: #0a1233; font-weight: 700; font-size: 14px; }
+  .btn { font: inherit; font-size: 14px; font-weight: 700; color: #f1f4fa; background: rgb(255 255 255 / 6%);
+    border: 1px solid rgb(255 255 255 / 16%); border-radius: 999px; padding: 0 14px; height: 36px; }
+  .panel { border-radius: 18px; background: rgb(16 26 66 / 72%); border: 1px solid rgb(255 255 255 / 12%); }
+  .chat { flex: none; box-sizing: border-box; padding: 10px 16px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
+  .chat .ln { color: #dfe4ef; } .chat .ln b { color: #f1f4fa; } .chat .sys { color: #b3bcd0; font-style: italic; }
+  .chat .in { margin-top: auto; display: flex; gap: 8px; }
+  .chat .in span { flex: 1; display: flex; align-items: center; color: #8d97ad; background: rgb(255 255 255 / 6%); border: 1px solid rgb(255 255 255 / 16%); border-radius: 12px; padding: 0 12px; min-height: 40px; }
+  .send { font: inherit; font-weight: 700; color: #0a1233; background: #04aaf7; border: 0; border-radius: 12px; padding: 0 18px; min-height: 40px; }
+  .small { font-size: 13px; color: #c8d0e0; }
+  /* season card */
+  .intro { flex: 1; min-height: 0; border: 3px solid #e06e22; border-radius: 22px; background: rgb(224 110 34 / 12%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; text-align: center; padding: 12px 24px; }
+  .sun { width: 72px; height: 72px; border-radius: 50%; border: 3px solid #e06e22; display: flex; align-items: center; justify-content: center; font-size: 38px; color: #e06e22; flex: none; }
+  .intro h1 { margin: 0; font-size: 64px; line-height: 1; }
+  .intro h2 { margin: 0; font-size: 32px; }
+  .intro p { margin: 0; font-size: 17px; max-width: 640px; }
+  .opens { font-size: 18px; margin-top: 6px; } .opens b { font-size: 40px; }
+  /* result: one scrolling area for both columns */
+  .scroll { flex: 1; min-height: 0; overflow: hidden; position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 10px; align-content: start; padding-right: 14px; }
+  .scroll::after { content: ''; position: absolute; right: 2px; top: 4px; width: 6px; height: 38%; border-radius: 3px; background: rgb(255 255 255 / 30%); }
+  .first { padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; }
+  .first h2 { margin: 0; font-size: 24px; } .first .miss { font-size: 14px; color: #c8d0e0; }
+  .head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .reveal { display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 20px; align-items: start; }
+  .num { font-size: 15px; color: #c8d0e0; } .num b { display: block; font-size: 38px; color: #f1f4fa; line-height: 1.15; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th { text-align: left; font-size: 13px; color: #b3bcd0; padding: 0 8px 4px; }
+  td { padding: 5px 8px; border-top: 1px solid rgb(255 255 255 / 10%); }
+  .foot { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; font-weight: 700; }
+  .card { padding: 12px 18px; }
+  .card h3 { margin: 0 0 6px; font-size: 16px; }
+  .best { display: grid; grid-auto-flow: column; grid-template-rows: repeat(5, 28px); grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 28px; }
+  .b { display: flex; align-items: center; gap: 8px; font-size: 15px; white-space: nowrap; padding: 0 6px; border-radius: 8px; }
+  .b .k { width: 18px; color: #b3bcd0; font-size: 13px; } .b .n { font-weight: 700; flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .b .v { font-weight: 700; } .b .d { color: #c8d0e0; font-size: 14px; }
+  .b.win { background: rgb(224 110 34 / 28%); } .b.win .d { color: #4fd18b; font-weight: 700; }
+  .side { display: flex; flex-direction: column; gap: 10px; }
+  .next { padding: 12px 16px; } .next h3 { margin: 0 0 4px; font-size: 18px; }
+  .pl { padding: 12px 16px; } .pl h3 { margin: 0 0 6px; font-size: 16px; display: flex; justify-content: space-between; }
+  .p { height: 26px; display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .p .n { flex: 1; } .on { width: 8px; height: 8px; border-radius: 50%; background: #4fd18b; }
+  .t { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+  .hi { color: #4fd18b; } .lo { color: #ff7b72; }
+  /* phone */
+  .phone { width: 390px; height: 844px; box-sizing: border-box; margin: 0 0 40px 28px; border-radius: 28px; outline: 2px solid rgb(255 255 255 / 18%); overflow: hidden; display: flex; flex-direction: column; gap: 8px; padding: 8px 10px 10px;
+    background: radial-gradient(circle at 15% 0%, rgb(175 184 78 / 18%), transparent 30%), radial-gradient(circle at 95% 10%, rgb(4 170 247 / 22%), transparent 35%), #0a1233; }
+  .pbar { height: 44px; flex: none; display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 14px; }
+  .pscroll { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; gap: 8px; }
+  .pchat { font: inherit; color: #f1f4fa; text-align: left; flex: none; height: 44px; border-radius: 14px; background: rgb(16 26 66 / 96%); border: 1px solid rgb(255 255 255 / 16%); display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 12px; font-size: 14px; }
+  .badge { padding: 2px 9px; border-radius: 999px; background: #04aaf7; color: #0a1233; font-weight: 700; font-size: 13px; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+  const C = ['#afb84e', '#e06e22', '#f9a825', '#04aaf7'];
+  const pick = (a, i) => a[i % a.length];
+  function chatBox(h) {
+    return `<section class="panel chat" style="height:${h}px">
+      <div class="sys">Round 1 started: Summer · Heatwave.</div>
+      <div class="ln"><b>dev-admin</b> das ist eine chatmessage</div>
+      <div class="ln"><b>monke42</b> so close, missed by one</div>
+      <div class="in"><span>Write a message</span><button class="send" type="button">Send</button></div></section>`;
+  }
+  const seasonBar = (extra) => `<div class="bar"><div style="display:flex;gap:14px;align-items:center"><span class="season">☀ Summer · Heatwave</span><strong>Shared</strong>${extra || ''}</div>
+      <div style="display:flex;gap:8px"><button class="btn" type="button">Players</button><button class="btn" type="button">Host</button><button class="btn" type="button">Full screen</button></div></div>`;
+  const resultBar = `<div class="bar"><div style="display:flex;gap:14px;align-items:center"><strong>Quick Test</strong><span class="btn" style="display:flex;align-items:center">Guess The Number</span><strong>Code 6NZRF2</strong></div>
+      <div style="display:flex;gap:8px"><button class="btn" type="button">Host</button><button class="btn" type="button">Play</button></div></div>`;
+
+  function intro(o) {
+    return `<div class="label">${o.label}</div><div class="note">${o.note}</div>
+    <div class="page" style="width:${o.w}px;height:${o.h}px">${seasonBar()}
+      <section class="intro"><div class="sun">☀</div><h1>Summer</h1><h2>Heatwave</h2>
+        <p>The waiting time between guesses gets shorter as the round goes on.</p>
+        <div class="small" style="font-weight:700;color:#f1f4fa">Shared number between 1 and 1,000,000<br>Cooldown 5.0 s between guesses</div>
+        <div class="opens">Opens in <b>6</b> s</div></section>
+      ${chatBox(o.chat)}</div>`;
+  }
+
+  const placings = `<table><tr><th>Place</th><th>Player</th><th>Guesses</th><th>Points</th></tr>
+    <tr><td>1</td><td><span class="t" style="display:inline-block;background:#e06e22"></span> bot-17</td><td>15</td><td>10</td></tr>
+    <tr><td>–</td><td><span class="t" style="display:inline-block;background:#afb84e"></span> bot-02</td><td>16</td><td>0</td></tr>
+    <tr><td>–</td><td><span class="t" style="display:inline-block;background:#04aaf7"></span> bot-05</td><td>16</td><td>0</td></tr></table>`;
+  const first = `<section class="panel first">
+      <div class="head"><h2>bot-17 found it first — after 15 guesses.</h2><span class="small">▸ Fairness proof</span></div>
+      <div class="miss">Closest miss besides the winner: bot-06, missed by just 1 (871,976).</div>
+      <div class="reveal"><div class="num">The number was <b>871,977</b>The range was 1 to 1,000,000.</div>${placings}</div>
+      <div class="foot"><button class="btn" type="button">All placings (27)</button><span>Team Summer wins the round (+1 team point)</span></div></section>`;
+  const BEST = [['bot-17', '871,977', 'found it'], ['bot-06', '871,976', 'off by 1'], ['bot-02', '871,990', 'off by 13'], ['bot-05', '871,940', 'off by 37'],
+    ['bot-11', '872,019', 'off by 42'], ['dev-admin', '872,000', 'off by 23'], ['bot-21', '871,850', 'off by 127'], ['bot-09', '872,210', 'off by 233'],
+    ['bot-14', '871,600', 'off by 377'], ['bot-03', '872,500', 'off by 523']];
+  BEST.sort((a, b) => (a[2] === 'found it' ? -1 : b[2] === 'found it' ? 1 : parseInt(a[2].replace(/\D/g, '')) - parseInt(b[2].replace(/\D/g, ''))));
+  const guesses = (n) => `<section class="panel card"><h3 style="display:flex;justify-content:space-between;align-items:center">Closest to winning<button class="btn" type="button" style="height:30px">All guesses (412)</button></h3>
+    <div class="best">${BEST.slice(0, n).map((r, i) => `<div class="b ${i === 0 ? 'win' : ''}"><span class="k">${i + 1}</span><span class="t" style="background:${pick(C, i * 3)}"></span><span class="n">${r[0]}</span><span class="v">${r[1]}</span><span class="d">${r[2]}</span></div>`).join('')}</div></section>`;
+  const players = (n) => `<section class="panel pl"><h3><span>Players</span><span class="small">27 · Team</span></h3>${Array.from({ length: n }, (_, i) =>
+      `<div class="p"><span class="n">${i === 0 ? 'dev-admin' : `bot-${String(i).padStart(2, '0')}`}</span><span class="t" style="background:${pick(C, i * 3)}"></span><span class="on"></span></div>`).join('')}</section>`;
+  const next = `<section class="panel next"><h3>Next round</h3><div class="small">Set up the next round from the Host menu.</div></section>`;
+
+  function result(o) {
+    return `<div class="label">${o.label}</div><div class="note">${o.note}</div>
+    <div class="page" style="width:${o.w}px;height:${o.h}px">${resultBar}
+      <div class="scroll"><div style="display:flex;flex-direction:column;gap:10px;min-width:0">${first}${guesses(10)}</div>
+        <div class="side">${next}${players(o.p)}</div></div>
+      ${chatBox(o.chat)}</div>`;
+  }
+
+  function phone(o) {
+    return `<div class="label">${o.label}</div><div class="note">${o.note}</div>
+    <div class="phone"><div class="pbar"><span>Quick Test</span><span style="flex:1"></span><span>Code 6NZRF2</span></div>
+      <div class="pscroll">
+        <section class="panel first" style="padding:12px 14px;gap:8px"><h2 style="font-size:20px">bot-17 found it first — after 15 guesses.</h2>
+          <div class="miss" style="font-size:13px">Closest miss besides the winner: bot-06, missed by just 1.</div>
+          <div class="num">The number was <b>871,977</b>The range was 1 to 1,000,000.</div>${placings}
+          <div class="foot" style="font-size:14px"><button class="btn" type="button">All placings (27)</button>Team Summer wins (+1)</div><span class="small">▸ Fairness proof</span></section>
+        ${guesses(10).replace('class="best"', 'class="best" style="grid-template-rows:repeat(10,28px);grid-template-columns:1fr"')}${next}${players(6)}</div>
+      <button class="pchat" type="button"><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><strong>Chat</strong> <span style="color:#c8d0e0">· monke42: so close, missed by one</span></span><span class="badge">2</span></button></div>`;
+  }
+
+  document.getElementById('root').innerHTML = [
+    intro({ label: '1 — Season card before the round, desktop 1280 × 720', w: 1280, h: 720, chat: 150,
+      note: 'Today the card is cut at the top (the sun) and the bottom ("Opens in 6 s") since the chat took its place. The card shrinks its parts to the height above the chat, here the smallest desktop case; at 1440 × 900 and larger it may grow, never past today’s sizes.' }),
+    result({ label: '2 — Result, Guess The Number shared, desktop 1440 × 900', w: 1440, h: 900, chat: 190, g: 12, p: 18,
+      note: 'The chat stays docked below. The result and the column beside it scroll together as one area: one scrollbar at the right edge instead of two. Space won: the number sits beside the placings without the empty area under it, smaller headings, "All placings" and the team line on one line, the players as compact rows. Under the first part the ten guesses closest to winning (owner decision 2026-11-19): the winner first, then each other player once with their best guess, closest first; every guess behind “All guesses (N)”. Everything shows without scrolling.' }),
+    result({ label: '3 — Result, desktop 1280 × 720', w: 1280, h: 720, chat: 150, g: 6, p: 12,
+      note: 'The smallest desktop case: the first part shows whole above the 150 px chat; “Closest to winning” and the players follow in the one scroll below it.' }),
+    phone({ label: '4 — Result, phone 390 × 844', note: 'One column scrolling above the one-line chat bar: the result, then “Closest to winning” in one column, then Next round, then the players. The Fairness proof moves under the result’s foot.' }),
+  ].join('');
+</script>
+</body>
+</html>

@@ -9,16 +9,16 @@
  *                 guess engine's, 02c §6, T73, T74); the hint (shared: everyone's; individual:
  *                 the player's own, never a spectator's, 02c §10). An explosion is an answer,
  *                 so it appears exactly where answers do. Only `result` takes the secrets: the
- *                 shared sequence or every player's, and the closest miss (02c §9, O22).
- *                 `reveal` words the secret for the chat's round-end line (O32).
- * Depends on:     zod, @smg/game-sdk (GameViews), @smg/guess-engine (views, closest miss),
+ *                 shared sequence or every player's (02c §9). `cutDistance` measures a sequence
+ *                 for "Closest to winning" (O110). `reveal` words the secret for the chat's
+ *                 round-end line (O32).
+ * Depends on:     zod, @smg/game-sdk (GameViews), @smg/guess-engine (views),
  *                 ./state, ./wires
  * Used by:        ./module, ./index
  * Spec:           docs/spec/02c-game-bomb-defusal.md §6, §9, §10; docs/spec/05-security-threat-model.md §3
  */
 import type { GameViews } from '@smg/game-sdk';
 import {
-  closestMissBy,
   guessSchemas,
   othersGuesses,
   ownGuesses,
@@ -60,11 +60,6 @@ export const viewSchemas = {
       secret: sequenceSchema.nullable(),
       secrets: z.record(z.string(), sequenceSchema).nullable(),
       guesses: guesses.result,
-      // Shared mode with a winner: the other wrong sequence with the longest correct start.
-      closestMiss: z
-        .object({ playerId: z.string(), value: sequenceSchema, correct: z.number().int() })
-        .strict()
-        .nullable(),
     })
     .strict(),
 };
@@ -80,17 +75,10 @@ const bombOf = (state: BdState) => ({
   harmless: state.harmless,
 });
 
-// 02c §9: the longest correct start of anyone but the winner, the earlier on a tie; an
-// explosion (no right cut) is not a near miss, so the best being 0 gives no line.
-export function closestMiss(state: BdState): ResultView['closestMiss'] {
-  const miss = closestMissBy(
-    state,
-    (f) => f.defused,
-    (g) => state.cuts - g.feedback.correct,
-  );
-  if (miss === null || miss.distance >= state.cuts) return null;
-  return { playerId: miss.playerId, value: miss.value, correct: state.cuts - miss.distance };
-}
+// How far a sequence is from defusing (02c §9, O110): the cuts after its correct start; 0
+// defused it.
+export const cutDistance = (f: { correct: number; defused: boolean }, cuts: number): number =>
+  f.defused ? 0 : cuts - f.correct;
 
 export const views: GameViews<BdState, Secrets<Sequence>> = {
   player: (state, playerId, ctx) => ({
@@ -111,7 +99,6 @@ export const views: GameViews<BdState, Secrets<Sequence>> = {
     secret: secrets.mode === 'shared' ? secrets.value : null,
     secrets: secrets.mode === 'individual' ? secrets.byPlayer : null,
     guesses: resultGuesses(state),
-    closestMiss: secrets.mode === 'shared' ? closestMiss(state) : null,
   }),
 };
 

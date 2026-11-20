@@ -5,7 +5,8 @@
  *
  * Responsibility: one arrangement for every game (T141), only what matters for the next guess
  *                 in this round (O54). A desktop: the stage on the left, for a list game the
- *                 round's guesses (./RoundLog `main`) with the action dock at its bottom, for a
+ *                 round's guesses (./RoundLog `main`, in two columns, O109) with the action dock
+ *                 at its bottom, for a
  *                 board game (Seasonal Target) its board (the input's `stage` box, O51), for a
  *                 split game (Seasonal Mind Games) its strip and its main part (T351); the
  *                 info column on the right, top to bottom the special line, the game's compact
@@ -13,7 +14,8 @@
  *                 the stage already holds only the viewer's guesses, T141), for a board game
  *                 the round's guesses and the dock; in individual mode the Others panel
  *                 under the game's panel (the other players' guesses and who solved,
- *                 ./RoundSide, T260). A phone: the info line under the bar (its
+ *                 ./RoundSide, T260; its "+N more", like the phone's others line, opens the
+ *                 Players panel, O110). A phone: the info line under the bar (its
  *                 sheet holds the game's panel), a board game's board, the round's guesses
  *                 filling the height that is left (in individual mode under the "Others"
  *                 line, ./RoundLog), and the dock at the bottom (./InputRow: the
@@ -69,12 +71,9 @@ function partsOf(state: RoundStateView, game: GameWeb | null) {
   return { playing, board, watching, panel };
 }
 
-// Every part of the body once; the layouts below only place them.
-function useParts(p: BodyProps) {
-  const { state, panels } = p;
-  const [stage, setStage] = useState<HTMLElement | null>(null);
-  const { playing, board, watching, panel } = partsOf(state, p.game);
-  const log = { feed: p.live.feed, game: p.game, state, viewerKey: p.viewerKey, now: p.now };
+// The list's way to the Log panel, and the others' "+N more" (individual mode) to the Players
+// panel, where every player stands (O110).
+function panelLinks(panels: Panels) {
   const more = {
     open: panels.open === 'list',
     toggle: () => {
@@ -82,6 +81,19 @@ function useParts(p: BodyProps) {
     },
     button: panels.button('list'),
   };
+  const onOthers = (): void => {
+    panels.toggle('players');
+  };
+  return { more, onOthers };
+}
+
+// Every part of the body once; the layouts below only place them.
+function useParts(p: BodyProps) {
+  const { state, panels } = p;
+  const [stage, setStage] = useState<HTMLElement | null>(null);
+  const { playing, board, watching, panel } = partsOf(state, p.game);
+  const log = { feed: p.live.feed, game: p.game, state, viewerKey: p.viewerKey, now: p.now };
+  const { more, onOthers } = panelLinks(panels);
   const banner = p.phone
     ? bannerOf(p.live.feed, state, p.game, p.now)
     : eventBanner(p.live.feed, p.game, p.now);
@@ -113,7 +125,13 @@ function useParts(p: BodyProps) {
       <RoundLog {...log} phone={p.phone} kind="all" />
     </FocusPanel>
   );
-  const main = <RoundLog {...log} phone={p.phone} kind="main" banner={banner} more={more} />;
+  const main = (
+    <RoundLog {...log} phone={p.phone} kind="main" banner={banner} {...{ more, onOthers }} />
+  );
+  // A list game's stage on a desktop: the same list in two columns (O109).
+  const columns = (
+    <RoundLog {...log} phone={false} kind="main" banner={banner} more={more} columns />
+  );
   // "Your guesses" beside a list game's stage, in shared mode only (individual: the same rows).
   const own =
     playing !== null && !board && state.secretMode === 'shared' ? (
@@ -121,18 +139,18 @@ function useParts(p: BodyProps) {
         <RoundLog {...log} phone={false} kind="own" />
       </section>
     ) : null;
-  return { board, panel, stageBox, dock, all, main, own };
+  return { board, panel, stageBox, dock, all, main, columns, own, onOthers };
 }
 
 // Individual mode: the other players in the column, a desktop's place for the phone's line.
-function Others(p: BodyProps): ReactElement | null {
+function Others(p: BodyProps & { readonly onMore: () => void }): ReactElement | null {
   if (p.state.secretMode !== 'individual') return null;
   const marks = roundMarks(p.state, p.game, p.viewerKey);
-  return <OthersPanel state={p.state} viewerKey={p.viewerKey} marks={marks} />;
+  return <OthersPanel state={p.state} viewerKey={p.viewerKey} marks={marks} onMore={p.onMore} />;
 }
 
 export function RoundBody(p: BodyProps): ReactElement {
-  const { board, panel, stageBox, dock, all, main, own } = useParts(p);
+  const { board, panel, stageBox, dock, all, main, columns, own, onOthers } = useParts(p);
   const mainBox = (
     <section
       className="smg-panel round-main"
@@ -156,14 +174,14 @@ export function RoundBody(p: BodyProps): ReactElement {
     <>
       {stageBox ?? (
         <section className="smg-panel round-stage round-stage--list" aria-label="This round">
-          {main}
+          {columns}
           {dock}
         </section>
       )}
       <aside className="round-column" aria-label="About this round">
         <SpecialLine state={p.state} rule={p.rule} />
         {panel === null ? null : <div className="smg-panel round-panel">{panel}</div>}
-        <Others {...p} />
+        <Others {...p} onMore={onOthers} />
         {board ? (
           <>
             {mainBox}

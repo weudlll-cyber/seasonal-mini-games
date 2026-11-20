@@ -63,7 +63,8 @@
 }
 
 /* Individual mode on a phone: the others' counts, a row of its own that no banner replaces
-   (T150); a long roster wraps to a second line. */
+   (T150); a long roster wraps to a second line, each player whole on one, and what does not
+   fit two lines is "+N more" (./OthersLine, O110; its parts in ./players.css). */
 .round-log-others {
   flex: none;
   margin: 0;

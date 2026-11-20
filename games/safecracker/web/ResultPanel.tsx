@@ -4,11 +4,12 @@
  * @brief  The game's part of the result page: the code or every player's, and the codes tried.
  *
  * Responsibility: the reveal (`part`, T150): "Code: 1123" with its space (4 digits, 0–9) in
- *                 shared mode, or that everyone had their own; the history: each player's
+ *                 shared mode, the code large on a line of its own and the space under it
+ *                 (O110), or that everyone had their own; the history: each player's
  *                 codes with their right and wrong places, in individual mode with the
  *                 player's own code, the viewer's line first (02b §8), "did not guess"
  *                 without one. The platform shows
- *                 placings, points, margin or the closest miss (`text.runnerUp`), teams and the
+ *                 placings, points, margin, "Closest to winning" (`text.best`), teams and the
  *                 fairness proof around it.
  * Depends on:     react, @smg/game-sdk (props), @smg-game/safecracker (types), ./text
  * Used by:        ./index

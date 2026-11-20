@@ -14,7 +14,7 @@
  * Spec:           docs/spec/04-software-architecture.md §4.7
  */
 export { guessedValues, pickDistinct, publicGuesses } from './candidates.js';
-export { closestMissBy, type ClosestMiss } from './closestMiss.js';
+export { bestGuessesBy, closestMissBy, type ClosestMiss } from './closestMiss.js';
 export {
   commentPicker,
   type Comment,

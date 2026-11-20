@@ -11,7 +11,9 @@
  *                 platform's cooldown check (02 §5.1 order; DECISIONS T29). An accepted
  *                 decision may lengthen the guesser's cooldown (`extraCooldownMs`, T120).
  *                 A `phased` game (04 §4.8) has no cooldown and gives its plan and its own
- *                 result rule in `phased` instead (./phased).
+ *                 result rule in `phased` instead (./phased). After the end a game may name
+ *                 each player's best guess (`closest`, O110) for the result's "Closest to
+ *                 winning".
  * Depends on:     zod (schemas), ./phased, ./random, ./settings
  * Used by:        ./index, packages/domain (round engine), games/*
  * Spec:           docs/spec/04-software-architecture.md §4, §4.8; docs/spec/02-game-guess-the-number.md §5.1
@@ -44,6 +46,10 @@ export interface GameMeta {
   // width, and the round bar has no Chat button; on a phone a bottom bar opens it as a sheet
   // (owner decision O97). Absent: the chat is a panel from the round bar, as in every guess game.
   readonly chatDock?: 'below';
+  // With the chat docked below, the phone's bar: 'line', one line (the newest message and the
+  // unread count) whose tap opens the whole chat with its field as a sheet (owner decision
+  // O109). Absent: the bar holds the room's own field too, the sheet the messages only (T363).
+  readonly chatBar?: 'line';
   // 'shared-by-name': equal match totals share a place, and a place lists its players by
   // display name; round wins and the earliest win do not count (owner decision O100). Absent:
   // equal points are ordered by round wins, then by the earliest win, as in every guess game.
@@ -169,6 +175,21 @@ export interface GameModule<S, A, E, Cfg, Sec> {
   // The secret in a few words for the chat's round-end line ("the number was 42", O32), from
   // the result view and the winner's key; null, or no hook, names no value.
   readonly reveal?: (result: unknown, winner: string | null) => string | null;
+  // Each player's best guess with a guess (O110), only after the end: it takes the secrets.
+  // The platform orders them (the placed players first, by place; then by distance); no hook,
+  // and the result shows every player's guesses in full instead (T150).
+  readonly closest?: (state: S, secrets: Sec) => readonly BestGuess[];
+}
+
+// One player's best guess of an ended round, for the result's "Closest to winning" (owner
+// decision O110): its place among the player's guesses (the result view lists them in this
+// order), its distance in the game's own measure (0: it solved; smaller is closer) and its
+// receive sequence, which orders equal ones (the earlier first).
+export interface BestGuess {
+  readonly playerId: string;
+  readonly index: number;
+  readonly distance: number;
+  readonly receiveSeq: number;
 }
 
 // What a game gives the platform's conformance suite (04 §4.5, 09 §2): a round input, secrets

@@ -8,7 +8,8 @@
  *                 match page and its summary, and the profile's rounds (O41) — and the name for
  *                 an id, the id itself while the list loads or for a game no longer installed;
  *                 whether a game's rounds show a season (O93) and a secret mode (T347), and
- *                 whether its match chat is docked under the round (O97).
+ *                 whether its match chat is docked under the round (O97) and the form of the
+ *                 docked chat's phone bar (O109).
  * Depends on:     react, @smg/contracts (GameInfoView), ../shell/http
  * Used by:        ./Lobby, ../shell/QuickTest, ../match/MatchSummary, ../match/MatchPage,
  *                 ../boards/ProfilePage, ../round/RoundScreen
@@ -82,3 +83,8 @@ export function useRoundLook(id: string): {
 // `meta.chatDock`, O97); false until the list has loaded, as for every guess game.
 export const docksChat = (games: readonly GameInfoView[], id: string): boolean =>
   games.find((g) => g.id === id)?.chatDock === 'below';
+
+// The docked chat's phone bar (the module's `meta.chatBar`, O109): 'line' or, by default and
+// until the list has loaded, 'field' (T363).
+export const chatBarOf = (games: readonly GameInfoView[], id: string): 'field' | 'line' =>
+  games.find((g) => g.id === id)?.chatBar ?? 'field';

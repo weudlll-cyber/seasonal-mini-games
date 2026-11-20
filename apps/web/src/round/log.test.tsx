@@ -22,7 +22,8 @@ import { cleanup, fireEvent, render, screen, within } from '@testing-library/rea
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ended } from './fakes.js';
-import { othersLine, RoundLog, type LogProps } from './RoundLog.js';
+import { othersLine } from './OthersLine.js';
+import { RoundLog, type LogProps } from './RoundLog.js';
 
 afterEach(() => {
   cleanup();

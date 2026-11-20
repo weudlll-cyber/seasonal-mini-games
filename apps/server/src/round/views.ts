@@ -8,7 +8,8 @@
  *                 ends, places and "timed out" (O71), winner, margin, results, the seed once
  *                 revealed) and the game's view for this viewer: the player view for a
  *                 roster player, the spectator view for everyone else, the result view (the
- *                 only one with secrets) after the end (02 §11); a roster player's view also
+ *                 only one with secrets) after the end (02 §11) with the game's "Closest to
+ *                 winning" (O110); a roster player's view also
  *                 carries their own inactivity deadlines, no other view any (O73). Frames:
  *                 every committed event
  *                 in its public form to the match room (a value only through the game's own
@@ -27,7 +28,7 @@
  */
 import type { RoundSession } from '@smg/application';
 import { frostDelay, inactivityDeadline, type RoundEvent, type RoundState } from '@smg/domain';
-import type { GameViews } from '@smg/game-sdk';
+import type { BestGuess, GameViews } from '@smg/game-sdk';
 
 import type { StoredEvent } from './pgRoundStore.js';
 
@@ -97,6 +98,14 @@ function platformPart<S, Cfg>(state: RoundState<S, Cfg>, cut: number) {
   };
 }
 
+// The rows of "Closest to winning" without their receive order, which only sorted them.
+const closestPart = (best: readonly BestGuess[] | null) =>
+  best === null
+    ? {}
+    : {
+        closest: best.map((b) => ({ playerId: b.playerId, index: b.index, distance: b.distance })),
+      };
+
 function announcedEnd<S, Cfg>(state: RoundState<S, Cfg>, cut: number): boolean {
   const byWin = state.endReason === 'solved' || state.endReason === 'allSolved';
   return !byWin || shown(state.endedAt, cut);
@@ -124,6 +133,8 @@ export function roundView<S, A, E, Cfg, Sec>(
       teams: ended.teams,
       seed: session.revealedSeed(),
       game: session.result(),
+      // "Closest to winning" (O110), for a game that names best guesses.
+      ...closestPart(session.closest()),
     };
   }
   const released = { releasedBefore: cut };

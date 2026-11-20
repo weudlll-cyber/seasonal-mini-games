@@ -10,8 +10,9 @@
  *                 view: the code as text, the answer in words with its pegs (one filled per
  *                 right place, one ring per right digit in a wrong place, T119) and without its
  *                 zero parts ("2 right · 1 wrong place", T143), "tried a code" where the code is
- *                 hidden, own rows pending while Frost holds them; the closest miss on the
- *                 result (02b §8); the intro's secret line (O36) and the special's sentence.
+ *                 hidden, own rows pending while Frost holds them; a row of the result's
+ *                 "Closest to winning" (the code, its counts or
+ *                 "cracked it", O110); the intro's secret line (O36) and the special's sentence.
  * Depends on:     @smg/game-sdk (GameText, GuessRow, GuessAnswer, FeedLine),
  *                 @smg-game/safecracker (types)
  * Used by:        ./Board, ./CodeInput, ./ResultPanel, ./index
@@ -26,7 +27,8 @@ import type {
   SpectatorView,
 } from '@smg-game/safecracker';
 import {
-  closestLabel,
+  type BestLine,
+  type BestRow,
   type FeedLine,
   type GameText,
   type GuessAnswer,
@@ -59,7 +61,7 @@ const CODES: Readonly<Record<string, string>> = {
   ALREADY_GUESSED: 'You already tried that code.',
 };
 
-// "2 right · 1 wrong place": the rows, the result and the closest miss (02b §5.2, §8), each
+// "2 right · 1 wrong place": the rows and "Closest to winning" (02b §5.2, §8), each
 // zero part left out, "no digit right" when both are zero (T143); "right" is a right digit in
 // its right place, "wrong place" a right digit in a wrong place (the panel's legend says so).
 export function counts(f: { readonly exact: number; readonly near: number }): string {
@@ -133,17 +135,14 @@ function guessRows(view: unknown): readonly GuessRow[] {
   ];
 }
 
-// "Closest miss besides the winner: Anna, 3 right · 1 wrong place (0427)."
-// (02b §8)
-function runnerUp(
-  view: unknown,
-  names: Readonly<Record<string, string>>,
-  won: boolean,
-): string | null {
-  const miss = (view as Partial<ResultView>).closestMiss ?? null;
-  if (miss === null) return null;
-  const name = names[miss.playerId] ?? miss.playerId;
-  return `${closestLabel(won)}: ${name}, ${counts(miss)} (${miss.value}).`;
+// A row of "Closest to winning" (O110): the code and its counts, as the list words them.
+function best(view: unknown, row: BestRow): BestLine | null {
+  const g = (view as Partial<ResultView>).guesses?.[row.playerId]?.[row.index];
+  if (g === undefined) return null;
+  return {
+    guess: { value: null, text: g.value },
+    words: g.feedback.solved ? 'cracked it' : counts(g.feedback),
+  };
 }
 
 // The intro's line (O36): "Shared 4-digit code, digits 0–9".
@@ -163,11 +162,11 @@ export const safecrackerText: GameText = {
   code: (code) => CODES[code] ?? null,
   event: (event) => eventText(event as ScEvent),
   guesses: guessRows,
-  runnerUp,
   banner: (event) => {
     const e = event as ScEvent;
     return e.type === 'DigitsFallen' ? fallLine(e.digits) : null;
   },
   intro,
   specialRule: (season) => SPECIAL_RULES[season] ?? null,
+  best,
 };

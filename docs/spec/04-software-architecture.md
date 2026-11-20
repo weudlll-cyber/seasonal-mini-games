@@ -110,8 +110,11 @@ interface GameModule<S, A, E, Cfg, Sec> {
     secretModes: ReadonlyArray<'shared' | 'individual'>;  // none: the round bar names no mode (T347)
     teams: boolean;             // supports season teams (shared mode)
     seasons?: false;            // false: the rounds show no season (Mind Games, O93); absent: shown
-    chatDock?: 'below';         // the match chat docked under the round and the result (O97);
-                                // absent: a panel from the round bar
+    chatDock?: 'below';         // the match chat docked under the round and the result (O97,
+                                // O109: Mind Games and the three list games); absent: a panel
+                                // from the round bar (Seasonal Target)
+    chatBar?: 'line';           // with the dock, the phone's bar is one line whose tap opens the
+                                // chat with its field (O109); absent: the bar holds the field (T363)
     standingsTies?: 'shared-by-name'; // equal totals share a place, listed by name (O100);
                                 // absent: ties by round wins, then the earliest win (02 §9)
   };
@@ -134,8 +137,11 @@ interface GameModule<S, A, E, Cfg, Sec> {
   viewSchemas: { player: ZodType; spectator: ZodType; result: ZodType };
   specials?: Partial<SpecialHooks<S, E>>;      // §4.4, joins with the seasonal specials
   reveal?(result: unknown, winner: string | null): string | null; // the secret in words for the chat's round-end line (07 §2, owner decision 32)
+  closest?(state: S, secrets: Sec): BestGuess[]; // after the end: each player's best guess (owner decision O110)
 }
 ```
+
+`closest` names, for the result's "Closest to winning" ([02](02-game-guess-the-number.md) §9, owner decision O110), each player's best guess with a guess: `{ playerId, index, distance, receiveSeq }`, its place among the player's guesses in the result view, its distance in the game's own measure (0: it solved; smaller is closer) and its receive number, which orders equal ones. The platform orders them (the placed players first, by place; then by distance; then the earlier guess), keeps ten, and sends `{ playerId, index, distance }` in the result view only (`RoundStateView.closest`); the game's web half words each row (`GameText.best`, §4.6). Without the hook the result shows every player's guesses in full instead (DECISIONS T150).
 
 The registry lists each game as one entry `{ module, conformance, devBot }`, where `conformance` is the game's kit for the shared suite (§4.5): a round input, sentinel secrets and actions that never hit a secret; `devBot` picks a development bot's next action from that bot's own player view (Quick Test, DECISIONS T36).
 
@@ -194,11 +200,13 @@ The platform runs one shared conformance test suite against every module in `gam
    - the player's main area and input row apart (the platform places them and puts its cooldown ring into the row),
    - the spectator and result panels,
    - the rows of the round's one list (`GuessRow`s from its player or spectator view, and `FeedLine`s for its events), which the platform draws (owner decision 20; DECISIONS T62, T74),
-   - and the line about the best of the rest that the result page shows where the winning margin goes when there is none (`runnerUp`, owner decision 22; DECISIONS T77),
-   - and optionally the round intro's line on the secret (`intro`, owner decision 36; DECISIONS T109).
+   - and optionally the line about the best of the rest that the result page shows where the winning margin goes when there is none (`runnerUp`, owner decision 22; DECISIONS T77; a game with "Closest to winning" gives none, owner decision O111),
+   - and optionally the round intro's line on the secret (`intro`, owner decision 36; DECISIONS T109),
+   - and, with the module's `closest`, a row of "Closest to winning" in its words (`best(resultView, row)`: the guess as the list draws it, and how close it came, a solve in the game's own word; owner decision O110).
    - A `FeedLine` marked `special` is a special's own row, which the platform draws on the season's tint with its icon; the panels learn whether the round's special is on (`specialOn`), so a game can show a special's own parts only then (DECISIONS T115).
    - A `GuessRow` whose guess is not a number gives it as `text` ("0427", "red, blue, green, white", "(12, 34)"), and an answer other than higher/lower as `answer` (`text`, a `tone` for its colour and optional `pegs`), which the platform draws in the same row, always with its words (DECISIONS T119).
    - A game whose special works differently from the platform's sentence words it itself (`GameText.specialRule(season)`, used on the intro screen and in the top bar's info note; DECISIONS T119).
+   - **Fitting the screen** (owner decision O111): the platform scales a game screen to the space it has with one mechanism (`useFitScale`, apps/web round/useFit). The screen's root names its fixed parts (`data-fit-fixed`) and finds its box (the nearest that clips or scrolls); the scale, the largest value ≤ 1 at which the fixed parts fit (never below 0.6), is the CSS custom property `--fit` on the root, measured anew only when the box's size or the screen's content changes, never in a loop. A game's own CSS inside a scaled screen multiplies its type and spacing by `var(--fit, 1)`, each with its floor (13 px text, 24 px display values, 22 px rows, 40 px touch targets on a phone); at 1 nothing changes.
 2. Add one line to each half of `games/registry` (`src/index.ts` and `web/index.ts`).
 3. Add its settings to [08](08-admin-settings.md) and its rules to a new spec section.
 
@@ -215,6 +223,7 @@ Guess The Number ([02](02-game-guess-the-number.md)), Seasonal Safecracker ([02b
 | The closeness tiers from way off to correct, the trend between two tiers, and picking a comment line from a game's catalogue with the round's DRBG under `comment/<receiveSeq>`, with no line of a pool again before the pool is used up (02 §6.3, DECISIONS T71, T72) | `tier(state, value, secret, answer)` and its catalogue of lines per tier and trend pool |
 | Views: the viewer's own guesses, the others' newest 60 at the round's visibility, answers and comments held back while Frost holds them (`releasedBefore`), the result's guesses | the rest of each view (range, map, hints, fallen values) and the view schemas, built with the engine's guess schemas |
 | The closest miss: the best wrong guess of anyone but the winner, the earlier on a tie (02 §9) | how far a guess is from the secret, where the game shows a closest miss |
+| Each player's best guess for "Closest to winning" (`bestGuessesBy`; the module's `closest` when the game gives a `distance`, owner decision O110) | `distance(guess, secret, state)`: how far a guess is from the guesser's secret, 0 when it solved |
 | The Leaf Fall candidate rule (owner, decision 37): the answers every player can see (a shared secret with `full` visibility, delivered by the Frost cut) or none, the values guessed so far, and a uniform draw of distinct values from a list | which values are its candidates (numbers, digits, wires, cells) and what is still possible given the public answers |
 | Optional `extraCooldownMs` from the game's rules on an accepted guess (§4.2) | when it applies (Bomb Defusal's explosion) |
 | The shared setting definitions `round.feedbackVisibility`, `round.comments`, `comments.trendPercent`, `round.repeatGuessRejected` ([08](08-admin-settings.md) §3), each game wording their help in its own terms | its own keys |

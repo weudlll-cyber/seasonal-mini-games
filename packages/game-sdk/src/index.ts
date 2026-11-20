@@ -17,6 +17,7 @@
 export type {
   Audience,
   ConformanceKit,
+  BestGuess,
   Decision,
   DevBot,
   DevPrefs,
@@ -90,6 +91,8 @@ export {
 } from './settings.js';
 export type {
   ActReply,
+  BestLine,
+  BestRow,
   FeedLine,
   FieldState,
   GameText,

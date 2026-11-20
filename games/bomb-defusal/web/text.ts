@@ -11,8 +11,8 @@
  *                 answer in words ("First 2 cuts right", "Boom!" with the icon,
  *                 "Defused!") with its tone (T119), and the sequence as colour dots with their
  *                 names (`swatches`, T143; the fills are `WIRE_COLORS`, shared with the
- *                 swatches of ./WireChip); the closest miss on the shared result
- *                 (02c §9); the intro's line on the bomb (02c §3); the season special in this
+ *                 swatches of ./WireChip); a row of the result's "Closest to winning" (the dots, its correct start or
+ *                 "defused it", O110); the intro's line on the bomb (02c §3); the season special in this
  *                 game's terms (T119). Server codes never reach the screen as codes.
  * Depends on:     @smg/game-sdk (GameText, GuessRow), @smg-game/bomb-defusal (types, wording)
  * Used by:        ./BombBlock, ./WireInput, ./ResultPanel, ./index
@@ -29,7 +29,8 @@ import {
   type Wire,
 } from '@smg-game/bomb-defusal';
 import {
-  closestLabel,
+  type BestLine,
+  type BestRow,
   type FeedLine,
   type GameText,
   type GuessAnswer,
@@ -122,6 +123,23 @@ export function answerText(f: Feedback, cuts: number): GuessAnswer {
   return { text: rightText(f.correct), tone: 2 * f.correct >= cuts ? 'close' : 'far' };
 }
 
+// A sequence as the list's colour dots, each with its wire's name (T143).
+const swatchesOf = (sequence: Sequence) =>
+  sequence.map((w) => ({ name: w, color: WIRE_COLORS[w] }));
+
+// A row of "Closest to winning" (O110): the sequence's dots and its correct start.
+function best(view: unknown, row: BestRow): BestLine | null {
+  const g = (view as Partial<ResultView>).guesses?.[row.playerId]?.[row.index];
+  if (g === undefined) return null;
+  const f = g.feedback;
+  const words = f.defused
+    ? 'defused it'
+    : f.correct === 0
+      ? 'no cut right'
+      : rightText(f.correct).toLowerCase();
+  return { guess: { value: null, swatches: swatchesOf(g.value) }, words };
+}
+
 interface Seen {
   readonly receiveSeq: number;
   readonly receivedAt: number;
@@ -142,7 +160,7 @@ function guessRows(view: unknown): readonly GuessRow[] {
     feedback: null,
     text: g.value === null ? 'cut a sequence' : sequenceText(g.value),
     // The sequence as colour dots in order, each named (T143).
-    swatches: g.value === null ? null : g.value.map((w) => ({ name: w, color: WIRE_COLORS[w] })),
+    swatches: g.value === null ? null : swatchesOf(g.value),
     answer: g.feedback === null ? null : answerText(g.feedback, v.cuts),
     comment: g.comment,
     tier: g.tier,
@@ -153,20 +171,6 @@ function guessRows(view: unknown): readonly GuessRow[] {
     ...(v.guesses ?? []).map((g) => row(g, null, g.feedback === null)),
     ...v.log.map((g) => row(g, g.playerId, g.held)),
   ];
-}
-
-// 02c §9: "Closest: Anna, the first 3 cuts right (red → blue → yellow → black)."
-function runnerUp(
-  view: unknown,
-  names: Readonly<Record<string, string>>,
-  won: boolean,
-): string | null {
-  const miss = (view as Partial<ResultView>).closestMiss ?? null;
-  if (miss === null) return null;
-  const name = names[miss.playerId] ?? miss.playerId;
-  const right =
-    miss.correct === 1 ? 'the first cut right' : `the first ${String(miss.correct)} cuts right`;
-  return `${closestLabel(won)}: ${name}, ${right} (${sequenceText(miss.value)}).`;
 }
 
 // The intro's line (02c §3): "Shared bomb: 6 wires, 4 cuts".
@@ -191,8 +195,8 @@ export const bdText: GameText = {
   code: (code) => CODES[code] ?? null,
   event: (event) => eventText(event as BdEvent),
   guesses: guessRows,
-  runnerUp,
   banner,
   intro,
   specialRule,
+  best,
 };

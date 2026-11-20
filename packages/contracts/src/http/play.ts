@@ -37,6 +37,9 @@ export interface GameInfoView {
   // Where the match chat sits around a round (the module's `meta.chatDock`, O97): 'panel'
   // from the round bar, or 'below', docked under the round view and the result.
   readonly chatDock: 'panel' | 'below';
+  // The docked chat's phone bar (the module's `meta.chatBar`, O109): 'field', the bar with the
+  // room's field (T363), or 'line', one line whose tap opens the chat with its field.
+  readonly chatBar: 'field' | 'line';
 }
 
 export interface MatchSummaryView {
@@ -138,6 +141,12 @@ export interface PlayerResultView {
   readonly timedOut: boolean;
 }
 
+export interface ClosestRowView {
+  readonly playerId: string;
+  readonly index: number;
+  readonly distance: number;
+}
+
 export interface RoundStateView {
   readonly roundId: string;
   readonly status: 'created' | 'countdown' | 'open' | 'ended' | 'aborted';
@@ -168,6 +177,10 @@ export interface RoundStateView {
   // The game's own view for this viewer; only its screens read it.
   readonly game: unknown;
   readonly results?: readonly PlayerResultView[];
+  // "Closest to winning" (O110), in the result only, for a game that names best guesses: at
+  // most ten players in order, each with the place of their best guess among their guesses
+  // in the game's result view and its distance in the game's measure (0: it solved).
+  readonly closest?: readonly ClosestRowView[];
   readonly teams?: readonly {
     readonly team: TeamName;
     readonly members: number;

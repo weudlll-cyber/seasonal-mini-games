@@ -14,8 +14,9 @@
  *                 guesses" or a board game's list with the dock); an open panel on demand is a
  *                 third column that pushes the game aside (O48). A phone: the bar, the info line
  *                 (at most 48 px, the game's panel behind it as a sheet), a board game's board
- *                 as wide as the screen, the round's guesses filling the height that is left,
- *                 at least four rows under a board, and the dock at the bottom, which no sheet
+ *                 as wide as the screen, the round's guesses filling the height that is left
+ *                 (on a short screen they give their rows first, then the board shrinks, so the
+ *                 dock stays on the screen, O111), and the dock at the bottom, which no sheet
  *                 covers. The season pill in its token colour (./SeasonPill); a solved or timed-out
  *                 player's notice in the dock (O25, O71) and the inactivity countdown line;
  *                 the platform's refusal line. The Players panel is
@@ -89,15 +90,23 @@
   grid-template-areas: 'bar' 'line' 'main' 'dock';
 }
 
-/* A board game on a phone: the board under the info line, as wide as the screen; the list
-   under it keeps at least four rows. */
+/* A board game on a phone: the board under the info line, as wide as the screen, the list
+   under it taking the rest. The board and the dock are the fixed parts (O111): where the
+   screen is too short for them (the on-screen keyboard open) the list gives its rows first,
+   down to its head ("N guesses" and "Log (N)", a hit target high, inside the panel's
+   padding), then the board's row shrinks and the board, which takes the smaller of its box's
+   width and height (`.st-board`), with it, so the dock stays on the screen. */
 .round-live[data-view='phone'][data-layout='board'] {
-  grid-template-rows: auto auto auto minmax(7rem, 1fr) auto;
+  grid-template-rows:
+    auto auto minmax(0, max-content) minmax(calc(2 * var(--space-1) + var(--hit-target)), 1fr)
+    auto;
   grid-template-areas: 'bar' 'line' 'stage' 'main' 'dock';
 }
 
+/* Square by its width; never taller than its row. */
 .round-live[data-view='phone'][data-layout='board'] .round-stage {
   aspect-ratio: 1 / 1;
+  max-height: 100%;
 }
 
 .round-live[data-view='phone'] > .round-input {

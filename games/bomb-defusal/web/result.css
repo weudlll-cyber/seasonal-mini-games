@@ -4,7 +4,8 @@
  * @brief  Styles of Seasonal Bomb Defusal's result panel: the secret, every player's cuts.
  *
  * Responsibility: the revealed sequence as compact chips that wrap as wholes, never sideways
- *                 or cut, and the players' sequences in colour dots (T150), from the design
+ *                 or cut, at the result's scale (`--fit`, O111), and the players' sequences in
+ *                 colour dots (T150), from the design
  *                 tokens only, light and dark. Every class starts with `bd-`.
  * Spec:           docs/spec/02c-game-bomb-defusal.md §9
  */
@@ -16,8 +17,8 @@
 
 .bd-secret {
   display: grid;
-  gap: var(--space-1);
-  font-size: var(--font-size-lead);
+  gap: calc(var(--fit, 1) * var(--space-1));
+  font-size: max(13px, calc(var(--fit, 1) * var(--font-size-lead)));
 }
 
 .bd-secret p {

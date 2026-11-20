@@ -165,16 +165,19 @@ export function ownRows(page: Page): Locator {
 }
 
 // How many one-line guess rows the round's list has room for (T142): the list's box over one
-// row's pitch (its line, its padding and the gap), so it holds with one guess as with twenty.
+// row's pitch (its line, its padding and the gap, or in two columns its margin), times its
+// columns (a desktop's two, O109), so it holds with one guess as with twenty.
 export async function listRoom(page: Page): Promise<number> {
   return page.getByTestId('guess-list').evaluate((ol) => {
     const list = getComputedStyle(ol);
-    const gap = parseFloat(list.rowGap) || 0;
+    const columns = Number.parseInt(list.columnCount, 10) || 1;
     const line = ol.querySelector('.round-row-line');
     const row = line?.closest('li');
-    const pad = row == null ? 0 : parseFloat(getComputedStyle(row).paddingTop) * 2;
+    const style = row == null ? null : getComputedStyle(row);
+    const gap = (parseFloat(list.rowGap) || 0) + (parseFloat(style?.marginBottom ?? '') || 0);
+    const pad = style === null ? 0 : parseFloat(style.paddingTop) * 2;
     const pitch = (line?.getBoundingClientRect().height ?? 20) + pad + gap;
-    return Math.floor((ol.clientHeight + gap) / pitch);
+    return Math.floor((ol.clientHeight + gap) / pitch) * columns;
   });
 }
 

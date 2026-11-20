@@ -1163,11 +1163,6 @@
         "feedback": "higher"
        }
       ]
-     },
-     "closestMiss": {
-      "playerId": "p2",
-      "value": 880,
-      "distance": 11
      }
     }
    }
@@ -2196,11 +2191,6 @@
         "feedback": "higher"
        }
       ]
-     },
-     "closestMiss": {
-      "playerId": "p2",
-      "value": 880,
-      "distance": 11
      }
     }
    }
@@ -3387,8 +3377,7 @@
         "feedback": "higher"
        }
       ]
-     },
-     "closestMiss": null
+     }
     }
    }
   ]
@@ -4574,8 +4563,7 @@
         "feedback": "higher"
        }
       ]
-     },
-     "closestMiss": null
+     }
     }
    }
   ]
@@ -5778,11 +5766,6 @@
         "feedback": "higher"
        }
       ]
-     },
-     "closestMiss": {
-      "playerId": "p2",
-      "value": 990,
-      "distance": 4
      }
     }
    }
@@ -6807,11 +6790,6 @@
         "feedback": "higher"
        }
       ]
-     },
-     "closestMiss": {
-      "playerId": "p2",
-      "value": 990,
-      "distance": 4
      }
     }
    }
@@ -7999,8 +7977,7 @@
         "feedback": "higher"
        }
       ]
-     },
-     "closestMiss": null
+     }
     }
    }
   ]
@@ -9187,8 +9164,7 @@
         "feedback": "higher"
        }
       ]
-     },
-     "closestMiss": null
+     }
     }
    }
   ]
@@ -10369,11 +10345,6 @@
         "feedback": "higher"
        }
       ]
-     },
-     "closestMiss": {
-      "playerId": "p3",
-      "value": 940,
-      "distance": 7
      }
     }
    }
@@ -11396,11 +11367,6 @@
         "feedback": "higher"
        }
       ]
-     },
-     "closestMiss": {
-      "playerId": "p3",
-      "value": 940,
-      "distance": 7
      }
     }
    }
@@ -12579,8 +12545,7 @@
         "feedback": "higher"
        }
       ]
-     },
-     "closestMiss": null
+     }
     }
    }
   ]
@@ -13758,8 +13723,7 @@
         "feedback": "higher"
        }
       ]
-     },
-     "closestMiss": null
+     }
     }
    }
   ]

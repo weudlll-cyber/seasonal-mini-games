@@ -34,7 +34,13 @@ export function NextRound(p: {
   const pausing = match.series?.nextAt != null;
   return (
     // No heading of its own (the design of MG-N7): the countdown's row heads the box.
-    <section className="next-round" aria-label="Next round" data-testid="next-round">
+    <section
+      className="next-round"
+      aria-label="Next round"
+      data-testid="next-round"
+      // A fixed part of the result's screen: whole at the screen's scale (O111).
+      data-fit-fixed=""
+    >
       <JoinLeave match={match} reload={p.reload} />
       {pausing ? (
         <SeriesCountdown match={match} since={p.since} />

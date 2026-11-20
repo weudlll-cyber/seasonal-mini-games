@@ -5,7 +5,8 @@
  *
  * Responsibility: the owner's reference of 2026-11-15 (MG-N8): the title (15 px bold) with its
  *                 short line (13 px muted); one row per round still to play, the label at the left
- *                 and a select 170 px wide and at least 44 px high at the right, the list the only
+ *                 and a select 170 px wide and 44 px high at the right (less, at least 32 px, at the
+ *                 screen's scale, `--fit`, O111, where the result has not the room), the list the only
  *                 part that scrolls when the box is short; "Hide my switches" at the foot. On a
  *                 phone the rounds two to a row, the label above its select. In the waiting area
  *                 and the next round's box alike (02e §7, §11). Colours only from the tokens.
@@ -16,12 +17,12 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: calc(var(--fit, 1) * 10px);
 }
 
 .mg-prefs-head {
   margin: 0;
-  font-size: 15px;
+  font-size: max(13px, calc(var(--fit, 1) * 15px));
 }
 
 .mg-prefs-what {
@@ -33,7 +34,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: calc(var(--fit, 1) * 8px);
   overflow-y: auto;
 }
 
@@ -43,13 +44,13 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  font-size: 15px;
+  font-size: max(13px, calc(var(--fit, 1) * 15px));
 }
 
 .mg-prefs-round select {
   flex: none;
   width: 170px;
-  min-height: var(--hit-target);
+  min-height: max(32px, calc(var(--fit, 1) * var(--hit-target)));
 }
 
 .mg-prefs-note {

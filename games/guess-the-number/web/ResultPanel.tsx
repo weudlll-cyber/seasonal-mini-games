@@ -3,8 +3,9 @@
  * @module games/guess-the-number/web
  * @brief  The game's part of the result page: the secret or every player's, and the guesses.
  *
- * Responsibility: the reveal (`part`, T150): the secret in shared mode and the round's range
- *                 (revealed here when it was hidden, T52); the history: each player's guesses
+ * Responsibility: the reveal (`part`, T150): the secret in shared mode, large on a line of its
+ *                 own (O110), and the round's range under it (revealed here when it was
+ *                 hidden, T52); the history: each player's guesses
  *                 with their answers, in individual mode with the player's own number, the
  *                 viewer's line first (02 §9), "did not guess" without one. The platform
  *                 shows placings, points, margin, teams and the fairness proof around it.
@@ -26,7 +27,7 @@ export function ResultPanel({ view, names, viewerKey, part }: ResultPanelProps):
       <div className="gtn-result" data-testid="gtn-result">
         {v.secret === null ? null : (
           <p className="gtn-secret">
-            The number was <strong data-testid="secret">{formatNumber(v.secret)}</strong>.
+            The number was <strong data-testid="secret">{formatNumber(v.secret)}</strong>
           </p>
         )}
         <p data-testid="result-range">
