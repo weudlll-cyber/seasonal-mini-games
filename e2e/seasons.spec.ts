@@ -75,6 +75,22 @@ const SEASONS: readonly Season[] = [
   },
 ];
 
+// The card whole: nothing of it cut at its top or its foot (O110: above the docked chat).
+async function cardWhole(page: Page): Promise<void> {
+  const cut = await page.getByTestId('round-intro').evaluate((card) => {
+    const box = card.getBoundingClientRect();
+    const parts = [...card.querySelectorAll('*')].map((e) => e.getBoundingClientRect());
+    return {
+      over: card.scrollHeight - card.clientHeight,
+      top: Math.min(...parts.map((r) => r.top)) - box.top,
+      foot: box.bottom - Math.max(...parts.map((r) => r.bottom)),
+    };
+  });
+  expect(cut.over, 'the card holds its parts').toBeLessThanOrEqual(1);
+  expect(cut.top, 'nothing cut at the top').toBeGreaterThanOrEqual(0);
+  expect(cut.foot, 'nothing cut at the foot').toBeGreaterThanOrEqual(0);
+}
+
 // The intro fits the screen at both sizes; it ends back at the wide size.
 async function introFits(page: Page, s: Season): Promise<void> {
   const intro = page.getByTestId('round-intro');
@@ -86,9 +102,11 @@ async function introFits(page: Page, s: Season): Promise<void> {
   );
   await expect(intro).toContainText('Cooldown 8.0 s between guesses');
   await fitsScreen(page);
+  await cardWhole(page);
   await page.setViewportSize(PHONE);
   await expect(intro).toBeVisible();
   await fitsScreen(page);
+  await cardWhole(page);
   await page.setViewportSize(WIDE);
 }
 

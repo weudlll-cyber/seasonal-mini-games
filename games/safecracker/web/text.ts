@@ -11,7 +11,8 @@
  *                 right place, one ring per right digit in a wrong place, T119) and without its
  *                 zero parts ("2 right · 1 wrong place", T143), "tried a code" where the code is
  *                 hidden, own rows pending while Frost holds them; the closest miss on the
- *                 result (02b §8); the intro's secret line (O36) and the special's sentence.
+ *                 result (02b §8); a row of "Closest to winning" (the code, its counts or
+ *                 "cracked it", O110); the intro's secret line (O36) and the special's sentence.
  * Depends on:     @smg/game-sdk (GameText, GuessRow, GuessAnswer, FeedLine),
  *                 @smg-game/safecracker (types)
  * Used by:        ./Board, ./CodeInput, ./ResultPanel, ./index
@@ -26,6 +27,8 @@ import type {
   SpectatorView,
 } from '@smg-game/safecracker';
 import {
+  type BestLine,
+  type BestRow,
   closestLabel,
   type FeedLine,
   type GameText,
@@ -146,6 +149,16 @@ function runnerUp(
   return `${closestLabel(won)}: ${name}, ${counts(miss)} (${miss.value}).`;
 }
 
+// A row of "Closest to winning" (O110): the code and its counts, as the closest miss.
+function best(view: unknown, row: BestRow): BestLine | null {
+  const g = (view as Partial<ResultView>).guesses?.[row.playerId]?.[row.index];
+  if (g === undefined) return null;
+  return {
+    guess: { value: null, text: g.value },
+    words: g.feedback.solved ? 'cracked it' : counts(g.feedback),
+  };
+}
+
 // The intro's line (O36): "Shared 4-digit code, digits 0–9".
 function intro(view: unknown, secretMode: 'shared' | 'individual'): string | null {
   const v = view as Partial<SpectatorView> | null;
@@ -170,4 +183,5 @@ export const safecrackerText: GameText = {
   },
   intro,
   specialRule: (season) => SPECIAL_RULES[season] ?? null,
+  best,
 };

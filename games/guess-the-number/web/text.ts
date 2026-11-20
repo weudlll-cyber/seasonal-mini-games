@@ -10,7 +10,8 @@
  *                 halving strikes ("Leaf Fall: 10 numbers fell.", O35); the list's guess rows from the player or
  *                 spectator view, own guesses and the others' at the round's visibility, with
  *                 answers and comments as far as the view carries them (O20, O21); and the
- *                 closest miss on the shared result (O22); the round intro's line on the
+ *                 closest miss on the shared result (O22); a row of "Closest to winning" (the
+ *                 number, "off by 13" or "found it", O110); the round intro's line on the
  *                 number and its range (O36). Server codes never reach the screen
  *                 as codes; every number is written with thousands separators (formatNumber).
  * Depends on:     @smg/game-sdk (GameText, GuessRow, formatNumber), ../src (types, limit)
@@ -25,6 +26,8 @@ import {
   type SpectatorView,
 } from '@smg-game/guess-the-number';
 import {
+  type BestLine,
+  type BestRow,
   closestLabel,
   type FeedLine,
   formatNumber,
@@ -146,6 +149,14 @@ function runnerUp(
   return `${closestLabel(won)}: ${name}, ${how} (${guess}).`;
 }
 
+// A row of "Closest to winning" (O110): the number and its distance from the server.
+function best(view: unknown, row: BestRow): BestLine | null {
+  const g = (view as Partial<ResultView>).guesses?.[row.playerId]?.[row.index];
+  if (g === undefined) return null;
+  const words = row.distance === 0 ? 'found it' : `off by ${formatNumber(row.distance)}`;
+  return { guess: { value: g.value }, words };
+}
+
 // The intro's line (O36): the mode and the range, or that the range is hidden (O19).
 function intro(view: unknown, secretMode: 'shared' | 'individual'): string | null {
   const v = view as Partial<Pick<PlayerView, 'range'>> | null;
@@ -164,4 +175,5 @@ export const gtnText: GameText = {
   runnerUp,
   banner,
   intro,
+  best,
 };

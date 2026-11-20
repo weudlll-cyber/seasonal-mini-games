@@ -23,7 +23,7 @@ import { CODE_PATTERN, scRules, type GuessAction } from './rules.js';
 import { scSettings, type ScConfig } from './settings.js';
 import { scSpecials } from './specials.js';
 import { createState, evolveGame, type ScEvent, type ScState } from './state.js';
-import { reveal, views, viewSchemas } from './views.js';
+import { codeDistance, reveal, views, viewSchemas } from './views.js';
 
 // One code: each position a uniform digit in use, repeats allowed (02b §3).
 const drawCode = (rng: Drbg, config: ScConfig): string =>
@@ -60,4 +60,6 @@ export const safecracker: GameModule<
   viewSchemas,
   specials: scSpecials,
   reveal,
+  // Closest to winning (O110): most digits in place, then most in a wrong place.
+  distance: (g, _secret, state) => codeDistance(g.feedback, state.length),
 });

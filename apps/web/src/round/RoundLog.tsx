@@ -17,7 +17,7 @@
  *                 own colour, and on a phone the others' counts in a row of their own above
  *                 the list ("Others: bot-01: 8 guesses · bot-02: 5", each player has their
  *                 own secret; "timed out" beside a player out of time, O71; each name through
- *                 ./PlayerName with its Discord steps, 07 §7),
+ *                 ./PlayerName with its Discord steps, 07 §7; ./OthersLine),
  *                 which a banner never replaces (a desktop has the info column's Others panel
  *                 instead, ./RoundSide, T260); `own`, "Your guesses", the
  *                 viewer's guesses and answers only; `all`, the guesses with every event,
@@ -25,8 +25,7 @@
  *                 (./GuessLine); on a phone the newest row's comment shows under it and a tap
  *                 on a row shows or hides its own.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (rows), @smg-game/registry/web (types),
- *                 ../live/useRound, ./GuessLine, ./PlayerName, ./RoundSide (guessCount),
- *                 ./SpecialBanner, ./roundText, ./roundColumns.css, ./roundLog.css
+ *                 ../live/useRound, ./GuessLine, ./OthersLine, ./SpecialBanner, ./roundText, ./roundColumns.css, ./roundLog.css
  * Used by:        ./RoundBody
  * Spec:           docs/spec/02-game-guess-the-number.md §6.2, §6.3, §12; docs/spec/03-seasonal-specials.md §2.4;
  *                 docs/spec/07-integration.md §7
@@ -34,13 +33,12 @@
 import type { GameWeb } from '@smg-game/registry/web';
 import type { RoundStateView } from '@smg/contracts';
 import type { FeedLine, GuessRow } from '@smg/game-sdk';
-import { Fragment, useState, type ReactElement } from 'react';
+import { useState, type ReactElement } from 'react';
 
 import type { FeedItem } from '../live/useRound.js';
 import { EventLine, GuessLine } from './GuessLine.js';
-import { PlayerName } from './PlayerName.js';
+import { OthersLine } from './OthersLine.js';
 import { roundMarks } from './playerMarks.js';
-import { guessCount } from './RoundSide.js';
 import { SpecialBanner } from './SpecialBanner.js';
 import { actionCount, actionWords, platformLine } from './roundText.js';
 import './roundColumns.css';
@@ -78,6 +76,8 @@ export interface LogProps {
   // A list game's stage on a desktop: the rows in two columns, newest first down the left one,
   // then on in the right one (O109, ./roundColumns.css).
   readonly columns?: boolean;
+  // Individual mode on a phone: "+N more" of the others' line opens the Players panel.
+  readonly onOthers?: () => void;
 }
 
 // The guesses a list shows: in individual mode, and in "Your guesses", the viewer's own only.
@@ -98,44 +98,6 @@ function eventsOf(p: LogProps): Row[] {
 }
 
 const LIST_IDS = { main: 'guess-list', own: 'own-list', all: 'all-list' } as const;
-
-// Individual mode: the other players and their guess counts, the first with its unit
-// ("8 guesses", then "5"), and "timed out" for a player out of the round (O71); empty when
-// the viewer plays alone.
-function othersOf(state: RoundStateView, viewerKey: string | null) {
-  return state.roster
-    .filter((r) => r.playerKey !== viewerKey)
-    .map((r, i) => ({
-      key: r.playerKey,
-      name: state.names[r.playerKey] ?? r.playerKey,
-      count: `${i === 0 ? guessCount(r.guesses) : String(r.guesses)}${r.timedOut ? ', timed out' : ''}`,
-    }));
-}
-
-// The others' line as text, "Others: bot-01: 8 guesses · bot-02: 5" (its title); null alone.
-export function othersLine(state: RoundStateView, viewerKey: string | null): string | null {
-  const others = othersOf(state, viewerKey);
-  if (others.length === 0) return null;
-  return `Others: ${others.map((o) => `${o.name}: ${o.count}`).join(' · ')}`;
-}
-
-// The others' line: each name as everywhere else, with the player's Discord steps (07 §7).
-function OthersLine(p: { readonly state: RoundStateView; readonly viewerKey: string | null }) {
-  const title = othersLine(p.state, p.viewerKey);
-  if (title === null) return null;
-  return (
-    <p className="round-log-others" data-testid="others-line" title={title}>
-      Others:{' '}
-      {othersOf(p.state, p.viewerKey).map((o, i) => (
-        <Fragment key={o.key}>
-          {i === 0 ? null : ' · '}
-          <PlayerName name={o.name} steps={p.state.steps?.[o.key]} />
-          {`: ${o.count}`}
-        </Fragment>
-      ))}
-    </p>
-  );
-}
 
 // The others' line shows in individual mode on a phone only; a desktop's info column has
 // them as the Others panel (./RoundSide, T260).
@@ -200,7 +162,9 @@ export function RoundLog(p: LogProps): ReactElement {
       {p.kind === 'all' ? null : (
         <Head {...p} count={shown.length} all={shown.length + events.length} />
       )}
-      {showsOthers(p) ? <OthersLine state={p.state} viewerKey={p.viewerKey} /> : null}
+      {showsOthers(p) ? (
+        <OthersLine state={p.state} viewerKey={p.viewerKey} onMore={p.onOthers} />
+      ) : null}
       {rows.length === 0 ? (
         <p className="smg-muted round-log-empty">No {actionWords(p.state).many} yet.</p>
       ) : (

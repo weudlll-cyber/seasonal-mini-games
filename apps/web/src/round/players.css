@@ -86,16 +86,46 @@
   color: var(--color-text-muted);
 }
 
-/* Individual mode on a desktop (T260): the other players under the game's panel, their rows
-   scrolling inside the panel; at most 40 % of the column, so a board game's list beside it
-   keeps its room. The four columns are the list's own: marker, name, guesses, "solved". */
+/* Individual mode on a desktop (T260): the other players under the game's panel; at most 40 %
+   of the column, so a board game's list beside it keeps its room. The rows that fit whole,
+   then "+N more" (./useFit, O110): the list never scrolls and never cuts a row. The four
+   columns are the list's own: marker, name, guesses, "solved". */
 .round-others {
   flex: 0 1 auto;
   min-width: 0;
   min-height: 0;
   max-height: 40%;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   padding: 0.6rem 0.75rem;
+}
+
+.round-others > .round-player-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.round-others-more {
+  grid-column: 1 / -1;
+}
+
+/* "+N more" of the others (here and the phone's line, ./OthersLine): a link-like button
+   that opens the Players panel. */
+.round-log-more {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: var(--font-weight-strong);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* One player of the phone's others line, whole on one line. */
+.round-log-other {
+  white-space: nowrap;
 }
 
 .round-others-title {

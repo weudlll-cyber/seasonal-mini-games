@@ -86,6 +86,7 @@ export {
   type TeamLeagueRowView,
 } from './http/boards.js';
 export type {
+  ClosestRowView,
   FrameEventView,
   GameInfoView,
   InactivityView,

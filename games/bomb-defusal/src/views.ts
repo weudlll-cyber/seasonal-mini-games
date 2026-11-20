@@ -80,13 +80,18 @@ const bombOf = (state: BdState) => ({
   harmless: state.harmless,
 });
 
+// How far a sequence is from defusing (02c §9, O110): the cuts after its correct start; 0
+// defused it.
+export const cutDistance = (f: { correct: number; defused: boolean }, cuts: number): number =>
+  f.defused ? 0 : cuts - f.correct;
+
 // 02c §9: the longest correct start of anyone but the winner, the earlier on a tie; an
 // explosion (no right cut) is not a near miss, so the best being 0 gives no line.
 export function closestMiss(state: BdState): ResultView['closestMiss'] {
   const miss = closestMissBy(
     state,
     (f) => f.defused,
-    (g) => state.cuts - g.feedback.correct,
+    (g) => cutDistance(g.feedback, state.cuts),
   );
   if (miss === null || miss.distance >= state.cuts) return null;
   return { playerId: miss.playerId, value: miss.value, correct: state.cuts - miss.distance };

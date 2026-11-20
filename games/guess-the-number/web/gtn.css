@@ -9,8 +9,9 @@
  *                 hint is a highlighted line (O35); the fallen numbers of a Leaf Fall round
  *                 as plain chips in three rows, the rest behind "+N more" (O58); the range
  *                 block stays compact, so the
- *                 platform's guess list under it keeps the room (O20, O46); layouts work down
- *                 to 390 px wide.
+ *                 platform's guess list under it keeps the room (O20, O46); on the result the
+ *                 number large on a line of its own, the range under it (O110); layouts work
+ *                 down to 390 px wide.
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §2.3, §6
  */
 /* The range block and the hint at the top of the main area; the platform's list is below. */
@@ -180,7 +181,7 @@
 
 .gtn-result {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--space-1);
   align-content: start;
 }
 
@@ -200,6 +201,19 @@
 .gtn-secret {
   font-size: var(--font-size-lead);
   margin: 0;
+}
+
+/* The number large on a line of its own, the range under it (the result's reveal, O110). */
+.gtn-secret strong {
+  display: block;
+  font-size: clamp(1.75rem, 1.2rem + 1.2vw, 2.4rem);
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.gtn-result [data-testid='result-range'] {
+  margin: 0;
+  color: var(--color-text-muted);
 }
 
 .gtn-you {

@@ -8,7 +8,8 @@
  *                 like everyone else, never first for being the viewer, T145; a player out of
  *                 time "timed out", O71), the top three until "All placings (N)" shows every
  *                 one; a name cut with an ellipsis at its end only, "(you)" beside it never
- *                 cut; one team line in the first part ("Team Spring wins the round (+1 team
+ *                 cut; one team line in the first part, after the button (on its line with
+ *                 "Closest to winning", O110) ("Team Spring wins the round (+1 team
  *                 point)", "No team wins this round."); the team result below, each team's
  *                 team points named as such, so they read apart from player points. A phased
  *                 round's table has only Player and Points, its winners first, then the rest,
@@ -23,7 +24,7 @@
 import type { RoundStateView } from '@smg/contracts';
 import { compareNames, formatNumber, type PlayerMark } from '@smg/game-sdk';
 import { useHighlightRow } from '@smg/ui';
-import { useState, type ReactElement } from 'react';
+import { useState, type ReactElement, type ReactNode } from 'react';
 
 import { SeasonIcon } from '../season/SeasonIcon.js';
 import { teamName } from '../season/season.js';
@@ -157,6 +158,8 @@ export function Placings(p: {
   readonly viewerKey: string | null;
   // A game with player tags: every player's marker and tag (O62).
   readonly marks?: Readonly<Record<string, PlayerMark>> | undefined;
+  // After "All placings", on its line where the result has room (the team line, O110).
+  readonly foot?: ReactNode;
 }): ReactElement {
   const phone = useMediaQuery(NARROW);
   const [all, setAll] = useState(false);
@@ -184,19 +187,22 @@ export function Placings(p: {
           </tbody>
         </table>
       </div>
-      {rows.length <= TOP ? null : (
-        <button
-          type="button"
-          className="smg-btn round-all-placings"
-          aria-expanded={all}
-          data-testid="all-placings"
-          onClick={() => {
-            setAll((was) => !was);
-          }}
-        >
-          {all ? 'Top 3 only' : `All placings (${String(rows.length)})`}
-        </button>
-      )}
+      <div className="round-placings-foot">
+        {rows.length <= TOP ? null : (
+          <button
+            type="button"
+            className="smg-btn round-all-placings"
+            aria-expanded={all}
+            data-testid="all-placings"
+            onClick={() => {
+              setAll((was) => !was);
+            }}
+          >
+            {all ? 'Top 3 only' : `All placings (${String(rows.length)})`}
+          </button>
+        )}
+        {p.foot}
+      </div>
     </div>
   );
 }

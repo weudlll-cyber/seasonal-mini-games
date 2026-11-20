@@ -25,7 +25,7 @@ import { Field } from '../match/roundFields.js';
 import { ended } from './fakes.js';
 import { InputRow } from './InputRow.js';
 import { Placings } from './ResultParts.js';
-import { othersLine } from './RoundLog.js';
+import { othersLine } from './OthersLine.js';
 import { OthersPanel } from './RoundSide.js';
 import { endHeadline, platformLine } from './roundText.js';
 

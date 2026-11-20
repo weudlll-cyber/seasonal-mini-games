@@ -7,8 +7,9 @@
  *                 page scrollbar, padding 20 × 28 px, 16 px between the view above and the chat
  *                 (./chatDock.css) under it; the result fills exactly the height left (its own
  *                 grid shares it out, ../round/resultOwn.css); the platform's longer result with
- *                 the waiting area beside it (a list game's, O109) scrolls inside that height
- *                 instead. A phone (the round view's rule):
+ *                 the waiting area beside it (a list game's, O109) scrolls with it as one area
+ *                 inside that height instead (O110), the waiting area's headings smaller and
+ *                 its players as compact rows. A phone (the round view's rule):
  *                 the screen is two parts, the content, the only part that scrolls (the round view
  *                 or the result at their own height, nothing scrolling inside them), and the chat
  *                 bar under it, in the layout; no fixed or sticky part. A list game's running
@@ -69,6 +70,27 @@
     min-height: 0;
     overflow-y: auto;
   }
+
+  /* The column beside it scrolls with the result, never on its own (O110): no cap of its own
+     height (./match.css caps it to the screen for the chat beside a result). */
+  .match-docked .match-after:not(.match-after--docked) > .match-side {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* The waiting area beside a list game's result (O110, the owner's reference): its headings
+   smaller and its players as compact rows, so more of them show above the chat. */
+.match-docked .match-after:not(.match-after--docked) .match-waiting h2 {
+  font-size: 1.125rem;
+}
+
+.match-docked .match-after:not(.match-after--docked) .match-waiting h3 {
+  font-size: 1rem;
+}
+
+.match-docked .match-after:not(.match-after--docked) .match-players {
+  row-gap: 0.25rem;
 }
 
 /* A desktop: the reference's page padding (the shell's focus mode has 8 px). */
@@ -132,6 +154,8 @@
   .match-docked .match-live:has(> .round-live[data-layout='list']) {
     flex: 1;
     min-height: 0;
+    /* A size container again: the season card fits its height (../round/roundIntro.css). */
+    container-type: size;
   }
 
   .match-docked .round-live[data-layout='list'] .round-main {

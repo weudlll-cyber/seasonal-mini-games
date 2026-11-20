@@ -7,13 +7,15 @@
  *                 derived from the seed as soon as the roster is frozen and kept only in
  *                 memory (05 §3), every command through the pure round rules, recovery by
  *                 replaying the log or from a snapshot and the log's tail, and the result view and the
- *                 results (as RoundEnded gave them) once the round has ended. The round
+ *                 results (as RoundEnded gave them) once the round has ended, with the
+ *                 game's "Closest to winning" where it names best guesses (O110). The round
  *                 actor (queue, group commit, delivery) wraps one session.
  * Depends on:     @smg/domain (round rules), @smg/game-sdk (module, crypto entry)
  * Used by:        ../index, apps/server (round actor)
  * Spec:           docs/spec/04-software-architecture.md §5.2–§5.4; docs/spec/02-game-guess-the-number.md §10
  */
 import {
+  closestToWinning,
   createRound,
   evolveRound,
   nextDue,
@@ -27,7 +29,7 @@ import {
   type RoundState,
   type StepResult,
 } from '@smg/domain';
-import type { GameModule, Season } from '@smg/game-sdk';
+import type { BestGuess, GameModule, Season } from '@smg/game-sdk';
 import { commitSeed, roundRng, SEED_BYTES } from '@smg/game-sdk/crypto';
 
 import type { RoundSettings } from './roundSettings.js';
@@ -125,6 +127,16 @@ export class RoundSession<S, A, E, Cfg, Sec> {
     if (s.status !== 'ended' || s.endedAt === null) return null;
     const { results, teams } = roundResults(s, this.module, s.endedAt);
     return { results, teams };
+  }
+
+  // "Closest to winning" once the round has ended (O110): the game's best guesses in the
+  // platform's order; null before the end and for a game that names none.
+  closest(): BestGuess[] | null {
+    const ended = this.results();
+    const { game } = this.current;
+    const hook = this.module.closest;
+    if (ended === null || game === null || hook === undefined || this.secrets === null) return null;
+    return closestToWinning(hook(game, this.secrets), ended.results);
   }
 
   // When the round next has to run without any player action (open, special, timeout, end).

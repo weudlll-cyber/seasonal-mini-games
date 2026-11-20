@@ -13,14 +13,18 @@
  *                 one ("took part" in shared mode, "not solved" in individual mode; the viewer
  *                 by place like everyone, their line highlighted, "(you)" never cut), and one
  *                 team line ("Team Spring wins the round (+1 team point)"). Below it, where the
- *                 page may scroll: every player's guesses in full (the game's history, T150),
+ *                 page may scroll: "Closest to winning" for a game that names best guesses,
+ *                 every guess behind its "All guesses" (./ClosestToWinning, O110; the
+ *                 first part then compact, ./resultClosest.css), else every player's guesses
+ *                 in full (the game's history, T150),
  *                 the team result and the match standings (O54). The proof: the
  *                 commitment published at creation, the seed revealed now, and the link to the
  *                 round's verification page (02 §9, §10; 03 §5).
  * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber),
  *                 @smg-game/registry/web (types), ../season/*, ../shell/router,
- *                 ./MatchStandings, ./ResultParts, ./RoundSide, ./RoundStandings, ./roundText,
- *                 ./result.css, ./resultBoard.css, ./resultOwn.css
+ *                 ./ClosestToWinning, ./MatchStandings, ./ResultParts, ./RoundSide,
+ *                 ./RoundStandings, ./roundText, ./result.css, ./resultBoard.css,
+ *                 ./resultOwn.css, ./resultClosest.css
  *                 A game that draws its own first part (`ownResult`, O97, T352) gets its
  *                 reveal (a headline row, the winners, the cards) with every line behind a
  *                 disclosure at the right, the match standings (./RoundStandings) under it and
@@ -36,12 +40,14 @@ import { hrefOf } from '../shell/router.js';
 import { MatchStandings } from './MatchStandings.js';
 import { roundMarks } from './playerMarks.js';
 import { Placings, TeamLine, Teams } from './ResultParts.js';
+import { ClosestToWinning } from './ClosestToWinning.js';
 import { colorsOf } from './RoundSide.js';
 import { RoundStandings } from './RoundStandings.js';
 import { endHeadline, marginText } from './roundText.js';
 import './result.css';
 import './resultBoard.css';
 import './resultOwn.css';
+import './resultClosest.css';
 
 function Proof({ state }: { readonly state: RoundStateView }): ReactElement | null {
   if (state.commitment === null) return null;
@@ -129,32 +135,68 @@ function OwnResult(p: ResultProps & { readonly game: GameWeb }): ReactElement {
   );
 }
 
+// The headline, the margin or, without one, the game's closest miss or guess (O22), and the
+// fairness proof's disclosure.
+function ResultHead(p: {
+  readonly state: RoundStateView;
+  readonly game: GameWeb | null;
+}): ReactElement {
+  const { state } = p;
+  const margin = marginText(state);
+  const miss =
+    margin === null
+      ? (p.game?.text.runnerUp(state.game, state.names, state.winner !== null) ?? null)
+      : null;
+  return (
+    <header className="round-result-head">
+      <h1>{endHeadline(state)}</h1>
+      {margin === null ? null : <p data-testid="margin">{margin}</p>}
+      {miss === null ? null : <p data-testid="closest-miss">{miss}</p>}
+      <Proof state={state} />
+    </header>
+  );
+}
+
+// Under the first part: "Closest to winning" for a game that names best guesses (O110), with
+// every guess behind "All guesses"; else every guess in full (T150).
+function Guesses(p: {
+  readonly state: RoundStateView;
+  readonly closest: GameWeb | null;
+  readonly history: ReactElement;
+}): ReactElement {
+  if (p.closest !== null) {
+    return <ClosestToWinning state={p.state} game={p.closest} history={p.history} />;
+  }
+  return (
+    <section
+      className="smg-panel round-result-history"
+      aria-label="Every guess"
+      data-testid="result-history"
+    >
+      {p.history}
+    </section>
+  );
+}
+
 export function ResultScreen(props: ResultProps): ReactElement {
   const { state, game, viewerKey, standings } = props;
   if (game?.ownResult === true) return <OwnResult {...props} game={game} />;
-  const margin = marginText(state);
-  // Without a margin, the game's line about the closest miss or guess stands in its place (O22).
-  const miss =
-    margin === null
-      ? (game?.text.runnerUp(state.game, state.names, state.winner !== null) ?? null)
-      : null;
   const part = (which: 'reveal' | 'history') => (
     <GamePart state={state} game={game} viewerKey={viewerKey} part={which} />
   );
+  // The game names best guesses (O110): "Closest to winning" stands for the full history.
+  const closest = game?.text.best !== undefined && state.closest !== undefined ? game : null;
   return (
     <section
       className="round-result"
       data-testid="result"
       // A board game's grid gets the free height of the first part (./resultBoard.css).
       data-layout={game?.layout ?? 'list'}
+      // A game with "Closest to winning" has the compact first part (./resultClosest.css).
+      data-closest={closest !== null || undefined}
     >
       <div className="smg-panel round-result-first" data-testid="result-first">
-        <header className="round-result-head">
-          <h1>{endHeadline(state)}</h1>
-          {margin === null ? null : <p data-testid="margin">{margin}</p>}
-          {miss === null ? null : <p data-testid="closest-miss">{miss}</p>}
-          <Proof state={state} />
-        </header>
+        <ResultHead state={state} game={game} />
         {/* The game's reveal (the secret, a board game's grid): the part that grows. */}
         <div className="round-result-game">{part('reveal')}</div>
         <div className="round-result-places">
@@ -162,17 +204,11 @@ export function ResultScreen(props: ResultProps): ReactElement {
             state={state}
             viewerKey={viewerKey}
             marks={roundMarks(state, game, viewerKey)}
+            foot={<TeamLine state={state} />}
           />
-          <TeamLine state={state} />
         </div>
       </div>
-      <section
-        className="smg-panel round-result-history"
-        aria-label="Every guess"
-        data-testid="result-history"
-      >
-        {part('history')}
-      </section>
+      <Guesses state={state} closest={closest} history={part('history')} />
       <div className="smg-panel round-result-more">
         {props.next}
         <Teams state={state} />

@@ -64,15 +64,17 @@ export type SpectatorView = z.infer<typeof viewSchemas.spectator>;
 export type ResultView = z.infer<typeof viewSchemas.result>;
 export type ClosestMiss = NonNullable<ResultView['closestMiss']>;
 
+// How far a code is from the safe's, in one number (02b §8, O110): fewer digits in their
+// place first, then fewer right digits in a wrong place (near ≤ length − exact); 0 opens it.
+export const codeDistance = (f: { exact: number; near: number }, length: number): number =>
+  (length - f.exact) * (length + 1) + (length - f.exact - f.near);
+
 // The best wrong code of anyone but the winner: most exact, then most near, then earlier.
 export function closestMiss(state: ScState, secret: string): ClosestMiss | null {
-  // A rank in one number: fewer exact counts first, then fewer near (near ≤ length).
-  const rank = (f: { exact: number; near: number }) =>
-    (state.length - f.exact) * (state.length + 1) + (state.length - f.near);
   const miss = closestMissBy(
     state,
     (f) => f.solved,
-    (g) => rank(g.feedback),
+    (g) => codeDistance(g.feedback, state.length),
   );
   if (miss === null) return null;
   const { exact, near } = feedbackFor(miss.value, secret);

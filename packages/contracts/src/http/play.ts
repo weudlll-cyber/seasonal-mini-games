@@ -141,6 +141,12 @@ export interface PlayerResultView {
   readonly timedOut: boolean;
 }
 
+export interface ClosestRowView {
+  readonly playerId: string;
+  readonly index: number;
+  readonly distance: number;
+}
+
 export interface RoundStateView {
   readonly roundId: string;
   readonly status: 'created' | 'countdown' | 'open' | 'ended' | 'aborted';
@@ -171,6 +177,10 @@ export interface RoundStateView {
   // The game's own view for this viewer; only its screens read it.
   readonly game: unknown;
   readonly results?: readonly PlayerResultView[];
+  // "Closest to winning" (O110), in the result only, for a game that names best guesses: at
+  // most ten players in order, each with the place of their best guess among their guesses
+  // in the game's result view and its distance in the game's measure (0: it solved).
+  readonly closest?: readonly ClosestRowView[];
   readonly teams?: readonly {
     readonly team: TeamName;
     readonly members: number;

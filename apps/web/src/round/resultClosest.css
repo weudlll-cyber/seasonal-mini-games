@@ -1,0 +1,58 @@
+/**
+ * @file   apps/web/src/round/resultClosest.css
+ * @module web/round
+ * @brief  The compact first part of a result with "Closest to winning" (the list games, O110).
+ *
+ * Responsibility: the placings' foot: "All placings (N)" and the team line on one line where
+ *                 the result has "Closest to winning", else (Seasonal Target) the two stay rows
+ *                 of the placings as before. The first part closer (the owner's reference
+ *                 docs/design/list-games-result-screens.html): smaller gaps and padding, and on
+ *                 a desktop the reveal in a narrow column beside the placings instead of a wide
+ *                 one, so the first part and "Closest to winning" show whole above the docked
+ *                 chat at 1440 × 900; on a phone one column with the fairness proof's
+ *                 disclosure under the result's foot. Colours only from @smg/ui tokens.
+ * Spec:           docs/spec/02-game-guess-the-number.md §9, §12
+ */
+.round-placings-foot {
+  display: contents;
+}
+
+.round-result[data-closest] .round-placings {
+  justify-items: stretch;
+}
+
+.round-result[data-closest] .round-placings-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.round-result[data-closest] .round-result-first {
+  gap: var(--space-1);
+  padding: 0.875rem 1.125rem;
+}
+
+/* A phone: one column, the fairness proof's disclosure under the result's foot (the head's
+   parts become the column's own, so the disclosure can go last). */
+@media (max-width: 899px) {
+  .round-result[data-closest] .round-result-first {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .round-result[data-closest] .round-result-head {
+    display: contents;
+  }
+
+  .round-result[data-closest] .round-proof {
+    order: 1;
+  }
+}
+
+@media (min-width: 900px) {
+  .round-result[data-closest] .round-result-first {
+    column-gap: var(--space-3);
+    grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr);
+  }
+}

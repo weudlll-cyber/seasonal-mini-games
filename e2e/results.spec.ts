@@ -8,7 +8,11 @@
  *                 instead of the app header, at 1280 × 720 and 390 × 844, and its first part
  *                 (headline of at most two lines, the game's result, the top three placings,
  *                 the team line) ends inside the screen; the standings follow below it, where
- *                 the page may scroll (T145, O54). The matches are aborted.
+ *                 the page may scroll (T145, O54). The list games (O110): the first part ends
+ *                 above the docked chat, "Closest to winning" follows it with "All guesses",
+ *                 which opens every guess; on a desktop the result and the column beside it
+ *                 are one scroll area, the column has none of its own and the page never
+ *                 scrolls. The matches are aborted.
  * Depends on:     @playwright/test, ./guessGames, ./play, ./screens
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 28); docs/spec/02-game-guess-the-number.md §9
  */
@@ -36,6 +40,33 @@ async function firstPartFits(page: Page): Promise<void> {
   expect(Math.round(fit.lines), 'the headline').toBeLessThanOrEqual(2);
 }
 
+// A list game's result with the chat docked (O110): the first part above the chat on a
+// desktop, one scroll area, "Closest to winning" and its "All guesses".
+async function closestDocked(page: Page, desktop: boolean): Promise<void> {
+  const m = await page.evaluate(() => {
+    const box = (s: string) => document.querySelector(s)?.getBoundingClientRect() ?? null;
+    const side = document.querySelector('.match-after > .match-side');
+    return {
+      first: box('[data-testid="result-first"]')?.bottom ?? 0,
+      chat: box('[data-testid="chat-dock"]')?.top ?? 0,
+      page: (document.scrollingElement?.scrollHeight ?? 0) - window.innerHeight,
+      side: side === null ? null : getComputedStyle(side).overflowY,
+    };
+  });
+  expect(m.page, 'the page itself never scrolls').toBeLessThanOrEqual(0);
+  if (desktop) {
+    expect(m.first, 'the first part above the chat').toBeLessThanOrEqual(m.chat + 1);
+    expect(m.side, 'no scroll of its own beside the result').toBe('visible');
+  }
+  const closest = page.getByTestId('result-closest');
+  await closest.scrollIntoViewIfNeeded();
+  await expect(closest.getByRole('heading', { name: 'Closest to winning' })).toBeVisible();
+  await expect(page.getByTestId('result-history')).toHaveCount(0);
+  await closest.getByTestId('all-guesses').click();
+  await expect(page.getByTestId('result-history')).toBeVisible();
+  await closest.getByTestId('all-guesses').click();
+}
+
 for (const gameId of ['guess-the-number', 'safecracker', 'bomb-defusal', 'seasonal-target']) {
   test(`journey 28 (${gameId}): the result's first part fits one screen`, async ({ browser }) => {
     test.setTimeout(90_000);
@@ -44,14 +75,19 @@ for (const gameId of ['guess-the-number', 'safecracker', 'bomb-defusal', 'season
     try {
       code = (await direct(p, { gameId, season: 'summer', cooldownS: 30 })).matchCode;
       await roundOpen(p.page);
+      const list = gameId !== 'seasonal-target';
+      // The bot's first guess, so "Closest to winning" has a row and "All guesses" a count.
+      if (list) await expect(p.page.getByTestId('guess-list').locator('li').first()).toBeVisible();
       await hostMenu(p);
       await p.page.getByTestId('host-console').getByTestId('end-round').click();
       await expect(p.page.getByTestId('result')).toBeVisible({ timeout: 15_000 });
       await firstPartFits(p.page);
+      if (list) await closestDocked(p.page, true);
       await p.page.setViewportSize(PHONE);
       await p.page.reload();
       await expect(p.page.getByTestId('result')).toBeVisible({ timeout: 15_000 });
       await firstPartFits(p.page);
+      if (list) await closestDocked(p.page, false);
     } finally {
       if (code !== '') await abortMatch(p, code);
       await closeAll([p]);

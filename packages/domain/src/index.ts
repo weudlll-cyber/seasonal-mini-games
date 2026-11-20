@@ -4,8 +4,8 @@
  * @brief  Public entry point of @smg/domain: the platform's pure rules.
  *
  * Responsibility: the audit hash chain, the round rules (lifecycle, receive order,
- *                 cooldown, inactivity, placings, points, standings, seasonal specials and
- *                 teams) and the season board's period (04 §3).
+ *                 cooldown, inactivity, placings, points, standings, "Closest to winning",
+ *                 seasonal specials and teams) and the season board's period (04 §3).
  * Depends on:     ./audit/hashChain, ./league/periods, ./round/*
  * Used by:        packages/application, apps/server
  * Spec:           docs/spec/04-software-architecture.md §3, §5
@@ -24,6 +24,7 @@ export {
   roundInput,
   rosterPlayers,
 } from './round/evolve.js';
+export { CLOSEST_ROWS, closestToWinning } from './round/closest.js';
 export { createRound, nextDue, roundResults, type NewRound } from './round/lifecycle.js';
 export {
   INACTIVITY_GRACE_MS,

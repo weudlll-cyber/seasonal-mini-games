@@ -10,7 +10,8 @@
  *                 hands the game only its own view, a way to act, and the clock. The game
  *                 turns its view into the list's guess rows (`GuessRow`, O20) and words its
  *                 event rows (`FeedLine`); the client draws both, in one list. On the result
- *                 page the game words the line about the best of the rest (`runnerUp`, O22).
+ *                 page the game words the line about the best of the rest (`runnerUp`, O22) and the rows
+ *                 of "Closest to winning" the server ordered (`best`, O110).
  *                 A game whose guesses are not numbers gives them and their answers in words
  *                 (`text`, `answer`) or as colour dots (`swatches`, T143), and words its own special
  *                 (`specialRule`, T119). A phased game's panels also get the round's timing and
@@ -174,6 +175,23 @@ export interface GuessRow {
   readonly pending: boolean;
 }
 
+// One row of the result's "Closest to winning" (O110): the player, the place of their best
+// guess among their guesses in the result view, and its distance (0: it solved), as the
+// server ordered them.
+export interface BestRow {
+  readonly playerId: string;
+  readonly index: number;
+  readonly distance: number;
+}
+
+// That row in the game's words: the guess as the round's list draws it (the number, its text
+// or its colour dots), and how close it came ("off by 13", "3 right · 1 wrong place"; a solve in
+// the game's own word, "found it").
+export interface BestLine {
+  readonly guess: Pick<GuessRow, 'value' | 'text' | 'swatches'>;
+  readonly words: string;
+}
+
 // The closest-miss line's start (O22, T145): with a winner the best of the rest, on a time-up
 // result the closest guess of the round.
 export const closestLabel = (won: boolean): string =>
@@ -204,6 +222,9 @@ export interface GameText {
   // that is not in the code falls out."), for the intro screen and the top bar's note; null,
   // or no hook, keeps the platform's sentence (T119).
   readonly specialRule?: (season: Season) => string | null;
+  // A row of the result's "Closest to winning" (O110) from the result view, for a game whose
+  // module names best guesses; null, or no hook, leaves the row out.
+  readonly best?: (resultView: unknown, row: BestRow) => BestLine | null;
 }
 
 // A phased game's panel in the waiting area (04 §4.8 rule 8; Mind Games' pre-picks): the

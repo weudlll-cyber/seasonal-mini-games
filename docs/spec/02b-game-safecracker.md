@@ -115,7 +115,9 @@ None. Safecracker implements no `halving` hook and sets `halvingAllowed` off, so
 
 ## 8. Winning, closest miss and the result page
 
-Winning, placings, end conditions, points and the winning margin are [02](02-game-guess-the-number.md) §8 and §9. The reveal shows the code (shared) or every player's code (individual), and the result's secret line reads "Code: 1123 (4 digits, 0–9)" (DECISIONS T150).
+Winning, placings, end conditions, points and the winning margin are [02](02-game-guess-the-number.md) §8 and §9. The reveal shows the code (shared) or every player's code (individual), and the result's secret line reads "Code: 1123 (4 digits, 0–9)" (DECISIONS T150), the code large on a line of its own and its digits under it (owner decision O110).
+
+**Closest to winning** ([02](02-game-guess-the-number.md) §9, owner decision O110): each player's best code, by the most digits in their place, then the most right digits in a wrong place, equal ones by the earlier code; a row reads the code and its counts as the round's list words them ("1243 · 2 right · 2 wrong places"), an opened safe "cracked it". Every code stays behind "All guesses (N)".
 
 **Closest miss**, shared mode with a winner and no second correct guess inside the margin window (owner, decision 22):
 

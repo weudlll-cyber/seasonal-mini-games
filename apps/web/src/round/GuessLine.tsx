@@ -30,7 +30,7 @@
  * Depends on:     react, @smg/contracts, @smg/game-sdk (rows, formatNumber, marks), @smg/ui
  *                 (PlayerMark, highlight), ../season/SeasonIcon, ./RoundSide (colours),
  *                 ./PlayerSteps, ./roundMarks.css
- * Used by:        ./RoundLog
+ * Used by:        ./RoundLog, ./ClosestToWinning (`GuessValue`)
  * Spec:           docs/spec/02-game-guess-the-number.md §6.2, §6.3, §12; docs/spec/03-seasonal-specials.md §2.4
  */
 import type { RoundStateView } from '@smg/contracts';
@@ -130,8 +130,13 @@ function Answer({ guess, state, now }: Pick<RowProps, 'guess' | 'state' | 'now'>
   );
 }
 
-// The guess: its colour dots, a game's own text, the number, or "guessed" where it is hidden.
-function Value({ guess }: { readonly guess: GuessRow }): ReactElement {
+// The guess: its colour dots, a game's own text, the number, or "guessed" where it is hidden;
+// also a row of the result's "Closest to winning" (./ClosestToWinning, O110).
+export function GuessValue({
+  guess,
+}: {
+  readonly guess: Pick<GuessRow, 'value' | 'text' | 'swatches'>;
+}): ReactElement {
   const swatches = guess.swatches ?? null;
   if (swatches !== null && swatches.length > 0) return <Swatches swatches={swatches} />;
   const text = guess.text ?? (guess.value === null ? 'guessed' : formatNumber(guess.value));
@@ -187,7 +192,7 @@ export function GuessLine(p: RowProps): ReactElement {
   const parts: ReactNode = (
     <>
       <Who {...p} />
-      <Value guess={guess} />
+      <GuessValue guess={guess} />
       <Answer guess={guess} state={state} now={p.now} />
       {state.plan === undefined ? null : <Age at={guess.at} now={p.now} />}
     </>
