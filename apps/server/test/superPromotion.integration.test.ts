@@ -6,19 +6,23 @@
  * Responsibility: promotion by website user id ends the member's sessions and survives the role
  *                 mapping recomputed at the next sign-in and a `rights` change; a second run says
  *                 "already"; an unknown id or name, a name two members share and a suspended
- *                 account are refused. The CLI itself (run with tsx): create-super refuses in
- *                 website mode before asking for a password, promote-super --name promotes, and
- *                 promote-super refuses in local mode.
- * Depends on:     vitest, node:child_process, ../src/auth/superPromotion, ./harness, ./websiteHelpers
+ *                 account are refused. The CLI itself: as a process (run with tsx, once, as it
+ *                 costs seconds to start) create-super refuses in website mode before asking for
+ *                 a password; in this process (its commands, ../src/cliCommands) promote-super
+ *                 --name promotes and promote-super refuses in local mode.
+ * Depends on:     vitest, node:child_process, ../src/auth/superPromotion, ../src/cliCommands,
+ *                 ../src/config/env, ./harness, ./websiteHelpers
  * Spec:           docs/spec/07-integration.md §7; Bingo 09 §4, §5
  */
 import { execFile } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { applyAccountChange } from '../src/integration/accountChanges.js';
 import { promoteWebsiteSuper } from '../src/auth/superPromotion.js';
+import { runCommand } from '../src/cliCommands.js';
+import { loadEnv } from '../src/config/env.js';
 import { startHarness, stopHarness, SUITE_TIMEOUT_MS, type Harness } from './harness.js';
 import { ORIGIN, sessionOf, signedIn, WEBSITE, type Member } from './websiteHelpers.js';
 
@@ -70,6 +74,24 @@ describe('promote-super (T243)', () => {
   });
 });
 
+// A CLI command in this process, with the environment the process would get; its exit code
+// and what it printed (a CLI process under tsx takes seconds to start, so only one test
+// starts one).
+async function command(args: readonly string[], env: Record<string, string>) {
+  const out: string[] = [];
+  const err: string[] = [];
+  const log = vi.spyOn(console, 'log').mockImplementation((line: string) => out.push(line));
+  const error = vi.spyOn(console, 'error').mockImplementation((line: string) => err.push(line));
+  try {
+    const source = { ...process.env, DATABASE_URL: harness.container.getConnectionUri(), ...env };
+    const code = await runCommand(args[0] ?? '', args.slice(1), () => loadEnv(source));
+    return { code, out: out.join(' '), err: err.join(' ') };
+  } finally {
+    log.mockRestore();
+    error.mockRestore();
+  }
+}
+
 // The CLI as `smg admin …` runs it, with tsx instead of the bundle.
 function cli(args: readonly string[], env: Record<string, string>) {
   const cwd = fileURLToPath(new URL('..', import.meta.url));
@@ -96,10 +118,12 @@ describe('the CLI on a website install (T243)', () => {
 
   it('promote-super --name promotes; local mode refuses promote-super', async () => {
     await signedIn(harness.built, { id: '73', name: 'Olive' });
-    const r = await cli(['promote-super', '--name', 'Olive'], WEBSITE);
+    const r = await command(['promote-super', '--name', 'Olive'], WEBSITE);
     expect(r).toMatchObject({ code: 0 });
     expect(r.out).toMatch(/Olive \(website user id 73\) is now super admin/);
-    const local = await cli(['promote-super', '--website-id', '73'], { SMG_AUTH_MODE: 'local' });
+    const local = await command(['promote-super', '--website-id', '73'], {
+      SMG_AUTH_MODE: 'local',
+    });
     expect(local.code).toBe(1);
     expect(local.err).toMatch(/standalone install uses create-super/);
   });

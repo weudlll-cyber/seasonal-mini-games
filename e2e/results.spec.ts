@@ -83,12 +83,19 @@ async function closestInView(page: Page): Promise<void> {
   for (const size of FIT_SIZES) {
     await page.setViewportSize(size);
     await page.reload();
+    // What the check reads: the docked layout (it follows the game list, which loads after the
+    // page) and the result's fitted scale; before them the result can stand in no scroll box.
+    await expect(page.getByTestId('chat-dock')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('result')).toHaveAttribute('data-fit-scale', /\d/);
     await expect(page.getByTestId('result-closest').locator('li').first()).toBeVisible();
     const m = await page.getByTestId('result').evaluate((res) => {
-      // The result's scroll box: the nearest ancestor that scrolls or clips.
-      let box = res.parentElement as HTMLElement;
-      while (!/(auto|scroll|hidden)/.test(getComputedStyle(box).overflowY))
-        box = box.parentElement as HTMLElement;
+      // The result's scroll box: the nearest ancestor that scrolls or clips, at most the root.
+      let box = res.parentElement ?? document.documentElement;
+      while (
+        box !== document.documentElement &&
+        !/(auto|scroll|hidden)/.test(getComputedStyle(box).overflowY)
+      )
+        box = box.parentElement ?? document.documentElement;
       const closest = res.querySelector('[data-testid="result-closest"]') as HTMLElement;
       return {
         scale: Number((res as HTMLElement).dataset['fitScale']),
@@ -115,7 +122,11 @@ for (const gameId of ['guess-the-number', 'safecracker', 'bomb-defusal', 'season
       const list = gameId !== 'seasonal-target';
       // A list game with twelve bots: their first guesses fill "Closest to winning" (ten rows).
       const bots = list ? 12 : 1;
-      code = (await direct(p, { gameId, season: 'summer', cooldownS: 30, bots })).matchCode;
+      // Bomb Defusal's default 6 wires and 4 cuts are 360 sequences: one of twelve first
+      // guesses hits now and then and ends the round before it is seen open; 8 and 6 are 20 160.
+      const settings = gameId === 'bomb-defusal' ? { 'bomb.wires': 8, 'bomb.cuts': 6 } : {};
+      code = (await direct(p, { gameId, season: 'summer', cooldownS: 30, bots, settings }))
+        .matchCode;
       await roundOpen(p.page);
       if (list) {
         const rows = p.page.getByTestId('guess-list').locator('li');
