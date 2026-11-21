@@ -9,6 +9,7 @@
  *                 each click chooses that card's season, whatever flies in the band; once
  *                 choices close, a click in a card's middle chooses nothing. At most 4 choices
  *                 a second per account (`rate.guessPerAccountPerS`), so the clicks are paced.
+ *                 The page reloads after the switch to the phone size (WebKit keeps the old scale).
  * Depends on:     @playwright/test, ./mindGames, ./play, ./screens
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 45); docs/spec/02e-game-mind-games.md §11
  */
@@ -55,13 +56,18 @@ test('journey 45: a click anywhere in a Mind Games card chooses its season', asy
   const p = await person(browser, 'host', DESKTOP);
   let code = '';
   try {
-    code = await mindQuickTest(p, { fields: { 'Total length': '40', All: 'on' }, bots: 3 });
+    code = await mindQuickTest(p, { fields: { 'Total length': '60', All: 'on' }, bots: 3 });
     await startRound(p);
     await roundOpen(p.page);
     await everyCard(p.page, '1280 × 800');
+    // A reload after the resize, as the other phone checks do: WebKit's phone emulation keeps
+    // the desktop's scale after the switch, so no card is where the page says it is.
     await p.page.setViewportSize(PHONE);
+    await p.page.reload();
+    await roundOpen(p.page);
     await everyCard(p.page, '390 × 844');
-    // Choices close at 30 s (total 40 − delay 10): then a card chooses nothing.
+    // Choices close at 50 s (total 60 − delay 10, room for the reload): then a card
+    // chooses nothing.
     await expect(radio(p.page, 'spring')).toBeDisabled({ timeout: 40_000 });
     for (const c of ['spring', 'summer', 'autumn', 'winter'] as const)
       await clickIn(p.page, c, 'middle');
