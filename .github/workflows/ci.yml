@@ -111,8 +111,8 @@ jobs:
       - name: Playwright browser (Chromium)
         run: pnpm exec playwright install --with-deps chromium
       # The run's own stack: the test server starts PostgreSQL (ops/compose.dev.yml) and its
-      # fresh database smg_test, then listens on 3940; the client on 5440, the admin app on
-      # 5441 (e2e/playwright.config.ts, docs/spec/09-testing-strategy.md §1.1). Chromium's own
+      # fresh database smg_test, then listens on 3740; the client on 5740, the admin app on
+      # 5741 (e2e/playwright.config.ts, docs/spec/09-testing-strategy.md §1.1). Chromium's own
       # specs, then its timing specs one at a time after them (the timing project waits for
       # all three browsers otherwise, so it runs without its deps).
       - run: pnpm e2e --project=chromium

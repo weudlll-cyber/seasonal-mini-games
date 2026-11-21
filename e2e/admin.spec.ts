@@ -4,7 +4,7 @@
  * @brief  Journey 15: the admin changes a special's default, sees the diff, rolls it back, and
  *         aborts a running Quick Test round from Live; the player sees the staff abort.
  *
- * Responsibility: the admin signs in to the admin app (development sign-in, the run's admin app on 5441);
+ * Responsibility: the admin signs in to the admin app (development sign-in, the run's admin app on 5741);
  *                 changes Leaf Fall's default in the game's settings document; finds the new
  *                 version in the history with its diff; rolls back to the version before
  *                 through the confirm dialog (a new version, the diff the other way round);
