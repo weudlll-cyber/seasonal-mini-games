@@ -186,7 +186,7 @@ The rules of [02](02-game-guess-the-number.md) §12 apply: focus mode with the r
 - **Animation** (owner, decision 90): switches and first choices fly between the seasons as the feed shows them (§11.1).
 - **Pre-picks panel** (the waiting area, the next round's box under the result and, during a round, the round bar's Pre-picks panel, §7, §9, O117; the design reference's screens 2A and 4a): "Your pre-picks" (15 px bold) with "play for you while you are away" beside it (13 px muted; its tooltip the whole sentence "Pre-picks play for you when you are away. If you are here, you can still switch.");
   - one row per round still to play, its label at the left and a select at the right ("none, Spring, Summer, Autumn, Winter, All", 170 px, at least 44 px high), on a phone two to a row with the label above;
-  - "Hide my switches" at the foot. After the last round there is no panel (O97).
+  - "Hide my switches" at the foot, except in the round bar's panel: during a round the box is under the cards, once (owner decision O122). After the last round there is no panel (O97).
 - **Result and pause** (O97, O99): §9;
   - at 1280 × 720, 1440 × 900, 1900 × 860 and 1920 × 1080 nothing scrolls but the standings' own panel, and the headline, the winners, the cards, the next round's countdown and its first pre-pick show with at least three standings rows;
   - a window under 760 px high shows the headline, the cards' icon and count at 28 px, the winners in two rows of chips, the chat at 150 px, and 12 px of page padding and tighter standings rows (O101);

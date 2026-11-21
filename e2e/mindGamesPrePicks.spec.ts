@@ -7,7 +7,8 @@
  *                 second player sets pre-picks for rounds 1–3 in the waiting area's panel (All
  *                 for round 2, where All is off) and closes their browser; their first choice
  *                 appears in the feed one delay after each opening with their name and no mark;
- *                 during round 1 the host's round bar opens Pre-picks for rounds 2 and 3 only (O117);
+ *                 during round 1 the host's round bar opens Pre-picks for rounds 2 and 3 only (O117),
+ *                 without the box (O122);
  *                 round 2 gives them no choice, and after reconnecting they read "Your pre-pick All
  *                 was not offered in round 2."; their points count in the standings; the host's
  *                 match details never hold them.
@@ -34,13 +35,16 @@ const settings = {
 const prefs = (p: Person, code: string, picks: Readonly<Record<string, string>>) =>
   call(p, 'PUT', `/matches/${code}/prefs`, { prefs: { picks } });
 
-// During round 1 the round bar's Pre-picks panel offers only the later rounds (O117).
+// During round 1 the round bar's Pre-picks panel offers only the later rounds (O117), without
+// the box (O122).
 async function laterRoundsOnly(page: Page): Promise<void> {
   await page.getByTestId('focus-prefs').click();
   const panel = page.getByTestId('prefs-drawer');
   await expect(panel.getByText('Round 2', { exact: true })).toBeVisible();
   await expect(panel.getByText('Round 3', { exact: true })).toBeVisible();
   await expect(panel.getByText('Round 1', { exact: true })).toHaveCount(0);
+  // The box is under the cards during a round, not in this panel (O122).
+  await expect(panel.getByLabel('Hide my switches')).toHaveCount(0);
   await page.keyboard.press('Escape');
 }
 

@@ -11,7 +11,8 @@
  *                 along); a refusal in words; the saved value shown again from `prefs`; a newer
  *                 saved value (the round's box or its Pre-picks panel saved it, O117) replaces
  *                 the draft unless a save of its own waits; a value with the account's box only
- *                 (a new match, O116) reads as no picks with the box set.
+ *                 (a new match, O116) reads as no picks with the box set; opened in a round
+ *                 the panel has no box (O122).
  * Depends on:     vitest, @testing-library/react, @smg-game/mind-games (module), ./PrefsPanel
  * Spec:           docs/spec/02e-game-mind-games.md §7, §11; docs/spec/09-testing-strategy.md §3 (MG6)
  */
@@ -102,6 +103,12 @@ describe('Mind Games pre-picks, one value for the round and its panels (O116, O1
       await Promise.resolve();
     });
     expect(save.mock.calls).toEqual([[{ picks: { '2': 'spring', '3': 'all' } }]]);
+  });
+
+  it('leaves the box out when opened in a round, whose box is under the cards (O122)', () => {
+    render(<PrefsPanel prefs={null} rounds={3} played={1} save={ok()} inRound />);
+    expect(selects()).toHaveLength(2);
+    expect(screen.queryByLabelText('Hide my switches')).toBeNull();
   });
 
   it('reads the account’s box alone as no picks with the box set (O116)', () => {

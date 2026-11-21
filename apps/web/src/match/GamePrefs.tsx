@@ -9,7 +9,8 @@
  *                 saves goes to `PUT …/prefs`, and the server's answer (a refusal's code) back to
  *                 the panel. Nothing for spectators or a game without the panel. During a round
  *                 the same panel opens from the round bar (`RoundPrefs`, O117): only the rounds
- *                 after the running one, saved as the round's own part saves. For the running
+ *                 after the running one, saved as the round's own part saves, marked `inRound` (the game
+ *                 leaves out what the round shows itself, O122). For the running
  *                 round, the viewer's own part of the match (`useOwnPart`: the round's number,
  *                 the value and its saving, a pre-pick refused at the opening, T327).
  * Depends on:     react, @smg/contracts, @smg/game-sdk (types), @smg-game/registry/web,
@@ -94,6 +95,7 @@ export function RoundPrefs(p: {
       rounds={p.match.series?.rounds ?? null}
       played={p.own.roundIndex}
       save={p.own.save}
+      inRound
     />
   );
 }

@@ -9,7 +9,8 @@
  *                 `PUT …/prefs`, and a refusal's code comes back to it; a spectator and a game
  *                 without the panel get nothing. In a round the same panel (`roundPrefsOf`,
  *                 O117) counts the running round as played, so it lists only the later rounds,
- *                 and saves as the round's own part does; the series' last round has none.
+ *                 is marked as opened in the round (O122), and saves as the round's own part
+ *                 does; the series' last round has none.
  * Depends on:     vitest, @testing-library/react, ./GamePrefs (also `useOwnPart`, T327)
  * Spec:           docs/spec/04-software-architecture.md §4.8 rule 8; docs/spec/06-data-model-api-realtime.md §3.1
  */
@@ -41,7 +42,7 @@ function StubPanel(p: PrefsPanelProps) {
   const [answer, setAnswer] = useState('');
   return (
     <div data-testid="stub-prefs">
-      {JSON.stringify({ prefs: p.prefs, rounds: p.rounds, played: p.played })}
+      {JSON.stringify({ prefs: p.prefs, rounds: p.rounds, played: p.played, inRound: p.inRound })}
       <button
         type="button"
         onClick={() => {
@@ -165,7 +166,7 @@ describe('the pre-pick panel during a round (O117)', () => {
     );
     render(<>{panel}</>);
     expect(screen.getByTestId('stub-prefs').textContent).toContain(
-      '{"prefs":{"picks":{"3":"c"}},"rounds":4,"played":2}',
+      '{"prefs":{"picks":{"3":"c"}},"rounds":4,"played":2,"inRound":true}',
     );
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByText('saved')).toBeTruthy();
