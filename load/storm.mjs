@@ -91,22 +91,37 @@ export async function connectWorkers(workers) {
   await Promise.all(workers.map((w) => (w.worker.postMessage({ t: 'connect' }), w.next('ready'))));
 }
 
-async function untilEnded(host, roundId) {
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Every `pollMs` the round's state, until it ended (or four minutes passed).
+async function untilEnded(host, roundId, pollMs) {
   const deadline = Date.now() + 4 * 60_000;
   while (Date.now() < deadline) {
     const s = await call(host, 'GET', `/rounds/${roundId}/state`);
     if (s?.status === 'ended') return s;
-    await new Promise((r) => setTimeout(r, 1_000));
+    await wait(pollMs);
+  }
+  return null;
+}
+
+// The round's log through the fairness proof; asked again after a pause when the host's
+// requests were refused (several rounds of one host at once, L3).
+async function verified(host, roundId) {
+  for (let i = 0; i < 5; i += 1) {
+    const v = await call(host, 'GET', `/rounds/${roundId}/verify`);
+    if (v !== null) return v;
+    await wait(5_000);
   }
   return null;
 }
 
 // One round in the context's match, played to its end, with its measurements. `round` is the
 // host's settings (./scenarios ROUNDS); `burst` sends every player's first guess within 50 ms
-// of the open (L2). With `sampler: false` the caller samples the server itself, and with
-// `acks` the result keeps every acknowledgement time, to spread several rounds together (L3).
+// of the open (L2). With `sampler: false` the caller samples the server itself, with `acks`
+// the result keeps every acknowledgement time, to spread several rounds together, and
+// `pollMs` spaces the host's state requests (L3: ten rounds of one host).
 export async function playRound(ctx, name, round, opts = {}) {
-  const { burst = false, sampler = true, acks = false } = opts;
+  const { burst = false, sampler = true, acks = false, pollMs = 1_000 } = opts;
   const { host, match, workers } = ctx;
   const metrics = sampler ? metricsSampler() : null;
   await metrics?.read();
@@ -119,12 +134,12 @@ export async function playRound(ctx, name, round, opts = {}) {
   const { opensAt, frostDelayMs } = state;
   for (const w of workers)
     w.worker.postMessage({ t: 'play', roundId: created.id, opensAt, frostDelayMs, burst });
-  const ended = await untilEnded(host, created.id);
+  const ended = await untilEnded(host, created.id, pollMs);
   const server = metrics?.stop() ?? null;
   const results = await Promise.all(
     workers.map((w) => (w.worker.postMessage({ t: 'stop' }), w.next('record'))),
   );
-  const verify = await call(host, 'GET', `/rounds/${created.id}/verify`);
+  const verify = await verified(host, created.id);
   const records = results.map((r) => r.record);
   const refused = {};
   for (const r of records)

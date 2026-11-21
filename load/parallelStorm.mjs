@@ -63,7 +63,9 @@ async function main() {
     await sampler.read();
     const startedAt = Date.now();
     const played = await Promise.all(
-      games.map((g) => storm.playRound(g, g.mode, g.round, { sampler: false, acks: true })),
+      games.map((g) =>
+        storm.playRound(g, g.mode, g.round, { sampler: false, acks: true, pollMs: 5_000 }),
+      ),
     );
     const server = sampler.stop();
     const summary = {
