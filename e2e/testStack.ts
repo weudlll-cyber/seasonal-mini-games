@@ -3,10 +3,11 @@
  * @module e2e
  * @brief  Ports and database of the browser tests' own stack, apart from the developer's.
  *
- * Responsibility: one place for the ports a Playwright run uses (server 3940, player client
- *                 5440, admin app 5441, test host site 5420; journey 36's website-mode server
+ * Responsibility: one place for the ports a Playwright run uses (server 3740, player client
+ *                 5740, admin app 5741, test host site 5420; journey 36's website-mode server
  *                 3960 behind the stand-in website on 5430, as 3930 is taken by another project
- *                 on the development machine), none of them a port of `pnpm dev` (3910, 5410,
+ *                 on the development machine; the run's 37xx/57xx ports since 2026-11-21, as that
+ *                 project's stacks took 3940, T398), none of them a port of `pnpm dev` (3910, 5410,
  *                 5411), and the URL of a database of the development PostgreSQL built from its
  *                 env file: the run's own `smg_test` (recreated empty at every start by
  *                 apps/server/tools/testServer), or another one (journey 36's, recreated by
@@ -22,9 +23,9 @@ import { fileURLToPath } from 'node:url';
 export const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
 export const ENV_FILE = 'ops/.env.dev.example';
 export const COMPOSE_FILE = 'ops/compose.dev.yml';
-export const SERVER_PORT = 3940;
-export const CLIENT_PORT = 5440;
-export const ADMIN_PORT = 5441;
+export const SERVER_PORT = 3740;
+export const CLIENT_PORT = 5740;
+export const ADMIN_PORT = 5741;
 export const SERVER_URL = `http://127.0.0.1:${String(SERVER_PORT)}`;
 export const CLIENT_URL = `http://127.0.0.1:${String(CLIENT_PORT)}`;
 export const ADMIN_URL = `http://127.0.0.1:${String(ADMIN_PORT)}`;

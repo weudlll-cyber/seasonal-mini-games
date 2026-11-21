@@ -9,7 +9,7 @@
  *                 `work` and stops the server whatever happened, waiting for it to exit. With
  *                 `SMG_LOAD_CPU_PROF` set to a directory the server runs under V8's CPU profiler
  *                 and writes its profile there when it exits (09 §5). The developer's `pnpm dev`
- *                 (3910, database smg) and a browser-test run (3940, smg_test) are never used
+ *                 (3910, database smg) and a browser-test run (3740, smg_test) are never used
  *                 or touched (docs/spec/09-testing-strategy.md §1.1, DECISIONS T345).
  * Depends on:     node:child_process, node:fs, ops/.env.dev.example, apps/server (test-server)
  * Used by:        ./guessStorm, ./parallelStorm, ./mindStorm, ./http
