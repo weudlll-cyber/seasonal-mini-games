@@ -5,10 +5,10 @@
  *
  * Responsibility: build the admin app (vite build, production mode) into a temporary folder
  *                 and serve it under /admin/ on a free local port with the security headers
- *                 the server sends for its admin paths, read from the run's server on 3940
+ *                 the server sends for its admin paths, read from the run's server on 3740
  *                 (so the check follows apps/server/src/http/plugins/securityHeaders.ts, not a
  *                 copy); /api goes on to that server, so the page is same-origin with its API
- *                 as behind Caddy. The Vite server on 5441 cannot carry the header: its
+ *                 as behind Caddy. The Vite server on 5741 cannot carry the header: its
  *                 React refresh preamble is an inline script, and a header there would need a
  *                 restart of the run's Vite server (DECISIONS T179). `viteBuild` builds any of
  *                 the apps that way (journey 36 builds the player client with it).
@@ -64,7 +64,7 @@ async function serverHeaders(): Promise<Record<string, string>> {
   return Object.fromEntries(pairs.filter((p): p is [string, string] => p[1] !== undefined));
 }
 
-// Only the run's server (3940) is reached: the path (an /api/ path, checked by the caller) is
+// Only the run's server (3740) is reached: the path (an /api/ path, checked by the caller) is
 // appended to its fixed origin; a base URL would yield to an absolute request URL.
 function proxy(req: IncomingMessage, res: ServerResponse, apiPath: string): void {
   const out = request(

@@ -4,9 +4,9 @@
  * @brief  Playwright config: three browsers against the run's own server, client and admin app.
  *
  * Responsibility: start the run's own stack, never the developer's (09 §1.1): the test server
- *                 on 3940 on its fresh database smg_test (apps/server/tools/testServer, which
- *                 also starts the development PostgreSQL), the player client on 5440 and the
- *                 admin app on 5441, both pointed at it, and the test host site on 5420
+ *                 on 3740 on its fresh database smg_test (apps/server/tools/testServer, which
+ *                 also starts the development PostgreSQL), the player client on 5740 and the
+ *                 admin app on 5741, both pointed at it, and the test host site on 5420
  *                 (development only, ./host-page); a running `pnpm dev` (3910, 5410, 5411) is
  *                 neither reused nor touched, and a port already taken stops the run. Then run
  *                 the specs in Chromium, Firefox and WebKit at a phone viewport. Specs listed in

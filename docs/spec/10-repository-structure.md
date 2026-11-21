@@ -91,7 +91,7 @@ Every port of this repository differs from every port used in the Bingo reposito
 | Mailpit web UI (dev compose) | **8510** | 8490 |
 | App port inside its container | **3100** | 3000 |
 | Test host page for e2e journey 8 (development only) | **5420** | — |
-| Browser tests' own server, player client and admin app ([09](09-testing-strategy.md) §1.1) | **3940**, **5440**, **5441** | — |
+| Browser tests' own server, player client and admin app ([09](09-testing-strategy.md) §1.1; 3940, 5440 and 5441 until 2026-11-21, when another project on the development machine took 3940, DECISIONS T398) | **3740**, **5740**, **5741** | — |
 | Journey 36's website-mode server and stand-in website | **3960**, **5430** | — |
 | Load check's own server ([09](09-testing-strategy.md) §1.1) | **3950** | — |
 | Metrics port inside its container | **9465** | 9464 |
