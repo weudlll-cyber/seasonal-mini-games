@@ -309,6 +309,7 @@ Platform commands on a round: `createRound`, `startCountdown`, `openRound`, `sub
 - Acknowledgements, feedback and broadcasts for a batch are sent **only after its transaction commits**. A crash can therefore lose at most guesses that were never answered. It can never undo a winner who has already been announced.
 - The room broadcasts of a round are merged over a short window (`SMG_ROOM_FRAME_MS`, 100 ms): the first frame after a quiet window goes out at once, the next ones together at the window's end. Acknowledgements and a player's own feedback are not merged (DECISIONS T49).
 - While a batch is being written, the actor keeps processing into the next batch. Order is preserved because batches commit in sequence.
+- A Frost release (the held answers that fall due, recorded as `HeldDelivered`) has no commit of its own: it joins the open batch with whatever is queued beside it, and when nothing else is queued, releases that fall due within one batch window share one batch (owner decision O113). The released answers go out after that batch committed, never before it and never before their due time; the log keeps one `HeldDelivered` per release, in order.
 - Recovery: the round actor is rebuilt from the latest snapshot plus the tail of `round_events` (Bingo 02 §5.2). Guesses whose batch did not commit never happened; their senders get no acknowledgement and resend.
 
 ### 5.4 Randomness and the round seed

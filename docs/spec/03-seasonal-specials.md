@@ -73,6 +73,7 @@ This section words Spring Herald, Leaf Fall and halving for Guess The Number.
 - **Unchanged:** receive order, winning and placings. They are decided when the guess is processed, not when its answer arrives. The cooldown runs from the receive time as always, so a player may guess again before an answer has arrived. The player's own row in the guess list shows "answer arriving in 2 s". The guess's closeness comment ([02](02-game-guess-the-number.md) §6.3) travels with its answer and is held exactly as long; other players see the answer and the comment at the same delayed time (owner decision 21).
 - **Round end under Frost:** in shared mode the round closes to guesses at the winning guess's receive time. A guess received after that is answered `ROUND_OVER` at once. The announcement of the winner and the reveal go to everyone, the winner included, at the winning guess's receive time plus the delay. In individual mode a solve is announced at its delayed time as well.
 - **Equality:** one delay for everyone, measured from server receive time. A player's connection adds nothing to it and takes nothing from it.
+- **Delivery:** a release of held answers rides in the round's next batch with the guesses queued beside it ([04](04-software-architecture.md) §5.3, owner decision O113), so an answer arrives at its due time plus at most one batch window and that batch's commit.
 
 ## 3. In Season — which season a round has
 
