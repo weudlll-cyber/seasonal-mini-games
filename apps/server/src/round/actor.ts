@@ -7,7 +7,9 @@
  *                 queue order is the order the process read the messages in (04 §5.2): the
  *                 receive time is stamped, the command runs through the round session, and
  *                 its events join the open batch. A batch closes after `batchMs` or
- *                 `batchMax` events and is written in one transaction; replies and frames
+ *                 `batchMax` events and is written in one transaction; a Frost release
+ *                 (HeldDelivered) joins the open batch the same way, so releases share the
+ *                 commits of the guesses around them (O113); replies and frames
  *                 of a batch go out only after it committed, and batches commit in order
  *                 (04 §5.3). A failed commit drops that batch and every later one (their
  *                 senders get INTERNAL) and the actor rebuilds itself from the database,
@@ -156,12 +158,18 @@ export class RoundActor<S, A, E, Cfg, Sec> {
             }
           : resolve;
       this.open.waiters.push({ reply: result.reply, resolve: answer });
-      if (this.open.events.length >= this.deps.options.batchMax) this.close();
-      else
-        this.timer ??= setTimeout(() => {
-          this.close();
-        }, this.deps.options.batchMs);
+      this.joined();
     });
+  }
+
+  // Something joined the open batch: it closes at `batchMax` events, else when the window that
+  // its first item opened ends (one timer for queue items and Frost releases alike).
+  private joined(): void {
+    if (this.open.events.length >= this.deps.options.batchMax) this.close();
+    else
+      this.timer ??= setTimeout(() => {
+        this.close();
+      }, this.deps.options.batchMs);
   }
 
   // Waits until every batch handed in so far is written (shutdown, tests).
@@ -191,7 +199,9 @@ export class RoundActor<S, A, E, Cfg, Sec> {
     this.due = { at, timer };
   }
 
-  // Frost: the due held events are delivered; the log records it as HeldDelivered.
+  // Frost: the due held events are delivered; the log records it as HeldDelivered. The release
+  // rides in the open batch with whatever is queued, and releases due within one batch window
+  // share it: no commit of its own (O113). They go out once that batch committed (04 §5.3).
   private release(due: StoredEvent[]): void {
     const now = this.deps.options.now();
     for (const e of due)
@@ -199,7 +209,7 @@ export class RoundActor<S, A, E, Cfg, Sec> {
     const upTo = due.at(-1)?.seq ?? 0;
     this.stamp({ type: 'HeldDelivered', upTo, at: now }, now);
     this.open.released.push(...due);
-    this.close();
+    this.joined();
   }
 
   private stamp(event: RoundEvent<E, A, Cfg>, at: number): void {

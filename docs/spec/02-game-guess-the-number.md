@@ -125,7 +125,7 @@ For an accepted guess `g` and the guesser's secret `s`:
 | `g > s` | `lower` — "The number is lower than 412." |
 | `g = s` | `correct` |
 
-Feedback goes to the guesser. Without Frost it is sent as soon as the guess is processed. With Frost it is sent after the Frost delay ([03](03-seasonal-specials.md) §2.4). No narrowed range is shown, neither the player's own nor a shared one (owner, decision 17): the server computes none and no view, frame or contract carries one. Each player sees their own past guesses with their answers in the round's one list, highlighted as their own (owner, decision 20; §12).
+Feedback goes to the guesser. Without Frost it is sent as soon as the guess is processed. With Frost it is sent after the Frost delay, its release riding in the round's next batch ([03](03-seasonal-specials.md) §2.4, [04](04-software-architecture.md) §5.3). No narrowed range is shown, neither the player's own nor a shared one (owner, decision 17): the server computes none and no view, frame or contract carries one. Each player sees their own past guesses with their answers in the round's one list, highlighted as their own (owner, decision 20; §12).
 
 ### 6.2 What other players learn in shared mode
 
