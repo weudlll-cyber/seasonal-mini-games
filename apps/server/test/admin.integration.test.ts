@@ -149,34 +149,46 @@ describe('account administration', () => {
   });
 });
 
+// Six argon2id operations at the production cost (m 64 MiB, t 3): the account's hash, two
+// logins, the wrong and the right current password and the new hash; 0.3–0.6 s each on an
+// idle machine, several times that under a full test run, so the 20 s default is too short
+// for the work itself (night chain 2026-11-21, measured). The two logins run side by side.
+const PASSWORD_TEST_MS = 60_000;
+
 describe('password change', () => {
-  it('needs the current password and signs out every other session', async () => {
-    await account('pia');
-    const first = await login('pia@example.com');
-    const second = await login('pia@example.com');
-    const csrf = (
-      await app().inject({ method: 'GET', url: '/api/v1/session', headers: { cookie: first } })
-    ).json<{ csrfToken: string }>().csrfToken;
-    const change = (current: string) =>
-      app().inject({
-        method: 'POST',
-        url: '/api/v1/me/password',
-        payload: { current, next: 'another long passphrase' },
-        headers: { cookie: first, 'x-csrf-token': csrf },
+  it(
+    'needs the current password and signs out every other session',
+    async () => {
+      await account('pia');
+      const [first, second] = await Promise.all([
+        login('pia@example.com'),
+        login('pia@example.com'),
+      ]);
+      const csrf = (
+        await app().inject({ method: 'GET', url: '/api/v1/session', headers: { cookie: first } })
+      ).json<{ csrfToken: string }>().csrfToken;
+      const change = (current: string) =>
+        app().inject({
+          method: 'POST',
+          url: '/api/v1/me/password',
+          payload: { current, next: 'another long passphrase' },
+          headers: { cookie: first, 'x-csrf-token': csrf },
+        });
+      expect((await change('wrong password!')).statusCode).toBe(403);
+      expect((await change(strong)).statusCode).toBe(204);
+      const other = await app().inject({
+        method: 'GET',
+        url: '/api/v1/session',
+        headers: { cookie: second },
       });
-    expect((await change('wrong password!')).statusCode).toBe(403);
-    expect((await change(strong)).statusCode).toBe(204);
-    const other = await app().inject({
-      method: 'GET',
-      url: '/api/v1/session',
-      headers: { cookie: second },
-    });
-    expect(other.json<{ signedIn: boolean }>().signedIn).toBe(false);
-    const kept = await app().inject({
-      method: 'GET',
-      url: '/api/v1/session',
-      headers: { cookie: first },
-    });
-    expect(kept.json<{ signedIn: boolean }>().signedIn).toBe(true);
-  });
+      expect(other.json<{ signedIn: boolean }>().signedIn).toBe(false);
+      const kept = await app().inject({
+        method: 'GET',
+        url: '/api/v1/session',
+        headers: { cookie: first },
+      });
+      expect(kept.json<{ signedIn: boolean }>().signedIn).toBe(true);
+    },
+    PASSWORD_TEST_MS,
+  );
 });
