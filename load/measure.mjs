@@ -9,7 +9,7 @@
  *                 gap-free, each player's acknowledgements in send order, one winner); the
  *                 specials a round fired, once each, with how late they were.
  * Depends on:     ./http
- * Used by:        ./guessStorm
+ * Used by:        ./storm, ./parallelStorm, ./mindStorm
  * Spec:           docs/spec/09-testing-strategy.md §5 (pass criteria)
  */
 import { BASE } from './http.mjs';

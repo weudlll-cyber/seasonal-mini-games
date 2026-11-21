@@ -6,7 +6,8 @@
  * Responsibility: open a socket per client of its slice and watch the match; on "play" for a
  *                 round, let each player binary-search its own answers inside what the room
  *                 learnt (a halved range, fallen numbers), guessing once its cooldown has
- *                 ended and its last answer arrived, plus a pause of 200–1 500 ms (09 §5);
+ *                 ended and its last answer arrived, plus a pause of 200–1 500 ms (09 §5), the
+ *                 first guess of an L2 `burst` round instead within 50 ms of the open;
  *                 record acknowledgement times, the time from a guess to its own answer, how
  *                 much later than due Frost delivered it, the acknowledged receive numbers,
  *                 the refusals, and through the slice's first spectator every special fired;
@@ -14,7 +15,7 @@
  *                 was (so a saturated driver shows instead of passing for a slow server); the
  *                 sockets stay for the next round until the thread is terminated.
  * Depends on:     socket.io-client, node:worker_threads, node:perf_hooks, ./http
- * Used by:        ./guessStorm
+ * Used by:        ./storm (./guessStorm, ./parallelStorm)
  * Spec:           docs/spec/09-testing-strategy.md §5; docs/spec/03-seasonal-specials.md §2, §4
  */
 import { performance } from 'node:perf_hooks';
@@ -117,7 +118,7 @@ function pick(s) {
 // A player: one guess at a time, the next only after the last one's answer arrived. It
 // writes to the record of its own round, so a turn still pending from the last round cannot
 // touch the next one's.
-function player(i, roundId, frostDelayMs) {
+function player(i, roundId, frostDelayMs, burst) {
   const socket = sockets[i];
   const rec = record;
   const s = { rec, num: clients[i].num, low: 1, high: 1_000_000, removed: new Set() };
@@ -129,10 +130,12 @@ function player(i, roundId, frostDelayMs) {
       else ownAnswer(s, item, frostDelayMs);
     }
   };
+  let first = burst;
   const turn = async () => {
-    await pause(
-      Math.max(0, s.cooldownEndsAt - Date.now()) + 200 + Math.floor(Math.random() * 1_300),
-    );
+    // L2: the first guess within 50 ms of the open; then the usual human pause.
+    const human = first ? Math.floor(Math.random() * 50) : 200 + Math.floor(Math.random() * 1_300);
+    first = false;
+    await pause(Math.max(0, s.cooldownEndsAt - Date.now()) + human);
     if (s.done || rec.over) return;
     const value = pick(s);
     const sent = Date.now();
@@ -167,7 +170,7 @@ parentPort.on('message', async (msg) => {
     busySince = performance.eventLoopUtilization();
     handlers[Math.min(players, clients.length - 1)] = specialsWatcher(msg.roundId);
     const turns = Array.from({ length: players }, (_, i) =>
-      player(i, msg.roundId, msg.frostDelayMs),
+      player(i, msg.roundId, msg.frostDelayMs, msg.burst === true),
     );
     setTimeout(() => turns.forEach((turn) => void turn()), Math.max(0, msg.opensAt - Date.now()));
   } else if (msg.t === 'stop') {

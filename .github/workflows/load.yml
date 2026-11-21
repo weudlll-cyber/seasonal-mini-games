@@ -102,6 +102,14 @@ jobs:
         if: contains(env.RUNS, ' l4 ')
         continue-on-error: true
         run: bash "$RUNNER_TEMP/run.sh" l4 node load/guessStorm.mjs 1000 out/l4.json plain
+      - name: L2 open burst, 500 players
+        if: contains(env.RUNS, ' l2 ')
+        continue-on-error: true
+        run: bash "$RUNNER_TEMP/run.sh" l2 node load/guessStorm.mjs 500 out/l2.json burst
+      - name: L3 parallel, 10 matches of 50 players
+        if: contains(env.RUNS, ' l3 ')
+        continue-on-error: true
+        run: bash "$RUNNER_TEMP/run.sh" l3 node load/parallelStorm.mjs 10 50 out/l3.json
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
