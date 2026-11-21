@@ -6,8 +6,9 @@
  * Responsibility: from the countdown until the round ends (O46) the round view is this one
  *                 container: the app's header is hidden (../shell/shell.css), the bar
  *                 (./FocusBar) on top and the round's content under it; Chat (kept mounted, so
- *                 it keeps its room and what was typed, 07 §2), Players with the teams and,
- *                 for the host, the host's controls are panels on demand, one at a time
+ *                 it keeps its room and what was typed, 07 §2), Players with the teams, a phased
+ *                 game's pre-picks for its player (O117) and, for the host, the host's controls
+ *                 are panels on demand, one at a time
  *                 (./usePanels, ./FocusPanel). The chat's unread badge counts the messages of
  *                 others that arrive while the chat panel is closed (../chat/chatArrivals) and
  *                 clears when it opens; a host's embedded chat is told whether its panel is
@@ -61,6 +62,8 @@ export interface FocusShellProps {
   readonly chat: ReactNode;
   // The host's controls in their panel, given its close; null for everyone but the host.
   readonly host: ((close: () => void) => ReactNode) | null;
+  // A phased game's pre-picks for the rounds after this one, for its player; else null (O117).
+  readonly prefs?: ReactNode;
   readonly children: (panels: Panels) => ReactNode;
 }
 
@@ -82,7 +85,8 @@ function useUnread(panels: Panels) {
   return { unread, arrived, sight, panels: { ...panels, toggle } };
 }
 
-// The three panels of the bar: the chat kept mounted, the players, the host's controls.
+// The panels of the bar: the chat kept mounted, the players, a player's pre-picks, the host's
+// controls.
 function BarPanels(p: FocusShellProps & { readonly panels: Panels }): ReactElement {
   const { panels } = p;
   const opened = (id: PanelId) => panels.open === id;
@@ -112,6 +116,16 @@ function BarPanels(p: FocusShellProps & { readonly panels: Panels }): ReactEleme
           marks={p.marks}
         />
       </FocusPanel>
+      {(p.prefs ?? null) === null ? null : (
+        <FocusPanel
+          title="Pre-picks"
+          open={opened('prefs')}
+          onClose={panels.close}
+          testId="prefs-drawer"
+        >
+          {p.prefs}
+        </FocusPanel>
+      )}
       {p.host === null ? null : (
         <FocusPanel title="Host" open={opened('host')} onClose={panels.close} testId="host-drawer">
           {p.host(panels.close)}
@@ -155,6 +169,7 @@ export function FocusShell(p: FocusShellProps): ReactElement {
             chat={p.chat !== null}
             unread={unread}
             host={p.host !== null}
+            prefs={(p.prefs ?? null) !== null}
             fullscreen={fullscreen}
           />
           {p.children(panels)}

@@ -1,13 +1,15 @@
 /**
  * @file   apps/web/src/match/GamePrefs.tsx
  * @module web/match
- * @brief  A phased game's own panel in the waiting area: the viewer's pre-picks (04 §4.8 rule 8).
+ * @brief  A phased game's own panel: the viewer's pre-picks, in the waiting area and in a round.
  *
  * Responsibility: for a player of the match whose game has a `Prefs` panel (the registry's web
  *                 half), the panel with the viewer's own value from the match details
  *                 (`myPrefs`, nobody else's), the series' rounds and those played; what the panel
  *                 saves goes to `PUT …/prefs`, and the server's answer (a refusal's code) back to
- *                 the panel. Nothing for spectators or a game without the panel. For the running
+ *                 the panel. Nothing for spectators or a game without the panel. During a round
+ *                 the same panel opens from the round bar (`RoundPrefs`, O117): only the rounds
+ *                 after the running one, saved as the round's own part saves. For the running
  *                 round, the viewer's own part of the match (`useOwnPart`: the round's number,
  *                 the value and its saving, a pre-pick refused at the opening, T327).
  * Depends on:     react, @smg/contracts, @smg/game-sdk (types), @smg-game/registry/web,
@@ -76,4 +78,34 @@ export function GamePrefs({ match }: { readonly match: MatchDetailsView }): Reac
       save={save}
     />
   );
+}
+
+// During a round, from its bar (O117): the same panel for the rounds after the running one; it
+// saves as the round's own part does (the value reloaded after each save).
+export function RoundPrefs(p: {
+  readonly match: MatchDetailsView;
+  readonly own: OwnMatchPart;
+}): ReactElement | null {
+  const Panel = GAME_SCREENS[p.match.gameId]?.Prefs;
+  if (Panel === undefined) return null;
+  return (
+    <Panel
+      prefs={p.own.prefs}
+      rounds={p.match.series?.rounds ?? null}
+      played={p.own.roundIndex}
+      save={p.own.save}
+    />
+  );
+}
+
+// The Pre-picks panel of a round's bar, or null: none for a spectator, a game without the panel
+// or the series' last round, which has no later round to pick for.
+export function roundPrefsOf(
+  match: MatchDetailsView,
+  own: OwnMatchPart | undefined,
+): ReactElement | null {
+  if (own === undefined || GAME_SCREENS[match.gameId]?.Prefs === undefined) return null;
+  const rounds = match.series?.rounds ?? null;
+  if (rounds !== null && rounds <= own.roundIndex) return null;
+  return <RoundPrefs match={match} own={own} />;
 }

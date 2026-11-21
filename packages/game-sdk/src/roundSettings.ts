@@ -82,13 +82,12 @@ const ROUND_SETTINGS: readonly SettingDef[] = [
     kind: 'int',
     label: 'Countdown before opening',
     help: 'The intro screen with the season and its special, before the first guess.',
-    // Proposal (OPEN (ab)): long enough to read the intro screen (O36); was 5 s.
+    // Long enough to read the intro screen (O36); was 5 s (owner decision O118).
     default: 10,
     min: 3,
     max: 30,
     unit: 's',
-    status: 'proposal',
-    spec: '08 §3',
+    ...owner('O118'),
     ...host,
   },
   {

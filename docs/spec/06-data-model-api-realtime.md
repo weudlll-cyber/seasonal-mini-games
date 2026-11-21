@@ -49,7 +49,9 @@
 
 `match_id`, `player_key text` (the account id, or `bot-NN` for bots of the development Quick Test), `account_id uuid NULL` (NULL for bots), `joined_at`, `left_at NULL`, `state` (`active`, `left`, `kicked`), `team text NULL` (`spring`/`summer`/`autumn`/`winter`), `team_chosen_at NULL`. PK `(match_id, player_key)`. Index `(account_id, match_id)`. This follows Bingo's built pattern (`player_id` as the key in Bingo's migration 0003), not the `(match_id, account_id)` key that Bingo 04 §3.3 states.
 
-**match_player_prefs** (a game with `prefs`, [04](04-software-architecture.md) §4.8 rule 8; Seasonal Mind Games' pre-picks and its "Hide my switches" box) — `match_id`, `player_key`, `prefs jsonb` (the game's schema, at most 2 KiB), `updated_at`. PK `(match_id, player_key)`, FK to `match_players`. The row is deleted when the player leaves the match or is removed. Only the round engine at a round's opening and that player's own requests read it.
+**match_player_prefs** (a game with `prefs`, [04](04-software-architecture.md) §4.8 rule 8; Seasonal Mind Games' pre-picks) — `match_id`, `player_key`, `prefs jsonb` (the game's schema, at most 2 KiB), `updated_at`. PK `(match_id, player_key)`, FK to `match_players`. The row is deleted when the player leaves the match or is removed. Only the round engine at a round's opening and that player's own requests read it.
+
+**account_game_prefs** (the keys a game keeps per account, [04](04-software-architecture.md) §4.8 rule 8, owner decision O116; Seasonal Mind Games' "Hide my switches" box) — `account_id`, `game_id`, `prefs jsonb` (at most 2 KiB), `updated_at`. PK `(account_id, game_id)`, FK to `accounts` (deleted with the account). Read together with the match's value, by the same readers.
 
 ### 2.3 `rounds`, `round_events`, `round_snapshots`
 

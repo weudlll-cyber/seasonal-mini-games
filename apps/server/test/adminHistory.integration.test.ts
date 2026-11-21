@@ -9,7 +9,9 @@
  *                 is 409 CONFIG_VERSION_CONFLICT; the document is back at its defaults at the
  *                 end. Migration 0013 (O45) gives a Seasonal Target document holding the old
  *                 map size a new version without it, keeping its other overrides, so the tile
- *                 grid starts at its default of 20; run again it changes nothing.
+ *                 grid starts at its default of 20; run again it changes nothing. Migration
+ *                 0021 (O118) writes a new version with a countdown of 10 s where a game's
+ *                 document still holds the old 5 s, and leaves any other stored value alone.
  *                 With SMG_WEB_DIR and SMG_ADMIN_DIR the server sends /admin on to
  *                 /admin/ and serves the admin build there with the security headers.
  * Depends on:     vitest, node:fs, ./harness, ./session
@@ -138,6 +140,59 @@ describe('migration 0013: the tile grid of Seasonal Target (O45)', () => {
       comment: 'reset',
     });
     expect(reset.json()).toMatchObject({ version: 4, overrides: {} });
+  });
+});
+
+describe('migration 0021: the countdown of 10 s (O118)', () => {
+  const run = async () => {
+    const file = new URL('../src/db/migrations/0021_countdown_10.sql', import.meta.url);
+    await h.pool.query(readFileSync(file, 'utf8'));
+  };
+  // A game's document whose current version holds these overrides.
+  const stored = async (id: string, overrides: object) => {
+    await h.pool.query(
+      `INSERT INTO smg.settings_documents (id, current_version) VALUES ($1, 1)
+       ON CONFLICT (id) DO NOTHING`,
+      [id],
+    );
+    await h.pool.query(
+      `INSERT INTO smg.settings_versions (document_id, version, document)
+       SELECT $1, d.current_version + 1, $2 FROM smg.settings_documents d WHERE d.id = $1`,
+      [id, JSON.stringify(overrides)],
+    );
+    await h.pool.query(
+      'UPDATE smg.settings_documents SET current_version = current_version + 1 WHERE id = $1',
+      [id],
+    );
+  };
+  const current = async (id: string) =>
+    (
+      await h.pool.query<{ version: number; document: Record<string, { value?: unknown }> }>(
+        `SELECT v.version, v.document FROM smg.settings_documents d
+         JOIN smg.settings_versions v ON v.document_id = d.id AND v.version = d.current_version
+         WHERE d.id = $1`,
+        [id],
+      )
+    ).rows[0];
+
+  it('moves a stored 5 s to 10 s as a new version and keeps any other value', async () => {
+    await stored('game.guess-the-number', {
+      'round.countdownS': { value: 5 },
+      'round.cooldownS': { value: 4 },
+    });
+    await stored('game.safecracker', { 'round.countdownS': { value: 7 } });
+    const before = await current('game.guess-the-number');
+    const other = await current('game.safecracker');
+    await run();
+    // A second run finds nothing left to move.
+    await run();
+    const after = await current('game.guess-the-number');
+    expect(after?.version).toBe((before?.version ?? 0) + 1);
+    expect(after?.document).toEqual({
+      'round.countdownS': { value: 10 },
+      'round.cooldownS': { value: 4 },
+    });
+    expect(await current('game.safecracker')).toEqual(other);
   });
 });
 

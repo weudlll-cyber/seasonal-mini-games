@@ -10,7 +10,8 @@
  *                 are the intro's; a phased round's counts to the plan's end and then says
  *                 "Result in 0:04", ./roundText, T386), then the buttons of the panels on demand (./usePanels):
  *                 Chat with the unread count (only with a chat, the provider not `none`),
- *                 Players with the teams, Host (the host only), and the full-screen toggle
+ *                 Players with the teams, Pre-picks (a phased game's player, O117), Host (the
+ *                 host only), and the full-screen toggle
  *                 where the browser offers it (./useFullscreen). The waiting time is not here:
  *                 the cooldown ring and the disabled button at the input show it (O47). Each
  *                 button names itself; a phone shows the icons and reads the words out.
@@ -76,11 +77,65 @@ export interface FocusBarProps {
   readonly chat: boolean;
   readonly unread: number;
   readonly host: boolean;
+  // A player of a phased game with pre-picks: the later rounds' picks in their panel (O117).
+  readonly prefs: boolean;
   readonly fullscreen: Fullscreen;
 }
 
+// The buttons at the bar's end: the panels on demand and the full-screen toggle.
+function BarButtons(p: FocusBarProps): ReactElement {
+  const { panels, fullscreen } = p;
+  return (
+    <span className="focus-actions">
+      {p.chat ? (
+        <PanelButton
+          id="chat"
+          panels={panels}
+          icon="chat"
+          label="Chat"
+          testId="focus-chat"
+          badge={p.unread}
+        />
+      ) : null}
+      <PanelButton
+        id="players"
+        panels={panels}
+        icon="players"
+        label="Players"
+        testId="focus-players"
+      />
+      {p.prefs ? (
+        <PanelButton
+          id="prefs"
+          panels={panels}
+          icon="prefs"
+          label="Pre-picks"
+          testId="focus-prefs"
+        />
+      ) : null}
+      {p.host ? (
+        <PanelButton id="host" panels={panels} icon="host" label="Host" testId="host-menu" />
+      ) : null}
+      {fullscreen.supported ? (
+        <button
+          type="button"
+          className="smg-btn focus-button"
+          aria-pressed={fullscreen.on}
+          data-testid="focus-fullscreen"
+          onClick={fullscreen.toggle}
+        >
+          <FocusIcon name={fullscreen.on ? 'shrink' : 'expand'} />
+          <span className="focus-button-label">
+            {fullscreen.on ? 'Leave full screen' : 'Full screen'}
+          </span>
+        </button>
+      ) : null}
+    </span>
+  );
+}
+
 export function FocusBar(p: FocusBarProps): ReactElement {
-  const { state, panels, fullscreen } = p;
+  const { state } = p;
   const time = barTime(state, p.now);
   return (
     <header className="focus-bar" data-testid="round-banner">
@@ -97,42 +152,7 @@ export function FocusBar(p: FocusBarProps): ReactElement {
           {time.left ? <span className="round-phone-hidden"> left</span> : null}
         </span>
       )}
-      <span className="focus-actions">
-        {p.chat ? (
-          <PanelButton
-            id="chat"
-            panels={panels}
-            icon="chat"
-            label="Chat"
-            testId="focus-chat"
-            badge={p.unread}
-          />
-        ) : null}
-        <PanelButton
-          id="players"
-          panels={panels}
-          icon="players"
-          label="Players"
-          testId="focus-players"
-        />
-        {p.host ? (
-          <PanelButton id="host" panels={panels} icon="host" label="Host" testId="host-menu" />
-        ) : null}
-        {fullscreen.supported ? (
-          <button
-            type="button"
-            className="smg-btn focus-button"
-            aria-pressed={fullscreen.on}
-            data-testid="focus-fullscreen"
-            onClick={fullscreen.toggle}
-          >
-            <FocusIcon name={fullscreen.on ? 'shrink' : 'expand'} />
-            <span className="focus-button-label">
-              {fullscreen.on ? 'Leave full screen' : 'Full screen'}
-            </span>
-          </button>
-        ) : null}
-      </span>
+      <BarButtons {...p} />
     </header>
   );
 }

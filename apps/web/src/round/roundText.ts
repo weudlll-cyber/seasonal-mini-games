@@ -43,7 +43,8 @@ const CODES: Readonly<Record<string, string>> = {
   TEAM_LOCKED: 'You keep your team for the whole match.',
   TEAMS_OFF: 'This match is played without teams.',
   MATCH_FULL: 'This match is full.',
-  KICKED: 'You were removed from this match by the host.',
+  // Owner decision O119: no "by the host" (staff can remove a player too).
+  KICKED: 'You were removed from this match.',
   MATCH_CLOSED: 'This match has ended.',
   NOT_THE_HOST: 'Only the host can do that.',
   ROUND_STATE_INVALID: 'That is not possible at this point of the round.',

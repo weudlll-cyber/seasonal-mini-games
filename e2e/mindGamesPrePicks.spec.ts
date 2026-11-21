@@ -7,13 +7,14 @@
  *                 second player sets pre-picks for rounds 1–3 in the waiting area's panel (All
  *                 for round 2, where All is off) and closes their browser; their first choice
  *                 appears in the feed one delay after each opening with their name and no mark;
+ *                 during round 1 the host's round bar opens Pre-picks for rounds 2 and 3 only (O117);
  *                 round 2 gives them no choice, and after reconnecting they read "Your pre-pick All
  *                 was not offered in round 2."; their points count in the standings; the host's
  *                 match details never hold them.
  * Depends on:     @playwright/test, ./mindGames, ./play
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 40); docs/spec/02e-game-mind-games.md §7
  */
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
 import { prePick } from './mindGames.js';
 import { abortMatch, call, closeAll, person, playerRow, visit, type Person } from './play.js';
@@ -32,6 +33,16 @@ const settings = {
 
 const prefs = (p: Person, code: string, picks: Readonly<Record<string, string>>) =>
   call(p, 'PUT', `/matches/${code}/prefs`, { prefs: { picks } });
+
+// During round 1 the round bar's Pre-picks panel offers only the later rounds (O117).
+async function laterRoundsOnly(page: Page): Promise<void> {
+  await page.getByTestId('focus-prefs').click();
+  const panel = page.getByTestId('prefs-drawer');
+  await expect(panel.getByText('Round 2', { exact: true })).toBeVisible();
+  await expect(panel.getByText('Round 3', { exact: true })).toBeVisible();
+  await expect(panel.getByText('Round 1', { exact: true })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+}
 
 test('journey 40: pre-picks play for an away player, seen by nobody else', async ({ browser }) => {
   test.setTimeout(240_000);
@@ -67,6 +78,7 @@ test('journey 40: pre-picks play for an away player, seen by nobody else', async
     const opened = Date.now();
     await expect(list).toContainText(/dev-player-2\s*chose Summer/, { timeout: 15_000 });
     expect(Date.now() - opened).toBeGreaterThan(DELAY_MS - 1_000);
+    await laterRoundsOnly(host.page);
     // Round 2: All is off, so the away player has no choice in it.
     // Round 1's result with the pause's countdown (O97).
     await expect(host.page.getByText(/Round 2 in \d:\d\d/)).toBeVisible({ timeout: 40_000 });

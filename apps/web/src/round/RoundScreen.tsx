@@ -52,6 +52,8 @@ interface RoundScreenProps {
   readonly chat: ReactNode;
   // A phased game's: the viewer's own part of the match, for their input (T327).
   readonly own?: OwnMatchPart | undefined;
+  // A phased game's pre-picks for the later rounds, a panel from the round bar (O117).
+  readonly prefs?: ReactNode;
   // The docked page's next-round box, beside the standings under the result (O97).
   readonly next?: ReactNode;
   // The round just ended, by its number in the match, for the standings' title.
@@ -100,6 +102,7 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
       teamPoints={props.teamPoints}
       chat={props.chat}
       host={props.host}
+      prefs={props.prefs}
     >
       {(panels) =>
         state.status === 'countdown' ? (
