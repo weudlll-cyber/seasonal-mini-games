@@ -1,18 +1,20 @@
 # @file   .github/workflows/load.yml
 # @module ci
-# @brief  The load check (09 §5) on a Linux runner: L1's plain, summer and winter rounds and L5.
+# @brief  The load check (09 §5) on a Linux runner: L1's rounds, L2, L3, L4, L5, a server profile.
 #
-# Responsibility: on demand (workflow_dispatch) and on a push to a `load/**` branch, never on
+# Responsibility: on demand (workflow_dispatch, its input `runs` naming the runs) and on a push
+#                 to a `load/**` branch (L1's plain, summer and winter rounds and L5), never on
 #                 master or a pull request, run the existing drivers as 09 §5 documents them,
-#                 500 players and 100 spectators each, every driver its own step that does not
-#                 stop the others. Each driver starts its own server on 3950 with the fresh
+#                 with 100 spectators, every driver its own step that does not stop the others:
+#                 L1's rounds, L5 and L2 at 500 players, L4 at 1 000, L3 as 10 matches of 50,
+#                 and the winter round with the server under V8's CPU profiler. Each driver starts its own server on 3950 with the fresh
 #                 database smg_load in the PostgreSQL 17 container of ops/compose.dev.yml (the
 #                 image the development machine uses, so the numbers compare). While a driver
 #                 runs, the server's /metrics is saved every 2 s, so its batch commit times
 #                 (`smg_round_batch_seconds`) survive the server's stop. Before the runs the
 #                 runner's CPUs, memory and the PostgreSQL version are printed; the drivers'
-#                 JSON, their output with the server's log and the last /metrics of each run
-#                 are kept as the artifact `load-results`. A runner is not the reference VPS:
+#                 JSON, their output with the server's log, the last /metrics of each run and
+#                 the profile are kept as the artifact `load-results`. A runner is not the reference VPS:
 #                 the driver and the server share its CPUs.
 # Depends on:     .github/actions/setup, ops/compose.dev.yml, load/
 # Spec:           docs/spec/09-testing-strategy.md §5
@@ -20,6 +22,10 @@ name: Load
 
 on:
   workflow_dispatch:
+    inputs:
+      runs:
+        description: 'Runs, space-separated: plain summer winter mind profile l4 l2 l3'
+        default: 'plain summer winter mind'
   push:
     branches: ['load/**']
 
@@ -32,6 +38,9 @@ concurrency:
 
 env:
   COMPOSE: docker compose --env-file ops/.env.dev.example -f ops/compose.dev.yml
+  # The runs this start makes, padded so a step can look for " name "; a push makes L1's
+  # plain, summer and winter rounds and L5.
+  RUNS: " ${{ inputs.runs || 'plain summer winter mind' }} "
 
 jobs:
   load:
@@ -47,7 +56,7 @@ jobs:
           free -m
           $COMPOSE up -d --wait postgres
           $COMPOSE exec -T postgres psql -U smg -d smg -tAc 'select version()'
-          mkdir -p out
+          mkdir -p out/prof
       # One driver run: its output (with the server's log) to out/<name>.log, the server's
       # /metrics every 2 s to out/<name>.metrics.txt; the driver's exit code is the step's.
       - name: Run helper
@@ -67,17 +76,32 @@ jobs:
           exit "$code"
           EOF
       - name: L1 plain, 500 players
+        if: contains(env.RUNS, ' plain ')
         continue-on-error: true
         run: bash "$RUNNER_TEMP/run.sh" plain node load/guessStorm.mjs 500 out/plain.json plain
       - name: L1 summer, 500 players
+        if: contains(env.RUNS, ' summer ')
         continue-on-error: true
         run: bash "$RUNNER_TEMP/run.sh" summer node load/guessStorm.mjs 500 out/summer.json summer
       - name: L1 winter, 500 players
+        if: contains(env.RUNS, ' winter ')
         continue-on-error: true
         run: bash "$RUNNER_TEMP/run.sh" winter node load/guessStorm.mjs 500 out/winter.json winter
       - name: L5 Mind Games, 500 players
+        if: contains(env.RUNS, ' mind ')
         continue-on-error: true
         run: bash "$RUNNER_TEMP/run.sh" mind node load/mindStorm.mjs 500 out/mind.json
+      # The winter round with the server under V8's CPU profiler (out/prof/*.cpuprofile).
+      - name: L1 winter, 500 players, server profiled
+        if: contains(env.RUNS, ' profile ')
+        continue-on-error: true
+        env:
+          SMG_LOAD_CPU_PROF: ${{ github.workspace }}/out/prof
+        run: bash "$RUNNER_TEMP/run.sh" profile node load/guessStorm.mjs 500 out/profile.json winter
+      - name: L4 plain, 1 000 players
+        if: contains(env.RUNS, ' l4 ')
+        continue-on-error: true
+        run: bash "$RUNNER_TEMP/run.sh" l4 node load/guessStorm.mjs 1000 out/l4.json plain
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
