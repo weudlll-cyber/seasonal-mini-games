@@ -14,6 +14,16 @@
       "description": "One weekly PR for all non-major updates.",
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "groupName": "minor and patch updates"
+    },
+    {
+      "description": "Node.js stays on 22 (spec 04, the technology decisions): Node.js (.nvmrc, the Docker image, engines) and its types are never proposed beyond 22.x.",
+      "matchPackageNames": ["node", "@types/node"],
+      "allowedVersions": "<23"
+    },
+    {
+      "description": "The engines field keeps its range (>=22, the major the project names); it is not pinned to one version.",
+      "matchDepTypes": ["engines"],
+      "rangeStrategy": "replace"
     }
   ],
   "osvVulnerabilityAlerts": true,
