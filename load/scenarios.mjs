@@ -1,18 +1,19 @@
 /**
  * @file   load/scenarios.mjs
  * @module load
- * @brief  The rounds of load scenario L1 and the halving day a halving round needs.
+ * @brief  The rounds of load scenarios L1 and L2 and the halving day a halving round needs.
  *
  * Responsibility: the host settings of each L1 round (shared, cooldown 3 s, range
- *                 1–1 000 000): plain, each season with its special, a halving round; the
+ *                 1–1 000 000): plain, each season with its special, a halving round, and L2's
+ *                 `burst`, a plain round whose players all guess within 50 ms of the open; the
  *                 named scenarios as lists of those rounds (`l1` is 09 §5's ten in one match,
  *                 one after another: five plain, the four specials, the halving round); and, for a halving round, today's halving day (in the
  *                 time zone of the `seasons` settings) through the admin route, removed again
  *                 afterwards when the check added it. Special timings stay the game
  *                 document's (Heatwave 30 s, Leaf Fall 20 s, halving 60 s, Frost 3 s by default).
  * Depends on:     ./http
- * Used by:        ./guessStorm
- * Spec:           docs/spec/09-testing-strategy.md §5 (L1); docs/spec/03-seasonal-specials.md §2, §4
+ * Used by:        ./guessStorm, ./parallelStorm
+ * Spec:           docs/spec/09-testing-strategy.md §5 (L1, L2, L3); docs/spec/03-seasonal-specials.md §2, §4
  */
 import { call } from './http.mjs';
 
@@ -50,6 +51,11 @@ export const ROUNDS = {
     },
   },
 };
+
+// L2 `open-burst`: a plain round; the driver sends every player's first guess within 50 ms
+// of `opensAt` (09 §5).
+ROUNDS.burst = ROUNDS.plain;
+export const OPEN_BURST = new Set(['burst']);
 
 export const SCENARIOS = {
   ...Object.fromEntries(Object.keys(ROUNDS).map((name) => [name, [name]])),

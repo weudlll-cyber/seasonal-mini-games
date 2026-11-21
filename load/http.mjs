@@ -8,7 +8,8 @@
  *                 groups with an optional pause; count HTTP problems with a few examples.
  *                 Adapted from Bingo's load/drawLatency.mjs.
  * Depends on:     ./stack (port and origin), Node's fetch
- * Used by:        ./guessStorm
+ * Used by:        ./storm, ./guessStorm, ./parallelStorm, ./scenarios, ./measure, ./stormWorker,
+ *                 ./mindStorm, ./mindWorker
  * Spec:           docs/spec/09-testing-strategy.md §5
  */
 

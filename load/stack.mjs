@@ -6,11 +6,13 @@
  * Responsibility: `withLoadStack(work)` starts the test server (apps/server/tools/testServer:
  *                 the development PostgreSQL, the database smg_load recreated empty and
  *                 migrated, the development features on) on 3950, waits for /readyz, runs
- *                 `work` and stops the server whatever happened. The developer's `pnpm dev`
+ *                 `work` and stops the server whatever happened, waiting for it to exit. With
+ *                 `SMG_LOAD_CPU_PROF` set to a directory the server runs under V8's CPU profiler
+ *                 and writes its profile there when it exits (09 §5). The developer's `pnpm dev`
  *                 (3910, database smg) and a browser-test run (3940, smg_test) are never used
  *                 or touched (docs/spec/09-testing-strategy.md §1.1, DECISIONS T345).
  * Depends on:     node:child_process, node:fs, ops/.env.dev.example, apps/server (test-server)
- * Used by:        ./guessStorm, ./mindStorm, ./http
+ * Used by:        ./guessStorm, ./parallelStorm, ./mindStorm, ./http
  * Spec:           docs/spec/09-testing-strategy.md §1.1, §5
  */
 import { spawn } from 'node:child_process';
@@ -48,8 +50,15 @@ async function ready(server) {
   throw new Error(`the load server did not answer on ${LOAD_PORT}`);
 }
 
+// The server's own process, profiled when SMG_LOAD_CPU_PROF names a directory.
+function serverArgs() {
+  const dir = process.env.SMG_LOAD_CPU_PROF;
+  const prof = dir ? ['--cpu-prof', `--cpu-prof-dir=${dir}`] : [];
+  return [...prof, '--import=tsx', 'tools/testServer.ts'];
+}
+
 export async function withLoadStack(work) {
-  const server = spawn(process.execPath, ['--import=tsx', 'tools/testServer.ts'], {
+  const server = spawn(process.execPath, serverArgs(), {
     cwd: fileURLToPath(new URL('../apps/server', import.meta.url)),
     env: {
       ...process.env,
@@ -65,6 +74,10 @@ export async function withLoadStack(work) {
     await ready(server);
     return await work();
   } finally {
+    // SIGTERM: the server closes and exits by itself, writing a profile on its way out.
+    const exited =
+      server.exitCode === null ? new Promise((done) => server.once('exit', done)) : null;
     server.kill();
+    if (exited !== null) await Promise.race([exited, new Promise((d) => setTimeout(d, 30_000))]);
   }
 }
