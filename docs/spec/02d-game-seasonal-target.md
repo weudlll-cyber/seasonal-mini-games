@@ -121,7 +121,7 @@ Comments, trend and line picking are [02](02-game-guess-the-number.md) §6.3 thr
 At `opensAt` the hint names two grid quarters, one of which holds the secret.
 
 - **Quarters:** the west half is columns 1 … ⌈W/2⌉, the north half rows 1 … ⌈H/2⌉ (as 03 §2.1's lower half). The second quarter, the decoy, is drawn uniformly from the other three with the round's randomness under `spring/<shared|playerId>`, so the fairness proof recomputes it (§10). The two always travel in the fixed order north-west, north-east, south-west, south-east, never "target first", so nothing a client receives tells the target's quarter from the decoy (05 §3).
-- **Words:** "Free hint: the target is in one of the two green quarters, north-west (columns 1–10, rows 1–10) or south-east (columns 11–20, rows 11–20)."; the phone's info line "Hint: NW or SE" in the season colour. Shared: one hint for everyone and spectators; individual: each player their own pair, spectators "Spring Herald: everyone received a hint" (03 §2.1).
+- **Words:** "Free hint: the target is in one of the two green quarters, north-west (columns 1–10, rows 1–10) or south-east (columns 11–20, rows 11–20)."; the phone's info line "Hint: NW or SE" in the season colour. Shared: one hint for everyone and spectators; individual: each player their own pair, spectators "Spring Herald: everyone got a free hint." (03 §2.1).
 - **Tint:** both quarters' empty tiles are tinted a clear green, the same in both themes (ink 8.5:1 on it), each with a small "Hint" tag on its tile nearest the grid's corner that is inside the target area, so a halving that dims the corner moves the tag (DECISIONS T144; left out while that tile is guessed or fallen); filled tiles keep their fill, and the tint never looks like the hatch of fallen tiles or the faded area outside a halving (O51).
 - The hint line stays in the game's panel all round; the list does not repeat it. `spring.hintType` does not apply. Intro and info sentence (`GameText.specialRule`): "Everyone learns two quarters of the grid; one of them hides the target."
 
@@ -202,7 +202,7 @@ Layout, top bar, banner, list, intro and accessibility follow [02](02-game-guess
 
 - Tiers are decided in whole numbers (10 000 · n against p² · D², and n against the minimum), so no tile is placed by float rounding.
 - A server `OUT_OF_MAP` for a tile inside the grid reads "outside the target area"; the input checks fallen and repeated tiles locally and keeps the selection inside the target area.
-- In individual mode Spring Herald also sends the room a line "everyone received a hint" (`HintGiven` with `quarters: null`).
+- In individual mode Spring Herald also sends the room a line "everyone got a free hint." (`HintGiven` with `quarters: null`).
 - The secret is stored with the round's answer rule (feedback mode and grid size) beside its tile, because the engine's `answer(value, secret)` gets no state; only the tile ever reaches a view, after the end.
 - Tiles take each player's list colour and name from the panel props (`names`, `colors`); "Another player" is gone.
 - (O45) The tier table gained a minimum in tiles per tier (§7): with shares alone, `hot` and `burning` could not occur below about 30 × 30 and an 8 × 8 grid had no `warm`. The action schema takes 1–30 per coordinate. The conformance kit plays on the largest grid, 30 × 30.

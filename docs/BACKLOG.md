@@ -1,6 +1,6 @@
 # Backlog
 
-The authoritative list. `OPEN.md` is the short page over it and is aligned after every change here.
+The authoritative list. `OPEN.md` is the short page over it and is aligned after every change here. The audits' findings, each with what was done and a proposal for the rest, are in [AUDIT.md](AUDIT.md).
 
 ## Part one — open
 
@@ -45,6 +45,7 @@ For Phase 7:
 
 ## Part two — closed
 
+- 2026-11-22: The production files carry no developer comments (owner decision O128, the ZAP finding 10027 of the production rehearsal): the built pages and `theme-init.js` are stripped in the build, the sources keep their headers (DECISIONS T403); proven on the production server build serving both production client builds (`/`, `/theme-init.js`, `/admin/`, `/embed.js`: no comment, the theme set in light and dark without a console error) and by `productionBundle.test.ts`. _Closed by:_ branch `chore/prod-comments`
 - 2026-11-22: The nightly WebKit finding of journey 16 (autumn, [run 44976858852](https://github.com/weudlll-cyber/seasonal-mini-games/actions/runs/44976858852), "the card holds its parts" 32 px over): the round intro card was fitted before the web fonts swapped in, and autumn's sentence then wrapped to a second line; the fit now runs again when fonts finish loading (DECISIONS T404), Chromium's card unchanged at 1280 × 720, 1536 × 768 and 390 × 844. _Closed by:_ branch `fix/webkit-intro-fit`
 - 2026-11-22: Faster checks (night chain 2026-11-21/22 (2), piece FASTER-CHECKS): `pnpm verify` measured per phase and per file, three runs before and after; Prettier's content cache and tsc's incremental state take a repeated run from 449–456 s to 418–419 s (a run without caches as before, CI unchanged), nothing left out (DECISIONS T401) _Closed by:_ branch `chore/faster-checks`
 - 2026-11-22: OPEN (ai), a pre-pick saved in the moment a round opened could count in it: the pre-picks are read in the opening's own transaction under a per-match lock that saves hold shared (DECISIONS T402); `accountPrefs.integration.test.ts` waits on the committed round row instead of the in-memory status, and a new case holds the lock to save while the opening waits for its commit (it plays in that round); the file passed 20 runs in a row. _Closed by:_ branch `fix/prepick-opening`

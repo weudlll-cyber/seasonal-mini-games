@@ -6,18 +6,18 @@
 
 | Topic | Bingo reference | Difference here |
 |---|---|---|
-| Conventions: PostgreSQL 17, UUIDv7 keys, `timestamptz` UTC, snake_case, `text` + `CHECK` instead of enums, `jsonb` only for documents and event payloads, **no monetary columns**, DB roles | Bingo 04 §1 | Schema `smg`, roles `smg_*`. |
-| Identity and access tables (`accounts`, `sessions`, `identity_providers`, `external_identities`, `roles`, `role_permissions`, `role_assignments`, `totp_factors`, `recovery_codes`, token tables, `player_profiles`, badges) | Bingo 04 §3.1 | No profile counters: a public profile is computed from the league awards, so it always agrees with the boards (DECISIONS T87). `identity_providers.kind` is `jwt_handoff` or `proxy_header` (the website, owner decision 66); `accounts.steps` holds a website member's Discord steps (a JSON array, at most three, `[]` standalone). |
+| Conventions: PostgreSQL 17, UUID keys (v4: `gen_random_uuid()` and `randomUUID()`; Bingo's v7 not adopted), `timestamptz` UTC, snake_case, `text` + `CHECK` instead of enums, `jsonb` only for documents and event payloads, **no monetary columns**, DB roles | Bingo 04 §1 | Schema `smg`, roles `smg_*`. |
+| Identity and access tables (`accounts`, `sessions`, `identity_providers`, `external_identities`, `roles`, `role_permissions`, `role_assignments`, `totp_factors`, `recovery_codes`, token tables, `player_profiles`, badges) | Bingo 04 §3.1 | `player_profiles` and badges are not built. No profile counters: a public profile is computed from the league awards, so it always agrees with the boards (DECISIONS T87). `identity_providers.kind` is `jwt_handoff` or `proxy_header` (the website, owner decision 66); `accounts.steps` holds a website member's Discord steps (a JSON array, at most three, `[]` standalone). |
 | Configuration tables (`settings_documents`, `settings_versions`, `embed_origins`) | Bingo 04 §3.2 | No `rulesets`, `ruleset_versions` or `patterns`. Per-game settings are settings documents with id `game.<gameId>` ([08](08-admin-settings.md)). |
 | Leaderboard tables (`leaderboard_periods`, `league_entries`, `league_awards`, `leaderboard_adjustments`) | Bingo 04 §3.4 | `league_entries` counts `wins` and `solves` instead of `season_completes`. `league_awards` hold a match's standing per board and account (replaced as its rounds end); `leaderboard_adjustments` are append-only. Adds `team_league_awards` and `team_league_entries` (§2.6). |
 | Chat and moderation tables | Bingo 04 §3.5 | None. |
-| Notifications, uploads, `audit_log`, `jwt_replay_cache` | Bingo 04 §3.6 | None. |
+| Notifications, uploads, `audit_log`, `jwt_replay_cache` | Bingo 04 §3.6 | Notifications and uploads are not built. |
 | `scheduled_actions` with leases | Bingo 04 §3.3 | The `kind` values differ (§2.5). |
 | Integrity rule: event logs, published versions and the audit log are immutable by trigger | Bingo 04 §4 | Applies to `round_events`. |
 | Migrations: hand-written SQL, checksummed own migrator, applied on start; seed on first install | Bingo 04 §6 | The seed has no rulesets. It holds the settings documents from defaults and the `game.guess-the-number` document. |
 | API conventions: `/api/v1`, zod contracts, OpenAPI generation, RFC 9457 problems, cursor pagination, `Idempotency-Key`, session cookie plus CSRF or bearer embed token, rate-limit headers | Bingo 05 §1 | None. |
 | Session, auth and profile routes | Bingo 05 §2.1, §2.2 | `POST /dev/sign-in` as Bingo (development builds only). `GET /session` adds `authMode` (`local` or `website`) and `signInPath` (`<base>auth/website` in website mode, else null). In website mode (owner decision 66) `POST /auth/register`, `POST /auth/login`, `POST /me/password` and `POST /dev/sign-in` do not exist; the sign-in is `GET <base>auth/website` and `GET <base>auth/website/login`, outside `/api` ([07](07-integration.md) §7). |
-| Leaderboard, chat, notification and misc routes (`/config/public`, `/assets`, `/healthz`, `/readyz`, `/metrics` internal only) | Bingo 05 §2.4, §2.5 | In website mode `/readyz` also answers `websiteFeed.lastSuccessAt` ([07](07-integration.md) §7.3). Leaderboards add `GET /leaderboards/:periodId/teams`; pages are `?offset=` steps of 50. The public profile is `GET /players/:displayName` (Bingo 05 §2.2); its last rounds carry their match's `gameId`. A board shows the period's total over every game; `?game=<id>` on `GET /leaderboards/:periodId`, `…/me` and `…/teams` shows one game's board instead, summed from the awards of that game's matches (owner decision 44; staff adjustments count in the total only; DECISIONS T126). An award belongs to a match, and the match names its game (T121). |
+| Leaderboard, chat, notification and misc routes (`/config/public`, `/assets`, `/healthz`, `/readyz`, `/metrics` internal only) | Bingo 05 §2.4, §2.5 | Notification routes, `/config/public` and `/assets` are not built. In website mode `/readyz` also answers `websiteFeed.lastSuccessAt` ([07](07-integration.md) §7.3). Leaderboards add `GET /leaderboards/:periodId/teams`; pages are `?offset=` steps of 50. The public profile is `GET /players/:displayName` (Bingo 05 §2.2); its last rounds carry their match's `gameId`. A board shows the period's total over every game; `?game=<id>` on `GET /leaderboards/:periodId`, `…/me` and `…/teams` shows one game's board instead, summed from the awards of that game's matches (owner decision 44; staff adjustments count in the total only; DECISIONS T126). An award belongs to a match, and the match names its game (T121). |
 | Admin route layout, permissions per route, audit on every write, step-up | Bingo 05 §3 | Rulesets, patterns and the simulator are replaced by settings documents and `halving-days` (§3.2). |
 | Realtime transport (Socket.IO over WebSocket only, `/ws`, namespaces `/play` and `/admin`, connection state recovery, frame limits) | Bingo 06 §1 | None. |
 | Handshake and auth, session revocation push | Bingo 06 §2 | A socket may be in at most 3 match rooms. |
@@ -77,14 +77,14 @@
 | seed_commitment | bytea NULL | `sha256(seed)` when the fairness proof is on |
 | seed_enc | bytea | AES-256-GCM with `SMG_ROUND_KEY`; returned only for `ended` / `aborted` rounds |
 | opens_at, ended_at | timestamptz NULL | |
-| end_reason | text NULL | `solved`, `allSolved`, `timeUp`, `host`, `noPlayers` |
+| end_reason | text NULL | `solved`, `allSolved`, `timeUp`, `host`, `noPlayers`, `game` |
 | aborted_reason, aborted_by | text NULL | |
 | outcome_words | text NULL | a phased round only: what won in the game's words once it has ended, an empty text when nobody won (DECISIONS T333); NULL for every guess round |
 | created_by | uuid FK | |
 
-**round_events** — `round_id`, `seq bigint`, `type text`, `payload jsonb`, `occurred_at`, `actor_account_id NULL`. PK `(round_id, seq)`. **Append-only** by trigger: UPDATE and DELETE are rejected for every role. Payload schemas per type live in `packages/contracts/src/events/` (platform) and `games/<game>/src/events.ts` (game). Matches and rounds made by tests are aborted, never deleted.
+**round_events** — `round_id`, `seq bigint`, `type text`, `payload jsonb`, `occurred_at`, `actor_account_id NULL`. PK `(round_id, seq)`. **Append-only** by trigger: UPDATE and DELETE are rejected for every role. Payload types per type live in `packages/domain/src/round/types.ts` (platform) and in each game's module (its `E` events); `type` stores a game event as `game.<type>`. Matches and rounds made by tests are aborted, never deleted.
 
-**round_snapshots** — `round_id`, `seq`, `state jsonb` (contains no secret: secrets are derived again on load), `created_at`. Every 200 events. Keep the last 2 while a round runs and only the last after the end.
+**round_snapshots** — `round_id`, `seq`, `state jsonb` (contains no secret: secrets are derived again on load), `created_at`. Every 200 events. The last 2 are kept, also after the end.
 
 ### 2.4 `round_results`
 
@@ -99,7 +99,7 @@
 
 - **match_standings** — `match_id`, `player_key`, `points`, `wins`, `first_win_at NULL`, `rank`. PK `(match_id, player_key)`. Updated with `RoundEnded`.
 - **match_team_standings** — `match_id`, `team`, `points int`, `wins`, `first_win_at NULL`, `rank`. PK `(match_id, team)`.
-- **scheduled_actions** (Bingo 04 §3.3) — `kind` values: `round_open`, `special` (payload: special and index), `round_time_up` (in a `phased` round at the plan's end), `match_autostart` (in a series also the next round after the pause, [04](04-software-architecture.md) §4.8 rule 7).
+- **scheduled_actions** (Bingo 04 §3.3) — `kind` values: `round_open`, `round_time_up` (in a `phased` round at the plan's end plus the hold before the result), `special` (allowed by the check, never written: the actor's timer fires the specials, DECISIONS T40), `match_autostart` (in a series also the next round after the pause, [04](04-software-architecture.md) §4.8 rule 7).
 
 ### 2.6 Seasons and leaderboard additions
 
@@ -133,7 +133,7 @@ Rejected guesses are **not** events. They are counted in metrics and in the abus
 
 ### 2.8 Sizing
 
-A shared round with 500 players, 10 s cooldown, lasting 5 minutes: at most 15 000 accepted guesses, about 45 000 events (`GuessAccepted`, `FeedbackGiven`, `GuessFed` per guess), about 9 MB. At 50 such rounds a day that is under 10 GB a month before compaction. The events of rounds older than 90 days are compacted: `round_results` stay, `round_events` of type `GuessAccepted`, `FeedbackGiven` and `GuessFed` move to a compressed archive table, and the hash of the moved rows stays in place so that the log remains verifiable.
+A shared round with 500 players, 10 s cooldown, lasting 5 minutes: at most 15 000 accepted guesses, about 45 000 events (`GuessAccepted`, `FeedbackGiven`, `GuessFed` per guess), about 9 MB. At 50 such rounds a day that is under 10 GB a month before compaction. The events of rounds older than 90 days are to be compacted (not built; `round_events` is append-only by trigger, §2.3, so the compaction needs a migration of its own): `round_results` stay, `round_events` of type `GuessAccepted`, `FeedbackGiven` and `GuessFed` move to a compressed archive table, and the hash of the moved rows stays in place so that the log remains verifiable.
 
 ### 2.9 Website mode (owner decision 66)
 
@@ -149,7 +149,7 @@ Every public answer and frame names a player by their number in the match, `p1`,
 |---|---|---|---|
 | GET | `/games` | — | anyone: registered games with name and supported modes |
 | GET | `/matches?status=&game=` | — | anyone: public matches in the lobby or open, and those ended in the last day |
-| POST | `/matches` | `{ gameId, title, visibility, maxPlayers, countsForLeaderboard?, teamMatch? }` (`teamMatch` default true, owner decision 34; `gameId` one of `GET /games`, chosen in the create-match form, owner decision 41: every round of the match is that game) | `match.create`; the host joins as the match's first player (owner decision 16); 422 `GAME_UNKNOWN` |
+| POST | `/matches` | `{ gameId, title, visibility, maxPlayers, countsForLeaderboard?, teamMatch?, showOnWebsite? }` (`teamMatch` default true, owner decision 34; `showOnWebsite` default true, O125; `gameId` one of `GET /games`, chosen in the create-match form, owner decision 41: every round of the match is that game) | `match.create`; the host joins as the match's first player (owner decision 16); 422 `GAME_UNKNOWN` |
 | POST | `/dev/quicktest` (development builds only) | `{ gameId?, mode?, bots?, cooldownS?, visibility?, …, settings? }`: the Guess The Number fields `rangeLow`, `rangeHigh`, `rangeVisible`, `comments` reach only a game that has those keys; `settings` holds the chosen game's own round settings by key (at most 40), checked like the host's (DECISIONS T121), and the inactivity limit and warning (owner decision 75) | signed in; 422 `GAME_UNKNOWN`, 422 `ROUND_SETTINGS_INVALID` (as for `/matches/:code/rounds`) |
 | GET | `/matches/:code` | — | anyone: summary (`youHost`, `teamLocked` for the viewer, player count, current round summary, `teamStandings`, `nextRoundDefaults` for the host, `standings`, and `ended` once the match is closed or aborted: rounds played and how it ended, the summary taking the players' totals from `standings` and the teams from `teamStandings`; DECISIONS T85) |
 | POST | `/matches/:code/join` · `/leave` | `{}` | `match.join`; a player staff removed from the match is refused with 409 `KICKED` |
@@ -164,6 +164,7 @@ Every public answer and frame names a player by their number in the match, `p1`,
 | GET | `/rounds/:id/result` | — | anyone, after the end: placings, team results, secret(s), seed if revealed |
 | GET | `/rounds/:id/verify` | — | anyone, after the end with the fairness proof on: seed, settings, roster, the accepted guesses in receive order |
 | POST | `/matches/:code/close` · `/abort` | `{}` · `{ reason }` | the host; close is the host menu's End match (owner decision 27): a round set up or running is aborted, ended rounds keep their points. The system closes an idle match the same way (decision 28) |
+| PUT | `/matches/:code/website` | `{ show }` | the host, while the match is open: "Show on the website" (O125, [07](07-integration.md) §8); 409 for a Quick Test or an ended match |
 | GET | `/seasons/current` | — | anyone: the In Season answer if usable, today's halving status |
 | GET | `/me/matches` | — | the signed-in account |
 
@@ -214,7 +215,7 @@ On the wire, committed events arrive as `events` frames (Bingo 06 §4, as built;
 - A player's room gets `{ roundId, events }` with only that player's own events, the host room likewise.
 - A `phased` round with a delay sends the match room `{ roundId, rs, events }` instead: only events released once `D` old, numbered by the round's release sequence `rs`, without any `null` place holder, so no number counts what is not released yet ([04](04-software-architecture.md) §4.8 rule 5); the frame's field is `s` as for every round, holding `rs`. Its player frames carry the player's own events at once, each with the current `rs` as its `s` (DECISIONS T291).
 
-The `event` values are the projected public or per-player forms below:
+The `event` values are the projected public or per-player forms below. As built (audit of 2026-11-22): the table names what the frames carry, not their types; an `event` keeps the domain log's type (`GuessAccepted`, `Game`, `RoundEnded`, … in `packages/domain/src/round/types.ts`), projected per viewer (`apps/server/src/round/views.ts`). Beside `events` the server emits only `match` (`{ matchId }`, at most once a second; the clients then reload the match and its standings, so there is no `standings.updated`), `prefs.refused` and `chat`; `resync` and the ack code `RESYNC` are not built (04 §5.6).
 
 | Event | Room | Data |
 |---|---|---|

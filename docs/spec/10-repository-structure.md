@@ -10,7 +10,7 @@ Files whose role is the same as in Bingo (Bingo 10 §1) are listed by name only.
 seasonal-mini-games/
 ├─ README.md  CLAUDE.md  LICENSE  SECURITY.md  CONTRIBUTING.md
 ├─ .editorconfig  .gitattributes  .gitignore  .nvmrc  .npmrc
-├─ package.json  pnpm-workspace.yaml  pnpm-lock.yaml        workspaces: packages/*, games/*, apps/*, e2e, load
+├─ package.json  pnpm-workspace.yaml  pnpm-lock.yaml        workspaces: packages/*, games/*, apps/*, load
 ├─ tsconfig.base.json  eslint.config.js  prettier.config.js  vitest.config.ts  lefthook.yml  renovate.json
 ├─ .vscode/  .github/                                        as Bingo (workflows, shared setup action, PR template)
 ├─ assets/                                                   copied from Bingo assets/ with its manifest (03 §6)
@@ -20,28 +20,32 @@ seasonal-mini-games/
 │  │                       @smg/game-sdk/crypto: drbg.ts, commitment.ts)
 │  ├─ guess-engine/src/    the shared guess engine (04 §4.7): secrets, state, rules, comments, tiers,
 │  │                       views, candidates, closestMiss, settings, module (guessModule)
-│  ├─ domain/src/          match/, round/ (lifecycle, roster, cooldown, order, placings), specials/
-│  │                       (scheduling, Heatwave, Frost), teams/, seasons/, standings/
-│  ├─ application/src/     round/ (engine.ts: the round actor, batcher.ts, queue.ts), match/, seasons/,
-│  │                       ports.ts (Clock, SecureRandom, RoundStore, Scheduler, EventBus, SeasonFeed), fakes.ts
-│  ├─ contracts/src/       http/, ws/, events/, settings/ (schemas and defaults/), errors.ts
+│  ├─ domain/src/          round/ (types, lifecycle, guess, phased, specials, inactivity, results,
+│  │                       closest, evolve), league/, audit/
+│  ├─ application/src/     round/ (roundSession: the round's state machine over the domain,
+│  │                       roundSettings, verify), settings/ (the settings service), audit/, fakes.ts
+│  ├─ contracts/src/       http/ (the wire shapes per area), settings/ (platform, chat, security:
+│  │                       definitions with their defaults), withoutEval.ts
 │  └─ ui/                  shared React components, design tokens (as Bingo)
 ├─ games/
 │  ├─ registry/            src/index.ts (modules), web/index.ts (screens): the installed games (04 §3);
 │  │                       src/conformance.test.ts, phased.conformance.test.ts: the conformance suite
 │  ├─ guess-the-number/
-│  │  ├─ src/              module.ts, feedback.ts, hints.ts, leafFall.ts, halving.ts, views.ts, events.ts,
-│  │  │                    settings/ (schema.ts, defaults.ts), *.test.ts
-│  │  └─ web/              GameScreen.tsx, RangeBar.tsx, CooldownRing.tsx, GuessList.tsx, strings.ts
+│  │  ├─ src/              module.ts, rules.ts, feedback.ts, closeness.ts, comments.ts, specials.ts,
+│  │  │                    leafFall.ts, secrets.ts, state.ts, views.ts, settings.ts, *.test.ts
+│  │  └─ web/              PlayerPanel.tsx, SpectatorPanel.tsx, ResultPanel.tsx, RangeBar.tsx,
+│  │                       InfoLine.tsx, FallenNumbers.tsx, text.ts (the round's list and cooldown
+│  │                       ring are the platform's, apps/web/src/round)
 │  ├─ safecracker/         02b; src/ and web/ as above, on the guess engine
 │  ├─ bomb-defusal/        02c; likewise
 │  ├─ seasonal-target/     02d; likewise
 │  └─ mind-games/          02e; src/ and web/, timing class phased, not on the guess engine
 ├─ apps/
 │  ├─ server/src/          main.ts, cli.ts, config/, http/, auth/, realtime/ (gateway, intents, inOrder),
-│  │                       round/ (actor host, pgRoundStore, pgScheduler), seasons/ (feed client), db/, dev/
-│  ├─ web/src/             shell/, lobby/, match/ (round host: loads the game's web entry), host/, account/,
-│  │                       leaderboard/, chat/, embed/
+│  │                       round/ (actor, pgRoundStore, scheduler), match/, league/, chat/, admin/,
+│  │                       integration/, seasons/ (feed client), db/, dev/
+│  ├─ web/src/             shell/, lobby/, match/ (the waiting area and the host menu), round/ (round
+│  │                       host: loads the game's web entry), account/, boards/, chat/, embed/, live/
 │  ├─ admin/  embed-loader/                                  as Bingo
 ├─ e2e/                    Playwright specs (journeys of 09 §4)
 ├─ load/                   guessStorm.mjs, mindStorm.mjs (09 §5)
@@ -59,7 +63,7 @@ As Bingo 10 §2, enforced by ESLint and `tsc`: file ≤ 300 lines (tests ≤ 400
 
 ## 3. Standard file header (adopted from Bingo 10 §3)
 
-Every source file (TS, TSX, SQL, shell, YAML workflow) starts with this header. Comment syntax follows the language: `#` lines for shell and YAML, `--` for SQL.
+Every source file (TS, TSX, SQL, shell, YAML workflow) starts with this header. Comment syntax follows the language: `#` lines for shell and YAML, `--` for SQL. The headers stay in the sources only: the files the production build serves carry no developer comments (owner decision O128; the bundles are minified, the pages and `theme-init.js` stripped by `apps/web/productionFiles.ts` and the admin app's Vite config, checked by `apps/server/test/productionBundle.test.ts`).
 
 ```ts
 /**
@@ -94,7 +98,7 @@ Every port of this repository differs from every port used in the Bingo reposito
 | Browser tests' own server, player client and admin app ([09](09-testing-strategy.md) §1.1; 3940, 5440 and 5441 until 2026-11-21, when another project on the development machine took 3940, DECISIONS T398) | **3740**, **5740**, **5741** | — |
 | Journey 36's website-mode server and stand-in website | **3960**, **5430** | — |
 | Load check's own server ([09](09-testing-strategy.md) §1.1) | **3950** | — |
-| Metrics port inside its container | **9465** | 9464 |
+| Metrics port inside its container | **9465** (reserved, not used: `/metrics` is served on the app's own port) | 9464 |
 
 Container-side ports of the third-party images (PostgreSQL 5432, Mailpit 1025 and 8025) are not bound on the host and are the same in both repositories.
 
@@ -111,7 +115,7 @@ Bingo 08 applies with the names of [04](04-software-architecture.md) §2.2:
 
 - environments (§1);
 - branching and release flow (§2);
-- CI (`.github/workflows/ci.yml`) on every push: `verify`, `security`, `docs`, the e2e journeys in Chromium and the `image` job; Firefox and WebKit every night on master (`browsers.yml`, O103); no CI job runs the load scenarios (`load/`, 09 §5), which are run by hand (§3);
+- CI (`.github/workflows/ci.yml`) on every push: `verify`, `security`, `docs`, the e2e journeys in Chromium and the `image` job; Firefox and WebKit every night on master (`browsers.yml`, O103); the load scenarios (`load/`, 09 §5) run in `.github/workflows/load.yml` on a push to a `load/**` branch and when started by hand (§3);
 - containers (§4: multi-stage, non-root uid 10001, read-only root FS, healthcheck `/healthz`, image ≤ 250 MB);
 - runtime configuration through validated env vars (§5);
 - observability with the metrics of [06](06-data-model-api-realtime.md) §4.6 (§6);

@@ -3,7 +3,8 @@
  * @module server/seasons
  * @brief  In Season and the halving days: the feed poller, the current season, today's halving.
  *
- * Responsibility: poll `seasons.feedUrl` every `inSeason.pollS` (07 §5; a development build
+ * Responsibility: poll `seasons.feedUrl` every `inSeason.pollS` (a failure never ends the
+ *                 polling; 07 §5; a development build
  *                 may name a local feed instead, SMG_DEV_FEED_URL); a valid answer
  *                 replaces the stored one and merges its halving days (admin entries stay),
  *                 an invalid or missing one keeps the last good answer and records the error.
@@ -60,6 +61,9 @@ function dayIn(now: number, timeZone: string): string {
   }
 }
 
+// `inSeason.pollS`'s default (@smg/contracts settings/platform.ts), when the setting cannot be read.
+const DEFAULT_POLL_S = 300;
+
 export class Seasons {
   private timer: NodeJS.Timeout | null = null;
 
@@ -70,19 +74,25 @@ export class Seasons {
     private readonly devFeedUrl: string | null,
   ) {}
 
+  // Polls now and then every `inSeason.pollS`; a poll or a read of the setting that fails (the
+  // database away) never ends the loop: the next poll comes at the setting's default then.
   start(): void {
-    const tick = (): void => {
-      void this.poll()
-        .catch((error: unknown) => {
-          console.error('[smg] season feed poll failed:', error);
-        })
-        .then(() => this.settings.values('seasons'))
-        .then((v) => {
-          if (this.timer !== null)
-            this.timer = setTimeout(tick, (v['inSeason.pollS'] as number) * 1_000);
-        });
+    const tick = async (): Promise<void> => {
+      await this.poll().catch((error: unknown) => {
+        console.error('[smg] season feed poll failed:', error);
+      });
+      const waitS = await this.settings.values('seasons').then(
+        (v) => v['inSeason.pollS'] as number,
+        (error: unknown) => {
+          console.error('[smg] season feed setting not read:', error);
+          return DEFAULT_POLL_S;
+        },
+      );
+      if (this.timer === null) return;
+      this.timer = setTimeout(() => void tick(), waitS * 1_000);
+      this.timer.unref();
     };
-    this.timer = setTimeout(tick, 0);
+    this.timer = setTimeout(() => void tick(), 0);
     this.timer.unref();
   }
 

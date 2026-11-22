@@ -24,10 +24,10 @@ Each row is built as Bingo specifies, with the names of §2.2. "Difference" list
 | Modular monolith, one Node.js process, stateless apart from the database | Bingo 02 §1 | None. |
 | System context (Caddy → app → PostgreSQL, optional SMTP and Web Push) | Bingo 02 §2 | The app is `smg-server`. The Seasonal Entertainment website signs in through `jwt-handoff` (Bingo D3), so the diagram's "OIDC" for the website does not apply. The website is also the source of the In Season feed ([07](07-integration.md) §5). |
 | Hexagonal layers and the dependency rule, enforced by lint | Bingo 02 §3 | Adds `packages/game-sdk` and `games/*` (§3). |
-| Bounded contexts communicating through domain events on an in-process bus | Bingo 02 §4 | "Match" becomes **Match & Round** (§6). "Configuration" holds settings documents and per-game settings instead of rulesets and patterns. |
+| Bounded contexts communicating through domain events on an in-process bus | Bingo 02 §4 | No bus is built: the contexts subscribe to the round's committed batches (§6). "Match" becomes **Match & Round** (§6). "Configuration" holds settings documents and per-game settings instead of rulesets and patterns. |
 | Functional core: commands → `decide(state, command, ctx) → events`, `evolve(state, event) → state` | Bingo 02 §5.1 | The command set is in §5.1. Game modules use the same pattern (§4). |
 | Event log + snapshots, recovery on restart | Bingo 02 §5.2 | The log is per **round** (`round_events`), with snapshots every 200 events. Acknowledgements wait for group commit (§5.3). |
-| DB-backed scheduler (`scheduled_actions`, `FOR UPDATE SKIP LOCKED`, leases) | Bingo 02 §5.3 | Polls every 100 ms while a round is open. Precision target: a special fires within 150 ms of its due time (p95). |
+| DB-backed scheduler (`scheduled_actions`, `FOR UPDATE SKIP LOCKED`, leases) | Bingo 02 §5.3 | Polls every 100 ms (`SMG_SCHEDULER_POLL_MS`) from the server's start. Precision target: a special fires within 150 ms of its due time (p95). |
 | Per-match command serialization | Bingo 02 §5.4 | It is per **round**, and guesses go **through** the queue. Bingo's off-the-aggregate mark path does not apply (§5.2). |
 | Configuration model: typed settings documents, versioned, audited, defaults in `contracts`, min/max per key | Bingo 02 §6 | No rulesets. Per-game settings documents and round settings frozen per round ([08](08-admin-settings.md)). |
 | Cross-cutting: zod at every boundary, `Result` errors and RFC 9457, `Clock` port, `SecureRandom` port, Pino logging, English strings files, UUIDv7 IDs and short public codes | Bingo 02 §7 | The per-match `Drbg` becomes a per-round DRBG (§5.4). |
@@ -68,10 +68,14 @@ packages/game-sdk     The game-module contract (types) and pure helpers every ga
                       setting definitions, range arithmetic, view helpers. Free of node:crypto.
                       Its second entry @smg/game-sdk/crypto holds the DRBG and the commitment
                       for the platform (a game only receives a RoundRng). Depends only on zod.
-packages/domain       Platform rules: match and round lifecycle, roster, cooldown, receive order,
-                      placings, season and special scheduling, teams, standings. Pure.
-packages/application  Use cases and ports (Clock, SecureRandom, RoundStore, Scheduler, EventBus,
-                      SeasonFeed). Hosts the round engine (§5). No framework imports.
+packages/domain       Platform rules of a round: lifecycle, roster, cooldown, receive order,
+                      placings, specials, inactivity, results; the league awards; the audit
+                      chain. Pure.
+packages/application  The round session (a round's state machine over a game module, its
+                      settings and its verification), the settings service and the audit log
+                      with their ports (SettingsStore, AuditLog). No framework imports. The
+                      round actor, its batches and Frost are the server's (apps/server
+                      src/round, §5).
 packages/guess-engine The shared guess engine (§4.7, DECISIONS T117): secrets, guesses, feedback
                       events, closeness tiers and comments, Frost-aware views at the round's
                       visibility, the closest miss and the Leaf Fall candidate rule, for the games
@@ -121,7 +125,8 @@ interface GameModule<S, A, E, Cfg, Sec> {
   settings: {
     defs: SettingDef[];         // the game's own keys of document game.<id> (08 §3)
     read(values): Cfg;          // frozen values → the game's config
-    problem(cfg: Cfg): string | null;  // a rule across keys
+    problem(cfg: Cfg): string | SettingIssue | null;  // a rule across keys
+    halvingAllowed?(cfg: Cfg): boolean;  // whether a halving round may use this config
   };
   actionSchema: ZodType<A>;     // the payload of one player action (a guess)
   deriveSecrets(input: RoundInput<Cfg>, rng: RoundRng): Sec;  // secrets are made here, never stored
@@ -253,6 +258,7 @@ phased?: {                         // present exactly when meta.timing is 'phase
   prefs?: {                        // one small value per player per match (pre-picks)
     schema: ZodType<P>;
     action(prefs: P, roundIndex: number, cfg: Cfg): A | null;     // the action it makes at a round's opening
+    accountKeys?: readonly string[];  // top-level keys kept per account (O116)
   };
   outcome(state: S): ReadonlyArray<{ playerId: string; won: boolean; points: number }>;  // no action count (T342)
 };
@@ -266,7 +272,7 @@ interface PhasePlan {              // milliseconds after opensAt
 
 **Rules the platform applies to every `phased` round:**
 
-1. **Phases.** The plan is computed once when the round is created and stored in `RoundCreated`; the countdown makes its times absolute from `opensAt`. The end is a `scheduled_actions` row (`round_time_up` at `opensAt + endMs`, in place of the longest round time); the entry and action ends need no timer, because they are checks at the receive time (rule 2). The views get the plan, so the client shows the phases; it never decides one.
+1. **Phases.** The plan is computed once when the round is created and stored in `RoundCreated`; the countdown makes its times absolute from `opensAt`. The end is a `scheduled_actions` row (`round_time_up` at `opensAt + endMs` plus the hold before the result of rule 5, in place of the longest round time); the entry and action ends need no timer, because they are checks at the receive time (rule 2). The views get the plan, so the client shows the phases; it never decides one.
 2. **Checks, in this order** (as [02](02-game-guess-the-number.md) §5.1, the first failure decides): `ROUND_NOT_OPEN` / `ROUND_OVER`; `NOT_IN_ROUND` when the actor is not an active player of the match at the receive time; `PLAY_OVER` at or after `actionsEndMs`; `JOIN_CLOSED` for an actor not yet in the round at or after `entryEndMs`; then the game's `validate`; then `decide`. There is no `TIMED_OUT`, `ALREADY_SOLVED` or `COOLDOWN_ACTIVE`. A player's first accepted action puts them in the round: the platform logs `PlayerEntered` before the action. Every refusal is free and private (P4).
 3. **Players.** There is no roster frozen at the countdown: every active match player may enter while the entry window runs, players who join the match during a round included (in place of 02 §2's "they watch it and play from the next round"); `RoundInput.roster` holds the match's players at the countdown for information only. No teams unless `meta.teams` (Mind Games: none).
 4. **No cooldown, Heatwave, Frost or inactivity limit.** The round has no cooldown and no `cooldownEndsAt`; the host form offers no special for a `phased` game (its document has no `round.specialOn`), so Heatwave and Frost never run; no player is timed out (its document has no `round.inactivityLimitS`). Its acknowledgement is `{ ok: true }` only, without `receiveSeq`: a receive number would tell a player how many actions others made since their last one.
@@ -327,11 +333,11 @@ Platform commands on a round: `createRound`, `startCountdown`, `openRound`, `sub
 ### 5.5 Time
 
 - **Cooldown has no timer.** The actor stores `cooldownEndsAt` per player and compares it with `receivedAt` (§5.1 check 7 of [02](02-game-guess-the-number.md)). With 500 players there are no 500 timers. That is the "no global tick" of owner decision 3 in code.
-- **Scheduled:** round open (`opensAt`), each special's due times, longest round time. These are `scheduled_actions` rows, so they are restart-safe.
+- **Scheduled:** round open (`opensAt`) and the round's end (the longest round time; in a `phased` round the plan's end plus the hold before the result) are `scheduled_actions` rows (`round_open`, `round_time_up`), so they are restart-safe; a special's due times are not rows: the actor's one timer below fires them, and after a restart the round catches up with them from its state (DECISIONS T40).
 - **Inactivity has no timer per player either** (owner, decision 71). Each roster player's limit is a time computed from the state (the open, or their last accepted guess's cooldown end and Frost delivery, [02](02-game-guess-the-number.md) §5.3).
   - The actor's one timer for the round's next due time (`nextDue`: the open, a special, the next limit, the end) runs a tick through the queue; that tick, or any earlier command, first catches the round up, logging each limit whose 2 s grace has passed (owner decision 72) as `PlayerTimedOut` with the limit plus the grace as its time, in time order with the specials (DECISIONS T274).
   - A late timer or a restart therefore writes the same events (DECISIONS T267).
-- **Frost deliveries** are in-memory timers on the actor (due `receivedAt + delay`). After a restart, every held event that was not delivered is recomputed from the log and sent at its due time, or at once if that time has passed.
+- **Frost deliveries** are in-memory timers on the actor (due `receivedAt + delay`). After a restart, and after a failed commit, every held event that was not delivered is recomputed from the log and sent at its due time, or at once if that time has passed (DECISIONS T405).
 - All times are server-clock milliseconds from the `Clock` port. The client shows times corrected by its measured offset ([06](06-data-model-api-realtime.md) §4.1).
 
 ### 5.6 Scale-out (documented, not built in v1)
@@ -348,4 +354,4 @@ One round runs on one instance under a lease (the `scheduled_actions` lease patt
 | **Leaderboard** | As Bingo, plus the team standing ([03](03-seasonal-specials.md) §5). |
 | Identity & Access, Chat & Moderation, Notification, Audit | As Bingo 02 §4. |
 
-Events between contexts: `RoundEnded` → Leaderboard (match points, team points), Notification and Chat (system line). `SeasonFeedChanged` → admin dashboard.
+Events between contexts: there is no event bus; the round's committed batches go to their subscribers in the server (`Rounds.onCommitted`): `RoundEnded` writes the results, match standings and league awards in the same transaction (`round/pgRoundStore.ts`), and the gateway, the chat's round lines and the series listen to the committed events (`realtime/gateway.ts`, `chat/roundLines.ts`, `round/runtime.ts`).
