@@ -2,6 +2,8 @@
 node_modules/
 dist/
 coverage/
+# tsc's incremental state of each project (tsconfig.base.json, DECISIONS T401)
+*.tsbuildinfo
 # Test output
 test-results/
 playwright-report/
