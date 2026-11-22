@@ -53,6 +53,9 @@ export interface PrefsHooks<A, Cfg> {
   readonly schema: ZodType;
   // `prefs` passed the schema; the round's index in the match, from 1.
   readonly action: (prefs: unknown, roundIndex: number, cfg: Cfg) => A | null;
+  // The value's top-level keys that hold per account across matches, not per match: the
+  // platform keeps them with the account and puts them into every match's value (O116).
+  readonly accountKeys?: readonly string[];
 }
 
 export interface PhasedHooks<S, A, Cfg> {

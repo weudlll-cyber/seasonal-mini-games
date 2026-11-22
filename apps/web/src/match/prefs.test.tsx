@@ -2,12 +2,15 @@
 /**
  * @file   apps/web/src/match/prefs.test.tsx
  * @module web/match
- * @brief  A phased game's pre-pick panel in the waiting area (04 §4.8 rule 8).
+ * @brief  A phased game's pre-pick panel in the waiting area and in a round (04 §4.8 rule 8).
  *
  * Responsibility: the game's `Prefs` panel shows for a player of the match with the viewer's
  *                 own value, the series' rounds and those played; what it saves is sent with
  *                 `PUT …/prefs`, and a refusal's code comes back to it; a spectator and a game
- *                 without the panel get nothing.
+ *                 without the panel get nothing. In a round the same panel (`roundPrefsOf`,
+ *                 O117) counts the running round as played, so it lists only the later rounds,
+ *                 is marked as opened in the round (O122), and saves as the round's own part
+ *                 does; the series' last round has none.
  * Depends on:     vitest, @testing-library/react, ./GamePrefs (also `useOwnPart`, T327)
  * Spec:           docs/spec/04-software-architecture.md §4.8 rule 8; docs/spec/06-data-model-api-realtime.md §3.1
  */
@@ -39,7 +42,7 @@ function StubPanel(p: PrefsPanelProps) {
   const [answer, setAnswer] = useState('');
   return (
     <div data-testid="stub-prefs">
-      {JSON.stringify({ prefs: p.prefs, rounds: p.rounds, played: p.played })}
+      {JSON.stringify({ prefs: p.prefs, rounds: p.rounds, played: p.played, inRound: p.inRound })}
       <button
         type="button"
         onClick={() => {
@@ -67,7 +70,7 @@ vi.mock('../live/socket.js', () => ({
   }),
 }));
 
-const { GamePrefs, useOwnPart } = await import('./GamePrefs.js');
+const { GamePrefs, roundPrefsOf, useOwnPart } = await import('./GamePrefs.js');
 
 afterEach(() => {
   cleanup();
@@ -141,5 +144,40 @@ describe("the viewer's own part of a phased round (DECISIONS T327)", () => {
       path: '/matches/ABC123/prefs',
       body: { prefs: { picks: {}, hide: true } },
     });
+  });
+});
+
+describe('the pre-pick panel during a round (O117)', () => {
+  const own = (roundIndex: number, saved: unknown[]) => ({
+    roundIndex,
+    prefs: { picks: { '3': 'c' } },
+    save: (prefs: unknown) => {
+      saved.push(prefs);
+      return Promise.resolve({ ok: true });
+    },
+    refusedPrePick: null,
+  });
+
+  it('lists the rounds after the running one and saves as the round’s own part', async () => {
+    const saved: unknown[] = [];
+    const panel = roundPrefsOf(
+      match({ series: { rounds: 4, played: 1, nextAt: null } }),
+      own(2, saved),
+    );
+    render(<>{panel}</>);
+    expect(screen.getByTestId('stub-prefs').textContent).toContain(
+      '{"prefs":{"picks":{"3":"c"}},"rounds":4,"played":2,"inRound":true}',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText('saved')).toBeTruthy();
+    expect(saved).toEqual([{ picks: { '1': 'a' } }]);
+    expect(sent).toEqual([]);
+  });
+
+  it('is none in the series’ last round, for a spectator or a game without the panel', () => {
+    const last = match({ series: { rounds: 2, played: 1, nextAt: null } });
+    expect(roundPrefsOf(last, own(2, []))).toBeNull();
+    expect(roundPrefsOf(match({}), undefined)).toBeNull();
+    expect(roundPrefsOf(match({ gameId: 'guess-the-number' }), own(1, []))).toBeNull();
   });
 });

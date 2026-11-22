@@ -45,7 +45,7 @@ import { RoundScreen } from '../round/RoundScreen.js';
 import { DockedMatch } from './DockedMatch.js';
 import { HostConsole, HostMenu, hosts, type Values } from './HostMenu.js';
 import { JoinLeave } from './JoinLeave.js';
-import { useOwnPart } from './GamePrefs.js';
+import { roundPrefsOf, useOwnPart } from './GamePrefs.js';
 import { MatchSummary } from './MatchSummary.js';
 import { NextRound } from './NextRound.js';
 import { ResultBar } from './ResultBar.js';
@@ -153,6 +153,8 @@ function MatchView(p: {
       // neither: ./DockedMatch holds it under both.
       chat={phase === 'live' && !docked ? chat : null}
       own={own}
+      // A player's pre-picks for the later rounds, from the round bar (O117).
+      prefs={roundPrefsOf(match, own)}
       // Docked with its own result, the next round's box goes beside the standings (O97).
       next={ownAfter ? nextBox(match, live, refresh) : undefined}
       roundNo={playedOf(match)}

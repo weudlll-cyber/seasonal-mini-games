@@ -46,6 +46,8 @@ interface Runner {
   series(gameConfig: unknown): Series | null;
   // A phased game's prefs value as its schema reads it, or undefined (rule 8); null: none.
   readonly parsePrefs: ((raw: unknown) => unknown) | null;
+  // The value's keys kept per account across matches, not per match (O116).
+  readonly accountKeys: readonly string[];
   // A development bot's pre-picks for a match of `rounds` rounds, or null (09 §4.2).
   readonly devPrefs: ((pick: (n: number) => number, rounds: number) => unknown) | null;
   // Throws RoundSettingsError for choices the round form would refuse.
@@ -119,6 +121,7 @@ export class Rounds {
       docKeys: new Set(gameSettingsDefs(entry.module).map((d) => d.key)),
       series: (cfg) => entry.module.phased?.series(cfg as Cfg) ?? null,
       parsePrefs: prefsParser(entry.module.phased?.prefs?.schema),
+      accountKeys: entry.module.phased?.prefs?.accountKeys ?? [],
       devPrefs: entry.devPrefs ?? null,
       check: (overrides, choices) => {
         chooseRoundSettings(entry.module, overrides, choices);
@@ -167,6 +170,11 @@ export class Rounds {
   // A prefs value as the game's schema reads it, or undefined when it does not fit.
   parsePrefs(gameId: string, raw: unknown): unknown {
     return this.runners.get(gameId)?.parsePrefs?.(raw);
+  }
+
+  // The prefs value's keys a game keeps per account across matches (O116), else none.
+  accountKeys(gameId: string): readonly string[] {
+    return this.runners.get(gameId)?.accountKeys ?? [];
   }
 
   devPrefs(gameId: string): ((pick: (n: number) => number, rounds: number) => unknown) | null {

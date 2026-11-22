@@ -8,7 +8,11 @@
  *                 setting's default before its first round), each with its tooltip, only the
  *                 rounds still to play (O97), none after the last; a change saved once, 2.1 s after the last one, as a value the
  *                 game's own prefs schema takes (none removes a round's pick; the box rides
- *                 along); a refusal in words; the saved value shown again from `prefs`.
+ *                 along); a refusal in words; the saved value shown again from `prefs`; a newer
+ *                 saved value (the round's box or its Pre-picks panel saved it, O117) replaces
+ *                 the draft unless a save of its own waits; a value with the account's box only
+ *                 (a new match, O116) reads as no picks with the box set; opened in a round
+ *                 the panel has no box (O122).
  * Depends on:     vitest, @testing-library/react, @smg-game/mind-games (module), ./PrefsPanel
  * Spec:           docs/spec/02e-game-mind-games.md §7, §11; docs/spec/09-testing-strategy.md §3 (MG6)
  */
@@ -80,5 +84,36 @@ describe('Mind Games pre-picks panel (02e §7)', () => {
       await Promise.resolve();
     });
     expect(screen.getByRole('status').textContent).toBe('That pre-pick is not allowed.');
+  });
+});
+
+describe('Mind Games pre-picks, one value for the round and its panels (O116, O117)', () => {
+  it('takes a newer saved value, unless a save of its own waits (O117)', async () => {
+    const save = ok();
+    const { rerender } = render(
+      <PrefsPanel prefs={{ picks: { '2': 'winter' } }} rounds={3} played={1} save={save} />,
+    );
+    rerender(<PrefsPanel prefs={{ picks: { '3': 'all' } }} rounds={3} played={1} save={save} />);
+    expect(selects().map((s) => s.value)).toEqual(['', 'all']);
+    fireEvent.change(selects()[0] as HTMLSelectElement, { target: { value: 'spring' } });
+    rerender(<PrefsPanel prefs={{ picks: {} }} rounds={3} played={1} save={save} />);
+    expect(selects().map((s) => s.value)).toEqual(['spring', 'all']);
+    await act(async () => {
+      vi.advanceTimersByTime(SAVE_AFTER_MS);
+      await Promise.resolve();
+    });
+    expect(save.mock.calls).toEqual([[{ picks: { '2': 'spring', '3': 'all' } }]]);
+  });
+
+  it('leaves the box out when opened in a round, whose box is under the cards (O122)', () => {
+    render(<PrefsPanel prefs={null} rounds={3} played={1} save={ok()} inRound />);
+    expect(selects()).toHaveLength(2);
+    expect(screen.queryByLabelText('Hide my switches')).toBeNull();
+  });
+
+  it('reads the account’s box alone as no picks with the box set (O116)', () => {
+    render(<PrefsPanel prefs={{ hide: true }} rounds={2} played={0} save={ok()} />);
+    expect(selects().map((s) => s.value)).toEqual(['', '']);
+    expect(screen.getByLabelText<HTMLInputElement>('Hide my switches').checked).toBe(true);
   });
 });

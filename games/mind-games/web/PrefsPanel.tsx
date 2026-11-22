@@ -9,7 +9,9 @@
  *                 still switch.", its tooltip); one row per round still to play, its label at
  *                 the left and its select at the right ("none, Spring, Summer, Autumn, Winter,
  *                 All"), each with its tooltip; at the foot the box "Hide my switches", which
- *                 every pre-pick carries into its round (02e §6.3, T309). On a phone the rounds
+ *                 every pre-pick carries into its round (02e §6.3, T309), left out when the
+ *                 panel is opened from a running round's bar, whose box is under the cards
+ *                 (O122). On a phone the rounds
  *                 two to a row, the label above its select (./prefs.css). Before the series'
  *                 first round the
  *                 number of rounds is the setting's default. A change is saved 2.1 s after the
@@ -116,12 +118,15 @@ export function PrefsPanel(p: PrefsPanelProps): ReactElement | null {
           {note}
         </p>
       )}
-      <HideBox
-        hide={draft.hide ?? false}
-        set={(hide) => {
-          change({ ...draft, hide });
-        }}
-      />
+      {/* During a round the box is under the cards, once (O122). */}
+      {p.inRound === true ? null : (
+        <HideBox
+          hide={draft.hide ?? false}
+          set={(hide) => {
+            change({ ...draft, hide });
+          }}
+        />
+      )}
     </section>
   );
 }

@@ -10,7 +10,8 @@
  *                 derives nothing and implements no special hook; its rounds show no season
  *                 (`seasons` false, owner decision O93); its match chat is docked under the
  *                 round view and the result (`chatDock` 'below', O97); equal match totals share
- *                 a place, listed by name (`standingsTies`, O100).
+ *                 a place, listed by name (`standingsTies`, O100); its pre-picks are per match,
+ *                 "Hide my switches" per account across matches (`accountKeys`, O116).
  * Depends on:     @smg/game-sdk (GameModule), ./rules, ./settings, ./state, ./views, ./words
  * Used by:        ./index, games/registry
  * Spec:           docs/spec/02e-game-mind-games.md; docs/spec/04-software-architecture.md §4, §4.8
@@ -51,7 +52,8 @@ export const mindGames: GameModule<MindState, MindAction, MindEvent, MindConfig,
     plan: planOf,
     series: seriesOf,
     outcome,
-    prefs: { schema: prefsSchema, action: prePick },
+    // "Hide my switches" holds per account across matches, the picks per match (O116).
+    prefs: { schema: prefsSchema, action: prePick, accountKeys: ['hide'] },
   },
   reveal: revealOf,
 };

@@ -158,6 +158,12 @@ describe('Mind Games own part of the match (02e §6.3, §7)', () => {
     expect(part.save).toHaveBeenCalledWith({ picks: {}, hide: false });
   });
 
+  it('takes a new match’s value with the account’s box only, no picks (O116)', () => {
+    render(<MindInput {...inputProps(playerView([], 0))} own={own({ prefs: { hide: true } })} />);
+    expect(screen.getByLabelText<HTMLInputElement>('Hide my switches').checked).toBe(true);
+    expect(screen.queryByRole('status')).toBeNull();
+  });
+
   it('tells a refused pre-pick to its player, after a reconnect and as it arrives', () => {
     render(<MindInput {...inputProps(playerView([], 0))} own={own()} />);
     expect(screen.getByRole('status').textContent).toBe(

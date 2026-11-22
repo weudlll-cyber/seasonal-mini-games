@@ -33,7 +33,7 @@ import { ChoiceButtons } from './ChoiceButtons.js';
 import { PhaseStrip } from './PhaseStrip.js';
 import { sinceOpening } from './phases.js';
 import { mindText } from './text.js';
-import { useSavedPrefs, type Prefs } from './useSavedPrefs.js';
+import { asPrefs, useSavedPrefs } from './useSavedPrefs.js';
 
 export type MindInputProps = PlayerPanelProps & {
   readonly ring?: ReactNode;
@@ -60,7 +60,7 @@ function HideBox(p: { readonly hide: boolean; readonly set: (hide: boolean) => v
 // The player's notice of a pre-pick this round refused, or null (02e §7).
 function prePickNotice(own: OwnMatchPart | undefined, view: PlayerView): string | null {
   if (own === undefined || view.own.choice !== null) return null;
-  const pick = (own.prefs as Prefs | null)?.picks[String(own.roundIndex)];
+  const pick = asPrefs(own.prefs).picks[String(own.roundIndex)];
   const offered = pick !== 'all' || view.rules.allOption;
   if (pick === undefined || (offered && own.refusedPrePick === null)) return null;
   const round = String(own.roundIndex);

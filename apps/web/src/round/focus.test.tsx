@@ -11,7 +11,9 @@
  *                 panel is open at a time; the chat panel stays mounted; the unread badge
  *                 counts others' messages while the chat is closed and clears on opening it;
  *                 the full-screen toggle shows only where the Fullscreen API is offered
- *                 (mocked) and follows the browser leaving full screen. The lists are
+ *                 (mocked) and follows the browser leaving full screen; a phased game's player
+ *                 gets Pre-picks in the bar, opening the panel given (O117), and nobody else
+ *                 does. The lists are
  *                 ./log.test.
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ../chat/chatArrivals, ./fakes,
  *                 ./RoundScreen
@@ -47,9 +49,10 @@ function FakeChat(): ReactElement {
   );
 }
 
-function show(host: boolean): void {
+function show(host: boolean, prefs: ReactElement | null = null): void {
   render(
     <RoundScreen
+      prefs={prefs}
       live={{ state: open, feed: [], reload: () => Promise.resolve() }}
       gameId="none"
       viewerKey="a"
@@ -62,6 +65,18 @@ function show(host: boolean): void {
 }
 
 const dialog = (name: string) => screen.queryByRole('dialog', { name });
+
+describe('the Pre-picks panel of a phased game (O117)', () => {
+  it('opens from the bar with the panel given, and is not there without one', () => {
+    show(false, <p>The later rounds</p>);
+    fireEvent.click(screen.getByTestId('focus-prefs'));
+    expect(screen.getByTestId('round-view').dataset['panel']).toBe('prefs');
+    expect(dialog('Pre-picks')?.textContent).toContain('The later rounds');
+    cleanup();
+    show(false);
+    expect(screen.queryByTestId('focus-prefs')).toBeNull();
+  });
+});
 
 describe('the game bar', () => {
   it('shows the time left but no waiting time (O47)', () => {
