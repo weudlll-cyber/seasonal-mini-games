@@ -13,7 +13,8 @@
  *                 team standings, gives the host the next round's defaults (the host-chosen
  *                 keys of the game's document), and once the match ended its summary (O27);
  *                 players by their number in the match, never by account id, with `you` the
- *                 viewer's own (T104).
+ *                 viewer's own (T104). The host switches "Show on the website" while the
+ *                 match is open (`PUT …/website`, O125, ../../match/website).
  * Depends on:     fastify, zod, @smg/application, @smg/contracts (shapes), ../../match/*,
  *                 ../../league/boards (match standings), ./adminGuard
  * Used by:        ../app
@@ -44,6 +45,7 @@ import { playerSteps, withSteps } from '../../match/playerSteps.js';
 import { forViewer } from '../../match/publicIds.js';
 import { matchEnd } from '../../match/summary.js';
 import { teamLocked } from '../../match/teams.js';
+import { setShowOnWebsite } from '../../match/website.js';
 import { permitted } from './adminGuard.js';
 
 const TEAMS = ['spring', 'summer', 'autumn', 'winter'] as const;
@@ -56,6 +58,8 @@ const openBody = z
     countsForLeaderboard: z.boolean().default(true),
     // A team match by default, as every match was before O34.
     teamMatch: z.boolean().default(true),
+    // On the website's list while open for joining, on by default (O125).
+    showOnWebsite: z.boolean().default(true),
   })
   .strict();
 const listQuery = z.object({
@@ -64,6 +68,7 @@ const listQuery = z.object({
 });
 const teamBody = z.object({ team: z.enum(TEAMS) }).strict();
 const abortBody = z.object({ reason: z.string().trim().min(1).max(200) }).strict();
+const websiteBody = z.object({ show: z.boolean() }).strict();
 
 export interface MatchRouteDeps {
   readonly play: Play;
@@ -83,6 +88,8 @@ function summaryOf(m: MatchRow): MatchSummaryView {
     countsForLeaderboard: m.countsForLeaderboard,
     teamMatch: m.teamMatch,
     createdAt: m.createdAt,
+    showOnWebsite: m.showOnWebsite,
+    quickTest: m.quickTest,
   };
 }
 
@@ -271,6 +278,18 @@ function registerHostRoutes(app: FastifyInstance, deps: MatchRouteDeps): void {
     const match = await hostOnly(request, reply);
     if (match === null) return reply;
     await deps.play.close(match, { status: 'aborted', reason: body.data.reason, by: 'host' });
+    return reply.status(204).send();
+  });
+
+  // The host's "Show on the website" while the match is open (O125); never a Quick Test.
+  app.put('/api/v1/matches/:code/website', async (request, reply) => {
+    const body = websiteBody.safeParse(request.body);
+    if (!body.success) return reply.status(400).send({ code: 'VALIDATION_FAILED' });
+    const match = await hostOnly(request, reply);
+    if (match === null) return reply;
+    const result = await setShowOnWebsite(deps.pool, match, body.data.show);
+    if (result !== 'done') return reply.status(409).send({ code: result });
+    deps.play.changed(match.id);
     return reply.status(204).send();
   });
 }

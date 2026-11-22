@@ -56,6 +56,7 @@ Seasonal Mini Games can run **next to Seasonal Bingo Royale on the same server**
 6. If the installer stops with "the website does not serve Mini Games yet", step 2 is missing: run the command it prints, then the installer again (it keeps your answers).
 7. Open `https://<website domain>/games/mini-games/` and sign in with your website account. Players sign in only through the website. Its admins are the game's admins, and members it lets start games may host. Guests can watch matches and leaderboards. The chat is the website's room `mini-games`.
 8. Make yourself the super admin (section 4, "On a website install") after that first sign-in.
+9. Nothing to enter for the website's list of open sign-ups: the website reads Mini Games' status at `/games/mini-games/api/public/open-rounds` on its own origin, a path it derives itself (spec 07 §8). A match appears there while it takes players and its host leaves "Show on the website" on; a Quick Test never does.
 
 ## 4. Create the first admin
 

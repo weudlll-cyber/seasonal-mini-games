@@ -22,4 +22,6 @@ export const FORM_HELP = {
   lobby: 'Wait in the lobby while the bots join, pick a team, then start the round yourself.',
   teamMatch: 'Players pick a season team, and the winner’s team scores the round.',
   game: 'Every round of the match is this game; it cannot change later.',
+  showOnWebsite:
+    'While players can join, the Seasonal Entertainment website lists this match as open for sign-up.',
 } as const;

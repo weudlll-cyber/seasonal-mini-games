@@ -141,6 +141,8 @@ export const ROUTES: readonly RouteCase[] = [
     allow: HOST,
     on: 'spare',
   },
+  // The host's "Show on the website" (O125).
+  { method: 'PUT', path: '/api/v1/matches/:code/website', body: { show: true }, allow: HOST },
   { method: 'POST', path: '/api/v1/matches/:code/join', body: {}, allow: JOINERS, on: 'spare' },
   { method: 'POST', path: '/api/v1/matches/:code/leave', body: {}, allow: JOINERS, on: 'spare' },
   // Teams are locked while the round runs.
@@ -211,6 +213,8 @@ export const ROUTES: readonly RouteCase[] = [
   { method: 'GET', path: '/api/v1/public/rounds/current', allow: ALL },
   { method: 'GET', path: '/api/v1/public/leaderboards/current', allow: ALL },
   { method: 'GET', path: '/api/v1/public/rounds/:id/result', allow: ALL },
+  // The website's open-rounds status (07 §8, O124).
+  { method: 'GET', path: '/api/public/open-rounds', allow: ALL },
   // integration.manage: invalid bodies, missing targets.
   { method: 'GET', path: '/api/v1/admin/embed-origins', allow: INTEGRATION },
   { method: 'POST', path: '/api/v1/admin/embed-origins', body: {}, allow: INTEGRATION },
