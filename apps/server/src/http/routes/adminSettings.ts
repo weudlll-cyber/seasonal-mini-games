@@ -51,7 +51,7 @@ const STATUS = {
 };
 
 // The install the settings are read for: website mode (O66) and the chat's default.
-export interface SettingsInstall {
+interface SettingsInstall {
   readonly settings: SettingsService;
   readonly pool: DbPool;
   readonly website: boolean;

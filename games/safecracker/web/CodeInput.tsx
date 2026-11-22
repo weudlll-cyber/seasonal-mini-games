@@ -33,7 +33,7 @@ import {
 
 import { invalidCode, safecrackerText } from './text.js';
 
-export type CodeInputProps = PlayerPanelProps & { readonly ring?: ReactNode };
+type CodeInputProps = PlayerPanelProps & { readonly ring?: ReactNode };
 
 // Why a typed character may not go into a box, or null when it may.
 function refusal(ch: string, v: PlayerView): string | null {

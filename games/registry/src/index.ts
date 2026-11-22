@@ -26,7 +26,7 @@ import {
 import type { GameEntry } from '@smg/game-sdk';
 
 // A function that works for the entry of any game, whatever its types.
-export type ForAnyGame<R> = <S, A, E, Cfg, Sec>(entry: GameEntry<S, A, E, Cfg, Sec>) => R;
+type ForAnyGame<R> = <S, A, E, Cfg, Sec>(entry: GameEntry<S, A, E, Cfg, Sec>) => R;
 
 export interface InstalledGame {
   readonly id: string;

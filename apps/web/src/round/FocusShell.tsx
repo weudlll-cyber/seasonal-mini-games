@@ -43,7 +43,7 @@ import { usePanels, type PanelId, type Panels } from './usePanels.js';
 import type { RoundView } from './useRoundView.js';
 import './focus.css';
 
-export interface FocusShellProps {
+interface FocusShellProps {
   readonly state: RoundStateView;
   readonly now: number;
   readonly rule: string;

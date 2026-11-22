@@ -18,7 +18,7 @@ import type { ChatReportView } from '@smg/contracts';
 import type { DbPool } from '../db/pool.js';
 import type { WordLists } from './filter.js';
 
-export type ReportStatus = ChatReportView['status'];
+type ReportStatus = ChatReportView['status'];
 export type ListId = keyof WordLists;
 export const LIST_IDS: readonly ListId[] = ['block', 'mask', 'flag'];
 
@@ -101,7 +101,7 @@ export async function actionReportsOf(pool: DbPool, messageId: string, by: strin
   );
 }
 
-export interface WordListRow {
+interface WordListRow {
   readonly id: ListId;
   readonly terms: readonly string[];
   readonly updatedAt: number;

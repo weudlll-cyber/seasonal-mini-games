@@ -17,7 +17,7 @@ import type { DbPool } from '../db/pool.js';
 
 export const SCORE_WINDOW = '7 days';
 
-export interface AbuseSignal {
+interface AbuseSignal {
   readonly accountId: string;
   readonly kind: string;
   readonly detail: string;

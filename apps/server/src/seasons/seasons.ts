@@ -31,7 +31,7 @@ const feedSchema = z.object({
     .optional(),
 });
 
-export interface InSeason {
+interface InSeason {
   readonly season: Season;
   readonly token: string;
   readonly since: number;

@@ -31,7 +31,7 @@ export interface SpamInput {
   readonly rateWindowS: number;
 }
 
-export type SpamVerdict =
+type SpamVerdict =
   | { readonly ok: true }
   | {
       readonly ok: false;

@@ -6,7 +6,7 @@
  * Responsibility: every admin write appends one entry through this port; the Postgres
  *                 adapter (apps/server) adds time, request id and the hash-chain link.
  * Depends on:     nothing
- * Used by:        ../settings/settingsService, ../index, apps/server (pgAuditLog), ./fakes
+ * Used by:        ../settings/settingsService, ../index, apps/server (pgAuditLog), ../fakes
  * Spec:           docs/spec/05-security-threat-model.md §8; Bingo 03 §16
  */
 

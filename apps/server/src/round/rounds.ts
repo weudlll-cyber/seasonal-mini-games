@@ -31,7 +31,7 @@ import type { LiveRound } from './liveRound.js';
 import type { LoadedRound, PgRoundStore, StoredEvent } from './pgRoundStore.js';
 
 // A game's entry of the game list: the contract's own shape (O93 added `seasons`).
-export type GameInfo = GameInfoView;
+type GameInfo = GameInfoView;
 
 interface Runner {
   readonly info: GameInfo;

@@ -19,7 +19,7 @@ import { findMatch, type MatchRow } from '../../match/matches.js';
 import type { Play } from '../../match/play.js';
 import type { PrefsCode } from '../../match/prefs.js';
 
-export interface PrefsRouteDeps {
+interface PrefsRouteDeps {
   readonly play: Play;
   readonly pool: Parameters<typeof findMatch>[0];
 }

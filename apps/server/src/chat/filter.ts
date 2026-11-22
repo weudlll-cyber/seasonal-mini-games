@@ -20,7 +20,7 @@ export interface WordLists {
   readonly flag: readonly string[];
 }
 
-export type Filtered =
+type Filtered =
   | { readonly blocked: true }
   | { readonly blocked: false; readonly shown: string; readonly flags: readonly string[] };
 
@@ -40,7 +40,7 @@ const LEET: Readonly<Record<string, string>> = {
 const INVISIBLE = /[\u200B-\u200F\u2060-\u2064\uFEFF\u00AD]/u;
 const MARKS = /\p{M}/u;
 
-export interface Normalized {
+interface Normalized {
   readonly text: string;
   // For each character of `text`, the index of the original character it came from.
   readonly from: readonly number[];

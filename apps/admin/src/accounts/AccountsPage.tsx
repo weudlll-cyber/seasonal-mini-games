@@ -26,7 +26,7 @@ import { TextInput } from '../TextInput.js';
 const ROLES = ['organizer', 'moderator', 'game_admin', 'security_admin', 'super_admin'];
 const REASON = { label: 'Reason (goes into the audit log)', minLength: 3 };
 
-export interface AccountRights {
+interface AccountRights {
   readonly suspend: boolean;
   readonly roles: boolean;
 }

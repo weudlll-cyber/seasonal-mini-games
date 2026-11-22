@@ -31,7 +31,7 @@ import { FlightBand } from './FlightBand.js';
 import { colorOf, iconsOf } from './seasons.js';
 import { delayS } from './text.js';
 
-export interface ChoiceButtonsProps {
+interface ChoiceButtonsProps {
   readonly view: SpectatorView;
   // The viewer's current choice, live; null without one (and for a spectator).
   readonly own: Choice | null;

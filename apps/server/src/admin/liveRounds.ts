@@ -97,7 +97,7 @@ export async function removedKeys(pool: DbPool, roundId: string): Promise<string
   return r.rows.map((x) => x.player_key);
 }
 
-export type RemoveResult = 'removed' | 'RESULT_NOT_FOUND' | 'ALREADY_REMOVED';
+type RemoveResult = 'removed' | 'RESULT_NOT_FOUND' | 'ALREADY_REMOVED';
 
 export async function removeResult(
   pool: DbPool,

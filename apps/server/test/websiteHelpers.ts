@@ -10,8 +10,10 @@
  *                 adjustable), the session cookie of a response, GET /session and a signed-in
  *                 client's write. Adapted from Bingo's websiteHelpers.ts.
  * Depends on:     fastify (types), @smg/contracts (types), ../src/index (types)
- * Used by:        ./website.integration.test, ./websiteFeed.integration.test,
- *                 ./authzWebsite.integration.test, ./websiteSessions.integration.test
+ * Used by:        ./websiteFeed.integration.test, ./websiteIdle.integration.test,
+ *                 ./websiteSecurity.integration.test, ./websiteSessions.integration.test,
+ *                 ./websiteSignIn.integration.test, ./authzMatrix.integration.test,
+ *                 ./superPromotion.integration.test
  * Spec:           docs/spec/07-integration.md §7
  */
 import type { PlayerStepView, SessionView } from '@smg/contracts';

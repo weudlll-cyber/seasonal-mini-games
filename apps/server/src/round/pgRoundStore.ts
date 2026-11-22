@@ -28,7 +28,7 @@ export interface StoredEvent {
   readonly event: unknown;
 }
 
-export interface NewRoundRow {
+interface NewRoundRow {
   readonly id: string;
   readonly matchId: string;
   readonly gameId: string;

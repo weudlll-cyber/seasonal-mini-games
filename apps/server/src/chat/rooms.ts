@@ -19,7 +19,7 @@ import type { DbPool } from '../db/pool.js';
 
 const PAGE = 50;
 
-export type RoomBase = Omit<ChatRoomView, 'canSend' | 'canModerate'>;
+type RoomBase = Omit<ChatRoomView, 'canSend' | 'canModerate'>;
 
 export interface RoomRow extends RoomBase {
   readonly matchId: string | null;
@@ -119,7 +119,7 @@ const toMessage = (r: MessageSql): ChatMessageView => ({
   at: r.created_at.getTime(),
 });
 
-export interface NewMessage {
+interface NewMessage {
   readonly roomId: string;
   readonly accountId: string | null;
   readonly body: string;

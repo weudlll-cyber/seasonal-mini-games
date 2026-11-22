@@ -20,7 +20,7 @@ import { addRole } from '../admin/accountsAdmin.js';
 import type { DbPool } from '../db/pool.js';
 import { revokeAccountSessions } from './sessions.js';
 
-export type PromoteTarget = { readonly websiteId: string } | { readonly name: string };
+type PromoteTarget = { readonly websiteId: string } | { readonly name: string };
 
 interface WebsiteMember {
   readonly accountId: string;

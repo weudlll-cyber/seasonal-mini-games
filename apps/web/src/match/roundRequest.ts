@@ -15,7 +15,7 @@
 import type { MatchDetailsView } from '@smg/contracts';
 import type { SettingValue } from '@smg/game-sdk';
 
-export interface RoundRequestPlan {
+interface RoundRequestPlan {
   readonly path: string;
   readonly method: 'POST' | 'PUT';
   readonly body: Readonly<Record<string, unknown>>;

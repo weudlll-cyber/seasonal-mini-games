@@ -15,7 +15,8 @@
  *                 "defused it", O110); the intro's line on the bomb (02c §3); the season special in this
  *                 game's terms (T119). Server codes never reach the screen as codes.
  * Depends on:     @smg/game-sdk (GameText, GuessRow), @smg-game/bomb-defusal (types, wording)
- * Used by:        ./BombBlock, ./WireInput, ./ResultPanel, ./index
+ * Used by:        ./WireInput, ./WireChip, ./ResultPanel, ./Explosion, ./panels, ./useSequence,
+ *                 ./index
  * Spec:           docs/spec/02c-game-bomb-defusal.md §4–§11; docs/spec/04-software-architecture.md §4.6
  */
 import {

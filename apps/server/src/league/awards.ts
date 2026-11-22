@@ -18,7 +18,8 @@
  *                 (no account, no solve; the standings leave it out already, ../round/pgResults).
  *                 Only this module writes league tables (Bingo 03 §11).
  * Depends on:     pg, @smg/domain (seasonPeriod)
- * Used by:        ../round/pgRoundStore, ../match/play, ./adjustments, ../admin/liveRounds
+ * Used by:        ../round/pgRoundStore, ../match/play, ./rules, ../admin/liveRounds,
+ *                 ../http/routes/leaderboards
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/06-data-model-api-realtime.md §2.6
  */
 import { seasonPeriod } from '@smg/domain';
