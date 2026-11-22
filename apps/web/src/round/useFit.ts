@@ -16,10 +16,12 @@
  *                 touch targets on a phone), and as `data-fit-scale` for tests. Where there is
  *                 room the scale is 1 and the screen looks as without it. It is measured anew
  *                 only when the box's size changes (resize, rotation, the on-screen keyboard
- *                 changing the visual viewport) or the screen's content does (`signature`), each
+ *                 changing the visual viewport), when web fonts finish loading (the type swaps
+ *                 in after the first paint and can wrap a line anew, `document.fonts`
+ *                 `loadingdone`), or the screen's content does (`signature`), each
  *                 time from 1 in at most nine measurements inside one task (a proportional
  *                 guess, then halving) (the first before the
- *                 first paint, a resize's in its next frame): no loop, no React state, no
+ *                 first paint, a resize's or a font's in its next frame): no loop, no React state, no
  *                 visible jump after the first paint. `useFit`: a box of a fixed height that
  *                 never scrolls and never cuts an item shows the items (`[data-fit]`) that fit
  *                 whole and "+N more" for the rest (the Others panel and line, O110).
@@ -129,22 +131,30 @@ export function useFitScale<T extends HTMLElement>(
     // observer of the page is notified in a loop.
     let size = `${String(box.clientWidth)}x${String(box.clientHeight)}`;
     let frame = 0;
-    const resized = (): void => {
-      const now = `${String(box.clientWidth)}x${String(box.clientHeight)}`;
-      if (now === size) return;
-      size = now;
+    const refit = (): void => {
       cancelAnimationFrame(frame);
       frame = requestAnimationFrame(() => {
         settle(root, box);
       });
     };
+    const resized = (): void => {
+      const now = `${String(box.clientWidth)}x${String(box.clientHeight)}`;
+      if (now === size) return;
+      size = now;
+      refit();
+    };
     const watch = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(resized);
     watch?.observe(box);
     window.visualViewport?.addEventListener('resize', resized);
+    // A web font arriving after the fitting (font-display: swap) changes the text, not the box
+    // (WebKit, journey 16: autumn's sentence wrapped to a second line, 32 px over the card).
+    const fonts = 'fonts' in document ? document.fonts : null;
+    fonts?.addEventListener('loadingdone', refit);
     return () => {
       cancelAnimationFrame(frame);
       watch?.disconnect();
       window.visualViewport?.removeEventListener('resize', resized);
+      fonts?.removeEventListener('loadingdone', refit);
     };
   }, [signature, self]);
   return ref;

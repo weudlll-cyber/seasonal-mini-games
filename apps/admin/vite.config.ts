@@ -6,22 +6,40 @@
  * Responsibility: serve the admin app on its project port (10 §4) and pass /api to the
  *                 server on 3910, so the session cookie stays first-party (a browser-test run
  *                 passes its own port and server in SMG_VITE_PORT and SMG_VITE_SERVER, 09 §1.1); relative asset
- *                 paths so one build serves at "/" or under a base path. Tests run in jsdom
+ *                 paths so one build serves at "/" or under a base path; the built page
+ *                 carries no developer comments (O128). Tests run in jsdom
  *                 where a file asks for it.
  * Depends on:     vite, @vitejs/plugin-react
  * Spec:           docs/spec/10-repository-structure.md §4; docs/spec/08-admin-settings.md §1
  */
 /// <reference types="vitest/config" />
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 
 // `pnpm dev`'s port and server; Playwright's run sets its own (e2e/testStack).
 const PORT = Number(process.env['SMG_VITE_PORT'] ?? 5411);
 const SERVER = process.env['SMG_VITE_SERVER'] ?? 'http://127.0.0.1:3910';
 
+// Build only: the page's HTML comments (its file header) are not shipped (owner decision O128).
+// Removed until none is left: one pass could join the parts of a nested comment into a new one.
+function withoutComments(html: string): string {
+  let out = html;
+  for (let before = ''; before !== out;) {
+    before = out;
+    out = out.replace(/\s*<!--[\s\S]*?-->/g, '');
+  }
+  return out;
+}
+
+const noHtmlComments: Plugin = {
+  name: 'smg-no-html-comments',
+  apply: 'build',
+  transformIndexHtml: { order: 'post', handler: withoutComments },
+};
+
 export default defineConfig({
   base: './',
-  plugins: [react()],
+  plugins: [react(), noHtmlComments],
   server: {
     host: '127.0.0.1',
     port: PORT,
