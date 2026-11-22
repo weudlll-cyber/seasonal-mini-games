@@ -6,7 +6,9 @@
  *
  * Responsibility: one transaction per batch (04 §5.3): the events, the round row's status,
  *                 the scheduled actions of a countdown, and at the end the results, team
- *                 results, the match standings and the league awards (../league/awards); a
+ *                 results, the match standings and the league awards (../league/awards), and
+ *                 in the batch that opens a round the caller's opening read (the pre-picks
+ *                 that round applies, ../match/prefs `openingPrePicks`, O117); a
  *                 snapshot every 200 events, keeping the
  *                 last two. Events are opaque JSON here; the actor knows their types.
  * Depends on:     pg (via ../db/pool), @smg/domain (types), ../league/awards, ./pgResults, ./seal
@@ -66,7 +68,12 @@ export interface BatchWrite {
   } | null;
   // Ended or aborted: pending scheduled actions are done.
   readonly finished: boolean;
+  // The batch holds RoundOpened: the opening read runs in its transaction.
+  readonly opened: boolean;
 }
+
+// Read in the transaction that commits a round's opening; its result goes out with that batch.
+export type OpeningRead = (c: pg.PoolClient, roundId: string, matchId: string) => Promise<unknown>;
 
 export interface LoadedRound {
   readonly id: string;
@@ -101,6 +108,7 @@ export class PgRoundStore {
     private readonly key: Buffer,
     // Read at round end (08 §4: `leaderboard.*` take effect from the next round end).
     private readonly leagueRules: () => Promise<LeagueRules>,
+    private readonly openingRead: OpeningRead | null = null,
   ) {}
 
   // Inserts the round row with its first event (RoundCreated) in one transaction.
@@ -136,9 +144,10 @@ export class PgRoundStore {
     });
   }
 
-  async append(batch: BatchWrite): Promise<void> {
+  // The opening read's result when the batch opens the round, otherwise null.
+  async append(batch: BatchWrite): Promise<unknown> {
     const rules = batch.ended === null ? null : await this.leagueRules();
-    await inTransaction(this.pool, async (c) => {
+    return inTransaction(this.pool, async (c) => {
       await insertEvents(c, batch.roundId, batch.events);
       const s = batch.status;
       await c.query(
@@ -163,6 +172,9 @@ export class PgRoundStore {
         await awardMatch(c, batch.matchId, rules);
       }
       if (batch.snapshot !== null) await writeSnapshot(c, batch.roundId, batch.snapshot);
+      // Last, so the lock it may take is held for the shortest time before the commit.
+      if (!batch.opened || this.openingRead === null) return null;
+      return this.openingRead(c, batch.roundId, batch.matchId);
     });
   }
 

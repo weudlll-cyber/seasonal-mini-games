@@ -60,10 +60,12 @@ interface Batch<S, Cfg> {
 }
 
 // How committed events go out: `held` names the seqs Frost keeps back for now; `late` marks
-// held events released after their own batch.
+// held events released after their own batch; `opening` is what the store read in the
+// transaction of the batch that opened the round (../match/prefs `openingPrePicks`), else null.
 export interface Delivery {
   readonly held: ReadonlySet<number>;
   readonly late: boolean;
+  readonly opening: unknown;
 }
 
 export type Committed = (events: readonly StoredEvent[], how: Delivery) => void;
@@ -232,14 +234,15 @@ export class RoundActor<S, A, E, Cfg, Sec> {
       if (this.broken) throw new Error('an earlier batch failed');
       if (batch.events.length > 0 && batch.state !== null) {
         const started = this.deps.options.now();
-        await this.deps.store.append(
+        const opening = await this.deps.store.append(
           batchWrite(this.roundId, this.matchId, batch.events, batch.state),
         );
         this.deps.options.observe?.batch((this.deps.options.now() - started) / 1_000);
-        this.deps.committed(batch.events, { held: this.frost.hold(batch.events), late: false });
+        const held = this.frost.hold(batch.events);
+        this.deps.committed(batch.events, { held, late: false, opening });
       }
       if (batch.released.length > 0)
-        this.deps.committed(batch.released, { held: new Set(), late: true });
+        this.deps.committed(batch.released, { held: new Set(), late: true, opening: null });
       for (const w of batch.waiters) w.resolve(w.reply);
     } catch (error) {
       for (const w of batch.waiters) w.resolve({ ok: false, code: 'INTERNAL' });
