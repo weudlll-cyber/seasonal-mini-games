@@ -17,8 +17,8 @@ import { lit, setHighlight, useHighlightRow } from '@smg/ui';
 import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-function Row(p: { readonly who: string | null; readonly phone?: boolean }): ReactElement {
-  const props = useHighlightRow(p.who, p.phone ?? false);
+function Row(p: { readonly who: string | null; readonly phone: boolean }): ReactElement {
+  const props = useHighlightRow(p.who, p.phone);
   return (
     <li data-testid={`row-${p.who ?? 'none'}`} {...props}>
       {p.who}
@@ -26,7 +26,7 @@ function Row(p: { readonly who: string | null; readonly phone?: boolean }): Reac
   );
 }
 
-function List(p: { readonly phone?: boolean }): ReactElement {
+function List(p: { readonly phone: boolean }): ReactElement {
   return (
     <ul>
       <Row who="anna" phone={p.phone} />
@@ -51,7 +51,7 @@ afterEach(() => {
 
 describe('the highlighted player (O62)', () => {
   it('follows hover and focus on a desktop and clears on leaving', () => {
-    render(<List />);
+    render(<List phone={false} />);
     expect(hl('anna')).toBeNull();
     fireEvent.mouseEnter(screen.getByTestId('row-anna'));
     expect([hl('anna'), hl('ben')]).toEqual(['on', 'off']);
