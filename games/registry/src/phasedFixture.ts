@@ -57,8 +57,10 @@ type SidesEvent =
       readonly counts: Readonly<Record<Side, number>>;
     };
 
-// Two rounds a match, 3 s apart, so a test plays a whole series (04 §4.8 rule 7).
-export const SIDES_SERIES: Series = { rounds: 2, pauseMs: 3_000 };
+// Two rounds a match, 10 s apart, so a test plays a whole series (04 §4.8 rule 7); the pause
+// is long enough for a test's requests between the round's end and the host's start on a slow
+// runner (with 3 s it ran out under coverage and the round started on its own, audit B3).
+export const SIDES_SERIES: Series = { rounds: 2, pauseMs: 10_000 };
 
 // A side per round number, fixed in advance; `x` is no side a round offers.
 const sidesPrefs = z
