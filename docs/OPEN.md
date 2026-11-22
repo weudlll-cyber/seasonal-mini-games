@@ -18,7 +18,7 @@ The first draft's questions (a)â€“(p) were answered on 2026-10-24 (DECISIONS O8â
 
 Failures that the nightly Firefox and WebKit run on master finds (O103, `.github/workflows/browsers.yml`) are listed here until a batch fixes them; the website's session asked for this list on 2026-11-10.
 
-- **Journey 16 (autumn) in WebKit, phone timing** ([run 44976858852](https://github.com/weudlll-cyber/seasonal-mini-games/actions/runs/44976858852), master `8adc94f`, 2026-11-22): "the card holds its parts" measured 32 px over where at most 1 is allowed (`e2e/seasons.spec.ts:89`); 42 other tests passed, journey 44 was skipped. Not yet looked into.
+- None open (the last, journey 16 in WebKit of run 44976858852, fixed by T404; BACKLOG part two).
 
 Fixed earlier: the three findings listed until 2026-11-21 (journey 37, fixed in `cff407f`; journey 45 and the nightly run of 2026-11-21, fixed by T397 in PR #25, `086ef30`) are in BACKLOG part two; Firefox and WebKit were green on master in [run 44866478568](https://github.com/weudlll-cyber/seasonal-mini-games/actions/runs/44866478568) and [run 44871572354](https://github.com/weudlll-cyber/seasonal-mini-games/actions/runs/44871572354).
 
