@@ -18,8 +18,10 @@ import { api } from '../http.js';
 import { TextInput } from '../TextInput.js';
 
 function AuditTable({ items }: { readonly items: readonly AuditEntryView[] }): ReactElement {
+  // Nothing in the table takes the focus, so the wrapper does: a keyboard can then scroll it
+  // sideways on a narrow screen (WCAG 2.1.1, axe scrollable-region-focusable; audit B4).
   return (
-    <div className="admin-table-wrap">
+    <div className="admin-table-wrap" tabIndex={0} role="region" aria-label="Audit entries">
       <table className="admin-table" data-testid="audit-table">
         <thead>
           <tr>

@@ -9,7 +9,7 @@
  *                 so a test checks what the screen sent; type into a labelled field, click a
  *                 button by its name, confirm the open dialog, and let the answers arrive.
  * Depends on:     vitest, @testing-library/react
- * Used by:        ./providers.test, ./origins.test, ./webhooks.test
+ * Used by:        ./providers.test, ./origins.test, ./webhooks.test, ../audit/audit.test
  * Spec:           docs/spec/09-testing-strategy.md §1
  */
 import { act, fireEvent, screen } from '@testing-library/react';
