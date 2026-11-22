@@ -33,8 +33,12 @@ export interface Prefs {
   readonly hide?: boolean;
 }
 
-// No picks yet (an account's box alone, O116) reads as none.
-const asPrefs = (value: unknown): Prefs => ({ picks: {}, ...((value as Prefs | null) ?? {}) });
+// The player's value as the panels and the round read it: no picks yet (an account's box
+// alone in a new match, O116) reads as none.
+export const asPrefs = (value: unknown): Prefs => ({
+  picks: {},
+  ...((value as Prefs | null) ?? {}),
+});
 
 // The value as the player edits it, and its saving 2.1 s after the last change.
 export function useSavedPrefs(initial: unknown, save: PrefsPanelProps['save']) {
