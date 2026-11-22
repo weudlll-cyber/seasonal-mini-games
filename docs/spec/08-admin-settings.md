@@ -7,8 +7,8 @@
 - The admin app, its navigation model, and forms generated from the same zod schemas the server validates with (defaults, bounds and help text from schema metadata) are as in Bingo 11 §1.
 - The host's round form and the development Quick Test show every field's help as one line under the field, in the words of the setting's definition (DECISIONS T64). A field that cannot be changed now (it follows another value, as a delay following the total, or holds for the match) looks locked, not only disabled: a muted fill and muted text, a dashed edge, the not-allowed cursor and a padlock with "locked" beside its label, in light and dark (owner decision O97, DECISIONS T354).
 - Every change is a new version of its settings document, with history, diff and rollback, and is audited ([05](05-security-threat-model.md) §8). Confirm dialogs and 2FA step-up apply as in Bingo 11 §1.
-- Bingo's settings documents `security`, `rate_limits`, `branding`, `theme`, `notifications`, `features` and `chat` are adopted with their keys (Bingo 11 §4). This catalogue lists only the keys that are new or different.
-- Definitions with their defaults live in `packages/contracts/src/settings/` (platform) and `games/guess-the-number/src/settings/` (game). The tables below are the specification of those files. A document stores only what an admin changed: per key a new default and, for numbers, narrowed bounds (never wider than the table).
+- Bingo's settings documents `security`, `rate_limits` and `chat` are adopted with their keys (Bingo 11 §4); `branding`, `theme`, `notifications` and `features` are not built (the platform documents are `matchmaking`, `seasons`, `integrations`, `chat`, `security` and `rate_limits`, `packages/contracts/src/settings/platform.ts`). This catalogue lists only the keys that are new or different.
+- Definitions with their defaults live in `packages/contracts/src/settings/` (platform) and `games/<game>/src/settings.ts` (each game). The tables below are the specification of those files. A document stores only what an admin changed: per key a new default and, for numbers, narrowed bounds (never wider than the table).
 - Navigation differs from Bingo 11 §2: **Game rules** becomes **Games** (per-game settings and bounds), and a new **Seasons** area holds the feed status and halving days.
 
 ## 2. How to read the tables
@@ -143,7 +143,7 @@ The cross-key rules are the game's `problem` (owner decision 74; 02e §3), with 
 | `inSeason.pollS` | 300 | 60 | 3 600 | technical | season admin | immediate |
 | `inSeason.staleAfterH` | 24 | 1 | 168 | owner (O15) | season admin | next: read at round creation |
 | `halving.timeZone` | `UTC` | — | — (IANA zone) | owner (O15) | season admin | next: read at round creation |
-| `halving.days` | empty | — | — (list of date + token) | owner (real halving days) | season admin | next: read at round creation |
+| halving days (not a key: the table `smg.halving_days`, edited at `/admin/halving-days`, 06 §2.6) | empty | — | — (list of date + token) | owner (real halving days) | season admin | next: read at round creation |
 | `integrations.chatProvider` | `builtin` (while unset: `SMG_CHAT_PROVIDER`, website mode `hostEmbed`, DECISIONS T236; the page shows the one in effect and why, T240) | — | — (`none`, `builtin`, `hostEmbed`) | technical ([07](07-integration.md) §2) | security admin | immediate (clients reload the panel) |
 | `integrations.hostChatUrl` | empty (website mode: the website's `/embed/chat?room=mini-games`) | — | — | adopted | security admin | immediate |
 

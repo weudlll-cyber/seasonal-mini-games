@@ -24,7 +24,7 @@ Each row is built as Bingo specifies, with the names of §2.2. "Difference" list
 | Modular monolith, one Node.js process, stateless apart from the database | Bingo 02 §1 | None. |
 | System context (Caddy → app → PostgreSQL, optional SMTP and Web Push) | Bingo 02 §2 | The app is `smg-server`. The Seasonal Entertainment website signs in through `jwt-handoff` (Bingo D3), so the diagram's "OIDC" for the website does not apply. The website is also the source of the In Season feed ([07](07-integration.md) §5). |
 | Hexagonal layers and the dependency rule, enforced by lint | Bingo 02 §3 | Adds `packages/game-sdk` and `games/*` (§3). |
-| Bounded contexts communicating through domain events on an in-process bus | Bingo 02 §4 | "Match" becomes **Match & Round** (§6). "Configuration" holds settings documents and per-game settings instead of rulesets and patterns. |
+| Bounded contexts communicating through domain events on an in-process bus | Bingo 02 §4 | No bus is built: the contexts subscribe to the round's committed batches (§6). "Match" becomes **Match & Round** (§6). "Configuration" holds settings documents and per-game settings instead of rulesets and patterns. |
 | Functional core: commands → `decide(state, command, ctx) → events`, `evolve(state, event) → state` | Bingo 02 §5.1 | The command set is in §5.1. Game modules use the same pattern (§4). |
 | Event log + snapshots, recovery on restart | Bingo 02 §5.2 | The log is per **round** (`round_events`), with snapshots every 200 events. Acknowledgements wait for group commit (§5.3). |
 | DB-backed scheduler (`scheduled_actions`, `FOR UPDATE SKIP LOCKED`, leases) | Bingo 02 §5.3 | Polls every 100 ms while a round is open. Precision target: a special fires within 150 ms of its due time (p95). |
@@ -68,10 +68,14 @@ packages/game-sdk     The game-module contract (types) and pure helpers every ga
                       setting definitions, range arithmetic, view helpers. Free of node:crypto.
                       Its second entry @smg/game-sdk/crypto holds the DRBG and the commitment
                       for the platform (a game only receives a RoundRng). Depends only on zod.
-packages/domain       Platform rules: match and round lifecycle, roster, cooldown, receive order,
-                      placings, season and special scheduling, teams, standings. Pure.
-packages/application  Use cases and ports (Clock, SecureRandom, RoundStore, Scheduler, EventBus,
-                      SeasonFeed). Hosts the round engine (§5). No framework imports.
+packages/domain       Platform rules of a round: lifecycle, roster, cooldown, receive order,
+                      placings, specials, inactivity, results; the league awards; the audit
+                      chain. Pure.
+packages/application  The round session (a round's state machine over a game module, its
+                      settings and its verification), the settings service and the audit log
+                      with their ports (SettingsStore, AuditLog). No framework imports. The
+                      round actor, its batches and Frost are the server's (apps/server
+                      src/round, §5).
 packages/guess-engine The shared guess engine (§4.7, DECISIONS T117): secrets, guesses, feedback
                       events, closeness tiers and comments, Frost-aware views at the round's
                       visibility, the closest miss and the Leaf Fall candidate rule, for the games
@@ -121,7 +125,8 @@ interface GameModule<S, A, E, Cfg, Sec> {
   settings: {
     defs: SettingDef[];         // the game's own keys of document game.<id> (08 §3)
     read(values): Cfg;          // frozen values → the game's config
-    problem(cfg: Cfg): string | null;  // a rule across keys
+    problem(cfg: Cfg): string | SettingIssue | null;  // a rule across keys
+    halvingAllowed?(cfg: Cfg): boolean;  // whether a halving round may use this config
   };
   actionSchema: ZodType<A>;     // the payload of one player action (a guess)
   deriveSecrets(input: RoundInput<Cfg>, rng: RoundRng): Sec;  // secrets are made here, never stored
@@ -253,6 +258,7 @@ phased?: {                         // present exactly when meta.timing is 'phase
   prefs?: {                        // one small value per player per match (pre-picks)
     schema: ZodType<P>;
     action(prefs: P, roundIndex: number, cfg: Cfg): A | null;     // the action it makes at a round's opening
+    accountKeys?: readonly string[];  // top-level keys kept per account (O116)
   };
   outcome(state: S): ReadonlyArray<{ playerId: string; won: boolean; points: number }>;  // no action count (T342)
 };
@@ -348,4 +354,4 @@ One round runs on one instance under a lease (the `scheduled_actions` lease patt
 | **Leaderboard** | As Bingo, plus the team standing ([03](03-seasonal-specials.md) §5). |
 | Identity & Access, Chat & Moderation, Notification, Audit | As Bingo 02 §4. |
 
-Events between contexts: `RoundEnded` → Leaderboard (match points, team points), Notification and Chat (system line). `SeasonFeedChanged` → admin dashboard.
+Events between contexts: there is no event bus; the round's committed batches go to their subscribers in the server (`Rounds.onCommitted`): `RoundEnded` writes the results, match standings and league awards in the same transaction (`round/pgRoundStore.ts`), and the gateway, the chat's round lines and the series listen to the committed events (`realtime/gateway.ts`, `chat/roundLines.ts`, `round/runtime.ts`).

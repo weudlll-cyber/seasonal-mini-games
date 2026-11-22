@@ -66,7 +66,7 @@ Seasonal Mini Games can run **next to Seasonal Bingo Royale on the same server**
 sudo smg admin create-super
 ```
 
-It asks for e-mail, display name (3–24 letters or digits) and a password of at least 12 characters (not shown while you type). This account can host matches and open the admin app.
+It asks for e-mail, display name (3–24 letters, digits, `_`, `.` or `-`) and a password of at least 12 characters (not shown while you type). This account can host matches and open the admin app.
 
 **On a website install** players sign in only through the website, so a local account could never sign in: `create-super` refuses there and names the command below. Instead, your website account becomes the super admin:
 
