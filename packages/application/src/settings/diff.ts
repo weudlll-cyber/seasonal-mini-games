@@ -12,7 +12,7 @@
  */
 import type { SettingOverride } from '@smg/game-sdk';
 
-export interface OverrideChange {
+interface OverrideChange {
   readonly key: string;
   readonly before: SettingOverride | null;
   readonly after: SettingOverride | null;

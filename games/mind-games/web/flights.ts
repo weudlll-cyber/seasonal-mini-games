@@ -108,7 +108,7 @@ const LABEL_GAP = 4;
 
 // A card as measured: its middle in px from the band's left and its inner width, inside its
 // frame's border.
-export interface Card {
+interface Card {
   readonly middle: number;
   readonly room: number;
 }

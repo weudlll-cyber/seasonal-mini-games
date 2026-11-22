@@ -57,7 +57,7 @@ function fastProfile(p: PlatformRoundConfig): PlatformRoundConfig {
   };
 }
 
-export interface RunnerDeps {
+interface RunnerDeps {
   readonly store: PgRoundStore;
   readonly options: ActorOptions;
   readonly committed: (round: LiveRound, events: readonly StoredEvent[], how: Delivery) => void;

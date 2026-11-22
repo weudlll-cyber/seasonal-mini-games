@@ -105,8 +105,8 @@ export function fixedRng(secret: number): RoundRng {
   };
 }
 
-export type PickRound = RoundState<PickState, null>;
-export type PickEvents = RoundEvent<PickEvent, Pick, null>[];
+type PickRound = RoundState<PickState, null>;
+type PickEvents = RoundEvent<PickEvent, Pick, null>[];
 
 export function config(change: Partial<PlatformRoundConfig> = {}): PlatformRoundConfig {
   return { ...readPlatformRound(resolveSettings(PLATFORM_ROUND_SETTINGS, {})), ...change };

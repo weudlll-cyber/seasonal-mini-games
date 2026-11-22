@@ -38,7 +38,7 @@ export interface RoundRequest {
   readonly fast?: boolean | undefined;
 }
 
-export interface CreationDeps {
+interface CreationDeps {
   readonly pool: DbPool;
   readonly rounds: Rounds;
   readonly settings: SettingsService;

@@ -22,7 +22,7 @@ import type { DbPool } from '../db/pool.js';
 
 const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 
-export type MatchStatus = 'lobby' | 'open' | 'closed' | 'aborted';
+type MatchStatus = 'lobby' | 'open' | 'closed' | 'aborted';
 export type Team = 'spring' | 'summer' | 'autumn' | 'winter';
 
 export interface MatchRow {

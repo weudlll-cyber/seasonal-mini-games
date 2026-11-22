@@ -30,7 +30,7 @@ const isAdminPath = (url: string | undefined) => ADMIN.test(url ?? '');
 // Only a plain origin reaches the header, so no stored value can add a directive.
 const PLAIN_ORIGIN = /^https?:\/\/[A-Za-z0-9.-]+(:\d{1,5})?$/;
 
-export interface FrameRules {
+interface FrameRules {
   // The host's chat room pages may frame with the provider hostEmbed (07 §2), read per
   // response: an origin, or the website's room as origin and path; '' for none.
   readonly chat: () => string;

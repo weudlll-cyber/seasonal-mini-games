@@ -70,7 +70,7 @@ const teamBody = z.object({ team: z.enum(TEAMS) }).strict();
 const abortBody = z.object({ reason: z.string().trim().min(1).max(200) }).strict();
 const websiteBody = z.object({ show: z.boolean() }).strict();
 
-export interface MatchRouteDeps {
+interface MatchRouteDeps {
   readonly play: Play;
   readonly series: SeriesRunner;
   readonly settings: SettingsService;

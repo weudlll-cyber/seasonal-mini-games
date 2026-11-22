@@ -7,7 +7,7 @@
  *                 apps/server (smg.settings_documents / smg.settings_versions). `save` writes
  *                 only when the stored version is still the expected one (optimistic lock).
  * Depends on:     @smg/game-sdk (types)
- * Used by:        ./settingsService, ../index, apps/server (pgSettingsStore), ./fakes
+ * Used by:        ./settingsService, ../index, apps/server (pgSettingsStore), ../fakes
  * Spec:           docs/spec/08-admin-settings.md §1; Bingo 04 §3.2
  */
 import type { SettingOverride } from '@smg/game-sdk';

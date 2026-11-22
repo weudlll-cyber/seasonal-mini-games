@@ -11,7 +11,7 @@
  *                 halving day runs a normal season round. The platform's round keys come first
  *                 in the document (game-sdk).
  * Depends on:     @smg/game-sdk (SettingDef, GameSettings), @smg/guess-engine (shared keys)
- * Used by:        ./module, ./state, ./index, ./web (forms)
+ * Used by:        ./module, ./state, ./index, ../web/index (forms)
  * Spec:           docs/spec/08-admin-settings.md §3.2; docs/spec/02c-game-bomb-defusal.md §3, §8.5
  */
 import type { GameSettings, SettingDef } from '@smg/game-sdk';

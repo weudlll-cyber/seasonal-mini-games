@@ -44,7 +44,7 @@ import { cellWords } from './words.js';
 import { marksFor } from './players.js';
 
 // The platform's cooldown ring for the row, and the round's stage the board is drawn into (O51).
-export type StInputProps = PlayerPanelProps & {
+type StInputProps = PlayerPanelProps & {
   readonly ring?: ReactNode;
   readonly stage?: HTMLElement | null;
 };

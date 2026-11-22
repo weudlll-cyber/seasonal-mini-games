@@ -48,7 +48,7 @@ The chat UI sits behind a `ChatPanel` component boundary, as in Bingo 07 §6. Th
 - With `builtin`, the platform writes one system line per round end that names the number (owner, decision 32): "Round 4: Walter found it first — the number was 731", in individual mode "— their number was 731" (the winner's), and "Round 4 ended: nobody found it — the number was 731" (without a number in individual mode). The game words the number through its optional `reveal` hook (04 §4; DECISIONS T90).
 - A chat mute applies to the whole chat (owner, decision 32): the moderator's inline mute and the admin API's mute both cover every room; only a ban may be kept to one room.
 - Teams have no chat of their own in v1. Whatever players share in the match chat is their choice. The rules give no team any information the others lack ([03](03-seasonal-specials.md) §5).
-- The `mini-games` room is created by a website admin. Nothing in this platform creates it.
+- The `mini-games` room is created by the website itself, on every start while Mini Games is switched on there (its `server/src/chat/seed.js`, `ensureGameRooms`); an admin's later changes to it stay. Nothing in this platform creates it.
 
 ## 3. Notifications
 

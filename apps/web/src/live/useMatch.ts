@@ -24,7 +24,7 @@ import { api, ApiError } from '../shell/http.js';
 import { retryable, useRetry } from './retry.js';
 import { gameSocket, intent } from './socket.js';
 
-export interface MatchState {
+interface MatchState {
   readonly match: MatchDetailsView | null;
   readonly missing: boolean;
   readonly reload: () => Promise<void>;

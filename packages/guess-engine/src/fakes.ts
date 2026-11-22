@@ -32,12 +32,12 @@ import {
   type Secrets,
 } from './index.js';
 
-export type Toy = 'up' | 'down' | 'hit';
-export interface ToyState extends GuessBase<number, Toy> {
+type Toy = 'up' | 'down' | 'hit';
+interface ToyState extends GuessBase<number, Toy> {
   readonly bonus: number;
 }
 type Bonus = { readonly type: 'Bonus' };
-export type ToyEvent = GuessEvent<number, Toy> | Bonus;
+type ToyEvent = GuessEvent<number, Toy> | Bonus;
 
 const lines = (tag: string) => [
   `${tag} one`,

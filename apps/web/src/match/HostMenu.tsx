@@ -130,7 +130,7 @@ function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
   );
 }
 
-export interface HostMenuProps {
+interface HostMenuProps {
   readonly match: MatchDetailsView;
   readonly roundStatus: string | null;
   readonly reload: () => void;

@@ -30,7 +30,7 @@ const RECOVERY_CODES = 10;
 // Lower case and digits without look-alikes; "xxxx-xxxx" as TwoFactorCodeBody expects.
 const CODE_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
 
-export type CheckResult = 'totp' | 'recovery' | 'invalid' | 'notEnrolled';
+type CheckResult = 'totp' | 'recovery' | 'invalid' | 'notEnrolled';
 
 const hashOf = (code: string) => createHash('sha256').update(code).digest();
 
