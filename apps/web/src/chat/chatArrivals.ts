@@ -29,7 +29,7 @@ export interface ChatArrival {
 
 export const ChatArrivals = createContext<((message: ChatArrival) => void) | null>(null);
 
-export interface ChatSight {
+interface ChatSight {
   // Whether the chat's panel is open (the frame counts unread messages while it is not).
   readonly visible: boolean;
   // The frame's unread count, 0 again once the panel is shown.

@@ -51,7 +51,7 @@ export async function teamLocked(pool: DbPool, matchId: string, playerKey: strin
 
 // The roster with every player's match team: the stored one, or the smallest team of the
 // match counted over its players with a team (O26). `placed` are the new placements.
-export function placeTeams(
+function placeTeams(
   roster: readonly RosterPlayer[],
   players: readonly PlayerRow[],
   roundId: string,

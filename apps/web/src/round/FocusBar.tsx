@@ -61,7 +61,7 @@ function PanelButton(p: {
   );
 }
 
-export interface FocusBarProps {
+interface FocusBarProps {
   readonly state: RoundStateView;
   readonly now: number;
   // The special's sentence, in the game's words where it has its own (T119).

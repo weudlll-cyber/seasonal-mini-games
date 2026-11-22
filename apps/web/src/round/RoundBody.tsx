@@ -44,7 +44,7 @@ import { bannerOf, eventBanner } from './SpecialBanner.js';
 import { actionWords } from './roundText.js';
 import type { Panels } from './usePanels.js';
 
-export interface BodyProps {
+interface BodyProps {
   readonly live: RoundLive;
   readonly state: RoundStateView;
   readonly game: GameWeb | null;

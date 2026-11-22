@@ -44,7 +44,7 @@ export interface BdState extends GuessBase<Sequence, Feedback> {
   readonly players: Readonly<Record<string, PlayerState>>;
 }
 
-export type BdOwnEvent =
+type BdOwnEvent =
   // `playerId` null: the shared hint, to everyone.
   | { readonly type: 'HintGiven'; readonly playerId: string | null; readonly wire: Wire }
   | { readonly type: 'WiresHarmless'; readonly index: number; readonly wires: readonly Wire[] }

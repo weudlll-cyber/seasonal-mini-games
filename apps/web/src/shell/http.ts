@@ -11,7 +11,8 @@
  *                 the website (@smg/ui signInAgainAfter, T282); the call then never settles, as
  *                 the page is leaving.
  * Depends on:     @smg/ui
- * Used by:        ./session, ../game/*, ../host/*, ../account/accountText, ../api
+ * Used by:        ./session, ./handoffLanding, ./QuickTest, ../account/*, ../boards/*, ../chat/*,
+ *                 ../embed/embedHost, ../live/*, ../lobby/*, ../match/*
  * Spec:           Bingo 05 §1; Bingo 03 §8
  */
 

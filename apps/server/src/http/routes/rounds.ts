@@ -48,7 +48,7 @@ export const createRoundBody = z
   .strict();
 const abortBody = z.object({ reason: z.string().trim().min(1).max(200) }).strict();
 
-export interface RoundRouteDeps {
+interface RoundRouteDeps {
   readonly play: Play;
   readonly limits: GuessLimits;
   readonly store: PgRoundStore;

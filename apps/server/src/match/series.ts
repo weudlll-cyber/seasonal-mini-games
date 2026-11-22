@@ -24,12 +24,12 @@ import type { LiveRound } from '../round/liveRound.js';
 import { matchById, type MatchRow } from './matches.js';
 import type { Play } from './play.js';
 
-export interface NextSettings {
+interface NextSettings {
   readonly choices: Readonly<Record<string, unknown>>;
   readonly season: Season | null;
 }
 
-export interface SeriesState {
+interface SeriesState {
   readonly rounds: number;
   readonly played: number;
   // When the pause ends (server time), or null outside a pause.

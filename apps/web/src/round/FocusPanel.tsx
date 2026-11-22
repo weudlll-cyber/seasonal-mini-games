@@ -26,7 +26,7 @@ import {
 
 import './focus.css';
 
-export interface FocusPanelProps {
+interface FocusPanelProps {
   readonly title: string;
   readonly open: boolean;
   readonly onClose: () => void;

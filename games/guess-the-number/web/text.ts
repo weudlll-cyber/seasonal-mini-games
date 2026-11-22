@@ -34,7 +34,7 @@ import {
   type GuessRow,
 } from '@smg/game-sdk';
 
-export type HintView =
+type HintView =
   | { readonly kind: 'lastDigit'; readonly digit: number }
   | { readonly kind: 'half'; readonly low: number; readonly high: number };
 

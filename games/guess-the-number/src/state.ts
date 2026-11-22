@@ -64,7 +64,7 @@ export interface GtnState extends GuessBase<number, Feedback> {
 }
 
 // The game's own events, beside the engine's answers and room lines.
-export type GtnOwnEvent =
+type GtnOwnEvent =
   // `playerId` null: the shared hint, to everyone.
   | { readonly type: 'HintGiven'; readonly playerId: string | null; readonly hint: Hint }
   | { readonly type: 'NumbersRemoved'; readonly index: number; readonly numbers: readonly number[] }

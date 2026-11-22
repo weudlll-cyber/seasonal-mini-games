@@ -151,7 +151,7 @@ const rowView =
   });
 
 // Which board: a period, and a game or null for the total over every game (O44).
-export interface BoardOf {
+interface BoardOf {
   readonly periodId: string;
   readonly game: string | null;
 }

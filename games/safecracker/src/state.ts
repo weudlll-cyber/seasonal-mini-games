@@ -48,7 +48,7 @@ export interface ScState extends GuessBase<string, Feedback> {
   readonly players: Readonly<Record<string, PlayerState>>;
 }
 
-export type ScOwnEvent =
+type ScOwnEvent =
   // `playerId` null with a hint: the shared hint, to everyone; null without one: the room's
   // line that every player got a hint of their own (individual mode).
   | { readonly type: 'HintGiven'; readonly playerId: string | null; readonly hint: Hint | null }

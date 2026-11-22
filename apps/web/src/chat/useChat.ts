@@ -60,7 +60,7 @@ export function useChatConfig(): ChatConfigView | null {
 export type ChatTarget =
   { readonly kind: 'lobby' } | { readonly kind: 'match'; readonly code: string };
 
-export interface ChatRoomLive {
+interface ChatRoomLive {
   readonly room: ChatRoomView | null;
   readonly messages: readonly ChatMessageView[];
   // Why the room cannot be shown (signed out, chat off), or null.

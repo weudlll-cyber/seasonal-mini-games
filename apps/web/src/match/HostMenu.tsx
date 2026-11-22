@@ -188,7 +188,7 @@ function RunningControls({
   );
 }
 
-export interface HostMenuProps {
+interface HostMenuProps {
   readonly match: MatchDetailsView;
   readonly roundStatus: string | null;
   readonly reload: () => void;

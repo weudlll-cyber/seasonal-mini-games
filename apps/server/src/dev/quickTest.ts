@@ -142,7 +142,7 @@ async function botsFor(
   runBots(round, keys, bot, { delayMs: bots.delayMs, plan: seeded });
 }
 
-export interface QuickTests {
+interface QuickTests {
   readonly start: (input: QuickTestInput) => Promise<QuickTestStarted>;
 }
 

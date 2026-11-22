@@ -25,7 +25,7 @@ interface InForce {
   readonly expiresAt: number | null;
 }
 
-export type Sanctioned =
+type Sanctioned =
   { readonly code: 'CHAT_BANNED' } | { readonly code: 'CHAT_MUTED'; readonly until: number };
 
 export interface NewSanction {

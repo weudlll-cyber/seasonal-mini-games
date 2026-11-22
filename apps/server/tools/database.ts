@@ -27,7 +27,7 @@ const LOCAL_HOSTS = new Set(['127.0.0.1', 'localhost']);
 // A plain identifier, so the name can stand in the DROP and CREATE statements unquoted.
 const NAME = /^[a-z_][a-z0-9_]{0,62}$/;
 
-export interface LocalDatabase {
+interface LocalDatabase {
   readonly url: string;
   readonly name: string;
   readonly port: string;

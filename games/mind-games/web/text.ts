@@ -17,7 +17,7 @@
  *                 same list.
  * Depends on:     @smg-game/mind-games (views, words), @smg/game-sdk (clockText, GameText,
  *                 GuessRow)
- * Used by:        ./index, ./MindInput, ./FeedHead, ./ResultPanel, ./ChoiceButtons
+ * Used by:        ./index, ./MindInput, ./FeedPanels, ./ResultPanel, ./ChoiceButtons
  * Spec:           docs/spec/02e-game-mind-games.md §2, §5.2, §6, §9
  */
 import {
