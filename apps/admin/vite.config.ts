@@ -21,10 +21,20 @@ const PORT = Number(process.env['SMG_VITE_PORT'] ?? 5411);
 const SERVER = process.env['SMG_VITE_SERVER'] ?? 'http://127.0.0.1:3910';
 
 // Build only: the page's HTML comments (its file header) are not shipped (owner decision O128).
+// Removed until none is left: one pass could join the parts of a nested comment into a new one.
+function withoutComments(html: string): string {
+  let out = html;
+  for (let before = ''; before !== out;) {
+    before = out;
+    out = out.replace(/\s*<!--[\s\S]*?-->/g, '');
+  }
+  return out;
+}
+
 const noHtmlComments: Plugin = {
   name: 'smg-no-html-comments',
   apply: 'build',
-  transformIndexHtml: { order: 'post', handler: (html) => html.replace(/\s*<!--[\s\S]*?-->/g, '') },
+  transformIndexHtml: { order: 'post', handler: withoutComments },
 };
 
 export default defineConfig({

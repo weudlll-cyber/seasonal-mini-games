@@ -23,11 +23,22 @@ const HTML_COMMENT = /\s*<!--[\s\S]*?-->/g;
 // The public scripts the page loads as they are (index.html).
 const PUBLIC_SCRIPTS = ['theme-init.js'] as const;
 
+// The page without its comments, removed until none is left (one pass could join the parts
+// of a nested or broken one into a new one).
+function withoutComments(html: string): string {
+  let out = html;
+  for (let before = ''; before !== out;) {
+    before = out;
+    out = out.replace(HTML_COMMENT, '');
+  }
+  return out;
+}
+
 export function productionFiles(): Plugin {
   return {
     name: 'smg-production-files',
     apply: 'build',
-    transformIndexHtml: { order: 'post', handler: (html) => html.replace(HTML_COMMENT, '') },
+    transformIndexHtml: { order: 'post', handler: withoutComments },
     // After the output is written, the public dir's copy included.
     writeBundle(options) {
       const dir = options.dir ?? 'dist';
