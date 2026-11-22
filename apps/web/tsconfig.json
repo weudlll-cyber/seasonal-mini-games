@@ -3,7 +3,7 @@
  * @module web
  * @brief  TypeScript settings for @smg/web.
  *
- * Responsibility: extend the bundler base; include src/; opt into the React JSX
+ * Responsibility: extend the bundler base; include src/ and the Vite config with its plugin; opt into the React JSX
  *                 runtime so `.tsx` files type-check against the installed React.
  * Spec:           docs/spec/10-repository-structure.md §2
  */
@@ -14,5 +14,5 @@
     "noEmit": true,
     "types": ["vite/client"]
   },
-  "include": ["src", "vite.config.ts"]
+  "include": ["src", "vite.config.ts", "productionFiles.ts"]
 }
