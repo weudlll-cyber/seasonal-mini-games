@@ -6,7 +6,8 @@
  * Responsibility: the public matches in the lobby or running (06 §3.1 `GET /matches`), a field
  *                 to go to a match by its code, each match with its game (O41), for hosts
  *                 (`match.create`) a form to open a match of the game they choose (O41), with
- *                 its title, players at most, and whether it is a team match (O34), and in
+ *                 its title, players at most, whether it is a team match (O34) and whether the
+ *                 website lists it (on by default, O125), and in
  *                 development builds the way to the Quick Test, also for hosts only (the
  *                 greeting offers opening a match to them alone), and the lobby's chat room
  *                 (07 §2). Signed-out visitors are asked to
@@ -46,6 +47,7 @@ function useOpenMatch() {
     title: string;
     maxPlayers: number;
     teamMatch: boolean;
+    showOnWebsite: boolean;
   }): void => {
     api<MatchSummaryView>('/matches', { method: 'POST', body })
       .then((m) => {
@@ -60,6 +62,34 @@ function useOpenMatch() {
   return { problem, openWith };
 }
 
+// The match's two switches: season teams (O34) and the website's list (O125, on by default;
+// the host may switch it off now or while the match is open).
+function MatchSwitches(p: {
+  readonly teamMatch: boolean;
+  readonly setTeamMatch: (on: boolean) => void;
+  readonly showOnWebsite: boolean;
+  readonly setShowOnWebsite: (on: boolean) => void;
+}): ReactElement {
+  return (
+    <>
+      <SwitchField
+        label="Team match"
+        help={FORM_HELP.teamMatch}
+        checked={p.teamMatch}
+        testId="team-match"
+        onChange={p.setTeamMatch}
+      />
+      <SwitchField
+        label="Show on the website"
+        help={FORM_HELP.showOnWebsite}
+        checked={p.showOnWebsite}
+        testId="show-on-website"
+        onChange={p.setShowOnWebsite}
+      />
+    </>
+  );
+}
+
 function OpenMatch(): ReactElement {
   const games = useGames();
   // The host's choice, or the first game until they choose (O41).
@@ -67,11 +97,12 @@ function OpenMatch(): ReactElement {
   const [title, setTitle] = useState('');
   const [maxPlayers, setMaxPlayers] = useState(50);
   const [teamMatch, setTeamMatch] = useState(true);
+  const [showOnWebsite, setShowOnWebsite] = useState(true);
   const { problem, openWith } = useOpenMatch();
   const gameId = chosen === '' ? (games[0]?.id ?? '') : chosen;
   const open = (e: SyntheticEvent): void => {
     e.preventDefault();
-    openWith({ gameId, title, maxPlayers, teamMatch });
+    openWith({ gameId, title, maxPlayers, teamMatch, showOnWebsite });
   };
   return (
     <form className="smg-panel smg-stack" onSubmit={open} data-testid="open-match">
@@ -98,12 +129,11 @@ function OpenMatch(): ReactElement {
         max={1_000}
         onChange={setMaxPlayers}
       />
-      <SwitchField
-        label="Team match"
-        help={FORM_HELP.teamMatch}
-        checked={teamMatch}
-        testId="team-match"
-        onChange={setTeamMatch}
+      <MatchSwitches
+        teamMatch={teamMatch}
+        setTeamMatch={setTeamMatch}
+        showOnWebsite={showOnWebsite}
+        setShowOnWebsite={setShowOnWebsite}
       />
       {problem === null ? null : (
         <p role="alert" className="round-refusal">

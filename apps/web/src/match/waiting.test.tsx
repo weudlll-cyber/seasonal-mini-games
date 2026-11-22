@@ -35,6 +35,8 @@ const match: MatchDetailsView = {
   countsForLeaderboard: false,
   teamMatch: true,
   createdAt: 0,
+  showOnWebsite: false,
+  quickTest: true,
   youHost: false,
   youPlayer: true,
   you: 'p2',

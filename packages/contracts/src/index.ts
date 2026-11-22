@@ -6,11 +6,12 @@
  * Responsibility: the platform settings catalogue (08), the admin API shapes, and the match,
  *                 round, frame, Quick Test and season shapes the player client reads, and the
  *                 boards (match standings, leaderboards, profiles), the chat, and the integration
- *                 shapes (handoff, embed allowlist, webhooks, public read API) (06, 07), and the
- *                 session answer with a website member's Discord steps (O66).
+ *                 shapes (handoff, embed allowlist, webhooks, public read API, the website's
+ *                 open-rounds answer) (06, 07), and the session answer with a website member's
+ *                 Discord steps (O66).
  * Depends on:     ./withoutEval (first: no eval in a browser), ./settings/platform,
- *                 ./http/admin, ./http/boards, ./http/chat, ./http/integration, ./http/play,
- *                 ./http/session
+ *                 ./http/admin, ./http/boards, ./http/chat, ./http/integration, ./http/openRounds,
+ *                 ./http/play, ./http/session
  * Used by:        apps/server, apps/web, apps/admin, packages/application
  * Spec:           docs/spec/04-software-architecture.md §3; docs/spec/06-data-model-api-realtime.md
  */
@@ -75,6 +76,12 @@ export {
   type WebhookEvent,
   type WebhookPayload,
 } from './http/integration.js';
+export {
+  openRound,
+  openRoundsAnswer,
+  type OpenRound,
+  type OpenRoundsAnswer,
+} from './http/openRounds.js';
 export {
   AdjustmentBody,
   type Adjustment,
