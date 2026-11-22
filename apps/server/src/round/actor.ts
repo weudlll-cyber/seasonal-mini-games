@@ -13,12 +13,10 @@
  *                 of a batch go out only after it committed, and batches commit in order
  *                 (04 §5.3). A failed commit drops that batch and every later one (their
  *                 senders get INTERNAL) and the actor rebuilds itself from the database,
- *                 answering ROUND_BUSY meanwhile: the open batch, decided against the state
- *                 that failed, is dropped too, Frost holds again what the log has not
- *                 delivered (a release whose batch failed included), and a reload that fails
- *                 is tried again after a second.
- *                 More than `queueBound` unanswered items answer ROUND_BUSY (05 §5). An optional
- *                 observer gets guess answers, commit times and tick and Frost lag (06 §4.6).
+ *                 answering ROUND_BUSY meanwhile: the open batch is dropped too, Frost holds
+ *                 again what the log has not delivered, a failed reload is retried. More than
+ *                 `queueBound` unanswered items answer ROUND_BUSY (05 §5). An optional observer
+ *                 gets guess answers, commit times and tick and Frost lag (06 §4.6).
  * Depends on:     @smg/application (RoundSession), @smg/domain (types), ./pgRoundStore, ./batch,
  *                 ./frost
  * Used by:        ./rounds
@@ -73,8 +71,7 @@ export interface Delivery {
 
 export type Committed = (events: readonly StoredEvent[], how: Delivery) => void;
 
-// The round as its log stands after a failed commit: the session, the last seq, and the Frost
-// events not yet delivered (after the last committed HeldDelivered).
+// The round as its log stands after a failed commit, with the Frost events not yet delivered.
 interface Reloaded<S, A, E, Cfg, Sec> {
   readonly session: RoundSession<S, A, E, Cfg, Sec>;
   readonly lastSeq: number;
