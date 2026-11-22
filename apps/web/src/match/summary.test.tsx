@@ -70,6 +70,8 @@ const ended: MatchDetailsView = {
   countsForLeaderboard: true,
   teamMatch: true,
   createdAt: 0,
+  showOnWebsite: false,
+  quickTest: false,
   youHost: false,
   youPlayer: true,
   you: 'p2',

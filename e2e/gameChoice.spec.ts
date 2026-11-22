@@ -5,7 +5,9 @@
  *
  * Responsibility: the create-match form offers the five games with a help line and opens a
  *                 public match of the chosen one; the match page and the Play list name its
- *                 game; ended at once, its summary names it too. The Quick
+ *                 game; "Show on the website" is on in the form, so the website's open-rounds
+ *                 status lists the match until its host switches it off in the host menu
+ *                 (O124, O125); ended at once, its summary names it too. The Quick
  *                 Test form shows only the chosen game's own settings (Guess The Number's range
  *                 for it alone, Bomb Defusal's wires and cuts for it alone).
  * Depends on:     @playwright/test, ./play
@@ -13,7 +15,7 @@
  */
 import { expect, test } from '@playwright/test';
 
-import { attempt, call, closeAll, person } from './play.js';
+import { attempt, call, closeAll, hostMenu, person, type Person } from './play.js';
 
 const GAMES = [
   'Guess The Number',
@@ -22,6 +24,23 @@ const GAMES = [
   'Seasonal Target',
   'Seasonal Mind Games',
 ];
+
+// The website's open-rounds status lists the match while it is shown, and not after its host
+// switched it off in the host menu (O124, O125).
+async function websiteList(p: Person, code: string): Promise<void> {
+  const listed = async () =>
+    (
+      (await (await p.page.request.get('/api/public/open-rounds')).json()) as {
+        rounds: { id: string }[];
+      }
+    ).rounds.map((r) => r.id);
+  expect(await listed()).toContain(code);
+  await hostMenu(p);
+  const toggle = p.page.getByTestId('website-switch');
+  await toggle.click();
+  await expect(p.page.getByTestId('website-switch')).not.toBeChecked();
+  await expect.poll(listed).not.toContain(code);
+}
 
 test('journey 23: the game is chosen when the match is opened, and named everywhere', async ({
   browser,
@@ -40,9 +59,11 @@ test('journey 23: the game is chosen when the match is opened, and named everywh
     await expect(form.getByText('Every round of the match is this game')).toBeVisible();
     await choice.selectOption('safecracker');
     await form.getByTestId('match-title').fill(title);
+    await expect(form.getByTestId('show-on-website')).toBeChecked();
     await form.getByRole('button', { name: 'Open match' }).click();
     await expect(p.page.getByTestId('match-game')).toHaveText('Seasonal Safecracker');
     code = /#\/match\/(\w+)/.exec(p.page.url())?.[1] ?? '';
+    await websiteList(p, code);
     // The Play list names it.
     await p.page.goto('./');
     const row = p.page.getByTestId('matches').locator('li', { hasText: title });

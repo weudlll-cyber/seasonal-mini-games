@@ -11,10 +11,12 @@
  *                 without those keys, and the account's in their place, so a value a match
  *                 stored before the split never shadows the account's. A game without such keys
  *                 keeps its whole value per match, as before.
- * Depends on:     ../db/pool
+ * Depends on:     pg (types), ../db/pool
  * Used by:        ./prefs
  * Spec:           docs/spec/04-software-architecture.md §4.8 rule 8; docs/spec/06-data-model-api-realtime.md §2.2
  */
+import type pg from 'pg';
+
 import type { DbPool } from '../db/pool.js';
 
 type Value = Readonly<Record<string, unknown>>;
@@ -39,9 +41,9 @@ export function mergePrefs(match: unknown, account: unknown, keys: readonly stri
   return { ...only(asRecord(match), keys, false), ...only(asRecord(account), keys, true) };
 }
 
-// The account's part for a game, written over the last one.
+// The account's part for a game, written over the last one (in the caller's transaction).
 export async function saveAccountPrefs(
-  pool: DbPool,
+  pool: DbPool | pg.PoolClient,
   accountId: string,
   gameId: string,
   part: Value,

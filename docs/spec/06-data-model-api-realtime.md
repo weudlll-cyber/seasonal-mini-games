@@ -39,6 +39,8 @@
 | max_players | int | within `match.maxPlayers` bounds |
 | counts_for_leaderboard | bool | default true |
 | team_match | bool | default true: the season teams play (owner decision 34) |
+| show_on_website | bool | default false in the table; a match opened from the form is shown unless its host unticks it, and the host switches it while the match is open: the website lists it as open for sign-up ([07](07-integration.md) §8, O124, O125); never true for a Quick Test |
+| quick_test | bool | default false: true for the development Quick Test's match, which the website never lists (O125) |
 | created_by | uuid FK accounts | the host |
 | created_at, closed_at | timestamptz | |
 | aborted_reason, aborted_by | text NULL | as Bingo D17 (`host` or `system`); for a closed match how it closed: the host with no reason, or `system` with `idle` (owner decisions 27, 28; DECISIONS T83) or with `complete`, a series whose last round is played ([04](04-software-architecture.md) §4.8 rule 7) |

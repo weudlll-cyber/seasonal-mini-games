@@ -6,7 +6,7 @@
  * Responsibility: from the typed events of a batch and the round state when it closed,
  *                 the round row's status, the scheduled actions a countdown needs (open at
  *                 `opensAt`, time-up at `endsAt`), the results of `RoundEnded`, whether the
- *                 round is finished, and a snapshot when the batch crosses a multiple of
+ *                 round is finished, whether it opens the round (`RoundOpened`), and a snapshot when the batch crosses a multiple of
  *                 200 events (06 §2.3). The `type` column names a game event `game.<type>`.
  * Depends on:     @smg/domain (types), ./pgRoundStore (types)
  * Used by:        ./actor
@@ -57,6 +57,7 @@ export function batchWrite<S, Cfg>(
     snapshot: crosses ? { seq: last, state } : null,
     schedule,
     ended: end === undefined ? null : { results: end.results, teams: end.teams },
+    opened: events.some((e) => e.type === 'RoundOpened'),
     finished: state.status === 'ended' || state.status === 'aborted',
   };
 }

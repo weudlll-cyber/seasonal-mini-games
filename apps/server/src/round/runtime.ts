@@ -26,6 +26,7 @@ import { roundKeyFrom } from '../config/roundKey.js';
 import type { DbPool } from '../db/pool.js';
 import { IdleClose } from '../match/idleClose.js';
 import { Play } from '../match/play.js';
+import { openingPrePicks, type OpeningPick } from '../match/prefs.js';
 import { Presence } from '../match/presence.js';
 import { SeriesRunner } from '../match/series.js';
 import { phasedWords } from '../chat/roundLines.js';
@@ -80,12 +81,13 @@ function roundsOf(env: Env, store: PgRoundStore, limits: GuessLimits, extra: Run
 }
 
 // A series' next round or close after each of its phased rounds (04 §4.8 rule 7), and the
-// players' pre-picks at each opening (rule 8).
+// players' pre-picks at each opening (rule 8), as the opening's transaction read them (O117).
 function seriesOf(pool: DbPool, play: Play, rounds: Rounds): SeriesRunner {
   const series = new SeriesRunner(pool, play);
-  rounds.onCommitted((round, events) => {
+  rounds.onCommitted((round, events, how) => {
     if (!round.phased) return;
-    if (events.some((e) => e.type === 'RoundOpened')) void play.prefs.apply(round);
+    if (Array.isArray(how.opening))
+      void play.prefs.apply(round, how.opening as readonly OpeningPick[]);
     const ended = events.find((e) => e.type === 'RoundEnded');
     if (ended !== undefined) {
       // What won, in the game's words, for the match summary (02e §9, T333).
@@ -106,7 +108,12 @@ export function createRoundRuntime(
   settings: SettingsService,
   extra: RuntimeExtra = {},
 ): RoundRuntime {
-  const store = new PgRoundStore(pool, roundKeyFrom(env), () => leagueRules(settings));
+  const store = new PgRoundStore(
+    pool,
+    roundKeyFrom(env),
+    () => leagueRules(settings),
+    openingPrePicks,
+  );
   const limits = new GuessLimits(settings, pool);
   const rounds = roundsOf(env, store, limits, extra);
   const devFeed = env.SMG_DEV ? (env.SMG_DEV_FEED_URL ?? null) : null;

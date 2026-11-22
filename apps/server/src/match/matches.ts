@@ -9,7 +9,8 @@
  *                 ./teams; the match is `open` once a round
  *                 was created, and ends `closed` or `aborted`. Display names for player keys
  *                 (bots keep their key); the match's team standings. Matches are never
- *                 deleted (06 §2.3).
+ *                 deleted (06 §2.3). Each carries whether it is shown on the website and
+ *                 whether it is a Quick Test (O124, ./website).
  * Depends on:     node:crypto, ../db/pool
  * Used by:        ./play, ../http/routes/matches, ../http/routes/adminRounds, ../realtime/*,
  *                 ../dev/quickTest
@@ -37,6 +38,9 @@ export interface MatchRow {
   readonly teamMatch: boolean;
   readonly hostId: string | null;
   readonly createdAt: number;
+  // Listed on the website while open for joining (O124, O125); never for a Quick Test.
+  readonly showOnWebsite: boolean;
+  readonly quickTest: boolean;
 }
 
 export interface PlayerRow {
@@ -58,10 +62,12 @@ interface Row {
   team_match: boolean;
   created_by: string | null;
   created_at: Date;
+  show_on_website: boolean;
+  quick_test: boolean;
 }
 
 const COLUMNS = `id::text, code, game_id, title, status, visibility, max_players,
-  counts_for_leaderboard, team_match, created_by::text, created_at`;
+  counts_for_leaderboard, team_match, created_by::text, created_at, show_on_website, quick_test`;
 
 const toMatch = (r: Row): MatchRow => ({
   id: r.id,
@@ -75,6 +81,8 @@ const toMatch = (r: Row): MatchRow => ({
   teamMatch: r.team_match,
   hostId: r.created_by,
   createdAt: r.created_at.getTime(),
+  showOnWebsite: r.show_on_website,
+  quickTest: r.quick_test,
 });
 
 export interface NewMatch {
@@ -85,6 +93,9 @@ export interface NewMatch {
   readonly countsForLeaderboard: boolean;
   readonly teamMatch: boolean;
   readonly hostId: string;
+  readonly showOnWebsite: boolean;
+  // A development Quick Test (never listed on the website).
+  readonly quickTest?: boolean;
 }
 
 export async function openMatch(pool: DbPool, m: NewMatch): Promise<MatchRow> {
@@ -97,8 +108,8 @@ export async function openMatch(pool: DbPool, m: NewMatch): Promise<MatchRow> {
     try {
       const r = await pool.query<Row>(
         `INSERT INTO smg.matches (code, game_id, title, visibility, max_players,
-           counts_for_leaderboard, team_match, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING ${COLUMNS}`,
+           counts_for_leaderboard, team_match, created_by, show_on_website, quick_test)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING ${COLUMNS}`,
         [
           code,
           m.gameId,
@@ -108,6 +119,8 @@ export async function openMatch(pool: DbPool, m: NewMatch): Promise<MatchRow> {
           m.countsForLeaderboard,
           m.teamMatch,
           m.hostId,
+          m.showOnWebsite && m.quickTest !== true,
+          m.quickTest === true,
         ],
       );
       const row = r.rows[0];
