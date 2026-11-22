@@ -253,7 +253,18 @@ describe('the round-end line', () => {
     if (winner === undefined) throw new Error('no winner socket');
     await until(async () => (await kit.send(winner, 'guess', { roundId: id, value })).ok);
     const text = `Round 1: dev-player-1 found it first — the number was ${String(value)}`;
-    await until(() => messages(p3).some((m) => m.kind === 'system' && m.text === text));
+    // Failed in CI three times, never locally (BACKLOG flaky tests): on a miss, name the system
+    // lines that did arrive, so the next failure shows whether the line came late or differed.
+    await until(() => messages(p3).some((m) => m.kind === 'system' && m.text === text)).catch(
+      (error: unknown) => {
+        const seen = messages(p3)
+          .filter((m) => m.kind === 'system')
+          .map((m) => m.text);
+        throw new Error(
+          `${String(error)}; wanted "${text}", system lines seen: ${JSON.stringify(seen)}`,
+        );
+      },
+    );
     for (const s of watchers) s.disconnect();
   });
 });
