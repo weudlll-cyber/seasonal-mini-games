@@ -24,6 +24,10 @@
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
+    // Typecheck only: each project keeps what it checked in <config>.tsbuildinfo beside its
+    // config (git-ignored), so a repeated `pnpm typecheck` re-checks only what changed and
+    // what depends on it (DECISIONS T401).
+    "incremental": true,
     // No ambient @types leak into a project; each one opts in to what it needs (e.g. node).
     "types": [],
     // Packages are consumed as source until a build step exists. The aliases also let ESLint's
