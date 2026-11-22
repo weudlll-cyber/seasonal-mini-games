@@ -176,6 +176,9 @@ export function quickTests(play: Play, pool: Parameters<typeof openMatch>[0]): Q
       // A game without teams has matches without them (04 §4.8 rule 3).
       teamMatch: input.teamMatch && play.rounds.teams(input.gameId),
       hostId: input.playerId,
+      // A Quick Test is never on the website's list (O125).
+      showOnWebsite: false,
+      quickTest: true,
     });
     const bots = Array.from(
       { length: input.bots },

@@ -53,6 +53,10 @@ export interface MatchSummaryView {
   // The season teams play (O34): without, no view shows a team.
   readonly teamMatch: boolean;
   readonly createdAt: number;
+  // Listed on the Seasonal Entertainment website while open for joining (O124, O125); a Quick
+  // Test never is.
+  readonly showOnWebsite: boolean;
+  readonly quickTest: boolean;
 }
 
 // The end of a closed or aborted match (O27): the rounds played and how it ended. The

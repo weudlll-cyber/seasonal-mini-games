@@ -174,3 +174,19 @@ browser ──GET /games/mini-games/auth/website?next=…──► website proxy
 - `rights`: its sessions end, so the next sign-in recomputes the roles; the website also sends `rights` when the member changes or resets their password, so that ends their game sessions too (DECISIONS T278).
 - `unlocked`: nothing. A change for an id the game does not know does nothing. A kind the game does not know is logged once per kind and process and handled like `rights`, as in Bingo, so the page is applied and the cursor moves on (DECISIONS T279). Each change is safe to apply twice.
 - The fetch is a plain HTTP request with a 10 s timeout, no redirects and a 256 KiB cap, not `SafeHttpClient`, which takes public https addresses only: this is the operator's own local address (DECISIONS T217). Errors back off from 30 s, doubling up to 10 minutes, and are logged by their message only, never with the token.
+
+## 8. The website's open sign-ups (new)
+
+The Seasonal Entertainment website shows on its home page the rounds of its embedded games that are open for sign-up, as Bingo and Cases provide them (owner decision O124). Mini Games serves the website's shared contract (version 1, the website's `docs/OPEN-ROUNDS.md`; here `openRoundsAnswer` in `@smg/contracts`).
+
+- **Route.** `GET /api/public/open-rounds`: public, no sign-in, JSON, `Cache-Control: public, max-age=30`. Behind the website the game lives under `/games/mini-games`, so the status URL is `/games/mini-games/api/public/open-rounds` on the website's own origin. The website derives it from the game's path; nobody enters it. The path stays stable: changing it breaks the website's list.
+- **Answer.** `{"version":1,"rounds":[…]}`, at most 20 entries, soonest first (the next round's opening, then matches without one in the order they were opened). Each entry:
+  - `id`: the match code;
+  - `title`: the match title;
+  - `kind`: `Seasonal Mini Games · <game>`, the game's name without its leading "Seasonal " (`Seasonal Mini Games · Bomb Defusal`), so every entry stays within the contract's 40 characters;
+  - `startsAt`: the opening of a round in its countdown, else the next automatic start of a series, else null;
+  - `signupClosesAt`: null (a match takes players until it is full or ends);
+  - `players`, `maxPlayers`: the active players and the match's limit;
+  - `joinUrl`: the match's page, an absolute https URL under `SMG_PUBLIC_URL` (`<public URL>#/match/<code>`); in development the request's own host.
+- **What is listed.** A match in the lobby or open, with a seat free, whose host shows it on the website. A full, closed or aborted match drops out. A Quick Test is never listed, whatever its option says. No player's name, account id or setting is in the answer.
+- **Show on the website** (owner decision O125). The create-match form has the option, on by default (`showOnWebsite`, default true in `POST /api/v1/matches`). While the match is open its host switches it off and on again in the host menu (`PUT /api/v1/matches/:code/website` with `{"show":true|false}`, the host only; 409 `QUICK_TEST` for a Quick Test, 409 `MATCH_CLOSED` for an ended match). The match's summary carries `showOnWebsite` and `quickTest`. The column is `matches.show_on_website` ([06](06-data-model-api-realtime.md) §2.1).

@@ -15,12 +15,15 @@
  *                 last round's choices or the document's values and limited to the bounds in
  *                 force (08 §3; the server checks again), the season (In Season when it is
  *                 usable, or one by hand), the halving round only on a halving day; then
- *                 Start round, End round and Abort round with a reason (02 §4, §9, §11). Last,
- *                 always: End match with its confirm sentence (./EndMatch, O27). Refusals in
+ *                 Start round, End round and Abort round with a reason (02 §4, §9, §11; while a
+ *                 round runs ./RunningControls). Last, always: "Show on the website" while the
+ *                 match is open (./WebsiteSwitch, O125) and End match with its confirm sentence
+ *                 (./EndMatch, O27). Refusals in
  *                 plain words; a refused setting's sentence under its field (O74). The host plays the round like every player; the menu holds no
  *                 secret.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (types), ../components/*, ../shell/http,
- *                 ../live/socket, ../round/roundText, ./EndMatch, ./roundFields, ./roundRequest
+ *                 ./EndMatch, ./RunningControls,
+ *                 ./WebsiteSwitch, ./roundFields, ./roundRequest
  * Used by:        ./MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §3, §4, §9; docs/spec/08-admin-settings.md §3
  */
@@ -30,11 +33,11 @@ import { useState, type ReactElement, type SyntheticEvent } from 'react';
 import { useDisclosure } from '@smg/ui';
 
 import { ActionButton, Problem } from '../components/fields.js';
-import { intent } from '../live/socket.js';
 import { useShowsSeason } from '../lobby/games.js';
-import { codeText } from '../round/roundText.js';
 import { api } from '../shell/http.js';
 import { EndMatch } from './EndMatch.js';
+import { RunningControls } from './RunningControls.js';
+import { WebsiteSwitch } from './WebsiteSwitch.js';
 import { roundRequest } from './roundRequest.js';
 import {
   fieldStateOf,
@@ -127,67 +130,6 @@ function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
   );
 }
 
-function RunningControls({
-  roundId,
-  created,
-  done,
-}: {
-  roundId: string | undefined;
-  created: boolean;
-  // After an action: whether it worked.
-  done: (ok: boolean) => void;
-}): ReactElement {
-  const [reason, setReason] = useState('');
-  const [problem, setProblem] = useState<string | null>(null);
-  const run = (t: string, data: object): void => {
-    void intent(t, { roundId, ...data }).then((answer) => {
-      setProblem(answer.ok ? null : codeText(answer.code));
-      done(answer.ok);
-    });
-  };
-  return (
-    <>
-      <div className="smg-row">
-        {created ? (
-          <ActionButton
-            label="Start round"
-            kind="primary"
-            testId="start-round"
-            onClick={() => {
-              run('round.start', {});
-            }}
-          />
-        ) : null}
-        <ActionButton
-          label="End round"
-          testId="end-round"
-          onClick={() => {
-            run('round.end', {});
-          }}
-        />
-        <input
-          className="smg-input"
-          placeholder="Reason to abort"
-          value={reason}
-          onChange={(e) => {
-            setReason(e.target.value);
-          }}
-          aria-label="Reason to abort"
-        />
-        <ActionButton
-          label="Abort round"
-          kind="danger"
-          disabled={reason.trim() === ''}
-          onClick={() => {
-            run('round.abort', { reason });
-          }}
-        />
-      </div>
-      <Problem text={problem} />
-    </>
-  );
-}
-
 interface HostMenuProps {
   readonly match: MatchDetailsView;
   readonly roundStatus: string | null;
@@ -207,14 +149,17 @@ function MenuBody({ p, close }: { readonly p: HostMenuProps; readonly close: () 
     if (ok) close();
     reload();
   };
-  // Last in the menu, whatever the round does: End match (O27).
+  // Last in the menu, whatever the round does: the website's list (O125) and End match (O27).
   const endMatch = (
-    <EndMatch
-      code={match.code}
-      done={() => {
-        after(true);
-      }}
-    />
+    <>
+      <WebsiteSwitch match={match} reload={reload} />
+      <EndMatch
+        code={match.code}
+        done={() => {
+          after(true);
+        }}
+      />
+    </>
   );
   if (running) {
     return (
