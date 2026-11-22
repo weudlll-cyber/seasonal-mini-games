@@ -20,9 +20,9 @@
  *                 rows at each size (T142, O109: Guess The Number 26 and 18 in two columns,
  *                 Safecracker 20 and 10, Bomb Defusal 16 and 11), Seasonal Target's 20 × 20
  *                 tiles at least 30 px and 18 px apart (T144); Seasonal Target is played on
- *                 the phone through the loupe. The round's bot
- *                 waits 60 s after each of its tries, so it cannot end the round while the
- *                 journey runs, however slow the machine (T373). The matches are aborted.
+ *                 the phone through the loupe, in a match of its own. The round's bot waits
+ *                 60 s after each of its tries, so it cannot end the round while the journey
+ *                 runs, however slow the machine (T373). The matches are aborted.
  * Depends on:     @playwright/test, ./guessGames, ./play, ./screens
  * Spec:           docs/spec/09-testing-strategy.md §4 (journeys 24–27); docs/spec/02-game-guess-the-number.md §12
  */
@@ -53,9 +53,7 @@ async function stillPlayable(page: Page, dialog: Box, size: Size): Promise<void>
   await expect(action).toBeVisible();
   // Disabled only while waiting, or until the input is complete (Safecracker's whole code,
   // Bomb Defusal's chosen wires): then it still reads its own word.
-  if (!(await action.isEnabled())) {
-    await expect(action).toHaveText(/^(Wait \d+ s|Try code|Cut)$/);
-  }
+  if (!(await action.isEnabled())) await expect(action).toHaveText(/^(Wait \d+ s|Try code|Cut)$/);
   // The parts of the round (T141): which ones there are depends on the game and the layout.
   const parts = ['.round-stage', '.round-column', '.round-main', '.round-line', '.round-input'];
   for (const part of parts) {
@@ -113,8 +111,7 @@ async function dockedChat(page: Page, size: Size): Promise<void> {
   await expect(dock.getByRole('textbox')).toBeVisible();
 }
 
-// A panel from the bar: open (the game still playable), Escape (focus back on its button),
-// open, Close.
+// A panel from the bar: open (the game still playable), Escape (focus back), open, Close.
 async function panel(page: Page, button: string, name: string, size: Size): Promise<void> {
   const opener = page.getByTestId(button);
   const dialog = page.getByRole('dialog', { name });
@@ -139,13 +136,13 @@ async function slimBar(page: Page, size: Size): Promise<void> {
   await expect(bar).not.toContainText(/Wait/);
 }
 
-// The measured sizes at one screen size against the game's targets.
-async function reaches(page: Page, targets: Targets, n: number): Promise<void> {
+// The sizes reached at one screen size: the rows after a guess, the tiles before (journey 27).
+async function reaches(page: Page, targets: Targets, n: number, played: boolean): Promise<void> {
   const rows = targets.rows?.[n];
-  if (rows !== undefined)
+  if (played && rows !== undefined)
     expect(await listRoom(page), 'guess rows in view').toBeGreaterThanOrEqual(rows);
   const tile = targets.tile?.[n];
-  if (tile !== undefined) {
+  if (!played && tile !== undefined) {
     // A tile's pitch, its fill and one gap: the grid's width over its columns (T144).
     const pitch = await page.getByTestId('tile-grid').evaluate((grid) => {
       const columns = grid.querySelectorAll('[data-testid="tile"][data-y="1"]').length;
@@ -159,12 +156,13 @@ async function focusJourney(
   browser: Browser,
   gameId: string,
   play: Play,
-  // The sizes to reach, the round's own settings, and where the chat is (a list game's docked
-  // under the round, O109; Seasonal Target's a panel from the bar).
+  // The sizes to reach, the round's own settings, where the chat is (a list game's docked
+  // under the round, O109; Seasonal Target's a panel from the bar), a match for each size.
   opts: {
     readonly targets: Targets;
     readonly round?: Readonly<Record<string, unknown>>;
     readonly chat: 'dock' | 'panel';
+    readonly matchPerSize?: boolean;
   },
 ): Promise<void> {
   const { targets, round = {} } = opts;
@@ -176,6 +174,7 @@ async function focusJourney(
     const body = { gameId, season: 'summer', botDelayS: 60, ...round };
     codes.push((await direct(p, body)).matchCode);
     for (const [n, size] of [WIDE, PHONE].entries()) {
+      if (n > 0 && opts.matchPerSize === true) codes.push((await direct(p, body)).matchCode);
       await p.page.setViewportSize(size);
       await p.page.reload();
       await roundOpen(p.page);
@@ -191,9 +190,10 @@ async function focusJourney(
       await expect(p.page.getByTestId('cooldown')).toHaveAttribute('aria-label', 'Ready', {
         timeout: 40_000,
       });
+      await reaches(p.page, targets, n, false);
       await play(p.page, n);
       await expect(ownRows(p.page).first()).toBeVisible({ timeout: 10_000 });
-      await reaches(p.page, targets, n);
+      await reaches(p.page, targets, n, true);
       await fitsScreen(p.page);
     }
   } finally {
@@ -282,14 +282,14 @@ test('journey 27: Seasonal Target in focus mode, the loupe on a phone', async ({
       await page.getByTestId('guess-button').click();
       await expect(loupe).toBeHidden();
     },
-    // 20 × 20 tiles: about 30 px at 1280 × 720 and at least 18 px on a phone (T144). The bot
-    // found a 20 × 20 target by its distances within two cooldowns of 20 s (CI); with
-    // warm/cold only and a 30 s cooldown it needs many more of them. Its first guess is a
-    // random cell, though, and once in CI it was the target (1 in 400): individual secrets,
-    // so a bot's solve never ends the player's round.
+    // 20 × 20 tiles: about 30 px at 1280 × 720, at least 18 px on a phone (T144). Warm/cold
+    // only, 30 s cooldowns: by distances the bot once found the target in two 20 s ones (CI).
+    // Individual targets: a find ends only its finder's round, and takes their board (the
+    // player's first guess, 1 in 400, twice in CI on 2026-11-22), so each size has its match.
     {
       targets: { tile: [30, 18] },
       chat: 'panel',
+      matchPerSize: true,
       round: {
         mode: 'individual',
         cooldownS: 30,
