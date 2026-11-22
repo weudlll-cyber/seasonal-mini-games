@@ -157,7 +157,13 @@ async function playOneGuess(host: Person, player: Person): Promise<void> {
   await expect(ownRows(player.page).first().or(player.page.getByTestId('result'))).toBeVisible();
   if (!(await ended.isVisible())) {
     await hostMenu(host);
-    await host.page.getByTestId('host-console').getByTestId('end-round').click();
+    // The secret's end may reach the host only now: then "End round" is gone and the click
+    // would wait for good (1 run in 20, 2026-11-22), so its failure counts only while the
+    // round is still running.
+    const endRound = host.page.getByTestId('host-console').getByTestId('end-round');
+    await endRound.click({ timeout: 10_000 }).catch(async (error: unknown) => {
+      if (!(await ended.isVisible())) throw error;
+    });
   }
   await expect(ended).toBeVisible({ timeout: 15_000 });
 }

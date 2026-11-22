@@ -46,6 +46,33 @@ Not changed, with a proposal:
 - **Two instances starting at once could race on a migration** (`db/migrator.ts` has no advisory lock; the loser fails on the record's key and rolls back). One instance is the supported setup (04 §5.6). Proposal: take an advisory lock around the run when scale-out is built.
 - **No test upgrades a database at the previous version** (0021 → 0022 and so on): each test migrates an empty one. Proposal: a test that migrates to the previous version, writes rows, and applies the last migration.
 
+### Tests (B3, branch `chore/audit-tests`)
+
+Coverage of the unit and integration tests, one Vitest project at a time (`vitest run --coverage --project <p>`, V8, each project counting its own sources only; e2e not counted):
+
+| Package                          | Lines      | Branches    | Functions  |
+| -------------------------------- | ---------- | ----------- | ---------- |
+| `packages/domain`                | 99.5 %     | 92.6 %      | 100 %      |
+| `packages/application`           | 96.6 %     | 89.7 %      | 95.6 %     |
+| `packages/guess-engine`          | 94.7 %     | 89.3 %      | 87.7 %     |
+| `packages/game-sdk`              | 84.5 %     | 86.7 %      | 84.3 %     |
+| `apps/server`                    | 92.9 %     | 80.9 %      | 92.3 %     |
+| `apps/web`                       | 82.8 %     | 72.7 %      | 81.3 %     |
+| `apps/admin`                     | 62.2 %     | 54.9 %      | 54.4 %     |
+| the five games (`src` and `web`) | 95.0–100 % | 86.2–98.7 % | 92.6–100 % |
+| `games/registry/src`             | 84.9 %     | 54.5 %      | 74.2 %     |
+
+`packages/contracts` and `packages/ui` read 0 % and 27 % only because their tests live in the projects that use them (the zod schemas are exercised by every server test, the ui components by the web's). Files under 40 % with 20 lines or more: `apps/server/src/main.ts` and `cliCommands.ts` (the process start, run by every e2e stack; the CLI's `promote-super` in `superPromotion.integration.test.ts`, its other commands untested), `apps/web/src/embed/*`, `live/socket.ts` and `match/MatchPage.tsx` (played by the embed journeys and every match journey in e2e), and the admin pages for seasons, two-factor, moderation, audit and accounts (no unit test, and the admin e2e, journey 15, opens only settings and live; their routes have server tests). Proposal: none for the process start; unit tests for the admin pages' lists and the CLI's other commands when they next change.
+
+Fixed:
+
+- **The highlighted player (O62) had no unit test** (`packages/ui/src/highlight.ts`, 20 % covered): `apps/web/src/round/highlight.test.tsx` now proves hover, focus, the phone's 3 s tap, that an earlier tap's end does not clear a later highlight, a row without a player, and `lit`.
+- **The series pause of the phased fixture was 3 s**, too short on a slow runner: under coverage, the test's requests between the round's end and the host's start took longer and the next round started on its own (`series.integration.test.ts`). Now 10 s (`games/registry/src/phasedFixture.ts`, `SIDES_SERIES`).
+- **Journey 36 could hang** (1 of 20 runs): when the guess of 500 was the secret, the host's page could learn of the end only after it had checked for the result; "End round" was then gone and the click waited until the test's 150 s ran out (trace: the host console already showed "Next round"). The click now waits 10 s and its failure counts only while the round has not ended (`e2e/website.spec.ts` `playOneGuess`); 3 of 3 afterwards.
+- **The chat's round-end line test** (flaky, cause not found) now names the system lines it saw when the line is missed, so its next failure says more (`apps/server/test/chat.integration.test.ts`).
+
+Flaky tests, 20 runs each in a row (BACKLOG "Flaky tests"): the chat's round-end line 20 of 20, the specials test 20 of 20; journeys 11, 12, 27, 28, 36 and 44 in Chromium and the timing project, one worker (180 runs, 2.9 h): all green except journey 36 once (fixed above) and journey 44 once, in the timing project: a named flight "bot-13" Winter → All found no feed line of its own within the probe's 1 s pairing window at 1440 × 900, while the 1280 × 720 page of the same round passed. That is the listed flake's second occurrence, both times into All; the cause is still not proven, so unchanged (proposal: the probe logs the lines of that path seen within 3 s on a miss, to tell a late line from a line taken by a neighbouring wave).
+
 ### Docs against code (B5, branch `chore/audit-docs`)
 
 Every spec section, the operator guide, README, CLAUDE.md, CONTRIBUTING, SECURITY and the review checklist read against the tree; every repository path the living docs name exists (a scan of all of them; the twelve hits were paths in the website's or Bingo's repository, or `.tsx` files matched by their `.ts` prefix).
