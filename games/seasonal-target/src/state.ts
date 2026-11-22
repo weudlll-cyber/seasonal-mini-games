@@ -75,7 +75,7 @@ export interface StState extends GuessBase<Cell, Feedback> {
   readonly players: Readonly<Record<string, StPlayer>>;
 }
 
-export type StOwnEvent =
+type StOwnEvent =
   // `playerId` null: to the room, with the shared quarters, or (individual) none: "everyone
   // received a hint".
   | {

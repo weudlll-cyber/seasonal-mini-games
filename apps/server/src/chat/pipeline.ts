@@ -36,7 +36,7 @@ export type SendResult =
   | { readonly ok: true; readonly message: ChatMessageView }
   | { readonly ok: false; readonly code: string; readonly until?: number };
 
-export interface PipelineDeps {
+interface PipelineDeps {
   readonly pool: DbPool;
   readonly sanctions: Sanctions;
   readonly spam: SpamGuard;

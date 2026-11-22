@@ -27,7 +27,7 @@ type ChatAnswer =
   | { readonly ok: true; readonly data?: unknown }
   | { readonly ok: false; readonly code: string; readonly until?: number };
 
-export type ChatIntent = 'chat.join' | 'chat.leave' | 'chat.send';
+type ChatIntent = 'chat.join' | 'chat.leave' | 'chat.send';
 
 export async function chatIntent(
   ctx: IntentContext,

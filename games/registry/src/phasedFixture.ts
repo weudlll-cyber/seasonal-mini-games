@@ -34,12 +34,12 @@ const SIDES = ['a', 'b', 'c'] as const;
 type Side = (typeof SIDES)[number];
 
 // The wire's guess value is the side itself (06 §4.3).
-export interface SidePick {
+interface SidePick {
   readonly value: Side;
 }
 
 // Every accepted pick in receive order; a player's side is their last one.
-export interface SidesState {
+interface SidesState {
   readonly picks: readonly {
     readonly playerId: string;
     readonly side: Side;
@@ -47,7 +47,7 @@ export interface SidesState {
   }[];
 }
 
-export type SidesEvent =
+type SidesEvent =
   | { readonly type: 'Picked'; readonly playerId: string; readonly side: Side; readonly at: number }
   | {
       readonly type: 'SideFed';

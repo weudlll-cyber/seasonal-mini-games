@@ -22,7 +22,7 @@ import { rememberNext, type SeriesRunner } from '../../match/series.js';
 import { createRoundBody, hostOf } from './rounds.js';
 import { settingsRefusal } from './settingsBody.js';
 
-export interface SeriesRouteDeps {
+interface SeriesRouteDeps {
   readonly play: Play;
   readonly series: SeriesRunner;
   readonly settings: SettingsService;

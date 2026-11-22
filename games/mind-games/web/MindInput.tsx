@@ -35,7 +35,7 @@ import { sinceOpening } from './phases.js';
 import { mindText } from './text.js';
 import { asPrefs, useSavedPrefs } from './useSavedPrefs.js';
 
-export type MindInputProps = PlayerPanelProps & {
+type MindInputProps = PlayerPanelProps & {
   readonly ring?: ReactNode;
   readonly stage?: HTMLElement | null;
 };

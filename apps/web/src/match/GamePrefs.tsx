@@ -83,7 +83,7 @@ export function GamePrefs({ match }: { readonly match: MatchDetailsView }): Reac
 
 // During a round, from its bar (O117): the same panel for the rounds after the running one; it
 // saves as the round's own part does (the value reloaded after each save).
-export function RoundPrefs(p: {
+function RoundPrefs(p: {
   readonly match: MatchDetailsView;
   readonly own: OwnMatchPart;
 }): ReactElement | null {

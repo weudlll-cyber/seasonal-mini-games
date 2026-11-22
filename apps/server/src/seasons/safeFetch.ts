@@ -53,7 +53,7 @@ export function isPublicAddress(address: string): boolean {
 
 export class FetchRefused extends Error {}
 
-export interface SafeFetchOptions {
+interface SafeFetchOptions {
   // Development only: plain HTTP and private addresses (a local test feed).
   readonly allowLocal: boolean;
 }

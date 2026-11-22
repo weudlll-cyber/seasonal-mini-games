@@ -11,7 +11,7 @@
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1, §4.3
  */
 
-export type PlayCode =
+type PlayCode =
   | 'ROUND_RUNNING'
   | 'ROUND_SETTINGS_INVALID'
   | 'IN_SEASON_UNAVAILABLE'

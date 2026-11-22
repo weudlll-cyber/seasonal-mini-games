@@ -34,7 +34,7 @@ function publicBounds(state: GtnState, releasedBefore: number): Range {
   return { low, high };
 }
 
-export interface Candidates {
+interface Candidates {
   readonly bounds: Range;
   // Numbers inside `bounds` that are not candidates: guessed or fallen.
   readonly out: ReadonlySet<number>;

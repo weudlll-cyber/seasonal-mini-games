@@ -54,7 +54,7 @@ const ARROW = { higher: '↑', lower: '↓', correct: '✓' } as const;
 const dot = (state: RoundStateView, key: string | null) =>
   key === null ? undefined : ({ '--dot': playerColor(state, key) } as CSSProperties);
 
-export interface RowProps {
+interface RowProps {
   readonly guess: GuessRow;
   readonly state: RoundStateView;
   readonly viewerKey: string | null;

@@ -163,7 +163,7 @@ export function SeasonControls(p: {
   );
 }
 
-export interface SeasonChoice {
+interface SeasonChoice {
   readonly now: SeasonsCurrentView | null;
   readonly season: SeasonName | 'inSeason';
   readonly setSeason: (s: SeasonName | 'inSeason') => void;

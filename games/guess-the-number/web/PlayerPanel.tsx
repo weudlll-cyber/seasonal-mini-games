@@ -33,7 +33,7 @@ import { RangeBar } from './RangeBar.js';
 import { freeHint, gtnText } from './text.js';
 
 // The platform hands its cooldown ring in, to sit at the start of the input row.
-export type GtnPlayerProps = PlayerPanelProps & { readonly ring?: ReactNode };
+type GtnPlayerProps = PlayerPanelProps & { readonly ring?: ReactNode };
 
 // A whole number the field takes, or null.
 function parsed(text: string): number | null {
