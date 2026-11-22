@@ -29,12 +29,11 @@ Each failed in CI or a local `pnpm verify` and passed on the same code; the coun
 
 For Phase 3 and Phase 7:
 
-- The In Season feed: a public endpoint with the token currently in season and, if possible, the halving days (contract proposed in spec/07-integration.md §5)
+- The In Season feed: a public endpoint with the token currently in season and, if possible, the halving days (contract proposed in spec/07-integration.md §5). The website computes the season for its home page (`shared/seasonClock.js`, used by its client only) but has no public endpoint for it (checked on its master `de057d8`, 2026-11-21).
 
 For Phase 7:
 
-- `/api/games/mini-games/authorize` and `/api/games/mini-games/account-changes` with Bingo's headers and rules, the sync token and the site's local port in `/etc/seasonal/` (being generalised there; the game's side is built against that contract, spec/07-integration.md §7)
-- Chat room `mini-games` created by a website admin (spec/07-integration.md §2)
+- The run on the Seasonal Entertainment website itself (Mini Games embedded at `/games/mini-games`, signed in through the website).
 
 ### Later games (roadmap only, decision O2)
 
@@ -46,6 +45,7 @@ For Phase 7:
 
 ## Part two — closed
 
+- 2026-11-21: From the website repository, checked read-only on weudlll-cyber/seasonal-entertainment master `de057d8`: `GET /api/games/mini-games/authorize` and `/api/games/mini-games/account-changes` exist since 2026-11-06 (`dddb1df`, `server/src/games/embeddedRoutes.js` lines 91 and 110; `server/src/games/embedded.js` names `mini-games`; its BACKLOG "Embedded games as a list"), and the `mini-games` chat room is created by the site on every start while the game is on (`server/src/chat/seed.js` `ensureGameRooms`, line 63), not by an admin (spec 07 §2 corrected). _Closed by:_ the website's `dddb1df`; branch `docs/website-facts`
 - 2026-11-21: The owner's play-through of `feat/owner-2026-11-21` (the 10 s countdown, the in-round pre-picks for later rounds only, a round-2 pre-pick applied at its start, "Hide my switches" kept across matches): the box once only during a round (O122); the room fan-out decided on the reference VPS (O123, the reading in OPEN (r)). _Closed by:_ branch `feat/owner-2026-11-21`
 - 2026-11-21: The owner's decisions on OPEN's remaining questions (night chain 2026-11-21/22). (af) 1–3: Mind Games stays without specials, halving rule and team points (O115, nothing to build); (af) 15: "Hide my switches" kept per account across matches (O116) and (af) 16: pre-picks during a round for the later rounds (O117), built as T399 on `feat/owner-2026-11-21` (the owner's test pending); (ab): the countdown's default 10 s, a stored 5 s moved to 10 s (O118, T399, migration 0021); (x): the kicked player's refusal without "by the host" (O119, T399); (af)'s other points, (w)'s remaining point, (y), (z) and (aa) accepted as built (O120: the decisions OPEN named for each); (ag) 1 and 3: the docked page's padding and the "No answer from the server" line stay (O121, T388, T389). _Closed by:_ DECISIONS O115–O121, branch `feat/owner-2026-11-21`
 - 2026-11-21: The browser tests' ports: 3740/5740/5741 instead of 3940/5440/5441, which another project on the development machine took (DECISIONS T398); the e2e stack starts locally while that project runs. _Closed by:_ branch `fix/test-ports`

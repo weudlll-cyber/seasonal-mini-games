@@ -4,7 +4,7 @@ Full list: [BACKLOG.md](BACKLOG.md). Decisions: [DECISIONS.md](DECISIONS.md).
 
 - Everything built is on `master` (the last merge before this list was checked: `62a6c2f`, 2026-11-21, PR #27); the merges before it are indexed in [NIGHT-RUN.md](NIGHT-RUN.md), their details in [DECISIONS.md](DECISIONS.md) and git history.
 - E2E journey 8 (embedded handoff) runs against a local test host page (night run 2, N7); the real website side is a website task.
-- From the website repository: the In Season feed (with halving days), the authorize endpoint and the account-changes feed for `/games/mini-games` with Bingo's headers and rules (the game signs in through them, spec/07 §7), and the chat room `mini-games` (the route import into its proxy is done by the website, BACKLOG part two). The website accepted this contract unchanged on 2026-11-06 as its task SE-EMBEDDED-GAMES (branch `feat/embedded-games`, not merged yet). The room is created when Mini Games is switched on, with members writing and guests reading; `--mini-games` asks again on a re-run. Its report section "For the Mini Games side" will confirm the exact headers, paths, room and embed URL.
+- From the website repository: the In Season feed (with halving days, spec/07 §5; the website computes the season only for its own home page, `shared/seasonClock.js`) and the run on the website itself. The authorize endpoint, the account-changes feed and the chat room `mini-games` exist there since 2026-11-06 (its `dddb1df`; the room created by the site while the game is on), BACKLOG part two.
 
 ## Owner questions
 
