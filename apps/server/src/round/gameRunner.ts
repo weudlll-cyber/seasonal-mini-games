@@ -154,7 +154,7 @@ export class GameRunner<S, A, E, Cfg, Sec> {
       reload: async () => {
         const loaded = await store.load(id);
         if (loaded === null) throw new Error(`round ${id} vanished`);
-        return this.sessionFrom(loaded);
+        return { ...this.sessionFrom(loaded), undelivered: loaded.undelivered };
       },
     });
     const plan = session.state.plan;

@@ -5,7 +5,9 @@
  *
  * Responsibility: the loop polls every `pollMs`, claims due rows with FOR UPDATE SKIP
  *                 LOCKED and a 30-second lease (safe with several instances), runs each
- *                 through its round in due order, and marks it done; a failing action is
+ *                 through its round in the order the rows were written (for one round its due
+ *                 order: the countdown's batch writes `round_open` before `round_time_up`), and
+ *                 marks it done; a failing action is
  *                 retried up to five times with a growing delay. Rows are written by the
  *                 batch that starts a countdown (./pgRoundStore), so a restarted server
  *                 continues every round. The round itself catches up with time, so a late

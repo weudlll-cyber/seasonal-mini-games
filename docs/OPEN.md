@@ -1,6 +1,6 @@
 # Open — short view
 
-Full list: [BACKLOG.md](BACKLOG.md). Decisions: [DECISIONS.md](DECISIONS.md).
+Full list: [BACKLOG.md](BACKLOG.md). Decisions: [DECISIONS.md](DECISIONS.md). Audits: [AUDIT.md](AUDIT.md).
 
 - Everything built is on `master` (the last merge before this list was checked: `62a6c2f`, 2026-11-21, PR #27); the merges before it are indexed in [NIGHT-RUN.md](NIGHT-RUN.md), their details in [DECISIONS.md](DECISIONS.md) and git history.
 - E2E journey 8 (embedded handoff) runs against a local test host page (night run 2, N7); the real website side is a website task.
