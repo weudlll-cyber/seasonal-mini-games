@@ -1,17 +1,18 @@
 /**
  * @file   apps/server/src/http/integrationWiring.ts
  * @module server/http
- * @brief  Wires the integration of 07 §1 onto the app: handoff, embed, public API, webhooks.
+ * @brief  Wires the integration of 07 onto the app: handoff, embed, public API, webhooks, the
+ *         website's open-rounds status.
  *
  * Responsibility: the provider keys (JWKS through the SSRF-safe client), the handoff and its
  *                 redirect form, the embed loader and the client's embed config, the public read
- *                 API, the admin's allowlist, provider and webhook routes, and, with
+ *                 API, the website's open-rounds status (07 §8, O124), the admin's allowlist, provider and webhook routes, and, with
  *                 SMG_FEATURE_WEBHOOKS, the lifecycle events queued for delivery. The delivery
  *                 loop itself is started by ../main (as the retention jobs), so tests drive it.
  * Depends on:     fastify, @smg/application (audit), ../config/*, ../integration/*, ../round/runtime,
  *                 ../seasons/safeFetch, ../dev/embedLoader (development only), ./routes/*
  * Used by:        ./app
- * Spec:           docs/spec/07-integration.md §1, §3.2, §4; Bingo 07 §2.2, §3, §5, §7
+ * Spec:           docs/spec/07-integration.md §1, §3.2, §4, §8; Bingo 07 §2.2, §3, §5, §7
  */
 import type { AuditLog } from '@smg/application';
 import type { FastifyInstance } from 'fastify';
@@ -35,6 +36,7 @@ import { registerAdminIntegration } from './routes/adminIntegration.js';
 import { registerAdminWebhooks } from './routes/adminWebhooks.js';
 import { bundledEmbedScript, registerEmbedRoutes } from './routes/embed.js';
 import { registerHandoffRoutes } from './routes/handoff.js';
+import { registerOpenRounds } from './routes/openRounds.js';
 import { registerPublicApi } from './routes/publicApi.js';
 
 interface IntegrationDeps {
@@ -64,6 +66,7 @@ export function registerIntegration(app: FastifyInstance, deps: IntegrationDeps)
   });
   registerEmbedRoutes(app, { embeds, script: env.SMG_DEV ? devEmbedScript : bundledEmbedScript });
   registerPublicApi(app, { pool, embeds, rounds: deps.runtime.rounds });
+  registerOpenRounds(app, { pool, rounds: deps.runtime.rounds, publicUrl: env.SMG_PUBLIC_URL });
   registerAdminIntegration(app, { pool, embeds, audit });
   const store = new WebhookStore(pool, derivedKey(roundKeyFrom(env), 'smg webhook secrets'));
   registerAdminWebhooks(app, { store, audit, enabled: deps.features.webhooks });
