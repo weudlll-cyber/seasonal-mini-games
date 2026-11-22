@@ -73,7 +73,7 @@ export interface BatchWrite {
 }
 
 // Read in the transaction that commits a round's opening; its result goes out with that batch.
-export type OpeningRead = (c: pg.PoolClient, roundId: string, matchId: string) => Promise<unknown>;
+type OpeningRead = (c: pg.PoolClient, roundId: string, matchId: string) => Promise<unknown>;
 
 export interface LoadedRound {
   readonly id: string;

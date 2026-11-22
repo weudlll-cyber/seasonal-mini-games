@@ -86,6 +86,14 @@ Owner questions (OPEN (ak)), not changed because they decide what players or adm
 
 Left as they are: 09 calls journeys 30–32, 37, 41, 43 and 46 "Chromium" although the nightly run also plays them in Firefox and WebKit (the label says where they were written; only journey 44 skips other browsers); 07 lists the postMessage type `smg:navigate`, which nothing sends (adopted from Bingo's protocol, harmless); `e2e/account.spec.ts` and `e2e/trustedTypes.spec.ts` carry no journey number in 09 §4.
 
+### Hygiene (B6, branch `chore/audit-hygiene`)
+
+Scanned on master `d29f85b` (scripts outside the repository): every export against its importers, every source header's "Used by" and "Depends on" against the imports, every repository path the docs name, the dependencies of each package against its imports, and file and function sizes (ESLint already enforces 300 lines a file, 60 a function and complexity 12 in `pnpm verify`; nothing over).
+
+- Fixed: `OpeningRead` (`apps/server/src/round/pgRoundStore.ts`) was exported but used only in that file; no longer exported.
+- No unused export otherwise and no unused dependency. 99 exports are used only by tests: helpers in `test/`, `fakes.ts` and `fixtures.tsx` files, and pure functions or constants exported so their own unit test can reach them (for example `nextScale` in `apps/web/src/round/useFit.ts`, `retryDelayMs` in `integration/webhookDelivery.ts`). That is the repository's pattern; not changed.
+- The header and path scans found nothing stale beyond what B5 corrected; their remaining hits are paths in the website's or Bingo's repository, or `.tsx` files matched by their `.ts` prefix.
+
 ### CI (B7; nothing changed, so no branch of its own)
 
 Job times on master (runs 44978929925, 44981545916, 44986403186): `verify` 7 m 28 s – 8 m 25 s (`pnpm verify` plus `pnpm test:coverage` for domain and application), `e2e` 24 m 19 s – 25 m 31 s (Chromium, then the timing project one test at a time), `image` 36–45 s, `security` 28–37 s, `docs` 7–10 s; CodeQL on every push to master and weekly; Firefox and WebKit nightly (`browsers.yml`); the load workflow only on `load/**` branches or by hand.
