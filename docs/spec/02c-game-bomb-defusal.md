@@ -5,7 +5,7 @@
 
 ## 1. The game in one paragraph
 
-A bomb has a few wires of different colours. The server picks a secret **order** in which some of them must be cut. A player sends a whole cutting sequence at once; the server answers how many cuts **from the start** were right ("The first 2 cuts were right"). If even the first cut was wrong, the bomb **explodes**: the screen shows an explosion and the player waits a little longer before the next sequence (owner, decision 40). The timing is fast mode with a per-player cooldown (02 §1, owner decision 3); the secret is shared or individual, and the first correct sequence received wins (owner, decisions 4 and 5).
+A bomb has a few wires of different colours. The server picks a secret **order** in which some of them must be cut. A player sends a whole cutting sequence at once; the server answers how many cuts **from the start** were right ("First 2 cuts right"). If even the first cut was wrong, the bomb **explodes**: the screen shows an explosion and the player waits a little longer before the next sequence (owner, decision 40). The timing is fast mode with a per-player cooldown (02 §1, owner decision 3); the secret is shared or individual, and the first correct sequence received wins (owner, decisions 4 and 5).
 
 ## 2. Matches and rounds
 
@@ -66,7 +66,7 @@ For an accepted sequence `g` and the guesser's secret `s`, the answer is `{ corr
 
 ## 6. What others learn
 
-As 02 §6.2 with the sequence in place of the number (owner, decision 8): `own` — "Anna cut a sequence — not defused."; `numbers` — also the sequence; `full` — also "The first 2 cuts were right." (or Boom), the explosion icon and the comment. Individual mode: only "Anna cut a sequence", plus solves and placings. Spectators see what `numbers` or `full` allow (§10).
+As 02 §6.2 with the sequence in place of the number (owner, decision 8): `own` — "Anna cut a sequence"; `numbers` — also the sequence; `full` — also "First 2 cuts right" (or Boom), the explosion icon and the comment. Individual mode: only "Anna cut a sequence", plus solves and placings. Spectators see what `numbers` or `full` allow (§10).
 
 ## 7. Closeness tiers and comments *(proposal)*
 
@@ -85,7 +85,7 @@ Every tier occurs at some number of cuts. Comments, trend lines (`comments.trend
 
 ### 8.1 Spring — Spring Herald *(proposal)*
 
-At `opensAt` the free hint names the first cut's colour: shared mode one hint to everyone, spectators included ("Free hint: cut red first."); individual mode each player about their own bomb, spectators see "Spring Herald: everyone received a hint" (03 §2.1). The hint's colour stands pre-filled and locked in slot 1 of the sequence, marked in the season colour (owner decision 60, §11). `spring.hintType` does not apply.
+At `opensAt` the free hint names the first cut's colour: shared mode one hint to everyone, spectators included ("Free hint: cut red first."); individual mode each player about their own bomb, spectators see "Spring Herald: everyone got a free hint." (03 §2.1). The hint's colour stands pre-filled and locked in slot 1 of the sequence, marked in the season colour (owner decision 60, §11). `spring.hintType` does not apply.
 
 ### 8.2 Summer — Heatwave
 
@@ -102,7 +102,7 @@ Every `autumn.intervalS` **one** wire that is not part of the sequence is **mark
 
 ### 8.4 Winter — Frost
 
-Platform feature, unchanged (03 §2.4): answers, comments and explosions arrive `winter.delayS` late; the row says "answer arriving in 2 s". The explosion penalty is not delayed, because the cooldown is not (§5.2).
+Platform feature, unchanged (03 §2.4): answers, comments and explosions arrive `winter.delayS` late; the row says "answer arriving… 2 s" (T150). The explosion penalty is not delayed, because the cooldown is not (§5.2).
 
 ### 8.5 Halving
 

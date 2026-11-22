@@ -90,7 +90,7 @@ From `D` after the opening, everyone sees a **feed** that always shows the round
 
 The feed has two parts:
 
-- **The counts:** how many players had each option at `t − D`, and how many players were in the round then ("The round 30 s ago: 23 players"). Options without a player show 0. After the join time has passed in the feed (from `J + D` on) the total is final, so a change in the counts can only be a switch; the feed says so once: "All 23 players are in. Every change now is a switch." (*proposal*).
+- **The counts:** how many players had each option at `t − D`, and how many players were in the round then ("30 seconds ago · 23 players", as §11). Options without a player show 0. After the join time has passed in the feed (from `J + D` on) the total is final, so a change in the counts can only be a switch; the feed says so once: "All 23 players are in. Every change now is a switch." (*proposal*).
 - **The lines**, newest first, each with its age, counting on: "Anna chose Summer · 30 s ago" (owner, decision 81: a first choice is always shown with the player's name), and for a switch shown by §6.3 "Anna switched Summer → Winter · 31 s ago". The viewer's own lines say "You". A first choice made by a pre-pick reads like any other (no mark, so nobody learns who is away) (*proposal*). The view carries the newest 60 lines; the result has all of them (*proposal*).
 
 The counts and the totals are computed by the server for every released step and carried with it; the client never counts ([04](04-software-architecture.md) §4.8).
