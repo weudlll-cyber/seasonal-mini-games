@@ -99,7 +99,7 @@
 
 - **match_standings** — `match_id`, `player_key`, `points`, `wins`, `first_win_at NULL`, `rank`. PK `(match_id, player_key)`. Updated with `RoundEnded`.
 - **match_team_standings** — `match_id`, `team`, `points int`, `wins`, `first_win_at NULL`, `rank`. PK `(match_id, team)`.
-- **scheduled_actions** (Bingo 04 §3.3) — `kind` values: `round_open`, `special` (payload: special and index), `round_time_up` (in a `phased` round at the plan's end), `match_autostart` (in a series also the next round after the pause, [04](04-software-architecture.md) §4.8 rule 7).
+- **scheduled_actions** (Bingo 04 §3.3) — `kind` values: `round_open`, `round_time_up` (in a `phased` round at the plan's end plus the hold before the result), `special` (allowed by the check, never written: the actor's timer fires the specials, DECISIONS T40), `match_autostart` (in a series also the next round after the pause, [04](04-software-architecture.md) §4.8 rule 7).
 
 ### 2.6 Seasons and leaderboard additions
 

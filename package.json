@@ -13,7 +13,7 @@
     "dev:reset-db": "pnpm --filter @smg/server db:reset-dev",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier . --write",
-    "format:check": "prettier . --check",
+    "format:check": "prettier . --check --cache --cache-strategy content",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p e2e/tsconfig.json && pnpm -r typecheck",
     "test": "vitest run --project \"!@smg/server\" && vitest run --project @smg/server src/ && vitest run --project @smg/server test/",
     "test:unit": "vitest run --project @smg/game-sdk --project @smg/guess-engine --project @smg/domain --project @smg/application --project @smg/contracts --project @smg-game/*",

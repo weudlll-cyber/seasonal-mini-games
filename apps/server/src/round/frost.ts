@@ -7,7 +7,8 @@
  *                 in-memory timer per round waits for the earliest, then hands every due event
  *                 on, in log order (delivery times grow with receive times, so order is kept).
  *                 After a restart the held events come back from the log and are released at
- *                 their time, or at once if it has passed (04 §5.5).
+ *                 their time, or at once if it has passed (04 §5.5); after a failed commit the
+ *                 log's undelivered events replace the held ones the same way (./actor).
  * Depends on:     ./pgRoundStore (types)
  * Used by:        ./actor
  * Spec:           docs/spec/03-seasonal-specials.md §2.4; docs/spec/04-software-architecture.md §5.5
@@ -42,6 +43,13 @@ export class FrostHold {
   restore(events: readonly StoredEvent[]): void {
     this.held.push(...events.filter((e) => deliverAtOf(e) !== null));
     this.arm();
+  }
+
+  // After a failed commit: the log's undelivered events replace what is held, so a release
+  // whose batch failed is held (and released) again, and nothing is held twice.
+  replace(events: readonly StoredEvent[]): void {
+    this.held = [];
+    this.restore(events);
   }
 
   stop(): void {

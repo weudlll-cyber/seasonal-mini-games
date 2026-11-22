@@ -63,7 +63,7 @@ As Bingo 10 §2, enforced by ESLint and `tsc`: file ≤ 300 lines (tests ≤ 400
 
 ## 3. Standard file header (adopted from Bingo 10 §3)
 
-Every source file (TS, TSX, SQL, shell, YAML workflow) starts with this header. Comment syntax follows the language: `#` lines for shell and YAML, `--` for SQL.
+Every source file (TS, TSX, SQL, shell, YAML workflow) starts with this header. Comment syntax follows the language: `#` lines for shell and YAML, `--` for SQL. The headers stay in the sources only: the files the production build serves carry no developer comments (owner decision O128; the bundles are minified, the pages and `theme-init.js` stripped by `apps/web/productionFiles.ts` and the admin app's Vite config, checked by `apps/server/test/productionBundle.test.ts`).
 
 ```ts
 /**

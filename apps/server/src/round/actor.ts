@@ -13,9 +13,10 @@
  *                 of a batch go out only after it committed, and batches commit in order
  *                 (04 §5.3). A failed commit drops that batch and every later one (their
  *                 senders get INTERNAL) and the actor rebuilds itself from the database,
- *                 answering ROUND_BUSY meanwhile.
- *                 More than `queueBound` unanswered items answer ROUND_BUSY (05 §5). An optional
- *                 observer gets guess answers, commit times and tick and Frost lag (06 §4.6).
+ *                 answering ROUND_BUSY meanwhile: the open batch is dropped too, Frost holds
+ *                 again what the log has not delivered, a failed reload is retried. More than
+ *                 `queueBound` unanswered items answer ROUND_BUSY (05 §5). An optional observer
+ *                 gets guess answers, commit times and tick and Frost lag (06 §4.6).
  * Depends on:     @smg/application (RoundSession), @smg/domain (types), ./pgRoundStore, ./batch,
  *                 ./frost
  * Used by:        ./rounds
@@ -60,13 +61,25 @@ interface Batch<S, Cfg> {
 }
 
 // How committed events go out: `held` names the seqs Frost keeps back for now; `late` marks
-// held events released after their own batch.
+// held events released after their own batch; `opening` is what the store read in the
+// transaction of the batch that opened the round (../match/prefs `openingPrePicks`), else null.
 export interface Delivery {
   readonly held: ReadonlySet<number>;
   readonly late: boolean;
+  readonly opening: unknown;
 }
 
 export type Committed = (events: readonly StoredEvent[], how: Delivery) => void;
+
+// The round as its log stands after a failed commit, with the Frost events not yet delivered.
+interface Reloaded<S, A, E, Cfg, Sec> {
+  readonly session: RoundSession<S, A, E, Cfg, Sec>;
+  readonly lastSeq: number;
+  readonly undelivered: readonly StoredEvent[];
+}
+
+// A reload that failed (the database still away) is tried again after this long.
+const REBUILD_RETRY_MS = 1_000;
 
 const emptyBatch = <S, Cfg>(): Batch<S, Cfg> => ({
   events: [],
@@ -98,7 +111,7 @@ export class RoundActor<S, A, E, Cfg, Sec> {
       readonly store: PgRoundStore;
       readonly options: ActorOptions;
       readonly committed: Committed;
-      readonly reload: () => Promise<{ session: RoundSession<S, A, E, Cfg, Sec>; lastSeq: number }>;
+      readonly reload: () => Promise<Reloaded<S, A, E, Cfg, Sec>>;
     },
   ) {
     this.roundId = ids.roundId;
@@ -232,14 +245,15 @@ export class RoundActor<S, A, E, Cfg, Sec> {
       if (this.broken) throw new Error('an earlier batch failed');
       if (batch.events.length > 0 && batch.state !== null) {
         const started = this.deps.options.now();
-        await this.deps.store.append(
+        const opening = await this.deps.store.append(
           batchWrite(this.roundId, this.matchId, batch.events, batch.state),
         );
         this.deps.options.observe?.batch((this.deps.options.now() - started) / 1_000);
-        this.deps.committed(batch.events, { held: this.frost.hold(batch.events), late: false });
+        const held = this.frost.hold(batch.events);
+        this.deps.committed(batch.events, { held, late: false, opening });
       }
       if (batch.released.length > 0)
-        this.deps.committed(batch.released, { held: new Set(), late: true });
+        this.deps.committed(batch.released, { held: new Set(), late: true, opening: null });
       for (const w of batch.waiters) w.resolve(w.reply);
     } catch (error) {
       for (const w of batch.waiters) w.resolve({ ok: false, code: 'INTERNAL' });
@@ -254,12 +268,32 @@ export class RoundActor<S, A, E, Cfg, Sec> {
     }
   }
 
+  // After a failed commit: the round as its log stands. Until then nothing new is taken.
   private async rebuild(): Promise<void> {
     await this.chain;
-    const fresh = await this.deps.reload();
+    let fresh: Reloaded<S, A, E, Cfg, Sec>;
+    try {
+      fresh = await this.deps.reload();
+    } catch (error) {
+      console.error(`[smg] round ${this.roundId}: reload failed, trying again`, error);
+      if (!this.stopped) setTimeout(() => void this.rebuild(), REBUILD_RETRY_MS).unref();
+      return;
+    }
+    // The open batch was decided against the state that failed: dropped, its senders resend.
+    this.dropOpen();
     this.session = fresh.session;
     this.lastSeq = fresh.lastSeq;
+    this.frost.replace(fresh.undelivered);
     this.broken = false;
-    this.armDue();
+    if (!this.stopped) this.armDue();
+  }
+
+  private dropOpen(): void {
+    if (this.timer !== null) clearTimeout(this.timer);
+    this.timer = null;
+    const dropped = this.open;
+    this.open = emptyBatch();
+    for (const w of dropped.waiters) w.resolve({ ok: false, code: 'INTERNAL' });
+    this.unanswered -= dropped.waiters.length;
   }
 }

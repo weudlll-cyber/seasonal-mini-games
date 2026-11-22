@@ -9,8 +9,10 @@
  *                 batch that records its release committed, never before its due time, in log
  *                 order; over a seeded stream of guesses every event is written once, the seqs
  *                 gap-free, every held answer released once; a failed commit loses nothing
- *                 already acknowledged and sends nothing of the failed batch. A fake session
- *                 and store, the real FrostHold, fake timers.
+ *                 already acknowledged and sends nothing of the failed batch; after it the open
+ *                 batch, decided against the failed state, is dropped, a release whose batch
+ *                 failed goes out once after the rebuild, and a reload that fails is tried
+ *                 again. A fake session and store, the real FrostHold, fake timers.
  * Depends on:     vitest, ./actor, ./pgRoundStore (types)
  * Spec:           docs/spec/04-software-architecture.md §5.3; docs/spec/03-seasonal-specials.md §2.4
  */
@@ -29,8 +31,13 @@ interface Sent {
   readonly held: ReadonlySet<number>;
 }
 
-// A round whose every guess is answered with one event held DELAY ms (Frost).
-function round(fail: (write: BatchWrite) => boolean = () => false) {
+// A round whose every guess is answered with one event held DELAY ms (Frost). A failing write
+// fails after `failAfter` ms; `undelivered` is what the log holds undelivered on a reload.
+function round(
+  fail: (write: BatchWrite) => boolean = () => false,
+  failAfter = 0,
+  undelivered: readonly StoredEvent[] = [],
+) {
   const appended: BatchWrite[] = [];
   const sent: Sent[] = [];
   const session = {
@@ -43,7 +50,12 @@ function round(fail: (write: BatchWrite) => boolean = () => false) {
   };
   const store = {
     append: (write: BatchWrite) => {
-      if (fail(write)) return Promise.reject(new Error('disk full'));
+      if (fail(write))
+        return new Promise((_, reject) =>
+          setTimeout(() => {
+            reject(new Error('disk full'));
+          }, failAfter),
+        );
       appended.push(write);
       return Promise.resolve();
     },
@@ -54,7 +66,7 @@ function round(fail: (write: BatchWrite) => boolean = () => false) {
     queueBound: () => 1_000,
     now: () => Date.now(),
   };
-  const reload = vi.fn(() => Promise.resolve({ session, lastSeq: 0 }));
+  const reload = vi.fn(() => Promise.resolve({ session, lastSeq: 0, undelivered }));
   const actor = new RoundActor({ roundId: 'r', matchId: 'm' }, session as never, 0, {
     store,
     options,
@@ -137,5 +149,53 @@ describe('the round queue with Frost: what holds whatever the timing (O113)', ()
     expect(r.appended.flatMap((w) => w.events.map((e) => e.seq))).toEqual([1]);
     expect(r.sent.filter((s) => s.late)).toEqual([]);
     expect(r.reload).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('the rebuild after a failed commit (night chain 2026-11-22, B2)', () => {
+  it('drops the open batch that was decided against the failed state', async () => {
+    // The first batch fails 10 ms into its write; a guess in that time opens the next batch,
+    // whose window ends after the rebuild.
+    let writes = 0;
+    const r = round(() => (writes += 1) === 1, 10);
+    const first = r.guess();
+    await vi.advanceTimersByTimeAsync(WINDOW + 5);
+    const second = r.guess();
+    await vi.advanceTimersByTimeAsync(WINDOW * 3);
+    expect(await first).toEqual({ ok: false, code: 'INTERNAL' });
+    expect(await second).toEqual({ ok: false, code: 'INTERNAL' });
+    expect(r.appended).toEqual([]);
+    expect(r.reload).toHaveBeenCalledTimes(1);
+    // After the rebuild the round takes guesses again.
+    const third = r.guess();
+    await vi.advanceTimersByTimeAsync(WINDOW);
+    expect(await third).toEqual({ ok: true });
+  });
+
+  it('holds a release again whose batch failed and sends it once after the rebuild', async () => {
+    let failed = false;
+    const once = (w: BatchWrite) => {
+      if (failed || !w.events.some((e) => e.type === 'HeldDelivered')) return false;
+      failed = true;
+      return true;
+    };
+    const held = { seq: 1, at: 0, type: 'GuessAccepted', event: { deliverAt: DELAY } };
+    const r = round(once, 0, [held]);
+    void r.guess();
+    await vi.advanceTimersByTimeAsync(DELAY + WINDOW * 4);
+    const late = r.sent.filter((s) => s.late);
+    expect(late).toEqual([expect.objectContaining({ seqs: [1] })]);
+    expect(r.reload).toHaveBeenCalledTimes(1);
+  });
+
+  it('tries a failed reload again instead of staying broken', async () => {
+    const r = round((w) => w.events.some((e) => e.seq === 1));
+    r.reload.mockRejectedValueOnce(new Error('database away'));
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    void r.guess();
+    await vi.advanceTimersByTimeAsync(WINDOW + 1_100);
+    expect(r.reload).toHaveBeenCalledTimes(2);
+    expect(error).toHaveBeenCalledWith(expect.stringContaining('reload failed'), expect.any(Error));
+    error.mockRestore();
   });
 });
