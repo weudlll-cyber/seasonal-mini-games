@@ -1,6 +1,6 @@
 # Backlog
 
-The authoritative list. `OPEN.md` is the short page over it and is aligned after every change here.
+The authoritative list. `OPEN.md` is the short page over it and is aligned after every change here. The audits' findings, each with what was done and a proposal for the rest, are in [AUDIT.md](AUDIT.md).
 
 ## Part one — open
 
