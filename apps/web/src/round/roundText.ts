@@ -18,13 +18,14 @@
  *                 Spring Herald, the round opening and ending), and the banner of a platform
  *                 special (Heatwave, Spring Herald, O35); a game's own rows and banners come
  *                 from the game's text.
- * Depends on:     @smg/contracts (shapes), @smg/game-sdk (clockText, FeedLine, formatNumber)
+ * Depends on:     @smg/contracts (shapes), @seasonal/kit (clockText), @smg/game-sdk (FeedLine, formatNumber)
  * Used by:        ./RoundScreen, ./ResultScreen, ./RoundLog, ./SpecialBanner, ./InputRow,
  *                 ./InactivityLine, ./FocusBar, ../match/HostMenu
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §12; docs/spec/03-seasonal-specials.md §2
  */
 import type { RoundStateView } from '@smg/contracts';
-import { clockText, formatNumber, type FeedLine } from '@smg/game-sdk';
+import { clockText } from '@seasonal/kit';
+import { formatNumber, type FeedLine } from '@smg/game-sdk';
 
 const CODES: Readonly<Record<string, string>> = {
   ROUND_NOT_OPEN: 'The round has not opened yet.',

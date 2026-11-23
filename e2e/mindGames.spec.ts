@@ -239,8 +239,8 @@ test('journey 38: one round of Seasonal Mind Games, everything one delay late', 
     await roundOpen(p.page);
     const opened = Date.now();
     // The strip marks the phase the round is in (O92).
-    await expect(p.page.locator('.mg-phase[aria-current="step"]')).toHaveAttribute(
-      'data-phase',
+    await expect(p.page.locator('.sk-phase[aria-current="step"]')).toHaveAttribute(
+      'data-sk-phase',
       'join',
     );
     await expect(p.page.getByTestId('delay-line')).toHaveText('You see the round 10 s late');

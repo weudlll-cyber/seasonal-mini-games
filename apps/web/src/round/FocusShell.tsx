@@ -8,22 +8,23 @@
  *                 (./FocusBar) on top and the round's content under it; Chat (kept mounted, so
  *                 it keeps its room and what was typed, 07 §2), Players with the teams, a phased
  *                 game's pre-picks for its player (O117) and, for the host, the host's controls
- *                 are panels on demand, one at a time
- *                 (./usePanels, ./FocusPanel). The chat's unread badge counts the messages of
- *                 others that arrive while the chat panel is closed (../chat/chatArrivals
- *                 `useChatArrivals`) and clears when it opens; a host's embedded chat is told whether its panel is
- *                 open and gives its own count instead (`HostChatSight`, DECISIONS T237).
+ *                 are panels on demand, one at a time (the kit's usePanels with ./panels' ids,
+ *                 ./FocusPanel). The chat's unread badge counts the messages of others that
+ *                 arrive while the chat panel is closed (../chat/chatArrivals
+ *                 `useChatArrivals`) and clears when it opens; a host's embedded chat is told
+ *                 whether its panel is open and gives its own count instead (`HostChatSight`,
+ *                 DECISIONS T237).
  *                 Full screen applies to this container, so the bar and the panels stay
- *                 inside it (./useFullscreen). The content gets the panels too,
+ *                 inside it (the kit's useFullscreen). The content gets the panels too,
  *                 for the whole list and the phone's game panel. The container carries the
  *                 layout, desktop or phone (`data-view`, T141).
  * Depends on:     react, @smg/contracts, ../chat/chatArrivals, ./FocusBar, ./FocusPanel,
- *                 ./RoundSide, ./useFullscreen, ./usePanels, @seasonal/kit/react (DockView, type),
+ *                 ./RoundSide, ./panels, @seasonal/kit/react (useFullscreen, usePanels, DockView),
  *                 ./focus.css
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/07-integration.md §2
  */
-import type { DockView } from '@seasonal/kit/react';
+import { useFullscreen, usePanels, type DockView } from '@seasonal/kit/react';
 import type { PlayerMark } from '@smg/game-sdk';
 import type { RoundStateView, TeamName } from '@smg/contracts';
 import { useRef, type CSSProperties, type ReactElement, type ReactNode } from 'react';
@@ -32,8 +33,7 @@ import { ChatArrivals, HostChatSight, useChatArrivals } from '../chat/chatArriva
 import { FocusBar } from './FocusBar.js';
 import { FocusPanel } from './FocusPanel.js';
 import { PlayersPanelBody } from './RoundSide.js';
-import { useFullscreen } from './useFullscreen.js';
-import { usePanels, type PanelId, type Panels } from './usePanels.js';
+import type { PanelId, Panels } from './panels.js';
 import './focus.css';
 
 interface FocusShellProps {
@@ -113,7 +113,7 @@ function BarPanels(p: FocusShellProps & { readonly panels: Panels }): ReactEleme
 export function FocusShell(p: FocusShellProps): ReactElement {
   const box = useRef<HTMLDivElement>(null);
   const fullscreen = useFullscreen(box);
-  const panels = usePanels();
+  const panels = usePanels<PanelId>();
   // The chat's unread count: counted while its panel is closed, cleared on opening it; a host's
   // embedded chat counts itself and is told whether its panel is open (`sight`).
   const { unread, arrived, sight } = useChatArrivals(panels.open === 'chat');

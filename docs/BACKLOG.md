@@ -45,7 +45,7 @@ For Phase 7:
 
 ### Kit adoption (owner decision O142, branch `feat/kit-adoption`, not merged)
 
-- The game moves onto `@seasonal/kit` v0.11.1 in the kit plan's six steps (night chain 2026-11-23/24). The branch waits for its review (Plan-Claude in the browser, then the owner and the kit planning); a separate task merges it. Done so far: step 1, tokens, fonts, motion and theme (T411); step 2, the website sign-in and the chat link (T412); step 3, the server's sign-in, two-factor and open-rounds checks (T413); step 4, the toggle, the back link and the disclosure (T414); step 5, the fit (T415), the dock (T416) and the start card (T417; the result frame not taken, T417). Owner questions: OPEN (an).
+- The game moves onto `@seasonal/kit` v0.11.1 in the kit plan's six steps (night chain 2026-11-23/24). The branch waits for its review (Plan-Claude in the browser, then the owner and the kit planning); a separate task merges it. Done so far: step 1, tokens, fonts, motion and theme (T411); step 2, the website sign-in and the chat link (T412); step 3, the server's sign-in, two-factor and open-rounds checks (T413); step 4, the toggle, the back link and the disclosure (T414); step 5, the fit (T415), the dock (T416), the start card (T417; the result frame not taken, T417) and the panels, full screen, phase strip and clock (T418; the bar kept, O143). Owner questions: OPEN (an).
 - Kept in the game until a kit release has them (no kit code copied): the round's own `FocusBar`, because `GameBar` has no 'prefs' icon for Pre-picks (O143); `useFit`'s refit after web fonts load, which `watchFit` lacks (O144).
 
 ### Optional inputs

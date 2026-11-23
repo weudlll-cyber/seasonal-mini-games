@@ -7,7 +7,7 @@
  *                 pushes it aside, on a phone a sheet that ends above the input row (O48,
  *                 ./focus.css); a visible Close button; Escape closes it from anywhere inside;
  *                 on opening the focus moves to the panel itself, its ring drawn only for the
- *                 keyboard, and closing hands it back to the opening button (./usePanels). No
+ *                 keyboard, and closing hands it back to the opening button (the kit's usePanels, ./panels). No
  *                 backdrop, so the game stays usable beside it. `keep` keeps a closed panel's content
  *                 mounted but hidden (the chat keeps its room and what was typed, 07 §2);
  *                 otherwise the content mounts only while the panel is open.

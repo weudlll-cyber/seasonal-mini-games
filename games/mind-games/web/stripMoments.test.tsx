@@ -18,7 +18,8 @@
  * Depends on:     vitest, @testing-library/react, @smg/game-sdk, ./fixtures, ./PhaseStrip
  * Spec:           docs/spec/02e-game-mind-games.md §4, §11
  */
-import { clockText, type PhasedTiming } from '@smg/game-sdk';
+import { clockText } from '@seasonal/kit';
+import type { PhasedTiming } from '@smg/game-sdk';
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -53,14 +54,14 @@ function strip(totalS: number, at: number) {
     now: () => at,
   };
   render(<PhaseStrip view={view} timing={timing} />);
-  const parts = [...document.querySelectorAll('.mg-phase')];
+  const parts = [...document.querySelectorAll('.sk-phase')];
   const now = parts.find((p) => p.getAttribute('aria-current') === 'step');
   return {
     bar: barAt(view.rules.plan.endMs, at),
     segments: parts.map((p) => p.textContent.replace(' · now', '')),
-    now: now?.querySelector('.mg-phase-name')?.textContent.replace(' · now', '') ?? '',
-    fill: now?.querySelector<HTMLElement>('.mg-phase-fill')?.style.width ?? '',
-    done: parts.filter((p) => p.getAttribute('data-done') === 'true').length,
+    now: now?.querySelector('.sk-phase-name')?.textContent.replace(' · now', '') ?? '',
+    fill: now?.querySelector<HTMLElement>('.sk-phase-fill')?.style.width ?? '',
+    done: parts.filter((p) => p.getAttribute('data-sk-done') === 'true').length,
     line: screen.getByTestId('next-change').textContent,
   };
 }

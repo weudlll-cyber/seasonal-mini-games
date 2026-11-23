@@ -24,7 +24,7 @@
  *                 a desktop, a sheet on a phone that ends above the dock.
  * Depends on:     react, @smg/contracts, @smg-game/registry/web, ../live/useRound, ./FocusPanel,
  *                 ./InfoParts, ./InputRow, ./playerMarks, ./RoundLog, ./RoundSide,
- *                 ./SpecialBanner, ./usePanels
+ *                 ./SpecialBanner, ./panels
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §7, §11, §12; docs/spec/03-seasonal-specials.md §6
  */
@@ -42,7 +42,7 @@ import { RoundLog } from './RoundLog.js';
 import { OthersPanel } from './RoundSide.js';
 import { bannerOf, eventBanner } from './SpecialBanner.js';
 import { actionWords } from './roundText.js';
-import type { Panels } from './usePanels.js';
+import type { Panels } from './panels.js';
 
 interface BodyProps {
   readonly live: RoundLive;

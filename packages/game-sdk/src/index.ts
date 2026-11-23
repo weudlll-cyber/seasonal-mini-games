@@ -4,8 +4,8 @@
  * @brief  Public entry point of @smg/game-sdk: what every game module and the platform share.
  *
  * Responsibility: the game-module contract (with the `phased` class's plan and result rows),
- *                 range arithmetic, the one number and clock formatter and name order, the
- *                 random-number types, setting definitions with their checks and the
+ *                 range arithmetic, the one number formatter (the clock is the kit's) and name
+ *                 order, the random-number types, setting definitions with their checks and the
  *                 platform's round keys (a `phased` game's own among them); free of
  *                 node:crypto, so browser code may import it.
  *                 The DRBG and the commitment are the separate entry @smg/game-sdk/crypto.
@@ -37,7 +37,7 @@ export type {
   SpecialHooks,
   ViewCtx,
 } from './module.js';
-export { clockText, formatNumber } from './format.js';
+export { formatNumber } from './format.js';
 export { compareNames } from './names.js';
 export {
   planIssue,

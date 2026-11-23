@@ -4,9 +4,9 @@
  * @brief  Entry point of the player client: design system, session, app shell or embed frame.
  *
  * Responsibility: load the design system (the kit's fonts, shared tokens, win glow with the
- *                 reduced-motion rule, shell parts, fit floors and frames, then the game's
- *                 tokens and base styles from @smg/ui), redeem a handoff landing
- *                 (`?handoff#token=…`), then render the app shell, or, for a page opened at
+ *                 reduced-motion rule, shell parts, fit floors, frames and the phase strip's
+ *                 bar styles, then the game's tokens and base styles from @smg/ui), redeem a
+ *                 handoff landing (`?handoff#token=…`), then render the app shell, or, for a page opened at
  *                 `#/embed/…` inside a host page, the embed frame, inside the session provider.
  *                 Development-only parts (quick sign-in, Quick Test, bots) follow Vite's DEV
  *                 flag, so production builds leave them out.
@@ -20,6 +20,7 @@ import '@seasonal/kit/motion.css';
 import '@seasonal/kit/shell.css';
 import '@seasonal/kit/fit.css';
 import '@seasonal/kit/frames.css';
+import '@seasonal/kit/bar.css';
 import '@smg/ui/tokens.css';
 import '@smg/ui/base.css';
 

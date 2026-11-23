@@ -17,7 +17,7 @@
  *                 also with All). The phone layout is the platform's (a landscape viewport under 900 px
  *                 or any portrait one, the same media query here): the strip compact, the cards
  *                 with icon, name and count, and the line "Your choice: Autumn". The phase strip
- *                 is styled in ./strip.css, the pre-picks in ./prefs.css, the result in
+ *                 is the kit's (@seasonal/kit/bar.css), the pre-picks in ./prefs.css, the result in
  *                 ./result.css, the flights in ./flights.css. Classes are prefixed
  *                 `mg-`.
  * Spec:           docs/spec/02e-game-mind-games.md §11
@@ -285,4 +285,15 @@
   .mg-yourline {
     display: block;
   }
+}
+
+/* The feed's note, and the next change in the phase strip's line (./PhaseStrip, the kit's
+   strip): small text, the change in strong. */
+.mg-note {
+  margin: 0;
+  font-size: var(--font-size-small);
+}
+
+.mg-next {
+  font-weight: var(--font-weight-strong);
 }

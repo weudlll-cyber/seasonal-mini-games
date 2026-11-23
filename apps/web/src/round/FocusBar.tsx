@@ -6,28 +6,30 @@
  * Responsibility: one row, at most 44 px on a desktop and 52 px on a phone (./focus.css): the
  *                 season pill (./SeasonPill, on a phone with the special's note; a desktop has
  *                 the special's line in the info column, T141), shared or individual (a
- *                 desktop only, and only in a game with a secret, T347), "9:50 left" once the round is open (the countdown's seconds
- *                 are the intro's; a phased round's counts to the plan's end and then says
- *                 "Result in 0:04", ./roundText, T386), then the buttons of the panels on demand (./usePanels):
- *                 Chat with the unread count (only with a chat, the provider not `none`),
- *                 Players with the teams, Pre-picks (a phased game's player, O117), Host (the
- *                 host only), and the full-screen toggle
- *                 where the browser offers it (./useFullscreen). The waiting time is not here:
- *                 the cooldown ring and the disabled button at the input show it (O47). Each
- *                 button names itself; a phone shows the icons and reads the words out.
- * Depends on:     react, @smg/contracts, ./FocusIcons, ./roundText, ./SeasonPill,
- *                 ./useFullscreen, ./usePanels
+ *                 desktop only, and only in a game with a secret, T347), "9:50 left" once the
+ *                 round is open (the countdown's seconds are the intro's; a phased round's
+ *                 counts to the plan's end and then says "Result in 0:04", ./roundText, T386),
+ *                 then the buttons of the panels on demand (./panels, the kit's usePanels): Chat
+ *                 with the unread count (only with a chat, the provider not `none`), Players with
+ *                 the teams, Pre-picks (a phased game's player, O117), Host (the host only), and
+ *                 the full-screen toggle where the browser offers it (the kit's useFullscreen).
+ *                 The waiting time is not here: the cooldown ring and the disabled button at the
+ *                 input show it (O47). Each button names itself; a phone shows the icons and
+ *                 reads the words out. The bar stays the game's: the kit's GameBar has no icon
+ *                 for Pre-picks (owner decision O143).
+ * Depends on:     react, @seasonal/kit/react (Fullscreen, type), @smg/contracts, ./FocusIcons,
+ *                 ./roundText, ./SeasonPill, ./panels
  * Used by:        ./FocusShell
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6
  */
+import type { Fullscreen } from '@seasonal/kit/react';
 import type { RoundStateView } from '@smg/contracts';
 import type { ReactElement } from 'react';
 
 import { FocusIcon, type IconName } from './FocusIcons.js';
 import { barTime } from './roundText.js';
 import { SeasonPill } from './SeasonPill.js';
-import type { Fullscreen } from './useFullscreen.js';
-import type { PanelId, Panels } from './usePanels.js';
+import type { PanelId, Panels } from './panels.js';
 
 function PanelButton(p: {
   readonly id: PanelId;
