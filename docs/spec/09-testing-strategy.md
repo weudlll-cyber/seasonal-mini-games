@@ -94,7 +94,7 @@ A browser-test run starts its own stack and reuses none: a port already taken st
 6. Reconnect mid-round: the cooldown is unchanged after reconnect, there are no duplicate guesses, and Frost answers arrive after reconnect.
 7. Spectator (guest): sees the feed at the round's visibility and never a number or feedback under `own`.
 8. Embedded: JWT handoff from a test host page (`e2e/host-page`, port 5420) signs the player in inside the iframe; the same page from an origin that is not on the allowlist cannot frame the game and its handoff is refused (Bingo journey 7).
-9. Accessibility: axe checks on lobby, round and result; keyboard-only guessing.
+9. Accessibility: axe checks (WCAG 2.2 AA, 24 px pointer targets among them, kit DECISIONS K33) on lobby, round and result; keyboard-only guessing. 9b: the same checks on the leaderboard, a profile, the account page (on a phone also the header's menu), every admin area, focus mode with its Players panel, and a docked match's chat (on a phone its sheet), at 1280 × 720 and 390 × 844 (DECISIONS T420).
 10. Hidden range (owner decision 19), 1280 × 720: the round view says "Any whole number", no bound is on the page, a guess far outside the range is answered, and the result reveals the range.
 11. Negative bounds (owner decision 18), 390 × 844: the Quick Test form takes "-500" typed key by key into Lowest number and, with "Start from the lobby" off, starts a round from −500 to 500 at once (T69); the range is shown, the ± button makes a typed number negative, the guess is answered, and the round plays to its result; during the round the app header is hidden and the round's bar is one row of at most 64 px (owner decision 46).
 12. Quick Test through the lobby (owner decisions 22–24, 26, 27):
