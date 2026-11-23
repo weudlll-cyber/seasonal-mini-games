@@ -19,6 +19,7 @@ import type { InstalledGame } from '@smg-game/registry';
 import { vi } from 'vitest';
 
 import { buildApp, createPool, loadEnv, migrate, type App, type DbPool } from '../src/index.js';
+import { aheadClock } from '../src/round/guessLimits.js';
 
 // Integration tests hash passwords and share the machine with their databases: in a full run a
 // single test can pass Vitest's 5 s default while it is green alone (DECISIONS T39). A file's
@@ -34,13 +35,6 @@ export interface Harness {
   readonly pool: DbPool;
   readonly built: App;
   readonly applied: readonly string[];
-}
-
-// The play limits' clock in the suites: a minute later at every read, so no test waits for a
-// host's or a team change's interval (05 §5); the limits' own test takes the real clock.
-export function aheadClock(): () => number {
-  let t = Date.now();
-  return () => (t += 60_000);
 }
 
 export async function buildOn(

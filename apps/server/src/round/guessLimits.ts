@@ -17,8 +17,8 @@
  *                 setting) per account (05 §5). Bots have no account and raise nothing.
  * Depends on:     @smg/application (settings), @smg/contracts, @smg/domain (Reply),
  *                 @smg/game-sdk, ../auth/rateLimit, ../admin/abuse, ../db/pool
- * Used by:        ../http/app, ../realtime/intents, ../http/routes/rounds, ../http/routes/matches,
- *                 ../http/routes/series
+ * Used by:        ./runtime, ../realtime/*, ../http/routes/rounds, ../http/routes/matches,
+ *                 ../http/routes/series, ../../tools/testServer and test/harness (`aheadClock`)
  * Spec:           docs/spec/05-security-threat-model.md §2, §5, §7; docs/spec/08-admin-settings.md §6
  */
 import type { SettingsService } from '@smg/application';
@@ -54,6 +54,13 @@ function read(rates: Record<string, unknown>, security: Record<string, unknown>)
     cooldownRejectsPerMin: security['abuse.cooldownRejectsPerMin'] as number,
     botWindowMs: security['abuse.botTimingWindowMs'] as number,
   };
+}
+
+// The play limits' clock of an automated run: a minute later at every read, so no run waits
+// for a host's or a team change's interval (the suites' harness, the e2e test server, T406).
+export function aheadClock(): () => number {
+  let t = Date.now();
+  return () => (t += 60_000);
 }
 
 // One call per interval: a bucket of one token, refilled in 60 s ÷ `perMin`.
