@@ -7,7 +7,9 @@
  *                 solved player's notice (O25), the inactivity countdown line (O71), the
  *                 result's headline ("Walter found it first — after 9 guesses", 02 §9; a phased
  *                 round's "The round is over.", 02e §9), where a game names finding in its own
- *                 words those (`found`, "hit the target", O136, O137), a round's action words
+ *                 words those (`found`, "hit the target": the headline, the solve's row, the
+ *                 already-solved refusal, O136, O137), a guess's own words for going too fast
+ *                 while other refusals say "try again in a moment" (O138), a round's action words
  *                 (guesses, or a phased round's choices, T332), the
  *                 winning margin, the round bar's time ("9:30 left"; a phased round's counts
  *                 to the plan's end, where its phase strip ends, and in the hold before the
@@ -30,7 +32,9 @@ const CODES: Readonly<Record<string, string>> = {
   NOT_IN_ROUND: 'You are watching this round. You can play from the next one.',
   ALREADY_SOLVED: 'You found your number already.',
   TIMED_OUT: 'Out of time this round. You can play the next round.',
-  RATE_LIMITED: 'Slow down a little — too many guesses at once.',
+  // A host's round command or a team change too soon after the last (O138); a guess has its
+  // own words (guessRefusal).
+  RATE_LIMITED: 'Slow down a little — try again in a moment.',
   ROUND_BUSY: 'The round is very busy. Try again in a moment.',
   // More rounds running on this server than `match.maxConcurrentRounds` (08 §4).
   SERVER_BUSY: 'The server is running as many rounds as it can. Try again in a moment.',
@@ -66,6 +70,20 @@ export function codeText(code: string | undefined, until?: number, now?: number)
   return CODES[code ?? ''] ?? 'That did not work. Please try again.';
 }
 
+// A guess's refusal: going too fast in a guess's words (O138), and where a game names finding
+// in its own words (GameText.found, O137) the already-solved refusal in those ("You hit the
+// target already."); else as codeText.
+export function guessRefusal(
+  code: string | undefined,
+  until: number | undefined,
+  now: number,
+  found?: string,
+): string {
+  if (code === 'RATE_LIMITED') return 'Slow down a little — too many guesses at once.';
+  if (code === 'ALREADY_SOLVED' && found !== undefined) return `You ${found} already.`;
+  return codeText(code, until, now);
+}
+
 type Names = Readonly<Record<string, string>>;
 const nameOf = (names: Names, key: string) => names[key] ?? key;
 
@@ -74,11 +92,13 @@ export function seconds(ms: number): string {
   return `${s < 10 ? s.toFixed(1) : String(Math.round(s))} s`;
 }
 
-// Players out of time are out of the round (O71): the solvers are everyone left in it.
-const allSolvedText = (state: RoundStateView): string =>
-  state.results?.some((r) => r.timedOut) === true
-    ? 'Everyone still in the round found their number.'
-    : 'Everyone found their number.';
+// Players out of time are out of the round (O71): the solvers are everyone left in it. In a
+// game's own words for finding, those ("Everyone hit the target.", O137).
+function allSolvedText(state: RoundStateView, found: string | undefined): string {
+  const who =
+    state.results?.some((r) => r.timedOut) === true ? 'Everyone still in the round' : 'Everyone';
+  return `${who} ${found ?? 'found their number'}.`;
+}
 
 // The words of a round's actions: a phased round's are choices (02e §5), a guess round's
 // guesses (DECISIONS T332).
@@ -106,15 +126,16 @@ function firstSolve(state: RoundStateView, found: string): string {
   return `${winner} ${found} first — after ${formatNumber(guesses)} ${guesses === 1 ? 'guess' : 'guesses'}.`;
 }
 
-// `found`: the game's words for finding the secret (GameText.found, O137), else "found it".
-export function endHeadline(state: RoundStateView, found = 'found it'): string {
+// `found`: the game's words for finding the secret (GameText.found, O137), else "found it"
+// and "found their number".
+export function endHeadline(state: RoundStateView, found?: string): string {
   const phased = phasedEnd(state);
   if (phased !== null) return phased;
   switch (state.endReason) {
     case 'solved':
-      return firstSolve(state, found);
+      return firstSolve(state, found ?? 'found it');
     case 'allSolved':
-      return allSolvedText(state);
+      return allSolvedText(state, found);
     case 'timeUp':
       return 'Time is up.';
     case 'host':
@@ -190,15 +211,22 @@ export function platformBanner(event: unknown): string | null {
   return e.type === 'SpecialFired' ? specialText(e) : null;
 }
 
-// The list row of a platform event, or null (game events are the game's to word).
-export function platformLine(event: unknown, names: Names): FeedLine | null {
+// A solve's row: "Anna found their number — place 2.", or in the game's words for finding
+// ("Anna hit the target — place 2.", O137).
+function solvedLine(e: Readonly<Record<string, unknown>>, names: Names, found?: string): FeedLine {
+  const who = String(e['playerId']);
+  const words = found ?? `found ${e['place'] === 1 ? 'it' : 'their number'}`;
+  const text = `${nameOf(names, who)} ${words} — place ${formatNumber(Number(e['place']))}.`;
+  return { text, playerId: who };
+}
+
+// The list row of a platform event, or null (game events are the game's to word); `found`
+// the game's words for finding (GameText.found), if any.
+export function platformLine(event: unknown, names: Names, found?: string): FeedLine | null {
   const e = event as { type?: string; [k: string]: unknown };
   switch (e.type) {
-    case 'PlayerSolved': {
-      const who = String(e['playerId']);
-      const text = `${nameOf(names, who)} found ${e['place'] === 1 ? 'it' : 'their number'} — place ${formatNumber(Number(e['place']))}.`;
-      return { text, playerId: who };
-    }
+    case 'PlayerSolved':
+      return solvedLine(e, names, found);
     case 'PlayerTimedOut': {
       const who = String(e['playerId']);
       return { text: `${nameOf(names, who)} is out of time.`, playerId: who };

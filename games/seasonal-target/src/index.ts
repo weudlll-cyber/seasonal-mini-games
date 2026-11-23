@@ -5,8 +5,8 @@
  *
  * Responsibility: export the GameModule, its conformance kit and its development bot for the
  *                 registry, and the types and pure helpers its screens name (the compass, the
- *                 cell and area shapes, the views and events). Nothing here is imported by
- *                 platform packages.
+ *                 cell and area shapes, the views and events, its words for finding). Nothing
+ *                 here is imported by platform packages.
  * Depends on:     ./conformance, ./devBot, ./geometry, ./module, ./rules, ./secrets,
  *                 ./settings, ./state, ./views
  * Used by:        games/registry, games/seasonal-target/web
@@ -30,4 +30,5 @@ export type { Secrets } from './secrets.js';
 export { stSettings, type StConfig } from './settings.js';
 export { QUARTER_NAMES } from './state.js';
 export type { Quarter, QuarterPair, StEvent, StState } from './state.js';
+export { FOUND } from './views.js';
 export type { PlayerView, ResultView, SpectatorView } from './views.js';

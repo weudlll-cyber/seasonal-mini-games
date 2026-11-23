@@ -52,6 +52,7 @@ export interface GuessGame<S extends GuessBase<V, F>, V, F, GE, Cfg, T> {
   };
   readonly specials?: Partial<SpecialHooks<S, GuessEvent<V, F> | GE, Secrets<T>>>;
   readonly reveal?: (result: unknown, winner: string | null) => string | null;
+  readonly found?: string;
   // How far a guess is from the guesser's secret, 0 when it solved (the game's measure, O110):
   // with it the module names each player's best guess (`closest`); without it, none.
   readonly distance?: (guess: Guess<V, F>, secret: T, state: S) => number;
@@ -78,6 +79,7 @@ export function guessModule<S extends GuessBase<V, F>, V, F, GE, Cfg, T>(
     viewSchemas: game.viewSchemas,
     ...(game.specials === undefined ? {} : { specials: game.specials }),
     ...(game.reveal === undefined ? {} : { reveal: game.reveal }),
+    ...(game.found === undefined ? {} : { found: game.found }),
     ...closestOf(game),
   };
 }

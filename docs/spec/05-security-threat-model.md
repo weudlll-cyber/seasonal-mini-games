@@ -111,10 +111,10 @@ Bingo's layers apply (Bingo 03 §13). The intent limits differ:
 
 | Intent or route | Limit | On excess |
 |---|---|---|
-| `guess` (WS), per account across all sockets | 4 / s, burst 4 (the cooldown already allows at most one accepted guess per 3 s; this caps the rejected ones) | `RATE_LIMITED`; counts towards the abuse score |
+| `guess` (WS), per account across all sockets | 4 / s, burst 4 (the cooldown already allows at most one accepted guess per 3 s; this caps the rejected ones) | `RATE_LIMITED`, "Slow down a little — too many guesses at once."; counts towards the abuse score |
 | `POST …/guesses` (HTTP fallback) per session | 1 / s | 429 |
-| `team.choose` and `POST …/team`, per account | 1 / 5 s (`rate.teamChoosePerMin`) | `RATE_LIMITED` (429 over HTTP) |
-| Host round commands (create, start, end, abort, a series' next settings and its start), over HTTP and the socket together | 1 / 2 s per host (`rate.hostRoundCommandsPerMin`) | `RATE_LIMITED` (429 over HTTP) |
+| `team.choose` and `POST …/team`, per account | 1 / 5 s (`rate.teamChoosePerMin`) | `RATE_LIMITED` (429 over HTTP), "Slow down a little — try again in a moment." (owner decision O138) |
+| Host round commands (create, start, end, abort, a series' next settings and its start), over HTTP and the socket together | 1 / 2 s per host (`rate.hostRoundCommandsPerMin`) | `RATE_LIMITED` (429 over HTTP), "Slow down a little — try again in a moment." (O138) |
 | `DELETE /me` (it checks the password), per account and address | the password change's limiter, shared with it: 5 / 15 min (owner decision O130) | 429 `RATE_LIMITED` |
 | Other intents | 10 / s per socket overall | as Bingo 06 §8 |
 | `GET <base>auth/website` (website mode) per address | 30 / min | 429 |

@@ -15,17 +15,19 @@
  *                 its first guesser's tag with their marker in its corner, "you" for the
  *                 viewer (`data-marked` moves the number clear of it, O62); a pending own
  *                 answer the frame with "…". Numbers are left out when the tiles are too small
- *                 to read (`numbers`); a tile's name starts with the number it shows (O135). Hovering or focusing a guessed tile (on the board, the
+ *                 to read (`numbers`). Hovering or focusing a guessed tile (on the board, the
  *                 selected tile while the grid has the focus) highlights its player
  *                 (@smg/ui `setHighlight`); while a player is highlighted, from a tile or a
  *                 list row, their tiles stay bright and the other guessed tiles dim. The selection is an outline outside the tile, unlike the own
  *                 frame inside it; the result's target a ring.
- *                 Each tile names its cell and every guess on it as title and label; the
- *                 interactive grid is one focus stop pointing at the selected tile
- *                 (`aria-activedescendant`), and a click or tap reports the tile; nothing here
- *                 sends anything (05 §3.1).
+ *                 Each tile names its cell and every guess on it as title and label, after
+ *                 what it shows (the number, then the corner tag, O135, O140); every board is
+ *                 one focus stop pointing at the selected tile (`aria-activedescendant`), a
+ *                 read-only one at its reading cursor (./readCursor, O140), and a click or tap
+ *                 reports the tile; nothing here sends anything (05 §3.1).
  * Depends on:     react, @smg/game-sdk (formatNumber), @smg/ui (PlayerMark, highlight),
- *                 @smg-game/seasonal-target (types, helpers), ./heat, ./tileHighlight, ./words
+ *                 @smg-game/seasonal-target (types, helpers), ./heat, ./readCursor,
+ *                 ./tileHighlight, ./words
  * Used by:        ./TargetInput, ./Loupe, ./SpectatorPanel, ./ResultPanel
  * Spec:           docs/spec/02d-game-seasonal-target.md §6, §8, §9, §11
  */
@@ -50,7 +52,8 @@ import {
 } from 'react';
 
 import { NO_TILE, stepOf, tileKey, tileLabel, type Tile } from './heat.js';
-import { playerFacts, useTileHighlight } from './tileHighlight.js';
+import { useGridKeys } from './readCursor.js';
+import { playerFacts } from './tileHighlight.js';
 import { ARROWS } from './words.js';
 
 export interface TileGridProps {
@@ -158,29 +161,32 @@ function factsOf({ c, p, fallen, hl }: TileProps) {
     out && 'outside the target area',
   ].filter((n): n is string => n !== false);
   const t = tile ?? NO_TILE;
+  const facts = playerFacts(t, tile !== undefined, p, hl);
   // The tag gives way to a fill, a hatch or a ring; the other tiles keep the tint.
   const free = tile === undefined && !isFallen && !target;
   const tag = free ? p.quarters?.find((q) => isAt(tagTileOf(q, p.area), c)) : undefined;
   return {
     t,
-    ...playerFacts(t, tile !== undefined, p, hl),
-    guessed: tile !== undefined,
+    ...facts,
     isFallen,
     out,
     target,
     tag,
     tinted: p.quarters?.some((q) => covers(q, c)) === true,
-    label: withNumber(shownNumber(t, p.numbers), tileLabel(c, t, notes)),
+    label: nameOf(t, p, facts.mark, tileLabel(c, t, notes)),
   };
 }
 
-// A tile's name: the number it shows first, then its position and its guesses (O135).
-const withNumber = (shown: string | null, label: string): string =>
-  shown === null ? label : `${shown}, ${label}`;
+// A tile's name: what it shows first, the number then the corner tag, then its position and
+// its guesses ("9, b1, column 4, row 4: …", WCAG 2.5.3, O135, O140).
+function nameOf(t: Tile, p: TileGridProps, mark: MarkView | undefined, label: string): string {
+  const shown = [shownNumber(t, p.numbers), mark?.tag].filter((s) => s != null);
+  return [...shown, label].join(', ');
+}
 
 function TileCell(props: TileProps): ReactElement {
   const { c, id, p } = props;
-  const { t, mark, lit: hl, guessed, isFallen, out, target, tag, tinted, label } = factsOf(props);
+  const { t, mark, lit: hl, isFallen, out, target, tag, tinted, label } = factsOf(props);
   return (
     <div
       id={id}
@@ -189,8 +195,6 @@ function TileCell(props: TileProps): ReactElement {
       title={label}
       aria-label={label}
       aria-selected={p.selected == null ? undefined : sameCell(p.selected, c)}
-      // Read-only grids: a guessed tile is a focus stop of its own, to read its guesses.
-      tabIndex={p.onKeyDown === undefined && guessed ? 0 : undefined}
       data-testid={p.variant === 'loupe' ? 'loupe-tile' : 'tile'}
       data-x={c.x}
       data-y={c.y}
@@ -233,16 +237,22 @@ function cellAt(e: MouseEvent<HTMLDivElement>): Cell | null {
   return { x: Number(el.dataset['x']), y: Number(el.dataset['y']) };
 }
 
-export function TileGrid(p: TileGridProps): ReactElement {
+export function TileGrid(props: TileGridProps): ReactElement {
   const uid = useId();
-  const shown = p.shown ?? { left: 1, right: p.map.width, top: 1, bottom: p.map.height };
+  const shown = props.shown ?? {
+    left: 1,
+    right: props.map.width,
+    top: 1,
+    bottom: props.map.height,
+  };
+  // A read-only board's reading cursor (./readCursor); the running grid's keys pass through.
+  const { p, handlers } = useGridKeys(props, shown);
   const fallen = new Set(p.fallen.map(tileKey));
   const idOf = (c: Cell): string => `${uid}-${String(c.x)}-${String(c.y)}`;
   const cols = shown.right - shown.left + 1;
   const style = { '--st-cols': String(cols), '--st-rows': String(shown.bottom - shown.top + 1) };
   const interactive = p.onKeyDown !== undefined;
   const hl = useHighlight();
-  const highlight = useTileHighlight(p);
   return (
     <div
       ref={p.gridRef}
@@ -254,7 +264,7 @@ export function TileGrid(p: TileGridProps): ReactElement {
       aria-activedescendant={interactive && p.selected != null ? idOf(p.selected) : undefined}
       tabIndex={interactive ? 0 : undefined}
       onKeyDown={p.onKeyDown}
-      {...highlight}
+      {...handlers}
       onClick={(e) => {
         const c = cellAt(e);
         if (c !== null) p.onTile?.(c);

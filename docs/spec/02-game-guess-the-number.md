@@ -109,7 +109,7 @@ A player who makes no guess for the round's inactivity limit is out of that roun
 - **On the screen** (§12, DECISIONS T270):
   - From the warning point one line at the input row (on a phone at the top of the action dock), "30 s left for your next guess", counting down every second in the warning colour, announced once to a screen reader at the warning point.
   - Once timed out, the input row gives way to "Out of time this round. You can play the next round." while the player keeps watching.
-  - The Others panel, the phone's Others line, the round's list ("bot-02 is out of time.") and the placings say "timed out"; an individual round that ends because everyone still in it solved says "Everyone still in the round found their number."
+  - The Others panel, the phone's Others line, the round's list ("bot-02 is out of time.") and the placings say "timed out"; an individual round that ends because everyone still in it solved says "Everyone still in the round found their number." (a game with its own words for finding says those, "Everyone still in the round hit the target.", O137)
   - The host's round form shows both settings with their help lines, the limit taking 0 for off (DECISIONS T271); so does every other place a round is set up, the Quick Test form included, and the next round's form starts from the last round's limit and warning, like the kept season (owner decision 75; DECISIONS T209, T277).
   - A value or pair a form or the server refuses is named under its field in one clear sentence, the same in the host form, the Quick Test and the admin's settings, such as "The warning must be shorter than the limit." or "Must be between 20 and 600, or 0 for off." (owner decision 74; DECISIONS T276).
 

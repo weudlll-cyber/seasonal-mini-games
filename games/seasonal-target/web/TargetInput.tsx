@@ -39,6 +39,7 @@ import { createPortal } from 'react-dom';
 import { shotsOf, tilesOf } from './heat.js';
 import { Loupe, useLoupe } from './Loupe.js';
 import { readable, TOUCH_PX, useCompact, useTileSize } from './measure.js';
+import { STEPS, type Step } from './readCursor.js';
 import { TypedSteer } from './Steer.js';
 import { CODES } from './text.js';
 import { TileGrid } from './TileGrid.js';
@@ -62,15 +63,6 @@ const middle = (a: Area): Cell => ({
   x: Math.floor((a.left + a.right) / 2),
   y: Math.floor((a.top + a.bottom) / 2),
 });
-
-type Step = readonly [number, number];
-
-const STEPS: Readonly<Record<string, Step>> = {
-  ArrowUp: [0, -1],
-  ArrowDown: [0, 1],
-  ArrowLeft: [-1, 0],
-  ArrowRight: [1, 0],
-};
 
 // Why a tile cannot be selected (T151), or null: it fell, or it lies outside the target area.
 const FELL = 'That tile fell.';

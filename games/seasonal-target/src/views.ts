@@ -11,7 +11,8 @@
  *                 guesses at the round's visibility and with Frost's cut are the guess engine's
  *                 (02d §6, 04 §4.7). No view of a running round holds a secret, another
  *                 player's quarter or area, or anything narrowed from the answers (O17, 05 §3).
- *                 `reveal` words the target for the chat's round-end line (O32).
+ *                 `reveal` words the target for the chat's round-end line (O32), `FOUND` finding
+ *                 it ("hit the target", O137).
  * Depends on:     zod, @smg/game-sdk (GameViews), @smg/guess-engine (views, closest miss),
  *                 ./geometry, ./secrets, ./state
  * Used by:        ./module, ./index
@@ -172,6 +173,10 @@ export const views: GameViews<StState, Secrets> = {
 };
 
 const short = (c: Cell): string => `(${String(c.x)}, ${String(c.y)})`;
+
+// The game's words for finding the secret (O137): the chat's round-end line and the web text's
+// headline, solve row, notice and refusal.
+export const FOUND = 'hit the target';
 
 // The chat's round-end clause (O32): the shared target, or in individual mode the winner's own.
 export function reveal(result: unknown, winner: string | null): string | null {

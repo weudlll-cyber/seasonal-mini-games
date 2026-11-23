@@ -10,7 +10,10 @@
  *                 a list game's solved player gets the platform's notice alone (O25, T78, O136);
  *                 the result's headline and margin take the game's words, else "found it"
  *                 (O137); on the phone layout a row's button is at least 24 px high (O134: jsdom
- *                 has no layout, so the rule itself is checked, as ./rows.test does).
+ *                 has no layout, so the rule itself is checked, as ./rows.test does). Of
+ *                 2026-11-23: every headline, solve row and the already-solved refusal in the
+ *                 game's words where it has them (O137); a refused host command or team change
+ *                 says "try again in a moment", a guess keeps its own words (O138).
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./fakes, ./InputRow,
  *                 ./roundText, ./roundLog.css (read as text)
  * Spec:           docs/spec/02-game-guess-the-number.md §9, §12; docs/spec/02d-game-seasonal-target.md §9, §11
@@ -24,7 +27,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { ended } from './fakes.js';
 import { InputRow } from './InputRow.js';
-import { endHeadline, marginText } from './roundText.js';
+import { codeText, endHeadline, guessRefusal, marginText, platformLine } from './roundText.js';
 
 const HERE = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
 const logCss = readFileSync(path.join(HERE, 'roundLog.css'), 'utf8');
@@ -96,5 +99,43 @@ describe('the phone layout’s rows (O134)', () => {
   it('makes a row’s button at least 24 px high', () => {
     const rule = /button\.round-row-line \{([^}]*)\}/.exec(logCss)?.[1] ?? '';
     expect(rule).toContain('min-height: 24px');
+  });
+});
+
+describe('Seasonal Target’s words wherever finding is named (O137, 2026-11-23)', () => {
+  const T = 'hit the target';
+  const allSolved = (timedOut: boolean) =>
+    ({
+      ...ended,
+      endReason: 'allSolved',
+      results: [{ playerId: 'b', place: 1, timedOut }],
+    }) as unknown as RoundStateView;
+
+  it('says everyone hit the target, in shared and in individual mode', () => {
+    for (const secretMode of ['shared', 'individual']) {
+      const state = { ...allSolved(false), secretMode } as RoundStateView;
+      expect(endHeadline(state, T)).toBe('Everyone hit the target.');
+      expect(endHeadline(state)).toBe('Everyone found their number.');
+    }
+    expect(endHeadline(allSolved(true), T)).toBe('Everyone still in the round hit the target.');
+    const won = { ...ended, endReason: 'solved', winner: 'b', secretMode: 'individual' };
+    expect(endHeadline(won as RoundStateView, T)).toMatch(/^\S+ hit the target first — /);
+  });
+
+  it('refuses a second hit and names a solve in the game’s words', () => {
+    expect(guessRefusal('ALREADY_SOLVED', undefined, 0, T)).toBe('You hit the target already.');
+    expect(guessRefusal('ALREADY_SOLVED', undefined, 0)).toBe('You found your number already.');
+    const solve = { type: 'PlayerSolved', playerId: 'b', place: 2 };
+    expect(platformLine(solve, { b: 'Anna' }, T)?.text).toBe('Anna hit the target — place 2.');
+    expect(platformLine(solve, { b: 'Anna' })?.text).toBe('Anna found their number — place 2.');
+  });
+});
+
+describe('a refusal for going too fast (O138)', () => {
+  it('keeps a guess’s words and says "try again in a moment" elsewhere', () => {
+    expect(guessRefusal('RATE_LIMITED', undefined, 0)).toBe(
+      'Slow down a little — too many guesses at once.',
+    );
+    expect(codeText('RATE_LIMITED')).toBe('Slow down a little — try again in a moment.');
   });
 });

@@ -78,7 +78,7 @@ describe('tiles by answer mode', () => {
     expect(faceOf(tile(4, 4))).toBe('');
     expect(faceOf(tile(6, 6))).toBe('◎');
     expect(tile(7, 7).dataset['step']).toBeUndefined();
-    expect(tile(4, 4).title).toBe('column 4, row 4: You — Hot');
+    expect(tile(4, 4).title).toBe('you, column 4, row 4: You — Hot');
   });
 
   it('draws numbers from 20 px tiles up, and leaves them out below', () => {
@@ -114,17 +114,17 @@ describe('own, others and shared tiles', () => {
     expect(tile(2, 2).dataset['pending']).toBe('true');
     expect(tile(2, 2).dataset['step']).toBeUndefined();
     expect(faceOf(tile(2, 2))).toBe('…');
-    expect(tile(2, 2).title).toBe('column 2, row 2: You — answer arriving');
+    expect(tile(2, 2).title).toBe('you, column 2, row 2: You — answer arriving');
     // The first guesser's tag in the corner, "you" on the own tile (O62); the number moves
     // clear of it.
     expect(tile(9, 9).querySelector('.smg-mark-tag')?.textContent).toBe('b');
     expect(tile(9, 9).dataset['marked']).toBe('true');
     expect(tile(1, 1).querySelector('.smg-mark-tag')?.textContent).toBe('you');
     expect(tile(9, 9).getAttribute('aria-label')).toBe(
-      '9, column 9, row 9: Anna — 9 tiles away, to the north-east',
+      '9, b, column 9, row 9: Anna — 9 tiles away, to the north-east',
     );
     // A guess under `numbers`: the tile and the player, no answer, no fill.
-    expect(tile(4, 4).title).toBe('column 4, row 4: Anna guessed');
+    expect(tile(4, 4).title).toBe('b, column 4, row 4: Anna guessed');
     expect(tile(4, 4).dataset['step']).toBeUndefined();
     // A player the list does not know is still named, without a tag of theirs.
     expect(tile(3, 3).title).toBe('column 3, row 3: c guessed');
@@ -144,7 +144,7 @@ describe('own, others and shared tiles', () => {
     expect(faceOf(t)).toBe('4↓');
     expect(t.dataset['own']).toBe('true');
     expect(t.title).toBe(
-      '4, column 5, row 5: You — 9 tiles away, to the north-east; ' +
+      '4, you, column 5, row 5: You — 9 tiles away, to the north-east; ' +
         'Anna — 4 tiles away, to the south; Walter — 9 tiles away, to the north-east',
     );
     // The first guesser's tag: the viewer's own guess came first.
@@ -205,9 +205,9 @@ describe('panels', () => {
     };
     render(<SpectatorPanel view={view} {...roster} season="autumn" specialOn />);
     expect(screen.getByTestId('area-line').textContent).toBe('Every target area: 10 × 20 tiles');
-    expect(tile(9, 9).title).toBe('column 9, row 9: Anna guessed');
+    expect(tile(9, 9).title).toBe('b, column 9, row 9: Anna guessed');
     expect(tile(9, 9).dataset['own']).toBe('false');
-    expect(tile(9, 9).tabIndex).toBe(0);
+    expect(tile(9, 9).tabIndex).toBe(-1);
     expect(screen.getByTestId('tile-grid').getAttribute('aria-readonly')).toBe('true');
     expect(screen.getByTestId('fallen').textContent).toBe('Fallen (0)');
   });
@@ -238,7 +238,7 @@ describe('result panel, shared', () => {
       '10',
       'correct',
     ]);
-    expect(target?.title).toBe('column 12, row 10: the target; Walter — Target found!');
+    expect(target?.title).toBe('a, column 12, row 10: the target; Walter — Target found!');
     expect(tile(4, 14).dataset['own']).toBe('true');
     expect(tile(12, 10).querySelector('.smg-mark-tag')?.textContent).toBe('a');
     expect(tile(1, 1).dataset['fallen']).toBe('true');

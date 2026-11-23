@@ -66,6 +66,8 @@ export interface LiveRound {
   frames(events: readonly StoredEvent[], held: ReadonlySet<number>): Frames;
   // After the end: the secret in the game's words ("the number was 42"), else null.
   reveal(winner: string | null): string | null;
+  // The game's words for finding the secret (its module's `found`, O137), if it has them.
+  readonly found?: string;
   verify(log: readonly StoredEvent[]): Verified<unknown>;
   drain(): Promise<void>;
   // Unanswered items in its queue (metrics).
@@ -178,6 +180,7 @@ export function liveRound<S, A, E, Cfg, Sec>(
       const result = actor.current.result();
       return result === null ? null : (module.reveal?.(result, winner) ?? null);
     },
+    ...(module.found === undefined ? {} : { found: module.found }),
     verify: (log) =>
       verifyRound(
         module,

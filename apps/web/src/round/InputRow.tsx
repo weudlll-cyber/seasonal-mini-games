@@ -35,7 +35,7 @@ import { CooldownRing } from './CooldownRing.js';
 import { timingOf } from './InfoParts.js';
 import { InactivityLine } from './InactivityLine.js';
 import { colorsOf } from './RoundSide.js';
-import { codeText, solvedText } from './roundText.js';
+import { codeText, guessRefusal, solvedText } from './roundText.js';
 import { roundMarks } from './playerMarks.js';
 
 interface PlayProps {
@@ -90,15 +90,16 @@ function ringOf(state: RoundStateView, me: RosterRowView | null, now: number) {
   return <CooldownRing endsAt={me.cooldownEndsAt} cooldownMs={state.cooldownMs} now={now} />;
 }
 
-// Sends the game's action as a guess; the platform's refusal in words, the game's own words
-// its refusals itself. The answer counts as arrived once the view holds the new cooldown:
+// Sends the game's action as a guess; the platform's refusal in a guess's words (./roundText
+// guessRefusal), the game's own words its refusals itself. The answer counts as arrived once the view holds the new cooldown:
 // until then the old one would show Guess enabled for a send the server refuses (T76).
 function useAct(state: RoundStateView, game: GameWeb, reload: () => Promise<void>) {
   const [refusal, setRefusal] = useState<string | null>(null);
   const act = async (action: unknown): Promise<ActReply> => {
     const reply = await intent('guess', { roundId: state.roundId, ...(action as object) });
     const own = reply.code === undefined ? null : game.text.code(reply.code);
-    setRefusal(reply.ok || own !== null ? null : codeText(reply.code, reply.until, serverNow()));
+    const refused = guessRefusal(reply.code, reply.until, serverNow(), game.text.found);
+    setRefusal(reply.ok || own !== null ? null : refused);
     await reload().catch(() => undefined);
     return reply;
   };

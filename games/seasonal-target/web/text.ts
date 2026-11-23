@@ -17,7 +17,13 @@
  * Used by:        ./index, ./text.test
  * Spec:           docs/spec/02d-game-seasonal-target.md §2, §4, §6, §8, §9
  */
-import type { PlayerView, ResultView, SpectatorView, StEvent } from '@smg-game/seasonal-target';
+import {
+  FOUND,
+  type PlayerView,
+  type ResultView,
+  type SpectatorView,
+  type StEvent,
+} from '@smg-game/seasonal-target';
 import {
   closestLabel,
   type FeedLine,
@@ -144,5 +150,5 @@ export const stText: GameText = {
   intro,
   specialRule,
   // The result's headline and margin and the solved notice name finding this way (O136, O137).
-  found: 'hit the target',
+  found: FOUND,
 };
