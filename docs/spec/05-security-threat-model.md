@@ -113,8 +113,9 @@ Bingo's layers apply (Bingo 03 §13). The intent limits differ:
 |---|---|---|
 | `guess` (WS), per account across all sockets | 4 / s, burst 4 (the cooldown already allows at most one accepted guess per 3 s; this caps the rejected ones) | `RATE_LIMITED`; counts towards the abuse score |
 | `POST …/guesses` (HTTP fallback) per session | 1 / s | 429 |
-| `team.choose` | 1 / 5 s | `RATE_LIMITED` |
-| Host round commands (create, start, end, abort) | 1 / 2 s per host | `RATE_LIMITED` |
+| `team.choose` and `POST …/team`, per account | 1 / 5 s (`rate.teamChoosePerMin`) | `RATE_LIMITED` (429 over HTTP) |
+| Host round commands (create, start, end, abort, a series' next settings and its start), over HTTP and the socket together | 1 / 2 s per host (`rate.hostRoundCommandsPerMin`) | `RATE_LIMITED` (429 over HTTP) |
+| `DELETE /me` (it checks the password), per account and address | the password change's limiter, shared with it: 5 / 15 min (owner decision O130) | 429 `RATE_LIMITED` |
 | Other intents | 10 / s per socket overall | as Bingo 06 §8 |
 | `GET <base>auth/website` (website mode) per address | 30 / min | 429 |
 | `GET <base>auth/website/login` (website mode) per address | 600 / min | 429 |
@@ -149,7 +150,7 @@ The owner's rule is that the server's receive order decides (decision 4). This i
 - **When it matters:** only when two correct guesses arrive within a fraction of a second of each other. With `feedbackVisibility = full`, which is the default (owner, decision 8), every player sees every answer. Once the shared band has shrunk to one number, many players know the secret at the same moment, and **the last step is then a pure latency race**. Players closer to the server win those races more often. With `own` this is rare, because players narrow down separately. The host can pick `own` or `numbers` per round when a crowd with very different connections plays.
 - **What is not done:** there is no latency compensation. Any compensation would trust client-reported times or measured round trips that a client can inflate, which would turn a physical disadvantage into a manipulable one (DECISIONS R3).
 - **What is done:** receive time is taken at the server's process. The path is the same for everyone (Caddy → app, no queue in front of the round actor). The receive gap to the next correct guess, if one arrives within `round.marginWindowS`, is stored with the result and shown as the winning margin (owner, decision 13: "found it 0.4 s before Anna", 02 §9). The latency of each socket is measured (Socket.IO ping) and exported as a metric, so the operator can see how large the spread actually is.
-- **Bots:** a script can binary-search perfectly and send each guess the instant its cooldown ends. The cooldown limits its rate exactly like a human's, so its edge is reaction time and accuracy. Guesses that repeatedly arrive within a few milliseconds of `cooldownEndsAt` raise the abuse score for moderator review (no automatic sanction).
+- **Bots:** a script can binary-search perfectly and send each guess the instant its cooldown ends. The cooldown limits its rate exactly like a human's, so its edge is reaction time and accuracy. Guesses that repeatedly arrive within a few milliseconds of `cooldownEndsAt` raise the abuse score for moderator review (no automatic sanction): an accepted guess that arrives within `abuse.botTimingWindowMs` (default 30 ms) after the account's previous cooldown ended counts, and more than 3 in one minute add one signal `botTiming` for that minute, the same style as `abuse.cooldownRejectsPerMin` (owner decision O131; the admin's accounts page lists the score).
 
 ## 8. Admin audit log
 

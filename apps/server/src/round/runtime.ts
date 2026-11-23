@@ -61,10 +61,11 @@ export interface RoundRuntime {
 }
 
 // The metrics' observer; the installed games (the registry's, or a test's list with the
-// phased fixture).
+// phased fixture); the play limits' clock (a test's, so its suites do not wait, ./guessLimits).
 interface RuntimeExtra {
   readonly observe?: RoundObserver;
   readonly games?: readonly InstalledGame[] | undefined;
+  readonly limitsNow?: (() => number) | undefined;
 }
 
 // The rounds with the actor options of 08 §7 and the queue bound setting.
@@ -114,7 +115,7 @@ export function createRoundRuntime(
     () => leagueRules(settings),
     openingPrePicks,
   );
-  const limits = new GuessLimits(settings, pool);
+  const limits = new GuessLimits(settings, pool, extra.limitsNow);
   const rounds = roundsOf(env, store, limits, extra);
   const devFeed = env.SMG_DEV ? (env.SMG_DEV_FEED_URL ?? null) : null;
   const seasons = new Seasons(pool, settings, devFeed);

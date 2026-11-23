@@ -130,7 +130,7 @@ The cross-key rules are the game's `problem` (owner decision 74; 02e §3), with 
 | `match.minPlayersPerRound` | 2 | 1 | 50 | owner (O15); in a series of a `phased` game only for its first round (04 §4.8 rule 7) | game admin | next: read when a countdown starts |
 | `match.maxPlayers` | 500 | 2 | 1 000 | owner (O15) | game admin (host picks up to it) | next: read on join |
 | `match.lobbyIdleCloseMin` | 60 | 10 | 1 440 | owner (O15, O28): a match with no round for this long closes itself, counted from the later of its creation and its last round's creation or end; checked every minute and on server start ([02](02-game-guess-the-number.md) §2) | game admin | immediate |
-| `match.maxConcurrentRounds` | 20 | 1 | 100 | technical (per server) | game admin | next: read at round creation |
+| `match.maxConcurrentRounds` | 20 | 1 | 100 | technical (per server): a round created while this many rounds of the server have not ended (also those being created) is refused with `SERVER_BUSY` (503), "The server is running as many rounds as it can. Try again in a moment." (owner decision O131) | game admin | next: read at round creation |
 | `leaderboard.minPlayersForPoints` | 4 | 2 | 50 | owner (O11) | game admin | next: read at round end |
 | `leaderboard.periodLength` | meteorological season | — | — | owner (O30): spring March–May, summer June–August, autumn September–November, winter December–February, in UTC; not a stored setting (DECISIONS T107) | — | — |
 | `leaderboard.abortedMatchesCount` | off | — | — | owner (O31): off, aborting a match takes back its league points; a match ended normally keeps them | game admin | immediate |
@@ -155,11 +155,11 @@ The cross-key rules are the game's `problem` (owner decision 74; 02e §3), with 
 | `antiMulti.requireLinkedChat` | false | — | — | owner (O10); website installs only: without a JWT handoff provider the form disables it with its reason and the server refuses it (DECISIONS T103); in website mode (§7 of 07) not shown and without effect (O68, T222) | security admin | next: read when a roster freezes |
 | `rate.guessPerAccountPerS` | 4 / s | 1 / s | 10 / s | technical | security admin | immediate |
 | `rate.httpGuessPerSessionPerMin` | 60 / min | 12 / min | 240 / min | technical | security admin | immediate |
-| `rate.teamChoosePerMin` | 12 / min | 1 / min | 60 / min | technical | security admin | immediate |
-| `rate.hostRoundCommandsPerMin` | 30 / min | 6 / min | 120 / min | technical | security admin | immediate |
+| `rate.teamChoosePerMin` | 12 / min | 1 / min | 60 / min | technical: one team change per 60 s ÷ this per account, `team.choose` and `POST …/team` alike; within it `RATE_LIMITED` ([05](05-security-threat-model.md) §5, O130) | security admin | immediate (read every second) |
+| `rate.hostRoundCommandsPerMin` | 30 / min | 6 / min | 120 / min | technical: one round command (create, start, end, abort, a series' next settings and start) per 60 s ÷ this per host, over HTTP and the socket alike; within it `RATE_LIMITED` (05 §5, O130) | security admin | immediate (read every second) |
 | `rate.roundQueueBound` | 5 000 | 1 000 | 20 000 | technical | security admin | immediate |
 | `abuse.cooldownRejectsPerMin` | 20 | 5 | 200 | technical | security admin | immediate |
-| `abuse.botTimingWindowMs` | 30 | 5 | 200 | technical: guesses this close to `cooldownEndsAt`, repeatedly, raise the abuse score | security admin | immediate |
+| `abuse.botTimingWindowMs` | 30 | 5 | 200 | technical: accepted guesses that arrive within this many ms after the account's previous cooldown ended raise the abuse score once more than 3 of them come in a minute (one signal a minute, 05 §7, O131) | security admin | immediate (read every second) |
 
 All Bingo security and rate-limit keys (Bingo 03 §13, Bingo 11 §3.10) keep their defaults and bounds. Loosening beyond a shipped default shows a warning, as in Bingo.
 

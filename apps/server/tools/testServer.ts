@@ -5,11 +5,11 @@
  *
  * Responsibility: start the development PostgreSQL, recreate the run's database (DATABASE_URL,
  *                 one of TEST_DATABASES, never the dev database `smg`), migrate it and start the
- *                 server on it (../src/main, which reads the rest of its settings from the
+ *                 server on it (../src/server, which reads the rest of its settings from the
  *                 environment: the run's port and allowed origins). Every run starts from an
  *                 empty database, so a run never reads what an earlier run or the developer left
  *                 (DECISIONS T345).
- * Depends on:     ./database, ../src/main
+ * Depends on:     ./database, ../src/server, ../src/round/guessLimits
  * Used by:        package.json script "test-server" (e2e/playwright.config.ts), load/stack.mjs
  * Spec:           docs/spec/09-testing-strategy.md §1.1
  */
@@ -25,4 +25,8 @@ if (!TEST_DATABASES.has(db.name)) {
 startDevPostgres();
 await recreateDatabase(db);
 await migrateDatabase(db);
-await import('../src/main.js');
+// The play limits never wait in an automated run (shared dev accounts, parallel workers,
+// DECISIONS T406); test/limits.integration.test.ts runs them with the real clock.
+const { startServer } = await import('../src/server.js');
+const { aheadClock } = await import('../src/round/guessLimits.js');
+await startServer({ limitsNow: aheadClock() });

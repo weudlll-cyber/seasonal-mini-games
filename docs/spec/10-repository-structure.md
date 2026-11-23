@@ -41,7 +41,7 @@ seasonal-mini-games/
 │  ├─ seasonal-target/     02d; likewise
 │  └─ mind-games/          02e; src/ and web/, timing class phased, not on the guess engine
 ├─ apps/
-│  ├─ server/src/          main.ts, cli.ts, config/, http/, auth/, realtime/ (gateway, intents, inOrder),
+│  ├─ server/src/          main.ts (entry), server.ts (start), cli.ts, config/, http/, auth/, realtime/ (gateway, intents, inOrder),
 │  │                       round/ (actor, pgRoundStore, scheduler), match/, league/, chat/, admin/,
 │  │                       integration/, seasons/ (feed client), db/, dev/
 │  ├─ web/src/             shell/, lobby/, match/ (the waiting area and the host menu), round/ (round
