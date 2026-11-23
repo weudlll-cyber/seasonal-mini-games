@@ -10,8 +10,9 @@
  *                 development code: the Quick Test route or page, the dev sign-in menu,
  *                 or the development server address; and the server bundle imports no
  *                 workspace package (@smg/*, @smg-game/*), which the image does not ship.
- *                 The pages and the early theme script, which Vite would ship as they are,
- *                 hold no comment (owner decision O128, ../../web/productionFiles).
+ *                 The pages and the kit's early theme script, which Vite and the kit's
+ *                 themeInit() would ship as they are, hold no comment (owner decision O128,
+ *                 ../../web/productionFiles).
  * Depends on:     vitest, node:child_process, node:fs
  * Spec:           Bingo 09 §1; Bingo 03 §13
  */

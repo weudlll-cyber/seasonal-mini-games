@@ -18,8 +18,8 @@
  *                 reduced motion), never by colour alone. Its second part: every line the feed
  *                 showed, oldest first; never a hidden switch or a pre-pick (02e §6.3, §7).
  * Depends on:     react, @smg/game-sdk (ResultPanelProps), @smg-game/mind-games (options,
- *                 names, words, views), ./seasons, ./text, ./WinnersPanel; the win glow `smg-anim-win` of
- *                 @smg/ui motion.css, which the player client loads
+ *                 names, words, views), ./seasons, ./text, ./WinnersPanel; the win glow
+ *                 `sk-anim-win` of @seasonal/kit/motion.css, which the player client loads
  * Used by:        ./index
  * Spec:           docs/spec/02e-game-mind-games.md §8, §9
  */
@@ -55,7 +55,7 @@ function OptionCard(p: {
     <li
       data-choice={c}
       data-wins={wins}
-      className={wins && p.lit ? 'mg-option smg-anim-win' : 'mg-option'}
+      className={wins && p.lit ? 'mg-option sk-anim-win' : 'mg-option'}
       style={{ ['--mg-color' as string]: colorOf(c) }}
     >
       {/* The top line: icon, name, count; no player names in a card (O99). */}

@@ -43,6 +43,11 @@ For Phase 7:
 
 - Renovate PR #47 (TypeScript 7): `pnpm verify` stops at lint with "Error: typescript-eslint does not support TS 7.0." (2026-11-23). It stays open, without code changes, until a typescript-eslint release supports TypeScript 7; then Renovate rebases it and it merges when its checks are green.
 
+### Kit adoption (owner decision O142, branch `feat/kit-adoption`, not merged)
+
+- The game moves onto `@seasonal/kit` v0.11.1 in the kit plan's six steps (night chain 2026-11-23/24). The branch waits for its review (Plan-Claude in the browser, then the owner and the kit planning); a separate task merges it. Done so far: step 1, tokens, fonts, motion and theme (T411).
+- Kept in the game until a kit release has them (no kit code copied): the round's own `FocusBar`, because `GameBar` has no 'prefs' icon for Pre-picks (O143); `useFit`'s refit after web fonts load, which `watchFit` lacks (O144).
+
 ### Optional inputs
 
 - App icon (PNG 512×512) and sounds, as in Bingo's assets manifest

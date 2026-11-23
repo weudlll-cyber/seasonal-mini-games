@@ -101,7 +101,7 @@ async function watchLight(page: Page): Promise<void> {
     const w = window as unknown as { lit: boolean };
     w.lit = false;
     new MutationObserver(() => {
-      if (document.querySelector('.mg-option.smg-anim-win') !== null) w.lit = true;
+      if (document.querySelector('.mg-option.sk-anim-win') !== null) w.lit = true;
     }).observe(document.body, { subtree: true, childList: true, attributes: true });
   });
 }

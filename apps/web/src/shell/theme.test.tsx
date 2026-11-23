@@ -2,21 +2,17 @@
 /**
  * @file   apps/web/src/shell/theme.test.tsx
  * @module web/shell
- * @brief  The theme logic: early script and React agree; the toggle stores; the system is followed live.
+ * @brief  The theme toggle stores the choice; the system setting is followed live until then.
  *
- * Responsibility: public/theme-init.js (run before the first paint) and ./theme resolve the
- *                 same theme for a stored choice, no choice with a dark or light system, and
- *                 blocked storage; the toggle flips and stores the choice; a change of the
- *                 system setting is followed only while nothing is stored.
- * Depends on:     @testing-library/react, vitest, ./theme, ./ThemeToggle,
- *                 ../../public/theme-init.js (raw), ../../public/theme-init.js?raw
+ * Responsibility: the toggle flips and stores the choice; a change of the system setting is
+ *                 followed only while nothing is stored. That the kit's early script and its
+ *                 theme functions resolve alike is the kit's own test (src/theme.test.ts).
+ * Depends on:     @testing-library/react, vitest, ./ThemeToggle
  * Spec:           Bingo 01 §13; Seasonal Entertainment docs/DESIGN.md "Theme logic"
  */
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import EARLY from '../../public/theme-init.js?raw';
-import { resolveTheme } from './theme.js';
 import { ThemeToggle } from './ThemeToggle.js';
 
 let systemDark = false;
@@ -38,38 +34,6 @@ afterEach(() => {
   window.localStorage.clear();
   listeners = [];
   document.documentElement.removeAttribute('data-theme');
-});
-
-// The theme the early script sets on <html>.
-function early(): string | null {
-  // Runs the real file as the browser does before the first paint.
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval
-  (new Function(EARLY) as () => void)();
-  return document.documentElement.getAttribute('data-theme');
-}
-
-describe('theme resolution', () => {
-  it.each([
-    ['stored dark, light system', 'dark', false, 'dark'],
-    ['stored light, dark system', 'light', true, 'light'],
-    ['nothing stored, dark system', null, true, 'dark'],
-    ['nothing stored, light system', null, false, 'light'],
-    ['junk stored, dark system', 'blue', true, 'dark'],
-  ])('%s: early script and module agree', (_name, stored, dark, expected) => {
-    system(dark);
-    if (stored !== null) window.localStorage.setItem('se.theme', stored);
-    expect(early()).toBe(expected);
-    expect(resolveTheme()).toBe(expected);
-  });
-
-  it('follows the system setting when storage is blocked', () => {
-    system(true);
-    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-      throw new Error('blocked');
-    });
-    expect(early()).toBe('dark');
-    expect(resolveTheme()).toBe('dark');
-  });
 });
 
 describe('the toggle', () => {

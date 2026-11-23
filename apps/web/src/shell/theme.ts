@@ -1,70 +1,38 @@
 /**
  * @file   apps/web/src/shell/theme.ts
  * @module web/shell
- * @brief  Light and dark theme: the website's logic, kept in step with <html data-theme>.
+ * @brief  Light and dark theme in React, on the kit's theme logic.
  *
- * Responsibility: resolve the theme as ../../public/theme-init.js does before the first
- *                 paint — a stored choice (localStorage `se.theme`) wins, otherwise the
- *                 system setting — follow the system setting live while nothing is stored,
- *                 and flip and store the choice on the toggle. Every storage access is in
- *                 try/catch: with storage blocked the system setting applies and the toggle
- *                 still works for the visit. `useShownTheme` follows <html data-theme> for
- *                 parts that must match it (the website's chat frame, 07 §2).
- * Depends on:     react
+ * Responsibility: `useTheme` resolves the theme as the kit's early script does before the
+ *                 first paint (a stored choice, localStorage `se.theme`, wins; otherwise the
+ *                 system setting), follows the system setting live while nothing is stored,
+ *                 and flips and stores the choice on the toggle. `useShownTheme` follows
+ *                 <html data-theme> for parts that must match it (the website's chat frame,
+ *                 07 §2). The logic (storage in try/catch, the media query, the observer) is
+ *                 the kit's; these hooks only hold it in React state.
+ * Depends on:     react, @seasonal/kit (resolveTheme, storeTheme, applyTheme,
+ *                 onSystemThemeChange, shownTheme, onShownThemeChange)
  * Used by:        ./ThemeToggle, ../chat/ChatPanel
  * Spec:           Bingo 01 §13; Seasonal Entertainment docs/DESIGN.md "Theme logic"
  */
+import {
+  applyTheme,
+  onShownThemeChange,
+  onSystemThemeChange,
+  resolveTheme,
+  shownTheme,
+  storeTheme,
+  type Theme,
+} from '@seasonal/kit';
 import { useEffect, useState, useSyncExternalStore } from 'react';
-
-type Theme = 'light' | 'dark';
-
-const KEY = 'se.theme';
-const QUERY = '(prefers-color-scheme: dark)';
-
-function storedTheme(): Theme | null {
-  try {
-    const value = window.localStorage.getItem(KEY);
-    return value === 'light' || value === 'dark' ? value : null;
-  } catch {
-    return null;
-  }
-}
-
-function storeTheme(theme: Theme): void {
-  try {
-    window.localStorage.setItem(KEY, theme);
-  } catch {
-    // Blocked storage: the choice holds for this visit only.
-  }
-}
-
-const systemTheme = (): Theme => (window.matchMedia(QUERY).matches ? 'dark' : 'light');
-
-// The same resolution as the early script.
-export function resolveTheme(): Theme {
-  return storedTheme() ?? systemTheme();
-}
-
-function apply(theme: Theme): void {
-  document.documentElement.setAttribute('data-theme', theme);
-}
 
 export function useTheme(): { readonly theme: Theme; readonly toggle: () => void } {
   const [theme, setTheme] = useState<Theme>(resolveTheme);
   useEffect(() => {
-    apply(theme);
+    applyTheme(theme);
   }, [theme]);
   // The system setting is followed live while no choice is stored.
-  useEffect(() => {
-    const media = window.matchMedia(QUERY);
-    const onChange = (): void => {
-      if (storedTheme() === null) setTheme(systemTheme());
-    };
-    media.addEventListener('change', onChange);
-    return () => {
-      media.removeEventListener('change', onChange);
-    };
-  }, []);
+  useEffect(() => onSystemThemeChange(setTheme), []);
   const toggle = (): void => {
     const next: Theme = theme === 'dark' ? 'light' : 'dark';
     storeTheme(next);
@@ -73,21 +41,6 @@ export function useTheme(): { readonly theme: Theme; readonly toggle: () => void
   return { theme, toggle };
 }
 
-// The theme the page shows now, as <html data-theme> says (set by the early script and the
-// toggle); 'auto' before either has set it, which the website's chat resolves by the same rule.
-function shownTheme(): Theme | 'auto' {
-  const value = document.documentElement.getAttribute('data-theme');
-  return value === 'light' || value === 'dark' ? value : 'auto';
-}
-
-function onThemeChange(changed: () => void): () => void {
-  const observer = new MutationObserver(changed);
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-  return () => {
-    observer.disconnect();
-  };
-}
-
 export function useShownTheme(): Theme | 'auto' {
-  return useSyncExternalStore(onThemeChange, shownTheme);
+  return useSyncExternalStore(onShownThemeChange, shownTheme);
 }

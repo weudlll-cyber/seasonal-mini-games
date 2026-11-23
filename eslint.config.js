@@ -88,9 +88,6 @@ export default defineConfig(
       'test-results/',
       'playwright-report/',
       'reports/',
-      // Static files served as they are (the plain early theme script, outside the TS
-      // projects); apps/web/src/shell/theme.test.tsx runs it.
-      'apps/web/public/',
       // The load check: plain Node scripts on their own server (load/stack.mjs), outside the TS projects.
       'load/',
     ],
