@@ -39,12 +39,17 @@ For Phase 7:
 
 - Seasonal Prediction, Seasonal Higher Or Lower, Seasonal Mystery Object: no design until the owner decides one (GAME-IDEAS.md)
 
+### Dependency updates waiting on their ecosystem
+
+- Renovate PR #47 (TypeScript 7): `pnpm verify` stops at lint with "Error: typescript-eslint does not support TS 7.0." (2026-11-23). It stays open, without code changes, until a typescript-eslint release supports TypeScript 7; then Renovate rebases it and it merges when its checks are green.
+
 ### Optional inputs
 
 - App icon (PNG 512×512) and sounds, as in Bingo's assets manifest
 
 ## Part two — closed
 
+- 2026-11-23: Seasonal Mind Games' strip test compares the fill's width by value to three decimals of a percent, not as text: jsdom 31 prints "1.66667%" for 1.6666666666666667% (Renovate PR #46's only failure); no product change. _Closed by:_ branch `chore/test-fill-percent`
 - 2026-11-23: Journey 44's names check (chain MG-N12, piece 1; again in audit B3, both into All): found and fixed (night chain 2026-11-22/23, piece HOUSEKEEPING). The probe now names the lines of the path within 3 s on a miss; in 20 runs under load (six cores busy, the timing project, one worker) it caught one: "bot-05" Summer → All had its own line 100 ms before the wave, already taken by a neighbouring wave's group or nameless flight of the same path, which take the nearest lines whoever wrote them. A probe fault, not the game's: a named flight now counts its own line also when another took it (`e2e/flightLines.ts` `ownLine`). The other six failures of that series came from the load itself (the flights' timings — standing, leftover, groups — and three runs past the test's time) and are not seen without it; 5 of 5 green afterwards without load. _Closed by:_ branch `chore/housekeeping-2026-11-22`
 - 2026-11-23: CodeQL's 17 open alerts dismissed as false positives with a reason each (owner decision O132, AUDIT B1); the image size budget measures the unpacked file system (O133, AUDIT B7: 194 MB unpacked, 72 MB compressed). _Closed by:_ branch `chore/housekeeping-2026-11-22`
 - 2026-11-23: A series' next round refused as full (`SERVER_BUSY`) stays due and starts once a running round has ended, never dropped after five tries (owner decision O139, DECISIONS T409). _Closed by:_ branch `fix/series-busy`
