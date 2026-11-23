@@ -99,8 +99,8 @@ describe('website mode, signed out', () => {
     serve('website');
     window.location.hash = '#/leaderboard';
     await renderShell(true);
-    expect(screen.getByTestId('open-sign-in').getAttribute('href')).toBe(nextOf('#/leaderboard'));
-    expect(screen.queryByTestId('open-register')).toBeNull();
+    expect(screen.getByTestId('sign-in').getAttribute('href')).toBe(nextOf('#/leaderboard'));
+    expect(screen.queryByTestId('register')).toBeNull();
     expect(screen.queryByTestId('dev-menu')).toBeNull();
     // The way back to the website, first in the bar (top left).
     const back = screen.getByTestId('back-link');
@@ -142,8 +142,8 @@ describe('local mode', () => {
     const calls = serve('local');
     window.location.hash = '#/match/ABC234';
     await renderShell(true);
-    expect(screen.getByTestId('open-sign-in').getAttribute('href')).toBe('#/sign-in');
-    expect(screen.getByTestId('open-register')).toBeTruthy();
+    expect(screen.getByTestId('sign-in').getAttribute('href')).toBe('#/sign-in');
+    expect(screen.getByTestId('register')).toBeTruthy();
     expect(await screen.findByTestId('dev-menu')).toBeTruthy();
     expect(calls).not.toContain('POST /auth/guest');
     expect(calls).toContain('intent');

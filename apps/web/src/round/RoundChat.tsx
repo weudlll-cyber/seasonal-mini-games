@@ -23,7 +23,7 @@ import './roundChat.css';
 // Where the panel lies on a phone: between the app's bar and the Chat button, so the button
 // (to close it) stays in view.
 function overlayBox(button: HTMLElement): CSSProperties {
-  const top = document.querySelector('.shell-bar');
+  const top = document.querySelector('.sk-header');
   const gap = 8;
   return {
     top: `${String(Math.round((top?.getBoundingClientRect().bottom ?? 0) + gap))}px`,

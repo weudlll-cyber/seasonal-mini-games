@@ -121,7 +121,7 @@ test('journey 11: a range from -500 to 500 takes negative guesses on a phone', a
     await fitsScreen(p.page);
     // During a round the app header is hidden and the round's own bar is one row of at most
     // 64 px on a phone (focus mode, O46).
-    await expect(p.page.locator('.shell-bar')).toBeHidden();
+    await expect(p.page.getByTestId('app-header')).toBeHidden();
     const bar = await p.page.getByTestId('round-banner').boundingBox();
     expect(bar?.height ?? Infinity, 'the round bar on a phone').toBeLessThanOrEqual(64);
     await readable(p.page, 'round view on a phone');

@@ -27,7 +27,7 @@ import { PHONE } from './screens.js';
 
 // The first part inside the screen, the headline at most two lines, the bar not the header.
 async function firstPartFits(page: Page): Promise<void> {
-  await expect(page.locator('.shell-bar')).toBeHidden();
+  await expect(page.getByTestId('app-header')).toBeHidden();
   await expect(page.getByTestId('result-bar')).toBeVisible();
   const first = page.getByTestId('result-first');
   await expect(first).toBeVisible();

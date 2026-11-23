@@ -6,20 +6,22 @@
  * Responsibility: bundle src/main.ts (the server) and src/cli.ts (the operator commands,
  *                 e.g. create-super) with esbuild into dist/ (or the folder given as the
  *                 first argument), the workspace packages (@smg/* and the games @smg-game/*,
- *                 TypeScript sources) inlined and the npm dependencies left as imports for node_modules,
- *                 without comments or spacing; the
- *                 development modules (src/dev/*, the Quick Test and dev sign-in routes)
- *                 replaced by ./devStub.mjs; the embed loader (apps/embed-loader) as a browser
- *                 script <out>/public/embed.js, which GET /embed.js serves; copy
+ *                 TypeScript sources) inlined and the npm dependencies left as imports for
+ *                 node_modules, without comments or spacing; the development modules (src/dev/*,
+ *                 the Quick Test and dev sign-in routes) replaced by ./devStub.mjs (the kit's
+ *                 devStubPlugin); the embed loader (apps/embed-loader) as a browser script
+ *                 <out>/public/embed.js, which GET /embed.js serves; copy
  *                 src/db/migrations to <out>/migrations, where the bundled migrator looks for
  *                 them. Run by the Dockerfile.
- * Depends on:     esbuild, node:fs, node:path, ./devStub.mjs
+ * Depends on:     esbuild, @seasonal/kit/devtools (devStubPlugin), node:fs, node:path,
+ *                 ./devStub.mjs
  * Used by:        Dockerfile, test/productionBundle.test.ts
  * Spec:           Bingo 08 §4; Bingo 09 §1
  */
 import { cpSync, rmSync } from 'node:fs';
 import path from 'node:path';
 
+import { devStubPlugin } from '@seasonal/kit/devtools';
 import { build } from 'esbuild';
 
 const out = process.argv[2] ?? 'dist';
@@ -38,18 +40,10 @@ const npmExternal = {
 };
 
 // Development code stays out of the production bundle (audit B): the app registers these
-// modules only with SMG_DEV=1, so the stub is never called in a production install.
+// modules only with SMG_DEV=1, so the stub is never called in a production install. The
+// plugin is the kit's; the modules and the stub are the game's.
 const DEV_MODULE = /[\\/]src[\\/](dev[\\/][^\\/]+|http[\\/]routes[\\/](quickTest|devSignIn))\.js$/;
-const devStub = {
-  name: 'dev-stub',
-  setup(builder) {
-    builder.onResolve({ filter: /^\./ }, (args) =>
-      DEV_MODULE.test(path.resolve(args.resolveDir, args.path))
-        ? { path: path.resolve('devStub.mjs') }
-        : undefined,
-    );
-  },
-};
+const devStub = devStubPlugin({ devModule: DEV_MODULE, stub: path.resolve('devStub.mjs') });
 
 rmSync(out, { recursive: true, force: true });
 await build({

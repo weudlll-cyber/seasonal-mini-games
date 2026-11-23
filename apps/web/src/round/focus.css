@@ -19,7 +19,7 @@
  */
 /* A running round in focus mode (`.focus-mode` on the match page): no app header at all, the
    round's own bar instead, and the round view as wide as the screen (../shell/shell.css). */
-#root:has(.focus-mode) .shell-bar {
+#root:has(.focus-mode) .sk-header {
   display: none;
 }
 

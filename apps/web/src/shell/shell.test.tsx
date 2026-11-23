@@ -8,9 +8,9 @@
  *                 and verification screens and back; Leaderboard sits beside Play;
  *                 the quick sign-in buttons "Sign in as host" / "admin" / "player 1/2/3"
  *                 exist only in development (production passes dev=false); the account chip
- *                 says host only with `match.create`; the compact bar's "Menu" opens the
- *                 account block and Escape closes the innermost menu, focus back on its
- *                 button; a late first session answer never undoes a quick sign-in. Taken
+ *                 says host only with `match.create`; the kit header's "Menu" (its fold) opens
+ *                 the links and the account with the dev menu inside, and Escape closes the
+ *                 innermost menu, focus back on its button; a late first session answer never undoes a quick sign-in. Taken
  *                 over from Bingo and trimmed.
  * Depends on:     @testing-library/react, ./AppShell, ./router, ./session
  * Spec:           Bingo 05 §2.1; Bingo 01 §13
@@ -112,24 +112,25 @@ describe('app shell', () => {
     expect(screen.queryByTestId('dev-menu')).toBeNull();
   });
 
-  it('opens the compact bar’s menu with its button and closes it with Escape', async () => {
+  it('opens the folded header’s menu with its button and closes it with Escape', async () => {
     serve(['match.watch', 'match.join']);
     await renderShell(true);
-    // The button shows only in the compact bar (CSS); the account block it opens is the same.
-    const button = screen.getByTestId('account-menu');
-    const account = screen.getByTestId('account');
-    expect(button.getAttribute('aria-controls')).toBe(account.id);
-    expect(account.dataset['open']).toBe('false');
+    // The button shows only while the header is folded (the kit's CSS); its panel holds the
+    // links and the account.
+    const button = screen.getByTestId('menu-button');
+    const menu = document.getElementById(button.getAttribute('aria-controls') ?? '');
+    expect(menu?.contains(screen.getByTestId('account'))).toBe(true);
+    expect(menu?.dataset['skOpen']).toBe('false');
     fireEvent.click(button);
     expect(button.getAttribute('aria-expanded')).toBe('true');
-    expect(account.dataset['open']).toBe('true');
+    expect(menu?.dataset['skOpen']).toBe('true');
     // Escape inside the menu closes it, and the focus goes back to the button.
     fireEvent.click(await screen.findByTestId('dev-menu'));
     fireEvent.keyDown(screen.getByTestId('dev-sign-in-host'), { key: 'Escape' });
     expect(screen.queryByTestId('dev-sign-in-host')).toBeNull();
-    expect(account.dataset['open']).toBe('true');
+    expect(menu?.dataset['skOpen']).toBe('true');
     fireEvent.keyDown(screen.getByTestId('signed-in-as'), { key: 'Escape' });
-    expect(account.dataset['open']).toBe('false');
+    expect(menu?.dataset['skOpen']).toBe('false');
     expect(document.activeElement).toBe(button);
   });
 

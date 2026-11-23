@@ -130,7 +130,7 @@ async function panel(page: Page, button: string, name: string, size: Size): Prom
 }
 
 async function slimBar(page: Page, size: Size): Promise<void> {
-  await expect(page.locator('.shell-bar')).toBeHidden();
+  await expect(page.getByTestId('app-header')).toBeHidden();
   const bar = page.getByTestId('round-banner');
   const box = await bar.boundingBox();
   expect(box?.height ?? Infinity, 'the round bar').toBeLessThanOrEqual(size === WIDE ? 44 : 52);

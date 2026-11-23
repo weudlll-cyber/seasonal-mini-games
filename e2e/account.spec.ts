@@ -37,7 +37,7 @@ async function deleteAccount(page: Page, email: string, password: string): Promi
 }
 
 async function signInWithForm(page: Page, email: string, password: string): Promise<void> {
-  await page.getByTestId('open-sign-in').click();
+  await page.getByTestId('sign-in').click();
   await page.getByTestId('sign-in-email').fill(email);
   await page.getByTestId('sign-in-password').fill(password);
   await page.getByTestId('sign-in-submit').click();
@@ -51,7 +51,7 @@ test('register, sign out, sign in, change the password, sign out', async ({ page
   let password: string | null = null;
   try {
     await page.goto('/#/');
-    await page.getByTestId('open-register').click();
+    await page.getByTestId('register').click();
     await page.getByTestId('register-displayName').fill(name);
     await page.getByTestId('register-email').fill(email);
     await page.getByTestId('register-password').fill(PASSWORD);
@@ -60,9 +60,9 @@ test('register, sign out, sign in, change the password, sign out', async ({ page
     await expect(page.getByTestId('signed-in-as')).toContainText(`${name} (player)`);
     password = PASSWORD;
     await page.getByTestId('sign-out').click();
-    await expect(page.getByTestId('open-sign-in')).toBeVisible();
+    await expect(page.getByTestId('sign-in')).toBeVisible();
     if (shots) {
-      await page.getByTestId('open-sign-in').click();
+      await page.getByTestId('sign-in').click();
       await captureLook(page, SHOTS_DIR, 'sign-in');
       await page.goto('/#/');
     }
@@ -76,7 +76,7 @@ test('register, sign out, sign in, change the password, sign out', async ({ page
     password = NEW_PASSWORD;
     if (shots) await captureLook(page, SHOTS_DIR, 'account');
     await page.getByTestId('sign-out').click();
-    await expect(page.getByTestId('open-sign-in')).toBeVisible();
+    await expect(page.getByTestId('sign-in')).toBeVisible();
   } finally {
     if (password !== null) await deleteAccount(page, email, password);
   }
@@ -92,7 +92,7 @@ test('too many tries for one account get the rate-limit message', async ({ page 
   test.skip(info.project.name !== 'chromium', 'Chromium only: the login limit is per address');
   const email = `limit${Date.now().toString(36)}@example.com`;
   await page.goto('/#/');
-  await page.getByTestId('open-sign-in').click();
+  await page.getByTestId('sign-in').click();
   for (let i = 0; i < 6; i += 1) {
     await page.getByTestId('sign-in-email').fill(email);
     await page.getByTestId('sign-in-password').fill('not the password');
