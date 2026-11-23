@@ -38,13 +38,15 @@ async function deleteAccount(page: Page, email: string, password: string): Promi
 }
 
 // One of the header's account items: on a phone the kit's header folds them into its Menu, which
-// is opened first.
+// is opened first. Right after a resize the header may still be folding or unfolding (it
+// measures again), so this tries until the item itself shows.
 async function fromBar(page: Page, testId: string) {
-  const menu = page.getByTestId('menu-button');
-  if ((await menu.isVisible()) && (await menu.getAttribute('aria-expanded')) !== 'true') {
-    await menu.click();
-  }
-  return page.getByTestId(testId);
+  const item = page.getByTestId(testId);
+  await expect(async () => {
+    if (!(await item.isVisible())) await page.getByTestId('menu-button').click({ timeout: 1_000 });
+    await expect(item).toBeVisible({ timeout: 1_000 });
+  }).toPass({ timeout: 15_000 });
+  return item;
 }
 
 async function signInWithForm(page: Page, email: string, password: string): Promise<void> {

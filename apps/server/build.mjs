@@ -6,7 +6,8 @@
  * Responsibility: bundle src/main.ts (the server) and src/cli.ts (the operator commands,
  *                 e.g. create-super) with esbuild into dist/ (or the folder given as the
  *                 first argument), the workspace packages (@smg/* and the games @smg-game/*,
- *                 TypeScript sources) inlined and the npm dependencies left as imports for
+ *                 TypeScript sources) and the shared kit (@seasonal/kit) inlined and the npm
+ *                 dependencies left as imports for
  *                 node_modules, without comments or spacing; the development modules (src/dev/*,
  *                 the Quick Test and dev sign-in routes) replaced by ./devStub.mjs (the kit's
  *                 devStubPlugin); the embed loader (apps/embed-loader) as a browser script
@@ -27,14 +28,15 @@ import { build } from 'esbuild';
 const out = process.argv[2] ?? 'dist';
 
 // npm packages stay imports for node_modules; the workspace packages (@smg/* and the games,
-// @smg-game/*: TypeScript sources Node cannot load from node_modules) are compiled into the
-// bundle.
-const WORKSPACE = /^@smg(-game)?\//;
+// @smg-game/*: TypeScript sources Node cannot load from node_modules) and the shared kit
+// (@seasonal/kit, a dev dependency: its git-hosted install needs git, which the image's
+// `pnpm deploy` does not have, as in Bingo) are compiled into the bundle.
+const INLINED = /^(@smg(-game)?\/|@seasonal\/kit(\/|$))/;
 const npmExternal = {
   name: 'npm-external',
   setup(builder) {
     builder.onResolve({ filter: /^[^./]/ }, (args) =>
-      WORKSPACE.test(args.path) ? undefined : { path: args.path, external: true },
+      INLINED.test(args.path) ? undefined : { path: args.path, external: true },
     );
   },
 };
