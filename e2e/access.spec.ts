@@ -161,7 +161,11 @@ async function dockedChat(browser: Browser, size: Size): Promise<void> {
   });
   try {
     await p.page.goto(`./#/match/${started.matchCode}`);
-    await expect(p.page.getByTestId('chat-dock')).toBeVisible({ timeout: 15_000 });
+    // The dock is the round's: it exists once the match page has left its waiting area.
+    await expect(p.page.getByTestId('match')).toHaveAttribute('data-phase', 'live', {
+      timeout: 60_000,
+    });
+    await expect(p.page.getByTestId('chat-dock')).toBeVisible();
     await noSeriousViolations(p.page, at(size, 'docked chat'));
     if (size.width < 900) {
       await p.page.getByTestId('chat-bar').click();
