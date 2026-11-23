@@ -8,7 +8,8 @@
  *                 (the same body without `startNow`, the same per-setting check, 422
  *                 ROUND_SETTINGS_INVALID with the field and its sentence) and keeps them for
  *                 the next round. `POST …/next-round/start` runs the pending next step at once;
- *                 outside a pause it is 409 ROUND_RUNNING.
+ *                 outside a pause it is 409 ROUND_RUNNING, with the server full 503 SERVER_BUSY
+ *                 and the next round still due (O139).
  * Depends on:     fastify, @smg/application (settings), ../../match/*, ./rounds (body, host check), ./settingsBody
  * Used by:        ./matches
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1; docs/spec/04-software-architecture.md §4.8 rule 7
@@ -83,6 +84,8 @@ export function registerSeriesRoutes(app: FastifyInstance, deps: SeriesRouteDeps
     if (match === null) return reply;
     const started = await deps.series.startNow(match);
     if (started === 'started') return reply.status(204).send();
+    // The server runs as many rounds as it can; the series' next round stays due (O139).
+    if (started === 'busy') return reply.status(503).send({ code: 'SERVER_BUSY' });
     return reply
       .status(409)
       .send({ code: started === 'notInPause' ? 'ROUND_RUNNING' : 'NOT_A_SERIES' });
