@@ -4,7 +4,7 @@ Owner decisions, technical decisions with their reasons, security decisions, and
 
 Each entry: its id, its date (an owner decision: the day decided; any other: the day it was first recorded) and its text, then its reason or where it is applied. Until 2026-11-17 this file was a set of tables; the same entries in that form are in git history (`git show 592592e:docs/DECISIONS.md`).
 
-## 1. Owner decisions (2026-10-24; O16–O19 on 2026-10-26; O20–O25 on 2026-10-31; O26–O41 on 2026-11-01; O42–O53 on 2026-11-02; O54 on 2026-11-03; O55–O67 on 2026-11-04; O68–O75 on 2026-11-06; O76–O90 on 2026-11-12; O91–O93 and O94 on 2026-11-13; O95 and O96 on 2026-11-14; O97–O101 on 2026-11-15; O102 and O103 on 2026-11-16; O104 and O105 on 2026-11-17; O106–O108 on 2026-11-18; O109 and O110 on 2026-11-19; O111 and O112 on 2026-11-20; O113–O125 on 2026-11-21; O126–O129 on 2026-11-22)
+## 1. Owner decisions (2026-10-24; O16–O19 on 2026-10-26; O20–O25 on 2026-10-31; O26–O41 on 2026-11-01; O42–O53 on 2026-11-02; O54 on 2026-11-03; O55–O67 on 2026-11-04; O68–O75 on 2026-11-06; O76–O90 on 2026-11-12; O91–O93 and O94 on 2026-11-13; O95 and O96 on 2026-11-14; O97–O101 on 2026-11-15; O102 and O103 on 2026-11-16; O104 and O105 on 2026-11-17; O106–O108 on 2026-11-18; O109 and O110 on 2026-11-19; O111 and O112 on 2026-11-20; O113–O125 on 2026-11-21; O126–O133 on 2026-11-22)
 
 - **O1** (2026-10-24): The platform foundation is adopted from seasonal-bingo-royale. _Applied in:_ 04 §2, 05 §1, 06 §1, 07 §1, 09 §1, 10
 - **O2** (2026-10-24): The first game is Guess The Number. The other games of the vision (Seasonal Target, Seasonal Safecracker, Seasonal Bomb Defusal, Seasonal Prediction, Seasonal Higher Or Lower, Seasonal Mystery Object) are listed in the roadmap only, with no design work now. _Applied in:_ 02, 11 §3, GAME-IDEAS.md
@@ -135,6 +135,9 @@ Each entry: its id, its date (an owner decision: the day decided; any other: the
 - **O127** (2026-11-22): The open sign-up status (`feat/open-rounds`) is accepted without a further owner test: a match opened on the development server at `3648a15` had "Show on the website" on by default and was listed by `/api/public/open-rounds` with its title, kind, counts and join URL and no names. _Applied in:_ the merge of `feat/open-rounds` (O124, O125, T400)
 - **O128** (2026-11-22): (on the ZAP finding of the production rehearsal, security-pass 2026-11-22) The files the production build serves carry no developer comments; the build strips them, the sources keep them. _Applied in:_ night chain 2026-11-22, piece A5
 - **O129** (2026-11-22): A full audit of the repository is made (security and access, correctness, tests, screens, docs against code, hygiene, CI), its findings kept in `docs/AUDIT.md`, newest audit first. Findings that are provably wrong, dead or stale, or defects whose fix changes nothing players see or do, are fixed; anything that would change what players see or do, or needs a decision, goes to OPEN as an owner question with a proposal. _Applied in:_ docs/AUDIT.md
+
+- **O132** (2026-11-22): CodeQL's 17 open alerts are false positives (audit B1): they are dismissed in GitHub with a reason each, listed in AUDIT.md. _Applied in:_ GitHub code scanning (dismissed 2026-11-23); docs/AUDIT.md B1
+- **O133** (2026-11-22): The image size budget follows AUDIT B7's proposal: it measures the unpacked size, so the 250 MB budget means what it says. _Applied in:_ .github/workflows/ci.yml (`image` job, the exported file system of a container); docs/AUDIT.md B7
 
 ## 2. Technical decisions
 

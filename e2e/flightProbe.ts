@@ -36,7 +36,7 @@ import {
   type Probe,
   type Times,
 } from './flightChecks.js';
-import { fits, flightOf, named, nameless, names, take } from './flightLines.js';
+import { fits, flightOf, named, nameless, names, ownLine, take } from './flightLines.js';
 
 export interface ProbeResult {
   readonly waves: number;
@@ -224,6 +224,7 @@ export function probeScript(times: Times, visible: boolean): string {
     take,
     fits,
     nameless,
+    ownLine,
     named,
   ];
   return [
