@@ -11,7 +11,8 @@
  *                 the hold, the bar's text (the platform's rule, apps/web roundText `barTime`:
  *                 the time to the plan's end through `clockText`, in the hold "Result in 0:04"),
  *                 the strip's three segments with their ends, the segment that is "now", its
- *                 fill, how many parts are done and the line under the strip. The bar's "left"
+ *                 fill (by value, to three decimals of a percent), how many parts are done and
+ *                 the line under the strip. The bar's "left"
  *                 ends where the strip does; in the hold no part is "now" and all three are done
  *                 (owner, 2026-11-18, DECISIONS T386).
  * Depends on:     vitest, @testing-library/react, @smg/game-sdk, ./fixtures, ./PhaseStrip
@@ -64,12 +65,19 @@ function strip(totalS: number, at: number) {
   };
 }
 
+// A fill's width as a number, null for none: the DOM may print the percentage rounded (jsdom 31
+// gives "1.66667%" for 1.6666666666666667%), so it is compared by value, not as text.
+const percent = (width: string): number | null => (width === '' ? null : Number.parseFloat(width));
+
 // Each moment of a round of `totalS`: the strip's parts, and what the screen shows then.
 function agrees(totalS: number, segments: readonly string[], moments: readonly Moment[]): void {
-  for (const { at, ...shown } of moments) {
-    const { segments: seen, ...rest } = strip(totalS, at);
+  for (const { at, fill, ...shown } of moments) {
+    const { segments: seen, fill: width, ...rest } = strip(totalS, at);
     expect(seen).toEqual(segments);
     expect(rest, String(at)).toEqual(shown);
+    const want = percent(fill);
+    if (want === null) expect(percent(width), String(at)).toBeNull();
+    else expect(percent(width), String(at)).toBeCloseTo(want, 3);
     cleanup();
   }
 }
