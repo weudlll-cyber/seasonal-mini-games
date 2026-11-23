@@ -141,8 +141,10 @@ export async function listening(harness: Harness) {
 export async function startSocketKit(
   overrides: Record<string, string> = {},
   games?: readonly InstalledGame[],
+  // The play limits' clock: the harness's, which never waits, unless a test gives the real one.
+  limitsNow?: () => number,
 ): Promise<SocketKit> {
-  const harness = await startHarness(overrides, games);
+  const harness = await startHarness(overrides, games, limitsNow);
   const { io, url } = await listening(harness);
   const app = harness.built.fastify;
   const clients = {

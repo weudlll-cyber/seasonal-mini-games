@@ -10,7 +10,8 @@
  *                 for views, with the players staff kicked from its match, and a phased one
  *                 with its whole log for its delayed room); committed events and a phased
  *                 round's released frames go to every subscriber (the gateway); a phased game's
- *                 series and a settings check for a series' next round. The list of
+ *                 series and a settings check for a series' next round; no new round
+ *                 beyond a given number running at once (RoundsFull, 08 §4). The list of
  *                 games is the registry's, or one given by a test (a phased fixture, 09 §4.2).
  * Depends on:     @smg/application (settings), @smg-game/registry, ./gameRunner, ./liveRound,
  *                 ./pgRoundStore, ./actor,
@@ -71,11 +72,20 @@ function prefsParser(schema: ZodType | undefined): ((raw: unknown) => unknown) |
 type Listener = (round: LiveRound, events: readonly StoredEvent[], how: Delivery) => void;
 type ReleaseListener = (round: LiveRound, released: Released) => void;
 
+// The server runs as many rounds as `match.maxConcurrentRounds` allows (SERVER_BUSY, 08 §4).
+export class RoundsFull extends Error {
+  constructor() {
+    super('rounds full');
+  }
+}
+
 export class Rounds {
   private readonly runners = new Map<string, Runner>();
   private readonly live = new Map<string, LiveRound>();
   private readonly listeners: Listener[] = [];
   private readonly releaseListeners: ReleaseListener[] = [];
+  // Rounds being created now, counted against the limit before they are live.
+  private creating = 0;
 
   constructor(
     private readonly store: PgRoundStore,
@@ -190,12 +200,28 @@ export class Rounds {
     return this.runners.get(gameId)?.hostKeys ?? new Set();
   }
 
-  async create(gameId: string, round: NewRound): Promise<LiveRound> {
+  // A new round, refused with RoundsFull when `maxRunning` rounds are running or being
+  // created already (`match.maxConcurrentRounds`, 08 §4).
+  async create(gameId: string, round: NewRound, maxRunning = Infinity): Promise<LiveRound> {
     const runner = this.runners.get(gameId);
     if (runner === undefined) throw new Error(`unknown game ${gameId}`);
-    const live = await runner.create(round);
-    this.live.set(live.id, live);
-    return live;
+    if (this.running() + this.creating >= maxRunning) throw new RoundsFull();
+    this.creating += 1;
+    try {
+      const live = await runner.create(round);
+      this.live.set(live.id, live);
+      return live;
+    } finally {
+      this.creating -= 1;
+    }
+  }
+
+  // The rounds in memory that have not ended or been aborted.
+  running(): number {
+    let n = 0;
+    for (const r of this.live.values())
+      if (r.status() !== 'ended' && r.status() !== 'aborted') n += 1;
+    return n;
   }
 
   async get(roundId: string): Promise<LiveRound | null> {

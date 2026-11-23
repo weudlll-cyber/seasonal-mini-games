@@ -19,6 +19,7 @@ import type { InstalledGame } from '@smg-game/registry';
 import { vi } from 'vitest';
 
 import { buildApp, createPool, loadEnv, migrate, type App, type DbPool } from '../src/index.js';
+import { aheadClock } from '../src/round/guessLimits.js';
 
 // Integration tests hash passwords and share the machine with their databases: in a full run a
 // single test can pass Vitest's 5 s default while it is green alone (DECISIONS T39). A file's
@@ -40,9 +41,11 @@ export async function buildOn(
   pool: DbPool,
   url: string,
   overrides: Record<string, string> = {},
-  // The installed games: the registry's unless a test adds the phased fixture (09 §4.2).
-  games?: readonly InstalledGame[],
+  // The installed games: the registry's unless a test adds the phased fixture (09 §4.2); the
+  // play limits' clock, `aheadClock` unless a test gives the real one.
+  extra: { readonly games?: readonly InstalledGame[]; readonly limitsNow?: () => number } = {},
 ): Promise<App> {
+  const { games, limitsNow = aheadClock() } = extra;
   const env = loadEnv({
     NODE_ENV: 'test',
     // The suites use the development features (quick sign-in, bots); production tests
@@ -54,7 +57,7 @@ export async function buildOn(
     DATABASE_URL: url,
     ...overrides,
   });
-  const built = await buildApp({ env, pool, ...(games === undefined ? {} : { games }) });
+  const built = await buildApp({ env, pool, limitsNow, ...(games === undefined ? {} : { games }) });
   await built.fastify.ready();
   return built;
 }
@@ -62,11 +65,16 @@ export async function buildOn(
 export async function startHarness(
   overrides: Record<string, string> = {},
   games?: readonly InstalledGame[],
+  limitsNow?: () => number,
 ): Promise<Harness> {
   const container = await new PostgreSqlContainer('postgres:17-alpine').start();
   const pool = createPool(container.getConnectionUri());
   const applied = await migrate(pool);
-  const built = await buildOn(pool, container.getConnectionUri(), overrides, games);
+  const extra = {
+    ...(games === undefined ? {} : { games }),
+    ...(limitsNow === undefined ? {} : { limitsNow }),
+  };
+  const built = await buildOn(pool, container.getConnectionUri(), overrides, extra);
   return { container, pool, built, applied };
 }
 

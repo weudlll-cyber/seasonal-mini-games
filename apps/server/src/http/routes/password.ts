@@ -16,7 +16,7 @@ import { z } from 'zod';
 
 import { passwordHashOf, setPassword } from '../../auth/accounts.js';
 import { passwordProblem, verifyPassword } from '../../auth/password.js';
-import { RATE_RULES, RateLimiter } from '../../auth/rateLimit.js';
+import type { RateLimiter } from '../../auth/rateLimit.js';
 import type { SessionEnds } from '../../auth/sessionEnds.js';
 import { revokeOtherSessions } from '../../auth/sessions.js';
 import type { DbPool } from '../../db/pool.js';
@@ -25,9 +25,10 @@ const body = z.object({ current: z.string().max(128), next: z.string() }).strict
 
 export function registerPasswordChange(
   app: FastifyInstance,
-  deps: { readonly pool: DbPool; readonly sessionEnds: SessionEnds },
+  // `limit`: shared with the account's deletion (../app, O130).
+  deps: { readonly pool: DbPool; readonly sessionEnds: SessionEnds; readonly limit: RateLimiter },
 ): void {
-  const limit = new RateLimiter(RATE_RULES.loginAccountIp);
+  const { limit } = deps;
   app.post('/api/v1/me/password', async (request, reply) => {
     const s = request.session;
     if (s === null || s.accountId === null)

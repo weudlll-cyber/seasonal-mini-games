@@ -32,6 +32,8 @@ const CODES: Readonly<Record<string, string>> = {
   TIMED_OUT: 'Out of time this round. You can play the next round.',
   RATE_LIMITED: 'Slow down a little — too many guesses at once.',
   ROUND_BUSY: 'The round is very busy. Try again in a moment.',
+  // More rounds running on this server than `match.maxConcurrentRounds` (08 §4).
+  SERVER_BUSY: 'The server is running as many rounds as it can. Try again in a moment.',
   NO_ANSWER: 'No answer from the server. Check your connection and try again.',
   ROUND_RUNNING: 'A round is running already.',
   ROUND_SETTINGS_INVALID: 'These round settings are not allowed.',

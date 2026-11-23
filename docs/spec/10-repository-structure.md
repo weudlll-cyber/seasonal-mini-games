@@ -41,7 +41,7 @@ seasonal-mini-games/
 │  ├─ seasonal-target/     02d; likewise
 │  └─ mind-games/          02e; src/ and web/, timing class phased, not on the guess engine
 ├─ apps/
-│  ├─ server/src/          main.ts, cli.ts, config/, http/, auth/, realtime/ (gateway, intents, inOrder),
+│  ├─ server/src/          main.ts (entry), server.ts (start), cli.ts, config/, http/, auth/, realtime/ (gateway, intents, inOrder),
 │  │                       round/ (actor, pgRoundStore, scheduler), match/, league/, chat/, admin/,
 │  │                       integration/, seasons/ (feed client), db/, dev/
 │  ├─ web/src/             shell/, lobby/, match/ (the waiting area and the host menu), round/ (round
@@ -116,7 +116,7 @@ Bingo 08 applies with the names of [04](04-software-architecture.md) §2.2:
 - environments (§1);
 - branching and release flow (§2);
 - CI (`.github/workflows/ci.yml`) on every push: `verify`, `security`, `docs`, the e2e journeys in Chromium and the `image` job; Firefox and WebKit every night on master (`browsers.yml`, O103); the load scenarios (`load/`, 09 §5) run in `.github/workflows/load.yml` on a push to a `load/**` branch and when started by hand (§3);
-- containers (§4: multi-stage, non-root uid 10001, read-only root FS, healthcheck `/healthz`, image ≤ 250 MB);
+- containers (§4: multi-stage, non-root uid 10001, read-only root FS, healthcheck `/healthz`, image ≤ 250 MB unpacked);
 - runtime configuration through validated env vars (§5);
 - observability with the metrics of [06](06-data-model-api-realtime.md) §4.6 (§6);
 - dependency and patch policy (§7);
@@ -129,7 +129,7 @@ CI in `.github/workflows/` (DECISIONS O103):
   - `security`: `pnpm audit` (production), osv-scanner, gitleaks (full history), license check;
   - `docs`: lychee link check of the repository's Markdown, offline;
   - `e2e`: the browser tests in Chromium (`chromium`, then `chromium-timing`);
-  - `image`: only for pull requests to master and pushes to master: Docker build, Trivy (HIGH/CRITICAL with a fix), the 250 MB size budget.
+  - `image`: only for pull requests to master and pushes to master: Docker build, Trivy (HIGH/CRITICAL with a fix), the 250 MB size budget of the unpacked file system (`docker export` of a container; `docker image inspect` gives the compressed size on the runner's containerd store, owner decision O133).
 - `codeql.yml`: `analyze` on pushes and pull requests to master and weekly.
 - `browsers.yml`: Firefox and WebKit (their specs, then their timing specs) every night on master and when started by hand; nobody waits for it.
 
