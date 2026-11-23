@@ -11,13 +11,16 @@
  *                 with their guesses, and no selection, Guess or coordinates (T78, O136); the
  *                 game names finding "hit the target" (O136, O137). Of 2026-11-23 (O140): the
  *                 corner tag follows the number in the name; the result's grid is one focus
- *                 stop whose arrow keys move between the tiles, no tile a stop of its own.
- * Depends on:     vitest, @testing-library/react, ./fixtures, ./ResultPanel, ./TargetInput, ./text
+ *                 stop whose arrow keys move between the tiles, no tile a stop of its own;
+ *                 Leaf Fall's Fallen list, which scrolls inside itself, a named focus stop (T408).
+ * Depends on:     vitest, @testing-library/react, ./FallenCells, ./fixtures, ./ResultPanel,
+ *                 ./TargetInput, ./text
  * Spec:           docs/spec/02d-game-seasonal-target.md §9, §11
  */
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { FallenCells } from './FallenCells.js';
 import { ne, own, playerView, props, renderInput, roster } from './fixtures.js';
 import { ResultPanel } from './ResultPanel.js';
 import { TargetInput } from './TargetInput.js';
@@ -97,5 +100,12 @@ describe('the decisions of 2026-11-23 on the tiles (O140)', () => {
     expect(tileAt(13, 11)?.getAttribute('data-selected')).toBe('true');
     fireEvent.blur(grid);
     expect(grid.getAttribute('aria-activedescendant')).toBeNull();
+  });
+});
+
+describe('the Fallen list (T408)', () => {
+  it('is a focus stop named by its heading, as it scrolls inside itself', () => {
+    render(<FallenCells fallen={[{ x: 7, y: 2 }]} />);
+    expect(screen.getByRole('list', { name: 'Fallen (1)' }).tabIndex).toBe(0);
   });
 });
