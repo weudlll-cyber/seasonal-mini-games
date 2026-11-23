@@ -94,6 +94,7 @@ describe('the authorization matrix: HTTP routes', () => {
       NODE_ENV: 'production',
       SMG_DEV: '0',
       SMG_ROUND_KEY: 'ab'.repeat(32),
+      SMG_RECOVERY_KEY: 'cd'.repeat(32),
     });
     try {
       expect(registeredRoutes(prod.fastify)).toEqual(

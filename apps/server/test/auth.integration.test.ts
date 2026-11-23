@@ -253,6 +253,7 @@ describe('development accounts', () => {
       NODE_ENV: 'production',
       SMG_DEV: '0',
       SMG_ROUND_KEY: 'ab'.repeat(32),
+      SMG_RECOVERY_KEY: 'cd'.repeat(32),
     });
     const r = await prod.fastify.inject({
       method: 'POST',

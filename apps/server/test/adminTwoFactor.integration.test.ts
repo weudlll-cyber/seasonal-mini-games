@@ -119,7 +119,8 @@ describe('recovery codes stored before the kit (kit K27)', () => {
     );
     const plain = new Set(codes.map((c) => sha256(c).toString('hex')));
     expect(stored.rows.some((row) => plain.has(row.code_hash.toString('hex')))).toBe(false);
-    // A code stored before the kit, as plain SHA-256 of its text (kit K27).
+    // A code issued on master, before the kit and before the recovery key: the plain SHA-256 of
+    // its text (kit K27, O149); the lookup also asks for it, so it works once.
     await h.pool.query('INSERT INTO smg.recovery_codes (account_id, code_hash) VALUES ($1, $2)', [
       stored.rows[0]?.account_id,
       sha256('abcd-efgh'),

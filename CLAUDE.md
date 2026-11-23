@@ -37,9 +37,21 @@ Everything in this repository is English: code, comments, commit messages, docs,
 - Never disable a trigger, constraint or other protection. If a task needs that, list it under the owner's questions in the report and continue without it.
 - Screenshots never go into a working branch: images under `reports/` are git-ignored; push a run's screenshots, with their `play-through.txt`, only to an orphan branch of their own (`shots/<night>`, nothing else in it), which the owner deletes after the review (DECISIONS T146).
 - Screenshots only when the owner is to look at something new, or when a defect is visible only in a picture: at most about 10 per task, light mode only (dark only when the change is about dark mode); no multi-agent screenshot reviews; the author looks at their own few shots and reports only what is wrong (DECISIONS O70, amending O55).
-- Tests run only where they can answer something about the change (DECISIONS O64): while working, only the tests of the package or game being changed; at the end of a task one full `pnpm verify`; e2e only for the journeys the change touches, once; CI on the final push is the second proof, so hand over without waiting for it and report it afterwards; repeated runs only when a test's flakiness is the subject; screenshots per O70. The merge gate and every push to master run `pnpm verify` plus the full e2e suite in Chromium only; Firefox and WebKit run every night on master (and when started by hand, `.github/workflows/browsers.yml`), nobody waits for them, and a failure there is listed in OPEN's "Firefox/WebKit findings" and fixed later in a batch (DECISIONS O103, amending O69).
+- Checks run on GitHub, never twice and not on the owner's machine, which also runs other projects (DECISIONS O147, amending O64): a branch gets a draft PR to master (draft, its title starting "Draft:"), so every push runs the full CI there; what CI finds is fixed and pushed again. Locally only the fast tests of the package or game being changed run, and a single journey only to reproduce a CI failure; no full local `pnpm verify` and no full local e2e. The proof of a task is the draft PR's CI run on its last push (report its run id and result). Repeated runs only when a test's flakiness is the subject; screenshots per O70. The merge gate and every push to master run `pnpm verify` plus the full e2e suite in Chromium only; Firefox and WebKit run every night on master (and when started by hand, `.github/workflows/browsers.yml`), nobody waits for them, and a failure there is listed in OPEN's "Firefox/WebKit findings" and fixed later in a batch (DECISIONS O103, amending O69).
 - Run commands one at a time. Do not chain them with `&&`, `;` or `|` unless a single tool needs a pipe; chained commands do not match the permission rules and make the owner approve them by hand.
+
+## Working cheaply
+
+Spend fewer tokens without testing or checking less (the rules Seasonal Bingo Royale has had since 2026-11-06, DECISIONS T421).
+
+- Test runs print failures only: `pnpm exec vitest run --reporter=dot <project or file>` and `pnpm e2e --reporter=dot <file>` (the repository has no quiet script). Never read a passing run's output.
+- Long logs (installer tests, load checks, CI job logs) go to a file in the git-ignored `logs/` folder; read only the failing part (search or tail).
+- Screenshots are for the owner, not for checking: check with assertions, and open an image only when an assertion cannot decide it (when to take them: Git, O70).
+- Wait for CI with one blocking command, `gh run watch <id> --exit-status` with its output sent to a file in `logs/`, not by polling.
+- Read large files by searching first and reading only the lines needed.
+- Never re-run a check on an unchanged tree.
+- A flaky test is fixed at its cause the first time it flakes, not re-run (the nightly Firefox/WebKit findings stay batched, Git, O103).
 
 ## Before reporting
 
-Run `pnpm verify` (once code exists). Report: lines before/after per touched file, what was removed, what was extracted, what was reused, what was noticed but left alone, test results, and for visible changes what the owner should look at (Quick Test seed when available).
+Push; the proof is the draft PR's CI run on the last push, not a local full run (Git, O147). Report the CI run id and its result, and: lines before/after per touched file, what was removed, what was extracted, what was reused, what was noticed but left alone, test results, and for visible changes what the owner should look at (Quick Test seed when available).
