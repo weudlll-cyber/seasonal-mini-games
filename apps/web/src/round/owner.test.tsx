@@ -13,9 +13,11 @@
  *                 has no layout, so the rule itself is checked, as ./rows.test does). Of
  *                 2026-11-23: every headline, solve row and the already-solved refusal in the
  *                 game's words where it has them (O137); a refused host command or team change
- *                 says "try again in a moment", a guess keeps its own words (O138).
+ *                 says "try again in a moment", a guess keeps its own words (O138). The
+ *                 phone's others' line breaks between players, never inside one, and beside a
+ *                 board keeps one line's room, the rest "+N more" (O141).
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./fakes, ./InputRow,
- *                 ./roundText, ./roundLog.css (read as text)
+ *                 ./OthersLine, ./roundText, ./roundLog.css and ./round.css (read as text)
  * Spec:           docs/spec/02-game-guess-the-number.md §9, §12; docs/spec/02d-game-seasonal-target.md §9, §11
  */
 import { readFileSync } from 'node:fs';
@@ -27,10 +29,12 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { ended } from './fakes.js';
 import { InputRow } from './InputRow.js';
+import { OthersLine } from './OthersLine.js';
 import { codeText, endHeadline, guessRefusal, marginText, platformLine } from './roundText.js';
 
 const HERE = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
 const logCss = readFileSync(path.join(HERE, 'roundLog.css'), 'utf8');
+const roundCss = readFileSync(path.join(HERE, 'round.css'), 'utf8');
 
 afterEach(() => {
   cleanup();
@@ -137,5 +141,28 @@ describe('a refusal for going too fast (O138)', () => {
       'Slow down a little — too many guesses at once.',
     );
     expect(codeText('RATE_LIMITED')).toBe('Slow down a little — try again in a moment.');
+  });
+});
+
+describe('the phone’s others’ line (O141)', () => {
+  it('breaks between two players, never inside one', () => {
+    const player = ended.roster[1];
+    const state = {
+      ...ended,
+      roster: ['a', 'b', 'c'].map((k, i) => ({ ...player, playerKey: k, guesses: i + 1 })),
+      names: { a: 'Anna', b: 'bot-01', c: 'bot-02' },
+    } as unknown as RoundStateView;
+    render(<OthersLine state={state} viewerKey="a" />);
+    const line = screen.getByTestId('others-line');
+    expect(line.textContent).toBe('Others: bot-01: 2 guesses · bot-02: 3');
+    // Each player is one unbreakable span; the separator stands between them.
+    const players = [...line.querySelectorAll('[data-fit]')].map((e) => e.textContent);
+    expect(players).toEqual(['bot-01: 2 guesses', 'bot-02: 3']);
+  });
+
+  it('keeps one line of it under the head beside a board', () => {
+    const rule = /\[data-layout='board'\] \.round-log-others \{([^}]*)\}/.exec(roundCss)?.[1] ?? '';
+    expect(rule).toContain('min-height: calc(1.5 * var(--font-size-small))');
+    expect(roundCss).toContain("[data-layout='board']:has(.round-log-others)");
   });
 });

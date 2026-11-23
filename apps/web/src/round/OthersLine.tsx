@@ -7,14 +7,16 @@
  *                 unit, "timed out" beside a player out of time (O71), each name through
  *                 ./PlayerName with its Discord steps (07 §7); at most two lines, never cut: the
  *                 players that fit whole, then "+N more", which opens the Players panel with
- *                 every player and their count (./useFit, O110). The whole line is its title.
+ *                 every player and their count (./useFit, O110); a line breaks between two
+ *                 players, never inside one, and on a short phone screen beside a board the
+ *                 line has one line's room (../round.css, O141). The whole line is its title.
  *                 Moved out of ./RoundLog to keep each file under the size limit.
  * Depends on:     react, @smg/contracts, ./PlayerName, ./RoundSide (guessCount), ./useFit
  * Used by:        ./RoundLog
  * Spec:           docs/spec/02-game-guess-the-number.md §12
  */
 import type { RoundStateView } from '@smg/contracts';
-import type { ReactElement } from 'react';
+import { Fragment, type ReactElement } from 'react';
 
 import { PlayerName } from './PlayerName.js';
 import { guessCount } from './RoundSide.js';
@@ -54,17 +56,24 @@ export function OthersLine(p: {
   return (
     <p ref={fit.ref} className="round-log-others" data-testid="others-line" title={title}>
       Others:{' '}
+      {/* The separator stands outside a player's unbreakable span, so the line can break
+          between two players and never inside one (O141). */}
       {others.slice(0, fit.shown).map((o, i) => (
-        <span key={o.key} className="round-log-other" data-fit="">
+        <Fragment key={o.key}>
           {i === 0 ? null : ' · '}
-          <PlayerName name={o.name} steps={p.state.steps?.[o.key]} />
-          {`: ${o.count}`}
-        </span>
+          <span className="round-log-other" data-fit="">
+            <PlayerName name={o.name} steps={p.state.steps?.[o.key]} />
+            {`: ${o.count}`}
+          </span>
+        </Fragment>
       ))}
       {rest === 0 ? null : (
-        <button type="button" className="round-log-more" onClick={p.onMore}>
-          {fit.shown === 0 ? '' : ' · '}+{rest} more
-        </button>
+        <>
+          {fit.shown === 0 ? null : ' · '}
+          <button type="button" className="round-log-more" onClick={p.onMore}>
+            +{rest} more
+          </button>
+        </>
       )}
     </p>
   );

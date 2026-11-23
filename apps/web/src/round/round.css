@@ -95,12 +95,32 @@
    screen is too short for them (the on-screen keyboard open) the list gives its rows first,
    down to its head ("N guesses" and "Log (N)", a hit target high, inside the panel's
    padding), then the board's row shrinks and the board, which takes the smaller of its box's
-   width and height (`.st-board`), with it, so the dock stays on the screen. */
+   width and height (`.st-board`), with it, so the dock stays on the screen; in individual
+   mode the head keeps one line of the others' counts under it (O141). */
 .round-live[data-view='phone'][data-layout='board'] {
   grid-template-rows:
     auto auto minmax(0, max-content) minmax(calc(2 * var(--space-1) + var(--hit-target)), 1fr)
     auto;
   grid-template-areas: 'bar' 'line' 'stage' 'main' 'dock';
+}
+
+/* Individual mode: the others' line under the head is fixed too, one line of it with the head,
+   the panel's padding and its 1 px border (owner decision of 2026-11-23, O141). Where the row
+   is short the line keeps that one line and shows the players that fit whole, then "+N more"
+   (./OthersLine, ./useFit, O110), never a cut line. */
+.round-live[data-view='phone'][data-layout='board']:has(.round-log-others) {
+  grid-template-rows:
+    auto auto minmax(0, max-content)
+    minmax(
+      calc(2 * var(--space-1) + 2px + var(--hit-target) + 0.3rem + 1.5 * var(--font-size-small)),
+      1fr
+    )
+    auto;
+}
+
+.round-live[data-view='phone'][data-layout='board'] .round-log-others {
+  flex-shrink: 1;
+  min-height: calc(1.5 * var(--font-size-small));
 }
 
 /* Square by its width; never taller than its row. */
