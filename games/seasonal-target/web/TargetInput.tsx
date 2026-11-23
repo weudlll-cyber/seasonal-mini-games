@@ -20,7 +20,9 @@
  *                 to bottom: "Selected: column 12, row 7", read out live; the platform's
  *                 cooldown ring and a large Guess, which reads "Wait 6 s" during the cooldown
  *                 (`buttonText`, T125), waits while a guess is on its way (T76) and closes the
- *                 loupe; a refusal; the coordinate toggle. Nothing is sent before Guess
+ *                 loupe; a refusal; the coordinate toggle. Once the player hit their target
+ *                 (`done`), the grid alone, read-only, for the rest of the round (T78, O136).
+ *                 Nothing is sent before Guess
  *                 (05 §3.1). A tile already tried is refused at once with its sentence, Guess
  *                 staying enabled (02d §4, T113).
  * Depends on:     react, react-dom (createPortal), @smg/game-sdk (props, buttonText),
@@ -43,10 +45,12 @@ import { TileGrid } from './TileGrid.js';
 import { cellWords } from './words.js';
 import { marksFor } from './players.js';
 
-// The platform's cooldown ring for the row, and the round's stage the board is drawn into (O51).
+// The platform's cooldown ring for the row, the round's stage the board is drawn into (O51),
+// and `done` once the player hit their target: the board alone, read-only (O136).
 type StInputProps = PlayerPanelProps & {
   readonly ring?: ReactNode;
   readonly stage?: HTMLElement | null;
+  readonly done?: boolean;
 };
 
 const clamp = (v: number, low: number, high: number) => Math.min(high, Math.max(low, v));
@@ -186,27 +190,37 @@ function Board(p: {
   return p.stage == null ? board : createPortal(board, p.stage);
 }
 
+// What the grid and the loupe draw: the map, the area, the hint, the fallen and guessed tiles.
+const gridOf = (view: PlayerView, props: StInputProps) => ({
+  map: view.map,
+  area: view.area,
+  quarters: view.hint,
+  fallen: view.fallen,
+  tiles: tilesOf(shotsOf(view.guesses, view.log), props),
+  marks: marksFor(props),
+});
+
 export function TargetInput(props: StInputProps): ReactElement {
   const view = props.view as PlayerView;
   const { t, size, compact, loupe, guess, onKeyDown, onTile, pick } = useAim(view, props);
-  const grid = {
-    map: view.map,
-    area: view.area,
-    quarters: view.hint,
-    fallen: view.fallen,
-    tiles: tilesOf(shotsOf(view.guesses, view.log), props),
-    marks: marksFor(props),
-  };
+  const grid = gridOf(view, props);
+  const shown = { numbers: readable(size.px), tags: readable(size.px), gridRef: size.ref };
+  // The player hit their target: the board stays in view for the rest of the round (T78).
+  if (props.done === true) {
+    return (
+      <Board stage={props.stage}>
+        <TileGrid {...grid} {...shown} variant="board" label="The grid with your guesses." />
+      </Board>
+    );
+  }
   return (
     <>
       <Board stage={props.stage}>
         <TileGrid
           {...grid}
+          {...shown}
           variant="board"
-          numbers={readable(size.px)}
-          tags={readable(size.px)}
           selected={t.selected}
-          gridRef={size.ref}
           label="The grid. Arrow keys move the selection, Enter guesses."
           onTile={onTile}
           onKeyDown={onKeyDown}

@@ -6,8 +6,9 @@
  * Responsibility: every platform code a player can meet in plain English (02 §12), the
  *                 solved player's notice (O25), the inactivity countdown line (O71), the
  *                 result's headline ("Walter found it first — after 9 guesses", 02 §9; a phased
- *                 round's "The round is over.", 02e §9), a round's action words (guesses, or a
- *                 phased round's choices, T332), the
+ *                 round's "The round is over.", 02e §9), where a game names finding in its own
+ *                 words those (`found`, "hit the target", O136, O137), a round's action words
+ *                 (guesses, or a phased round's choices, T332), the
  *                 winning margin, the round bar's time ("9:30 left"; a phased round's counts
  *                 to the plan's end, where its phase strip ends, and in the hold before the
  *                 result says "Result in 0:04", DECISIONS T386), and one event row of the round's list per platform event (a
@@ -96,15 +97,20 @@ function phasedEnd(state: RoundStateView): string | null {
   return state.endReason === 'noPlayers' ? 'Nobody chose this round.' : null;
 }
 
-export function endHeadline(state: RoundStateView): string {
+// "Walter found it first — after 9 guesses.", with the game's words for finding (O137).
+function firstSolve(state: RoundStateView, found: string): string {
+  const winner = state.winner === null ? 'Someone' : nameOf(state.names, state.winner);
+  const guesses = state.roster.find((r) => r.playerKey === state.winner)?.guesses ?? 0;
+  return `${winner} ${found} first — after ${formatNumber(guesses)} ${guesses === 1 ? 'guess' : 'guesses'}.`;
+}
+
+// `found`: the game's words for finding the secret (GameText.found, O137), else "found it".
+export function endHeadline(state: RoundStateView, found = 'found it'): string {
   const phased = phasedEnd(state);
   if (phased !== null) return phased;
-  const names = state.names;
-  const winner = state.winner === null ? null : nameOf(names, state.winner);
-  const guesses = state.roster.find((r) => r.playerKey === state.winner)?.guesses ?? 0;
   switch (state.endReason) {
     case 'solved':
-      return `${winner ?? 'Someone'} found it first — after ${formatNumber(guesses)} ${guesses === 1 ? 'guess' : 'guesses'}.`;
+      return firstSolve(state, found);
     case 'allSolved':
       return allSolvedText(state);
     case 'timeUp':
@@ -118,8 +124,10 @@ export function endHeadline(state: RoundStateView): string {
   }
 }
 
-// In place of the input row once a player solved their own number (O25).
-export function solvedText(place: number | null): string {
+// In place of the input row once a player solved their own number (O25); in a game's own
+// words for finding it, that alone ("You hit the target.", O136).
+export function solvedText(place: number | null, found?: string): string {
+  if (found !== undefined) return `You ${found}.`;
   const at = place === null ? '' : ` — place ${formatNumber(place)}`;
   return `You found your number${at}. Your guesses stay here while the others play on.`;
 }
@@ -151,9 +159,10 @@ export function inactivityText(outAt: number, now: number): string {
 
 // The winning margin when a second correct guess came within the window (O13), else null:
 // the game's closest miss takes its place (O22).
-export function marginText(state: RoundStateView): string | null {
+export function marginText(state: RoundStateView, found = 'found it'): string | null {
   if (state.secretMode !== 'shared' || state.margin === null) return null;
-  return `Found it ${seconds(state.margin.ms)} before ${nameOf(state.names, state.margin.playerId)}.`;
+  const verb = found.charAt(0).toUpperCase() + found.slice(1);
+  return `${verb} ${seconds(state.margin.ms)} before ${nameOf(state.names, state.margin.playerId)}.`;
 }
 
 const roundLine = (text: string): FeedLine => ({ text, playerId: null });

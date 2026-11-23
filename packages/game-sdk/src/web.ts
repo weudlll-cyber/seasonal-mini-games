@@ -226,6 +226,11 @@ export interface GameText {
   // A row of the result's "Closest to winning" (O110) from the result view, for a game whose
   // module names best guesses; null, or no hook, leaves the row out.
   readonly best?: (resultView: unknown, row: BestRow) => BestLine | null;
+  // The game's words for finding the secret ("hit the target", O136, O137): the result's
+  // headline ("Walter hit the target first — after 9 guesses."), its margin ("Hit the target
+  // 0.4 s before Anna.") and the solved player's notice ("You hit the target."); no hook keeps
+  // the platform's ("found it", and the notice with the place, O25).
+  readonly found?: string;
 }
 
 // A phased game's panel in the waiting area and the round bar (04 §4.8 rule 8; Mind Games'

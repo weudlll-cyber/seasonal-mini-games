@@ -7,7 +7,7 @@
  * Responsibility: the bomb block names wires, cuts, the penalty, the hint and the harmless
  *                 wires (struck, by name); a spectator also sees the wires; the result shows
  *                 the secret as numbered chips or each player's own; the views become the
- *                 list's rows with the sequence in words and the answer with its tone ("Boom!"
+ *                 list's rows with the sequence in words and the answer with its tone ("Boom! +5 s", O137
  *                 with its icon, "First 2 cuts right", "Defused!") and its colour dots (T143), own rows
  *                 pending under Frost,
  *                 hidden sequences as "cut a sequence"; the event lines and the Leaf Fall
@@ -91,6 +91,7 @@ describe('the result panel', () => {
     const v = {
       wires: view.wires,
       cuts: 4,
+      penaltyS: 5,
       secret: ['red', 'blue', 'yellow', 'white'],
       secrets: null,
       guesses,
@@ -113,6 +114,7 @@ describe('the result panel', () => {
     const v = {
       wires: view.wires,
       cuts: 4,
+      penaltyS: 5,
       secret: null,
       secrets: { a: ['red', 'blue', 'yellow', 'white'], b: ['white', 'red', 'blue', 'green'] },
       guesses,
@@ -139,11 +141,13 @@ describe('the game text', () => {
         r.pending,
       ]),
     ).toEqual([
-      [null, 'blue → red → yellow → white', '💥 Boom!', 'boom', false],
+      [null, 'blue → red → yellow → white', '💥 Boom! +5 s', 'boom', false],
       [null, 'blue → red → yellow → white', null, null, true],
       ['p2', 'blue → red → yellow → white', 'First 2 cuts right', 'close', false],
       ['p3', 'cut a sequence', null, null, false],
     ]);
+    // Without an explosion penalty the row names none.
+    expect(bdText.guesses({ ...view, penaltyS: 0 })[0]?.answer?.text).toBe('💥 Boom!');
     const more = bdText.guesses({ ...view, guesses: [own(1, 1), own(2, 4)], log: [] });
     expect(more.map((r) => [r.answer?.text, r.answer?.tone])).toEqual([
       ['First cut right', 'far'],

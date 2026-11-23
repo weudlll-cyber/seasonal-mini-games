@@ -10,7 +10,9 @@
  *                 board game also gets the stage, the box it draws its board into (O51). From
  *                 the inactivity warning point the countdown line above the input
  *                 (./InactivityLine, O71). Once the player solved (individual mode), a short
- *                 notice with their place instead (O25); once out of time, the notice that
+ *                 notice with their place instead (O25), or in the game's words for finding
+ *                 ("You hit the target.", O136), and a board game's board stays in the stage,
+ *                 read-only (`done`, T78, O136); once out of time, the notice that
  *                 they play the next round (O71), while they keep watching. In a phased round
  *                 (04 §4.8) every match player gets the input, also before the delayed roster
  *                 lists them (it shows a player only once their entry is one delay old), with no
@@ -56,7 +58,7 @@ function waitOf(state: RoundStateView, endsAt: number, now: number): number | nu
 
 // The notice in place of the input row, or null while the player plays: solved (individual
 // mode) with their place (O25), or out of time for this round (O71).
-function noticeOf(me: RosterRowView): ReactElement | null {
+function noticeOf(me: RosterRowView, found: string | undefined): ReactElement | null {
   if (!me.solved && !me.timedOut) return null;
   return (
     <p
@@ -64,7 +66,7 @@ function noticeOf(me: RosterRowView): ReactElement | null {
       role="status"
       data-testid={me.solved ? 'solved-notice' : 'timed-out-notice'}
     >
-      {me.solved ? solvedText(me.place) : codeText('TIMED_OUT')}
+      {me.solved ? solvedText(me.place, found) : codeText('TIMED_OUT')}
     </p>
   );
 }
@@ -88,6 +90,21 @@ function ringOf(state: RoundStateView, me: RosterRowView | null, now: number) {
   return <CooldownRing endsAt={me.cooldownEndsAt} cooldownMs={state.cooldownMs} now={now} />;
 }
 
+// Sends the game's action as a guess; the platform's refusal in words, the game's own words
+// its refusals itself. The answer counts as arrived once the view holds the new cooldown:
+// until then the old one would show Guess enabled for a send the server refuses (T76).
+function useAct(state: RoundStateView, game: GameWeb, reload: () => Promise<void>) {
+  const [refusal, setRefusal] = useState<string | null>(null);
+  const act = async (action: unknown): Promise<ActReply> => {
+    const reply = await intent('guess', { roundId: state.roundId, ...(action as object) });
+    const own = reply.code === undefined ? null : game.text.code(reply.code);
+    setRefusal(reply.ok || own !== null ? null : codeText(reply.code, reply.until, serverNow()));
+    await reload().catch(() => undefined);
+    return reply;
+  };
+  return { act, refusal };
+}
+
 // A roster player's input row with the ring, and the platform's refusals under it; once the
 // player solved (individual mode), a short notice with their place instead (O25); once out
 // of time, the timeout's notice (O71). A phased round's match player without a row yet (the
@@ -101,45 +118,41 @@ export function InputRow({
   stage,
   own,
 }: PlayProps): ReactElement | null {
-  const [refusal, setRefusal] = useState<string | null>(null);
+  const { act, refusal } = useAct(state, game, reload);
   const me = state.roster.find((r) => r.playerKey === viewerKey) ?? null;
   if (state.game === null || !inDock(state, me)) return null;
-  const notice = me === null ? null : noticeOf(me);
-  if (notice !== null) return notice;
-  const act = async (action: unknown): Promise<ActReply> => {
-    const reply = await intent('guess', { roundId: state.roundId, ...(action as object) });
-    // The game words its own refusals; the platform's are worded here.
-    const own = reply.code === undefined ? null : game.text.code(reply.code);
-    setRefusal(reply.ok || own !== null ? null : codeText(reply.code, reply.until, serverNow()));
-    // The answer counts as arrived once the view holds the new cooldown: until then the old
-    // one would show Guess enabled for a send the server refuses (T76).
-    await reload().catch(() => undefined);
-    return reply;
+  const input = {
+    view: state.game,
+    act,
+    canAct: mayAct(state, me, now),
+    frostDelayMs: state.frostDelayMs,
+    now: serverNow,
+    season: state.season,
+    specialOn: state.specialOn,
+    waitS: me === null || state.plan !== undefined ? null : waitOf(state, me.cooldownEndsAt, now),
+    names: state.names,
+    colors: colorsOf(state),
+    marks: roundMarks(state, game, viewerKey),
+    viewerKey,
+    stage,
+    timing: timingOf(state),
+    own,
   };
-  const ring = ringOf(state, me, now);
+  const notice = me === null ? null : noticeOf(me, game.text.found);
+  if (notice !== null) {
+    // A board game's solved player keeps the board in view, read-only (T78, O136).
+    if (me?.solved !== true || stage == null) return notice;
+    return (
+      <>
+        {notice}
+        <game.Input {...input} canAct={false} done />
+      </>
+    );
+  }
   return (
     <div className="round-input">
       <InactivityLine inactivity={state.ownInactivity} now={now} />
-      <game.Input
-        view={state.game}
-        act={act}
-        canAct={mayAct(state, me, now)}
-        frostDelayMs={state.frostDelayMs}
-        now={serverNow}
-        season={state.season}
-        specialOn={state.specialOn}
-        waitS={
-          me === null || state.plan !== undefined ? null : waitOf(state, me.cooldownEndsAt, now)
-        }
-        names={state.names}
-        colors={colorsOf(state)}
-        marks={roundMarks(state, game, viewerKey)}
-        viewerKey={viewerKey}
-        ring={ring}
-        stage={stage}
-        timing={timingOf(state)}
-        own={own}
-      />
+      <game.Input {...input} ring={ringOf(state, me, now)} />
       {refusal === null ? null : (
         <p role="status" className="round-refusal">
           {refusal}

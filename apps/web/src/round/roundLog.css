@@ -115,8 +115,11 @@
   white-space: nowrap;
 }
 
-/* On a phone the line is the button that shows or hides the row's comment. */
+/* Only on the phone layout the line is the button that shows or hides the row's comment: at
+   least 24 px high, the rows' gap kept (WCAG 2.5.8, owner decision O134). */
 button.round-row-line {
+  min-height: 24px;
+  align-content: center;
   width: 100%;
   padding: 0;
   border: 0;
@@ -133,11 +136,10 @@ button.round-row-line {
   box-shadow: inset 4px 0 0 var(--own, var(--season));
 }
 
-/* The name in full where the line has room; it gives way after the comment, with an
-   ellipsis, down to a few letters (T150). At most half the line, so a long name never
-   pushes the guess and the answer onto a second line (a 30-character name, T202). The
-   title holds the full name; the row is not ../PlayerName, since on a phone the row is a
-   button and a name inside it cannot take focus of its own. */
+/* The name in full where there is room, else after the comment it gives way with an ellipsis
+   down to a few letters (T150); at most half the line, so a long name never pushes the guess
+   and the answer to a second line (T202). The title holds the full name; not ../PlayerName:
+   on a phone the row is a button, and a name inside it cannot take focus of its own. */
 .round-who {
   flex: 0 1 auto;
   min-width: 2.5rem;
@@ -290,8 +292,7 @@ button.round-row-line {
   }
 }
 
-/* A large screen (1920 × 1080): the stage's list reads larger, so with few guesses the wide
-   stage is not mostly empty (O50; night-8 review: 1.375 rem, T153); about 30 rows still fit. */
+/* A large screen (1920 × 1080): a larger list fills the wide stage, ~30 rows (O50, T153). */
 @media (min-width: 1600px) and (min-height: 950px) {
   .round-stage--list .round-log {
     font-size: 1.375rem;

@@ -160,7 +160,7 @@ Offered on a real halving day as [03](03-seasonal-specials.md) §4. Every `halvi
 
 ## 9. Winning, closest miss and the result
 
-Winning, placings, margin and points are [02](02-game-guess-the-number.md) §8–§9. End line: "Walter hit the target first — after 9 guesses."
+Winning, placings, margin and points are [02](02-game-guess-the-number.md) §8–§9. End line: "Walter hit the target first — after 9 guesses."; the margin "Hit the target 0.4 s before Anna."; a player who hit their own target (individual mode) reads "You hit the target." in place of the input row and keeps the board in view, read-only, for the rest of the round (the game's words for finding, `found`, owner decisions O136, O137; T78).
 
 - The **closest miss** (shared, with a winner and no second hit in the margin window, owner decision 22) is the wrong guess of another player with the smallest `n`, the earlier on a tie: "Closest miss besides the winner: Anna, right next to the target (13, 11)." when it touches, else "Closest miss besides the winner: Anna, 3 tiles away (9, 10)."
 - A time-up result without a winner shows the round's closest guess instead, "Closest guess: …" (DECISIONS T145).
@@ -196,7 +196,7 @@ Layout, top bar, banner, list, intro and accessibility follow [02](02-game-guess
   - hovering or focusing a list row highlights that player's tiles and fades the other guessed tiles; hovering or focusing a tile highlights that player's rows; on a phone a tap on a row highlights for 3 s;
   - below 20 px (a phone's 20 × 20 and 30 × 30 grids) the tag is not drawn on the tile; the highlight and the loupe, which shows the tags at its large tile size, carry it (DECISIONS T196).
 - **Result:** the grid as large as the first part allows: on a desktop its column beside a 22rem placings column (427 px at 1280 × 720); on a phone a square as wide as the card, the placings below it one line a row ("–" for took part, "Pts" for Points), "dev-host (you)" whole (DECISIONS T195, T211). The result's grid carries the players' tags and the row↔tile highlight of the round, with its placings rows (T211). The viewer's own list rows show the "you" tag once (T204).
-- Never colour alone: own tiles by frame, others' by their tag and name, fallen tiles by hatch, answers always in words on the tile's label and in the list.
+- Never colour alone: own tiles by frame, others' by their tag and name, fallen tiles by hatch, answers always in words on the tile's label and in the list. A tile's accessible name starts with the number it shows, then its position and its guesses ("9, column 4, row 4: You — 9 tiles away"; WCAG 2.5.3, owner decision O135).
 
 ## Decided while building (proposals)
 

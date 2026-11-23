@@ -148,14 +148,16 @@ function ResultHead(p: {
   readonly game: GameWeb | null;
 }): ReactElement {
   const { state } = p;
-  const margin = marginText(state);
+  // The game's words for finding its secret, where it has its own (O137).
+  const found = p.game?.text.found;
+  const margin = marginText(state, found);
   const miss =
     margin === null
       ? (p.game?.text.runnerUp?.(state.game, state.names, state.winner !== null) ?? null)
       : null;
   return (
     <header className="round-result-head">
-      <h1>{endHeadline(state)}</h1>
+      <h1>{endHeadline(state, found)}</h1>
       {margin === null ? null : <p data-testid="margin">{margin}</p>}
       {miss === null ? null : <p data-testid="closest-miss">{miss}</p>}
       <Proof state={state} />

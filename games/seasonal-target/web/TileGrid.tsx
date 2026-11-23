@@ -15,7 +15,7 @@
  *                 its first guesser's tag with their marker in its corner, "you" for the
  *                 viewer (`data-marked` moves the number clear of it, O62); a pending own
  *                 answer the frame with "…". Numbers are left out when the tiles are too small
- *                 to read (`numbers`). Hovering or focusing a guessed tile (on the board, the
+ *                 to read (`numbers`); a tile's name starts with the number it shows (O135). Hovering or focusing a guessed tile (on the board, the
  *                 selected tile while the grid has the focus) highlights its player
  *                 (@smg/ui `setHighlight`); while a player is highlighted, from a tile or a
  *                 list row, their tiles stay bright and the other guessed tiles dim. The selection is an outline outside the tile, unlike the own
@@ -99,13 +99,23 @@ function Face(p: { readonly tile: Tile; readonly numbers: boolean }) {
       </span>
     );
   }
-  if (best.kind === 'closeness' || !p.numbers) return null;
+  const shown = shownNumber(p.tile, p.numbers);
+  if (shown === null) return null;
   return (
     <span className="st-face" aria-hidden="true">
-      {formatNumber(best.distance)}
+      {shown}
       {best.kind === 'direction' ? <span className="st-dir">{ARROWS[best.direction]}</span> : null}
     </span>
   );
+}
+
+// The number a tile shows, or null: the distance of its best answer when the tiles are large
+// enough for numbers; the tile's name starts with it (WCAG 2.5.3, owner decision O135).
+function shownNumber(tile: Tile, numbers: boolean): string | null {
+  const best = tile.best;
+  if (best === null || !numbers || best.kind === 'correct' || best.kind === 'closeness')
+    return null;
+  return formatNumber(best.distance);
 }
 
 interface TileProps {
@@ -160,9 +170,13 @@ function factsOf({ c, p, fallen, hl }: TileProps) {
     target,
     tag,
     tinted: p.quarters?.some((q) => covers(q, c)) === true,
-    label: tileLabel(c, t, notes),
+    label: withNumber(shownNumber(t, p.numbers), tileLabel(c, t, notes)),
   };
 }
+
+// A tile's name: the number it shows first, then its position and its guesses (O135).
+const withNumber = (shown: string | null, label: string): string =>
+  shown === null ? label : `${shown}, ${label}`;
 
 function TileCell(props: TileProps): ReactElement {
   const { c, id, p } = props;

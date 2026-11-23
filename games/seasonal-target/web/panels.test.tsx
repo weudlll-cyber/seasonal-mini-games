@@ -121,7 +121,7 @@ describe('own, others and shared tiles', () => {
     expect(tile(9, 9).dataset['marked']).toBe('true');
     expect(tile(1, 1).querySelector('.smg-mark-tag')?.textContent).toBe('you');
     expect(tile(9, 9).getAttribute('aria-label')).toBe(
-      'column 9, row 9: Anna — 9 tiles away, to the north-east',
+      '9, column 9, row 9: Anna — 9 tiles away, to the north-east',
     );
     // A guess under `numbers`: the tile and the player, no answer, no fill.
     expect(tile(4, 4).title).toBe('column 4, row 4: Anna guessed');
@@ -144,7 +144,7 @@ describe('own, others and shared tiles', () => {
     expect(faceOf(t)).toBe('4↓');
     expect(t.dataset['own']).toBe('true');
     expect(t.title).toBe(
-      'column 5, row 5: You — 9 tiles away, to the north-east; ' +
+      '4, column 5, row 5: You — 9 tiles away, to the north-east; ' +
         'Anna — 4 tiles away, to the south; Walter — 9 tiles away, to the north-east',
     );
     // The first guesser's tag: the viewer's own guess came first.
