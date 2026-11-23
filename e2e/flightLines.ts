@@ -5,7 +5,8 @@
  *
  * Responsibility: the name and group checks ./flightProbe runs on each wave a second after it
  *                 starts, against the feed lines shown near it, by content: a named flight has
- *                 its player's line of its from → to; a group "×N" has N such lines and no
+ *                 its player's line of its from → to (also one a neighbouring wave's group or
+ *                 nameless flight took first); a group "×N" has N such lines and no
  *                 name; a single flight is named only when its line is shown (a first choice,
  *                 or a switch with switches visible), never on the phone layout, and a lone one
  *                 whose name fits its card is named; one flight per from → to in a wave. Each
@@ -77,6 +78,27 @@ export function nameless(p: Probe, one: One, fresh: readonly Line[], at: number)
     bad(p, 'names', `${one.key} flies alone without "${who}", whose name fits its card`);
 }
 
+// A named flight's own line among those near its wave: the player's own line counts even when a
+// group or nameless flight of a neighbouring wave took it first, as those take the nearest
+// lines of their path, whoever wrote them (journey 44's flake into All, found by the log of
+// that path, BACKLOG "Flaky tests"); else the problem names that path's lines within 3 s.
+export function ownLine(
+  p: Probe,
+  flight: { readonly key: string; readonly name: string },
+  fresh: readonly Line[],
+  at: number,
+): void {
+  const { key, name } = flight;
+  if (take(fresh, at, { key, n: 1, who: name }).length > 0) return;
+  if (fresh.some((l) => l.text === `${name}|${key}`)) return;
+  const near = p.log
+    .filter((l) => l.text.endsWith(`|${key}`) && Math.abs(l.seen - at) <= 3_000)
+    .map(
+      (l) => `${l.text.split('|')[0] ?? ''}@${String(Math.round(l.seen - at))}${l.used ? '*' : ''}`,
+    );
+  bad(p, 'names', `"${name}" ${key} has no such line; near: ${near.join(' ') || 'none'}`);
+}
+
 // One flight against the feed lines near its wave, by content; `lone`: the only one into its
 // card in this wave.
 export function named(p: Probe, one: One, fresh: readonly Line[], at: number): void {
@@ -94,8 +116,7 @@ export function named(p: Probe, one: One, fresh: readonly Line[], at: number): v
     return;
   }
   if (!lined) bad(p, 'names', `${key} flies with "${name}"`);
-  if (take(fresh, at, { key, n: 1, who: name }).length === 0)
-    bad(p, 'names', `"${name}" ${key} has no such line`);
+  ownLine(p, { key, name }, fresh, at);
 }
 
 // A wave's flights: each one's name and count, and one flight per from → to.

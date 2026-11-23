@@ -131,7 +131,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       IMAGE: smg:ci
-      # Size budget from Bingo 08 §3 (uncompressed, as Docker reports it).
+      # Size budget from Bingo 08 §3, of the unpacked file system (owner decision O133).
       MAX_IMAGE_BYTES: 250000000
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -141,8 +141,13 @@ jobs:
           docker run --rm -v /var/run/docker.sock:/var/run/docker.sock "$TRIVY_IMAGE" image \
             --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --no-progress "$IMAGE"
       - name: Size budget
+        # `docker image inspect` and `docker save` give the compressed layers on the runner's
+        # containerd image store (72 MB for a 194 MB image, audit B7); the exported file system
+        # of a container is the unpacked size.
         run: |
-          size=$(docker image inspect "$IMAGE" --format '{{.Size}}')
+          cid=$(docker create "$IMAGE")
+          size=$(docker export "$cid" | wc -c)
+          docker rm "$cid" > /dev/null
           echo "Image size: $((size / 1000000)) MB (budget $((MAX_IMAGE_BYTES / 1000000)) MB)"
           if [ "$size" -gt "$MAX_IMAGE_BYTES" ]; then
             echo "::error::Image exceeds the size budget"
