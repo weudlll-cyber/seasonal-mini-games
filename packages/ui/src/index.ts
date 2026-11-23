@@ -4,12 +4,13 @@
  * @brief  Public entry point of @smg/ui.
  *
  * Responsibility: shared React components and design tokens for web, admin and the game
- *                 screens: the ± sign toggle (./SignToggle), the open-and-close hook of menus
- *                 and panels (./useDisclosure), how many of a clipped list's items show
- *                 (./useFit), a player's marker and tag (./PlayerMark) and the one highlighted
- *                 player (./highlight), the CSS files beside it. Website mode's sign-in
- *                 helpers are the kit's (@seasonal/kit websiteSignInHref, signInAgainAfter).
- * Depends on:     ./SignToggle, ./useDisclosure, ./useFit, ./PlayerMark, ./highlight
+ *                 screens: the ± sign toggle (./SignToggle), how many of a clipped list's
+ *                 items show (./useFit), a player's marker and tag (./PlayerMark) and the one
+ *                 highlighted player (./highlight), the CSS files beside it. Website mode's sign-in
+ *                 helpers and the open-and-close hook of menus and panels are the kit's
+ *                 (@seasonal/kit websiteSignInHref, signInAgainAfter; @seasonal/kit/react
+ *                 useDisclosure).
+ * Depends on:     ./SignToggle, ./useFit, ./PlayerMark, ./highlight
  * Used by:        ./index.test, apps/web, apps/admin, games/guess-the-number/web
  * Spec:           docs/spec/10-repository-structure.md §1
  */
@@ -18,7 +19,6 @@
 export const PACKAGE_NAME = '@smg/ui';
 
 export { flipSign, SignToggle } from './SignToggle.js';
-export { useDisclosure, type Disclosure } from './useDisclosure.js';
 export { fitCount, useFit } from './useFit.js';
 export { flashHighlight, lit, setHighlight, useHighlight, useHighlightRow } from './highlight.js';
 export { PlayerMark, type MarkView } from './PlayerMark.js';

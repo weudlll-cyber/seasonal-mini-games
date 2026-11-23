@@ -5,7 +5,7 @@
  *
  * Responsibility: which panel is open (chat, players, host, a phased game's pre-picks, the
  *                 whole list, a phone's game panel), or none; each panel's opening button by id, so closing a panel hands
- *                 the focus back to the button it was opened from (as @smg/ui `useDisclosure`
+ *                 the focus back to the button it was opened from (as the kit's `useDisclosure`
  *                 does for a single panel); opening another panel closes the open one, since
  *                 only one is open at a time. Escape and the panels' Close buttons call `close`
  *                 (./FocusPanel).

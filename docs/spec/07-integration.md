@@ -107,6 +107,7 @@ The In Season season ([03](03-seasonal-specials.md) §3) and, where available, t
 | Names | Display name | Display name with the member's Discord steps (at most three) |
 | A deleted account | Its own deletion (`DELETE /me`) | Also through the website's feed: "Deleted player" in past rounds, gone from the boards (§7.3) |
 | Address | Own domain, base path `/` | `/games/mini-games` on the website's domain |
+| The way back | None | "← Seasonal Entertainment" at the top left of the app's bar (the shared kit's `BackLink`), to the website's games page `/games` (the website's GAME-INTEGRATION §8); on a phone its own first row. Focus mode, whose bar replaces the app's during a round, has none yet (DECISIONS T414) |
 | Chat | `builtin` | `hostEmbed`, room `mini-games` |
 | In Season | Only with a configured feed | From the website feed |
 | Halving days | Admin list | Website feed plus admin list |
@@ -145,7 +146,7 @@ browser ──GET /games/mini-games/auth/website?next=…──► website proxy
   - Roles are mapped and recomputed at every sign-in (`source=idp_mapping`, §1): `admin` → `game_admin`, `X-Acting-User-Can-Host: true` → `organizer`, everyone `player`; `super_admin` and `security_admin` are never granted by mapping: `super_admin` comes only from `smg admin promote-super` (DECISIONS T243), and an install may have several.
   - The e-mail verification is mirrored for league points. A suspended game account is refused (403).
 - **Steps:**
-  - Decoded and checked at each sign-in (zod `PlayerStep` in `packages/contracts/src/http/session.ts`); a step that does not hold (an unknown ladder, an icon that is no same-origin path) is dropped, and a bad header drops them all, never the sign-in.
+  - Decoded and checked at each sign-in (the shared kit's check, `websiteSignInCheck` with steps `each`, since 2026-11-23); a step that does not hold (an unknown ladder, an unknown field, an icon not exactly `/media/step-icons/<32 hex>.webp`) is dropped, and a bad header drops them all, never the sign-in.
   - They are stored with the account (`accounts.steps`) and sent as an optional `steps` field beside the name: the match's players and standings, the round state (`steps` by player key, beside `names`), leaderboard rows and the public profile; a standalone install sends none.
   - The client shows them after every other player's name (not after "You"): a small icon named by the step, or the step's name (DECISIONS T239). Icons are same-origin paths, so the CSP's `img-src 'self'` covers them; a step without an icon shows its name.
 - **Session:** a fresh, rotated game session (05 §1) that lives at most 7 days from this sign-in, as Bingo's (a guest session in website mode too; an admin session keeps its 8 hours absolute and 30 minutes idle; a standalone install keeps 30 days, DECISIONS T280), and a redirect to `next` when it is a same-origin path under the base path in printable ASCII without a scheme, host, `//` or backslash; anything else goes to the base path (the lobby) (Bingo D43).

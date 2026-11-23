@@ -24,14 +24,14 @@
  *                 `chatBarText`. A host's chat has no field of the platform's, so its bar has
  *                 none either. The same element holds
  *                 the chat in both layouts, so turning a phone does not reload it.
- * Depends on:     react, @seasonal/kit (chatBarText), @smg/ui (useDisclosure),
+ * Depends on:     react, @seasonal/kit (chatBarText), @seasonal/kit/react (useDisclosure),
  *                 ../chat/chatArrivals, ../chat/ChatRoom (Writer), ./chatDock.css
  * Used by:        ./DockedMatch
  * Spec:           docs/spec/02e-game-mind-games.md §11; docs/spec/02-game-guess-the-number.md §12;
  *                 docs/spec/07-integration.md §2
  */
 import { chatBarText } from '@seasonal/kit';
-import { useDisclosure, type Disclosure } from '@smg/ui';
+import { useDisclosure, type Disclosure } from '@seasonal/kit/react';
 import { useState, type ReactElement, type ReactNode } from 'react';
 
 import {

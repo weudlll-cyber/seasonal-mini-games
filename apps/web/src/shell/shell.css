@@ -3,16 +3,17 @@
  * @module web/shell
  * @brief  Layout of the player client: top bar and main column.
  *
- * Responsibility: a top bar on the website's season gradient (emblem, wordmark,
- *                 navigation as pills with the current one solid, the round light/dark toggle,
- *                 account and the dev sign-in menu) over a centred main column, sticky from 640 px with focus kept below
- *                 it; on phones the bar wraps into two rows, scrolls away with the page and
+ * Responsibility: a top bar on the website's season gradient (in website mode the kit's back
+ *                 link first, emblem, wordmark, navigation as pills with the current one solid,
+ *                 the kit's round light/dark toggle, account and the dev sign-in menu) over a
+ *                 centred main column, sticky from 640 px with focus kept below it; on phones the bar wraps into two rows, scrolls away with the page and
  *                 the navigation scrolls sideways. While a round runs, and on a match's
  *                 summary, the page is one screen high (`.one-screen`) and the view fills what
  *                 the bar leaves; on a phone the bar is then one row of at most 56 px with the
  *                 account behind "Menu" and Play as the only navigation pill. A running round
  *                 in focus mode hides the bar altogether (../round/focus.css, O46). Colours
- *                 come from @smg/ui.
+ *                 come from the tokens; the toggle's and the back link's look is the kit's
+ *                 (@seasonal/kit/shell.css), only their place in the bar is set here.
  * Spec:           Bingo 01 §13; docs/spec/02-game-guess-the-number.md §12
  */
 
@@ -105,23 +106,9 @@
   color: var(--color-on-solid);
 }
 
-/* The light/dark toggle: a round glass button with a hairline */
-.theme-toggle {
+/* The kit's light/dark toggle, after the navigation */
+.sk-theme-toggle {
   order: 3;
-  display: inline-grid;
-  place-items: center;
-  flex: none;
-  width: var(--hit-target);
-  height: var(--hit-target);
-  border: 1px solid var(--color-border);
-  border-radius: 50%;
-  background: var(--color-glass);
-  color: var(--color-text);
-  cursor: pointer;
-}
-
-.theme-toggle:hover {
-  background: var(--color-active-bg);
 }
 
 /* The account and the development menu; the "Menu" button shows only in the compact bar */
@@ -194,7 +181,7 @@ html:has(.one-screen) {
   }
 
   /* On a phone the toggle shares the first row with the brand */
-  .theme-toggle {
+  .sk-theme-toggle {
     order: 1;
   }
 
@@ -217,6 +204,12 @@ html:has(.one-screen) {
   #root:has(.one-screen) .shell-bar {
     flex-wrap: nowrap;
     padding-block: 5px;
+  }
+
+  /* In website mode the back link keeps its own first row above that one (the kit's phone
+     rule, GAME-INTEGRATION §8: top left on every screen), so the bar wraps once for it. */
+  #root:has(.one-screen) .shell-bar:has(.sk-back-link) {
+    flex-wrap: wrap;
   }
 
   #root:has(.one-screen) .shell-brand span {

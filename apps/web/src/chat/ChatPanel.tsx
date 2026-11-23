@@ -22,19 +22,20 @@
  *                 right column (../round/RoundChat) and the match's waiting area; elsewhere
  *                 (the lobby) it is a panel of its own height.
  *                 A screen that already loaded the config passes it, else the panel loads it.
- * Depends on:     react, @seasonal/kit (chatEmbedUrl), @smg/contracts (ChatConfigView),
+ * Depends on:     react, @seasonal/kit (chatEmbedUrl), @seasonal/kit/react (useShownTheme),
+ *                 @smg/contracts (ChatConfigView),
  *                 ../account/SignIn, ../shell/session,
- *                 ../shell/theme, ./ChatRoom, ./useChat, ./useHostChatFrame, ./chat.css
+ *                 ./ChatRoom, ./useChat, ./useHostChatFrame, ./chat.css
  * Used by:        ../lobby/Lobby, ../match/MatchPage
  * Spec:           docs/spec/07-integration.md §2; Bingo 07 §6; Seasonal Entertainment docs/EMBED.md
  */
 import { chatEmbedUrl, type EmbedTheme } from '@seasonal/kit';
+import { useShownTheme } from '@seasonal/kit/react';
 import type { ChatConfigView } from '@smg/contracts';
 import { useRef, type ReactElement } from 'react';
 
 import { SignInLink } from '../account/SignIn.js';
 import { useSession } from '../shell/session.js';
-import { useShownTheme } from '../shell/theme.js';
 import { ChatRoom } from './ChatRoom.js';
 import { useChatConfig, type ChatTarget } from './useChat.js';
 import { useHostChatFrame } from './useHostChatFrame.js';

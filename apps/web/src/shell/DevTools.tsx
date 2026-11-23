@@ -7,12 +7,12 @@
  *                 1/2/3" and a hint that one window holds one sign-in (Escape closes it); the
  *                 lobby's link to the Quick Test. Loaded on demand by ./AppShell and ../lobby/Lobby only
  *                 when Vite's DEV flag is set, so a production bundle does not contain it.
- * Depends on:     react, @smg/ui (useDisclosure), ./router, ./session
+ * Depends on:     react, @seasonal/kit/react (useDisclosure), ./router, ./session
  * Used by:        ./AppShell, ../lobby/Lobby (lazy imports)
  * Spec:           Bingo 05 §2.1; Bingo 01 §13
  */
 import type { ReactElement } from 'react';
-import { useDisclosure } from '@smg/ui';
+import { useDisclosure } from '@seasonal/kit/react';
 
 import { hrefOf } from './router.js';
 import { useSession, type DevIdentity } from './session.js';

@@ -13,7 +13,7 @@
  *                 and an info button keeps the phone's bar to one row (O46). The sentence is the
  *                 game's own where it words its special (`ruleOf`, T119), else the platform's.
  *                 A desktop's pill is plain: its info column has the special's line (T141).
- * Depends on:     react, @smg/contracts, @smg/ui (useDisclosure), @smg-game/registry/web
+ * Depends on:     react, @smg/contracts, @seasonal/kit/react (useDisclosure), @smg-game/registry/web
  *                 (types), ../season/*, ./roundSpecials.css
  * Used by:        ./FocusBar, ./RoundIntro
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §2
@@ -21,7 +21,7 @@
 import type { GameWeb } from '@smg-game/registry/web';
 import type { RoundStateView, SeasonName } from '@smg/contracts';
 import type { ReactElement } from 'react';
-import { useDisclosure } from '@smg/ui';
+import { useDisclosure } from '@seasonal/kit/react';
 
 import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASON_NAMES, SPECIALS } from '../season/season.js';

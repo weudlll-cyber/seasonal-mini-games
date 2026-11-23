@@ -3,8 +3,11 @@
  * @module web/shell
  * @brief  The player client's frame: top bar, navigation, account, screens.
  *
- * Responsibility: show the Seasonal Entertainment emblem with the "Seasonal Mini Games"
- *                 wordmark, the light/dark toggle, the navigation and the account
+ * Responsibility: show, in website mode, the way back to the website at the top left (the
+ *                 kit's BackLink, "← Seasonal Entertainment" to /games, the website's
+ *                 GAME-INTEGRATION §8; on a phone its own first row), the Seasonal
+ *                 Entertainment emblem with the "Seasonal Mini Games" wordmark, the kit's
+ *                 light/dark toggle, the navigation and the account
  *                 ("Signed in as <name> (host|player)", Account, Sign out) or, signed out,
  *                 "Sign in" and "Register". Below the bar, the screen of the current route.
  *                 In development also the "Dev sign-in" menu (./DevTools), loaded on demand so
@@ -21,14 +24,15 @@
  *                 (./session useWatchSession, DECISIONS T221). Under the screen, on every
  *                 page, the build badge (./BuildBadge).
  *                 Bingo's shell, without its game screens.
- * Depends on:     react, ./router, ./session, ./ThemeToggle, ./BuildBadge, ./DevTools (lazy, development
- *                 only), @smg/ui (useDisclosure), ../lobby/Lobby, ../account/*,
- *                 ../match/MatchPage, ../boards/*, ./shell.css, assets/brand/emblem.webp
+ * Depends on:     react, @seasonal/kit/react (BackLink, ThemeToggle, useDisclosure), ./router,
+ *                 ./session, ./BuildBadge, ./DevTools (lazy, development only), ../lobby/Lobby,
+ *                 ../account/*, ../match/MatchPage, ../boards/*, ./shell.css,
+ *                 assets/brand/emblem.webp
  * Used by:        ../main
- * Spec:           Bingo 01 §13; Bingo 05 §2.1
+ * Spec:           Bingo 01 §13; Bingo 05 §2.1; Seasonal Entertainment docs/GAME-INTEGRATION.md §8
  */
+import { BackLink, ThemeToggle, useDisclosure } from '@seasonal/kit/react';
 import { lazy, Suspense, type ReactElement } from 'react';
-import { useDisclosure } from '@smg/ui';
 
 import emblem from '../../../../assets/brand/emblem.webp';
 import { AccountPage } from '../account/AccountPage.js';
@@ -43,7 +47,6 @@ import { MatchPage } from '../match/MatchPage.js';
 import { BuildBadge } from './BuildBadge.js';
 import { hrefOf, useRoute, type Route } from './router.js';
 import { useSession, useWatchSession } from './session.js';
-import { ThemeToggle } from './ThemeToggle.js';
 import './shell.css';
 
 // Development tools load on demand. A production build replaces import.meta.env.DEV with
@@ -63,10 +66,13 @@ export function AppShell({ dev }: { readonly dev: boolean }): ReactElement {
   // for a page opened at it (../main).
   const route: ShellRoute = routed.name === 'embed' ? { name: 'lobby' } : routed;
   // Keyed by account: a sign-in or sign-out from the menu closes it.
-  const who = useSession().session?.account?.id ?? 'guest';
+  const session = useSession().session;
+  const who = session?.account?.id ?? 'guest';
   return (
     <>
       <header className="shell-bar">
+        {/* Website mode only: the way back, at the top left (shell.css). */}
+        <BackLink websiteMode={session?.authMode === 'website'} />
         <a className="shell-brand" href={hrefOf({ name: 'lobby' })}>
           <img src={emblem} alt="" width="42" height="37" />
           <span>

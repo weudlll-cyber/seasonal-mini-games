@@ -12,12 +12,13 @@
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p web/tsconfig.json"
   },
   "dependencies": {
+    "@seasonal/kit": "github:weudlll-cyber/seasonal-kit#v0.11.1",
     "@smg/game-sdk": "workspace:*",
     "@smg/guess-engine": "workspace:*",
     "@smg/ui": "workspace:*",
-    "zod": "4.6.7",
     "react": "19.3.1",
-    "react-dom": "19.3.1"
+    "react-dom": "19.3.1",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@testing-library/dom": "10.4.2",

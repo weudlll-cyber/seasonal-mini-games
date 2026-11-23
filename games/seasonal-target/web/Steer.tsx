@@ -8,14 +8,14 @@
  *                 a tile that way (the caller steps past fallen tiles and refuses a tile it
  *                 cannot select, T151). On a desktop behind the
  *                 input row's "Type coordinates" toggle, closed at first (`TypedSteer`,
- *                 `useDisclosure` of @smg/ui as the loupe; Escape closes it, O51); inside the
+ *                 `useDisclosure` of the kit as the loupe; Escape closes it, O51); inside the
  *                 loupe on a phone (02d §11).
- * Depends on:     react, @smg/ui (useDisclosure), @smg-game/seasonal-target (types)
+ * Depends on:     react, @seasonal/kit/react (useDisclosure), @smg-game/seasonal-target (types)
  * Used by:        ./TargetInput, ./Loupe
  * Spec:           docs/spec/02d-game-seasonal-target.md §11
  */
 import type { Cell } from '@smg-game/seasonal-target';
-import { useDisclosure } from '@smg/ui';
+import { useDisclosure } from '@seasonal/kit/react';
 import type { ReactElement } from 'react';
 
 interface SteerProps {
