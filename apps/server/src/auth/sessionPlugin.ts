@@ -15,13 +15,15 @@
  *                 Website mode: a cookie that names an ended session of an active account
  *                 (idle, expired, revoked) gets the answer header X-Smg-Session-Ended with the
  *                 sign-in route, so the clients sign in again through the website (T282).
- * Depends on:     fastify, @fastify/cookie, node:crypto, ./sessions, ./rateLimit, ../db/pool
+ * Depends on:     fastify, @fastify/cookie, node:crypto, @smg/contracts (SESSION_ENDED_HEADER),
+ *                 ./sessions, ./rateLimit, ../db/pool
  * Used by:        ../http/app, ../http/routes/auth, ../http/routes/devSignIn
  * Spec:           Bingo 03 §3, §8, §13
  */
 import { timingSafeEqual } from 'node:crypto';
 
 import cookie from '@fastify/cookie';
+import { SESSION_ENDED_HEADER } from '@smg/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import type { DbPool } from '../db/pool.js';
@@ -59,9 +61,6 @@ const SESSION_STARTERS = new Set([
 // Development only and outside any session: the load check's cleanup (no CSRF token).
 const DEV_UNSESSIONED = new Set(['/api/v1/dev/load-accounts']);
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
-
-// The answer header naming the sign-in route after an account's session ended (website mode).
-export const SESSION_ENDED_HEADER = 'x-smg-session-ended';
 
 // signInPath: website mode's sign-in route, else null (no X-Smg-Session-Ended).
 export async function registerSessions(

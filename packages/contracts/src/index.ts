@@ -113,6 +113,7 @@ export type {
 export {
   MAX_PLAYER_STEPS,
   PlayerStep,
+  SESSION_ENDED_HEADER,
   type PlayerStepView,
   type SessionView,
 } from './http/session.js';

@@ -10,8 +10,8 @@
  *                 game's pre-picks for its player (O117) and, for the host, the host's controls
  *                 are panels on demand, one at a time
  *                 (./usePanels, ./FocusPanel). The chat's unread badge counts the messages of
- *                 others that arrive while the chat panel is closed (../chat/chatArrivals) and
- *                 clears when it opens; a host's embedded chat is told whether its panel is
+ *                 others that arrive while the chat panel is closed (../chat/chatArrivals
+ *                 `useChatArrivals`) and clears when it opens; a host's embedded chat is told whether its panel is
  *                 open and gives its own count instead (`HostChatSight`, DECISIONS T237).
  *                 Full screen applies to this container, so the bar and the panels stay
  *                 inside it (./useFullscreen). The content gets the panels too,
@@ -24,17 +24,9 @@
  */
 import type { PlayerMark } from '@smg/game-sdk';
 import type { RoundStateView, TeamName } from '@smg/contracts';
-import {
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-  type CSSProperties,
-  type ReactElement,
-  type ReactNode,
-} from 'react';
+import { useRef, type CSSProperties, type ReactElement, type ReactNode } from 'react';
 
-import { ChatArrivals, HostChatSight } from '../chat/chatArrivals.js';
+import { ChatArrivals, HostChatSight, useChatArrivals } from '../chat/chatArrivals.js';
 import { FocusBar } from './FocusBar.js';
 import { FocusPanel } from './FocusPanel.js';
 import { PlayersPanelBody } from './RoundSide.js';
@@ -65,24 +57,6 @@ interface FocusShellProps {
   // A phased game's pre-picks for the rounds after this one, for its player; else null (O117).
   readonly prefs?: ReactNode;
   readonly children: (panels: Panels) => ReactNode;
-}
-
-// The unread count of the chat: counted while its panel is closed, cleared on opening it; a
-// host's embedded chat counts itself and is told whether its panel is open (`sight`).
-function useUnread(panels: Panels) {
-  const [unread, setUnread] = useState(0);
-  const open = useRef(panels.open);
-  open.current = panels.open;
-  const arrived = useCallback(() => {
-    if (open.current !== 'chat') setUnread((n) => n + 1);
-  }, []);
-  const visible = panels.open === 'chat';
-  const sight = useMemo(() => ({ visible, unread: setUnread }), [visible]);
-  const toggle = (id: PanelId): void => {
-    if (id === 'chat') setUnread(0);
-    panels.toggle(id);
-  };
-  return { unread, arrived, sight, panels: { ...panels, toggle } };
 }
 
 // The panels of the bar: the chat kept mounted, the players, a player's pre-picks, the host's
@@ -138,7 +112,10 @@ function BarPanels(p: FocusShellProps & { readonly panels: Panels }): ReactEleme
 export function FocusShell(p: FocusShellProps): ReactElement {
   const box = useRef<HTMLDivElement>(null);
   const fullscreen = useFullscreen(box);
-  const { unread, arrived, sight, panels } = useUnread(usePanels());
+  const panels = usePanels();
+  // The chat's unread count: counted while its panel is closed, cleared on opening it; a host's
+  // embedded chat counts itself and is told whether its panel is open (`sight`).
+  const { unread, arrived, sight } = useChatArrivals(panels.open === 'chat');
   return (
     <ChatArrivals.Provider value={arrived}>
       <HostChatSight.Provider value={sight}>

@@ -18,51 +18,31 @@
  *                 that one line and the sheet holds the whole chat with its field. The newest
  *                 message comes through the same slot in both. Its Close button or Escape
  *                 closes the sheet and hands the focus back to the bar. Unread counts another
- *                 player's messages that arrive while the sheet is closed
- *                 (../chat/chatArrivals); a host's embedded chat is told
- *                 whether it is in sight and gives its own count (`HostChatSight`, T237); it has
- *                 no field of the platform's, so its bar has none either. The same element holds
+ *                 player's messages that arrive while the sheet is closed (../chat/chatArrivals
+ *                 `useChatArrivals`); a host's embedded chat is told whether it is in sight and
+ *                 gives its own count (`HostChatSight`, T237); the bar's words are the kit's
+ *                 `chatBarText`. A host's chat has no field of the platform's, so its bar has
+ *                 none either. The same element holds
  *                 the chat in both layouts, so turning a phone does not reload it.
- * Depends on:     react, @smg/ui (useDisclosure), ../chat/chatArrivals, ../chat/ChatRoom (Writer),
- *                 ./chatDock.css
+ * Depends on:     react, @seasonal/kit (chatBarText), @smg/ui (useDisclosure),
+ *                 ../chat/chatArrivals, ../chat/ChatRoom (Writer), ./chatDock.css
  * Used by:        ./DockedMatch
  * Spec:           docs/spec/02e-game-mind-games.md §11; docs/spec/02-game-guess-the-number.md §12;
  *                 docs/spec/07-integration.md §2
  */
+import { chatBarText } from '@seasonal/kit';
 import { useDisclosure, type Disclosure } from '@smg/ui';
-import { useCallback, useMemo, useRef, useState, type ReactElement, type ReactNode } from 'react';
+import { useState, type ReactElement, type ReactNode } from 'react';
 
 import {
   ChatArrivals,
   ChatComposerSlot,
   HostChatSight,
-  type ChatArrival,
+  useChatArrivals,
   type ChatComposer,
 } from '../chat/chatArrivals.js';
 import { Writer } from '../chat/ChatRoom.js';
 import './chatDock.css';
-
-// The unread count while the chat is out of sight.
-function useArrivals(visible: boolean) {
-  const [unread, setUnread] = useState(0);
-  const seen = useRef(visible);
-  seen.current = visible;
-  const arrived = useCallback(() => {
-    if (!seen.current) setUnread((n) => n + 1);
-  }, []);
-  const sight = useMemo(() => ({ visible, unread: setUnread }), [visible]);
-  const clear = (): void => {
-    setUnread(0);
-  };
-  return { unread, arrived, sight, clear };
-}
-
-// The bar's words after "Chat": the newest message's author and text (a system line its text
-// alone), if any.
-const barText = (m: ChatArrival | null): string | null => {
-  if (m === null || m.text === null) return null;
-  return m.author === null ? m.text : `${m.author}: ${m.text}`;
-};
 
 // The phone's bar: "Chat · <newest message>" and the unread count, opening the sheet; in the
 // form 'field' under it the room's own field with Send (when the viewer may write), which sends
@@ -74,7 +54,7 @@ function PhoneBar(p: {
   readonly composer: ChatComposer | null;
   readonly bar: 'field' | 'line';
 }): ReactElement {
-  const newest = barText(p.composer?.newest ?? null);
+  const newest = chatBarText(p.composer?.newest ?? null);
   return (
     <>
       <button
@@ -138,14 +118,10 @@ export function ChatDock(p: {
   readonly bar: 'field' | 'line';
 }): ReactElement | null {
   const sheet = useDisclosure();
-  const a = useArrivals(!p.phone || sheet.open);
+  const a = useChatArrivals(!p.phone || sheet.open);
   // The room's writing part, for the phone bar's own field (T363).
   const [composer, setComposer] = useState<ChatComposer | null>(null);
   if (p.chat === null) return null;
-  const toggle = (): void => {
-    if (!sheet.open) a.clear();
-    sheet.toggle();
-  };
   return (
     <ChatArrivals.Provider value={a.arrived}>
       <ChatComposerSlot.Provider value={setComposer}>
@@ -163,7 +139,7 @@ export function ChatDock(p: {
               <PhoneBar
                 sheet={sheet}
                 unread={a.unread}
-                onClick={toggle}
+                onClick={sheet.toggle}
                 composer={composer}
                 bar={p.bar}
               />

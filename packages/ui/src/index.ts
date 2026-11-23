@@ -7,10 +7,9 @@
  *                 screens: the ± sign toggle (./SignToggle), the open-and-close hook of menus
  *                 and panels (./useDisclosure), how many of a clipped list's items show
  *                 (./useFit), a player's marker and tag (./PlayerMark) and the one highlighted
- *                 player (./highlight), website mode's sign-in route and signing in again
- *                 (./websiteSignIn), the CSS files beside it.
- * Depends on:     ./SignToggle, ./useDisclosure, ./useFit, ./PlayerMark, ./highlight,
- *                 ./websiteSignIn
+ *                 player (./highlight), the CSS files beside it. Website mode's sign-in
+ *                 helpers are the kit's (@seasonal/kit websiteSignInHref, signInAgainAfter).
+ * Depends on:     ./SignToggle, ./useDisclosure, ./useFit, ./PlayerMark, ./highlight
  * Used by:        ./index.test, apps/web, apps/admin, games/guess-the-number/web
  * Spec:           docs/spec/10-repository-structure.md §1
  */
@@ -23,4 +22,3 @@ export { useDisclosure, type Disclosure } from './useDisclosure.js';
 export { fitCount, useFit } from './useFit.js';
 export { flashHighlight, lit, setHighlight, useHighlight, useHighlightRow } from './highlight.js';
 export { PlayerMark, type MarkView } from './PlayerMark.js';
-export { signInAgain, signInAgainAfter, websiteSignInHref } from './websiteSignIn.js';

@@ -8,19 +8,20 @@
  *                 (website mode, T282) is handed to `signInAgainAfter` and the call never
  *                 settles while the page leaves; when it stays (its loop guard), the answer
  *                 is handled as usual.
- * Depends on:     vitest, ./http, @smg/ui (signInAgainAfter mocked)
+ * Depends on:     vitest, ./http, @seasonal/kit (signInAgainAfter mocked)
  * Spec:           Bingo 09 §1; docs/spec/07-integration.md §7
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { api, ApiError, basePathOf } from './http.js';
 
-// The page's leaving is @smg/ui's (its own test): here only which route it is handed.
+// The page's leaving is the kit's (its own test): here only which route it is handed, read
+// from the header the client names.
 const signInAgain = vi.fn((_path: string) => true);
-vi.mock('@smg/ui', async (original) => ({
-  ...(await original<typeof import('@smg/ui')>()),
-  signInAgainAfter: (r: Response) => {
-    const path = r.headers.get('x-smg-session-ended');
+vi.mock('@seasonal/kit', async (original) => ({
+  ...(await original<typeof import('@seasonal/kit')>()),
+  signInAgainAfter: (r: Response, header: string) => {
+    const path = r.headers.get(header);
     return path !== null && signInAgain(path);
   },
 }));

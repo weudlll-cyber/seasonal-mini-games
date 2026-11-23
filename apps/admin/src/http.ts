@@ -13,14 +13,16 @@
  *                 `failureText` puts a refusal in plain words. The same contract as the
  *                 player client's http.ts (a separate app may not import it, 04 §3). An answer
  *                 saying the account's session ended (website mode) signs in again through
- *                 the website and back to this page (@smg/ui signInAgainAfter, T282); the call then
- *                 never settles, as the page is leaving.
- * Depends on:     @smg/ui
+ *                 the website and back to this page (the kit's signInAgainAfter with the
+ *                 contract's SESSION_ENDED_HEADER, T282); the call then never settles, as the
+ *                 page is leaving.
+ * Depends on:     @seasonal/kit (signInAgainAfter), @smg/contracts (SESSION_ENDED_HEADER)
  * Used by:        ./App, ./StepUp, ./SignIn and every page of the areas
  * Spec:           Bingo 05 §1; Bingo 03 §8
  */
 
-import { signInAgainAfter } from '@smg/ui';
+import { signInAgainAfter } from '@seasonal/kit';
+import { SESSION_ENDED_HEADER } from '@smg/contracts';
 
 // Served by the server under <base>/admin/ (09 §1), by Vite at the root in development.
 const PAGE_PATH = typeof document === 'undefined' ? '/' : new URL('.', document.baseURI).pathname;
@@ -78,7 +80,7 @@ async function send<T>(path: string, options: Options): Promise<T> {
     credentials: 'same-origin',
     ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
   });
-  if (signInAgainAfter(response)) return new Promise<T>(() => undefined);
+  if (signInAgainAfter(response, SESSION_ENDED_HEADER)) return new Promise<T>(() => undefined);
   if (response.status === 204) return undefined as T;
   const body = (await response.json().catch(() => ({}))) as {
     code?: string;

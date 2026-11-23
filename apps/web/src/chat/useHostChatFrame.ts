@@ -5,38 +5,22 @@
  *
  * Responsibility: under a screen that shows the chat behind a button (./chatArrivals
  *                 `HostChatSight`), the game is the embed's host page (Seasonal Entertainment
- *                 docs/EMBED.md, "The postMessage API"): it tells the frame
- *                 `{ source: 'seasonal-chat-host', type: 'visible', visible }` whenever the
- *                 panel opens or closes and again on each `ready` (a frame that loaded or
- *                 reloaded has not heard it yet), only to that frame at the chat's origin; it
- *                 hands each `unread` count to the screen's badge. It acts only on messages
- *                 whose `event.origin` is the chat's origin (the frame address's own: this
- *                 site's for the website's room), whose `event.source` is the frame's window
- *                 and whose `source` is `seasonal-chat`; everything else is ignored. Without
- *                 such a screen (the lobby, the waiting area) it posts and listens to nothing.
+ *                 docs/EMBED.md, "The postMessage API"), through the kit's checked link
+ *                 `connectChat`: it tells the frame whether the panel is in sight, again on
+ *                 each `ready`, only at the chat's origin, and hands each `unread` count to the
+ *                 screen's badge. The link acts only on messages from the frame's window at
+ *                 the chat's origin (the frame address's own: this site's for the website's
+ *                 room, another origin's for a host chat elsewhere) and ignores everything
+ *                 else. Without such a screen (the lobby, the waiting area) it links nothing.
  *                 Nothing the game posts is secret (DECISIONS T237).
- * Depends on:     react, ./chatArrivals
+ * Depends on:     react, @seasonal/kit (connectChat), ./chatArrivals
  * Used by:        ./ChatPanel
  * Spec:           docs/spec/07-integration.md §2; Seasonal Entertainment docs/EMBED.md
  */
+import { connectChat } from '@seasonal/kit';
 import { useContext, useEffect, type RefObject } from 'react';
 
 import { HostChatSight } from './chatArrivals.js';
-
-// A message the chat sends, as EMBED.md defines it: only `ready` and `unread` matter here.
-type FromChat = { readonly type: 'ready' } | { readonly type: 'unread'; readonly count: number };
-
-function fromChat(data: unknown): FromChat | null {
-  if (typeof data !== 'object' || data === null) return null;
-  const m = data as Record<string, unknown>;
-  if (m.source !== 'seasonal-chat') return null;
-  if (m.type === 'ready') return { type: 'ready' };
-  const count = m.count;
-  if (m.type !== 'unread' || typeof count !== 'number' || !Number.isInteger(count) || count < 0) {
-    return null;
-  }
-  return { type: 'unread', count };
-}
 
 export function useHostChatFrame(frame: RefObject<HTMLIFrameElement | null>, url: string): void {
   const sight = useContext(HostChatSight);
@@ -45,23 +29,16 @@ export function useHostChatFrame(frame: RefObject<HTMLIFrameElement | null>, url
   const visible = sight?.visible;
   const unread = sight?.unread;
   useEffect(() => {
-    if (visible === undefined || unread === undefined) return undefined;
-    const tell = (): void => {
-      const message = { source: 'seasonal-chat-host', type: 'visible', visible };
-      frame.current?.contentWindow?.postMessage(message, origin);
-    };
-    const listen = (event: MessageEvent): void => {
-      const own = frame.current?.contentWindow;
-      if (event.origin !== origin || own === null || own === undefined) return;
-      if (event.source !== own) return;
-      const message = fromChat(event.data);
-      if (message?.type === 'ready') tell();
-      if (message?.type === 'unread') unread(message.count);
-    };
-    tell();
-    window.addEventListener('message', listen);
-    return () => {
-      window.removeEventListener('message', listen);
-    };
+    const element = frame.current;
+    if (element === null || visible === undefined || unread === undefined) return undefined;
+    const link = connectChat({
+      frame: element,
+      visible,
+      origin,
+      onMessage: (message) => {
+        if (message.type === 'unread') unread(message.count);
+      },
+    });
+    return link.close;
   }, [frame, origin, visible, unread]);
 }

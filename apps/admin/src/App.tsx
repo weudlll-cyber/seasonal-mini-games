@@ -12,14 +12,14 @@
  *                 account) — chosen with the
  *                 address's hash (08 §1, §2); the step-up dialog (./StepUp) for writes that
  *                 need a fresh two-factor check. The server checks every permission again.
- * Depends on:     react, @smg/ui (websiteSignInHref), ./http, ./SignIn, ./StepUp, ./live/LivePage, ./accounts/AccountsPage,
+ * Depends on:     react, @seasonal/kit (websiteSignInHref), ./http, ./SignIn, ./StepUp, ./live/LivePage, ./accounts/AccountsPage,
  *                 ./settings/SettingsPage, ./seasons/SeasonsPage, ./moderation/ModerationPage,
  *                 ./abuse/AbusePage, ./audit/AuditPage, ./integration/IntegrationPage,
  *                 ./twofactor/TwoFactorPage
  * Used by:        ./main
  * Spec:           docs/spec/08-admin-settings.md §1, §2; Bingo 11 §1, §2
  */
-import { websiteSignInHref } from '@smg/ui';
+import { websiteSignInHref } from '@seasonal/kit';
 import { useCallback, useEffect, useState, type ReactElement } from 'react';
 
 import { AbusePage } from './abuse/AbusePage.js';

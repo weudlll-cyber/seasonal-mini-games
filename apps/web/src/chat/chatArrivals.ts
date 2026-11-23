@@ -1,31 +1,27 @@
 /**
  * @file   apps/web/src/chat/chatArrivals.ts
  * @module web/chat
- * @brief  React contexts: told of chat messages that arrive while the chat is out of sight.
+ * @brief  Told of chat messages that arrive while the chat is out of sight: the contexts and
+ *         the count, on the kit's arrivals.
  *
  * Responsibility: a screen that shows the chat behind a button (the round's focus mode, O46;
- *                 the docked chat's bar on a phone, O97) provides both and shows the count on
- *                 the button's unread badge. `ChatArrivals`: the builtin room (./ChatRoom)
- *                 calls it with each live message by another player, never for its own
- *                 messages, system lines or the history loaded on joining; the screen counts
- *                 those that arrive while its panel is closed, and the docked chat's bar shows
- *                 the newest one's start. `HostChatSight`: a host's embedded chat (`hostEmbed`, the website's
- *                 frame, ./useHostChatFrame) is told whether its panel is in sight and hands
- *                 back the frame's own unread count (DECISIONS T237). `ChatComposerSlot`: the
- *                 builtin room offers its writing part to a screen that writes from elsewhere
- *                 (the docked chat's phone bar, T363).
- * Depends on:     react
+ *                 the docked chat's bar on a phone, O97) provides both contexts and shows the
+ *                 count on the button's unread badge (`useChatArrivals`, the kit's
+ *                 `createChatArrivals` held in React state: counted while out of sight, 0 once
+ *                 shown). `ChatArrivals`: the builtin room (./ChatRoom) calls it with each live
+ *                 message by another player, never for its own messages, system lines or the
+ *                 history loaded on joining. `HostChatSight`: a host's embedded chat
+ *                 (`hostEmbed`, the website's frame, ./useHostChatFrame) is told whether its
+ *                 panel is in sight and hands back the frame's own unread count (DECISIONS
+ *                 T237). `ChatComposerSlot`: the builtin room offers its writing part to a
+ *                 screen that writes from elsewhere (the docked chat's phone bar, T363).
+ * Depends on:     react, @seasonal/kit (createChatArrivals, ChatArrival), @smg/contracts
  * Used by:        ./ChatRoom, ./useHostChatFrame, ../round/FocusShell, ../match/ChatDock
  * Spec:           docs/spec/07-integration.md §2; Seasonal Entertainment docs/EMBED.md
  */
+import { createChatArrivals, type ChatArrival, type ChatArrivalsState } from '@seasonal/kit';
 import type { ChatRoomView } from '@smg/contracts';
-import { createContext } from 'react';
-
-// A message that arrived: its author's name and its text (null once a moderator deleted it).
-export interface ChatArrival {
-  readonly author: string | null;
-  readonly text: string | null;
-}
+import { createContext, useEffect, useMemo, useState } from 'react';
 
 export const ChatArrivals = createContext<((message: ChatArrival) => void) | null>(null);
 
@@ -50,3 +46,20 @@ export interface ChatComposer {
 export const ChatComposerSlot = createContext<((composer: ChatComposer | null) => void) | null>(
   null,
 );
+
+// The unread count of a chat shown behind a button: `arrived` for `ChatArrivals`, `sight` for
+// `HostChatSight`; cleared whenever the chat comes into sight.
+export function useChatArrivals(visible: boolean): {
+  readonly unread: number;
+  readonly arrived: (message: ChatArrival) => void;
+  readonly sight: ChatSight;
+} {
+  const [state, setState] = useState<ChatArrivalsState>({ unread: 0, newest: null });
+  // One counter for the screen's life; it tells the state of every change.
+  const [arrivals] = useState(() => createChatArrivals(visible, setState));
+  useEffect(() => {
+    arrivals.setVisible(visible);
+  }, [arrivals, visible]);
+  const sight = useMemo(() => ({ visible, unread: arrivals.frameUnread }), [arrivals, visible]);
+  return { unread: state.unread, arrived: arrivals.arrived, sight };
+}

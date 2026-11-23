@@ -8,7 +8,8 @@
  *                 room in a sandboxed frame titled "Chat" from the host chat's address (the
  *                 server's CSP admits it as frame-src; in website mode by default the
  *                 website's `/embed/chat?room=mini-games`, O66) with `theme=light|dark`
- *                 following the game's theme (a change reloads the frame); behind the round
+ *                 following the game's theme (the kit's `chatEmbedUrl` for the website's room;
+ *                 a change reloads the frame); behind the round
  *                 bar's Chat button the frame is told whether it is in sight and its unread
  *                 count goes to the badge (./useHostChatFrame, DECISIONS T237). The frame's
  *                 request carries this site's origin as its referrer (`strict-origin`; the
@@ -21,11 +22,13 @@
  *                 right column (../round/RoundChat) and the match's waiting area; elsewhere
  *                 (the lobby) it is a panel of its own height.
  *                 A screen that already loaded the config passes it, else the panel loads it.
- * Depends on:     react, @smg/contracts (ChatConfigView), ../account/SignIn, ../shell/session,
+ * Depends on:     react, @seasonal/kit (chatEmbedUrl), @smg/contracts (ChatConfigView),
+ *                 ../account/SignIn, ../shell/session,
  *                 ../shell/theme, ./ChatRoom, ./useChat, ./useHostChatFrame, ./chat.css
  * Used by:        ../lobby/Lobby, ../match/MatchPage
  * Spec:           docs/spec/07-integration.md §2; Bingo 07 §6; Seasonal Entertainment docs/EMBED.md
  */
+import { chatEmbedUrl, type EmbedTheme } from '@seasonal/kit';
 import type { ChatConfigView } from '@smg/contracts';
 import { useRef, type ReactElement } from 'react';
 
@@ -56,11 +59,14 @@ function Body({
   return <HostChat url={config.hostChatUrl} />;
 }
 
-// The host chat's address with the game's theme; a path (the website's own room) stays one.
-function withTheme(url: string, theme: string): string {
+// The host chat's address with the game's theme: the website's own room (a path on this site)
+// by the kit's embed address, a host chat on another origin its own address with `theme` set.
+function withTheme(url: string, theme: EmbedTheme): string {
   const at = new URL(url, window.location.origin);
+  if (url.startsWith('/'))
+    return chatEmbedUrl(at.searchParams.get('room') ?? '', theme, at.pathname);
   at.searchParams.set('theme', theme);
-  return url.startsWith('/') ? `${at.pathname}${at.search}` : at.href;
+  return at.href;
 }
 
 function HostChat({ url }: { readonly url: string }): ReactElement {
