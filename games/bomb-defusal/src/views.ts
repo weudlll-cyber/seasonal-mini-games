@@ -57,6 +57,8 @@ export const viewSchemas = {
     .object({
       wires,
       cuts: z.number().int(),
+      // The explosion penalty, so the result names it beside "Boom!" (O137).
+      penaltyS: z.number().int().nonnegative(),
       secret: sequenceSchema.nullable(),
       secrets: z.record(z.string(), sequenceSchema).nullable(),
       guesses: guesses.result,
@@ -96,6 +98,7 @@ export const views: GameViews<BdState, Secrets<Sequence>> = {
   result: (state, secrets) => ({
     wires: state.wires,
     cuts: state.cuts,
+    penaltyS: state.penaltyMs / 1_000,
     secret: secrets.mode === 'shared' ? secrets.value : null,
     secrets: secrets.mode === 'individual' ? secrets.byPlayer : null,
     guesses: resultGuesses(state),

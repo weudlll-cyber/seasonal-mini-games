@@ -8,8 +8,9 @@
  *                 chat never tells a win before the round view does), writes "Round 4: Walter
  *                 found it first — the number was 42" or "Round 4 ended: nobody found it — the
  *                 number was 42" into the match's room. The line names the winner by display
- *                 name (bots by their key) and the secret in the game's own words (its
- *                 optional `reveal` hook, O32): the platform does not know a game's result
+ *                 name (bots by their key), finding in the game's words where it has its own
+ *                 (`found`: "Round 4: Walter hit the target first", O137) and the secret in the
+ *                 game's own words (its optional `reveal` hook, O32): the platform does not know a game's result
  *                 shape (04 §4); a game without the hook, or a round no longer in memory,
  *                 gets the line without it. A phased round (04 §4.8) has no first place: its
  *                 winners are the rows with `won`, and its line is the game's words, "Round 3:
@@ -43,11 +44,17 @@ export function phasedEndLine(index: number, winners: number, words: string | nu
     : `Round ${String(index)}: ${won}.`;
 }
 
-export function endLine(index: number, winner: string | null, secret: string | null): string {
+// `found`: the game's words for finding the secret (its module's, O137), else "found it".
+export function endLine(
+  index: number,
+  winner: string | null,
+  secret: string | null,
+  found = 'found it',
+): string {
   const line =
     winner === null
-      ? `Round ${String(index)} ended: nobody found it`
-      : `Round ${String(index)}: ${winner} found it first`;
+      ? `Round ${String(index)} ended: nobody ${found}`
+      : `Round ${String(index)}: ${winner} ${found} first`;
   return secret === null ? line : `${line} — ${secret}`;
 }
 
@@ -67,8 +74,8 @@ async function lineOf(
   const name =
     winner === null ? null : ((await displayNames(chat.pool, [winner]))[winner] ?? winner);
   // The round is still in memory when its end commits; the result view names the secret.
-  const secret = rounds.peek(round.id)?.reveal(winner) ?? null;
-  return endLine(round.index, name, secret);
+  const live = rounds.peek(round.id);
+  return endLine(round.index, name, live?.reveal(winner) ?? null, live?.found);
 }
 
 async function post(

@@ -8,7 +8,7 @@
  *                 once, in the wire panel) and the banner when a fall strikes (02c §8, O35); the
  *                 list's guess rows from the player or spectator view: the sequence as
  *                 "red → blue → …" where the view shows it, else "cut a sequence", and the
- *                 answer in words ("First 2 cuts right", "Boom!" with the icon,
+ *                 answer in words ("First 2 cuts right", "Boom! +5 s" with the icon and the penalty,
  *                 "Defused!") with its tone (T119), and the sequence as colour dots with their
  *                 names (`swatches`, T143; the fills are `WIRE_COLORS`, shared with the
  *                 swatches of ./WireChip); a row of the result's "Closest to winning" (the dots, its correct start or
@@ -117,10 +117,14 @@ export const WIRE_COLORS: Readonly<Record<Wire, string>> = {
   purple: '#7b3fbf',
 };
 
-// The answer in words with its tone (T119): the explosion, the right start, or defused.
-export function answerText(f: Feedback, cuts: number): GuessAnswer {
+// The answer in words with its tone (T119): the explosion with its waiting time ("💥 Boom! +5 s",
+// owner decision O137), the right start, or defused.
+export function answerText(f: Feedback, cuts: number, penaltyS: number): GuessAnswer {
   if (f.defused) return { text: 'Defused!', tone: 'correct' };
-  if (f.correct === 0) return { text: `${BOOM_ICON} Boom!`, tone: 'boom' };
+  if (f.correct === 0) {
+    const plus = penaltyS > 0 ? ` +${String(penaltyS)} s` : '';
+    return { text: `${BOOM_ICON} Boom!${plus}`, tone: 'boom' };
+  }
   return { text: rightText(f.correct), tone: 2 * f.correct >= cuts ? 'close' : 'far' };
 }
 
@@ -152,7 +156,7 @@ interface Seen {
 
 // The list's rows of a player view (own sequences and the others') or a spectator view.
 function guessRows(view: unknown): readonly GuessRow[] {
-  const v = view as Partial<PlayerView> & Pick<SpectatorView, 'log' | 'cuts'>;
+  const v = view as Partial<PlayerView> & Pick<SpectatorView, 'log' | 'cuts' | 'penaltyS'>;
   const row = (g: Seen, playerId: string | null, held: boolean): GuessRow => ({
     key: String(g.receiveSeq),
     at: g.receivedAt,
@@ -162,7 +166,7 @@ function guessRows(view: unknown): readonly GuessRow[] {
     text: g.value === null ? 'cut a sequence' : sequenceText(g.value),
     // The sequence as colour dots in order, each named (T143).
     swatches: g.value === null ? null : swatchesOf(g.value),
-    answer: g.feedback === null ? null : answerText(g.feedback, v.cuts),
+    answer: g.feedback === null ? null : answerText(g.feedback, v.cuts, v.penaltyS),
     comment: g.comment,
     tier: g.tier,
     // Frost's held answer, the viewer's own or another player's (T150).

@@ -37,7 +37,7 @@ The action is the shared guess intent with `{ value: ["red", "blue", "green", "w
 | 4 | Exactly `cuts` entries, each a wire of this round, none twice | `SEQUENCE_INVALID` | "Choose 4 different wires of this bomb." |
 | 5 | No wire Leaf Fall marked harmless (§8.3) | `WIRE_HARMLESS` | "That wire is harmless — it is not part of the sequence." |
 | 6 | Not the same sequence as an earlier one of this player (`round.repeatGuessRejected`) | `ALREADY_GUESSED` | "You already tried that order." |
-| 7 | Cooldown over, the explosion penalty included (§5.2) | `COOLDOWN_ACTIVE` | "You can cut again in 4 s." |
+| 7 | Cooldown over, the explosion penalty included (§5.2) | `COOLDOWN_ACTIVE` | the platform's "Your cooldown is running — 4 s left." (owner decision O137) |
 
 A rejection costs nothing and tells nothing (02 §5.1). A sequence that only shares a start with an earlier one is not a repeat. Receive order is 02 §5.2.
 
@@ -52,7 +52,7 @@ For an accepted sequence `g` and the guesser's secret `s`, the answer is `{ corr
 | Sequence | `correct` | Player reads | Tier |
 |---|---|---|---|
 | red, blue, green, white | 2 | "First 2 cuts right" (white in place 4 does not count) | burning |
-| blue, red, yellow, white | 0 | "Boom! The first cut was wrong. +5 s waiting time." Next cut at receive time + 15 s | wayOff |
+| blue, red, yellow, white | 0 | "💥 Boom! +5 s" in the row, the explosion overlay over the input (owner decision O137). Next cut at receive time + 15 s | wayOff |
 | red, blue, yellow, black | 3 | "First 3 cuts right" | justMissed |
 | red, blue, yellow, white | 4 | "Defused!" | correct |
 

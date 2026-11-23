@@ -61,7 +61,8 @@ export function ResultPanel({ view, names, viewerKey, part }: ResultPanelProps):
               <ol className="bd-cuts">
                 {cuts.map((g, i) => (
                   <li key={i}>
-                    <SequenceDots sequence={g.value} /> {answerText(g.feedback, v.cuts).text}
+                    <SequenceDots sequence={g.value} />{' '}
+                    {answerText(g.feedback, v.cuts, v.penaltyS).text}
                   </li>
                 ))}
               </ol>

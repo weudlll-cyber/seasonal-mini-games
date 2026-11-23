@@ -128,7 +128,7 @@ At the end, count every final choice per option. Only options chosen by at least
 |---|---|---|---|
 | 3, 5, 3, 9, off | 1 | 1: Spring, Autumn (3); 2: Summer (5); 3: Winter (9) | the 6 players on Spring and Autumn |
 | 3, 5, 3, 9, off | 2 | as above | the 5 players on Summer |
-| 3, 5, 3, 9, off | 4 | only three places | nobody: "There is no 4th least chosen option this round." |
+| 3, 5, 3, 9, off | 4 | only three places | nobody: the platform's "Nobody wins this round." (owner decision O137) |
 | 0, 4, 2, 0, off | 1 | 1: Autumn (2); 2: Summer (4); Spring and Winter take no part | the 2 players on Autumn |
 | 2, 2, 2, 2, 1 | 1 | 1: All (1); 2: the four seasons (2) | the player on All, with 2 points |
 | 5, 0, 0, 0, off | 1 | 1: Spring (5) | all 5 players: the only chosen option is the least chosen |

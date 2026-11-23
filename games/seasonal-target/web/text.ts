@@ -10,13 +10,20 @@
  *                 view, the tile as `text`, the answer as `answer` (T119) and its tier as `tier`
  *                 (the answer's colour, O51), pending while Frost holds an own answer; the
  *                 closest miss besides the winner on the shared result (02d §9); the intro
- *                 line (02d §2) and the special's sentence for Spring and Autumn (T119).
+ *                 line (02d §2) and the special's sentence for Spring and Autumn (T119); its
+ *                 words for finding the target, "hit the target" (O136, O137).
  * Depends on:     @smg/game-sdk (GameText, GuessRow, FeedLine, formatNumber),
  *                 @smg-game/seasonal-target (types), ./words
  * Used by:        ./index, ./text.test
  * Spec:           docs/spec/02d-game-seasonal-target.md §2, §4, §6, §8, §9
  */
-import type { PlayerView, ResultView, SpectatorView, StEvent } from '@smg-game/seasonal-target';
+import {
+  FOUND,
+  type PlayerView,
+  type ResultView,
+  type SpectatorView,
+  type StEvent,
+} from '@smg-game/seasonal-target';
 import {
   closestLabel,
   type FeedLine,
@@ -142,4 +149,6 @@ export const stText: GameText = {
   banner,
   intro,
   specialRule,
+  // The result's headline and margin and the solved notice name finding this way (O136, O137).
+  found: FOUND,
 };

@@ -175,6 +175,9 @@ export interface GameModule<S, A, E, Cfg, Sec> {
   // The secret in a few words for the chat's round-end line ("the number was 42", O32), from
   // the result view and the winner's key; null, or no hook, names no value.
   readonly reveal?: (result: unknown, winner: string | null) => string | null;
+  // The game's words for finding the secret in the chat's round-end line ("Round 4: Walter hit
+  // the target first", O137), the same as its web text's `found`; no value, "found it".
+  readonly found?: string;
   // Each player's best guess with a guess (O110), only after the end: it takes the secrets.
   // The platform orders them (the placed players first, by place; then by distance); no hook,
   // and the result shows every player's guesses in full instead (T150).

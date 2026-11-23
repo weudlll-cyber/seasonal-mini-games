@@ -44,8 +44,14 @@ export interface GameWeb {
   // The input row; `ring` is the platform's cooldown ring, drawn at its start. A board game
   // gets `stage`, the box at full height on the left (on a phone above the input row), and
   // draws its board there through a portal; the row itself stays in the right column (O51).
+  // `done`: the player solved (individual mode): the board only, read-only, kept in view for
+  // the rest of the round in place of the row (T78, owner decision O136).
   readonly Input: ComponentType<
-    PlayerPanelProps & { readonly ring?: ReactNode; readonly stage?: HTMLElement | null }
+    PlayerPanelProps & {
+      readonly ring?: ReactNode;
+      readonly stage?: HTMLElement | null;
+      readonly done?: boolean;
+    }
   >;
   readonly Spectator: ComponentType<SpectatorPanelProps>;
   // The phone's info line over the stage (T141): one line of what matters for the next guess

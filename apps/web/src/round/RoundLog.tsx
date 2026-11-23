@@ -48,11 +48,12 @@ type Row =
   | { readonly kind: 'guess'; readonly key: string; readonly at: number; readonly guess: GuessRow }
   | { readonly kind: 'event'; readonly key: string; readonly at: number; readonly line: FeedLine };
 
-// The row of one feed item: a game event (wrapped as Game) is the game's to word.
+// The row of one feed item: a game event (wrapped as Game) is the game's to word; a solve's
+// row takes the game's words for finding (O137).
 function lineOf(event: unknown, game: GameWeb | null, names: RoundStateView['names']) {
   const e = event as { type?: string; event?: unknown };
   if (e.type === 'Game') return game?.text.event(e.event, names) ?? null;
-  return platformLine(event, names);
+  return platformLine(event, names, game?.text.found);
 }
 
 // The compact list's way to the whole list: its panel's state and opening button.
