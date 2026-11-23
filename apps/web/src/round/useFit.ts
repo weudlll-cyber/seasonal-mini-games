@@ -17,14 +17,15 @@
  *                 (`[data-fit]`) that fit whole and "+N more" for the rest (the Others panel
  *                 and line, O110).
  * Depends on:     react, @seasonal/kit/react (useFitScale)
- * Used by:        ./RoundIntro, ./ResultScreen (useScreenFit); ./OthersLine, ./RoundSide (useFit)
+ * Used by:        ./ResultScreen (useScreenFit); ./RoundIntro (useFontLoads, for the kit's
+ *                 StartCard); ./OthersLine, ./RoundSide (useFit)
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/02-game-guess-the-number.md §12
  */
 import { useFitScale } from '@seasonal/kit/react';
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 
 // How many times web fonts have finished loading while the screen is shown (O144, T404).
-function useFontLoads(): number {
+export function useFontLoads(): number {
   const [loads, setLoads] = useState(0);
   useEffect(() => {
     const fonts = 'fonts' in document ? document.fonts : null;

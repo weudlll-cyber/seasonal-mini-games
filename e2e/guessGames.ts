@@ -49,7 +49,7 @@ export async function fromLobby(
   await expect(playerRow(p, 'bot-01')).toContainText('online', { timeout: 10_000 });
   await hostMenu(p);
   await p.page.getByTestId('host-console').getByTestId('start-round').click();
-  await expect(p.page.getByTestId('round-intro')).toBeVisible();
+  await expect(p.page.getByTestId('start-card')).toBeVisible();
   return code;
 }
 

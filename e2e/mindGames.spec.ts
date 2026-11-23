@@ -228,11 +228,13 @@ test('journey 38: one round of Seasonal Mind Games, everything one delay late', 
       fields: BY_HAND,
     });
     await startRound(p);
-    await expect(p.page.getByTestId('round-intro')).toContainText(
+    await expect(p.page.getByTestId('start-card')).toContainText(
       'Pick a season. The least chosen wins. Join within 0:30 · choices close at 0:50 · everyone sees the round 10 s late',
     );
     // No season in the game (O93): the intro is the game's, the bar has no season pill.
-    await expect(p.page.locator('#round-intro-season')).toHaveText('Seasonal Mind Games');
+    await expect(p.page.getByTestId('start-card').getByRole('heading', { level: 1 })).toHaveText(
+      'Seasonal Mind Games',
+    );
     await expect(p.page.getByTestId('round-season')).toHaveCount(0);
     await roundOpen(p.page);
     const opened = Date.now();

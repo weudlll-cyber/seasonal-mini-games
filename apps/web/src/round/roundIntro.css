@@ -1,99 +1,24 @@
 /**
  * @file   apps/web/src/round/roundIntro.css
  * @module web/round
- * @brief  The round intro screen during the countdown: one card in the season's colours.
+ * @brief  The round intro during the countdown: where the kit's start card sits, and its badge.
  *
- * Responsibility: the intro fills the round's space under the round bar and never scrolls the
- *                 page: a card framed and tinted in the season colour, everything centred, the
- *                 season name in the largest type, the special's name and sentence, the
- *                 facts, and the seconds left; sizes follow the viewport's smaller side (O36).
- *                 Where the card has not the room (above a docked chat, a small phone), every
- *                 size shrinks with the screen's scale (`--fit`, ./useFit, O111), each with its
- *                 floor (13 px text, 24 px display values), never larger than without it.
- *                 Colours only from @smg/ui tokens, so light and dark both work.
+ * Responsibility: the card itself (frame and tint in the season colour, the parts centred and
+ *                 their sizes at the screen's scale, O36, O111) is the kit's
+ *                 (@seasonal/kit/frames.css `.sk-start-card`). The game places it in the round
+ *                 view under the round bar, over the rest of the view, and draws its halving
+ *                 badge on the tint. Colours only from the tokens, so light and dark both work.
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6
  */
 /* Under the round bar: one card, the rest of the round view (./round.css). */
-.round-intro {
+.round-live > .sk-start-card {
   grid-column: 1 / -1;
   grid-row: 2 / -1;
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: calc(var(--fit, 1) * clamp(0.5rem, 2.5vmin, 1.5rem));
-  padding: calc(var(--fit, 1) * var(--space-3)) var(--space-3);
-  border: 3px solid var(--season);
-  border-radius: var(--radius-card);
-  background: color-mix(in srgb, var(--season) 16%, var(--color-surface));
-  text-align: center;
-}
-
-.round-intro-head {
-  display: grid;
-  justify-items: center;
-  gap: calc(var(--fit, 1) * var(--space-1));
-}
-
-/* The token icon on a disc of the page colour, as on the round's season chip. */
-.round-intro-icon {
-  display: grid;
-  place-items: center;
-  width: max(2.5rem, calc(var(--fit, 1) * clamp(4rem, 14vmin, 7.5rem)));
-  height: max(2.5rem, calc(var(--fit, 1) * clamp(4rem, 14vmin, 7.5rem)));
-  padding: calc(var(--fit, 1) * 0.6rem);
-  border-radius: 50%;
-  border: 3px solid var(--season);
-  background: var(--color-surface);
-}
-
-.round-intro-head h1 {
-  margin: 0;
-  font-size: max(var(--sk-floor-display), calc(var(--fit, 1) * var(--font-size-ball)));
-  line-height: 1;
 }
 
 /* The halving badge on the tint instead of on the season colour. */
-.round-intro-head .round-badge {
-  border-color: var(--season);
+.sk-start-head .round-badge {
+  border-color: var(--sk-season);
   padding-block: 0.15rem;
   font-weight: var(--font-weight-strong);
-}
-
-.round-intro-special {
-  max-width: 34rem;
-  display: grid;
-  gap: 0.25rem;
-}
-
-.round-intro-special h2 {
-  margin: 0;
-  font-size: max(16px, calc(var(--fit, 1) * var(--font-size-title)));
-}
-
-.round-intro-special p {
-  margin: 0;
-  font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * var(--font-size-lead)));
-}
-
-.round-intro-facts {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: 0.15rem;
-  font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * 1rem));
-  font-weight: var(--font-weight-strong);
-}
-
-.round-intro-count {
-  margin: 0;
-  font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * var(--font-size-lead)));
-}
-
-.round-intro-count strong {
-  font-size: max(var(--sk-floor-display), calc(var(--fit, 1) * var(--font-size-title)));
-  font-variant-numeric: tabular-nums;
 }

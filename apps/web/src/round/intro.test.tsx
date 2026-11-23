@@ -57,13 +57,17 @@ describe('the round intro', () => {
     show({ ...counting, season });
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(name);
     expect(screen.getByRole('heading', { level: 2 }).textContent).toBe(special);
-    expect(screen.getByTestId('intro-special').textContent).toBe(`${special}${rule}`);
-    expect(screen.getByTestId('round-intro').dataset['season']).toBe(season);
+    expect(screen.getByTestId('start-card').querySelector('.sk-start-special')?.textContent).toBe(
+      `${special}${rule}`,
+    );
+    expect(screen.getByTestId('start-card').dataset['skSeason']).toBe(season);
   });
 
   it('says so when the special is off', () => {
     show({ ...counting, specialOn: false });
-    expect(screen.getByTestId('intro-special').textContent).toBe('No special this round.');
+    expect(screen.getByTestId('start-card').querySelector('.sk-start-special')?.textContent).toBe(
+      'No special this round.',
+    );
     expect(screen.queryByRole('heading', { level: 2 })).toBeNull();
   });
 
@@ -92,7 +96,7 @@ describe('the round intro', () => {
         chat={null}
       />,
     );
-    expect(screen.getByTestId('round-intro')).toBeTruthy();
+    expect(screen.getByTestId('start-card')).toBeTruthy();
     // The bar keeps the panels (O46); the seconds to the opening are only the intro's.
     expect(screen.getByTestId('round-banner')).toBeTruthy();
     expect(screen.getAllByTestId('countdown')).toHaveLength(1);

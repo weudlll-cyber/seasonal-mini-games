@@ -77,7 +77,7 @@ const SEASONS: readonly Season[] = [
 
 // The card whole: nothing of it cut at its top or its foot (O110: above the docked chat).
 async function cardWhole(page: Page): Promise<void> {
-  const cut = await page.getByTestId('round-intro').evaluate((card) => {
+  const cut = await page.getByTestId('start-card').evaluate((card) => {
     const box = card.getBoundingClientRect();
     const parts = [...card.querySelectorAll('*')].map((e) => e.getBoundingClientRect());
     return {
@@ -93,10 +93,10 @@ async function cardWhole(page: Page): Promise<void> {
 
 // The intro fits the screen at both sizes; it ends back at the wide size.
 async function introFits(page: Page, s: Season): Promise<void> {
-  const intro = page.getByTestId('round-intro');
+  const intro = page.getByTestId('start-card');
   await expect(intro).toBeVisible();
   await expect(intro.getByRole('heading', { level: 1 })).toHaveText(s.name);
-  await expect(intro.getByTestId('intro-special')).toHaveText(`${s.special}${s.rule}`);
+  await expect(intro.locator('.sk-start-special')).toHaveText(`${s.special}${s.rule}`);
   await expect(intro.getByTestId('intro-secret')).toHaveText(
     'Shared number between 1 and 1,000,000',
   );

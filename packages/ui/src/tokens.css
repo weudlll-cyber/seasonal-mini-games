@@ -7,9 +7,9 @@
  *                 motion timing; the Seasonal Entertainment website's look) come from
  *                 @seasonal/kit/tokens.css, which each client imports before this file. This
  *                 file adds only the game's own: the player marks, the text steps of Winter and
- *                 success, the own-row tint, the game board and the ball's type size. Light is
- *                 the default on :root, :root[data-theme='dark'] replaces the colours (set
- *                 before the first paint by the kit's early theme script). Components use
+ *                 success, the own-row tint and the game board. Light is the default on :root,
+ *                 :root[data-theme='dark'] replaces the colours (set before the first paint by
+ *                 the kit's early theme script). Components use
  *                 these custom properties and never hard-code colours.
  * Spec:           Bingo 01 §13; assets/brand/colors.md; kit docs/ADOPTION.md "Seasonal Mini Games"
  */
@@ -46,9 +46,6 @@
   --color-board-marked-ink: #f6f3ea;
   --color-ball: #eef1f5;
   --color-ball-ink: #12161c;
-
-  /* The ball's number (the kit's type sizes stop at the title) */
-  --font-size-ball: clamp(3rem, 2rem + 6vw, 5.5rem);
 }
 
 :root[data-theme='dark'] {
