@@ -4,19 +4,19 @@
  * @brief  Told of chat messages that arrive while the chat is out of sight: the contexts and
  *         the count, on the kit's arrivals.
  *
- * Responsibility: a screen that shows the chat behind a button (the round's focus mode, O46;
- *                 the docked chat's bar on a phone, O97) provides both contexts and shows the
- *                 count on the button's unread badge (`useChatArrivals`, the kit's
- *                 `createChatArrivals` held in React state: counted while out of sight, 0 once
- *                 shown). `ChatArrivals`: the builtin room (./ChatRoom) calls it with each live
+ * Responsibility: a screen that shows the chat behind a button (the round's focus mode, O46)
+ *                 provides both contexts and shows the count on the button's unread badge
+ *                 (`useChatArrivals`, the kit's `createChatArrivals` held in React state:
+ *                 counted while out of sight, 0 once shown). The docked chat (O97) is the
+ *                 kit's dock, which counts with arrivals of its own (../match/DockedMatch). `ChatArrivals`: the builtin room (./ChatRoom) calls it with each live
  *                 message by another player, never for its own messages, system lines or the
  *                 history loaded on joining. `HostChatSight`: a host's embedded chat
  *                 (`hostEmbed`, the website's frame, ./useHostChatFrame) is told whether its
  *                 panel is in sight and hands back the frame's own unread count (DECISIONS
  *                 T237). `ChatComposerSlot`: the builtin room offers its writing part to a
- *                 screen that writes from elsewhere (the docked chat's phone bar, T363).
+ *                 screen that writes from elsewhere (the docked chat's phone bar field, T363).
  * Depends on:     react, @seasonal/kit (createChatArrivals, ChatArrival), @smg/contracts
- * Used by:        ./ChatRoom, ./useHostChatFrame, ../round/FocusShell, ../match/ChatDock
+ * Used by:        ./ChatRoom, ./useHostChatFrame, ../round/FocusShell, ../match/DockedMatch
  * Spec:           docs/spec/07-integration.md §2; Seasonal Entertainment docs/EMBED.md
  */
 import { createChatArrivals, type ChatArrival, type ChatArrivalsState } from '@seasonal/kit';
@@ -34,12 +34,11 @@ interface ChatSight {
 
 export const HostChatSight = createContext<ChatSight | null>(null);
 
-// What a builtin room (./ChatRoom) hands to a screen that shows it from somewhere else, the
-// docked chat's phone bar (MG-N8): the room, its newest message of any kind (a system line
-// too), and its writing part, null while the viewer cannot write there; nothing until loaded.
+// What a builtin room (./ChatRoom) hands to a screen that writes from somewhere else, the
+// docked chat's phone bar (MG-N8): the room and its writing part, null while the viewer cannot
+// write there; nothing until loaded.
 export interface ChatComposer {
   readonly room: ChatRoomView;
-  readonly newest: ChatArrival | null;
   readonly send: ((text: string) => Promise<string | null>) | null;
 }
 

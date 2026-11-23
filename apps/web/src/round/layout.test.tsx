@@ -13,7 +13,7 @@
  *                 the dock; no round view shows team points, team tiles, match standings or an
  *                 earlier round, which stay in the Players panel and the result (O54).
  * Depends on:     vitest, @testing-library/react, @smg/contracts, @smg-game/registry/web, ./fakes,
- *                 ./RoundScreen, ./useRoundView
+ *                 ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/09-testing-strategy.md §2
  */
 import { GAME_SCREENS } from '@smg-game/registry/web';
@@ -23,7 +23,6 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { ended, viewport } from './fakes.js';
 import { RoundScreen } from './RoundScreen.js';
-import { viewOf } from './useRoundView.js';
 
 afterEach(() => {
   cleanup();
@@ -72,13 +71,21 @@ const view = () => screen.getByTestId('round-view').dataset['view'];
 
 describe('the layout choice', () => {
   it('is a desktop for a landscape viewport of 900 px and more, else a phone', () => {
-    expect(viewOf(1280, 720)).toBe('desktop');
-    expect(viewOf(1920, 1080)).toBe('desktop');
-    expect(viewOf(900, 700)).toBe('desktop');
-    expect(viewOf(899, 600)).toBe('phone');
-    expect(viewOf(390, 844)).toBe('phone');
-    // A tablet held upright is a phone.
-    expect(viewOf(1024, 1366)).toBe('phone');
+    // The kit's choice (useDockView); a tablet held upright is a phone.
+    const sizes = [
+      [1280, 720, 'desktop'],
+      [1920, 1080, 'desktop'],
+      [900, 700, 'desktop'],
+      [899, 600, 'phone'],
+      [390, 844, 'phone'],
+      [1024, 1366, 'phone'],
+    ] as const;
+    for (const [width, height, layout] of sizes) {
+      viewport(width, height);
+      show();
+      expect(view(), `${String(width)} × ${String(height)}`).toBe(layout);
+      cleanup();
+    }
   });
 
   it('follows the window as it is resized', () => {

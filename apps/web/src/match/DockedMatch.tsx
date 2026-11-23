@@ -8,65 +8,56 @@
  *                 box in focus mode (the app header hidden, ../round/focus.css) a screen high:
  *                 what the match page shows now (the round view, "Loading the round…", the
  *                 result with the next round's box) on top, taking the height the chat leaves,
- *                 and the docked chat (./ChatDock) under it. The chat keeps its place in this
- *                 box whatever is above it, so it is mounted once and keeps its room and what
- *                 was typed between the round and the result (07 §2). The layout, desktop or
- *                 phone, is the round view's (../round/useRoundView, T141); on a phone the
- *                 content scrolls alone above the chat bar (a list game's running round fills it
- *                 instead, its guesses scrolling inside, O109) and the page is the visible
- *                 viewport's height, so the bar stays above the on-screen keyboard (MG-N8, T364).
- *                 The bar's form is the game's (./ChatDock, `meta.chatBar`).
- * Depends on:     react, ../round/useRoundView, ./ChatDock, ./docked.css
+ *                 and the docked chat under it: the kit's `DockedScreen` (its strip on a
+ *                 desktop; on a phone its bar with the sheet, the page the visible viewport's
+ *                 height, `--sk-visible-height`, so the bar stays above the on-screen keyboard,
+ *                 MG-N8, T364). The chat keeps its place in this box whatever is above it, so it
+ *                 is mounted once and keeps its room and what was typed between the round and
+ *                 the result (07 §2). The bar's form is the game's (`meta.chatBar`): in the form
+ *                 'field' the room's own field with Send (../chat/ChatRoom `Writer`, offered
+ *                 through `ChatComposerSlot`, T363) sits under the bar. On a phone the content
+ *                 scrolls alone above the chat bar (a list game's running round fills it
+ *                 instead, its guesses scrolling inside, O109; ./docked.css). Without a chat
+ *                 (the provider `none`) there is no dock: the kit's has no form without one.
+ * Depends on:     react, @seasonal/kit/react (DockedScreen), @seasonal/kit/dock.css,
+ *                 ../chat/chatArrivals (ChatComposerSlot), ../chat/ChatRoom (Writer), ./docked.css
  * Used by:        ./MatchPage
  * Spec:           docs/spec/02e-game-mind-games.md §11; docs/spec/02-game-guess-the-number.md §12;
  *                 docs/spec/07-integration.md §2
  */
-import { useEffect, type ReactElement, type ReactNode } from 'react';
+import { DockedScreen } from '@seasonal/kit/react';
+import { useState, type ReactElement, type ReactNode } from 'react';
 
-import { useRoundView } from '../round/useRoundView.js';
-import { ChatDock } from './ChatDock.js';
+import { ChatComposerSlot, type ChatComposer } from '../chat/chatArrivals.js';
+import { Writer } from '../chat/ChatRoom.js';
+import '@seasonal/kit/dock.css';
 import './docked.css';
-
-// On a phone the screen is the visible viewport: when the on-screen keyboard takes part of it,
-// the page shrinks with it, so the chat bar stays directly above the keyboard (T364). The app's
-// root is a screen high (../shell/shell.css `.one-screen`); its height follows the viewport
-// while this page is shown and is handed back after.
-function useVisibleHeight(phone: boolean): void {
-  useEffect(() => {
-    const vv = window.visualViewport;
-    const root = document.getElementById('root');
-    if (!phone || vv == null || root === null) return undefined;
-    const follow = (): void => {
-      root.style.height = `${String(Math.round(vv.height))}px`;
-    };
-    follow();
-    vv.addEventListener('resize', follow);
-    return () => {
-      vv.removeEventListener('resize', follow);
-      root.style.height = '';
-    };
-  }, [phone]);
-}
 
 export function DockedMatch(p: {
   readonly phase: 'live' | 'loading' | 'after';
   // The match chat, or null without one (the provider `none`).
   readonly chat: ReactNode;
-  // The phone bar's form, the game's (./ChatDock, O109).
+  // The phone bar's form, the game's (O109).
   readonly bar: 'field' | 'line';
   readonly children: ReactNode;
 }): ReactElement {
-  const view = useRoundView();
-  useVisibleHeight(view === 'phone');
+  // The room's writing part, for the phone bar's own field (T363).
+  const [composer, setComposer] = useState<ChatComposer | null>(null);
+  const field =
+    composer?.send == null ? null : (
+      <Writer room={composer.room} send={composer.send} placeholder="Write a message…" />
+    );
   return (
-    <div
-      className="match-docked one-screen focus-mode"
-      data-testid="match"
-      data-phase={p.phase}
-      data-view={view}
-    >
-      <div className="match-docked-main">{p.children}</div>
-      <ChatDock chat={p.chat} phone={view === 'phone'} bar={p.bar} />
+    <div className="match-docked one-screen focus-mode" data-testid="match" data-phase={p.phase}>
+      {p.chat === null ? (
+        <div className="match-docked-main">{p.children}</div>
+      ) : (
+        <ChatComposerSlot.Provider value={setComposer}>
+          <DockedScreen chat={p.chat} bar={p.bar} field={field} callId={null}>
+            {p.children}
+          </DockedScreen>
+        </ChatComposerSlot.Provider>
+      )}
     </div>
   );
 }

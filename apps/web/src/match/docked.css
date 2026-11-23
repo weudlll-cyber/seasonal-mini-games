@@ -3,9 +3,11 @@
  * @module web/match
  * @brief  The docked match page (./DockedMatch, O97): the view above, the chat under it.
  *
- * Responsibility: the owner's reference of 2026-11-15 (MG-N8). A desktop: one screen without a
- *                 page scrollbar, padding 20 × 28 px, 16 px between the view above and the chat
- *                 (./chatDock.css) under it; the result fills exactly the height left (its own
+ * Responsibility: the owner's reference of 2026-11-15 (MG-N8). The dock itself, its strip,
+ *                 phone bar and sheet, is the kit's (@seasonal/kit/dock.css, `.sk-docked`); this
+ *                 file holds the page around it and inside its main part. A desktop: one screen
+ *                 without a page scrollbar, padding 20 × 28 px, the kit's 16 px between the view
+ *                 above and the chat under it; the result fills exactly the height left (its own
  *                 grid shares it out, ../round/resultOwn.css); the platform's longer result with
  *                 the waiting area beside it (a list game's, O109) scrolls with it as one area
  *                 inside that height instead (O110), the waiting area's headings smaller and
@@ -15,9 +17,9 @@
  *                 bar under it, in the layout; no fixed or sticky part. A list game's running
  *                 round (O109) is the exception: it fills the content's height as without the
  *                 dock, its guesses scrolling inside and its input dock right above the chat
- *                 bar. The next round's row,
- *                 Start now and bar under a game's own result (./NextRound). Colours only from
- *                 @smg/ui tokens.
+ *                 bar. In the bar's form 'field' the sheet holds the messages only (the bar has
+ *                 the field). The next round's row, Start now and bar under a game's own result
+ *                 (./NextRound). Colours only from the tokens.
  * Spec:           docs/spec/02e-game-mind-games.md §11; docs/spec/02-game-guess-the-number.md §12
  */
 .match-docked {
@@ -25,19 +27,33 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
 }
 
+/* The kit's dock fills the page; without a chat the view alone does. */
+.match-docked > .sk-docked,
 .match-docked-main {
   flex: 1;
   min-height: 0;
+}
+
+.match-docked-main {
   display: flex;
   flex-direction: column;
 }
 
+/* The bar's form 'field': its own field under the bar, so the sheet shows the messages only;
+   in that field the room's writer keeps one row. */
+.sk-chat-dock[data-sk-view='phone'][data-sk-bar='field'] .sk-chat-dock-body .chat-writer {
+  display: none;
+}
+
+.sk-chat-dock-row > .chat-writer .chat-form {
+  gap: 6px;
+}
+
 /* The result and the pause: the bar, then the result in the whole width and exactly the height
    that is left; nothing here scrolls on a desktop. */
-.match-docked-main > .match-result-page {
+:is(.sk-docked-main, .match-docked-main) > .match-result-page {
   flex: 1;
   min-height: 0;
   display: flex;
@@ -124,11 +140,7 @@
     padding: 0;
   }
 
-  .match-docked {
-    gap: 0;
-  }
-
-  .match-docked-main {
+  .match-docked :is(.sk-docked-main, .match-docked-main) {
     /* The containing block of what is placed inside (the visually hidden labels), so nothing
        of the scrolled content reaches past the screen and scrolls the page. */
     position: relative;
@@ -136,7 +148,7 @@
     overflow-y: auto;
   }
 
-  .match-docked-main > .match-result-page,
+  :is(.sk-docked-main, .match-docked-main) > .match-result-page,
   .match-after.match-after--docked {
     flex: none;
   }
@@ -156,7 +168,7 @@
   /* A list game's running round (O109): its own screen above the chat bar, as without the
      dock: the guesses scroll inside their box and the input dock stays right above the bar,
      so nothing hides behind it. */
-  .match-docked-main:has(.round-live[data-layout='list']) {
+  .match-docked :is(.sk-docked-main, .match-docked-main):has(.round-live[data-layout='list']) {
     overflow: hidden;
     padding: 8px 10px;
   }

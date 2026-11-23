@@ -137,11 +137,12 @@
 
 /* A one-screen view (a running round, a match summary) makes the page exactly one screen:
    the bar on top, the view in the rest (../round/round.css, ../match/summary.css), and no
-   page scrollbar. */
+   page scrollbar. On a phone the kit's docked screen sets the visible viewport's height
+   (--sk-visible-height), so the chat bar stays above the on-screen keyboard (T364). */
 #root:has(.one-screen) {
   display: flex;
   flex-direction: column;
-  height: 100dvh;
+  height: var(--sk-visible-height, 100dvh);
 }
 
 /* Such a view never scrolls the page, so no gutter is kept for a scrollbar (the empty strip

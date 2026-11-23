@@ -177,7 +177,7 @@ async function lastPhases(p: Person, opened: number): Promise<void> {
 // sent, which the result must still show (the chat is mounted once).
 async function dockedChat(page: Page): Promise<void> {
   await expect(page.getByTestId('focus-chat')).toHaveCount(0);
-  await expect(page.getByTestId('chat-dock')).toHaveAttribute('data-view', 'desktop');
+  await expect(page.getByTestId('chat-dock')).toHaveAttribute('data-sk-view', 'desktop');
   await page.getByTestId('chat-dock').getByRole('textbox').fill(DRAFT);
 }
 
@@ -263,7 +263,7 @@ test('journey 38: one round of Seasonal Mind Games, everything one delay late', 
     await watchLight(p.page);
     await lastPhases(p, opened);
     await p.page.setViewportSize(PHONE);
-    await expect(p.page.getByTestId('chat-dock-bar')).toBeVisible();
+    await expect(p.page.getByTestId('chat-bar')).toBeVisible();
     await fitsScreen(p.page);
     await bandClear(p.page);
     await p.page.setViewportSize(WIDE);

@@ -9,28 +9,29 @@
  *                 server's CSP admits it as frame-src; in website mode by default the
  *                 website's `/embed/chat?room=mini-games`, O66) with `theme=light|dark`
  *                 following the game's theme (the kit's `chatEmbedUrl` for the website's room;
- *                 a change reloads the frame); behind the round
- *                 bar's Chat button the frame is told whether it is in sight and its unread
- *                 count goes to the badge (./useHostChatFrame, DECISIONS T237). The frame's
- *                 request carries this site's origin as its referrer (`strict-origin`; the
- *                 page itself sends none), which the embed needs in Firefox to know its
- *                 parent (T242). In website mode a visitor who is not signed in also gets
- *                 "Log in": the website's sign-in for this page (../account/SignIn,
- *                 DECISIONS T238); the frame shows the website's own guest view. `bare` drops
- *                 the panel's frame and heading
- *                 where the screen gives the chat its own place and heading: the round view's
- *                 right column (../round/RoundChat) and the match's waiting area; elsewhere
- *                 (the lobby) it is a panel of its own height.
- *                 A screen that already loaded the config passes it, else the panel loads it.
- * Depends on:     react, @seasonal/kit (chatEmbedUrl), @seasonal/kit/react (useShownTheme),
- *                 @smg/contracts (ChatConfigView),
- *                 ../account/SignIn, ../shell/session,
- *                 ./ChatRoom, ./useChat, ./useHostChatFrame, ./chat.css
+ *                 a change reloads the frame). Inside the docked chat (O97) the website's room
+ *                 is the kit's `WebsiteChatFrame`, which the kit's dock tells whether it is in
+ *                 sight; behind the round bar's Chat button the game's frame is told whether it
+ *                 is in sight and its unread count goes to the badge (./useHostChatFrame,
+ *                 DECISIONS T237). The frame's request carries this site's origin as its
+ *                 referrer (`strict-origin`; the page itself sends none), which the embed needs
+ *                 in Firefox to know its parent (T242). In website mode a visitor who is not
+ *                 signed in also gets "Log in": the website's sign-in for this page
+ *                 (../account/SignIn, DECISIONS T238); the frame shows the website's own guest
+ *                 view. `bare` drops the panel's frame and heading where the screen gives the
+ *                 chat its own place and heading: the round view's right column
+ *                 (../round/RoundChat) and the match's waiting area; elsewhere (the lobby) it is
+ *                 a panel of its own height. A screen that already loaded the config passes it,
+ *                 else the panel loads it.
+ * Depends on:     react, @seasonal/kit (chatEmbedUrl), @seasonal/kit/react (useShownTheme,
+ *                 useDockArrivals, WebsiteChatFrame), @smg/contracts (ChatConfigView),
+ *                 ../account/SignIn, ../shell/session, ./ChatRoom, ./useChat,
+ *                 ./useHostChatFrame, ./chat.css
  * Used by:        ../lobby/Lobby, ../match/MatchPage
  * Spec:           docs/spec/07-integration.md §2; Bingo 07 §6; Seasonal Entertainment docs/EMBED.md
  */
 import { chatEmbedUrl, type EmbedTheme } from '@seasonal/kit';
-import { useShownTheme } from '@seasonal/kit/react';
+import { useDockArrivals, useShownTheme, WebsiteChatFrame } from '@seasonal/kit/react';
 import type { ChatConfigView } from '@smg/contracts';
 import { useRef, type ReactElement } from 'react';
 
@@ -70,12 +71,32 @@ function withTheme(url: string, theme: EmbedTheme): string {
   return at.href;
 }
 
-function HostChat({ url }: { readonly url: string }): ReactElement {
+// The game's own frame and its link (./useHostChatFrame): behind the round bar's Chat button,
+// in the lobby, and for a host chat on another origin.
+function OwnFrame({ url }: { readonly url: string }): ReactElement {
   const theme = useShownTheme();
-  const session = useSession().session;
-  const guest = session?.authMode === 'website' && session.account === null;
   const frame = useRef<HTMLIFrameElement>(null);
   useHostChatFrame(frame, url);
+  return (
+    <iframe
+      ref={frame}
+      className="chat-frame"
+      title="Chat"
+      src={withTheme(url, theme)}
+      sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+      referrerPolicy="strict-origin"
+      data-testid="chat-frame"
+    />
+  );
+}
+
+function HostChat({ url }: { readonly url: string }): ReactElement {
+  const session = useSession().session;
+  const guest = session?.authMode === 'website' && session.account === null;
+  // Inside the kit's dock the website's room is the kit's frame, which the dock tells whether
+  // it is in sight (a host chat on another origin cannot be told there: a kit gap, T416).
+  const docked = useDockArrivals() !== null;
+  const site = url.startsWith('/') ? new URL(url, window.location.origin) : null;
   return (
     <>
       {guest ? (
@@ -84,15 +105,15 @@ function HostChat({ url }: { readonly url: string }): ReactElement {
           account.
         </p>
       ) : null}
-      <iframe
-        ref={frame}
-        className="chat-frame"
-        title="Chat"
-        src={withTheme(url, theme)}
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-        referrerPolicy="strict-origin"
-        data-testid="chat-frame"
-      />
+      {docked && site !== null ? (
+        <WebsiteChatFrame
+          room={site.searchParams.get('room') ?? ''}
+          path={site.pathname}
+          className="chat-frame"
+        />
+      ) : (
+        <OwnFrame url={url} />
+      )}
     </>
   );
 }

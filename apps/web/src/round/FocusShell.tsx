@@ -18,10 +18,12 @@
  *                 for the whole list and the phone's game panel. The container carries the
  *                 layout, desktop or phone (`data-view`, T141).
  * Depends on:     react, @smg/contracts, ../chat/chatArrivals, ./FocusBar, ./FocusPanel,
- *                 ./RoundSide, ./useFullscreen, ./usePanels, ./useRoundView (type), ./focus.css
+ *                 ./RoundSide, ./useFullscreen, ./usePanels, @seasonal/kit/react (DockView, type),
+ *                 ./focus.css
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/07-integration.md §2
  */
+import type { DockView } from '@seasonal/kit/react';
 import type { PlayerMark } from '@smg/game-sdk';
 import type { RoundStateView, TeamName } from '@smg/contracts';
 import { useRef, type CSSProperties, type ReactElement, type ReactNode } from 'react';
@@ -32,7 +34,6 @@ import { FocusPanel } from './FocusPanel.js';
 import { PlayersPanelBody } from './RoundSide.js';
 import { useFullscreen } from './useFullscreen.js';
 import { usePanels, type PanelId, type Panels } from './usePanels.js';
-import type { RoundView } from './useRoundView.js';
 import './focus.css';
 
 interface FocusShellProps {
@@ -43,7 +44,7 @@ interface FocusShellProps {
   readonly season?: boolean;
   // False in a game without a secret: the bar names no secret mode (T347).
   readonly mode?: boolean;
-  readonly view: RoundView;
+  readonly view: DockView;
   readonly style: CSSProperties;
   readonly layout: string;
   readonly viewerKey: string | null;
@@ -125,7 +126,7 @@ export function FocusShell(p: FocusShellProps): ReactElement {
           style={p.style}
           data-testid="round-view"
           data-layout={p.layout}
-          // Desktop or phone (./useRoundView, T141): ./round.css lays the round out by it.
+          // Desktop or phone (the kit's useDockView, T141): ./round.css lays the round out by it.
           data-view={p.view}
           data-status={p.state.status}
           // The open panel: on a desktop its column pushes the game aside (./round.css, O48).
