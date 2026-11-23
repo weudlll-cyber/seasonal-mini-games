@@ -11,9 +11,11 @@
  *                 per-account limit and the round's queue, nothing awaited. The others:
  *                 match.watch / match.unwatch (at most 3 matches, a match player also joins
  *                 their own room and counts as connected, the host joins the host room),
- *                 time.sync, team.choose (an account with match.join, as over HTTP),
- *                 match.prefs (a player's own pre-picks, as over HTTP, 04 §4.8 rule 8),
- *                 round.start / round.end / round.abort for the host, and the chat's
+ *                 time.sync, team.choose (an account with match.join, as over HTTP, one per
+ *                 `rate.teamChoosePerMin` interval), match.prefs (a player's own pre-picks,
+ *                 as over HTTP, 04 §4.8 rule 8), round.start / round.end / round.abort for
+ *                 the host (one per `rate.hostRoundCommandsPerMin` interval, shared with
+ *                 HTTP, 05 §5), and the chat's
  *                 chat.join / chat.leave / chat.send (./chatIntents).
  *                 Adapted from Bingo's intents.ts.
  * Depends on:     zod, socket.io (types), ../auth/rateLimit, ../match/*, ./chatIntents,
@@ -121,8 +123,9 @@ export function guessIntent(ctx: IntentContext, raw: unknown): Promise<Answer> {
   const { limits } = ctx.deps;
   if (!limits.allow(accountId, accountId))
     return Promise.resolve({ ok: false, code: 'RATE_LIMITED' });
+  const at = Date.now();
   return round.guess(accountId, { value: body.data.value }).then((answer) => {
-    limits.noteReply(accountId, answer.ok ? undefined : answer.code);
+    limits.noteReply(accountId, answer, at);
     return answer;
   });
 }
@@ -173,6 +176,7 @@ async function chooseTeam(ctx: IntentContext, body: z.infer<typeof teamData>): P
   const { accountId, permissions } = ctx.data.session;
   if (accountId === null) return { ok: false, code: 'SIGN_IN_REQUIRED' };
   if (!permissions.includes('match.join')) return { ok: false, code: 'FORBIDDEN' };
+  if (!ctx.deps.limits.allowTeam(accountId)) return { ok: false, code: 'RATE_LIMITED' };
   const match = await matchOr(ctx, body.code);
   if (match === null) return { ok: false, code: 'NOT_FOUND' };
   const ok = await ctx.deps.play.chooseTeam(match, accountId, body.team);
@@ -252,7 +256,11 @@ async function hostRound(
   const round = await ctx.deps.play.rounds.get(body.roundId);
   const match = round === null ? null : await matchById(ctx.deps.pool, round.matchId);
   if (round === null || match === null) return { ok: false, code: 'NOT_FOUND' };
-  if (match.hostId !== ctx.data.session.accountId) return { ok: false, code: 'NOT_THE_HOST' };
+  // A guest has no account, so never hosts (as over HTTP), also not a match whose host is gone.
+  const host = ctx.data.session.accountId;
+  if (host === null || match.hostId !== host) return { ok: false, code: 'NOT_THE_HOST' };
+  // One host command per interval, shared with HTTP (05 §5).
+  if (!ctx.deps.limits.allowHost(host)) return { ok: false, code: 'RATE_LIMITED' };
   if (t === 'round.start') return ctx.deps.play.startRound(match, round);
   if (t === 'round.end') return round.run({ type: 'end', reason: 'host' });
   if (body.reason === undefined) return { ok: false, code: 'VALIDATION_FAILED' };

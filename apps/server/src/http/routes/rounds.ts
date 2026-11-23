@@ -4,7 +4,8 @@
  * @brief  Rounds over HTTP: create, start, end, abort, state, the guess fallback, result, verify.
  *
  * Responsibility: the round routes of 06 §3.1. The match's host (T48) creates, starts,
- *                 ends and aborts; anyone allowed to watch reads the state (their own view, 02 §11); a roster player guesses through the same
+ *                 ends and aborts, one command per `rate.hostRoundCommandsPerMin` interval
+ *                 (RATE_LIMITED, 05 §5); anyone allowed to watch reads the state (their own view, 02 §11); a roster player guesses through the same
  *                 queue and checks as the socket (the HTTP fallback, with its own rate limit);
  *                 the result and the proof only after the end. Every answer names players by
  *                 their number in the match, never by account id; the state adds `you`, the
@@ -63,6 +64,7 @@ const STATUS: Record<string, number> = {
   ROUND_SETTINGS_INVALID: 422,
   RATE_LIMITED: 429,
   ROUND_BUSY: 503,
+  SERVER_BUSY: 503,
   INTERNAL: 500,
 };
 
@@ -70,6 +72,9 @@ export function sendReply(reply: FastifyReply, answer: Reply) {
   if (answer.ok) return reply.send(answer);
   return reply.status(STATUS[answer.code] ?? 409).send(answer);
 }
+
+// A host's round command inside its interval (`rate.hostRoundCommandsPerMin`, 05 §5).
+export const tooFast = (reply: FastifyReply) => reply.status(429).send({ code: 'RATE_LIMITED' });
 
 async function roundOr404(deps: RoundRouteDeps, request: FastifyRequest, reply: FastifyReply) {
   const round = await deps.play.rounds.get((request.params as { id: string }).id).catch(() => null);
@@ -117,6 +122,7 @@ function registerHostRoutes(app: FastifyInstance, deps: RoundRouteDeps): void {
     const match = await findMatch(deps.pool, (request.params as { code: string }).code);
     const actor = await hostOf(request, reply, match);
     if (actor === null || match === null) return reply;
+    if (!deps.limits.allowHost(actor.accountId)) return tooFast(reply);
     try {
       const round = await deps.play.createRound(match, actor.accountId, {
         choices: body.data.settings,
@@ -140,7 +146,9 @@ function registerHostRoutes(app: FastifyInstance, deps: RoundRouteDeps): void {
       const round = await roundOr404(deps, request, reply);
       if (round === null) return reply;
       const match = await matchById(deps.pool, round.matchId);
-      if ((await hostOf(request, reply, match)) === null || match === null) return reply;
+      const actor = await hostOf(request, reply, match);
+      if (actor === null || match === null) return reply;
+      if (!deps.limits.allowHost(actor.accountId)) return tooFast(reply);
       return sendReply(reply, await run(round, match, request.body));
     });
   };
@@ -185,8 +193,9 @@ function registerReadRoutes(app: FastifyInstance, deps: RoundRouteDeps): void {
     if (!deps.limits.allow(s.accountId, s.accountId, s.id)) {
       return sendReply(reply, { ok: false, code: 'RATE_LIMITED' });
     }
+    const at = Date.now();
     const answer = await round.guess(s.accountId, request.body);
-    deps.limits.noteReply(s.accountId, answer.ok ? undefined : answer.code);
+    deps.limits.noteReply(s.accountId, answer, at);
     return sendReply(reply, answer);
   });
 

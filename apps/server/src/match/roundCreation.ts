@@ -9,8 +9,9 @@
  *                 game's document with the host's choices (ROUND_SETTINGS_INVALID with the
  *                 refused key, O74), a match without teams overruling the team key of a game
  *                 that has teams (O34; a game without teams has no team keys, 04 §4.8 rule 3),
- *                 a fresh seed from the CSPRNG unless the Quick Test gives one, and the match
- *                 opened by its first round.
+ *                 a fresh seed from the CSPRNG unless the Quick Test gives one, no round
+ *                 beyond `match.maxConcurrentRounds` running on this server (SERVER_BUSY,
+ *                 08 §4), and the match opened by its first round.
  * Depends on:     node:crypto, @smg/application (settings), @smg/game-sdk, ../db/pool,
  *                 ../round/*, ../seasons/seasons, ./matches, ./playError, ./teams
  * Used by:        ./play
@@ -24,7 +25,7 @@ import { SEED_BYTES } from '@smg/game-sdk/crypto';
 
 import type { DbPool } from '../db/pool.js';
 import type { LiveRound } from '../round/liveRound.js';
-import type { Rounds } from '../round/rounds.js';
+import { RoundsFull, type Rounds } from '../round/rounds.js';
 import type { Seasons } from '../seasons/seasons.js';
 import { setMatchStatus, type MatchRow } from './matches.js';
 import { PlayError } from './playError.js';
@@ -68,26 +69,33 @@ export async function newRound(
   }
   const { season, source } = await seasonOf(deps.seasons, req);
   const doc = await deps.settings.view(`game.${match.gameId}`, []);
+  // Read at each creation (08 §4: takes effect for the next round).
+  const max = (await deps.settings.values('matchmaking'))['match.maxConcurrentRounds'] as number;
   try {
-    const round = await deps.rounds.create(match.gameId, {
-      matchId: match.id,
-      overrides: doc.overrides,
-      choices: {
-        ...req.choices,
-        ...(deps.rounds.teams(match.gameId) ? teamChoices(match) : {}),
-        'round.seasonSource': source,
+    const round = await deps.rounds.create(
+      match.gameId,
+      {
+        matchId: match.id,
+        overrides: doc.overrides,
+        choices: {
+          ...req.choices,
+          ...(deps.rounds.teams(match.gameId) ? teamChoices(match) : {}),
+          'round.seasonSource': source,
+        },
+        season,
+        seasonSource: source,
+        createdBy: hostId,
+        seed: req.seed ?? new Uint8Array(randomBytes(SEED_BYTES)),
+        fast: req.fast === true,
       },
-      season,
-      seasonSource: source,
-      createdBy: hostId,
-      seed: req.seed ?? new Uint8Array(randomBytes(SEED_BYTES)),
-      fast: req.fast === true,
-    });
+      max,
+    );
     if (match.status === 'lobby') await setMatchStatus(deps.pool, match.id, 'open');
     return round;
   } catch (error) {
     if (error instanceof RoundSettingsError)
       throw new PlayError('ROUND_SETTINGS_INVALID', error.message, error.field);
+    if (error instanceof RoundsFull) throw new PlayError('SERVER_BUSY');
     throw error;
   }
 }

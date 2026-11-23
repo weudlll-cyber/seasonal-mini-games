@@ -19,7 +19,8 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { findMatch, type MatchRow } from '../../match/matches.js';
 import type { Play } from '../../match/play.js';
 import { rememberNext, type SeriesRunner } from '../../match/series.js';
-import { createRoundBody, hostOf } from './rounds.js';
+import type { GuessLimits } from '../../round/guessLimits.js';
+import { createRoundBody, hostOf, tooFast } from './rounds.js';
 import { settingsRefusal } from './settingsBody.js';
 
 interface SeriesRouteDeps {
@@ -27,6 +28,7 @@ interface SeriesRouteDeps {
   readonly series: SeriesRunner;
   readonly settings: SettingsService;
   readonly pool: Parameters<typeof findMatch>[0];
+  readonly limits: GuessLimits;
 }
 
 const nextBody = createRoundBody.omit({ startNow: true });
@@ -41,6 +43,11 @@ async function hostMatch(
   if ((await hostOf(request, reply, match)) === null || match === null) return null;
   if ((await deps.series.seriesOf(match)) === null) {
     await reply.status(409).send({ code: 'NOT_A_SERIES' });
+    return null;
+  }
+  // The next round's settings and its start are host round commands (05 §5).
+  if (match.hostId !== null && !deps.limits.allowHost(match.hostId)) {
+    await tooFast(reply);
     return null;
   }
   return match;

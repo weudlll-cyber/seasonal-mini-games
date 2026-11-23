@@ -58,6 +58,8 @@ interface AuthDeps {
   readonly sessionEnds: SessionEnds;
   // Website mode: the sign-in route (`<base>auth/website`); null in local mode.
   readonly signInPath: string | null;
+  // Shared with the password change (./password), per account and address (O130).
+  readonly passwordLimit: RateLimiter;
 }
 
 const registerBody = z.object({
@@ -234,6 +236,8 @@ async function deletionConfirmed(
 async function deleteMe(request: FastifyRequest, reply: FastifyReply, deps: AuthDeps) {
   const accountId = request.session?.accountId ?? null;
   if (accountId === null) return reply.status(401).send({ code: 'SIGN_IN_REQUIRED' });
+  // The password change's limiter: a deletion checks the password too (O130).
+  if (!deps.passwordLimit.take(`${accountId}|${request.ip}`).allowed) return tooMany(reply);
   const confirmed = await deletionConfirmed(request, deps, accountId);
   if (confirmed !== 'ok') return reply.status(403).send({ code: confirmed });
   const sessions = await accountSessionIds(deps.pool, accountId);

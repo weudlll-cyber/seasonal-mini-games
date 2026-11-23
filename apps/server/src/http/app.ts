@@ -31,6 +31,7 @@ import Fastify, { type FastifyInstance, type FastifyServerOptions } from 'fastif
 
 import { PgAuditLog } from '../admin/pgAuditLog.js';
 import { PgSettingsStore } from '../admin/pgSettingsStore.js';
+import { RATE_RULES, RateLimiter } from '../auth/rateLimit.js';
 import { SessionEnds } from '../auth/sessionEnds.js';
 import { cookieConfig, registerSessions, type CookieConfig } from '../auth/sessionPlugin.js';
 import { createChat, type Chat } from '../chat/chat.js';
@@ -71,6 +72,9 @@ interface AppDeps {
   readonly pool: DbPool;
   // The installed games: the registry's, or a test's list with a phased fixture (09 §4.2).
   readonly games?: readonly InstalledGame[];
+  // The play limits' clock: a test suite's, so it never waits for a host's or a team's
+  // interval (../round/guessLimits); the real clock without one.
+  readonly limitsNow?: () => number;
 }
 
 export interface App {
@@ -165,12 +169,15 @@ function registerSignIn(
   const { env, pool, cookie, features, sessionEnds } = deps;
   const website = env.SMG_AUTH_MODE === 'website';
   const signInPath = signInPathOf(env);
-  registerAuthRoutes(fastify, { pool, cookie, features, sessionEnds, signInPath });
+  // One limiter for the two password checks of an account: its change and its deletion
+  // (per account and address, owner decision O130).
+  const passwordLimit = new RateLimiter(RATE_RULES.loginAccountIp);
+  registerAuthRoutes(fastify, { pool, cookie, features, sessionEnds, signInPath, passwordLimit });
   if (website) {
     registerWebsiteSignIn(fastify, { env, pool, cookie, sessionEnds });
     return;
   }
-  registerPasswordChange(fastify, { pool, sessionEnds });
+  registerPasswordChange(fastify, { pool, sessionEnds, limit: passwordLimit });
   // Development only: quick sign-in as host or player (never in a production build).
   if (env.SMG_DEV) registerDevSignIn(fastify, { pool, cookie, sessionEnds });
 }
@@ -195,6 +202,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
     embedOrigins: () => embeds.config().origins,
   });
   const metrics = createMetrics();
+  const observe = metrics.rounds;
   registerBasics(fastify, deps, metrics);
   const cookie = cookieConfig(!isDev, deps.env.SMG_BASE_PATH);
   const sessionEnds = new SessionEnds();
@@ -205,13 +213,11 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   registerAdminSettings(fastify, { settings, pool: deps.pool, website, chat: chatFallback });
   registerAdminAudit(fastify, audit);
   registerAdminAccounts(fastify, { pool: deps.pool, audit, sessionEnds });
-  const runtime = createRoundRuntime(deps.env, deps.pool, settings, {
-    observe: metrics.rounds,
-    games: deps.games,
-  });
+  // The installed games and the limits' clock come with `deps` (a test's, or none).
+  const runtime = createRoundRuntime(deps.env, deps.pool, settings, { ...deps, observe });
   attachSources(metrics, runtime);
   const { play, limits, store } = runtime;
-  registerMatchRoutes(fastify, { play, settings, series: runtime.series, pool: deps.pool });
+  registerMatchRoutes(fastify, { play, settings, series: runtime.series, pool: deps.pool, limits });
   registerRoundRoutes(fastify, { play, limits, store, pool: deps.pool });
   registerSeasonRoutes(fastify, { pool: deps.pool, seasons: runtime.seasons, audit });
   registerLeaderboardRoutes(fastify, { pool: deps.pool, audit });
