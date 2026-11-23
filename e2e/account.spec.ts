@@ -3,8 +3,9 @@
  * @module e2e
  * @brief  Register, sign out, sign in, change the password, sign out; wrong password; too many tries.
  *
- * Responsibility: a new account registers from the top bar, signs out, signs in again,
- *                 changes its password on the account page and signs out; a wrong password
+ * Responsibility: a new account registers from the top bar (on a phone from its folded Menu),
+ *                 signs out, signs in again, changes its password on the account page and
+ *                 signs out; a wrong password
  *                 and an unknown e-mail get the same plain answer; repeated failures for one
  *                 account get the rate-limit message (Chromium only, so the full suite stays
  *                 under the per-address login limit). The test deletes its account
@@ -36,8 +37,18 @@ async function deleteAccount(page: Page, email: string, password: string): Promi
   expect(r.status(), 'test account deleted').toBe(204);
 }
 
+// One of the header's account items: on a phone the kit's header folds them into its Menu, which
+// is opened first.
+async function fromBar(page: Page, testId: string) {
+  const menu = page.getByTestId('menu-button');
+  if ((await menu.isVisible()) && (await menu.getAttribute('aria-expanded')) !== 'true') {
+    await menu.click();
+  }
+  return page.getByTestId(testId);
+}
+
 async function signInWithForm(page: Page, email: string, password: string): Promise<void> {
-  await page.getByTestId('sign-in').click();
+  await (await fromBar(page, 'sign-in')).click();
   await page.getByTestId('sign-in-email').fill(email);
   await page.getByTestId('sign-in-password').fill(password);
   await page.getByTestId('sign-in-submit').click();
@@ -51,23 +62,23 @@ test('register, sign out, sign in, change the password, sign out', async ({ page
   let password: string | null = null;
   try {
     await page.goto('/#/');
-    await page.getByTestId('register').click();
+    await (await fromBar(page, 'register')).click();
     await page.getByTestId('register-displayName').fill(name);
     await page.getByTestId('register-email').fill(email);
     await page.getByTestId('register-password').fill(PASSWORD);
     if (shots) await captureLook(page, SHOTS_DIR, 'register');
     await page.getByTestId('register-submit').click();
-    await expect(page.getByTestId('signed-in-as')).toContainText(`${name} (player)`);
+    await expect(await fromBar(page, 'signed-in-as')).toContainText(`${name} (player)`);
     password = PASSWORD;
     await page.getByTestId('sign-out').click();
-    await expect(page.getByTestId('sign-in')).toBeVisible();
+    await expect(await fromBar(page, 'sign-in')).toBeVisible();
     if (shots) {
       await page.getByTestId('sign-in').click();
       await captureLook(page, SHOTS_DIR, 'sign-in');
       await page.goto('/#/');
     }
     await signInWithForm(page, email, PASSWORD);
-    await page.getByTestId('signed-in-as').click();
+    await (await fromBar(page, 'signed-in-as')).click();
     await page.getByTestId('password-current').fill(PASSWORD);
     await page.getByTestId('password-next').fill(NEW_PASSWORD);
     await page.getByTestId('password-again').fill(NEW_PASSWORD);
@@ -75,8 +86,8 @@ test('register, sign out, sign in, change the password, sign out', async ({ page
     await expect(page.getByTestId('password-done')).toBeVisible();
     password = NEW_PASSWORD;
     if (shots) await captureLook(page, SHOTS_DIR, 'account');
-    await page.getByTestId('sign-out').click();
-    await expect(page.getByTestId('sign-in')).toBeVisible();
+    await (await fromBar(page, 'sign-out')).click();
+    await expect(await fromBar(page, 'sign-in')).toBeVisible();
   } finally {
     if (password !== null) await deleteAccount(page, email, password);
   }
@@ -92,7 +103,7 @@ test('too many tries for one account get the rate-limit message', async ({ page 
   test.skip(info.project.name !== 'chromium', 'Chromium only: the login limit is per address');
   const email = `limit${Date.now().toString(36)}@example.com`;
   await page.goto('/#/');
-  await page.getByTestId('sign-in').click();
+  await (await fromBar(page, 'sign-in')).click();
   for (let i = 0; i < 6; i += 1) {
     await page.getByTestId('sign-in-email').fill(email);
     await page.getByTestId('sign-in-password').fill('not the password');
