@@ -9,8 +9,10 @@
  *                 (a TOTP or recovery code stamps the session), …/disable (needs a current
  *                 code). Codes are limited per account (RATE_RULES.twoFactor); a wrong one is
  *                 422 AUTH_2FA_INVALID. Enrol, confirm, disable and the use of a recovery code
- *                 are audited. With `features.twoFactor` on, the gate of ./adminGuard is
- *                 installed; with it off nothing changes for admin writes.
+ *                 are audited. The factor gets two keys derived from the game's secret, one
+ *                 sealing the TOTP secrets, one keying the recovery codes (kit K20). With
+ *                 `features.twoFactor` on, the gate of ./adminGuard is installed; with it off
+ *                 nothing changes for admin writes.
  * Depends on:     fastify, @smg/application (AuditLog), @smg/contracts, ../../auth/*,
  *                 ../../config/*, ../../db/pool
  * Used by:        ../app
@@ -103,7 +105,13 @@ async function checked(ctx: Ctx, request: FastifyRequest, reply: FastifyReply) {
 }
 
 export function registerTwoFactor(app: FastifyInstance, deps: Deps): void {
-  const factor = new TwoFactor(deps.pool, derivedKey(roundKeyFrom(deps.env), 'smg totp secrets'));
+  const root = roundKeyFrom(deps.env);
+  // Two keys from the game's secret, each for one purpose (kit K20: the recovery key is never
+  // the TOTP key).
+  const factor = new TwoFactor(deps.pool, {
+    secrets: derivedKey(root, 'smg totp secrets'),
+    recovery: derivedKey(root, 'smg recovery codes'),
+  });
   const ctx: Ctx = { factor, limit: new RateLimiter(RATE_RULES.twoFactor), audit: deps.audit };
   if (deps.features.twoFactor) app.decorate('stepUpGate', (id: string) => factor.refusal(id));
   app.get('/api/v1/me/2fa', async (request, reply) => {

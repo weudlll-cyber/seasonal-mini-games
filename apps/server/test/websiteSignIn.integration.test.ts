@@ -7,7 +7,8 @@
  *                 test runner's address as the trusted proxy): GET <base>auth/website with the
  *                 headers from the trusted peer with the secret creates the account (no
  *                 password, no e-mail), maps the roles (admin → game admin, can-host → host,
- *                 never super_admin or security_admin; `organiser` alone does not host), stores
+ *                 never super_admin or security_admin; `organiser` alone does not host; the
+ *                 role header is one of the contract's roles, a list is no identity), stores
  *                 the Discord steps and shows them beside the name in the match's players and
  *                 standings and on the boards, starts a rotated game session and redirects to
  *                 `next`; a later sign-in follows a new name and recomputes roles and steps;
@@ -43,7 +44,11 @@ afterAll(async () => {
 }, SUITE_TIMEOUT_MS);
 
 const STEPS = [
-  { ladder: 'holder' as const, name: 'Acorn', icon: '/media/step-icons/0123.webp' },
+  {
+    ladder: 'holder' as const,
+    name: 'Acorn',
+    icon: '/media/step-icons/0123456789abcdef0123456789abcdef.webp',
+  },
   { ladder: 'farmer' as const, name: 'Sprout', icon: null },
 ];
 
@@ -124,7 +129,7 @@ describe('signing in through the website (O66)', () => {
 
 describe('website roles (O66)', () => {
   it('makes a website admin a game admin until the website drops the role', async () => {
-    const admin = await signedIn(app(), { id: '10', name: 'Ada', roles: 'member,admin' });
+    const admin = await signedIn(app(), { id: '10', name: 'Ada', roles: 'admin' });
     const id = admin.session.account?.id ?? '';
     expect(await rolesOf(id)).toEqual(['game_admin', 'player']);
     expect(admin.session.permissions).toContain('match.abort');
@@ -140,8 +145,17 @@ describe('website roles (O66)', () => {
   });
 
   it('never maps any website role to super_admin or security_admin', async () => {
+    // A list of roles (or a joined repeat of the header) is no identity at all.
     const all = 'super_admin,security_admin,game_admin,moderator,owner,admin,organiser';
-    const greedy = await signedIn(app(), { id: '13', name: 'Greedy', roles: all, canHost: 'true' });
+    const listed = await viaProxy(app(), { id: '13', name: 'Greedy', roles: all, canHost: 'true' });
+    expect([listed.statusCode, listed.json()]).toEqual([403, { code: 'NO_WEBSITE_USER' }]);
+    // The strongest role the contract has, with the host right: no more than these.
+    const greedy = await signedIn(app(), {
+      id: '13',
+      name: 'Greedy',
+      roles: 'admin',
+      canHost: 'true',
+    });
     expect(await rolesOf(greedy.session.account?.id ?? '')).toEqual([
       'game_admin',
       'organizer',

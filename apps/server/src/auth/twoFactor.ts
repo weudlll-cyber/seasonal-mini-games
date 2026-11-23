@@ -6,44 +6,54 @@
  * Responsibility: one factor per account (smg.totp_factors): enrolment draws a 20-byte secret
  *                 sealed at rest under its own derived key and replaces an unconfirmed one;
  *                 the first right code confirms it and answers ten recovery codes once, kept
- *                 as SHA-256 hashes; a TOTP step is accepted once (`last_step`, raised in the
+ *                 as HMAC-SHA-256 under the game's recovery key (the kit's 'grouped' style,
+ *                 kit DECISIONS K20); a code stored before as plain SHA-256 still works until
+ *                 used (K27: the lookup asks for both hashes); a TOTP step is accepted once (`last_step`, raised in the
  *                 same statement that checks it, so two requests cannot both use it); a
  *                 recovery code works once. A right code stamps the session's
  *                 `last_2fa_at` (the step-up). Disabling removes factor and codes. The
  *                 admin-write gate reads whether a session has a factor and a fresh step-up.
- * Depends on:     node:crypto, pg, @smg/contracts, ../db/pool, ../round/seal, ./totp
+ * Depends on:     pg, @seasonal/kit/server (TOTP, recovery codes), @smg/contracts, ../db/pool,
+ *                 ../round/seal
  * Used by:        ../http/routes/twoFactor
  * Spec:           Bingo 03 §2, §3; Bingo 05 §2.1; Bingo 11 §1
  */
-import { createHash, randomBytes, randomInt } from 'node:crypto';
-
+import {
+  base32Encode,
+  looksLikeRecoveryCode,
+  matchingStep,
+  newRecoveryCodes,
+  newSecret,
+  otpauthUri,
+  recoveryHash,
+  recoveryLookups,
+} from '@seasonal/kit/server';
 import type { TwoFactorStatusView } from '@smg/contracts';
 import type pg from 'pg';
 
 import { inTransaction, type DbPool } from '../db/pool.js';
 import { openSeed, sealSeed } from '../round/seal.js';
-import { base32Encode, matchingStep, otpauthUri } from './totp.js';
 
 // A step-up holds for ten minutes (Bingo 03 §3).
 const STEP_UP = "interval '10 minutes'";
-const RECOVERY_CODES = 10;
-// Lower case and digits without look-alikes; "xxxx-xxxx" as TwoFactorCodeBody expects.
-const CODE_ALPHABET = 'abcdefghjkmnpqrstuvwxyz23456789';
+// The authenticator app's issuer, and the recovery codes' form: "xxxx-xxxx" as
+// TwoFactorCodeBody expects.
+const ISSUER = 'Seasonal Mini Games';
+const STYLE = 'grouped';
 
 type CheckResult = 'totp' | 'recovery' | 'invalid' | 'notEnrolled';
 
-const hashOf = (code: string) => createHash('sha256').update(code).digest();
-
-function recoveryCode(): string {
-  const part = () =>
-    Array.from({ length: 4 }, () => CODE_ALPHABET[randomInt(CODE_ALPHABET.length)]).join('');
-  return `${part()}-${part()}`;
+// The two keys, each derived for its purpose (../config/roundKey): one seals the TOTP
+// secrets, the other keys the recovery codes' hashes, never the same (kit K20).
+export interface TwoFactorKeys {
+  readonly secrets: Buffer;
+  readonly recovery: Buffer;
 }
 
 export class TwoFactor {
   constructor(
     private readonly pool: DbPool,
-    private readonly key: Buffer,
+    private readonly keys: TwoFactorKeys,
     private readonly now: () => number = Date.now,
   ) {}
 
@@ -76,15 +86,15 @@ export class TwoFactor {
     accountId: string,
     account: string,
   ): Promise<{ otpauthUri: string; secret: string } | null> {
-    const secret = new Uint8Array(randomBytes(20));
+    const secret = newSecret();
     const r = await this.pool.query(
       `INSERT INTO smg.totp_factors (account_id, secret_enc) VALUES ($1, $2)
        ON CONFLICT (account_id) DO UPDATE SET secret_enc = $2, last_step = 0, created_at = now()
          WHERE smg.totp_factors.confirmed_at IS NULL`,
-      [accountId, sealSeed(secret, this.key)],
+      [accountId, sealSeed(secret, this.keys.secrets)],
     );
     if (r.rowCount !== 1) return null;
-    return { otpauthUri: otpauthUri(account, secret), secret: base32Encode(secret) };
+    return { otpauthUri: otpauthUri(secret, account, ISSUER), secret: base32Encode(secret) };
   }
 
   // The first right code confirms the factor: the ten recovery codes, shown once; null when
@@ -98,19 +108,19 @@ export class TwoFactor {
       );
       const row = f.rows[0];
       if (row === undefined) return null;
-      const secret = openSeed(row.secret_enc, this.key);
+      const secret = openSeed(row.secret_enc, this.keys.secrets);
       const step = matchingStep(secret, code, this.now(), Number(row.last_step));
       if (step === null) return null;
       await c.query(
         'UPDATE smg.totp_factors SET confirmed_at = now(), last_step = $2 WHERE account_id = $1',
         [accountId, step],
       );
-      const codes = Array.from({ length: RECOVERY_CODES }, recoveryCode);
+      const codes = [...newRecoveryCodes(STYLE)];
       await c.query('DELETE FROM smg.recovery_codes WHERE account_id = $1', [accountId]);
       for (const one of codes) {
         await c.query(
           'INSERT INTO smg.recovery_codes (account_id, code_hash) VALUES ($1, $2) ON CONFLICT DO NOTHING',
-          [accountId, hashOf(one)],
+          [accountId, recoveryHash(one, STYLE, this.keys.recovery)],
         );
       }
       await stamp(c, sessionId);
@@ -128,13 +138,13 @@ export class TwoFactor {
       );
       const row = f.rows[0];
       if (row === undefined) return 'notEnrolled';
-      const result = code.includes('-')
-        ? await useRecoveryCode(c, accountId, code)
+      const result = looksLikeRecoveryCode(code)
+        ? await useRecoveryCode(c, accountId, recoveryLookups(code, STYLE, this.keys.recovery))
         : await useStep(
             c,
             accountId,
             matchingStep(
-              openSeed(row.secret_enc, this.key),
+              openSeed(row.secret_enc, this.keys.secrets),
               code,
               this.now(),
               Number(row.last_step),
@@ -179,11 +189,16 @@ async function useStep(c: Db, accountId: string, step: number | null): Promise<C
   return r.rowCount === 1 ? 'totp' : 'invalid';
 }
 
-async function useRecoveryCode(c: Db, accountId: string, code: string): Promise<CheckResult> {
+// The code's keyed hash or its legacy SHA-256 (kit K27), whichever is stored.
+async function useRecoveryCode(
+  c: Db,
+  accountId: string,
+  lookups: readonly Buffer[],
+): Promise<CheckResult> {
   const r = await c.query(
     `UPDATE smg.recovery_codes SET used_at = now()
-     WHERE account_id = $1 AND code_hash = $2 AND used_at IS NULL`,
-    [accountId, hashOf(code)],
+     WHERE account_id = $1 AND code_hash = ANY($2) AND used_at IS NULL`,
+    [accountId, lookups],
   );
   return r.rowCount === 1 ? 'recovery' : 'invalid';
 }

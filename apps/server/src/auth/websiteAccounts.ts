@@ -12,17 +12,18 @@
  *                 super_admin or security_admin), the e-mail verification mirrored, the Discord
  *                 steps stored, the last sign-in. A suspended or deleted game account is
  *                 refused. Never links by e-mail. Adapted from Bingo's websiteAccounts.ts.
- * Depends on:     pg (types), ../db/pool, ./accounts, ./websiteIdentity, ../integration/handoff
+ * Depends on:     pg (types), @seasonal/kit/server (mappedRoles, WebsiteIdentity), ../db/pool,
+ *                 ./accounts, ../integration/handoff
  * Used by:        ../http/routes/websiteSignIn, ../integration/accountChanges (websiteProvider)
  * Spec:           docs/spec/07-integration.md §7; docs/spec/06-data-model-api-realtime.md §1;
  *                 Bingo 07 §2.1, §2.3
  */
+import { mappedRoles, type WebsiteIdentity } from '@seasonal/kit/server';
 import type pg from 'pg';
 
 import { inTransaction, type DbPool } from '../db/pool.js';
 import { applyRoles, nameCandidates } from '../integration/handoff.js';
 import { createLinkedAccount } from './accounts.js';
-import { mappedRoles, type WebsiteIdentity } from './websiteIdentity.js';
 
 interface Linked {
   readonly account_id: string;

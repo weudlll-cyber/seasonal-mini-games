@@ -8,14 +8,18 @@
  *                 (AUTH_2FA_REQUIRED) and a step-up within 10 minutes (AUTH_STEP_UP_REQUIRED),
  *                 reads never; the secret is sealed at rest; the first right code confirms and
  *                 answers ten recovery codes once; a TOTP step and a recovery code work once;
- *                 disabling needs a code; enrol, confirm, recovery-code use and disable are
- *                 audited. With the feature off the same writes pass without any factor.
- * Depends on:     vitest, ../src/auth/totp, ./harness, ./session
+ *                 new recovery codes are stored keyed, and a code stored as plain SHA-256
+ *                 before the kit still works once (kit K27); disabling needs a code; enrol,
+ *                 confirm, recovery-code use and disable are audited. With the feature off the same writes pass without any factor.
+ * Depends on:     vitest, node:crypto, @seasonal/kit/server (base32Decode, hotp, stepAt), ./harness,
+ *                 ./session
  * Spec:           Bingo 03 §2, §3; Bingo 05 §2.1, §3; Bingo 11 §1
  */
+import { createHash } from 'node:crypto';
+
+import { base32Decode, hotp, stepAt } from '@seasonal/kit/server';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { base32Decode, hotp, stepAt } from '../src/auth/totp.js';
 import { buildOn, startHarness, stopHarness, SUITE_TIMEOUT_MS, type Harness } from './harness.js';
 import { signIn, type Client } from './session.js';
 
@@ -105,7 +109,35 @@ describe('two-factor step-up with the feature on', () => {
     expect((await stepUp(hotp(secret, s0 + 1))).json()).toMatchObject({ stepUpNeeded: false });
     expect((await write(admin)).statusCode).toBe(200);
   });
+});
 
+describe('recovery codes stored before the kit (kit K27)', () => {
+  it('stores new recovery codes keyed and keeps a legacy SHA-256 code working once', async () => {
+    const sha256 = (code: string) => createHash('sha256').update(code).digest();
+    const stored = await h.pool.query<{ account_id: string; code_hash: Buffer }>(
+      'SELECT account_id, code_hash FROM smg.recovery_codes',
+    );
+    const plain = new Set(codes.map((c) => sha256(c).toString('hex')));
+    expect(stored.rows.some((row) => plain.has(row.code_hash.toString('hex')))).toBe(false);
+    // A code stored before the kit, as plain SHA-256 of its text (kit K27).
+    await h.pool.query('INSERT INTO smg.recovery_codes (account_id, code_hash) VALUES ($1, $2)', [
+      stored.rows[0]?.account_id,
+      sha256('abcd-efgh'),
+    ]);
+    await expire(admin);
+    expect((await stepUp('abcd-efgh')).statusCode).toBe(200);
+    // Used once: marked used (a second try would spend one of the account's ten codes a
+    // quarter of an hour, which the tests after this one need).
+    const used = await h.pool.query(
+      'SELECT 1 FROM smg.recovery_codes WHERE code_hash = $1 AND used_at IS NOT NULL',
+      [sha256('abcd-efgh')],
+    );
+    expect(used.rowCount).toBe(1);
+    expect(await status()).toMatchObject({ stepUpNeeded: false, recoveryCodesLeft: 10 });
+  });
+});
+
+describe('two-factor recovery codes and disabling with the feature on', () => {
   it('accepts a recovery code once, disables with a code, and audits it all', async () => {
     await expire(admin);
     const [first = '', second = ''] = codes;
@@ -129,6 +161,8 @@ describe('two-factor step-up with the feature on', () => {
       'twoFactor.disable',
       // The code that disabled it was a recovery code too.
       'twoFactor.recoveryCode',
+      'twoFactor.recoveryCode',
+      // The legacy code of the test before.
       'twoFactor.recoveryCode',
       'twoFactor.confirm',
       'twoFactor.enrol',
