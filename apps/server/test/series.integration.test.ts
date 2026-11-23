@@ -9,7 +9,9 @@
  *                 starts the next round at once, others may not, and once a round runs Start
  *                 next round now is ROUND_RUNNING; the next round started without the minimum;
  *                 after the last round's pause the match closes itself with `complete`; a
- *                 match of a guess game is no series.
+ *                 next round the server refuses as full stays due, uncounted, past its pause
+ *                 (Start next round now is SERVER_BUSY) and starts once a running round ended
+ *                 (O139); a match of a guess game is no series.
  * Depends on:     vitest, socket.io-client, @smg-game/registry (and its testing entry), ./*
  * Spec:           docs/spec/04-software-architecture.md §4.8 rule 7; docs/spec/06-data-model-api-realtime.md §3.1
  */
@@ -18,7 +20,9 @@ import { SIDES_FIXTURE, SIDES_PLAN, SIDES_SERIES } from '@smg-game/registry/test
 import type { Socket } from 'socket.io-client';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { setSettings } from './chatKit.js';
 import { SUITE_TIMEOUT_MS } from './harness.js';
+import { signIn } from './session.js';
 import { startSocketKit, type SocketKit, type Who } from './socketKit.js';
 
 let kit: SocketKit;
@@ -144,4 +148,48 @@ describe('a series of rounds (04 §4.8 rule 7)', () => {
     expect(put.json<{ code: string }>().code).toBe('NOT_A_SERIES');
     expect((await details(code)).series).toBeNull();
   });
+});
+
+describe('a series while the server is full (O139)', () => {
+  it('keeps the next round due while the server is full, then starts it (O139)', async () => {
+    const { code } = await seriesMatch();
+    // A round of another match, and the limit set while the series' first round runs: once
+    // that one ended, the server is full.
+    const other = await kit.openMatch([]);
+    opened.push(other);
+    const blocker = await kit.clients.host.post(`/api/v1/matches/${other}/rounds`, {
+      settings: {},
+      season: 'spring',
+    });
+    const first = await kit.clients.host.post(`/api/v1/matches/${code}/rounds`, {
+      settings: { 'round.countdownS': 3 },
+      season: 'summer',
+      startNow: true,
+    });
+    const firstId = first.json<{ id: string }>().id;
+    const admin = await signIn(kit.harness.built.fastify, 'admin');
+    const restore = await setSettings(admin, 'matchmaking', {
+      'match.maxConcurrentRounds': { value: kit.harness.built.runtime.rounds.running() - 1 },
+    });
+    try {
+      await until(code, (d) => d.round?.status === 'ended' && d.series?.nextAt != null);
+      await sleep(SIDES_SERIES.pauseMs + 4_000);
+      const pending = await kit.harness.pool.query<{ attempts: number }>(
+        `SELECT a.attempts FROM smg.scheduled_actions a JOIN smg.matches m
+           ON m.id::text = a.payload->>'matchId'
+         WHERE a.kind = 'match_autostart' AND m.code = $1`,
+        [code],
+      );
+      expect(pending.rows).toEqual([{ attempts: 0 }]);
+      expect((await details(code)).round?.id).toBe(firstId);
+      const start = await kit.clients.host.post(`/api/v1/matches/${code}/next-round/start`, {});
+      expect([start.statusCode, start.json<{ code: string }>().code]).toEqual([503, 'SERVER_BUSY']);
+      const blockerId = blocker.json<{ id: string }>().id;
+      await kit.clients.host.post(`/api/v1/rounds/${blockerId}/abort`, { reason: 'test' });
+      const next = await until(code, (d) => d.round !== null && d.round.id !== firstId, 15_000);
+      expect(next.status).not.toBe('closed');
+    } finally {
+      await restore();
+    }
+  }, 90_000);
 });
