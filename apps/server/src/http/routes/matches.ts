@@ -4,7 +4,8 @@
  * @brief  Games and matches over HTTP: list, open, summary, join, leave, team, close, abort.
  *
  * Responsibility: the match routes of 06 §3.1 with their permissions (`match.create` to
- *                 open, `match.join` to join, the match's host for close and abort), every body
+ *                 open, `match.join` to join and to change team, one change per
+ *                 `rate.teamChoosePerMin` interval, the match's host for close and abort), every body
  *                 validated with zod. The host joins their own match as a player when opening
  *                 it, and plays along (O16); a game without season teams gets a match without
  *                 them (04 §4.8 rule 3), a series' host routes (./series) and a player's own
@@ -16,7 +17,7 @@
  *                 viewer's own (T104). The host switches "Show on the website" while the
  *                 match is open (`PUT …/website`, O125, ../../match/website).
  * Depends on:     fastify, zod, @smg/application, @smg/contracts (shapes), ../../match/*,
- *                 ../../league/boards (match standings), ./adminGuard
+ *                 ../../league/boards (match standings), ../../round/guessLimits, ./adminGuard
  * Used by:        ../app
  * Spec:           docs/spec/06-data-model-api-realtime.md §3.1; docs/spec/02-game-guess-the-number.md §2
  */
@@ -40,6 +41,8 @@ import type { Play } from '../../match/play.js';
 import type { SeriesRunner } from '../../match/series.js';
 import { registerPrefsRoutes } from './prefs.js';
 import { registerSeriesRoutes } from './series.js';
+import { tooFast } from './rounds.js';
+import type { GuessLimits } from '../../round/guessLimits.js';
 import { PlayError } from '../../match/playError.js';
 import { playerSteps, withSteps } from '../../match/playerSteps.js';
 import { forViewer } from '../../match/publicIds.js';
@@ -75,6 +78,7 @@ interface MatchRouteDeps {
   readonly series: SeriesRunner;
   readonly settings: SettingsService;
   readonly pool: Parameters<typeof findMatch>[0];
+  readonly limits: GuessLimits;
 }
 
 function summaryOf(m: MatchRow): MatchSummaryView {
@@ -233,6 +237,7 @@ function registerPlayerRoutes(app: FastifyInstance, deps: MatchRouteDeps): void 
     if (actor === null) return reply;
     const body = teamBody.safeParse(request.body);
     if (!body.success) return reply.status(400).send({ code: 'VALIDATION_FAILED' });
+    if (!deps.limits.allowTeam(actor.accountId)) return tooFast(reply);
     const match = await matchOr404(deps, (request.params as { code: string }).code, reply);
     if (match === null) return reply;
     try {

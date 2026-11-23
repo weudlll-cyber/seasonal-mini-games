@@ -19,7 +19,9 @@ type PlayCode =
   | 'TEAMS_LOCKED'
   | 'TEAM_LOCKED'
   | 'TEAMS_OFF'
-  | 'MATCH_CLOSED';
+  | 'MATCH_CLOSED'
+  // More rounds running on this server than `match.maxConcurrentRounds` allows (08 §4).
+  | 'SERVER_BUSY';
 
 export class PlayError extends Error {
   constructor(
