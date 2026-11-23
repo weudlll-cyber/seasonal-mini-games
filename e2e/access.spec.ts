@@ -11,13 +11,14 @@
  *                 every admin area, focus mode with its Players panel, and a docked match's
  *                 chat (on a phone its sheet); the WCAG 2.2 AA tags hold axe's `target-size`,
  *                 24 px pointer targets (kit DECISIONS K33, WCAG 2.5.8).
- * Depends on:     @playwright/test, @axe-core/playwright, ./play, ./testStack
+ * Depends on:     @playwright/test, @axe-core/playwright, ./play, ./mindGames, ./testStack
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 9); docs/spec/02-game-guess-the-number.md §12
  */
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Browser, type Page } from '@playwright/test';
 
-import { abortMatch, call, closeAll, hostMenu, ownRows, person } from './play.js';
+import { mindQuickTest, startRound } from './mindGames.js';
+import { abortMatch, call, closeAll, hostMenu, ownRows, person, roundOpen } from './play.js';
 import { ADMIN_URL } from './testStack.js';
 
 async function noSeriousViolations(page: Page, where: string): Promise<void> {
@@ -154,17 +155,13 @@ async function focusMode(browser: Browser, size: Size): Promise<void> {
 
 // A docked match (Seasonal Mind Games): the chat under the round, on a phone its sheet open.
 async function dockedChat(browser: Browser, size: Size): Promise<void> {
-  const p = await person(browser, 'player-1', size);
-  const started = await call<{ matchCode: string }>(p, 'POST', '/dev/quicktest', {
-    gameId: 'mind-games',
-    bots: 1,
-  });
+  const p = await person(browser, 'host', size);
+  let code = '';
   try {
-    await p.page.goto(`./#/match/${started.matchCode}`);
-    // The dock is the round's: it exists once the match page has left its waiting area.
-    await expect(p.page.getByTestId('match')).toHaveAttribute('data-phase', 'live', {
-      timeout: 60_000,
-    });
+    // From the lobby, as the Mind Games journeys do: the round starts when the host says so.
+    code = await mindQuickTest(p, { fields: { 'Total length': '40' }, bots: 3 });
+    await startRound(p);
+    await roundOpen(p.page);
     await expect(p.page.getByTestId('chat-dock')).toBeVisible();
     await noSeriousViolations(p.page, at(size, 'docked chat'));
     if (size.width < 900) {
@@ -173,7 +170,7 @@ async function dockedChat(browser: Browser, size: Size): Promise<void> {
       await noSeriousViolations(p.page, at(size, "docked chat's sheet"));
     }
   } finally {
-    await abortMatch(p, started.matchCode);
+    if (code !== '') await abortMatch(p, code);
     await closeAll([p]);
   }
 }
