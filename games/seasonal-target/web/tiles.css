@@ -13,7 +13,7 @@
  *                 two quarters a fixed green with a "Hint" tag (O51, O61), fallen tiles hatched (a
  *                 pattern, not colour alone), the viewer's
  *                 own tiles framed inside, an ink ring around the viewer's own colour, the
- *                 first guesser's tag and marker in the corner (O62; the right edge column's at its right, so none reaches past the board, O111), the number moved clear
+ *                 first guesser's tag and marker in the corner (O62; the right edge column's at its right, so none reaches past the board, O111; on the opaque surface in dark, O140), the number moved clear
  *                 of it, a highlighted player's tiles ringed and the other guessed ones
  *                 faded, the selection outlined outside the tile in the text colour, the
  *                 result's target ringed. Numbers scale with their tile (container units).
@@ -203,6 +203,13 @@
   color: var(--color-text);
   font-size: max(0.5rem, 26cqmin);
   line-height: 1.1;
+}
+
+/* In dark the card colour is translucent, so the tile's fill showed through under the light
+   text (1.7:1 on a light step): the tag sits on the opaque surface instead, the theme's text on
+   it at 4.5:1 or more (O140). */
+:root[data-theme='dark'] .st-tag {
+  background: var(--color-surface);
 }
 
 /* A tag wider than its tile reaches into the next one; in the right edge column it hangs from
