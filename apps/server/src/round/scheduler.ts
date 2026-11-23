@@ -8,7 +8,9 @@
  *                 through its round in the order the rows were written (for one round its due
  *                 order: the countdown's batch writes `round_open` before `round_time_up`), and
  *                 marks it done; a failing action is
- *                 retried up to five times with a growing delay. Rows are written by the
+ *                 retried up to five times with a growing delay; one that cannot run yet
+ *                 (`NotYet`, a series' next round while the server is full) comes again every
+ *                 2 s without counting, until it runs (O139). Rows are written by the
  *                 batch that starts a countdown (./pgRoundStore), so a restarted server
  *                 continues every round. The round itself catches up with time, so a late
  *                 firing changes nothing (DECISIONS T32). A `match_autostart` row (a series'
@@ -24,6 +26,11 @@ import type { DbPool } from '../db/pool.js';
 import type { Rounds } from './rounds.js';
 
 const MAX_ATTEMPTS = 5;
+
+// An action that could not run yet and is to run again later without counting as a failure:
+// a series' next round refused while the server runs as many rounds as it can (O139).
+export class NotYet extends Error {}
+const NOT_YET_S = 2;
 
 interface ActionRow {
   id: string;
@@ -90,6 +97,14 @@ export class RoundScheduler {
         row.id,
       ]);
     } catch (error) {
+      if (error instanceof NotYet) {
+        await this.pool.query(
+          `UPDATE smg.scheduled_actions SET lease_until = NULL, done_at = NULL,
+             due_at = now() + make_interval(secs => $2) WHERE id = $1`,
+          [row.id, NOT_YET_S],
+        );
+        return;
+      }
       const attempts = row.attempts + 1;
       console.error(
         `[smg] action ${row.kind} for ${row.round_id} failed (${String(attempts)}):`,

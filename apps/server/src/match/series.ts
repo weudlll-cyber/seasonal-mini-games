@@ -11,9 +11,13 @@
  *                 players; or, after the last round, the match's close with its summary
  *                 (reason `complete`). An action runs once: the scheduler and the host's Start
  *                 next round now both claim it first. An aborted round schedules nothing; the
- *                 host starts the next by hand and the series goes on from there (T297). A start
+ *                 host starts the next by hand and the series goes on from there (T297). A next
+ *                 round the server refuses as full (SERVER_BUSY) leaves the action due: the
+ *                 scheduler tries again until a running round has ended, the host's click gets
+ *                 the refusal, and the pause's countdown stays at 0 meanwhile (O139). A start
  *                 schedules what a restart missed (`sweep`).
- * Depends on:     ../db/pool, ../round/* (types), ./matches, ./play (types)
+ * Depends on:     ../db/pool, ../round/* (types), ../round/scheduler (NotYet), ./matches,
+ *                 ./play (types), ./playError
  * Used by:        ../round/runtime, ../http/routes/series
  * Spec:           docs/spec/04-software-architecture.md §4.8 rule 7; docs/spec/06-data-model-api-realtime.md §2.1, §2.5, §3.1
  */
@@ -21,8 +25,10 @@ import type { Season } from '@smg/game-sdk';
 
 import type { DbPool } from '../db/pool.js';
 import type { LiveRound } from '../round/liveRound.js';
+import { NotYet } from '../round/scheduler.js';
 import { matchById, type MatchRow } from './matches.js';
 import type { Play } from './play.js';
+import { PlayError } from './playError.js';
 
 interface NextSettings {
   readonly choices: Readonly<Record<string, unknown>>;
@@ -111,22 +117,40 @@ export class SeriesRunner {
       [actionId],
     );
     const payload = claimed.rows[0]?.payload;
-    if (payload !== undefined) await this.fire(payload);
+    if (payload === undefined) return;
+    // The server is full (SERVER_BUSY): the action stays due, and the scheduler runs it again
+    // until a running round has ended (O139).
+    if (await this.busy(actionId, payload)) throw new NotYet();
   }
 
   // The host's Start next round now: the pending action of the match, at once.
-  async startNow(match: MatchRow): Promise<'started' | 'notASeries' | 'notInPause'> {
+  async startNow(match: MatchRow): Promise<'started' | 'notASeries' | 'notInPause' | 'busy'> {
     if ((await this.seriesOf(match)) === null) return 'notASeries';
-    const claimed = await this.pool.query<{ payload: Due }>(
+    const claimed = await this.pool.query<{ id: string; payload: Due }>(
       `UPDATE smg.scheduled_actions SET done_at = now()
        WHERE kind = 'match_autostart' AND done_at IS NULL AND payload->>'matchId' = $1::text
-       RETURNING payload`,
+       RETURNING id::text, payload`,
       [match.id],
     );
-    const payload = claimed.rows[0]?.payload;
-    if (payload === undefined) return 'notInPause';
-    await this.fire(payload);
-    return 'started';
+    const row = claimed.rows[0];
+    if (row === undefined) return 'notInPause';
+    // Refused while the server is full: the host hears it, and the series goes on (O139).
+    return (await this.busy(row.id, row.payload)) ? 'busy' : 'started';
+  }
+
+  // Fires a claimed action; true when the server refused its round as full (SERVER_BUSY), the
+  // action then due again, unclaimed.
+  private async busy(actionId: string, due: Due): Promise<boolean> {
+    try {
+      await this.fire(due);
+      return false;
+    } catch (error) {
+      if (!(error instanceof PlayError) || error.code !== 'SERVER_BUSY') throw error;
+      await this.pool.query('UPDATE smg.scheduled_actions SET done_at = NULL WHERE id = $1', [
+        actionId,
+      ]);
+      return true;
+    }
   }
 
   // Start-up: the last ended round of every open series match whose next step was not written.
