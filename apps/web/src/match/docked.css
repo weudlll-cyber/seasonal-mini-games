@@ -18,7 +18,8 @@
  *                 round (O109) is the exception: it fills the content's height as without the
  *                 dock, its guesses scrolling inside and its input dock right above the chat
  *                 bar. In the bar's form 'field' the sheet holds the messages only (the bar has
- *                 the field). The next round's row, Start now and bar under a game's own result
+ *                 the field); in the form 'line' the bar is the line alone, 44 px high (O109).
+ *                 The next round's row, Start now and bar under a game's own result
  *                 (./NextRound). Colours only from the tokens.
  * Spec:           docs/spec/02e-game-mind-games.md §11; docs/spec/02-game-guess-the-number.md §12
  */
@@ -49,6 +50,14 @@
 
 .sk-chat-dock-row > .chat-writer .chat-form {
   gap: 6px;
+}
+
+/* The bar's form 'line' (the list games, O109): only the line and the count, the bar 44 px
+   high with no padding above or below, so the list above keeps its room (the kit's dock pads
+   every form 4 px; with the keyboard open on a 375 × 667 phone that cut the list's head). */
+.sk-chat-dock[data-sk-view='phone'][data-sk-bar='line'] .sk-chat-dock-row {
+  padding: 0 12px;
+  border-radius: 14px;
 }
 
 /* The result and the pause: the bar, then the result in the whole width and exactly the height
