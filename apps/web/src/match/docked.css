@@ -201,7 +201,7 @@
 
 .next-round-when {
   margin: 0;
-  font-size: max(13px, calc(var(--fit, 1) * 18px));
+  font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * 18px));
   font-weight: var(--font-weight-strong);
 }
 

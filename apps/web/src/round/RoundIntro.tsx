@@ -27,7 +27,7 @@ import { SeasonIcon } from '../season/SeasonIcon.js';
 import { NO_SPECIAL, SEASON_NAMES, SPECIALS } from '../season/season.js';
 import { seconds } from './roundText.js';
 import { ruleOf } from './SeasonPill.js';
-import { useFitScale } from './useFit.js';
+import { useScreenFit } from './useFit.js';
 import './roundIntro.css';
 
 // Whole seconds until the round opens, never below 0.
@@ -82,7 +82,7 @@ export function RoundIntro(p: {
     state.game === null ? null : (p.game?.text.intro?.(state.game, state.secretMode) ?? null);
   const left = opensIn(state, p.now);
   // The card fits its space at the screen's scale (O111); its content changes only with these.
-  const fit = useFitScale<HTMLElement>(`${state.roundId}|${String(secret)}|${String(noSeason)}`);
+  const fit = useScreenFit<HTMLElement>(`${state.roundId}|${String(secret)}|${String(noSeason)}`);
   return (
     <section
       ref={fit}

@@ -39,7 +39,7 @@ export function NextRound(p: {
       aria-label="Next round"
       data-testid="next-round"
       // A fixed part of the result's screen: whole at the screen's scale (O111).
-      data-fit-fixed=""
+      data-sk-fit-fixed=""
     >
       <JoinLeave match={match} reload={p.reload} />
       {pausing ? (

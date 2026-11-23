@@ -86,7 +86,7 @@ async function closestInView(page: Page): Promise<void> {
     // What the check reads: the docked layout (it follows the game list, which loads after the
     // page) and the result's fitted scale; before them the result can stand in no scroll box.
     await expect(page.getByTestId('chat-dock')).toBeVisible({ timeout: 15_000 });
-    await expect(page.getByTestId('result')).toHaveAttribute('data-fit-scale', /\d/);
+    await expect(page.getByTestId('result')).toHaveAttribute('data-sk-fit-scale', /\d/);
     await expect(page.getByTestId('result-closest').locator('li').first()).toBeVisible();
     const m = await page.getByTestId('result').evaluate((res) => {
       // The result's scroll box: the nearest ancestor that scrolls or clips, at most the root.
@@ -98,7 +98,7 @@ async function closestInView(page: Page): Promise<void> {
         box = box.parentElement ?? document.documentElement;
       const closest = res.querySelector('[data-testid="result-closest"]') as HTMLElement;
       return {
-        scale: Number((res as HTMLElement).dataset['fitScale']),
+        scale: Number((res as HTMLElement).dataset['skFitScale']),
         left:
           box.getBoundingClientRect().top +
           box.clientHeight -

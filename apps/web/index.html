@@ -6,7 +6,8 @@
 
   Responsibility: load theme-init.js before the first paint (an external file: the CSP forbids
                   inline scripts; the kit's themeInit() serves it, vite.config.ts), then the
-                  React entry ./src/main.tsx into #root.
+                  React entry ./src/main.tsx into #root, which names the game for the kit's
+                  readable floors (data-sk-game, @seasonal/kit/fit.css).
   Depends on:     @seasonal/kit/vite (theme-init.js), src/main.tsx
   Spec:           Bingo 01 §13; Bingo 03 §7
 -->
@@ -19,7 +20,7 @@
     <script src="theme-init.js"></script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root" data-sk-game="mini-games"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

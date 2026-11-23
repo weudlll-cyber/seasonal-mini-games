@@ -51,7 +51,7 @@
 
 .round-intro-head h1 {
   margin: 0;
-  font-size: max(24px, calc(var(--fit, 1) * var(--font-size-ball)));
+  font-size: max(var(--sk-floor-display), calc(var(--fit, 1) * var(--font-size-ball)));
   line-height: 1;
 }
 
@@ -75,7 +75,7 @@
 
 .round-intro-special p {
   margin: 0;
-  font-size: max(13px, calc(var(--fit, 1) * var(--font-size-lead)));
+  font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * var(--font-size-lead)));
 }
 
 .round-intro-facts {
@@ -84,16 +84,16 @@
   list-style: none;
   display: grid;
   gap: 0.15rem;
-  font-size: max(13px, calc(var(--fit, 1) * 1rem));
+  font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * 1rem));
   font-weight: var(--font-weight-strong);
 }
 
 .round-intro-count {
   margin: 0;
-  font-size: max(13px, calc(var(--fit, 1) * var(--font-size-lead)));
+  font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * var(--font-size-lead)));
 }
 
 .round-intro-count strong {
-  font-size: max(24px, calc(var(--fit, 1) * var(--font-size-title)));
+  font-size: max(var(--sk-floor-display), calc(var(--fit, 1) * var(--font-size-title)));
   font-variant-numeric: tabular-nums;
 }

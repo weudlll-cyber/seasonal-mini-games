@@ -57,7 +57,7 @@
   align-items: center;
   gap: 0.5rem;
   min-width: 0;
-  min-height: max(22px, calc(var(--fit, 1) * 1.75rem));
+  min-height: max(var(--sk-floor-row), calc(var(--fit, 1) * 1.75rem));
   padding: 0 0.4rem;
   border-radius: 8px;
   white-space: nowrap;
@@ -67,14 +67,14 @@
   flex: none;
   min-width: 1.25rem;
   color: var(--color-text-muted);
-  font-size: max(13px, 0.875em);
+  font-size: max(var(--sk-floor-text), 0.875em);
   font-variant-numeric: tabular-nums;
 }
 
 .round-closest-words {
   flex: none;
   color: var(--color-text-muted);
-  font-size: max(13px, 0.875em);
+  font-size: max(var(--sk-floor-text), 0.875em);
 }
 
 /* A solve: the row on the season's tint, its words in the text colour and bold. */

@@ -22,7 +22,7 @@
 
 .mg-prefs-head {
   margin: 0;
-  font-size: max(13px, calc(var(--fit, 1) * 15px));
+  font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * 15px));
 }
 
 .mg-prefs-what {
@@ -44,7 +44,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  font-size: max(13px, calc(var(--fit, 1) * 15px));
+  font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * 15px));
 }
 
 .mg-prefs-round select {
