@@ -3,7 +3,7 @@
  * @module web/round
  * @brief  The result of a round: its first screen, then the team result and the standings.
  *
- * Responsibility: the first part fits one screen on a desktop and a phone (T145, the slim bar
+ * Responsibility: the kit's ResultFrame draws the screen (T424): its first part fits one screen on a desktop and a phone (T145, the slim bar
  *                 above it, ../match/ResultBar): the end in plain words ("Walter found it first
  *                 — after 9 guesses", at most two lines), the winning margin in shared mode
  *                 ("found it 0.4 s before Anna") or, without one, the game's closest miss or, on
@@ -12,8 +12,8 @@
  *                 the part allows), the top three placings with "All placings" to show every
  *                 one ("took part" in shared mode, "not solved" in individual mode; the viewer
  *                 by place like everyone, their line highlighted, "(you)" never cut), and one
- *                 team line ("Team Spring wins the round (+1 team point)"). Below it, where the
- *                 page may scroll: "Closest to winning" for a game that names best guesses,
+ *                 team line ("Team Spring wins the round (+1 team point)"). Between it and
+ *                 the rest, the frame's middle part: "Closest to winning" for a game that names best guesses,
  *                 every guess behind its "All guesses" (./ClosestToWinning, O110; the
  *                 first part then compact, ./resultClosest.css, both whole on the screen at its
  *                 scale, the kit's useFitScale, O111), else every player's guesses
@@ -21,7 +21,7 @@
  *                 the team result and the match standings (O54). The proof: the
  *                 commitment published at creation, the seed revealed now, and the link to the
  *                 round's verification page (02 §9, §10; 03 §5).
- * Depends on:     react, @seasonal/kit/react (useFitScale), @smg/contracts,
+ * Depends on:     react, @seasonal/kit/react (ResultFrame, useFitScale), @smg/contracts,
  *                 @smg/game-sdk (formatNumber),
  *                 @smg-game/registry/web (types), ../season/*, ../shell/router,
  *                 ./ClosestToWinning, ./MatchStandings, ./ResultParts, ./RoundSide,
