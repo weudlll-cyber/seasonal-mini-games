@@ -87,7 +87,7 @@
 @media (min-width: 900px) {
   .sk-result:has([data-closest]) .sk-result-first {
     column-gap: calc(var(--fit, 1) * var(--sk-space-3));
-    grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 15rem) minmax(18rem, 1fr);
   }
 
   /* The headline and the proof's disclosure on one row: no closest-miss line under it (O111). */

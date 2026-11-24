@@ -55,14 +55,16 @@
   font-size: var(--sk-font-size-lead);
 }
 
-/* A desktop: "took part" on one line; "Guesses" and "Points" apart. */
+/* A desktop: the kit's placings column is 20 to 28 rem wide, so the number columns stay narrow
+   (a 6.5 rem place column and two 5.25 rem ones left a name 48 px, T424): "–" and the two
+   numbers need little, and a short name with its icon and "(you)" keeps its room. */
 @media (min-width: 900px) {
   :is(.round-result, .sk-result) .round-col-place {
-    width: 6.5rem;
+    width: 3.5rem;
   }
 
   :is(.round-result, .sk-result) .round-col-num {
-    width: 5.25rem;
+    width: 4.5rem;
   }
 
   :is(.round-result, .sk-result) .round-table td:first-child {
