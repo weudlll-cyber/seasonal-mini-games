@@ -4,7 +4,7 @@
  * @brief  The slim game bar over a round's result and the match summary (T145).
  *
  * Responsibility: one row like the round's bar (../round/FocusBar: at most 44 px on a desktop,
- *                 52 px on a phone), in place of the app header, which the result and the
+ *                 52 px on a phone; its rules are this file's, ./match.css), in place of the app header, which the result and the
  *                 summary hide as a running round does (`focus-mode`, ../round/focus.css): the
  *                 match's title, cut with an ellipsis, its game, the match code, the host's menu
  *                 where the viewer hosts, and "Play", the way back to the lobby, which the
@@ -28,16 +28,16 @@ export function ResultBar(p: {
   readonly host: ReactNode;
 }): ReactElement {
   return (
-    <header className="focus-bar result-bar" data-testid="result-bar">
+    <header className="result-bar" data-testid="result-bar">
       <strong className="result-bar-title">{p.title}</strong>
       <span className="smg-chip result-bar-game" title={p.game} data-testid="match-game">
         {p.game}
       </span>
-      <span className="focus-fact result-bar-code" data-testid="result-code">
+      <span className="result-bar-code" data-testid="result-code">
         <span className="result-bar-label">Code </span>
         {p.code}
       </span>
-      <span className="focus-actions">
+      <span className="result-bar-actions">
         {p.host}
         <a className="smg-btn result-bar-link" href={hrefOf({ name: 'lobby' })}>
           Play

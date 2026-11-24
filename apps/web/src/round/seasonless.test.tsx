@@ -78,7 +78,7 @@ describe('a round of a game that shows no season (O93)', () => {
     expect(screen.queryByTestId('round-season')).not.toBeNull();
     cleanup();
     screenOf('plain', 'open');
-    expect(screen.getByTestId('round-banner')).toBeTruthy();
+    expect(screen.getByTestId('game-bar')).toBeTruthy();
     // The game list arrives after the first frame.
     await waitFor(() => {
       expect(screen.queryByTestId('round-season')).toBeNull();
@@ -87,7 +87,7 @@ describe('a round of a game that shows no season (O93)', () => {
 
   it('names the secret mode in the bar only for a game with a secret (T347)', async () => {
     screenOf('seasonal', 'open');
-    const bar = () => screen.getByTestId('round-banner');
+    const bar = () => screen.getByTestId('game-bar');
     await waitFor(() => {
       expect(bar().textContent).toContain('Shared');
     });

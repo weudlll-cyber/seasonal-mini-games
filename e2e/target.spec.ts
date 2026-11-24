@@ -76,8 +76,8 @@ async function twoHints(page: Page): Promise<void> {
 // width and how far the page scrolls; a missing part counts as past the screen.
 async function phoneParts(page: Page) {
   return page.evaluate(() => {
-    const rows = ['.focus-bar', '.round-stage', '.round-main', '.round-input'].map((s) =>
-      document.querySelector(s)?.getBoundingClientRect(),
+    const rows = ['[data-testid="game-bar"]', '.round-stage', '.round-main', '.round-input'].map(
+      (s) => document.querySelector(s)?.getBoundingClientRect(),
     );
     const width = (s: string) => document.querySelector(s)?.getBoundingClientRect().width ?? 0;
     return {

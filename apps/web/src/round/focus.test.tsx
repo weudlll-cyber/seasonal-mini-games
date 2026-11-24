@@ -81,7 +81,7 @@ describe('the Pre-picks panel of a phased game (O117)', () => {
 describe('the game bar', () => {
   it('shows the time left but no waiting time (O47)', () => {
     show(false);
-    const bar = screen.getByTestId('round-banner').textContent;
+    const bar = screen.getByTestId('game-bar').textContent;
     expect(bar).not.toMatch(/Wait/);
     expect(bar).not.toMatch(/\d+ s/);
   });
@@ -130,21 +130,21 @@ describe('the focus mode panels', () => {
     const arrive = () => {
       fireEvent.click(screen.getByRole('button', { name: 'A message arrives', hidden: true }));
     };
-    expect(screen.queryByTestId('chat-unread')).toBeNull();
+    expect(screen.queryByTestId('bar-unread')).toBeNull();
     arrive();
     arrive();
-    expect(screen.getByTestId('chat-unread').textContent).toBe('2 unread');
+    expect(screen.getByTestId('bar-unread').textContent).toBe('2 unread');
     fireEvent.click(screen.getByTestId('focus-chat'));
-    expect(screen.queryByTestId('chat-unread')).toBeNull();
+    expect(screen.queryByTestId('bar-unread')).toBeNull();
     arrive();
-    expect(screen.queryByTestId('chat-unread')).toBeNull();
+    expect(screen.queryByTestId('bar-unread')).toBeNull();
   });
 });
 
 describe('the full-screen toggle', () => {
   it('is left out where the browser offers no Fullscreen API', () => {
     show(false);
-    expect(screen.queryByTestId('focus-fullscreen')).toBeNull();
+    expect(screen.queryByTestId('bar-fullscreen')).toBeNull();
   });
 
   it('asks for full screen on the round view and follows the browser leaving it', () => {
@@ -161,7 +161,7 @@ describe('the full-screen toggle', () => {
       configurable: true,
     });
     show(false);
-    const toggle = screen.getByTestId('focus-fullscreen');
+    const toggle = screen.getByTestId('bar-fullscreen');
     fireEvent.click(toggle);
     expect(request).toHaveBeenCalledTimes(1);
     // The element asked to go full screen is the round view itself.

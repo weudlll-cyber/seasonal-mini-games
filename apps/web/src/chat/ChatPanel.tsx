@@ -9,11 +9,10 @@
  *                 server's CSP admits it as frame-src; in website mode by default the
  *                 website's `/embed/chat?room=mini-games`, O66) with `theme=light|dark`
  *                 following the game's theme (the kit's `chatEmbedUrl` for the website's room;
- *                 a change reloads the frame). Inside the docked chat (O97) the website's room
- *                 is the kit's `WebsiteChatFrame`, which the kit's dock tells whether it is in
- *                 sight; behind the round bar's Chat button the game's frame is told whether it
- *                 is in sight and its unread count goes to the badge (./useHostChatFrame,
- *                 DECISIONS T237). The frame's request carries this site's origin as its
+ *                 a change reloads the frame). Behind the round bar's Chat button and inside the
+ *                 kit's dock (O97) the frame is told whether it is in sight and its unread count
+ *                 goes to the badge or the dock's bar (./useHostChatFrame, the kit's
+ *                 `useDockSight`, DECISIONS T237, T416). The frame's request carries this site's origin as its
  *                 referrer (`strict-origin`; the page itself sends none), which the embed needs
  *                 in Firefox to know its parent (T242). In website mode a visitor who is not
  *                 signed in also gets "Log in": the website's sign-in for this page
@@ -23,15 +22,15 @@
  *                 (../round/RoundChat) and the match's waiting area; elsewhere (the lobby) it is
  *                 a panel of its own height. A screen that already loaded the config passes it,
  *                 else the panel loads it.
- * Depends on:     react, @seasonal/kit (chatEmbedUrl), @seasonal/kit/react (useShownTheme,
- *                 useDockArrivals, WebsiteChatFrame), @smg/contracts (ChatConfigView),
+ * Depends on:     react, @seasonal/kit (chatEmbedUrl), @seasonal/kit/react (useShownTheme),
+ *                 @smg/contracts (ChatConfigView),
  *                 ../account/SignIn, ../shell/session, ./ChatRoom, ./useChat,
  *                 ./useHostChatFrame, ./chat.css
  * Used by:        ../lobby/Lobby, ../match/MatchPage
  * Spec:           docs/spec/07-integration.md §2; Bingo 07 §6; Seasonal Entertainment docs/EMBED.md
  */
 import { chatEmbedUrl, type EmbedTheme } from '@seasonal/kit';
-import { useDockArrivals, useShownTheme, WebsiteChatFrame } from '@seasonal/kit/react';
+import { useShownTheme } from '@seasonal/kit/react';
 import type { ChatConfigView } from '@smg/contracts';
 import { useRef, type ReactElement } from 'react';
 
@@ -71,8 +70,8 @@ function withTheme(url: string, theme: EmbedTheme): string {
   return at.href;
 }
 
-// The game's own frame and its link (./useHostChatFrame): behind the round bar's Chat button,
-// in the lobby, and for a host chat on another origin.
+// The host chat's frame and its link (./useHostChatFrame): behind the round bar's Chat button,
+// in the kit's dock, in the lobby, whichever origin the chat is on.
 function OwnFrame({ url }: { readonly url: string }): ReactElement {
   const theme = useShownTheme();
   const frame = useRef<HTMLIFrameElement>(null);
@@ -93,10 +92,6 @@ function OwnFrame({ url }: { readonly url: string }): ReactElement {
 function HostChat({ url }: { readonly url: string }): ReactElement {
   const session = useSession().session;
   const guest = session?.authMode === 'website' && session.account === null;
-  // Inside the kit's dock the website's room is the kit's frame, which the dock tells whether
-  // it is in sight (a host chat on another origin cannot be told there: a kit gap, T416).
-  const docked = useDockArrivals() !== null;
-  const site = url.startsWith('/') ? new URL(url, window.location.origin) : null;
   return (
     <>
       {guest ? (
@@ -105,15 +100,7 @@ function HostChat({ url }: { readonly url: string }): ReactElement {
           account.
         </p>
       ) : null}
-      {docked && site !== null ? (
-        <WebsiteChatFrame
-          room={site.searchParams.get('room') ?? ''}
-          path={site.pathname}
-          className="chat-frame"
-        />
-      ) : (
-        <OwnFrame url={url} />
-      )}
+      <OwnFrame url={url} />
     </>
   );
 }

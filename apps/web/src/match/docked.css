@@ -31,15 +31,9 @@
 }
 
 /* The kit's dock fills the page; without a chat the view alone does. */
-.match-docked > .sk-docked,
-.match-docked-main {
+.match-docked > .sk-docked {
   flex: 1;
   min-height: 0;
-}
-
-.match-docked-main {
-  display: flex;
-  flex-direction: column;
 }
 
 /* The bar's form 'field': its own field under the bar, so the sheet shows the messages only;
@@ -62,7 +56,7 @@
 
 /* The result and the pause: the bar, then the result in the whole width and exactly the height
    that is left; nothing here scrolls on a desktop. */
-:is(.sk-docked-main, .match-docked-main) > .match-result-page {
+.sk-docked-main > .match-result-page {
   flex: 1;
   min-height: 0;
   display: flex;
@@ -149,7 +143,7 @@
     padding: 0;
   }
 
-  .match-docked :is(.sk-docked-main, .match-docked-main) {
+  .match-docked .sk-docked-main {
     /* The containing block of what is placed inside (the visually hidden labels), so nothing
        of the scrolled content reaches past the screen and scrolls the page. */
     position: relative;
@@ -157,7 +151,7 @@
     overflow-y: auto;
   }
 
-  :is(.sk-docked-main, .match-docked-main) > .match-result-page,
+  .sk-docked-main > .match-result-page,
   .match-after.match-after--docked {
     flex: none;
   }
@@ -177,7 +171,7 @@
   /* A list game's running round (O109): its own screen above the chat bar, as without the
      dock: the guesses scroll inside their box and the input dock stays right above the bar,
      so nothing hides behind it. */
-  .match-docked :is(.sk-docked-main, .match-docked-main):has(.round-live[data-layout='list']) {
+  .match-docked .sk-docked-main:has(.round-live[data-layout='list']) {
     overflow: hidden;
     padding: 8px 10px;
   }

@@ -115,10 +115,29 @@
   }
 }
 
-/* The bar is a row of the page here, not the round view's `bar` area (that name would open
-   tracks of its own in this grid). */
+/* The slim bar: one row of small text, at most 44 px high (52 px on a phone, below), its facts
+   never shrinking and its buttons at the end. It is a row of the page here, not the round
+   view's `bar` area. */
 .result-bar {
-  grid-area: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sk-space-1) var(--sk-space-2);
+  min-width: 0;
+  max-height: 44px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.result-bar-code {
+  flex: none;
+  font-weight: var(--sk-font-weight-strong);
+}
+
+.result-bar-actions {
+  flex: none;
+  display: flex;
+  gap: var(--sk-space-1);
+  margin-left: auto;
 }
 
 /* The slim bar's title takes the room left and is cut at its end. */
@@ -137,6 +156,15 @@
 /* A phone: the game and the code whole, then the buttons; the match's title and the code's
    label stay out, so nothing is cut (T150). */
 @media (max-width: 899px) {
+  .result-bar {
+    gap: 0.25rem;
+    max-height: 52px;
+  }
+
+  .result-bar-actions {
+    gap: 0.25rem;
+  }
+
   .result-bar-title,
   .result-bar-label {
     display: none;

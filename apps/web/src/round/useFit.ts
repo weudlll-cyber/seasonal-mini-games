@@ -1,30 +1,23 @@
 /**
  * @file   apps/web/src/round/useFit.ts
  * @module web/round
- * @brief  Fitting to the screen (O111): a screen's scale, and how many of a box's items fit.
+ * @brief  Fitting to the screen (O111): how many of a box's items fit, and the font-load count
+ *         the start card still needs.
  *
- * Responsibility: `useScreenFit`: the one platform mechanism by which a game screen fits the
- *                 space it has is the kit's `useFitScale('mini-games', …)` (its fixed parts
- *                 marked `data-sk-fit-fixed`; the scale `--fit` and `data-sk-fit-scale` on
- *                 the root, never below 0.6; each size with its floor, `--sk-floor-*` of the
- *                 kit's fit.css under `data-sk-game="mini-games"`: 13 px text, 24 px display
- *                 values, 22 px rows, 40 px touch targets on a phone). The kit fits again when
- *                 the box or the visual viewport changes size, not when web fonts finish
- *                 loading (the type swaps in after the first paint and can wrap a line anew,
- *                 T404); until a kit release does, the game fits again then by counting the
- *                 font loads into the signature (owner decision O144). `useFit`: a box of a
- *                 fixed height that never scrolls and never cuts an item shows the items
- *                 (`[data-fit]`) that fit whole and "+N more" for the rest (the Others panel
- *                 and line, O110).
- * Depends on:     react, @seasonal/kit/react (useFitScale)
- * Used by:        ./ResultScreen (useScreenFit); ./RoundIntro (useFontLoads, for the kit's
- *                 StartCard); ./OthersLine, ./RoundSide (useFit)
+ * Responsibility: `useFit`: a box of a fixed height that never scrolls and never cuts an item
+ *                 shows the items (`[data-fit]`) that fit whole and "+N more" for the rest (the
+ *                 Others panel and line, O110). A screen's own scale is the kit's
+ *                 `useFitScale('mini-games', …, { afterFonts: true })` (the result screens,
+ *                 ./ResultScreen): the kit fits again after web fonts load, which T404 needed.
+ *                 Its `StartCard` has no such option, so `useFontLoads` counts the font loads
+ *                 for the intro's `signature` (./RoundIntro) until the kit's card has it.
+ * Depends on:     react
+ * Used by:        ./OthersLine, ./RoundSide (useFit); ./RoundIntro (useFontLoads)
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/02-game-guess-the-number.md §12
  */
-import { useFitScale } from '@seasonal/kit/react';
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
 
-// How many times web fonts have finished loading while the screen is shown (O144, T404).
+// How many times web fonts have finished loading while the card is shown (T404).
 export function useFontLoads(): number {
   const [loads, setLoads] = useState(0);
   useEffect(() => {
@@ -38,17 +31,6 @@ export function useFontLoads(): number {
     };
   }, []);
   return loads;
-}
-
-// The screen's scale (`--fit` on the element the returned ref is put on), fitted to its box
-// by the kit, and again after a font load. `self`: the screen fills a height of its own (a
-// grid sharing it out), so its own box is the one its fixed parts must fit.
-export function useScreenFit<T extends HTMLElement>(
-  signature: string,
-  self = false,
-): RefObject<T | null> {
-  const loads = useFontLoads();
-  return useFitScale<T>('mini-games', `${signature}|${String(loads)}`, self);
 }
 
 // The items that fit whole: inside the box's height (and width) by half a pixel.

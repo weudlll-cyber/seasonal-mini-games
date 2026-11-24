@@ -127,6 +127,12 @@ export function SessionProvider({ children }: { children: ReactNode }): ReactEle
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
 
+// Whether the page runs inside the website (O66): the bar's way back is shown only there. Unlike
+// `useSession` it needs no provider: a screen rendered alone (a test, a preview) is standalone.
+export function useWebsiteMode(): boolean {
+  return useContext(SessionContext)?.session?.authMode === 'website';
+}
+
 export function useSession(): SessionContextValue {
   const value = useContext(SessionContext);
   if (value === null) throw new Error('useSession outside SessionProvider');

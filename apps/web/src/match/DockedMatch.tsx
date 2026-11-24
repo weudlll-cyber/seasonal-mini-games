@@ -18,7 +18,7 @@
  *                 through `ChatComposerSlot`, T363) sits under the bar. On a phone the content
  *                 scrolls alone above the chat bar (a list game's running round fills it
  *                 instead, its guesses scrolling inside, O109; ./docked.css). Without a chat
- *                 (the provider `none`) there is no dock: the kit's has no form without one.
+ *                 (the provider `none`) there is no dock: the kit's `withoutChat`.
  * Depends on:     react, @seasonal/kit/react (DockedScreen), @seasonal/kit/dock.css,
  *                 ../chat/chatArrivals (ChatComposerSlot), ../chat/ChatRoom (Writer), ./docked.css
  * Used by:        ./MatchPage
@@ -50,7 +50,8 @@ export function DockedMatch(p: {
   return (
     <div className="match-docked one-screen focus-mode" data-testid="match" data-phase={p.phase}>
       {p.chat === null ? (
-        <div className="match-docked-main">{p.children}</div>
+        // No dock at all, but the page still follows the on-screen keyboard (T416).
+        <DockedScreen withoutChat>{p.children}</DockedScreen>
       ) : (
         <ChatComposerSlot.Provider value={setComposer}>
           <DockedScreen chat={p.chat} bar={p.bar} field={field} callId={null}>

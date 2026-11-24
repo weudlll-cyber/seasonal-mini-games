@@ -17,17 +17,18 @@
  *                 its own; a tap opens the sheet with the chat and its field; on a desktop the
  *                 same dock as with the field.
  * Depends on:     vitest, @testing-library/react, @seasonal/kit/react (useDockArrivals),
- *                 ../chat/chatArrivals, ../round/fakes, ./DockedMatch
+ *                 ../chat/chatArrivals, ../chat/useHostChatFrame, ../round/fakes, ./DockedMatch
  * Spec:           docs/spec/02e-game-mind-games.md §11; docs/spec/02-game-guess-the-number.md §12;
  *                 docs/spec/07-integration.md §2
  */
 import { useDockArrivals } from '@seasonal/kit/react';
 import type { ChatRoomView } from '@smg/contracts';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { useContext, useEffect, type ReactElement } from 'react';
+import { useContext, useEffect, useRef, type ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatComposerSlot } from '../chat/chatArrivals.js';
+import { useHostChatFrame } from '../chat/useHostChatFrame.js';
 import { viewport } from '../round/fakes.js';
 import { DockedMatch } from './DockedMatch.js';
 
@@ -123,6 +124,44 @@ describe('the docked chat', () => {
     fireEvent.click(bar);
     fireEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(bar.getAttribute('aria-expanded')).toBe('false');
+  });
+});
+
+// A host chat's frame in the dock (any origin): told whether the sheet is open, its unread count
+// going to the phone bar (the kit's useDockSight, T416).
+function HostFrame(): ReactElement {
+  const frame = useRef<HTMLIFrameElement>(null);
+  useHostChatFrame(frame, '/embed/chat?room=mini-games');
+  return <iframe ref={frame} title="Chat" data-testid="chat-frame" />;
+}
+
+describe('a host chat in the dock (T416)', () => {
+  it("is told its sheet's sight and its unread count reaches the phone bar", () => {
+    viewport(390, 844);
+    render(
+      <DockedMatch phase="live" chat={<HostFrame />} bar="line">
+        <p>The round</p>
+      </DockedMatch>,
+    );
+    const own = screen.getByTestId<HTMLIFrameElement>('chat-frame').contentWindow;
+    if (own === null) throw new Error('no frame window');
+    const told = vi.spyOn(own, 'postMessage');
+    act(() => {
+      window.dispatchEvent(
+        new MessageEvent('message', {
+          origin: window.location.origin,
+          source: own,
+          data: { source: 'seasonal-chat', type: 'unread', room: 'x', count: 3 },
+        }),
+      );
+    });
+    expect(screen.getByTestId('chat-unread').textContent).toBe('3 unread');
+    fireEvent.click(screen.getByTestId('chat-bar'));
+    expect(told).toHaveBeenLastCalledWith(
+      { source: 'seasonal-chat-host', type: 'visible', visible: true },
+      window.location.origin,
+    );
+    expect(screen.queryByTestId('chat-unread')).toBeNull();
   });
 });
 

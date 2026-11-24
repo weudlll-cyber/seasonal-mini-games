@@ -16,15 +16,16 @@
  *                 page may scroll: "Closest to winning" for a game that names best guesses,
  *                 every guess behind its "All guesses" (./ClosestToWinning, O110; the
  *                 first part then compact, ./resultClosest.css, both whole on the screen at its
- *                 scale, ./useFit, O111), else every player's guesses
+ *                 scale, the kit's useFitScale, O111), else every player's guesses
  *                 in full (the game's history, T150),
  *                 the team result and the match standings (O54). The proof: the
  *                 commitment published at creation, the seed revealed now, and the link to the
  *                 round's verification page (02 §9, §10; 03 §5).
- * Depends on:     react, @smg/contracts, @smg/game-sdk (formatNumber),
+ * Depends on:     react, @seasonal/kit/react (useFitScale), @smg/contracts,
+ *                 @smg/game-sdk (formatNumber),
  *                 @smg-game/registry/web (types), ../season/*, ../shell/router,
  *                 ./ClosestToWinning, ./MatchStandings, ./ResultParts, ./RoundSide,
- *                 ./RoundStandings, ./roundText, ./useFit, ./result.css, ./resultBoard.css,
+ *                 ./RoundStandings, ./roundText, ./result.css, ./resultBoard.css,
  *                 ./resultOwn.css, ./resultClosest.css
  *                 A game that draws its own first part (`ownResult`, O97, T352) gets its
  *                 reveal (a headline row, the winners, the cards) with every line behind a
@@ -33,6 +34,7 @@
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §10; docs/spec/03-seasonal-specials.md §5
  */
+import { useFitScale } from '@seasonal/kit/react';
 import type { GameWeb } from '@smg-game/registry/web';
 import type { MatchStandingView, RoundStateView } from '@smg/contracts';
 import type { ReactElement, ReactNode } from 'react';
@@ -45,11 +47,13 @@ import { ClosestToWinning } from './ClosestToWinning.js';
 import { colorsOf } from './RoundSide.js';
 import { RoundStandings } from './RoundStandings.js';
 import { endHeadline, marginText } from './roundText.js';
-import { useScreenFit } from './useFit.js';
 import './result.css';
 import './resultBoard.css';
 import './resultOwn.css';
 import './resultClosest.css';
+
+// The kit fits again once web fonts have loaded (T404; a WebKit wrap that ran 32 px over).
+const AFTER_FONTS = { afterFonts: true } as const;
 
 function Proof({ state }: { readonly state: RoundStateView }): ReactElement | null {
   if (state.commitment === null) return null;
@@ -115,7 +119,7 @@ function OwnResult(p: ResultProps & { readonly game: GameWeb }): ReactElement {
   );
   // The grid fills the height above the chat; its next-round box (the fixed part) shows whole
   // at the screen's scale (O111).
-  const fit = useScreenFit<HTMLElement>(`${state.roundId}|own`, true);
+  const fit = useFitScale<HTMLElement>('mini-games', `${state.roundId}|own`, true, AFTER_FONTS);
   return (
     <section
       ref={fit}
@@ -195,7 +199,12 @@ export function ResultScreen(props: ResultProps): ReactElement {
   // The game names best guesses (O110): "Closest to winning" stands for the full history.
   const closest = game?.text.best !== undefined && state.closest !== undefined ? game : null;
   // Its first part and "Closest to winning" fit the screen at the screen's scale (O111).
-  const fit = useScreenFit<HTMLElement>(`${state.roundId}|${String(state.closest?.length)}`);
+  const fit = useFitScale<HTMLElement>(
+    'mini-games',
+    `${state.roundId}|${String(state.closest?.length)}`,
+    false,
+    AFTER_FONTS,
+  );
   return (
     <section
       ref={closest === null ? undefined : fit}

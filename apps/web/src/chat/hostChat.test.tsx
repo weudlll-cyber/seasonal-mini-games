@@ -53,7 +53,12 @@ function serve(member: boolean, authMode: 'website' | 'local' = 'website'): void
   };
   vi.stubGlobal(
     'fetch',
-    vi.fn(() => Promise.resolve(new Response(JSON.stringify(session)))),
+    vi.fn((url: string) =>
+      // The games list the round's look asks for; every other call is the session's.
+      Promise.resolve(
+        new Response(JSON.stringify(url.endsWith('/games') ? { games: [] } : session)),
+      ),
+    ),
   );
 }
 
@@ -112,8 +117,8 @@ describe('"Log in" for guests', () => {
 });
 
 // The round bar with the website's chat behind its Chat button; the chat frame's window.
-function roundWithChat(): Window {
-  serve(true);
+function roundWithChat(authMode: 'website' | 'local' = 'website'): Window {
+  serve(true, authMode);
   const open: RoundStateView = { ...ended, status: 'open', role: 'player', game: {} };
   render(
     <SessionProvider>
@@ -153,6 +158,25 @@ const visible = (shown: boolean) => ({
   visible: shown,
 });
 
+describe("the round bar's way back (GAME-INTEGRATION §8, O148)", () => {
+  it('starts with the way back to the website in website mode, and has none standalone', async () => {
+    roundWithChat('website');
+    await act(async () => {
+      await Promise.resolve();
+    });
+    const back = screen.getByTestId('back-link');
+    expect(back.getAttribute('href')).toBe('/games');
+    expect(back.parentElement?.getAttribute('data-testid')).toBe('game-bar');
+    expect(back.parentElement?.firstElementChild).toBe(back);
+    cleanup();
+    roundWithChat('local');
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(screen.queryByTestId('back-link')).toBeNull();
+  });
+});
+
 describe("the website chat's unread badge (T237)", () => {
   it('tells the frame its panel is hidden or shown and shows its count on the badge', () => {
     const own = roundWithChat();
@@ -163,12 +187,12 @@ describe("the website chat's unread badge (T237)", () => {
     );
     expect(told).toHaveBeenLastCalledWith(visible(false), window.location.origin);
     post(unread(3), { source: own });
-    expect(screen.getByTestId('chat-unread').textContent).toBe('3 unread');
+    expect(screen.getByTestId('bar-unread').textContent).toBe('3 unread');
     act(() => {
       screen.getByTestId('focus-chat').click();
     });
     expect(told).toHaveBeenLastCalledWith(visible(true), window.location.origin);
-    expect(screen.queryByTestId('chat-unread')).toBeNull();
+    expect(screen.queryByTestId('bar-unread')).toBeNull();
   });
 
   it('ignores another origin, another window, another source and a malformed count', () => {
@@ -179,7 +203,7 @@ describe("the website chat's unread badge (T237)", () => {
     post({ ...unread(2), source: 'seasonal-chat-host' }, { source: own });
     post(unread(-1), { source: own });
     post({ ...unread(2), count: '2' }, { source: own });
-    expect(screen.queryByTestId('chat-unread')).toBeNull();
+    expect(screen.queryByTestId('bar-unread')).toBeNull();
   });
 
   it('asks the browser for a referrer with the origin only', () => {
