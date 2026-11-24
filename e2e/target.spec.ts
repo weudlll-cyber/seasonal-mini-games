@@ -121,7 +121,10 @@ test('journey 22: Seasonal Target, warm/cold only (the default) and distance onl
   const codes: string[] = [];
   const own = p.page.locator('[data-testid="tile"][data-own="true"]');
   try {
-    codes.push(await fromLobby(p, 'seasonal-target', 'spring'));
+    // A 60 s cooldown: the bot guesses at random on every cooldown (3 s by default), and over
+    // the intro and the first checks it found its target now and then and ended the round before
+    // the test saw it open (CI run 45387899454: "bot-01 hit the target first — after 1 guess").
+    codes.push(await fromLobby(p, 'seasonal-target', 'spring', { Cooldown: '60' }));
     await expect(p.page.getByTestId('intro-secret')).toHaveText('Shared target on a 20 × 20 grid');
     await roundOpen(p.page);
     await expect(p.page.locator('[data-testid="tile"][data-quarter="true"]').first()).toBeVisible();
