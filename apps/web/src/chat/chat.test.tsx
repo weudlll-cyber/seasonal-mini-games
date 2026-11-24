@@ -68,11 +68,14 @@ function serve(
   config: ChatConfigView,
   permissions: readonly string[],
   moderator = false,
-  // The session's kind as the server sends it; null: no session at all.
-  kind?: string | null,
-  // The room inside the kit's dock on a phone, in this bar form, instead of alone.
-  dock?: 'field' | 'line',
+  where: {
+    // The session's kind as the server sends it; null: no session at all.
+    readonly kind?: string | null;
+    // The room inside the kit's dock on a phone, in this bar form, instead of alone.
+    readonly dock?: 'field' | 'line';
+  } = {},
 ) {
+  const { kind, dock } = where;
   const calls: { url: string; body: unknown }[] = [];
   const session = {
     ...(kind === undefined ? {} : { kind }),
@@ -217,18 +220,15 @@ describe('the builtin room', () => {
 
 describe('the builtin room without a session (T370)', () => {
   it('asks a viewer without any session to sign in, without asking the server for the room', async () => {
-    const calls = serve({ provider: 'builtin', hostChatUrl: null }, [], false, null);
+    const calls = serve({ provider: 'builtin', hostChatUrl: null }, [], false, { kind: null });
     await screen.findByText('Sign in, or watch as a guest, to read the chat.');
     expect(calls.map((c) => c.url)).not.toContain('/chat/rooms/lobby');
   });
 
   it('asks the server for the room for a guest', async () => {
-    const calls = serve(
-      { provider: 'builtin', hostChatUrl: null },
-      ['match.watch'],
-      false,
-      'guest',
-    );
+    const calls = serve({ provider: 'builtin', hostChatUrl: null }, ['match.watch'], false, {
+      kind: 'guest',
+    });
     await screen.findByText('gg');
     expect(calls.map((c) => c.url)).toContain('/chat/rooms/lobby');
   });
@@ -239,7 +239,7 @@ describe("the room's own field in the dock's open sheet (T416 (3))", () => {
 
   it("hides it while the form 'field' has the field in its bar and the sheet is open", async () => {
     viewport(390, 844);
-    serve({ provider: 'builtin', hostChatUrl: null }, ['chat.send'], false, undefined, 'field');
+    serve({ provider: 'builtin', hostChatUrl: null }, ['chat.send'], false, { dock: 'field' });
     await screen.findByText('gg', {}, { timeout: 3_000 });
     // Closed: the bar's field and the room's own one inside the closed sheet.
     expect(fields()).toBe(2);
@@ -255,7 +255,7 @@ describe("the room's own field in the dock's open sheet (T416 (3))", () => {
 
   it("keeps it in the open sheet of the form 'line', whose bar has none", async () => {
     viewport(390, 844);
-    serve({ provider: 'builtin', hostChatUrl: null }, ['chat.send'], false, undefined, 'line');
+    serve({ provider: 'builtin', hostChatUrl: null }, ['chat.send'], false, { dock: 'line' });
     await screen.findByText('gg', {}, { timeout: 3_000 });
     expect(fields()).toBe(1);
     fireEvent.click(screen.getByTestId('chat-bar'));

@@ -123,6 +123,14 @@ export function Writer(p: {
   );
 }
 
+// The dock's bar has the field (the form 'field' gave the room a slot for it) and its sheet is open
+// on a phone: the room's own field would be a second one in the sheet (T416 (3)).
+function useBarHasField(slot: boolean): boolean {
+  const sight = useDockSight();
+  const phone = useDockView() === 'phone';
+  return slot && phone && sight?.visible === true;
+}
+
 export function ChatRoom({ target }: { readonly target: ChatTarget }): ReactElement {
   const { session, can } = useSession();
   const me = session?.account?.displayName ?? null;
@@ -136,11 +144,7 @@ export function ChatRoom({ target }: { readonly target: ChatTarget }): ReactElem
   });
   const offer = useContext(ChatComposerSlot);
   const writes = can('chat.send');
-  // The dock's bar has the field (the form 'field' gave this room a slot for it) and the sheet is
-  // open on a phone: the room's own field would be a second one in the sheet (T416 (3)).
-  const sight = useDockSight();
-  const phone = useDockView() === 'phone';
-  const barHasField = offer !== null && phone && sight?.visible === true;
+  const barHasField = useBarHasField(offer !== null);
   // The dock's bar shows the newest line of any kind (a system line too, MG-N8).
   const newest = messages.at(-1) ?? null;
   useEffect(() => {
