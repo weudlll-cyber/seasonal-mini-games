@@ -56,7 +56,7 @@
 
 /* A game with player tags (O62): the highlighted player's rows ringed, the others faded. */
 .round-row[data-hl='on'] {
-  outline: 2px solid var(--color-text);
+  outline: 2px solid var(--sk-color-text);
   outline-offset: -2px;
 }
 

@@ -6,7 +6,7 @@
  * Responsibility: text colours only from the design tokens (light and dark); wire colours are
  *                 swatch fills with the wire's name in text beside them (the swatches are
  *                 ./swatch.css); wire buttons, Undo, Clear and Cut at least 44 px
- *                 (`--hit-target`); wires in one row on a desktop (eight too, T143),
+ *                 (`--sk-hit-target`); wires in one row on a desktop (eight too, T143),
  *                 two even rows of up to four on a phone; slots at least 44 px, the hint
  *                 locked in slot 1 (O60); the explosion's own styles are ./explosion.css, the
  *                 result's ./result.css. Every class starts with `bd-`. Layouts work down to
@@ -15,30 +15,30 @@
  */
 .bd-bomb {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .bd-bomb-title {
   margin: 0;
-  font-size: var(--font-size-lead);
-  font-weight: var(--font-weight-heading);
+  font-size: var(--sk-font-size-lead);
+  font-weight: var(--sk-font-weight-heading);
   line-height: 1.2;
 }
 
 .bd-bomb-note {
   margin: 0;
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
+  font-size: var(--sk-font-size-small);
+  color: var(--sk-color-text-muted);
 }
 
 /* Spring Herald's hint for the whole round: a highlighted line (O35). */
 .bd-hint {
   margin: 0;
   padding: 0.3rem 0.6rem;
-  border-radius: var(--radius);
-  border-left: 4px solid var(--season, var(--color-accent));
-  background: color-mix(in srgb, var(--season, var(--color-accent)) 22%, var(--color-card));
-  font-weight: var(--font-weight-strong);
+  border-radius: var(--sk-radius);
+  border-left: 4px solid var(--season, var(--sk-color-accent));
+  background: color-mix(in srgb, var(--season, var(--sk-color-accent)) 22%, var(--sk-color-card));
+  font-weight: var(--sk-font-weight-strong);
 }
 
 .bd-chips,
@@ -67,10 +67,10 @@
   align-items: center;
   gap: 0.3rem;
   padding: 0.05rem 0.45rem;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--color-border-strong);
-  background: var(--color-card);
-  font-size: var(--font-size-small);
+  border-radius: var(--sk-radius-pill);
+  border: 1px solid var(--sk-color-border-strong);
+  background: var(--sk-color-card);
+  font-size: var(--sk-font-size-small);
 }
 
 /* A harmless wire: a struck name beside a crossed swatch; the word is for screen readers. */
@@ -79,8 +79,8 @@
 }
 
 .bd-wire-note {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+  color: var(--sk-color-text-muted);
+  font-size: var(--sk-font-size-small);
 }
 
 /* The input row: slots, wire buttons, then the ring with Undo, Clear and Cut. */
@@ -88,15 +88,15 @@
   /* The wire rows follow the dock's own width (a panel on demand narrows the stage). */
   container-type: inline-size;
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 /* The picker's help line: small, one line on a desktop, at most two on a phone. */
 .bd-help {
   margin: 0;
-  font-size: var(--font-size-small);
+  font-size: var(--sk-font-size-small);
   line-height: 1.25;
-  color: var(--color-text-muted);
+  color: var(--sk-color-text-muted);
 }
 
 .bd-slots {
@@ -110,10 +110,10 @@
 .bd-slot {
   flex: 1 1 0;
   min-width: 0;
-  min-height: var(--hit-target);
+  min-height: var(--sk-hit-target);
   display: flex;
-  border-radius: var(--radius);
-  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--sk-radius);
+  border: 1px dashed var(--sk-color-border-strong);
   overflow: hidden;
 }
 
@@ -123,9 +123,9 @@
 
 /* Slot 1 with Spring Herald's colour, locked: outlined and tinted in the season colour (O60). */
 .bd-slot[data-hint='true'] {
-  outline: 3px solid var(--season, var(--color-accent));
+  outline: 3px solid var(--season, var(--sk-color-accent));
   outline-offset: -1px;
-  background: color-mix(in srgb, var(--season, var(--color-accent)) 22%, var(--color-card));
+  background: color-mix(in srgb, var(--season, var(--sk-color-accent)) 22%, var(--sk-color-card));
 }
 
 /* A slot's number and wire; a filled slot the player may empty is a button over the slot. */
@@ -148,7 +148,7 @@
 }
 
 .bd-slot-number {
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
   font-variant-numeric: tabular-nums;
 }
 
@@ -188,7 +188,7 @@
 }
 
 .bd-wire {
-  min-height: var(--hit-target);
+  min-height: var(--sk-hit-target);
   min-width: 0;
   display: inline-flex;
   align-items: center;
@@ -204,23 +204,23 @@
 .bd-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .bd-action {
-  min-height: var(--hit-target);
-  padding-inline: var(--space-2);
+  min-height: var(--sk-hit-target);
+  padding-inline: var(--sk-space-2);
 }
 
 .bd-cut {
   flex: 1 1 auto;
-  min-height: var(--hit-target);
-  font-size: var(--font-size-lead);
+  min-height: var(--sk-hit-target);
+  font-size: var(--sk-font-size-lead);
 }
 
 .bd-message {
   margin: 0;
-  color: var(--color-danger);
+  color: var(--sk-color-danger);
 }
 
 /* A phone: two even rows of up to four wires (3 + 3 with six, 4 + 4 with eight, 3 + 2 with
@@ -236,11 +236,11 @@
   }
 
   .bd-bomb-title {
-    font-size: var(--font-size-body);
+    font-size: var(--sk-font-size-body);
   }
 
   .bd-slot-number {
-    font-size: var(--font-size-small);
+    font-size: var(--sk-font-size-small);
   }
 
   /* Six slots in 358 px: a filled slot shows its number and swatch, the name only to a screen

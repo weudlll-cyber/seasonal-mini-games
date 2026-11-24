@@ -28,4 +28,4 @@ export const iconsOf = (c: Choice): readonly string[] =>
 
 // A choice's colour: its season's token, All the neutral surface.
 export const colorOf = (c: Choice): string =>
-  c === 'all' ? 'var(--color-surface-2)' : `var(--color-${c})`;
+  c === 'all' ? 'var(--sk-color-surface-2)' : `var(--sk-color-${c})`;

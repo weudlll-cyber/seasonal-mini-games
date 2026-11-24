@@ -17,7 +17,7 @@
 .round-teams {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .round-team {
@@ -26,14 +26,14 @@
   text-align: center;
   gap: 0.15rem;
   padding: 0.4rem 0.25rem;
-  border-radius: var(--radius);
+  border-radius: var(--sk-radius);
   border: 2px solid var(--season);
-  background: var(--color-card);
-  font-size: var(--font-size-small);
+  background: var(--sk-color-card);
+  font-size: var(--sk-font-size-small);
 }
 
 .round-team-points {
-  font-size: var(--font-size-lead);
+  font-size: var(--sk-font-size-lead);
 }
 
 /* The Players panel's rows: dot, name, team, guesses; the viewer's on the season's tint.
@@ -41,7 +41,7 @@
    teams the team column goes (T202, T210). */
 .round-players {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--sk-space-2);
 }
 
 /* The list holds the columns and every row takes them (subgrid): the marker, the name taking
@@ -61,7 +61,7 @@
   grid-template-columns: subgrid;
   align-items: center;
   padding: 0.2rem 0.5rem;
-  border-radius: var(--radius);
+  border-radius: var(--sk-radius);
 }
 
 .round-player-list[data-teams='false'] {
@@ -76,14 +76,14 @@
 .round-player-guesses {
   justify-self: start;
   white-space: nowrap;
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
+  font-size: var(--sk-font-size-small);
+  color: var(--sk-color-text-muted);
 }
 
 /* The heading row over the team column ("Team"), in the muted small type (T212). */
 .round-player-head {
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
+  font-size: var(--sk-font-size-small);
+  color: var(--sk-color-text-muted);
 }
 
 /* Individual mode on a desktop (T260): the other players under the game's panel; at most 40 %
@@ -118,7 +118,7 @@
   background: none;
   color: inherit;
   font: inherit;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
   text-decoration: underline;
   cursor: pointer;
 }
@@ -140,12 +140,12 @@
 
 .round-others-title {
   margin: 0 0 0.3rem;
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
+  font-size: var(--sk-font-size-small);
+  color: var(--sk-color-text-muted);
 }
 
 .round-player-solved {
-  font-size: var(--font-size-small);
-  font-weight: var(--font-weight-strong);
+  font-size: var(--sk-font-size-small);
+  font-weight: var(--sk-font-weight-strong);
   color: var(--color-success-text);
 }

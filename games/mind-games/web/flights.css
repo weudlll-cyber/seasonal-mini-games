@@ -37,7 +37,7 @@
   width: 26px;
   height: 26px;
   animation:
-    mg-fly var(--mg-fly) var(--ease-out) both,
+    mg-fly var(--mg-fly) var(--sk-ease-out) both,
     mg-fade var(--mg-fade) ease-in var(--mg-fade-at) forwards;
 }
 
@@ -81,17 +81,17 @@
 .mg-flight-count {
   position: absolute;
   left: 50%;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
   white-space: nowrap;
-  background: var(--color-surface);
-  border-radius: var(--radius-pill);
+  background: var(--sk-color-surface);
+  border-radius: var(--sk-radius-pill);
   transform: translateX(-50%);
 }
 
 .mg-flight-name {
   bottom: calc(100% + 6px);
-  padding: 0 var(--space-1);
-  font-size: var(--font-size-small);
+  padding: 0 var(--sk-space-1);
+  font-size: var(--sk-font-size-small);
   line-height: 16px;
 }
 
@@ -102,7 +102,7 @@
   padding: 0 5px;
   font-size: 15px;
   line-height: 15px;
-  border: 1px solid var(--color-border-strong);
+  border: 1px solid var(--sk-color-border-strong);
 }
 
 /* A card's "+N", a coin-sized pill in its last slot. */
@@ -115,10 +115,10 @@
   display: grid;
   place-items: center;
   font-size: 12px;
-  font-weight: var(--font-weight-strong);
-  background: var(--color-surface);
-  border: 1px solid var(--color-border-strong);
-  border-radius: var(--radius-pill);
+  font-weight: var(--sk-font-weight-strong);
+  background: var(--sk-color-surface);
+  border: 1px solid var(--sk-color-border-strong);
+  border-radius: var(--sk-radius-pill);
   transform: translate(var(--mg-to), 0) scale(var(--mg-s));
   animation:
     mg-more var(--mg-fly) linear both,

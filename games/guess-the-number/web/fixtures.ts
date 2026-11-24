@@ -11,7 +11,7 @@
  * Spec:           docs/spec/09-testing-strategy.md §2
  */
 // The platform's per-player props: no cooldown running, and the names and colours of the list.
-export const who = { waitS: null, names: { p1: 'Anna' }, colors: { p1: 'var(--color-spring)' } };
+export const who = { waitS: null, names: { p1: 'Anna' }, colors: { p1: 'var(--sk-color-spring)' } };
 export const answered = { feedback: 'higher' as const, tier: 'cool' as const, comment: 'Mild.' };
 export const held = { feedback: null, tier: null, comment: null };
 export const view = {

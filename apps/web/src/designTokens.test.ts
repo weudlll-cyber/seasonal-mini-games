@@ -52,18 +52,22 @@ function parse(value: string): Rgba {
   return [Number(m[1]), Number(m[2]), Number(m[3]), m[4] === undefined ? 1 : Number(m[4]) / 100];
 }
 
-// The single-colour custom properties of a block.
+// A property's name without the kit's `--sk-` prefix: the tests below name a token the way the
+// game's CSS and the website do (`color-text`), whoever declares it.
+const bare = (name: string): string => name.replace(/^sk-/, '');
+
+// The single-colour custom properties of a block, by bare name.
 function colours(selector: string): Record<string, string> {
   const entries = [
     ...blockText(selector).matchAll(/--([\w-]+):\s*(#[0-9a-f]{6}|rgb\([^)]*\)|var\(--[\w-]+\));/gi),
-  ].map((m): [string, string] => [m[1] ?? '', m[2] ?? '']);
+  ].map((m): [string, string] => [bare(m[1] ?? ''), m[2] ?? '']);
   return Object.fromEntries(entries);
 }
 
 // Every rgb()/hex colour inside one multi-part token (the glows, the gradient stops).
 function parts(selector: string, name: string): Rgba[] {
   const text = blockText(selector);
-  const start = text.indexOf(`--${name}:`);
+  const start = text.indexOf(`--sk-${name}:`);
   const body = text.slice(start, text.indexOf(';', start));
   return [...body.matchAll(/#[0-9a-f]{6}|rgb\([^)]*\)/gi)].map((m) => parse(m[0]));
 }
@@ -123,7 +127,7 @@ function backgrounds(theme: keyof typeof THEMES): [string, Rgba][] {
 function resolved(set: Readonly<Record<string, string>>, name: string): string {
   const value = set[name] ?? '';
   const ref = /^var\(--([\w-]+)\)$/.exec(value)?.[1];
-  return ref === undefined ? value : resolved(set, ref);
+  return ref === undefined ? value : resolved(set, bare(ref));
 }
 
 describe('token contrast (WCAG AA), light and dark', () => {

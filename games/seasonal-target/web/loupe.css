@@ -20,25 +20,25 @@
   transform: translateX(-50%);
   width: min(100%, 17rem);
   display: grid;
-  gap: var(--space-1);
-  padding: var(--space-1);
-  border: 2px solid var(--season, var(--color-border));
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-raised);
+  gap: var(--sk-space-1);
+  padding: var(--sk-space-1);
+  border: 2px solid var(--season, var(--sk-color-border));
+  border-radius: var(--sk-radius);
+  background: var(--sk-color-surface);
+  box-shadow: var(--sk-shadow-raised);
 }
 
 .st-loupe-row {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 /* Column, Row and Close on the first row, the arrows on the second. */
 .st-loupe-close {
   order: 1;
-  min-height: var(--hit-target);
+  min-height: var(--sk-hit-target);
   margin-left: auto;
 }
 

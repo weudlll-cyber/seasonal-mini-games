@@ -33,10 +33,10 @@
   flex: none;
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
   min-width: 0;
   min-height: 2rem;
-  font-size: var(--font-size-small);
+  font-size: var(--sk-font-size-small);
 }
 
 .round-log-title {
@@ -45,8 +45,8 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--color-text-muted);
-  font-weight: var(--font-weight-strong);
+  color: var(--sk-color-text-muted);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 .round-log-all {
@@ -68,9 +68,9 @@
 .round-log-others {
   flex: none;
   margin: 0;
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
-  font-weight: var(--font-weight-strong);
+  font-size: var(--sk-font-size-small);
+  color: var(--sk-color-text-muted);
+  font-weight: var(--sk-font-weight-strong);
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -97,7 +97,7 @@
   min-width: 0;
   /* Close lines: 22 rows fit a list game's stage at 1280 × 720 (T142). */
   padding: 0.05rem 0.5rem;
-  border-radius: var(--radius);
+  border-radius: var(--sk-radius);
   line-height: 1.25;
 }
 
@@ -146,14 +146,14 @@ button.round-row-line {
   max-width: 50%;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 /* The guess and the answer never give way (T150): the comment and the name do. */
 .round-value,
 .round-answer {
   flex: none;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 .round-value {
@@ -166,7 +166,7 @@ button.round-row-line {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: var(--font-size-small);
+  font-size: var(--sk-font-size-small);
 }
 
 /* A board game's list (the column beside the grid): a comment without room beside the answer
@@ -191,7 +191,7 @@ button.round-row-line {
   align-items: baseline;
   gap: 0.3rem;
   color: var(--color-winter-text);
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 /* The seconds until a held answer arrives: a small badge in Frost's colour. */
@@ -199,9 +199,9 @@ button.round-row-line {
   display: inline-block;
   min-width: 2.2em;
   padding: 0 0.35em;
-  border-radius: var(--radius-pill);
+  border-radius: var(--sk-radius-pill);
   border: 1px solid currentColor;
-  font-size: var(--font-size-small);
+  font-size: var(--sk-font-size-small);
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
@@ -212,8 +212,8 @@ button.round-row-line {
   align-items: baseline;
   gap: 0.5rem;
   padding-block: 0.05rem;
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
+  font-size: var(--sk-font-size-small);
+  color: var(--sk-color-text-muted);
 }
 
 /* A special's row (Leaf Fall): a dashed outline in the season colour with the season icon, in
@@ -224,10 +224,10 @@ button.round-row-line {
   align-items: flex-start;
   padding: 0.2rem 0.5rem;
   border: 2px dashed var(--season);
-  background: var(--color-card);
-  color: var(--color-text);
+  background: var(--sk-color-card);
+  color: var(--sk-color-text);
   font-size: inherit;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 /* The text wraps beside the icon, never under it. */
@@ -243,7 +243,7 @@ button.round-row-line {
   width: 1.4rem;
   height: 1.4rem;
   border-radius: 50%;
-  background: var(--color-surface);
+  background: var(--sk-color-surface);
 }
 
 .round-dot {
@@ -252,14 +252,14 @@ button.round-row-line {
   height: 0.7rem;
   border-radius: 50%;
   background: var(--dot, transparent);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--sk-color-border);
 }
 
 /* A guess drawn as colour dots (Bomb Defusal's wires): the viewer's own marker is a neutral
    ring, never a colour that reads as a wire; the own-row tint says whose row it is (T153). */
 .round-row[data-own='true']:has(.round-swatches) .round-dot {
   background: transparent;
-  border: 2px solid var(--color-text);
+  border: 2px solid var(--sk-color-text);
 }
 
 .round-answer[data-feedback='higher'] {
@@ -268,7 +268,7 @@ button.round-row-line {
 
 .round-answer[data-feedback='lower'],
 .round-answer[data-feedback='boom'] {
-  color: var(--color-danger);
+  color: var(--sk-color-danger);
 }
 
 /* A game's own answers (T119): close and found in the success colour, far in plain text. */
@@ -280,7 +280,7 @@ button.round-row-line {
 /* A phone: closer parts; "Log (M)" a full touch target (night-7 review). */
 @media (max-width: 899px) {
   .round-log-all {
-    min-height: var(--hit-target);
+    min-height: var(--sk-hit-target);
   }
 
   .round-row-line {

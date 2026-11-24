@@ -43,7 +43,7 @@ function setup() {
       specialOn
       waitS={null}
       names={{ p1: 'Anna' }}
-      colors={{ p1: 'var(--color-spring)' }}
+      colors={{ p1: 'var(--sk-color-spring)' }}
     />,
   );
   const boxes = [0, 1, 2, 3].map((i) =>

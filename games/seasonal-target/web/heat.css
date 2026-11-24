@@ -173,8 +173,8 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
+  font-size: var(--sk-font-size-small);
+  color: var(--sk-color-text-muted);
 }
 
 .st-heat .st-swatch {

@@ -121,7 +121,7 @@
 /* Compact: no empty space between "Next round", its line and "Players" (O111). */
 .match-docked .match-after:not(.match-after--docked) .match-side,
 .match-docked .match-after:not(.match-after--docked) .match-waiting {
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .match-docked .match-after:not(.match-after--docked) .match-waiting p {
@@ -217,27 +217,27 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-1) var(--space-2);
+  gap: var(--sk-space-1) var(--sk-space-2);
 }
 
 .next-round-when {
   margin: 0;
   font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * 18px));
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 /* The accent blue of the round's winter and the focus ring, with dark text (8.4:1). */
 .next-round-start {
-  min-height: max(32px, calc(var(--fit, 1) * var(--hit-target)));
+  min-height: max(32px, calc(var(--fit, 1) * var(--sk-hit-target)));
   border-color: transparent;
   border-radius: 999px;
-  background: var(--color-accent);
+  background: var(--sk-color-accent);
   color: #0a1233;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 .next-round-start:hover:not(:disabled) {
-  background: var(--color-accent);
+  background: var(--sk-color-accent);
   filter: brightness(1.08);
 }
 
@@ -247,13 +247,13 @@
   height: 6px;
   overflow: hidden;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+  background: color-mix(in srgb, var(--sk-color-text) 10%, transparent);
 }
 
 .next-round-bar > span {
   display: block;
   height: 100%;
-  background: var(--color-accent);
+  background: var(--sk-color-accent);
   transition: width 1s linear;
 }
 

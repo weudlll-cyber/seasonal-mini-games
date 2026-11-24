@@ -28,7 +28,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .mg-stage > * {
@@ -40,7 +40,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 /* The cards: frames behind three rows, the buttons, the flight band and the counts. Clipped at
@@ -56,7 +56,7 @@
 .mg-counts {
   display: grid;
   grid-template-columns: repeat(var(--mg-options), minmax(0, 1fr));
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .mg-frames {
@@ -66,23 +66,23 @@
 }
 
 .mg-frame {
-  background: var(--color-surface);
+  background: var(--sk-color-surface);
   border: 2px solid var(--mg-color);
-  border-radius: var(--radius-card);
+  border-radius: var(--sk-radius-card);
 }
 
 .mg-frame[data-choice='all'] {
-  border-color: var(--color-border-strong);
+  border-color: var(--sk-color-border-strong);
 }
 
 /* The own choice: a strong frame in its colour (All's in the text colour) on a tint. */
 .mg-frame[data-own='true'] {
-  background: color-mix(in srgb, var(--mg-color) 22%, var(--color-surface));
+  background: color-mix(in srgb, var(--mg-color) 22%, var(--sk-color-surface));
   border-width: 5px;
 }
 
 .mg-frame[data-choice='all'][data-own='true'] {
-  border-color: var(--color-text);
+  border-color: var(--sk-color-text);
 }
 
 .mg-buttons,
@@ -105,13 +105,13 @@
   align-items: center;
   justify-content: flex-start;
   gap: 0.3rem;
-  padding: var(--space-2) var(--space-1) 0;
-  color: var(--color-text);
+  padding: var(--sk-space-2) var(--sk-space-1) 0;
+  color: var(--sk-color-text);
   font: inherit;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
   background: none;
   border: 0;
-  border-radius: var(--radius-card);
+  border-radius: var(--sk-radius-card);
   cursor: pointer;
 }
 
@@ -134,7 +134,7 @@
 }
 
 .mg-choice:focus-visible {
-  outline: 3px solid var(--color-accent);
+  outline: 3px solid var(--sk-color-accent);
   outline-offset: -3px;
 }
 
@@ -162,10 +162,10 @@
 
 .mg-yours {
   padding: 0.1rem 0.6rem;
-  border-radius: var(--radius-pill);
-  background: var(--color-solid);
-  color: var(--color-on-solid);
-  font-size: var(--font-size-small);
+  border-radius: var(--sk-radius-pill);
+  background: var(--sk-color-solid);
+  color: var(--sk-color-on-solid);
+  font-size: var(--sk-font-size-small);
   white-space: nowrap;
 }
 
@@ -174,19 +174,19 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-bottom: var(--space-1);
+  padding-bottom: var(--sk-space-1);
   text-align: center;
 }
 
 .mg-count-n {
   font-size: 2rem;
-  font-weight: var(--font-weight-heading);
+  font-weight: var(--sk-font-weight-heading);
   line-height: 1.1;
 }
 
 .mg-count-ago {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+  color: var(--sk-color-text-muted);
+  font-size: var(--sk-font-size-small);
 }
 
 .mg-counts--waiting {
@@ -197,15 +197,15 @@
 .mg-yourline {
   display: none;
   margin: 0;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 .mg-hide {
   align-self: flex-start;
-  min-height: var(--hit-target);
+  min-height: var(--sk-hit-target);
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
   cursor: pointer;
 }
 
@@ -217,7 +217,7 @@
 .mg-head,
 .mg-line {
   margin: 0;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 .mg-line {
@@ -234,7 +234,7 @@
 
 .mg-refusal {
   margin: 0;
-  color: var(--color-danger);
+  color: var(--sk-color-danger);
 }
 
 /* The phone layout (the platform's: under 900 px or upright): the cards with icon, name and
@@ -256,8 +256,8 @@
 
   .mg-choice {
     gap: 2px;
-    padding-top: var(--space-1);
-    font-size: var(--font-size-small);
+    padding-top: var(--sk-space-1);
+    font-size: var(--sk-font-size-small);
   }
 
   .mg-yours {
@@ -291,9 +291,9 @@
    strip): small text, the change in strong. */
 .mg-note {
   margin: 0;
-  font-size: var(--font-size-small);
+  font-size: var(--sk-font-size-small);
 }
 
 .mg-next {
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }

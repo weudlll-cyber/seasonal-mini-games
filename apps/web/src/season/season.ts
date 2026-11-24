@@ -54,5 +54,5 @@ export const SPECIALS: Readonly<
 export const NO_SPECIAL = 'No special this round.';
 
 export function seasonColor(season: SeasonName): string {
-  return `var(--color-${season})`;
+  return `var(--sk-color-${season})`;
 }

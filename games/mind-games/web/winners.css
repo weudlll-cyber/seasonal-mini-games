@@ -31,12 +31,12 @@
 }
 
 .mg-winners[data-none='true'] {
-  border-color: var(--color-border);
-  background: var(--color-surface);
+  border-color: var(--sk-color-border);
+  background: var(--sk-color-surface);
 }
 
 .mg-winners[data-none='true'] > strong {
-  color: var(--color-text);
+  color: var(--sk-color-text);
 }
 
 .mg-chips {
@@ -55,7 +55,7 @@
   background: var(--mg-win);
   color: var(--mg-win-ink);
   font-size: 14px;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -69,7 +69,7 @@
   color: var(--mg-win-title);
   font: inherit;
   font-size: 14px;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
   cursor: pointer;
 }
 
@@ -82,12 +82,12 @@
   width: min(28rem, 100%);
   max-height: 18rem;
   margin: 0;
-  padding: var(--space-2) var(--space-2) var(--space-2) 2.2rem;
+  padding: var(--sk-space-2) var(--sk-space-2) var(--sk-space-2) 2.2rem;
   overflow-y: auto;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-raised);
+  border: 1px solid var(--sk-color-border);
+  border-radius: var(--sk-radius);
+  background: var(--sk-color-surface);
+  box-shadow: var(--sk-shadow-raised);
   overflow-wrap: anywhere;
 }
 
@@ -117,7 +117,7 @@
   }
 
   .mg-chip-more {
-    min-height: var(--hit-target);
+    min-height: var(--sk-hit-target);
     font-size: 13px;
   }
 }

@@ -11,16 +11,16 @@
  */
 
 .embed-main {
-  padding: var(--space-3);
+  padding: var(--sk-space-3);
 }
 
 .embed-who {
-  margin: 0 0 var(--space-2);
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
+  margin: 0 0 var(--sk-space-2);
+  font-size: var(--sk-font-size-small);
+  color: var(--sk-color-text-muted);
 }
 
 .embed-refused {
-  margin: var(--space-4);
-  color: var(--color-text-muted);
+  margin: var(--sk-space-4);
+  color: var(--sk-color-text-muted);
 }

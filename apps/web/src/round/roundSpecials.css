@@ -21,13 +21,13 @@
   min-width: 0;
   margin: 0;
   padding: 0.2rem 0.6rem;
-  border-radius: var(--radius);
+  border-radius: var(--sk-radius);
   background: var(--season);
-  color: var(--color-on-season);
-  font-weight: var(--font-weight-strong);
+  color: var(--sk-color-on-season);
+  font-weight: var(--sk-font-weight-strong);
   line-height: 1.25;
   overflow-wrap: anywhere;
-  animation: round-banner-in var(--duration-fast) ease-out;
+  animation: round-banner-in var(--sk-duration-fast) ease-out;
 }
 
 .round-banner:empty {
@@ -58,12 +58,12 @@
   width: 1.15rem;
   height: 1.15rem;
   border-radius: 50%;
-  background: var(--color-surface);
-  color: var(--color-text);
+  background: var(--sk-color-surface);
+  color: var(--sk-color-text);
   font-family: Georgia, serif;
   font-size: 0.8rem;
   font-style: italic;
-  font-weight: var(--font-weight-heading);
+  font-weight: var(--sk-font-weight-heading);
 }
 
 .round-info-note {
@@ -71,12 +71,12 @@
   top: calc(100% + 0.25rem);
   left: 0;
   z-index: 25;
-  width: min(22rem, calc(100vw - 2 * var(--gutter)));
-  padding: var(--space-2);
+  width: min(22rem, calc(100vw - 2 * var(--sk-gutter)));
+  padding: var(--sk-space-2);
   border: 2px solid var(--season);
-  border-radius: var(--radius-card);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-raised);
+  border-radius: var(--sk-radius-card);
+  background: var(--sk-color-surface);
+  box-shadow: var(--sk-shadow-raised);
   white-space: normal;
 }
 
@@ -90,15 +90,15 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  min-height: var(--hit-target);
+  min-height: var(--sk-hit-target);
   padding: 0 0.9rem 0 0.35rem;
   border: 0;
-  border-radius: var(--radius-pill);
+  border-radius: var(--sk-radius-pill);
   background: var(--season);
-  color: var(--color-on-season);
+  color: var(--sk-color-on-season);
   font: inherit;
   /* Thin text on a season colour read pale (night-5 review). */
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 .round-season--button {
@@ -117,14 +117,14 @@
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background: var(--color-surface);
+  background: var(--sk-color-surface);
 }
 
 .round-badge {
   padding: 0 0.6rem;
-  border-radius: var(--radius-pill);
-  border: 2px solid var(--color-on-season);
-  font-size: var(--font-size-small);
+  border-radius: var(--sk-radius-pill);
+  border: 2px solid var(--sk-color-on-season);
+  font-size: var(--sk-font-size-small);
 }
 
 /* A phone: the pill smaller with the special's name read out (the note names it). */
@@ -132,7 +132,7 @@
   .round-season {
     gap: 0.35rem;
     padding: 0 0.5rem 0 0.25rem;
-    font-size: var(--font-size-small);
+    font-size: var(--sk-font-size-small);
   }
 
   .round-season-icon {

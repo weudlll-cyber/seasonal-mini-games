@@ -23,7 +23,7 @@
   height: 0.75em;
   border-radius: 50%;
   background: var(--mark);
-  box-shadow: 0 0 0 1px var(--color-text);
+  box-shadow: 0 0 0 1px var(--sk-color-text);
 }
 
 .smg-mark-shape[data-shape='ring'] {
@@ -37,5 +37,5 @@
 
 .smg-mark-tag {
   font-variant-numeric: tabular-nums;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }

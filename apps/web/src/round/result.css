@@ -20,7 +20,7 @@
  */
 .round-result {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--sk-space-2);
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -28,13 +28,13 @@
 /* The first part: one screen under the bar (the page's top offset is ../match/match.css's). */
 .round-result-first {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--sk-space-2);
   height: calc(100dvh - var(--result-top, 4.5rem));
   min-height: 0;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto;
   grid-template-areas: 'head' 'game' 'places';
-  padding: var(--space-2) var(--space-3);
+  padding: var(--sk-space-2) var(--sk-space-3);
 }
 
 /* A list game's first part is as tall as its content (its reveal is a line or two), so no
@@ -91,12 +91,12 @@
   min-width: 0;
   display: grid;
   align-content: start;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .round-placings {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
   justify-items: start;
 }
 
@@ -106,7 +106,7 @@
 
 .round-team-line {
   margin: 0;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 /* Below the first part: every player's guesses in full, then the team result and the match
@@ -114,14 +114,14 @@
 .round-result-history,
 .round-result-more {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--sk-space-2);
   align-content: start;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--sk-space-2) var(--sk-space-3);
 }
 
 .round-result-more h2 {
   margin: 0;
-  font-size: var(--font-size-lead);
+  font-size: var(--sk-font-size-lead);
 }
 
 /* A desktop: the visual on the left at the part's full height, the top three and the team
@@ -195,7 +195,7 @@
 .round-player {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
   min-width: 0;
   white-space: nowrap;
 }
@@ -221,8 +221,8 @@
 .round-table th,
 .round-table td {
   text-align: left;
-  padding: var(--space-1);
-  border-bottom: 1px solid var(--color-border);
+  padding: var(--sk-space-1);
+  border-bottom: 1px solid var(--sk-color-border);
 }
 
 /* A shared round's place is a number or "–" (took part, its words for a screen reader):
@@ -240,7 +240,7 @@
    "Pts" with room between them, the name the rest (T211). */
 @media (max-width: 480px) {
   .round-table {
-    font-size: var(--font-size-small);
+    font-size: var(--sk-font-size-small);
   }
 
   .round-col-place {
@@ -280,18 +280,18 @@
 }
 
 .round-you {
-  background: var(--color-active-bg);
-  font-weight: var(--font-weight-strong);
+  background: var(--sk-color-active-bg);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 .round-hex {
   overflow-wrap: anywhere;
-  font-size: var(--font-size-small);
+  font-size: var(--sk-font-size-small);
 }
 
 .round-teams-result {
   margin: 0;
   padding-left: 1.25rem;
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }

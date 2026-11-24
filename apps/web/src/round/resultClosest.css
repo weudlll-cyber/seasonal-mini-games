@@ -27,19 +27,19 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-1) var(--space-2);
+  gap: var(--sk-space-1) var(--sk-space-2);
 }
 
 /* The screen's scale (`--fit`, ./useFit, O111): the type of the whole result follows it from
    here (13 px at the least), and the sizes below that are not the text's own; at 1 every size
    is as without it. */
 .round-result[data-closest] {
-  gap: calc(var(--fit, 1) * var(--space-2));
+  gap: calc(var(--fit, 1) * var(--sk-space-2));
   font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * 1rem));
 }
 
 .round-result[data-closest] .round-result-first {
-  gap: calc(var(--fit, 1) * var(--space-1));
+  gap: calc(var(--fit, 1) * var(--sk-space-1));
   padding: calc(var(--fit, 1) * 0.875rem) calc(var(--fit, 1) * 1.125rem);
 }
 
@@ -49,7 +49,7 @@
 
 .round-result[data-closest] .round-table th,
 .round-result[data-closest] .round-table td {
-  padding: calc(var(--fit, 1) * var(--space-1));
+  padding: calc(var(--fit, 1) * var(--sk-space-1));
 }
 
 /* "All placings (N)": the size of the round list's "Log (N)" (../round/roundLog.css). */
@@ -80,13 +80,13 @@
 @media (max-width: 899px) {
   .round-result[data-closest] .round-all-placings,
   .round-result[data-closest] .round-all-guesses {
-    min-height: max(var(--sk-floor-target), calc(var(--fit, 1) * var(--hit-target)));
+    min-height: max(var(--sk-floor-target), calc(var(--fit, 1) * var(--sk-hit-target)));
   }
 }
 
 @media (min-width: 900px) {
   .round-result[data-closest] .round-result-first {
-    column-gap: calc(var(--fit, 1) * var(--space-3));
+    column-gap: calc(var(--fit, 1) * var(--sk-space-3));
     grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr);
   }
 

@@ -19,7 +19,7 @@ interface WithPlayers {
 }
 
 // The viewer's own tiles where the platform named no viewer (a test): "you" on an ink ring.
-export const YOU_MARK: PlayerMark = { tag: 'you', color: 'var(--color-text)', shape: 'ring' };
+export const YOU_MARK: PlayerMark = { tag: 'you', color: 'var(--sk-color-text)', shape: 'ring' };
 
 export const marksFor = (p: WithPlayers): Readonly<Record<string, PlayerMark>> =>
   p.marks ?? marksOf(Object.keys(p.colors), p.viewerKey ?? null);

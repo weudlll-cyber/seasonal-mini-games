@@ -43,7 +43,7 @@
   flex: 1;
   min-height: 0;
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
   grid-template-columns: minmax(0, 1fr);
 }
 
@@ -69,15 +69,18 @@
    so the list's rows have room for their comments (O62's review: messages readable). The bar
    row is its fixed 44 px, which the stage's height is reckoned from. */
 .round-live[data-view='desktop'][data-layout='board'] {
-  --board-side: min(calc(100cqh - 44px - var(--space-1)), calc(100cqw - 340px - var(--space-1)));
+  --board-side: min(
+    calc(100cqh - 44px - var(--sk-space-1)),
+    calc(100cqw - 340px - var(--sk-space-1))
+  );
   grid-template-columns: var(--board-side) minmax(340px, 1fr);
   grid-template-rows: 44px minmax(0, 1fr);
 }
 
 .round-live[data-view='desktop'][data-layout='board'][data-panel] {
   --board-side: min(
-    calc(100cqh - 44px - var(--space-1)),
-    calc(100cqw - 700px - 2 * var(--space-1))
+    calc(100cqh - 44px - var(--sk-space-1)),
+    calc(100cqw - 700px - 2 * var(--sk-space-1))
   );
   grid-template-columns: var(--board-side) minmax(340px, 1fr) 360px;
 }
@@ -99,7 +102,7 @@
    mode the head keeps one line of the others' counts under it (O141). */
 .round-live[data-view='phone'][data-layout='board'] {
   grid-template-rows:
-    auto auto minmax(0, max-content) minmax(calc(2 * var(--space-1) + var(--hit-target)), 1fr)
+    auto auto minmax(0, max-content) minmax(calc(2 * var(--sk-space-1) + var(--sk-hit-target)), 1fr)
     auto;
   grid-template-areas: 'bar' 'line' 'stage' 'main' 'dock';
 }
@@ -112,7 +115,10 @@
   grid-template-rows:
     auto auto minmax(0, max-content)
     minmax(
-      calc(2 * var(--space-1) + 2px + var(--hit-target) + 0.3rem + 1.5 * var(--font-size-small)),
+      calc(
+        2 * var(--sk-space-1) + 2px + var(--sk-hit-target) + 0.3rem + 1.5 *
+          var(--sk-font-size-small)
+      ),
       1fr
     )
     auto;
@@ -120,7 +126,7 @@
 
 .round-live[data-view='phone'][data-layout='board'] .round-log-others {
   flex-shrink: 1;
-  min-height: calc(1.5 * var(--font-size-small));
+  min-height: calc(1.5 * var(--sk-font-size-small));
 }
 
 /* Square by its width; never taller than its row. */
@@ -149,7 +155,7 @@
 }
 
 .round-stage--list {
-  gap: var(--space-2);
+  gap: var(--sk-space-2);
   padding: 0.6rem 0.75rem;
 }
 
@@ -165,7 +171,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .round-panel {
@@ -196,10 +202,10 @@
   margin: 0;
   padding: 0.35rem 0.75rem;
   border: 2px solid var(--season);
-  border-radius: var(--radius-card);
-  background: var(--color-surface);
-  color: var(--color-text);
-  font-size: var(--font-size-small);
+  border-radius: var(--sk-radius-card);
+  background: var(--sk-color-surface);
+  color: var(--sk-color-text);
+  font-size: var(--sk-font-size-small);
   line-height: 1.3;
 }
 
@@ -208,7 +214,7 @@
   margin: 0;
   padding: 0.35rem 0.75rem;
   border-left: 4px solid var(--season);
-  font-size: var(--font-size-small);
+  font-size: var(--sk-font-size-small);
 }
 
 /* The phone's info line: the game's line, at most 48 px; the game's parts sit side by side
@@ -218,13 +224,13 @@
   grid-area: line;
   display: flex;
   align-items: center;
-  gap: var(--space-1);
-  min-height: var(--hit-target);
+  gap: var(--sk-space-1);
+  min-height: var(--sk-hit-target);
   max-height: 48px;
   padding: 0.2rem 0.75rem;
-  color: var(--color-text);
+  color: var(--sk-color-text);
   font: inherit;
-  font-size: var(--font-size-small);
+  font-size: var(--sk-font-size-small);
   text-align: start;
   line-height: 1.2;
   cursor: pointer;
@@ -260,41 +266,41 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 /* Solved (individual mode) or out of time (O71): a short notice where the input row was, in
    the season's frame. */
 .round-solved {
   margin: 0;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--sk-space-2) var(--sk-space-3);
   border: 2px solid var(--season);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  font-weight: var(--font-weight-strong);
+  border-radius: var(--sk-radius);
+  background: var(--sk-color-surface);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 /* The inactivity countdown above the input (O71): the warning surface with the text colour,
    over 4.5:1 in both themes, edged in the danger colour so it stands out on a light card. */
 .round-inactivity {
   margin: 0;
-  padding: var(--space-1) var(--space-2);
-  border-left: 4px solid var(--color-danger);
-  border-radius: var(--radius);
-  background: var(--color-warning-surface);
-  color: var(--color-text);
-  font-weight: var(--font-weight-strong);
+  padding: var(--sk-space-1) var(--sk-space-2);
+  border-left: 4px solid var(--sk-color-danger);
+  border-radius: var(--sk-radius);
+  background: var(--sk-color-warning-surface);
+  color: var(--sk-color-text);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 /* A phone: the panels tighter. */
 @media (max-width: 899px) {
   .round-main,
   .round-panel {
-    padding: var(--space-1) var(--space-2);
+    padding: var(--sk-space-1) var(--sk-space-2);
   }
 }
 
 .round-refusal {
   margin: 0;
-  color: var(--color-danger);
+  color: var(--sk-color-danger);
 }

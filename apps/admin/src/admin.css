@@ -17,30 +17,30 @@ body {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-2) var(--gutter);
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
+  gap: var(--sk-space-3);
+  padding: var(--sk-space-2) var(--sk-gutter);
+  background: var(--sk-color-surface);
+  border-bottom: 1px solid var(--sk-color-border);
 }
 
 .admin-bar nav {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--sk-space-2);
   flex: 1;
 }
 
 .admin-bar nav a[aria-current='page'] {
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
   text-decoration: underline;
 }
 
 .admin-main {
   max-width: 96rem;
   margin: 0 auto;
-  padding: var(--space-3) var(--gutter);
+  padding: var(--sk-space-3) var(--sk-gutter);
   display: grid;
-  gap: var(--space-3);
+  gap: var(--sk-space-3);
 }
 
 .admin-sign-in {
@@ -50,12 +50,12 @@ body {
 .admin-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--sk-space-2);
 }
 
 .admin-tabs button[aria-pressed='true'] {
-  background: var(--color-solid);
-  color: var(--color-on-solid);
+  background: var(--sk-color-solid);
+  color: var(--sk-color-on-solid);
 }
 
 .admin-table-wrap {
@@ -66,15 +66,15 @@ body {
 .admin-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: var(--font-size-small);
+  font-size: var(--sk-font-size-small);
 }
 
 .admin-table th,
 .admin-table td {
   text-align: left;
   vertical-align: top;
-  padding: var(--space-1) var(--space-2);
-  border-bottom: 1px solid var(--color-border);
+  padding: var(--sk-space-1) var(--sk-space-2);
+  border-bottom: 1px solid var(--sk-color-border);
 }
 
 /* A display name on one line, cut with an ellipsis at its end; the full name is its title
@@ -94,7 +94,7 @@ body {
 
 .admin-editor {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
   min-width: 9rem;
 }
 
@@ -108,15 +108,15 @@ body {
   z-index: 10;
   display: grid;
   place-items: center;
-  padding: var(--gutter);
-  background: var(--color-scrim);
+  padding: var(--sk-gutter);
+  background: var(--sk-color-scrim);
 }
 
 .admin-dialog {
   width: min(32rem, 100%);
-  background: var(--color-surface);
-  color: var(--color-text);
-  box-shadow: var(--shadow-raised);
+  background: var(--sk-color-surface);
+  color: var(--sk-color-text);
+  box-shadow: var(--sk-shadow-raised);
 }
 
 .admin-history,
@@ -125,13 +125,13 @@ body {
   padding-left: 0;
   list-style: none;
   display: grid;
-  gap: var(--space-2);
+  gap: var(--sk-space-2);
 }
 
 .admin-codes {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
   padding-left: 0;
   list-style: none;
 }
@@ -139,6 +139,6 @@ body {
 /* A multi-line input (a PEM key, a role mapping): room for its lines, monospace like code */
 .admin-textarea {
   min-height: 6rem;
-  padding: var(--space-1) 0.85rem;
+  padding: var(--sk-space-1) 0.85rem;
   font-family: ui-monospace, monospace;
 }
