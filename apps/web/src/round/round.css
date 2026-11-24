@@ -15,8 +15,9 @@
  *                 third column that pushes the game aside (O48). A phone: the bar, the info line
  *                 (at most 48 px, the game's panel behind it as a sheet), a board game's board
  *                 as wide as the screen, the round's guesses filling the height that is left
- *                 (on a short screen they give their rows first, then the board shrinks, so the
- *                 dock stays on the screen, O111), and the dock at the bottom, which no sheet
+ *                 (on a short screen they give their rows first, down to their head, then the
+ *                 board shrinks, so the dock stays on the screen, O111; a list game's panel
+ *                 gives its padding before its head is cut, T424), and the dock at the bottom, which no sheet
  *                 covers. The season pill in its token colour (./SeasonPill); a solved or timed-out
  *                 player's notice in the dock (O25, O71) and the inactivity countdown line;
  *                 the platform's refusal line. The Players panel is
@@ -91,6 +92,14 @@
 .round-live[data-view='phone'] {
   grid-template-rows: auto auto minmax(0, 1fr) auto;
   grid-template-areas: 'bar' 'line' 'main' 'dock';
+}
+
+/* A list game on a phone: the list's row keeps its head ("N guesses" and "Log (N)", a hit target
+   high, inside the panel's 1 px borders) whatever the dock and the on-screen keyboard leave, so
+   the head is never cut by its panel; where the room is short the panel gives its own padding
+   first (below, T424). */
+.round-live[data-view='phone'][data-layout='list'] {
+  grid-template-rows: auto auto minmax(calc(var(--sk-hit-target) + 2px), 1fr) auto;
 }
 
 /* A board game on a phone: the board under the info line, as wide as the screen, the list
