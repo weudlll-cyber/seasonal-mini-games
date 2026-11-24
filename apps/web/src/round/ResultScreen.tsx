@@ -47,7 +47,6 @@ import { ClosestToWinning } from './ClosestToWinning.js';
 import { colorsOf } from './RoundSide.js';
 import { RoundStandings } from './RoundStandings.js';
 import { endHeadline, marginText } from './roundText.js';
-import { useFontLoads } from './useFit.js';
 import './result.css';
 import './resultBoard.css';
 import './resultOwn.css';
@@ -185,6 +184,9 @@ function Guesses(p: {
   );
 }
 
+// The fitting option of the result frame, as the start card's (RoundIntro): fit again after fonts.
+const FIT = { afterFonts: true } as const;
+
 // The platform's result (T145) in the kit's `ResultFrame`: the first part one screen high (the
 // end, the margin, the proof, the game's reveal, the top placings and the team line), "Closest to
 // winning" or the full history as its middle card, fitted with the first part (O110, O111), and
@@ -197,8 +199,6 @@ export function ResultScreen(props: ResultProps): ReactElement {
   );
   // The game names best guesses (O110): "Closest to winning" stands for the full history.
   const closest = game?.text.best !== undefined && state.closest !== undefined ? game : null;
-  // The kit's frame fits again after a font load only through its signature (T423 (3), waiting for the kit).
-  const loads = useFontLoads();
   const { headline, lines } = headlineOf(state, game);
   return (
     <ResultFrame
@@ -227,7 +227,9 @@ export function ResultScreen(props: ResultProps): ReactElement {
       layout={game?.layout === 'board' ? 'board' : 'list'}
       // A game with "Closest to winning" fits its first part and that card to the screen.
       fitted={closest !== null}
-      signature={`${state.roundId}|${String(state.closest?.length)}|${String(loads)}`}
+      // The fit again after web fonts have loaded is the kit's (v0.18.0, K55, T423 (3)).
+      fit={FIT}
+      signature={`${state.roundId}|${String(state.closest?.length)}`}
     />
   );
 }

@@ -8,20 +8,18 @@
  *                 its root at mount, again after `document.fonts` reports `loadingdone` (the
  *                 type swapped in after the first paint, font-display: swap, can wrap a line
  *                 anew; WebKit, journey 16), and no longer once the screen is gone; the kit's
- *                 `StartCard` does the same with the game's `fit` option (RoundIntro, K48);
- *                 and `useFontLoads`, the result frame's count of those loads for its
- *                 signature (the kit's frame has no such option). jsdom has no layout, so a
- *                 fitting shows as `data-sk-fit-scale` being written again.
- * Depends on:     vitest, @testing-library/react, react, @seasonal/kit/react, ./useFit
+ *                 `StartCard` does the same with the game's `fit` option (RoundIntro, K48), and
+ *                 so does the fitted `ResultFrame` with the option ResultScreen passes (K55).
+ *                 jsdom has no layout, so a fitting shows as `data-sk-fit-scale` being written
+ *                 again.
+ * Depends on:     vitest, @testing-library/react, react, @seasonal/kit/react
  * Spec:           docs/spec/04-software-architecture.md §4.6
  */
-import { act, cleanup, render } from '@testing-library/react';
+import { cleanup, render } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { StartCard, useFitScale } from '@seasonal/kit/react';
-
-import { useFontLoads } from './useFit.js';
+import { ResultFrame, StartCard, useFitScale } from '@seasonal/kit/react';
 
 function Card(): ReactElement {
   const ref = useFitScale<HTMLDivElement>('mini-games', 'card', false, { afterFonts: true });
@@ -86,18 +84,31 @@ describe('the start card with the fit option the intro passes', () => {
   });
 });
 
-function Loads(): ReactElement {
-  return <span data-testid="loads">{useFontLoads()}</span>;
+// The fitted result frame with the option ResultScreen passes (K55): the frame's root is the
+// element that carries the scale.
+function Result(): ReactElement {
+  return (
+    <ResultFrame
+      game="mini-games"
+      headline="Result"
+      lines={[]}
+      placings={<p>Placings</p>}
+      fitted
+      fit={{ afterFonts: true }}
+      signature="a"
+    />
+  );
 }
 
-describe('useFontLoads', () => {
-  it('counts the fonts loads while the result is shown', () => {
-    const view = render(<Loads />);
-    expect(view.getByTestId('loads').textContent).toBe('0');
-    act(() => {
-      fonts.dispatchEvent(new Event('loadingdone'));
-      fonts.dispatchEvent(new Event('loadingdone'));
+describe('the fitted result frame with the fit option the result screen passes', () => {
+  it('fits again once fonts have loaded', async () => {
+    const view = render(<Result />);
+    const frame = view.getByTestId('result-first').closest('[data-sk-fit-scale]') as HTMLElement;
+    await new Promise((r) => setTimeout(r, 50));
+    delete frame.dataset['skFitScale'];
+    fonts.dispatchEvent(new Event('loadingdone'));
+    await vi.waitFor(() => {
+      expect(frame.dataset['skFitScale']).toBe('1');
     });
-    expect(view.getByTestId('loads').textContent).toBe('2');
   });
 });

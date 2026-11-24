@@ -1,38 +1,20 @@
 /**
  * @file   apps/web/src/round/useFit.ts
  * @module web/round
- * @brief  Fitting to the screen (O111): how many of a box's items fit, and the font-load count
- *         the result frame still needs.
+ * @brief  Fitting to the screen (O111): how many of a box's items fit.
  *
  * Responsibility: `useFit`: a box of a fixed height that never scrolls and never cuts an item
  *                 shows the items (`[data-fit]`) that fit whole and "+N more" for the rest (the
  *                 Others panel and line, O110). A screen's own scale is the kit's
  *                 `useFitScale('mini-games', …, { afterFonts: true })` (a game's own result
- *                 and, as `fit`, the start card, ./ResultScreen, ./RoundIntro): the kit fits
- *                 again after web fonts load, which T404 needed. Its `ResultFrame` has no such
- *                 option, so `useFontLoads` counts the font loads for the frame's `signature`
- *                 (./ResultScreen) until the kit's frame has it (T423).
+ *                 and, as `fit`, the start card and the result frame, ./ResultScreen,
+ *                 ./RoundIntro): the kit fits again after web fonts load, which T404 needed
+ *                 (the frame's option since v0.18.0, K55).
  * Depends on:     react
- * Used by:        ./OthersLine, ./RoundSide (useFit); ./ResultScreen (useFontLoads)
+ * Used by:        ./OthersLine, ./RoundSide
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/02-game-guess-the-number.md §12
  */
-import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';
-
-// How many times web fonts have finished loading while the card is shown (T404).
-export function useFontLoads(): number {
-  const [loads, setLoads] = useState(0);
-  useEffect(() => {
-    const fonts = 'fonts' in document ? document.fonts : null;
-    const loaded = (): void => {
-      setLoads((n) => n + 1);
-    };
-    fonts?.addEventListener('loadingdone', loaded);
-    return () => {
-      fonts?.removeEventListener('loadingdone', loaded);
-    };
-  }, []);
-  return loads;
-}
+import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
 
 // The items that fit whole: inside the box's height (and width) by half a pixel.
 function fitting(box: HTMLElement): number {
