@@ -9,8 +9,8 @@
  *                 the top of the left column and the right column goes on from the foot of the
  *                 left one, in shared mode (every player's rows, the viewer's marked) and in
  *                 individual mode (the viewer's rows only); the columns fill in that order, each
- *                 row whole in one (jsdom has no layout: the rules themselves are checked, as
- *                 ./rows.test does for T150).
+ *                 row whole in one; an answer wider than a column wraps inside it (T426) (jsdom
+ *                 has no layout: the rules themselves are checked, as ./rows.test does for T150).
  * Depends on:     vitest, @testing-library/react, @smg/contracts, ./fakes, ./RoundLog,
  *                 ./RoundScreen, ./roundColumns.css (read as text)
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/09-testing-strategy.md §2
@@ -92,6 +92,15 @@ describe('the two columns (O109)', () => {
     expect(columnsCss).toContain('column-gap: 28px;');
     expect(columnsCss).toContain('column-fill: auto;');
     expect(columnsCss).toContain('break-inside: avoid;');
+  });
+
+  it('lets an answer wider than its column wrap whole inside it, never cut (T426)', () => {
+    const start = columnsCss.indexOf(".round-log ol[data-columns='2'] .round-answer {");
+    expect(start).toBeGreaterThanOrEqual(0);
+    const rule = columnsCss.slice(start, columnsCss.indexOf('}', start));
+    expect(rule).toContain('flex: 0 1 auto;');
+    expect(rule).toContain('min-width: 0;');
+    expect(rule).toContain('white-space: normal;');
   });
 });
 
