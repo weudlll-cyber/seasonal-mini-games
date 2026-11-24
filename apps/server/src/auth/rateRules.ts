@@ -16,6 +16,8 @@ import type { RateRule } from '@seasonal/kit/server';
 
 // Defaults of 03 §13. Settings in admin (WP-20) replace these values later.
 export const RATE_RULES = {
+  // Per account and address: failed sign-ins (the kit's FailureBrake, T427), and every password
+  // change or deletion (a RateLimiter, O130).
   loginAccountIp: { limit: 5, windowMs: 15 * 60_000 },
   loginIp: { limit: 20, windowMs: 15 * 60_000 },
   register: { limit: 5, windowMs: 60 * 60_000 },

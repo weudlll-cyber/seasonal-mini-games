@@ -8,13 +8,15 @@
  *                 refused and passes after; `DELETE /me` is refused once the password change's
  *                 limit is used up (O130); a round beyond `match.maxConcurrentRounds` is
  *                 SERVER_BUSY and is created once a running round ended (O131); a guest is never
- *                 the host of a match whose host account is gone. Matches are aborted at the
+ *                 the host of a match whose host account is gone; sign-ins are braked by their
+ *                 failures only (T427). Matches are aborted at the
  *                 end; the settings changed are restored.
- * Depends on:     vitest, ./socketKit, ./chatKit, ./session
+ * Depends on:     vitest, ../src/auth/accounts, ./socketKit, ./chatKit, ./session
  * Spec:           docs/spec/05-security-threat-model.md §5; docs/spec/08-admin-settings.md §4, §6
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
+import { deleteAccount, registerAccount } from '../src/auth/accounts.js';
 import { guestCookie, setSettings } from './chatKit.js';
 import { SUITE_TIMEOUT_MS } from './harness.js';
 import { signIn } from './session.js';
@@ -152,4 +154,37 @@ describe('the rounds running at once (08 §4)', () => {
       await restore();
     }
   }, 40_000);
+});
+
+describe('the sign-in brake (T427)', () => {
+  it('counts only failed sign-ins: right ones never use up the five, five wrong ones brake a right one', async () => {
+    const created = await registerAccount(kit.harness.pool, {
+      email: 'brake@example.com',
+      displayName: 'brake',
+      password: 'correct horse battery staple',
+    });
+    if (!created.ok) throw new Error('the test account was not created');
+    const from = (password: string) =>
+      kit.harness.built.fastify.inject({
+        method: 'POST',
+        url: '/api/v1/auth/login',
+        payload: { email: 'brake@example.com', password },
+        remoteAddress: '10.0.0.91',
+      });
+    try {
+      // Seven right sign-ins in a row: more than the five, and all are let through.
+      for (let i = 0; i < 7; i += 1) {
+        expect((await from('correct horse battery staple')).statusCode).toBe(200);
+      }
+      for (let i = 0; i < 5; i += 1) expect((await from('wrong')).statusCode).toBe(401);
+      // Looked at before the password is checked: the right one is refused too, as before.
+      const refused = await from('correct horse battery staple');
+      expect([refused.statusCode, refused.json<{ code: string }>().code]).toEqual([
+        429,
+        'RATE_LIMITED',
+      ]);
+    } finally {
+      await deleteAccount(kit.harness.pool, created.id);
+    }
+  });
 });

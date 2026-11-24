@@ -4,7 +4,7 @@ Full list: [BACKLOG.md](BACKLOG.md). Decisions: [DECISIONS.md](DECISIONS.md). Au
 
 - Everything built is on `master` (the last merge before this list was checked: `62a6c2f`, 2026-11-21, PR #27); the merges before it are indexed in [NIGHT-RUN.md](NIGHT-RUN.md), their details in [DECISIONS.md](DECISIONS.md) and git history.
 - Renovate PR #47 (TypeScript 7) waits until typescript-eslint supports TypeScript 7 (BACKLOG part one, "Dependency updates waiting on their ecosystem").
-- The kit adoption (O142) is on `master` at the kit's v0.17.0 (merge commit `52f996c`, PR #53). The kit's server parts are on `feat/kit-server` (draft PR, T427, O152): `RateLimiter` and `SessionEnds` taken; the owner's question is whether the sign-in's per-account limit moves to `FailureBrake`, which would stop counting right sign-ins (T427, BACKLOG part one, "Kit adoption"). The PR stays a draft until he answers.
+- The kit adoption (O142) is on `master` at the kit's v0.17.0 (merge commit `52f996c`, PR #53). The kit's server parts, `RateLimiter`, `SessionEnds` and the sign-in's `FailureBrake`, are on `feat/kit-server` (draft PR #54, T427, O152, O153), not merged yet (BACKLOG part one, "Kit adoption").
 - E2E journey 8 (embedded handoff) runs against a local test host page (night run 2, N7); the real website side is a website task.
 - From the website repository: the In Season feed (with halving days, spec/07 §5; the website computes the season only for its own home page, `shared/seasonClock.js`) and the run on the website itself. The authorize endpoint, the account-changes feed and the chat room `mini-games` exist there since 2026-11-06 (its `dddb1df`; the room created by the site while the game is on), BACKLOG part two.
 
