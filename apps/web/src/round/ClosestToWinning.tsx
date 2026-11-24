@@ -68,11 +68,11 @@ export function ClosestToWinning(p: {
   const total = (p.state.results ?? []).reduce((n, r) => n + r.guesses, 0);
   return (
     <section
-      className="smg-panel round-closest"
+      className="round-closest"
       aria-labelledby="closest-title"
       data-testid="result-closest"
-      // A fixed part of the result's screen: it shows whole at the screen's scale (O111).
-      data-sk-fit-fixed=""
+      // The compact first part of a result with this card (./resultClosest.css, O111).
+      data-closest=""
       // The round's season, for a solve's tint (./closest.css).
       style={{ '--season': seasonColor(p.state.season) } as CSSProperties}
     >

@@ -98,7 +98,7 @@ describe('the round intro', () => {
     );
     expect(screen.getByTestId('start-card')).toBeTruthy();
     // The bar keeps the panels (O46); the seconds to the opening are only the intro's.
-    expect(screen.getByTestId('round-banner')).toBeTruthy();
+    expect(screen.getByTestId('game-bar')).toBeTruthy();
     expect(screen.getAllByTestId('countdown')).toHaveLength(1);
     expect(screen.queryByTestId('guess-list')).toBeNull();
   });

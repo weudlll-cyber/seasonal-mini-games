@@ -11,14 +11,14 @@
  */
 .bd-result {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--sk-space-2);
   align-content: start;
 }
 
 .bd-secret {
   display: grid;
-  gap: calc(var(--fit, 1) * var(--space-1));
-  font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * var(--font-size-lead)));
+  gap: calc(var(--fit, 1) * var(--sk-space-1));
+  font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * var(--sk-font-size-lead)));
 }
 
 .bd-secret p {
@@ -48,7 +48,7 @@
   margin: 0;
   padding-left: 1.25rem;
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .bd-players > li {
@@ -73,5 +73,5 @@
 }
 
 .bd-you {
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }

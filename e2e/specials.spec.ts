@@ -109,7 +109,7 @@ test('journey 4: a halving round halves the range and refuses a guess outside it
     // The helper's range of 1–1 000 000: with 1–1 000 the bot, which searches inside the
     // halved range, could win the round before the journey was done (night run 2, N1).
     code = await quickRound(p, { season: 'spring', halving: true });
-    await expect(p.page.getByTestId('round-banner')).toContainText('Halving round');
+    await expect(p.page.getByTestId('game-bar')).toContainText('Halving round');
     // After the first halving (fast profile: 6 s) the range has 500 000 numbers.
     const bounds = async (): Promise<[number, number]> => {
       // Bounded: once the round is over the range is gone, and an unbounded read would make

@@ -14,12 +14,17 @@
  *                 the size of the round list's "Log (N)". Colours only from @smg/ui tokens.
  * Spec:           docs/spec/02-game-guess-the-number.md §9
  */
+/* The card is the result frame's middle card (@seasonal/kit/frames.css); the screen's scale
+   (`--fit`, O111) shrinks its padding. */
+.sk-result-middle:has(> .round-closest) {
+  padding: calc(var(--fit, 1) * 0.75rem) calc(var(--fit, 1) * var(--sk-space-3));
+}
+
 .round-closest {
   display: grid;
-  gap: calc(var(--fit, 1) * var(--space-1));
+  gap: calc(var(--fit, 1) * var(--sk-space-1));
   align-content: start;
   min-width: 0;
-  padding: calc(var(--fit, 1) * 0.75rem) calc(var(--fit, 1) * var(--space-3));
 }
 
 .round-closest-head {
@@ -27,7 +32,7 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-1) var(--space-2);
+  gap: var(--sk-space-1) var(--sk-space-2);
 }
 
 .round-closest-head h2 {
@@ -66,23 +71,23 @@
 .round-closest-rank {
   flex: none;
   min-width: 1.25rem;
-  color: var(--color-text-muted);
+  color: var(--sk-color-text-muted);
   font-size: max(var(--sk-floor-text), 0.875em);
   font-variant-numeric: tabular-nums;
 }
 
 .round-closest-words {
   flex: none;
-  color: var(--color-text-muted);
+  color: var(--sk-color-text-muted);
   font-size: max(var(--sk-floor-text), 0.875em);
 }
 
 /* A solve: the row on the season's tint, its words in the text colour and bold. */
 .round-closest-row[data-found] {
-  background: color-mix(in srgb, var(--season, var(--color-accent)) 26%, transparent);
+  background: color-mix(in srgb, var(--season, var(--sk-color-accent)) 26%, transparent);
 }
 
 .round-closest-row[data-found] .round-closest-words {
-  color: var(--color-text);
-  font-weight: var(--font-weight-strong);
+  color: var(--sk-color-text);
+  font-weight: var(--sk-font-weight-strong);
 }

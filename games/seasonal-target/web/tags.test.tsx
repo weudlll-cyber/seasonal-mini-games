@@ -50,7 +50,7 @@ function renderBusy(): void {
     <TargetInput
       {...p}
       names={Object.fromEntries(keys.map((k) => [k, k]))}
-      colors={Object.fromEntries(keys.map((k) => [k, 'var(--color-spring)']))}
+      colors={Object.fromEntries(keys.map((k) => [k, 'var(--sk-color-spring)']))}
       marks={marksOf(keys, 'p1')}
       viewerKey="p1"
     />,
@@ -131,7 +131,7 @@ describe('the result grid (T211)', () => {
           closestMiss: null,
         }}
         names={{ p1: 'dev-host', 'bot-01': 'bot-01' }}
-        colors={{ p1: 'var(--color-spring)', 'bot-01': 'var(--color-winter)' }}
+        colors={{ p1: 'var(--sk-color-spring)', 'bot-01': 'var(--sk-color-winter)' }}
         marks={marksOf(['p1', 'bot-01'], 'p1')}
         viewerKey="p1"
         part="reveal"

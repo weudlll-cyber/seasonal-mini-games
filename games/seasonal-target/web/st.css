@@ -18,7 +18,7 @@
 .st-player,
 .st-input {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
   min-width: 0;
 }
 
@@ -31,7 +31,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .st-spectator > :not(.st-board),
@@ -51,95 +51,95 @@
 .st-area,
 .st-note {
   margin: 0;
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
+  font-size: var(--sk-font-size-small);
+  color: var(--sk-color-text-muted);
 }
 
 /* Spring Herald's quarter for the whole round: a highlighted line (O35). */
 .st-hint {
   margin: 0;
   padding: 0.3rem 0.6rem;
-  border-radius: var(--radius);
-  border-left: 4px solid var(--season, var(--color-accent));
-  background: color-mix(in srgb, var(--season, var(--color-accent)) 22%, var(--color-card));
-  font-weight: var(--font-weight-strong);
+  border-radius: var(--sk-radius);
+  border-left: 4px solid var(--season, var(--sk-color-accent));
+  background: color-mix(in srgb, var(--season, var(--sk-color-accent)) 22%, var(--sk-color-card));
+  font-weight: var(--sk-font-weight-strong);
 }
 
 /* The ring and Guess under the selected tile, Guess taking the row's free width. */
 .st-row {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .st-selected {
   margin: 0;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 .st-typed {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .st-typed-toggle {
   justify-self: start;
-  min-height: var(--hit-target);
+  min-height: var(--sk-hit-target);
 }
 
 .st-steer {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .st-fields {
   display: flex;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .st-field {
   display: grid;
-  font-size: var(--font-size-small);
+  font-size: var(--sk-font-size-small);
 }
 
 .st-field input {
   width: 4rem;
-  min-height: var(--hit-target);
+  min-height: var(--sk-hit-target);
 }
 
 .st-cross {
   display: grid;
-  grid-template-columns: repeat(4, var(--hit-target));
+  grid-template-columns: repeat(4, var(--sk-hit-target));
   gap: 0.25rem;
 }
 
 .st-move {
-  width: var(--hit-target);
-  height: var(--hit-target);
-  min-width: var(--hit-target);
-  min-height: var(--hit-target);
+  width: var(--sk-hit-target);
+  height: var(--sk-hit-target);
+  min-width: var(--sk-hit-target);
+  min-height: var(--sk-hit-target);
   padding: 0;
-  font-size: var(--font-size-lead);
+  font-size: var(--sk-font-size-lead);
 }
 
 .st-go {
   flex: 1;
   min-height: 3.25rem;
   padding: 0 1.75rem;
-  font-size: var(--font-size-lead);
+  font-size: var(--sk-font-size-lead);
 }
 
 .st-message {
   margin: 0;
-  color: var(--color-danger);
+  color: var(--sk-color-danger);
 }
 
 .st-secret {
   margin: 0;
-  font-size: var(--font-size-lead);
-  font-weight: var(--font-weight-strong);
+  font-size: var(--sk-font-size-lead);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 /* Every player's guesses in words, in full below the result's first part (T150): the grid
@@ -148,11 +148,11 @@
   margin: 0;
   padding-left: 1.25rem;
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .st-you {
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 /* A phone (the loupe's fields): narrow padding, so "30" fits (night-5 review). */

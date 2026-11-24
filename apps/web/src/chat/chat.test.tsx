@@ -4,7 +4,8 @@
  * @module web/chat
  * @brief  The ChatPanel boundary with its three providers, the builtin room, and the words.
  *
- * Responsibility: `none` shows no panel; `hostEmbed` shows the host's room in a sandboxed
+ * Responsibility: in the kit's dock on a phone the room hides its own field while the form
+ *                 'field' has one in its bar and the sheet is open (T416 (3)); `none` shows no panel; `hostEmbed` shows the host's room in a sandboxed
  *                 frame; `builtin` shows the room's messages oldest first with system lines and
  *                 deleted messages, sends with Enter (one message at a time, keeping what was
  *                 typed meanwhile) and says a refusal in a plain sentence; a
@@ -13,7 +14,7 @@
  *                 sign in and the room is not asked for (T370). The refusal and confirm sentences.
  *                 The server and the socket are stand-ins.
  * Depends on:     vitest, @testing-library/react, @smg/contracts (views), ../shell/session,
- *                 ./ChatPanel, ./chatText
+ *                 ../match/DockedMatch, ../round/fakes, ./ChatPanel, ./chatText
  * Spec:           docs/spec/07-integration.md §2; Bingo 06 §7, Bingo 03 §12
  */
 import type { ChatConfigView, ChatMessageView, ChatRoomView } from '@smg/contracts';
@@ -21,6 +22,8 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SessionProvider } from '../shell/session.js';
+import { DockedMatch } from '../match/DockedMatch.js';
+import { viewport } from '../round/fakes.js';
 import { ChatPanel } from './ChatPanel.js';
 import { chatCodeText, confirmText, timeLeft } from './chatText.js';
 
@@ -65,9 +68,14 @@ function serve(
   config: ChatConfigView,
   permissions: readonly string[],
   moderator = false,
-  // The session's kind as the server sends it; null: no session at all.
-  kind?: string | null,
+  where: {
+    // The session's kind as the server sends it; null: no session at all.
+    readonly kind?: string | null;
+    // The room inside the kit's dock on a phone, in this bar form, instead of alone.
+    readonly dock?: 'field' | 'line';
+  } = {},
 ) {
+  const { kind, dock } = where;
   const calls: { url: string; body: unknown }[] = [];
   const session = {
     ...(kind === undefined ? {} : { kind }),
@@ -96,9 +104,16 @@ function serve(
         : { ok: false, code: 'CHAT_MUTED', until: Date.now() + 5 * 60_000 },
     ),
   );
+  const panel = <ChatPanel target={{ kind: 'lobby' }} bare />;
   render(
     <SessionProvider>
-      <ChatPanel target={{ kind: 'lobby' }} />
+      {dock === undefined ? (
+        panel
+      ) : (
+        <DockedMatch phase="live" chat={panel} bar={dock}>
+          <p>The round</p>
+        </DockedMatch>
+      )}
     </SessionProvider>,
   );
   return calls;
@@ -205,20 +220,51 @@ describe('the builtin room', () => {
 
 describe('the builtin room without a session (T370)', () => {
   it('asks a viewer without any session to sign in, without asking the server for the room', async () => {
-    const calls = serve({ provider: 'builtin', hostChatUrl: null }, [], false, null);
+    const calls = serve({ provider: 'builtin', hostChatUrl: null }, [], false, { kind: null });
     await screen.findByText('Sign in, or watch as a guest, to read the chat.');
     expect(calls.map((c) => c.url)).not.toContain('/chat/rooms/lobby');
   });
 
   it('asks the server for the room for a guest', async () => {
-    const calls = serve(
-      { provider: 'builtin', hostChatUrl: null },
-      ['match.watch'],
-      false,
-      'guest',
-    );
+    const calls = serve({ provider: 'builtin', hostChatUrl: null }, ['match.watch'], false, {
+      kind: 'guest',
+    });
     await screen.findByText('gg');
     expect(calls.map((c) => c.url)).toContain('/chat/rooms/lobby');
+  });
+});
+
+describe("the room's own field in the dock's open sheet (T416 (3))", () => {
+  const fields = () => document.querySelectorAll('.chat-writer').length;
+
+  it("hides it while the form 'field' has the field in its bar and the sheet is open", async () => {
+    viewport(390, 844);
+    serve({ provider: 'builtin', hostChatUrl: null }, ['chat.send'], false, { dock: 'field' });
+    await screen.findByText('gg', {}, { timeout: 3_000 });
+    // Closed: the bar's field and the room's own one inside the closed sheet.
+    expect(fields()).toBe(2);
+    fireEvent.click(screen.getByTestId('chat-bar'));
+    await waitFor(() => {
+      expect(fields()).toBe(1);
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await waitFor(() => {
+      expect(fields()).toBe(2);
+    });
+  });
+
+  it("keeps it in the open sheet of the form 'line', whose bar has none", async () => {
+    viewport(390, 844);
+    serve({ provider: 'builtin', hostChatUrl: null }, ['chat.send'], false, { dock: 'line' });
+    await screen.findByText('gg', {}, { timeout: 3_000 });
+    expect(fields()).toBe(1);
+    fireEvent.click(screen.getByTestId('chat-bar'));
+    await waitFor(() => {
+      expect(
+        screen.getByRole('dialog', { name: 'Chat' }).querySelector('.chat-writer'),
+      ).not.toBeNull();
+    });
+    expect(fields()).toBe(1);
   });
 });
 

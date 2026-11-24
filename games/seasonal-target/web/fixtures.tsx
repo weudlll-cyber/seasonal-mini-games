@@ -23,7 +23,7 @@ export const ne = { kind: 'direction', distance: 9, direction: 'NE', tier: 'cold
 // The platform's list: each player's name and one colour (T125).
 export const roster = {
   names: { a: 'Walter', b: 'Anna' },
-  colors: { a: 'var(--color-summer)', b: 'var(--color-winter)' },
+  colors: { a: 'var(--sk-color-summer)', b: 'var(--sk-color-winter)' },
 };
 
 const seen = { tier: null, comment: null };

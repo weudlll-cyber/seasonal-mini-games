@@ -131,7 +131,7 @@ async function panel(page: Page, button: string, name: string, size: Size): Prom
 
 async function slimBar(page: Page, size: Size): Promise<void> {
   await expect(page.getByTestId('app-header')).toBeHidden();
-  const bar = page.getByTestId('round-banner');
+  const bar = page.getByTestId('game-bar');
   const box = await bar.boundingBox();
   expect(box?.height ?? Infinity, 'the round bar').toBeLessThanOrEqual(size === WIDE ? 44 : 52);
   // No waiting time in the bar: the ring and the button at the input show it (O47).

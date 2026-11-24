@@ -11,14 +11,14 @@
 
 .account-form {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--sk-space-2);
   max-width: 28rem;
   margin: 0 auto;
 }
 
 .account-form small {
-  font-weight: var(--font-weight-body);
-  font-size: var(--font-size-small);
+  font-weight: var(--sk-font-weight-body);
+  font-size: var(--sk-font-size-small);
 }
 
 .account-form p {
@@ -26,11 +26,11 @@
 }
 
 .account-form h3 {
-  margin: var(--space-2) 0 0;
-  font-size: var(--font-size-body);
+  margin: var(--sk-space-2) 0 0;
+  font-size: var(--sk-font-size-body);
 }
 
 .account-form ul {
-  margin: var(--space-1) 0 0;
-  padding-left: var(--space-3);
+  margin: var(--sk-space-1) 0 0;
+  padding-left: var(--sk-space-3);
 }

@@ -29,15 +29,15 @@
   fill: none;
   /* Half the text colour: a track of at least 3:1 on the page in light and dark (the second
      surface it was nearly vanished on the cream and the navy, night-6 review). */
-  stroke: color-mix(in srgb, var(--color-text) 45%, transparent);
+  stroke: color-mix(in srgb, var(--sk-color-text) 45%, transparent);
   stroke-width: 6;
 }
 
 .round-ring-left {
   fill: none;
-  stroke: var(--season, var(--color-accent));
+  stroke: var(--season, var(--sk-color-accent));
   stroke-width: 6;
-  transition: stroke-dashoffset var(--duration-fast) linear;
+  transition: stroke-dashoffset var(--sk-duration-fast) linear;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -51,8 +51,8 @@
   inset: 0;
   display: grid;
   place-items: center;
-  font-weight: var(--font-weight-strong);
-  font-size: var(--font-size-small);
+  font-weight: var(--sk-font-weight-strong);
+  font-size: var(--sk-font-size-small);
 }
 
 /* Ready: a check mark drawn in the ring's own box, so it scales with the ring (T150). */
@@ -61,7 +61,7 @@
   inset: 0;
   transform: none;
   fill: none;
-  stroke: var(--color-text);
+  stroke: var(--sk-color-text);
   stroke-width: 6;
   stroke-linecap: round;
   stroke-linejoin: round;

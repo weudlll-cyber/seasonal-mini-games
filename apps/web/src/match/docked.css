@@ -17,10 +17,11 @@
  *                 bar under it, in the layout; no fixed or sticky part. A list game's running
  *                 round (O109) is the exception: it fills the content's height as without the
  *                 dock, its guesses scrolling inside and its input dock right above the chat
- *                 bar. In the bar's form 'field' the sheet holds the messages only (the bar has
- *                 the field); in the form 'line' the bar is the line alone, 44 px high (O109).
- *                 The next round's row, Start now and bar under a game's own result
- *                 (./NextRound). Colours only from the tokens.
+ *                 bar; its list's panel keeps its head whole in the short height the kit's bar and
+ *                 the on-screen keyboard leave (T424). In the bar's form 'field' the sheet holds
+ *                 the messages only (the bar has the field); in the form 'line' the bar is the
+ *                 line alone (O109), the kit's own 54 px. The next round's row, Start now and
+ *                 bar under a game's own result (./NextRound). Colours only from the tokens.
  * Spec:           docs/spec/02e-game-mind-games.md §11; docs/spec/02-game-guess-the-number.md §12
  */
 .match-docked {
@@ -31,38 +32,20 @@
 }
 
 /* The kit's dock fills the page; without a chat the view alone does. */
-.match-docked > .sk-docked,
-.match-docked-main {
+.match-docked > .sk-docked {
   flex: 1;
   min-height: 0;
 }
 
-.match-docked-main {
-  display: flex;
-  flex-direction: column;
-}
-
-/* The bar's form 'field': its own field under the bar, so the sheet shows the messages only;
-   in that field the room's writer keeps one row. */
-.sk-chat-dock[data-sk-view='phone'][data-sk-bar='field'] .sk-chat-dock-body .chat-writer {
-  display: none;
-}
-
+/* The bar's form 'field': the room's writer in the bar keeps one row (the open sheet has none:
+   the room hides its own, ../chat/ChatRoom). */
 .sk-chat-dock-row > .chat-writer .chat-form {
   gap: 6px;
 }
 
-/* The bar's form 'line' (the list games, O109): only the line and the count, the bar 44 px
-   high with no padding above or below, so the list above keeps its room (the kit's dock pads
-   every form 4 px; with the keyboard open on a 375 × 667 phone that cut the list's head). */
-.sk-chat-dock[data-sk-view='phone'][data-sk-bar='line'] .sk-chat-dock-row {
-  padding: 0 12px;
-  border-radius: 14px;
-}
-
 /* The result and the pause: the bar, then the result in the whole width and exactly the height
    that is left; nothing here scrolls on a desktop. */
-:is(.sk-docked-main, .match-docked-main) > .match-result-page {
+.sk-docked-main > .match-result-page {
   flex: 1;
   min-height: 0;
   display: flex;
@@ -121,7 +104,7 @@
 /* Compact: no empty space between "Next round", its line and "Players" (O111). */
 .match-docked .match-after:not(.match-after--docked) .match-side,
 .match-docked .match-after:not(.match-after--docked) .match-waiting {
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .match-docked .match-after:not(.match-after--docked) .match-waiting p {
@@ -149,7 +132,7 @@
     padding: 0;
   }
 
-  .match-docked :is(.sk-docked-main, .match-docked-main) {
+  .match-docked .sk-docked-main {
     /* The containing block of what is placed inside (the visually hidden labels), so nothing
        of the scrolled content reaches past the screen and scrolls the page. */
     position: relative;
@@ -157,7 +140,7 @@
     overflow-y: auto;
   }
 
-  :is(.sk-docked-main, .match-docked-main) > .match-result-page,
+  .sk-docked-main > .match-result-page,
   .match-after.match-after--docked {
     flex: none;
   }
@@ -177,7 +160,7 @@
   /* A list game's running round (O109): its own screen above the chat bar, as without the
      dock: the guesses scroll inside their box and the input dock stays right above the bar,
      so nothing hides behind it. */
-  .match-docked :is(.sk-docked-main, .match-docked-main):has(.round-live[data-layout='list']) {
+  .match-docked .sk-docked-main:has(.round-live[data-layout='list']) {
     overflow: hidden;
     padding: 8px 10px;
   }
@@ -185,6 +168,18 @@
   .match-docked .match-live:has(> .round-live[data-layout='list']) {
     flex: 1;
     min-height: 0;
+    /* A size container again, as without the dock: the list's panel reads the height the dock
+       and the keyboard leave it (./round.css, T424). */
+    container-type: size;
+  }
+
+  /* Under 21 rem (336 px) of round view, the on-screen keyboard open on a 375 × 667 phone with
+     the kit's 54 px bar: the list's panel gives its padding so its head, a hit target high, is
+     whole in its row. */
+  @container (max-height: 21rem) {
+    .match-docked .round-live[data-layout='list'] .round-main {
+      padding-block: 0;
+    }
   }
 
   .match-docked .round-live[data-layout='list'] .round-main {
@@ -217,27 +212,27 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-1) var(--space-2);
+  gap: var(--sk-space-1) var(--sk-space-2);
 }
 
 .next-round-when {
   margin: 0;
   font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * 18px));
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 /* The accent blue of the round's winter and the focus ring, with dark text (8.4:1). */
 .next-round-start {
-  min-height: max(32px, calc(var(--fit, 1) * var(--hit-target)));
+  min-height: max(32px, calc(var(--fit, 1) * var(--sk-hit-target)));
   border-color: transparent;
   border-radius: 999px;
-  background: var(--color-accent);
+  background: var(--sk-color-accent);
   color: #0a1233;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 .next-round-start:hover:not(:disabled) {
-  background: var(--color-accent);
+  background: var(--sk-color-accent);
   filter: brightness(1.08);
 }
 
@@ -247,13 +242,13 @@
   height: 6px;
   overflow: hidden;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--color-text) 10%, transparent);
+  background: color-mix(in srgb, var(--sk-color-text) 10%, transparent);
 }
 
 .next-round-bar > span {
   display: block;
   height: 100%;
-  background: var(--color-accent);
+  background: var(--sk-color-accent);
   transition: width 1s linear;
 }
 

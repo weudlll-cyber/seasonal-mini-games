@@ -42,7 +42,7 @@ function setup(
       specialOn
       waitS={waitS}
       names={{ p1: 'Anna' }}
-      colors={{ p1: 'var(--color-autumn)' }}
+      colors={{ p1: 'var(--sk-color-autumn)' }}
       ring={<span data-testid="ring" />}
     />,
   );

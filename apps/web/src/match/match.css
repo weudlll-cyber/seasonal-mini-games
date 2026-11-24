@@ -21,7 +21,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--sk-space-2);
 }
 
 .match-head h1 {
@@ -38,37 +38,37 @@
 .match-teams {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--sk-space-2);
 }
 
 /* The chosen team keeps its colour under the pointer too. */
 .match-teams button[aria-pressed='true'],
 .match-teams button[aria-pressed='true']:hover:not(:disabled) {
   background: var(--season);
-  color: var(--color-on-season);
+  color: var(--sk-color-on-season);
   border-color: var(--season);
 }
 
 .match-team-check {
-  margin-left: var(--space-1);
-  font-weight: var(--font-weight-strong);
+  margin-left: var(--sk-space-1);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 /* After a round (T145): the app header hidden (`focus-mode`, ../round/focus.css), the slim
-   bar on top (./ResultBar); the result's first part one screen high under it (`--result-top`
+   bar on top (./ResultBar); the result's first part one screen high under it (`--sk-result-top`
    is everything above it: the page's padding, the bar and the gap), the page scrolling past
    it; the next round's box and the chat in a column beside it on a desktop, under it on a
    phone. */
 .match-result-page {
-  --result-top: calc(44px + 3 * var(--space-1));
+  --sk-result-top: calc(44px + 3 * var(--sk-space-1));
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .match-after {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--sk-space-2);
   align-items: start;
   min-width: 0;
 }
@@ -96,10 +96,10 @@
   /* Beside the result: the next round's box, then the chat in what is left of the screen,
      so its field stays in view (night-7 review). */
   .match-after > .match-side {
-    max-height: calc(100dvh - var(--result-top));
+    max-height: calc(100dvh - var(--sk-result-top));
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
+    gap: var(--sk-space-2);
   }
 
   .match-after > .match-side .round-chat {
@@ -111,14 +111,33 @@
 
 @media (max-width: 899px) {
   .match-result-page {
-    --result-top: calc(52px + 3 * var(--space-1));
+    --sk-result-top: calc(52px + 3 * var(--sk-space-1));
   }
 }
 
-/* The bar is a row of the page here, not the round view's `bar` area (that name would open
-   tracks of its own in this grid). */
+/* The slim bar: one row of small text, at most 44 px high (52 px on a phone, below), its facts
+   never shrinking and its buttons at the end. It is a row of the page here, not the round
+   view's `bar` area. */
 .result-bar {
-  grid-area: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--sk-space-1) var(--sk-space-2);
+  min-width: 0;
+  max-height: 44px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.result-bar-code {
+  flex: none;
+  font-weight: var(--sk-font-weight-strong);
+}
+
+.result-bar-actions {
+  flex: none;
+  display: flex;
+  gap: var(--sk-space-1);
+  margin-left: auto;
 }
 
 /* The slim bar's title takes the room left and is cut at its end. */
@@ -137,6 +156,15 @@
 /* A phone: the game and the code whole, then the buttons; the match's title and the code's
    label stay out, so nothing is cut (T150). */
 @media (max-width: 899px) {
+  .result-bar {
+    gap: 0.25rem;
+    max-height: 52px;
+  }
+
+  .result-bar-actions {
+    gap: 0.25rem;
+  }
+
   .result-bar-title,
   .result-bar-label {
     display: none;
@@ -163,7 +191,7 @@
 
   /* Slimmer sides, so the longest game's name, the code and both buttons fit 390 px. */
   .result-bar-link {
-    min-height: var(--hit-target);
+    min-height: var(--sk-hit-target);
     padding-inline: 0.75rem;
   }
 }
@@ -190,7 +218,7 @@
   grid-template-columns: minmax(0, 1fr) max-content max-content;
   /* Narrow gaps: the name column keeps the width, a 24-character name whole beside the team's
      icon and "online" in the 340 px side column (T212). */
-  gap: var(--space-1) 0.25rem;
+  gap: var(--sk-space-1) 0.25rem;
 }
 
 .match-players li {
@@ -217,12 +245,12 @@
   width: 0.6rem;
   height: 0.6rem;
   border-radius: 50%;
-  border: 2px solid var(--color-text-muted);
+  border: 2px solid var(--sk-color-text-muted);
 }
 
 .match-presence[data-online='true'] .match-dot {
-  background: var(--color-success);
-  border-color: var(--color-success);
+  background: var(--sk-color-success);
+  border-color: var(--sk-color-success);
 }
 
 /* The waiting area and, apart from it, the match chat's own panel (../round/RoundChat):
@@ -231,7 +259,7 @@
 .match-side {
   min-width: 0;
   display: grid;
-  gap: var(--space-3);
+  gap: var(--sk-space-3);
   align-content: start;
 }
 
@@ -248,8 +276,8 @@
 }
 
 .host-menu-button {
-  min-width: var(--hit-target);
-  min-height: var(--hit-target);
+  min-width: var(--sk-hit-target);
+  min-height: var(--sk-hit-target);
 }
 
 .host-menu-panel {
@@ -257,14 +285,14 @@
   right: 0;
   top: calc(100% + 0.4rem);
   z-index: 20;
-  width: min(42rem, calc(100vw - 2 * var(--gutter)));
+  width: min(42rem, calc(100vw - 2 * var(--sk-gutter)));
   max-height: min(36rem, calc(100dvh - 8rem));
   overflow-y: auto;
-  padding: var(--space-3);
-  border-radius: var(--radius-card);
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-raised);
+  padding: var(--sk-space-3);
+  border-radius: var(--sk-radius-card);
+  border: 1px solid var(--sk-color-border);
+  background: var(--sk-color-surface);
+  box-shadow: var(--sk-shadow-raised);
   white-space: normal;
 }
 
@@ -274,20 +302,20 @@
   .host-menu-panel {
     position: fixed;
     top: 3.75rem;
-    left: var(--gutter);
-    right: var(--gutter);
+    left: var(--sk-gutter);
+    right: var(--sk-gutter);
     width: auto;
   }
 }
 
 .host-form {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--sk-space-2);
   grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
 }
 
 /* The heading row over the team column ("Team"), in the muted small type (T212). */
 .match-players-head {
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
+  font-size: var(--sk-font-size-small);
+  color: var(--sk-color-text-muted);
 }

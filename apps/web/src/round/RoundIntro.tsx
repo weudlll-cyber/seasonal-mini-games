@@ -13,12 +13,12 @@
  *                 keeps the host's controls, the chat and the players (./FocusShell, O46). The
  *                 card fills the space under the bar without a page scrollbar on desktop and
  *                 phone, at the screen's scale where it has not the room (the kit's fit, O111;
- *                 a font load counted into its signature fits it again, O144, ./useFit). A game
+ *                 the kit's `fit` option `afterFonts` fits it again after web fonts load, T423). A game
  *                 whose rounds show no season (O93) has its name as the heading, with no season
  *                 icon and no special block.
  * Depends on:     react, @seasonal/kit/react (StartCard), @smg/contracts,
  *                 @smg-game/registry/web (types), ../season/*, ./roundText, ./SeasonPill
- *                 (ruleOf), ./useFit (useFontLoads), ./roundIntro.css
+ *                 (ruleOf), ./roundIntro.css
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §2, §6
  */
@@ -31,8 +31,10 @@ import { SeasonIcon } from '../season/SeasonIcon.js';
 import { NO_SPECIAL, SEASON_NAMES, SPECIALS } from '../season/season.js';
 import { seconds } from './roundText.js';
 import { ruleOf } from './SeasonPill.js';
-import { useFontLoads } from './useFit.js';
 import './roundIntro.css';
+
+// The card fits again once web fonts have loaded (kit v0.16.0, K48; T404).
+const FIT = { afterFonts: true } as const;
 
 // Seconds until the round opens.
 function opensIn(state: RoundStateView, now: number): number {
@@ -67,8 +69,6 @@ export function RoundIntro(p: {
     // A phased round has no cooldown (04 §4.8 rule 4).
     state.plan === undefined ? `Cooldown ${seconds(state.cooldownMs)} between guesses` : null,
   ].filter((fact) => fact !== null);
-  // The card's content changes only with these, and with a font load (O144).
-  const loads = useFontLoads();
   return (
     <StartCard
       game="mini-games"
@@ -79,7 +79,9 @@ export function RoundIntro(p: {
       special={noSeason === null ? special(state, p.game) : undefined}
       facts={facts}
       opensIn={opensIn(state, p.now)}
-      signature={`${state.roundId}|${String(secret)}|${String(noSeason)}|${String(loads)}`}
+      // The card's content changes only with these.
+      signature={`${state.roundId}|${String(secret)}|${String(noSeason)}`}
+      fit={FIT}
     />
   );
 }

@@ -19,13 +19,13 @@
 .gtn-player,
 .gtn-spectator {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
   container-type: inline-size;
 }
 
 .gtn-range {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 /* Sized by the box the platform gives the range block (the round's right column on a
@@ -33,21 +33,21 @@
 .gtn-range-title {
   margin: 0;
   font-size: clamp(1.05rem, 6.2cqi, 1.9rem);
-  font-weight: var(--font-weight-heading);
+  font-weight: var(--sk-font-weight-heading);
   line-height: 1.15;
 }
 
 .gtn-range-note {
   margin: 0;
-  font-size: var(--font-size-small);
-  color: var(--color-text-muted);
+  font-size: var(--sk-font-size-small);
+  color: var(--sk-color-text-muted);
 }
 
 .gtn-range-bar {
   height: 1.25rem;
-  border-radius: var(--radius-pill);
-  background: var(--season, var(--color-accent));
-  border: 1px solid var(--color-border);
+  border-radius: var(--sk-radius-pill);
+  background: var(--season, var(--sk-color-accent));
+  border: 1px solid var(--sk-color-border);
 }
 
 /* The two numbers of the heading stay on one line together ("1 and 1,000"). */
@@ -65,8 +65,8 @@
 
 .gtn-fallen-title {
   margin: 0;
-  font-size: var(--font-size-small);
-  font-weight: var(--font-weight-strong);
+  font-size: var(--sk-font-size-small);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 .gtn-fallen-list {
@@ -85,17 +85,17 @@
 .gtn-fallen-list li {
   padding: 0 0.45rem;
   line-height: calc(1.5rem - 2px);
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--color-border-strong);
-  background: var(--color-card);
-  font-size: var(--font-size-small);
+  border-radius: var(--sk-radius-pill);
+  border: 1px solid var(--sk-color-border-strong);
+  background: var(--sk-color-card);
+  font-size: var(--sk-font-size-small);
   font-variant-numeric: tabular-nums;
 }
 
 .gtn-fallen-more,
 .gtn-fallen-close {
-  min-height: var(--hit-target);
-  padding-inline: var(--space-2);
+  min-height: var(--sk-hit-target);
+  padding-inline: var(--sk-space-2);
   white-space: nowrap;
 }
 
@@ -104,16 +104,16 @@
   display: grid;
   gap: 0.25rem;
   position: fixed;
-  right: var(--gutter);
-  bottom: var(--gutter);
+  right: var(--sk-gutter);
+  bottom: var(--sk-gutter);
   z-index: 30;
-  width: min(22rem, calc(100vw - 2 * var(--gutter)));
+  width: min(22rem, calc(100vw - 2 * var(--sk-gutter)));
   max-height: 60dvh;
-  padding: var(--space-2);
-  border: 2px solid var(--season, var(--color-border));
-  border-radius: var(--radius-card);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-raised);
+  padding: var(--sk-space-2);
+  border: 2px solid var(--season, var(--sk-color-border));
+  border-radius: var(--sk-radius-card);
+  background: var(--sk-color-surface);
+  box-shadow: var(--sk-shadow-raised);
 }
 
 .gtn-fallen-body[hidden] {
@@ -124,12 +124,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .gtn-fallen-head h3 {
   margin: 0;
-  font-size: var(--font-size-lead);
+  font-size: var(--sk-font-size-lead);
 }
 
 .gtn-fallen-list--all {
@@ -148,28 +148,28 @@
 .gtn-hint {
   margin: 0;
   padding: 0.3rem 0.6rem;
-  border-radius: var(--radius);
-  border-left: 4px solid var(--season, var(--color-accent));
-  background: color-mix(in srgb, var(--season, var(--color-accent)) 22%, var(--color-card));
-  font-weight: var(--font-weight-strong);
+  border-radius: var(--sk-radius);
+  border-left: 4px solid var(--season, var(--sk-color-accent));
+  background: color-mix(in srgb, var(--season, var(--sk-color-accent)) 22%, var(--sk-color-card));
+  font-weight: var(--sk-font-weight-strong);
 }
 
 .gtn-input {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .gtn-guess {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .gtn-guess input {
   flex: 1 1 8rem;
   min-width: 0;
   min-height: 3.25rem;
-  font-size: var(--font-size-lead);
+  font-size: var(--sk-font-size-lead);
 }
 
 /* The large Guess button */
@@ -177,12 +177,12 @@
   flex: none;
   min-height: 3.25rem;
   padding: 0 1.75rem;
-  font-size: var(--font-size-lead);
+  font-size: var(--sk-font-size-lead);
 }
 
 .gtn-result {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
   align-content: start;
 }
 
@@ -191,16 +191,16 @@
   margin: 0;
   padding-left: 1.25rem;
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .gtn-message {
   margin: 0;
-  color: var(--color-danger);
+  color: var(--sk-color-danger);
 }
 
 .gtn-secret {
-  font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * var(--font-size-lead)));
+  font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * var(--sk-font-size-lead)));
   margin: 0;
 }
 
@@ -217,9 +217,9 @@
 
 .gtn-result [data-testid='result-range'] {
   margin: 0;
-  color: var(--color-text-muted);
+  color: var(--sk-color-text-muted);
 }
 
 .gtn-you {
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }

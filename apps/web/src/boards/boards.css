@@ -13,7 +13,7 @@
  */
 .boards-grid {
   display: grid;
-  gap: var(--space-3);
+  gap: var(--sk-space-3);
   align-items: start;
 }
 
@@ -21,7 +21,7 @@
 .boards-pickers {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2) var(--space-3);
+  gap: var(--sk-space-2) var(--sk-space-3);
 }
 
 @media (min-width: 900px) {
@@ -38,8 +38,8 @@
 .boards-page caption,
 .boards-grid caption {
   text-align: left;
-  font-weight: var(--font-weight-strong);
-  padding-bottom: var(--space-1);
+  font-weight: var(--sk-font-weight-strong);
+  padding-bottom: var(--sk-space-1);
 }
 
 .boards-more {
@@ -50,7 +50,7 @@
 .boards-facts {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
-  gap: var(--space-2);
+  gap: var(--sk-space-2);
   margin: 0;
 }
 
@@ -60,37 +60,37 @@
 }
 
 .boards-facts dt {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+  color: var(--sk-color-text-muted);
+  font-size: var(--sk-font-size-small);
 }
 
 .boards-facts dd {
   margin: 0;
-  font-size: var(--font-size-lead);
-  font-weight: var(--font-weight-strong);
+  font-size: var(--sk-font-size-lead);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 .boards-list {
   margin: 0;
   padding-left: 1.25rem;
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 /* The verification page */
 .boards-check[data-ok='true'] {
   color: var(--color-success-text);
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 .boards-check[data-ok='false'] {
-  color: var(--color-danger);
-  font-weight: var(--font-weight-strong);
+  color: var(--sk-color-danger);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 .boards-hex {
   overflow-wrap: anywhere;
-  font-size: var(--font-size-small);
+  font-size: var(--sk-font-size-small);
 }
 
 /* The accepted guesses scroll inside their panel; the header row stays in view. */
@@ -102,12 +102,12 @@
 .boards-scroll th {
   position: sticky;
   top: 0;
-  background: var(--color-surface);
+  background: var(--sk-color-surface);
 }
 
 .boards-json {
   max-width: 100%;
   overflow-x: auto;
   margin: 0;
-  font-size: var(--font-size-small);
+  font-size: var(--sk-font-size-small);
 }

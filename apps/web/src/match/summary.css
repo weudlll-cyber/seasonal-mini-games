@@ -22,8 +22,8 @@
   grid-template-rows: auto minmax(0, max-content) auto;
   align-content: start;
   grid-template-areas: 'head' 'standings' 'side';
-  gap: var(--space-2);
-  padding: var(--space-3);
+  gap: var(--sk-space-2);
+  padding: var(--sk-space-3);
 }
 
 @media (min-width: 900px) {
@@ -33,7 +33,7 @@
     grid-template-areas:
       'head head'
       'standings side';
-    column-gap: var(--space-4);
+    column-gap: var(--sk-space-4);
   }
 }
 
@@ -44,7 +44,7 @@
 }
 
 .match-summary h2 {
-  font-size: var(--font-size-lead);
+  font-size: var(--sk-font-size-lead);
 }
 
 .match-summary-head {
@@ -66,7 +66,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .match-summary-standings .round-table-wrap {
@@ -82,14 +82,14 @@
 .match-summary .round-table thead th {
   position: sticky;
   top: 0;
-  background: var(--color-card);
+  background: var(--sk-color-card);
 }
 
 .match-summary-side {
   grid-area: side;
   display: grid;
   align-content: start;
-  gap: var(--space-2);
+  gap: var(--sk-space-2);
 }
 
 /* The page under the slim bar: the bar, then the summary in the rest. */
@@ -98,7 +98,7 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 /* One line per team, never wrapping (T145): "Team Autumn: 1 point". */
@@ -116,6 +116,6 @@
 /* A phone: tighter. */
 @media (max-width: 899px) {
   .match-summary {
-    padding: var(--space-2);
+    padding: var(--sk-space-2);
   }
 }

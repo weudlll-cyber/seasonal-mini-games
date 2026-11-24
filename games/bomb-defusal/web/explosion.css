@@ -18,18 +18,18 @@
   display: grid;
   place-content: center;
   justify-items: center;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
   pointer-events: none;
-  background: color-mix(in srgb, var(--color-danger) 30%, transparent);
+  background: color-mix(in srgb, var(--sk-color-danger) 30%, transparent);
   animation: bd-flash 1s linear both;
 }
 
 .bd-boom strong {
   padding: 0.3rem 1rem;
-  border-radius: var(--radius-pill);
-  border: 3px solid var(--color-danger);
-  background: var(--color-surface);
-  color: var(--color-text);
+  border-radius: var(--sk-radius-pill);
+  border: 3px solid var(--sk-color-danger);
+  background: var(--sk-color-surface);
+  color: var(--sk-color-text);
   font-size: 2rem;
   animation: bd-shake 0.25s ease-in-out 4;
 }

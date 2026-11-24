@@ -67,9 +67,9 @@
 .round-standings,
 .round-result--own > .next-round {
   min-height: 0;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--sk-color-border);
   border-radius: 18px;
-  background: color-mix(in srgb, var(--color-surface) 72%, transparent);
+  background: color-mix(in srgb, var(--sk-color-surface) 72%, transparent);
 }
 
 .round-standings {
@@ -88,11 +88,11 @@
   top: -14px;
   margin: -14px -18px 0;
   padding: 14px 18px 6px;
-  background: var(--color-surface);
+  background: var(--sk-color-surface);
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: var(--space-2);
+  gap: var(--sk-space-2);
 }
 
 .round-standings-head h2 {
@@ -121,14 +121,14 @@
   gap: 10px;
   margin: 0;
   padding: 7px 8px;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--sk-color-border);
   font-size: 15px;
 }
 
 .round-standing-place {
   flex: none;
   width: 22px;
-  color: var(--color-text-muted);
+  color: var(--sk-color-text-muted);
 }
 
 .round-standing-name {
@@ -142,14 +142,14 @@
 .round-standing-round {
   flex: none;
   width: 44px;
-  color: var(--color-text-muted);
+  color: var(--sk-color-text-muted);
   text-align: right;
 }
 
 .round-standing-total {
   flex: none;
   width: 36px;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
   text-align: right;
 }
 
@@ -157,7 +157,7 @@
 .round-standing[data-own='true'],
 .round-standings-own {
   color: var(--own-amber);
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 .round-standing[data-own='true'] > span,
@@ -181,7 +181,7 @@
 .round-result-lines > summary {
   min-height: 36px;
   padding-inline: 0.85rem;
-  font-size: var(--font-size-small);
+  font-size: var(--sk-font-size-small);
   list-style: none;
 }
 
@@ -197,11 +197,11 @@
   width: min(24rem, 80vw);
   max-height: 16rem;
   overflow-y: auto;
-  padding: var(--space-2);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius);
-  background: var(--color-surface);
-  box-shadow: var(--shadow-raised);
+  padding: var(--sk-space-2);
+  border: 1px solid var(--sk-color-border);
+  border-radius: var(--sk-radius);
+  background: var(--sk-color-surface);
+  box-shadow: var(--sk-shadow-raised);
 }
 
 /* A desktop window under 760 px high: the standings' rows 5 px above and below (T367). */
@@ -265,6 +265,6 @@
   }
 
   .round-result-lines > summary {
-    min-height: var(--hit-target);
+    min-height: var(--sk-hit-target);
   }
 }

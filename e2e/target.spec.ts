@@ -76,8 +76,8 @@ async function twoHints(page: Page): Promise<void> {
 // width and how far the page scrolls; a missing part counts as past the screen.
 async function phoneParts(page: Page) {
   return page.evaluate(() => {
-    const rows = ['.focus-bar', '.round-stage', '.round-main', '.round-input'].map((s) =>
-      document.querySelector(s)?.getBoundingClientRect(),
+    const rows = ['[data-testid="game-bar"]', '.round-stage', '.round-main', '.round-input'].map(
+      (s) => document.querySelector(s)?.getBoundingClientRect(),
     );
     const width = (s: string) => document.querySelector(s)?.getBoundingClientRect().width ?? 0;
     return {
@@ -121,7 +121,9 @@ test('journey 22: Seasonal Target, warm/cold only (the default) and distance onl
   const codes: string[] = [];
   const own = p.page.locator('[data-testid="tile"][data-own="true"]');
   try {
-    codes.push(await fromLobby(p, 'seasonal-target', 'spring'));
+    // 60 s cooldown: a bot guessing every 3 s hit the target and ended the round before the
+    // test saw it open (CI run 45387899454, T424).
+    codes.push(await fromLobby(p, 'seasonal-target', 'spring', { Cooldown: '60' }));
     await expect(p.page.getByTestId('intro-secret')).toHaveText('Shared target on a 20 × 20 grid');
     await roundOpen(p.page);
     await expect(p.page.locator('[data-testid="tile"][data-quarter="true"]').first()).toBeVisible();

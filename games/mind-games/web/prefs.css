@@ -26,7 +26,7 @@
 }
 
 .mg-prefs-what {
-  color: var(--color-text-muted);
+  color: var(--sk-color-text-muted);
   font-size: 13px;
 }
 
@@ -50,13 +50,13 @@
 .mg-prefs-round select {
   flex: none;
   width: 170px;
-  min-height: max(32px, calc(var(--fit, 1) * var(--hit-target)));
+  min-height: max(32px, calc(var(--fit, 1) * var(--sk-hit-target)));
 }
 
 .mg-prefs-note {
   margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+  color: var(--sk-color-text-muted);
+  font-size: var(--sk-font-size-small);
 }
 
 /* "Hide my switches" at the foot of its box. */
@@ -76,7 +76,7 @@
     flex-direction: column;
     align-items: stretch;
     gap: 4px;
-    color: var(--color-text-muted);
+    color: var(--sk-color-text-muted);
     font-size: 13px;
   }
 

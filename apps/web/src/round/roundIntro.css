@@ -20,5 +20,5 @@
 .sk-start-head .round-badge {
   border-color: var(--sk-season);
   padding-block: 0.15rem;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }

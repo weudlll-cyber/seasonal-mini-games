@@ -23,9 +23,9 @@
 
 .shell-main {
   width: 100%;
-  max-width: var(--content-width);
+  max-width: var(--sk-content-width);
   margin: 0 auto;
-  padding: var(--space-3) var(--gutter) var(--space-4);
+  padding: var(--sk-space-3) var(--sk-gutter) var(--sk-space-4);
 }
 
 /* A one-screen view (a running round, a match summary) makes the page exactly one screen:
@@ -49,5 +49,5 @@ html:has(.one-screen) {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: var(--space-2) var(--gutter);
+  padding: var(--sk-space-2) var(--sk-gutter);
 }

@@ -148,7 +148,7 @@ export async function hostRound(
 
 // The round started: its view in focus mode, counting down (the intro, O36) or already open.
 async function roundStarted(page: Page): Promise<void> {
-  await expect(page.getByTestId('round-banner')).toBeVisible();
+  await expect(page.getByTestId('game-bar')).toBeVisible();
 }
 
 // The round is open: the intro (10 s by default, OPEN (ab)) has given way to the round itself;

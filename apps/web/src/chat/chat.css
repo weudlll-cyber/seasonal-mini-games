@@ -18,18 +18,18 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .chat-panel--page {
   flex: none;
   height: 24rem;
-  padding: var(--space-2);
+  padding: var(--sk-space-2);
 }
 
 .chat-panel--page h2 {
   margin: 0;
-  font-size: var(--font-size-lead);
+  font-size: var(--sk-font-size-lead);
 }
 
 .chat-list {
@@ -51,12 +51,12 @@
 }
 
 .chat-line--system {
-  color: var(--color-text-muted);
+  color: var(--sk-color-text-muted);
   font-style: italic;
 }
 
 .chat-author {
-  color: var(--color-text);
+  color: var(--sk-color-text);
 }
 
 /* A long name gives way with an ellipsis, so the message still starts on its line (T202). */
@@ -80,21 +80,21 @@
   padding: 0;
   border: 0;
   background: none;
-  color: var(--color-text-muted);
+  color: var(--sk-color-text-muted);
   font: inherit;
-  font-size: var(--font-size-small);
+  font-size: var(--sk-font-size-small);
   text-decoration: underline;
   cursor: pointer;
 }
 
 .chat-link:hover,
 .chat-link:focus-visible {
-  color: var(--color-text);
+  color: var(--sk-color-text);
 }
 
 .chat-confirm {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
   margin-top: 0.25rem;
 }
 
@@ -114,7 +114,7 @@
 
 .chat-form {
   display: flex;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .chat-form .smg-input {
@@ -123,7 +123,7 @@
 }
 
 .chat-refusal {
-  color: var(--color-danger);
+  color: var(--sk-color-danger);
 }
 
 .chat-frame {
@@ -131,7 +131,7 @@
   min-height: 0;
   width: 100%;
   border: 0;
-  border-radius: var(--radius);
+  border-radius: var(--sk-radius);
 }
 
 /* Website mode, signed out: "Log in" above the website's chat frame (./ChatPanel). */

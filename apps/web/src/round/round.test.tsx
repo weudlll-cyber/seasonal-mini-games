@@ -101,7 +101,7 @@ describe('the guess list', () => {
     expect(rows[3]?.dataset['tier']).toBe('warm');
     // The viewer's own dot: Anna plays for winter.
     expect(rows[0]?.querySelector<HTMLElement>('.round-dot')?.style.getPropertyValue('--dot')).toBe(
-      'var(--color-winter)',
+      'var(--sk-color-winter)',
     );
     // Leaf Fall's row stands out: the season's tint and icon (T115); numbers are grouped.
     expect(rows[1]?.className).toContain('round-row--special');
@@ -117,11 +117,11 @@ describe('the guess list', () => {
 
 describe('the colours and the teams', () => {
   it('colour players by team when teams play, else by roster order', () => {
-    expect(playerColor(ended, 'w')).toBe('var(--color-autumn)');
+    expect(playerColor(ended, 'w')).toBe('var(--sk-color-autumn)');
     const plain = { ...ended, teamsOn: false };
     expect([playerColor(plain, 'w'), playerColor(plain, 'a')]).toEqual([
-      'var(--color-spring)',
-      'var(--color-summer)',
+      'var(--sk-color-spring)',
+      'var(--sk-color-summer)',
     ]);
   });
 

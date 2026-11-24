@@ -10,7 +10,10 @@
  *                 its height takes, each row its height of one line as in one column; a row is
  *                 never split between the columns. Rows past the two columns are not shown here
  *                 ("Log (N)" has them all), so the list does not scroll. Each row keeps its parts
- *                 and T150 (./roundLog.css: the comment gives way first, then the name).
+ *                 and T150 (./roundLog.css: the comment gives way first, then the name). A column
+ *                 is 205 px at the narrowest desktop (900 px), less than Safecracker's longest
+ *                 answer ("1 right · 3 wrong places", 215 to 227 px), so there the answer wraps
+ *                 whole at its spaces inside the column instead of being cut (T426).
  * Spec:           docs/spec/02-game-guess-the-number.md §12
  */
 .round-log ol[data-columns='2'] {
@@ -26,4 +29,13 @@
 .round-log ol[data-columns='2'] > li {
   break-inside: avoid;
   margin-bottom: 0.08rem;
+}
+
+/* An answer wider than its column goes to a second line inside it, never cut (T426). It is
+   alone on its line then: ./roundLog.css wraps a part that has no room to a line of its own, and
+   this lets the part itself give way when the line is narrower than it. */
+.round-log ol[data-columns='2'] .round-answer {
+  flex: 0 1 auto;
+  min-width: 0;
+  white-space: normal;
 }

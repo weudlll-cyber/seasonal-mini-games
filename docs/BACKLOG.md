@@ -43,11 +43,10 @@ For Phase 7:
 
 - Renovate PR #47 (TypeScript 7): `pnpm verify` stops at lint with "Error: typescript-eslint does not support TS 7.0." (2026-11-23). It stays open, without code changes, until a typescript-eslint release supports TypeScript 7; then Renovate rebases it and it merges when its checks are green.
 
-### Kit adoption (owner decision O142, branch `feat/kit-adoption`, not merged)
+### Kit adoption (owner decisions O142, O150)
 
-- The game moves onto `@seasonal/kit` v0.11.1 in the kit plan's six steps (night chain 2026-11-23/24). The branch waits for its review (Plan-Claude in the browser, then the owner and the kit planning); a separate task merges it. Its draft PR is #52, whose CI is the proof (O147). Done so far: step 1, tokens, fonts, motion and theme (T411); step 2, the website sign-in and the chat link (T412); step 3, the server's sign-in, two-factor and open-rounds checks (T413); step 4, the toggle, the back link and the disclosure (T414); step 5, the fit (T415), the dock (T416), the start card (T417; the result frame not taken, T417) and the panels, full screen, phase strip and clock (T418; the bar kept, O143); step 6, the header and the dev tools (T419). The 24 px target check runs on every screen at two sizes (T420).
-- Kept in the game until a kit release has them (no kit code copied): the round's own `FocusBar`, because `GameBar` has no 'prefs' icon for Pre-picks (O143); `useFit`'s refit after web fonts load, which `watchFit` lacks (O144).
-- Waits for the kit's `GameBar` back-link place (OPEN (an) 1, O148): focus mode shows no "← Seasonal Entertainment" until the kit has a place for it and the game moves its bar to `GameBar`.
+- On `master` at the kit's v0.11.1 since the merge commit `0bed072` (PR #52). The move to v0.17.0 is on `feat/kit-0.14` (draft PR #53, T422, T424–T426), not merged: the owner has looked at it on the desktop and on his phone (O151) and the merge waits for his word.
+- Stays the game's own after the move, with the reason or the kit release that replaces it: T423. Waiting for the kit: `ResultFrame` taking an `afterFonts` option (the game counts font loads into its signature), a host chat from another https origin (T412). Not yet taken, a later task may: the kit's `RateLimiter`, `SessionEnds` and `FailureBrake`.
 
 ### Optional inputs
 
@@ -55,6 +54,10 @@ For Phase 7:
 
 ## Part two — closed
 
+- 2026-11-24: Safecracker's running round clipped its guess list at 900 × 700 (the two-column list's answers wider than a column, on master too): the answer wraps whole inside its column, proven by the no-clipping sweep with 3 and 30 bots (T426). _Closed by:_ branch `feat/kit-0.14` (draft PR #53, not merged)
+- 2026-11-24: The start card's own font-load counting (T423 (3), first half): the kit's `StartCard` takes `fit={{ afterFonts: true }}` since v0.16.0 (K48); and the check that nothing of the game's own CSS sets the open chat sheet's size or place, after the kit's v0.17.0 cap (K50): nothing did (T425). _Closed by:_ branch `feat/kit-0.14` (draft PR #53, not merged)
+- 2026-11-24: T416 (3) and the game's dock overrides: the list fits the height the dock leaves, the kit's `dock.css` alone draws the bar, the room's own field hides by the dock's `visible`; the platform result is the kit's `ResultFrame` with "Closest to winning" as `middle` (T424). _Closed by:_ branch `feat/kit-0.14` (draft PR #53, not merged)
+- 2026-11-24: The back link in focus mode (OPEN (an) 1, O148) and the game's own gaps with the kit (O143: the bar, O144: the refit after fonts for the result screens, T416 (1) and (2): the dock without a chat and a host chat's visibility): the round's bar is the kit's `GameBar` with its back link, the result screens use `afterFonts`, the page without a chat `withoutChat`, the host frame `useDockSight` (T422); T416 (3) measured in the real game and kept (T422). _Closed by:_ branch `feat/kit-0.14` (draft PR #53, not merged)
 - 2026-11-23: OPEN (an), the owner's answers: the back link in focus mode waits for the kit's `GameBar` place (O148, part one); the two-factor recovery codes are keyed with a secret of its own, `SMG_RECOVERY_KEY`, made once by the installer, and the plain-SHA-256 codes of master keep working (O149). _Closed by:_ branch `feat/kit-adoption`
 
 - 2026-11-23: Seasonal Mind Games' strip test compares the fill's width by value to three decimals of a percent, not as text: jsdom 31 prints "1.66667%" for 1.6666666666666667% (Renovate PR #46's only failure); no product change. _Closed by:_ branch `chore/test-fill-percent`

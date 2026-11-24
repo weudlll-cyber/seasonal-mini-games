@@ -19,12 +19,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .st-fallen-head h3 {
   margin: 0;
-  font-size: var(--font-size-small);
+  font-size: var(--sk-font-size-small);
 }
 
 .st-fallen-body {
@@ -53,10 +53,10 @@
   place-items: center;
   white-space: nowrap;
   padding: 0 0.4rem;
-  border-radius: var(--radius-pill);
-  border: 1px solid var(--season, var(--color-border));
-  background: color-mix(in srgb, var(--season, var(--color-accent)) 14%, var(--color-card));
-  font-size: var(--font-size-small);
+  border-radius: var(--sk-radius-pill);
+  border: 1px solid var(--season, var(--sk-color-border));
+  background: color-mix(in srgb, var(--season, var(--sk-color-accent)) 14%, var(--sk-color-card));
+  font-size: var(--sk-font-size-small);
   font-variant-numeric: tabular-nums;
 }
 
@@ -65,7 +65,7 @@
   .st-fallen-toggle,
   .st-fallen-close {
     display: inline-flex;
-    min-height: var(--hit-target);
+    min-height: var(--sk-hit-target);
   }
 
   .st-fallen-body {
@@ -75,16 +75,16 @@
   .st-fallen[data-open='true'] .st-fallen-body {
     display: grid;
     position: fixed;
-    left: var(--gutter);
-    right: var(--gutter);
-    bottom: var(--gutter);
+    left: var(--sk-gutter);
+    right: var(--sk-gutter);
+    bottom: var(--sk-gutter);
     z-index: 30;
     max-height: 60dvh;
-    padding: var(--space-2);
-    border: 2px solid var(--season, var(--color-border));
-    border-radius: var(--radius-card);
-    background: var(--color-surface);
-    box-shadow: var(--shadow-raised);
+    padding: var(--sk-space-2);
+    border: 2px solid var(--season, var(--sk-color-border));
+    border-radius: var(--sk-radius-card);
+    background: var(--sk-color-surface);
+    box-shadow: var(--sk-shadow-raised);
   }
 
   .st-fallen[data-open='true'] .st-fallen-list {

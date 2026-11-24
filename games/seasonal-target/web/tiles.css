@@ -58,7 +58,7 @@
 .st-grid {
   /* Set here, not on :root: the season colour is the round view's. */
   /* The viewer's own colour from the platform (their dot's), as on their list rows. */
-  --st-own: var(--own, var(--season, var(--color-accent)));
+  --st-own: var(--own, var(--season, var(--sk-color-accent)));
   display: grid;
   grid-template-columns: repeat(var(--st-cols), minmax(0, 1fr));
   grid-template-rows: repeat(var(--st-rows), minmax(0, 1fr));
@@ -80,13 +80,13 @@
 }
 
 .st-grid--loupe {
-  grid-template-columns: repeat(var(--st-cols), minmax(var(--hit-target), 1fr));
-  grid-template-rows: repeat(var(--st-rows), minmax(var(--hit-target), 1fr));
+  grid-template-columns: repeat(var(--st-cols), minmax(var(--sk-hit-target), 1fr));
+  grid-template-rows: repeat(var(--st-rows), minmax(var(--sk-hit-target), 1fr));
   width: 100%;
 }
 
 .st-grid:focus-visible {
-  outline: 3px solid var(--color-accent);
+  outline: 3px solid var(--sk-color-accent);
   outline-offset: 3px;
 }
 
@@ -110,7 +110,7 @@
    inside the own tile's frame (about 14 px digits on the 20 × 20 grid at 1280 × 720). */
 .st-face {
   font-size: 48cqmin;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
   line-height: 1;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -141,7 +141,7 @@
   background: var(--st-quarter);
   color: var(--st-on-quarter);
   font-size: max(0.625rem, 30cqmin);
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
   line-height: 1.2;
   white-space: nowrap;
   pointer-events: none;
@@ -199,8 +199,8 @@
   left: 1px;
   padding: 0 0.12em;
   border-radius: 2px;
-  background: var(--color-card);
-  color: var(--color-text);
+  background: var(--sk-color-card);
+  color: var(--sk-color-text);
   font-size: max(0.5rem, 26cqmin);
   line-height: 1.1;
 }
@@ -209,7 +209,7 @@
    text (1.7:1 on a light step): the tag sits on the opaque surface instead, the theme's text on
    it at 4.5:1 or more (O140). */
 :root[data-theme='dark'] .st-tag {
-  background: var(--color-surface);
+  background: var(--sk-color-surface);
 }
 
 /* A tag wider than its tile reaches into the next one; in the right edge column it hangs from
@@ -223,7 +223,7 @@
    guessed tiles faded. */
 .st-tile[data-hl='on'] {
   z-index: 1;
-  outline: 3px solid var(--color-text);
+  outline: 3px solid var(--sk-color-text);
   outline-offset: -1px;
 }
 
@@ -234,7 +234,7 @@
 /* The selection: a thick outline outside the tile, unlike the own frame inside it. */
 .st-tile[data-selected='true'] {
   z-index: 1;
-  outline: 3px solid var(--color-text);
+  outline: 3px solid var(--sk-color-text);
   outline-offset: 1px;
 }
 
@@ -243,6 +243,6 @@
   position: absolute;
   inset: 8%;
   border-radius: 50%;
-  border: 3px solid var(--season, var(--color-accent));
+  border: 3px solid var(--season, var(--sk-color-accent));
   box-shadow: 0 0 0 1px var(--st-ink);
 }

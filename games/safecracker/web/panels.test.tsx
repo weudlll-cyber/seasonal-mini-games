@@ -37,7 +37,7 @@ const view = {
   log: [{ receiveSeq: 2, receivedAt: 2_000, playerId: 'p2', value: null, ...held, held: false }],
 };
 const names = { p1: 'Anna', p2: 'Ben' };
-const colors = { p1: 'var(--color-spring)', p2: 'var(--color-autumn)' };
+const colors = { p1: 'var(--sk-color-spring)', p2: 'var(--sk-color-autumn)' };
 const props = {
   act: () => Promise.resolve({ ok: true }),
   canAct: true,

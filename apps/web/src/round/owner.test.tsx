@@ -162,7 +162,7 @@ describe('the phone’s others’ line (O141)', () => {
 
   it('keeps one line of it under the head beside a board', () => {
     const rule = /\[data-layout='board'\] \.round-log-others \{([^}]*)\}/.exec(roundCss)?.[1] ?? '';
-    expect(rule).toContain('min-height: calc(1.5 * var(--font-size-small))');
+    expect(rule).toContain('min-height: calc(1.5 * var(--sk-font-size-small))');
     expect(roundCss).toContain("[data-layout='board']:has(.round-log-others)");
   });
 });

@@ -36,7 +36,7 @@
   /* The viewer's own rows (the round's lists, "Your guesses", the Players panel): their own
      colour mixed into this base at this strength; light keeps the tint over the card (T75) */
   --own-tint: 22%;
-  --color-own-base: var(--color-card);
+  --color-own-base: var(--sk-color-card);
 
   /* The game board (range bar, guess list) is the hero element, cream with dark ink in both themes */
   --color-board: #f6f3ea;
@@ -53,6 +53,6 @@
      every text colour of a row keeps 4.5:1 on it (DECISIONS T261, designTokens.test) */
   --own-tint: 30%;
   --color-own-base: #000000;
-  --color-winter-text: var(--color-winter);
-  --color-success-text: var(--color-success);
+  --color-winter-text: var(--sk-color-winter);
+  --color-success-text: var(--sk-color-success);
 }

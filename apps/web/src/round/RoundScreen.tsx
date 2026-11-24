@@ -65,7 +65,7 @@ interface RoundScreenProps {
 // game's own tiles take it, so the list and the board agree (night 6).
 const screenStyle = (state: RoundStateView, viewerKey: string | null, season: boolean) =>
   ({
-    '--season': season ? seasonColor(state.season) : 'var(--color-border-strong)',
+    '--season': season ? seasonColor(state.season) : 'var(--sk-color-border-strong)',
     '--own': viewerKey === null ? undefined : playerColor(state, viewerKey),
   }) as CSSProperties;
 

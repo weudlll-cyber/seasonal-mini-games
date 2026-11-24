@@ -19,7 +19,7 @@
  */
 .sc-board {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
   container-type: inline-size;
 }
 
@@ -27,7 +27,7 @@
 .sc-line {
   margin: 0;
   font-size: clamp(1.05rem, 6.2cqi, 1.9rem);
-  font-weight: var(--font-weight-heading);
+  font-weight: var(--sk-font-weight-heading);
   line-height: 1.15;
 }
 
@@ -47,13 +47,13 @@
   flex: 0 1 2.25rem;
   min-width: 1.5rem;
   min-height: 2rem;
-  border-radius: var(--radius);
-  border: 1px solid var(--season, var(--color-border));
-  background: color-mix(in srgb, var(--season, var(--color-accent)) 14%, var(--color-card));
-  color: var(--color-text);
+  border-radius: var(--sk-radius);
+  border: 1px solid var(--season, var(--sk-color-border));
+  background: color-mix(in srgb, var(--season, var(--sk-color-accent)) 14%, var(--sk-color-card));
+  color: var(--sk-color-text);
   font-family: ui-monospace, 'SF Mono', Consolas, monospace;
   font-variant-numeric: tabular-nums;
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 /* The phone's info line: small chips, so the hint keeps room beside them (T141). */
@@ -65,16 +65,16 @@
   flex: 0 0 1.35rem;
   min-width: 1.35rem;
   min-height: 1.5rem;
-  font-size: var(--font-size-small);
+  font-size: var(--sk-font-size-small);
 }
 
 /* A fallen digit: greyed on a dashed border, crossed out from corner to corner — signs that
    are not colour, plain at a phone's 1.35 rem chip (T153); the muted digit still reads at 7:1. */
 .sc-chip[data-fallen='true'] {
-  background: var(--color-surface);
+  background: var(--sk-color-surface);
   border-style: dashed;
-  border-color: var(--color-text-muted);
-  color: var(--color-text-muted);
+  border-color: var(--sk-color-text-muted);
+  color: var(--sk-color-text-muted);
 }
 
 /* The cross fills its own chip, never the next one. */
@@ -84,7 +84,7 @@
   width: 76%;
   height: 76%;
   fill: none;
-  stroke: var(--color-text);
+  stroke: var(--sk-color-text);
   stroke-width: 1.4;
   stroke-linecap: round;
 }
@@ -92,24 +92,24 @@
 /* What "right" and "wrong place" mean in the answers (T143): one quiet line. */
 .sc-legend {
   margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-small);
+  color: var(--sk-color-text-muted);
+  font-size: var(--sk-font-size-small);
 }
 
 /* Spring Herald's hint for the whole round: a highlighted line (O35). */
 .sc-hint {
   margin: 0;
   padding: 0.3rem 0.6rem;
-  border-radius: var(--radius);
-  border-left: 4px solid var(--season, var(--color-accent));
-  background: color-mix(in srgb, var(--season, var(--color-accent)) 22%, var(--color-card));
-  color: var(--color-text);
-  font-weight: var(--font-weight-strong);
+  border-radius: var(--sk-radius);
+  border-left: 4px solid var(--season, var(--sk-color-accent));
+  background: color-mix(in srgb, var(--season, var(--sk-color-accent)) 22%, var(--sk-color-card));
+  color: var(--sk-color-text);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 .sc-input {
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 /* One row on a desktop, also beside a panel on demand (night-7 review): the boxes give way. */
@@ -117,7 +117,7 @@
   display: flex;
   flex-wrap: nowrap;
   align-items: center;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .sc-boxes {
@@ -128,27 +128,27 @@
 .sc-box {
   flex: 0 1 auto;
   min-width: 2rem;
-  width: max(var(--hit-target, 44px), 2.75rem);
-  height: max(var(--hit-target, 44px), 3.25rem);
+  width: max(var(--sk-hit-target, 44px), 2.75rem);
+  height: max(var(--sk-hit-target, 44px), 3.25rem);
   padding: 0;
-  border: 2px solid var(--color-text-muted);
-  border-radius: var(--radius);
-  background: var(--color-card);
-  color: var(--color-text);
+  border: 2px solid var(--sk-color-text-muted);
+  border-radius: var(--sk-radius);
+  background: var(--sk-color-card);
+  color: var(--sk-color-text);
   font-family: ui-monospace, 'SF Mono', Consolas, monospace;
-  font-size: var(--font-size-lead);
+  font-size: var(--sk-font-size-lead);
   text-align: center;
 }
 
 /* Spring Herald's digit, locked in its box from the round's opening (O59). */
 .sc-box--hint {
-  border-color: var(--season, var(--color-accent));
-  background: color-mix(in srgb, var(--season, var(--color-accent)) 22%, var(--color-card));
-  font-weight: var(--font-weight-strong);
+  border-color: var(--season, var(--sk-color-accent));
+  background: color-mix(in srgb, var(--season, var(--sk-color-accent)) 22%, var(--sk-color-card));
+  font-weight: var(--sk-font-weight-strong);
 }
 
 .sc-box:focus-visible {
-  outline: 3px solid var(--color-accent);
+  outline: 3px solid var(--sk-color-accent);
   outline-offset: 1px;
 }
 
@@ -157,23 +157,23 @@
   flex: none;
   min-height: 3.25rem;
   padding: 0 1.5rem;
-  font-size: var(--font-size-lead);
+  font-size: var(--sk-font-size-lead);
 }
 
 .sc-message {
   margin: 0;
-  color: var(--color-danger);
+  color: var(--sk-color-danger);
 }
 
 .sc-result {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--sk-space-2);
   align-content: start;
 }
 
 .sc-secret {
   margin: 0;
-  font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * var(--font-size-lead)));
+  font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * var(--sk-font-size-lead)));
 }
 
 /* The code large on a line of its own, the digits in use under it (the result's reveal, O110). */
@@ -190,7 +190,7 @@
 
 .sc-secret .sc-space {
   display: block;
-  color: var(--color-text-muted);
+  color: var(--sk-color-text-muted);
 }
 
 .sc-code {
@@ -208,11 +208,11 @@
   margin: 0;
   padding-left: 1.25rem;
   display: grid;
-  gap: var(--space-1);
+  gap: var(--sk-space-1);
 }
 
 .sc-you {
-  font-weight: var(--font-weight-strong);
+  font-weight: var(--sk-font-weight-strong);
 }
 
 /* A phone: the line, then the strip of compact chips in a row of its own; the boxes on the first line of
@@ -224,7 +224,7 @@
   }
 
   .sc-line {
-    font-size: var(--font-size-lead);
+    font-size: var(--sk-font-size-lead);
   }
 
   .sc-hint {

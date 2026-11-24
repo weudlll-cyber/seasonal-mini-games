@@ -11,33 +11,33 @@
  * Spec:           docs/spec/02d-game-seasonal-target.md §11
  */
 @media (min-width: 900px) {
-  .round-result[data-layout='board'] .round-result-first {
+  .sk-result[data-sk-layout='board'] .sk-result-first {
     grid-template-columns: minmax(0, 1fr) 21rem;
   }
 
   /* The icon, the name and "(you)" closer, as on a phone. */
-  .round-result[data-layout='board'] .round-player {
+  .sk-result[data-sk-layout='board'] .round-player {
     gap: 0.25rem;
   }
 
-  .round-result[data-layout='board'] .round-col-num {
+  .sk-result[data-sk-layout='board'] .round-col-num {
     width: 4.75rem;
   }
 
   /* "Points" needs less than "Guesses". */
-  .round-result[data-layout='board'] .round-col-num:last-child {
+  .sk-result[data-sk-layout='board'] .round-col-num:last-child {
     width: 4rem;
   }
 }
 
 /* The cells' sides tighter, so "dev-host (you)" stays whole beside the grid (T211). */
-.round-result[data-layout='board'] .round-table th,
-.round-result[data-layout='board'] .round-table td {
+.sk-result[data-sk-layout='board'] .round-table th,
+.sk-result[data-sk-layout='board'] .round-table td {
   padding-inline: 0.25rem;
 }
 
 @media (max-width: 899px) {
-  .round-result[data-layout='board'] .round-result-first {
+  .sk-result[data-sk-layout='board'] .sk-result-first {
     height: auto;
     grid-template-rows: auto auto auto;
   }
