@@ -18,13 +18,13 @@
  *                 lock that every save holds shared: a save committed before the opening plays in
  *                 that round, one after it from the next round on (O117).
  *                 A value is never logged: the logger redacts `prefs`.
- * Depends on:     pg (types), ../auth/rateLimit, ../db/pool, ../round/* (types), ./accountPrefs, ./matches
+ * Depends on:     pg (types), @seasonal/kit/server (RateLimiter), ../db/pool, ../round/* (types), ./accountPrefs, ./matches
  * Used by:        ../round/runtime, ./play, ../http/routes/prefs, ../realtime/*
  * Spec:           docs/spec/04-software-architecture.md §4.8 rule 8; docs/spec/06-data-model-api-realtime.md §2.2, §3.1, §4.3, §4.4
  */
 import type pg from 'pg';
 
-import { RateLimiter } from '../auth/rateLimit.js';
+import { RateLimiter } from '@seasonal/kit/server';
 import { inTransaction, type DbPool } from '../db/pool.js';
 import type { LiveRound } from '../round/liveRound.js';
 import type { Rounds } from '../round/rounds.js';

@@ -6,16 +6,16 @@
  * Responsibility: in this order, a room's slow mode (seconds between two messages of one
  *                 account in that room), the new-account slow mode (10 s between any two
  *                 messages of an account younger than `chat.newAccountSlowModeHours`), the
- *                 token bucket of `chat.rateMessages` per `chat.rateWindowS` (./../auth/rateLimit),
+ *                 token bucket of `chat.rateMessages` per `chat.rateWindowS` (the kit's RateLimiter),
  *                 and duplicate detection (the same text a third time within 60 s is refused).
  *                 Only delivered messages count for slow mode and duplicates. The clock is
  *                 injected so tests do not wait. In memory per server process, as the other
  *                 limits (02 §8).
- * Depends on:     ../auth/rateLimit
+ * Depends on:     @seasonal/kit/server (RateLimiter)
  * Used by:        ./pipeline, ./spam.test
  * Spec:           Bingo 03 §12
  */
-import { RateLimiter } from '../auth/rateLimit.js';
+import { RateLimiter } from '@seasonal/kit/server';
 
 export const NEW_ACCOUNT_GAP_MS = 10_000;
 const DUPLICATE_WINDOW_MS = 60_000;

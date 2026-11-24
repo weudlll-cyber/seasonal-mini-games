@@ -32,7 +32,7 @@ import type { Server as HttpServer } from 'node:http';
 
 import { Server, type Socket } from 'socket.io';
 
-import type { SessionEnds } from '../auth/sessionEnds.js';
+import type { SessionEnds } from '@seasonal/kit/server';
 import { findSession, type Session } from '../auth/sessions.js';
 import type { Chat } from '../chat/chat.js';
 import type { DbPool } from '../db/pool.js';

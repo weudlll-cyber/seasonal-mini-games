@@ -16,7 +16,7 @@
  *                 (idle, expired, revoked) gets the answer header X-Smg-Session-Ended with the
  *                 sign-in route, so the clients sign in again through the website (T282).
  * Depends on:     fastify, @fastify/cookie, node:crypto, @smg/contracts (SESSION_ENDED_HEADER),
- *                 ./sessions, ./rateLimit, ../db/pool
+ *                 ./sessions, ./rateRules, @seasonal/kit/server (RateLimiter), ../db/pool
  * Used by:        ../http/app, ../http/routes/auth, ../http/routes/devSignIn
  * Spec:           Bingo 03 §3, §8, §13
  */
@@ -27,7 +27,8 @@ import { SESSION_ENDED_HEADER } from '@smg/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import type { DbPool } from '../db/pool.js';
-import { RATE_RULES, RateLimiter } from './rateLimit.js';
+import { RateLimiter } from '@seasonal/kit/server';
+import { RATE_RULES } from './rateRules.js';
 import { endedAccountSession, findSession, type Session } from './sessions.js';
 
 declare module 'fastify' {

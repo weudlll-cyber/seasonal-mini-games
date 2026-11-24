@@ -25,14 +25,14 @@
  * Used by:        ../main.ts, test/*, ../index
  * Spec:           docs/spec/04-software-architecture.md §2.1; docs/spec/06-data-model-api-realtime.md §3
  */
+import { RateLimiter, SessionEnds } from '@seasonal/kit/server';
 import { SettingsService } from '@smg/application';
 import { PLATFORM_SETTINGS } from '@smg/contracts';
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from 'fastify';
 
 import { PgAuditLog } from '../admin/pgAuditLog.js';
 import { PgSettingsStore } from '../admin/pgSettingsStore.js';
-import { RATE_RULES, RateLimiter } from '../auth/rateLimit.js';
-import { SessionEnds } from '../auth/sessionEnds.js';
+import { RATE_RULES } from '../auth/rateRules.js';
 import { cookieConfig, registerSessions, type CookieConfig } from '../auth/sessionPlugin.js';
 import { createChat, type Chat } from '../chat/chat.js';
 import { chatDefault, hostChatSource } from '../chat/provider.js';
@@ -155,6 +155,13 @@ function registerBasics(fastify: FastifyInstance, deps: AppDeps, metrics: Metric
   }
 }
 
+// The kit's SessionEnds: a listener that fails is logged and stops no other (T423).
+function sessionEndsOf(fastify: FastifyInstance): SessionEnds {
+  return new SessionEnds((error) => {
+    fastify.log.error({ err: error }, 'A session-end listener failed');
+  });
+}
+
 // Website mode's sign-in route (O66); null in local mode.
 function signInPathOf(env: AppDeps['env']): string | null {
   return env.SMG_AUTH_MODE === 'website' ? `${env.SMG_BASE_PATH}auth/website` : null;
@@ -205,7 +212,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   const observe = metrics.rounds;
   registerBasics(fastify, deps, metrics);
   const cookie = cookieConfig(!isDev, deps.env.SMG_BASE_PATH);
-  const sessionEnds = new SessionEnds();
+  const sessionEnds = sessionEndsOf(fastify);
   await registerSessions(fastify, deps.pool, cookie, signInPathOf(deps.env));
   const features = featuresFrom(deps.env);
   registerSignIn(fastify, { ...deps, cookie, features, sessionEnds });

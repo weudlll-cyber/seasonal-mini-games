@@ -24,7 +24,7 @@ import type { FastifyInstance } from 'fastify';
 
 import { deleteAccount, ensureDevAccount } from '../../auth/accounts.js';
 import { setSessionCookie, type CookieConfig } from '../../auth/sessionPlugin.js';
-import type { SessionEnds } from '../../auth/sessionEnds.js';
+import type { SessionEnds } from '@seasonal/kit/server';
 import { accountSessionIds, createSession, revokeSession } from '../../auth/sessions.js';
 import type { DbPool } from '../../db/pool.js';
 
@@ -50,7 +50,7 @@ export function registerDevSignIn(
     const accountId = await ensureDevAccount(deps.pool, who.displayName, who.roles);
     if (request.session !== null) {
       await revokeSession(deps.pool, request.session.id);
-      deps.sessionEnds.end([request.session.id]);
+      void deps.sessionEnds.end([request.session.id]);
     }
     const { token } = await createSession(deps.pool, accountId, 'dev quick sign-in');
     setSessionCookie(reply, deps.cookie, token);
@@ -64,7 +64,7 @@ export function registerDevSignIn(
     for (const { id } of rows.rows) {
       const sessions = await accountSessionIds(deps.pool, id);
       await deleteAccount(deps.pool, id);
-      deps.sessionEnds.end(sessions);
+      void deps.sessionEnds.end(sessions);
     }
     return reply.status(200).send({ deleted: rows.rows.length });
   });

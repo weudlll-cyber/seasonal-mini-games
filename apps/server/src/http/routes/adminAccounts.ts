@@ -26,7 +26,7 @@ import {
   searchAccounts,
   setStatus,
 } from '../../admin/accountsAdmin.js';
-import type { SessionEnds } from '../../auth/sessionEnds.js';
+import type { SessionEnds } from '@seasonal/kit/server';
 import { accountSessionIds } from '../../auth/sessions.js';
 import type { DbPool } from '../../db/pool.js';
 import { permitted } from './adminGuard.js';
@@ -82,7 +82,7 @@ async function changeStatus(
   if (!(await setStatus(deps.pool, id, status)))
     return reply.status(409).send({ code: 'NO_CHANGE' });
   // A suspended account is signed out everywhere at once (its sessions no longer load).
-  if (status === 'suspended') deps.sessionEnds.end(await accountSessionIds(deps.pool, id));
+  if (status === 'suspended') void deps.sessionEnds.end(await accountSessionIds(deps.pool, id));
   await audited(deps, actor, `account.${status === 'suspended' ? 'suspend' : 'unsuspend'}`, {
     id,
     diff: { reason: parsed.data.reason },

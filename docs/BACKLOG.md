@@ -45,8 +45,8 @@ For Phase 7:
 
 ### Kit adoption (owner decisions O142, O150)
 
-- On `master` at the kit's v0.11.1 since the merge commit `0bed072` (PR #52). The move to v0.17.0 is on `feat/kit-0.14` (draft PR #53, T422, T424–T426), not merged: the owner has looked at it on the desktop and on his phone (O151) and the merge waits for his word.
-- Stays the game's own after the move, with the reason or the kit release that replaces it: T423. Waiting for the kit: `ResultFrame` taking an `afterFonts` option (the game counts font loads into its signature), a host chat from another https origin (T412). Not yet taken, a later task may: the kit's `RateLimiter`, `SessionEnds` and `FailureBrake`.
+- On `master` at the kit's v0.17.0 since the merge commit `52f996c` (PR #53, 2026-11-24; the first move to v0.11.1 was PR #52, `0bed072`). The server parts follow on `feat/kit-server` (draft PR, T427, O152).
+- Stays the game's own after the move, with the reason or the kit release that replaces it: T423. Waiting for the kit: `ResultFrame` taking an `afterFonts` option (the game counts font loads into its signature), a host chat from another https origin (T412). Owner's question (T427): the kit's `FailureBrake` for the sign-in's per-account limit; it counts only failures, so right sign-ins would no longer use up the five in 15 minutes; the proposal is in T427 and the PR stays a draft until he answers.
 
 ### Optional inputs
 
@@ -54,6 +54,7 @@ For Phase 7:
 
 ## Part two — closed
 
+- 2026-11-24: The game's own rate limiter and session-end notifier: the kit's `RateLimiter` and `SessionEnds` replace them, `auth/rateLimit.ts` keeps only the game's rules as `auth/rateRules.ts` (T427, O152). _Closed by:_ branch `feat/kit-server` (draft PR, not merged: the `FailureBrake` question is open)
 - 2026-11-24: Safecracker's running round clipped its guess list at 900 × 700 (the two-column list's answers wider than a column, on master too): the answer wraps whole inside its column, proven by the no-clipping sweep with 3 and 30 bots (T426). _Closed by:_ branch `feat/kit-0.14` (draft PR #53, not merged)
 - 2026-11-24: The start card's own font-load counting (T423 (3), first half): the kit's `StartCard` takes `fit={{ afterFonts: true }}` since v0.16.0 (K48); and the check that nothing of the game's own CSS sets the open chat sheet's size or place, after the kit's v0.17.0 cap (K50): nothing did (T425). _Closed by:_ branch `feat/kit-0.14` (draft PR #53, not merged)
 - 2026-11-24: T416 (3) and the game's dock overrides: the list fits the height the dock leaves, the kit's `dock.css` alone draws the bar, the room's own field hides by the dock's `visible`; the platform result is the kit's `ResultFrame` with "Closest to winning" as `middle` (T424). _Closed by:_ branch `feat/kit-0.14` (draft PR #53, not merged)

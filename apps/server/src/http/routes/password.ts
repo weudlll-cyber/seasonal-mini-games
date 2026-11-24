@@ -11,13 +11,12 @@
  * Used by:        ../app
  * Spec:           docs/spec/05-security-threat-model.md §1; Bingo 03 §2.1, §3
  */
+import { type RateLimiter, type SessionEnds } from '@seasonal/kit/server';
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 
 import { passwordHashOf, setPassword } from '../../auth/accounts.js';
 import { passwordProblem, verifyPassword } from '../../auth/password.js';
-import type { RateLimiter } from '../../auth/rateLimit.js';
-import type { SessionEnds } from '../../auth/sessionEnds.js';
 import { revokeOtherSessions } from '../../auth/sessions.js';
 import type { DbPool } from '../../db/pool.js';
 
@@ -45,7 +44,7 @@ export function registerPasswordChange(
     const problem = passwordProblem(parsed.data.next);
     if (problem !== null) return reply.status(400).send({ code: 'PASSWORD_WEAK', reason: problem });
     await setPassword(deps.pool, s.accountId, parsed.data.next);
-    deps.sessionEnds.end(await revokeOtherSessions(deps.pool, s.accountId, s.id));
+    void deps.sessionEnds.end(await revokeOtherSessions(deps.pool, s.accountId, s.id));
     return reply.status(204).send();
   });
 }

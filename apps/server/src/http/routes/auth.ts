@@ -21,6 +21,7 @@
  * Used by:        ../app, ./handoff (startSession), ./websiteSignIn (openSession)
  * Spec:           docs/spec/05-security-threat-model.md §1, §2; Bingo 05 §2.1; Bingo 03 §2.1, §2.3, §3, §13
  */
+import { RateLimiter, type SessionEnds } from '@seasonal/kit/server';
 import type { SessionView } from '@smg/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
@@ -34,13 +35,12 @@ import {
   registerAccount,
 } from '../../auth/accounts.js';
 import { dummyPasswordHash, passwordProblem, verifyPassword } from '../../auth/password.js';
-import { RATE_RULES, RateLimiter } from '../../auth/rateLimit.js';
+import { RATE_RULES } from '../../auth/rateRules.js';
 import {
   clearSessionCookie,
   setSessionCookie,
   type CookieConfig,
 } from '../../auth/sessionPlugin.js';
-import type { SessionEnds } from '../../auth/sessionEnds.js';
 import {
   accountSessionIds,
   createSession,
@@ -85,7 +85,7 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AuthDeps): void {
   app.post('/api/v1/auth/logout', async (request, reply) => {
     if (request.session !== null) {
       await revokeSession(deps.pool, request.session.id);
-      deps.sessionEnds.end([request.session.id]);
+      void deps.sessionEnds.end([request.session.id]);
     }
     clearSessionCookie(reply, deps.cookie);
     return reply.status(204).send();
@@ -187,7 +187,7 @@ export async function openSession(
 ): Promise<void> {
   if (request.session !== null) {
     await revokeSession(deps.pool, request.session.id);
-    deps.sessionEnds.end([request.session.id]);
+    void deps.sessionEnds.end([request.session.id]);
   }
   const { token } = await createSession(
     deps.pool,
@@ -242,7 +242,7 @@ async function deleteMe(request: FastifyRequest, reply: FastifyReply, deps: Auth
   if (confirmed !== 'ok') return reply.status(403).send({ code: confirmed });
   const sessions = await accountSessionIds(deps.pool, accountId);
   await deleteAccount(deps.pool, accountId);
-  deps.sessionEnds.end(sessions);
+  void deps.sessionEnds.end(sessions);
   clearSessionCookie(reply, deps.cookie);
   return reply.status(204).send();
 }

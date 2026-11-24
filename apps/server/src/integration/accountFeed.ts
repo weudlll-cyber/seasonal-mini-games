@@ -15,14 +15,14 @@
  *                 256 KiB cap, not the SafeHttpClient, which takes public https addresses only
  *                 (an SSRF guard for addresses admins type); this one is the operator's local
  *                 http address from the env file (DECISIONS T217).
- * Depends on:     zod, ../db/pool, ../auth/sessionEnds (types), ./accountChanges,
+ * Depends on:     zod, ../db/pool, @seasonal/kit/server (SessionEnds, type), ./accountChanges,
  *                 ../seasons/safeFetch (readLimited, FetchRefused)
  * Used by:        ../main, ../http/routes/health (feedLastSuccess), test/*
  * Spec:           docs/spec/07-integration.md §7; docs/spec/05-security-threat-model.md §1
  */
 import { z } from 'zod';
 
-import type { SessionEnds } from '../auth/sessionEnds.js';
+import type { SessionEnds } from '@seasonal/kit/server';
 import type { DbPool } from '../db/pool.js';
 import { FetchRefused, readLimited } from '../seasons/safeFetch.js';
 import {
@@ -103,7 +103,7 @@ export async function pollAccountFeed(deps: AccountFeedDeps): Promise<number> {
     const answer = await fetchPage(deps, since);
     for (const change of answer.changes) {
       const ended = await applyAccountChange(deps.pool, deps.issuer, known(deps, change));
-      deps.sessionEnds.end(ended);
+      void deps.sessionEnds.end(ended);
     }
     applied += answer.changes.length;
     await deps.pool.query('UPDATE smg.website_feed SET cursor = $1', [answer.next]);
