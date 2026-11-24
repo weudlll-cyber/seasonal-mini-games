@@ -21,7 +21,8 @@
  *                 ./useSavedPrefs
  * Spec:           docs/spec/02e-game-mind-games.md §4, §6, §7, §11; docs/spec/09-testing-strategy.md §4.2
  */
-import { clockText, type OwnMatchPart, type PhasedTiming } from '@smg/game-sdk';
+import { clockText } from '@seasonal/kit';
+import type { OwnMatchPart, PhasedTiming } from '@smg/game-sdk';
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -107,18 +108,18 @@ describe('Mind Games input with the round timing (02e §5.2, §11)', () => {
       'Joining closes in 0:24 · Choices close in 0:54',
     );
     expect(screen.getByTestId('delay-line').textContent).toBe('You see the round 30 s late');
-    const parts = [...document.querySelectorAll('.mg-phase')];
+    const parts = [...document.querySelectorAll('.sk-phase')];
     expect(parts.map((p) => p.getAttribute('aria-current'))).toEqual(['step', null, null]);
     expect(parts[0]?.textContent).toContain('Join · now');
     // 36 s of a 60 s join: 60 % filled; the other parts have no bar.
-    expect(document.querySelectorAll('.mg-phase-fill')).toHaveLength(1);
-    expect(parts[0]?.querySelector('.mg-phase-fill')?.getAttribute('style')).toContain(
+    expect(document.querySelectorAll('.sk-phase-fill')).toHaveLength(1);
+    expect(parts[0]?.querySelector('.sk-phase-fill')?.getAttribute('style')).toContain(
       'width: 60%',
     );
     expect(document.querySelector('.mg-markers')).toBeNull();
     cleanup();
     render(<MindInput {...inputProps(playerView([], 0))} timing={at(100_000)} />);
-    const later = [...document.querySelectorAll('.mg-phase')];
+    const later = [...document.querySelectorAll('.sk-phase')];
     expect(later.map((p) => p.getAttribute('aria-current'))).toEqual([null, null, 'step']);
   });
 

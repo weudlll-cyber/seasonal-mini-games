@@ -9,9 +9,11 @@
  *                 ladder steps the website names beside a member's name (its icon a path on
  *                 the website's own origin, or null: then the step's name is shown); the
  *                 server checks the website's header with `PlayerStep` and drops what does
- *                 not hold. Standalone installs send no steps.
+ *                 not hold. Standalone installs send no steps. In website mode an answer after
+ *                 an account's session ended names the sign-in route in SESSION_ENDED_HEADER
+ *                 (DECISIONS T282), which the clients hand to the kit's signInAgainAfter.
  * Depends on:     zod
- * Used by:        ../index, ./play, ./boards, apps/server, apps/web
+ * Used by:        ../index, ./play, ./boards, apps/server, apps/web, apps/admin
  * Spec:           docs/spec/06-data-model-api-realtime.md §3; docs/spec/07-integration.md §7
  */
 import { z } from 'zod';
@@ -48,3 +50,6 @@ export interface SessionView {
   // a visitor the website does not know is sent on to its login. Null in local mode.
   readonly signInPath: string | null;
 }
+
+// The answer header naming the sign-in route after an account's session ended (website mode).
+export const SESSION_ENDED_HEADER = 'x-smg-session-ended';

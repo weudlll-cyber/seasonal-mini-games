@@ -7,7 +7,7 @@
  *                 and Quick Test routes, each throwing when called. The app calls them
  *                 only with SMG_DEV=1, which a production install never sets; a name missing
  *                 here fails the build, not the server.
- * Used by:        ./build.mjs (dev-stub plugin)
+ * Used by:        ./build.mjs (the kit's devStubPlugin)
  * Spec:           Bingo 09 §1
  */
 const missing = () => {

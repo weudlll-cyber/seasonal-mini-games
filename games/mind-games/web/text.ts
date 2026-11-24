@@ -15,7 +15,7 @@
  *                 (O22). Room events
  *                 make no row of their own: the lines come from the view, so a reload shows the
  *                 same list.
- * Depends on:     @smg-game/mind-games (views, words), @smg/game-sdk (clockText, GameText,
+ * Depends on:     @smg-game/mind-games (views, words), @seasonal/kit (clockText), @smg/game-sdk (GameText,
  *                 GuessRow)
  * Used by:        ./index, ./MindInput, ./FeedPanels, ./ResultPanel, ./ChoiceButtons
  * Spec:           docs/spec/02e-game-mind-games.md §2, §5.2, §6, §9
@@ -29,7 +29,8 @@ import {
   type ResultView,
   type SpectatorView,
 } from '@smg-game/mind-games';
-import { clockText, type GameText, type GuessRow } from '@smg/game-sdk';
+import { clockText } from '@seasonal/kit';
+import type { GameText, GuessRow } from '@smg/game-sdk';
 
 const CODES: Readonly<Record<string, string>> = {
   NOT_IN_ROUND: 'Join the match to play.',

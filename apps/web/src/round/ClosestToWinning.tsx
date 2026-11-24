@@ -72,7 +72,7 @@ export function ClosestToWinning(p: {
       aria-labelledby="closest-title"
       data-testid="result-closest"
       // A fixed part of the result's screen: it shows whole at the screen's scale (O111).
-      data-fit-fixed=""
+      data-sk-fit-fixed=""
       // The round's season, for a solve's tint (./closest.css).
       style={{ '--season': seasonColor(p.state.season) } as CSSProperties}
     >

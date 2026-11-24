@@ -73,7 +73,7 @@ test('journey 42: the build badge covers nothing', async ({ browser }) => {
         await coversNothing(host.page, `${where} round`);
         // The chat docked under the round (O109): in view on a desktop, a sheet from its bar
         // on a phone.
-        if (size === PHONE) await host.page.getByTestId('chat-dock-bar').click();
+        if (size === PHONE) await host.page.getByTestId('chat-bar').click();
         await coversNothing(host.page, `${where} round with Chat`);
         await host.page.keyboard.press('Escape');
       }

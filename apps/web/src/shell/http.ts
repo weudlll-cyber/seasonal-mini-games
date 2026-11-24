@@ -8,15 +8,17 @@
  *                 call (03 §8), JSON in and out, and an ApiError carrying the server's
  *                 error code and, for a refused setting, its key and sentence (O74). An answer
  *                 saying the account's session ended (website mode) signs in again through
- *                 the website (@smg/ui signInAgainAfter, T282); the call then never settles, as
- *                 the page is leaving.
- * Depends on:     @smg/ui
+ *                 the website (the kit's signInAgainAfter with the contract's
+ *                 SESSION_ENDED_HEADER, T282); the call then never settles, as the page is
+ *                 leaving.
+ * Depends on:     @seasonal/kit (signInAgainAfter), @smg/contracts (SESSION_ENDED_HEADER)
  * Used by:        ./session, ./handoffLanding, ./QuickTest, ../account/*, ../boards/*, ../chat/*,
  *                 ../embed/embedHost, ../live/*, ../lobby/*, ../match/*
  * Spec:           Bingo 05 §1; Bingo 03 §8
  */
 
-import { signInAgainAfter } from '@smg/ui';
+import { signInAgainAfter } from '@seasonal/kit';
+import { SESSION_ENDED_HEADER } from '@smg/contracts';
 
 // Where the client is served: "/" standalone, "/games/mini-games/" inside the website. The page
 // routes with the URL hash, so the folder of its address is the base (09 §1).
@@ -70,7 +72,7 @@ export async function api<T>(
     credentials: 'same-origin',
     ...(options.body === undefined ? {} : { body: JSON.stringify(options.body) }),
   });
-  if (signInAgainAfter(response)) return new Promise<T>(() => undefined);
+  if (signInAgainAfter(response, SESSION_ENDED_HEADER)) return new Promise<T>(() => undefined);
   if (response.status === 204) return undefined as T;
   const body = (await response.json().catch(() => ({}))) as Refused;
   if (!response.ok) {

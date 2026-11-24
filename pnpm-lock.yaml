@@ -226,6 +226,9 @@ importers:
 
   apps/admin:
     dependencies:
+      '@seasonal/kit':
+        specifier: github:weudlll-cyber/seasonal-kit#v0.11.1
+        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/acd011a621c2380479c58b3c01a29677747a3157(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
       '@smg/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -311,6 +314,9 @@ importers:
         specifier: 4.6.7
         version: 4.6.7
     devDependencies:
+      '@seasonal/kit':
+        specifier: github:weudlll-cyber/seasonal-kit#v0.11.1
+        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/acd011a621c2380479c58b3c01a29677747a3157(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
       '@testcontainers/postgresql':
         specifier: 12.2.2
         version: 12.2.2(supports-color@7.2.0)
@@ -329,6 +335,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@seasonal/kit':
+        specifier: github:weudlll-cyber/seasonal-kit#v0.11.1
+        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/acd011a621c2380479c58b3c01a29677747a3157(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
       '@smg-game/registry':
         specifier: workspace:*
         version: link:../../games/registry
@@ -425,6 +434,9 @@ importers:
         specifier: 4.6.7
         version: 4.6.7
     devDependencies:
+      '@seasonal/kit':
+        specifier: github:weudlll-cyber/seasonal-kit#v0.11.1
+        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/acd011a621c2380479c58b3c01a29677747a3157(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
       '@testing-library/dom':
         specifier: 10.4.2
         version: 10.4.2
@@ -459,6 +471,9 @@ importers:
         specifier: 4.6.7
         version: 4.6.7
     devDependencies:
+      '@seasonal/kit':
+        specifier: github:weudlll-cyber/seasonal-kit#v0.11.1
+        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/acd011a621c2380479c58b3c01a29677747a3157(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
       '@testing-library/dom':
         specifier: 10.4.2
         version: 10.4.2
@@ -573,6 +588,9 @@ importers:
         specifier: 4.6.7
         version: 4.6.7
     devDependencies:
+      '@seasonal/kit':
+        specifier: github:weudlll-cyber/seasonal-kit#v0.11.1
+        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/acd011a621c2380479c58b3c01a29677747a3157(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
       '@testing-library/dom':
         specifier: 10.4.2
         version: 10.4.2
@@ -1294,6 +1312,19 @@ packages:
 
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
+
+  '@seasonal/kit@https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/acd011a621c2380479c58b3c01a29677747a3157':
+    resolution: {gitHosted: true, integrity: sha512-5DMYMDufCMsdJY68R0orYF7vwhUyWtIDd6ItyYdWwR+0gy1yXJAMKZCqFwGqZhvjlkE7y9jJzCx1SE4aJu4GMA==, tarball: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/acd011a621c2380479c58b3c01a29677747a3157}
+    version: 0.11.1
+    engines: {node: '>=22'}
+    peerDependencies:
+      react: ^19.3.1
+      vite: ^8.3.4
+    peerDependenciesMeta:
+      react:
+        optional: true
+      vite:
+        optional: true
 
   '@socket.io/component-emitter@3.1.2':
     resolution: {integrity: sha512-9BCxFwvbGg/RsZK9tjXd8s4UcwR0MWeFQ1XEKIQVVvAGJyINdrqKMcTRyLoK8Rse1GjzLV9cwjWV1olXRWEXVA==}
@@ -3735,6 +3766,11 @@ snapshots:
     optional: true
 
   '@rolldown/pluginutils@1.0.1': {}
+
+  '@seasonal/kit@https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/acd011a621c2380479c58b3c01a29677747a3157(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))':
+    optionalDependencies:
+      react: 19.3.1
+      vite: 8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1)
 
   '@socket.io/component-emitter@3.1.2': {}
 

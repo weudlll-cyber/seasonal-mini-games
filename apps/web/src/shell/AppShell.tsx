@@ -1,40 +1,42 @@
 /**
  * @file   apps/web/src/shell/AppShell.tsx
  * @module web/shell
- * @brief  The player client's frame: top bar, navigation, account, screens.
+ * @brief  The player client's frame: the app header, the screens, the build badge.
  *
- * Responsibility: show the Seasonal Entertainment emblem with the "Seasonal Mini Games"
- *                 wordmark, the light/dark toggle, the navigation and the account
- *                 ("Signed in as <name> (host|player)", Account, Sign out) or, signed out,
- *                 "Sign in" and "Register". Below the bar, the screen of the current route.
- *                 In development also the "Dev sign-in" menu (./DevTools), loaded on demand so
- *                 a production build (Vite's DEV false) leaves it out; `dev` decides whether
- *                 it shows. On a one-screen view on a phone (a match's summary) the bar is one
- *                 compact row and the account and development controls sit behind one "Menu"
- *                 button (./shell.css); a running round hides the bar altogether, its focus
- *                 mode has a bar of its own (O46). The navigation has Play and Leaderboard;
- *                 the compact bar keeps Play only.
- *                 Website mode (O66): signed out, "Sign in" goes to the website's sign-in for
- *                 the page shown (../account/SignIn SignInLink); no Register, no "Dev sign-in",
- *                 and the sign-in and register addresses show the website's sign-in; a
- *                 signed-out visitor who opens a match watches with a guest session
- *                 (./session useWatchSession, DECISIONS T221). Under the screen, on every
- *                 page, the build badge (./BuildBadge).
- *                 Bingo's shell, without its game screens.
- * Depends on:     react, ./router, ./session, ./ThemeToggle, ./BuildBadge, ./DevTools (lazy, development
- *                 only), @smg/ui (useDisclosure), ../lobby/Lobby, ../account/*,
- *                 ../match/MatchPage, ../boards/*, ./shell.css, assets/brand/emblem.webp
+ * Responsibility: the kit's `AppHeader` with the game's parts: in website mode the way back to
+ *                 the website first ("← Seasonal Entertainment" to /games, GAME-INTEGRATION
+ *                 §8), the Seasonal Entertainment emblem with the "Seasonal Mini Games"
+ *                 wordmark, the navigation (Play, Leaderboard), the account (the chip
+ *                 "<name> (host|player)" to the account page, "Signed in as" shown only on wide
+ *                 screens, and Sign out) or, signed out, "Sign in" and "Register", and the
+ *                 light/dark toggle at the end; the links and the account fold into one "Menu"
+ *                 whenever they do not fit on one row (a phone). Below the bar, the screen of
+ *                 the current route. In development also the "Dev sign-in" menu (./DevTools,
+ *                 the kit's DevSignIn), loaded on demand so a production build (Vite's DEV
+ *                 false) leaves it out; `dev` decides whether it shows. A running round and a
+ *                 match's summary hide the header altogether, their focus mode has a bar of its
+ *                 own (O46, ../round/focus.css). Website mode (O66): signed out, "Sign in" goes
+ *                 to the website's sign-in for the page shown (../account/SignIn
+ *                 useSignInHref); no Register, no "Dev sign-in", and the sign-in and register
+ *                 addresses show the website's sign-in; a signed-out visitor who opens a match
+ *                 watches with a guest session (./session useWatchSession, DECISIONS T221).
+ *                 Under the screen, on every page, the build badge (./BuildBadge). Bingo's
+ *                 shell, without its game screens.
+ * Depends on:     react, @seasonal/kit/react (AppHeader), @seasonal/kit/header.css, ./router,
+ *                 ./session, ./BuildBadge, ./DevTools (lazy, development only), ../lobby/Lobby,
+ *                 ../account/*, ../match/MatchPage, ../boards/*, ./shell.css,
+ *                 assets/brand/emblem.webp
  * Used by:        ../main
- * Spec:           Bingo 01 §13; Bingo 05 §2.1
+ * Spec:           Bingo 01 §13; Bingo 05 §2.1; Seasonal Entertainment docs/GAME-INTEGRATION.md §8
  */
+import { AppHeader } from '@seasonal/kit/react';
 import { lazy, Suspense, type ReactElement } from 'react';
-import { useDisclosure } from '@smg/ui';
 
 import emblem from '../../../../assets/brand/emblem.webp';
 import { AccountPage } from '../account/AccountPage.js';
 import { AccountDeleted } from '../account/DeleteAccount.js';
 import { Register } from '../account/Register.js';
-import { SignIn, SignInLink, WebsiteSignIn } from '../account/SignIn.js';
+import { SignIn, useSignInHref, WebsiteSignIn } from '../account/SignIn.js';
 import { LeaderboardPage } from '../boards/LeaderboardPage.js';
 import { ProfilePage } from '../boards/ProfilePage.js';
 import { VerifyPage } from '../boards/VerifyPage.js';
@@ -43,7 +45,7 @@ import { MatchPage } from '../match/MatchPage.js';
 import { BuildBadge } from './BuildBadge.js';
 import { hrefOf, useRoute, type Route } from './router.js';
 import { useSession, useWatchSession } from './session.js';
-import { ThemeToggle } from './ThemeToggle.js';
+import '@seasonal/kit/header.css';
 import './shell.css';
 
 // Development tools load on demand. A production build replaces import.meta.env.DEV with
@@ -62,23 +64,9 @@ export function AppShell({ dev }: { readonly dev: boolean }): ReactElement {
   // An embed address opened after the page loaded shows the lobby: the embed frame exists only
   // for a page opened at it (../main).
   const route: ShellRoute = routed.name === 'embed' ? { name: 'lobby' } : routed;
-  // Keyed by account: a sign-in or sign-out from the menu closes it.
-  const who = useSession().session?.account?.id ?? 'guest';
   return (
     <>
-      <header className="shell-bar">
-        <a className="shell-brand" href={hrefOf({ name: 'lobby' })}>
-          <img src={emblem} alt="" width="42" height="37" />
-          <span>
-            Seasonal Mini Games
-            <small>Seasonal Entertainment</small>
-          </span>
-        </a>
-        {/* Beside the account on wide screens, beside the brand on phones (shell.css). */}
-        <ThemeToggle />
-        <Nav route={route} />
-        <Account key={who} dev={dev} />
-      </header>
+      <Header route={route} dev={dev} />
       <main className="shell-main">
         <Screen route={route} dev={dev} />
       </main>
@@ -87,94 +75,51 @@ export function AppShell({ dev }: { readonly dev: boolean }): ReactElement {
   );
 }
 
-function Nav({ route }: { readonly route: Route }): ReactElement {
-  return (
-    <nav className="shell-nav" aria-label="Main">
-      <a
-        href={hrefOf({ name: 'lobby' })}
-        aria-current={route.name === 'lobby' ? 'page' : undefined}
-      >
-        Play
-      </a>
-      {/* Left out of the compact bar of a running round on a phone (shell.css). */}
-      <a
-        className="shell-nav-boards"
-        href={hrefOf({ name: 'leaderboard', periodId: null })}
-        aria-current={route.name === 'leaderboard' ? 'page' : undefined}
-      >
-        Leaderboard
-      </a>
-    </nav>
-  );
-}
-
-// The account and the development menu: in the bar, or, in the compact bar of a round on a
-// phone (shell.css), behind one "Menu" button that the wide bar hides.
-function Account({ dev }: { readonly dev: boolean }): ReactElement {
-  const menu = useDisclosure();
-  return (
-    <div className="shell-menu" onKeyDown={menu.onKeyDown}>
-      <button
-        ref={menu.button}
-        type="button"
-        className="smg-btn shell-menu-button"
-        aria-expanded={menu.open}
-        aria-controls={menu.panelId}
-        data-testid="account-menu"
-        onClick={menu.toggle}
-      >
-        Menu
-      </button>
-      <AccountItems id={menu.panelId} open={menu.open} dev={dev} />
-    </div>
-  );
-}
-
-function AccountItems(props: {
-  readonly id: string;
-  readonly open: boolean;
-  readonly dev: boolean;
-}): ReactElement {
+// The kit's header with the game's brand, links, account and development menu.
+function Header({ route, dev }: { readonly route: ShellRoute; readonly dev: boolean }) {
   const { session, signOut, can } = useSession();
   const website = session?.authMode === 'website';
+  const account = session?.account ?? null;
+  const signInHref = useSignInHref();
   // The development sign-in does not exist in website mode (07 §7).
-  const dev = props.dev && !website;
+  const devTools =
+    dev && !website && DevSignIn !== null ? (
+      <Suspense fallback={null}>
+        <DevSignIn />
+      </Suspense>
+    ) : undefined;
   return (
-    <div id={props.id} className="shell-account" data-open={props.open} data-testid="account">
-      {session?.account ? (
-        <>
-          <a className="smg-chip" href={hrefOf({ name: 'account' })} data-testid="signed-in-as">
-            <span className="chip-prefix">Signed in as </span>
-            {session.account.displayName} ({can('match.create') ? 'host' : 'player'})
-          </a>
-          <button
-            type="button"
-            className="smg-btn"
-            data-testid="sign-out"
-            onClick={() => void signOut()}
-          >
-            Sign out
-          </button>
-        </>
-      ) : null}
-      {session !== null && session.account === null ? (
-        <>
-          <SignInLink className="smg-btn smg-btn--primary" testId="open-sign-in">
-            Sign in
-          </SignInLink>
-          {website ? null : (
-            <a className="smg-btn" href={hrefOf({ name: 'register' })} data-testid="open-register">
-              Register
-            </a>
-          )}
-        </>
-      ) : null}
-      {dev && DevSignIn !== null ? (
-        <Suspense fallback={null}>
-          <DevSignIn />
-        </Suspense>
-      ) : null}
-    </div>
+    <AppHeader
+      websiteMode={website}
+      brand={{
+        href: hrefOf({ name: 'lobby' }),
+        emblem: <img src={emblem} alt="" width="42" height="37" />,
+        name: 'Seasonal Mini Games',
+      }}
+      links={[
+        { href: hrefOf({ name: 'lobby' }), label: 'Play', active: route.name === 'lobby' },
+        {
+          href: hrefOf({ name: 'leaderboard', periodId: null }),
+          label: 'Leaderboard',
+          active: route.name === 'leaderboard',
+        },
+      ]}
+      account={
+        account === null
+          ? null
+          : {
+              name: account.displayName,
+              role: can('match.create') ? 'host' : 'player',
+              href: hrefOf({ name: 'account' }),
+              onSignOut: () => void signOut(),
+            }
+      }
+      signIn={{ href: signInHref, registerHref: hrefOf({ name: 'register' }) }}
+      {...(devTools === undefined ? {} : { devTools })}
+      // A new route or account closes the folded menu.
+      closeKey={`${route.name}|${account?.id ?? 'guest'}`}
+      buttonClassName="smg-btn"
+    />
   );
 }
 

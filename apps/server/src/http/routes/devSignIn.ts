@@ -10,14 +10,17 @@
  *                 owner can try host and players alone in several browser windows. The load
  *                 check signs in `load-0001` … `load-1100` the same way (`dev-load-NNNN`,
  *                 players) and removes them with DELETE /api/v1/dev/load-accounts. The app
- *                 registers this route only with SMG_DEV=1; a test proves
- *                 a production build answers 404.
- * Depends on:     fastify, zod, ../../auth/*, ../../db/pool
+ *                 registers this route only with SMG_DEV=1; a test proves a production build
+ *                 answers 404. Which account a request names is the kit's check
+ *                 (`devSignInAccount`: the body's own `as`, one of the accounts or a whole load
+ *                 name); the accounts and the sessions are the game's.
+ * Depends on:     fastify, @seasonal/kit/devtools (devSignInAccount), ../../auth/*,
+ *                 ../../db/pool
  * Used by:        ../app
  * Spec:           Bingo 15 WP-09 (draft), Bingo 12 §8
  */
+import { devSignInAccount } from '@seasonal/kit/devtools';
 import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
 
 import { deleteAccount, ensureDevAccount } from '../../auth/accounts.js';
 import { setSessionCookie, type CookieConfig } from '../../auth/sessionPlugin.js';
@@ -36,30 +39,14 @@ const DEV_ACCOUNTS = {
 
 // The load check (load/) signs in numbered players: `load-0001` … `load-1100`.
 const LOAD = /^load-\d{3,4}$/;
-const body = z.object({
-  as: z.union([
-    z.enum(['host', 'admin', 'player-1', 'player-2', 'player-3']),
-    z.string().regex(LOAD),
-  ]),
-});
-
-function devAccount(as: string): {
-  readonly displayName: string;
-  readonly roles: readonly string[];
-} {
-  return as in DEV_ACCOUNTS
-    ? DEV_ACCOUNTS[as as keyof typeof DEV_ACCOUNTS]
-    : { displayName: `dev-${as}`, roles: [] };
-}
 
 export function registerDevSignIn(
   app: FastifyInstance,
   deps: { readonly pool: DbPool; readonly cookie: CookieConfig; readonly sessionEnds: SessionEnds },
 ): void {
   app.post('/api/v1/dev/sign-in', async (request, reply) => {
-    const parsed = body.safeParse(request.body);
-    if (!parsed.success) return reply.status(400).send({ code: 'VALIDATION_FAILED' });
-    const who = devAccount(parsed.data.as);
+    const who = devSignInAccount(request.body, { accounts: DEV_ACCOUNTS, load: LOAD });
+    if (who === null) return reply.status(400).send({ code: 'VALIDATION_FAILED' });
     const accountId = await ensureDevAccount(deps.pool, who.displayName, who.roles);
     if (request.session !== null) {
       await revokeSession(deps.pool, request.session.id);

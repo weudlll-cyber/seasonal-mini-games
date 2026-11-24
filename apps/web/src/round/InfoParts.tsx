@@ -13,7 +13,7 @@
  *                 between the bar and the action dock, which it never covers (O48), the special's
  *                 sentence at its top (the desktop's special line).
  * Depends on:     react, @smg/contracts, @smg-game/registry/web (types), ../live/socket,
- *                 ../season/season, ./FocusPanel, ./RoundSide (colours), ./usePanels
+ *                 ../season/season, ./FocusPanel, ./RoundSide (colours), ./panels
  * Used by:        ./RoundBody
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §6
  */
@@ -26,7 +26,7 @@ import { serverNow } from '../live/socket.js';
 import { SPECIALS } from '../season/season.js';
 import { FocusPanel } from './FocusPanel.js';
 import { colorsOf } from './RoundSide.js';
-import type { Panels } from './usePanels.js';
+import type { Panels } from './panels.js';
 import { roundMarks } from './playerMarks.js';
 
 // A phased round's timing for the game's panels (04 §4.8), public facts with its result's time

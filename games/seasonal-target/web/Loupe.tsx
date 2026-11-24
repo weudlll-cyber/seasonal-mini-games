@@ -8,16 +8,16 @@
  *                 at least 44 px with the same fills, numbers and marks (./TileGrid); a tap in
  *                 it selects that tile; the Column and Row fields and the arrow buttons
  *                 (./Steer) move the selection, the window following when it leaves; "Close",
- *                 Escape (`useDisclosure` of @smg/ui) or Guess close it (02d §11). The window
+ *                 Escape (`useDisclosure` of the kit) or Guess close it (02d §11). The window
  *                 stays put while the selection is inside it, so a tile never jumps under the
  *                 finger.
- * Depends on:     react, @smg/ui (useDisclosure), @smg-game/seasonal-target (types, helpers),
+ * Depends on:     react, @seasonal/kit/react (useDisclosure), @smg-game/seasonal-target (types, helpers),
  *                 ./Steer, ./TileGrid, ./loupe.css
  * Used by:        ./TargetInput
  * Spec:           docs/spec/02d-game-seasonal-target.md §11
  */
 import { inArea, type Area, type Cell, type MapSize } from '@smg-game/seasonal-target';
-import { useDisclosure } from '@smg/ui';
+import { useDisclosure } from '@seasonal/kit/react';
 import { useState, type ReactElement } from 'react';
 
 import { Steer } from './Steer.js';

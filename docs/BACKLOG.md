@@ -43,11 +43,19 @@ For Phase 7:
 
 - Renovate PR #47 (TypeScript 7): `pnpm verify` stops at lint with "Error: typescript-eslint does not support TS 7.0." (2026-11-23). It stays open, without code changes, until a typescript-eslint release supports TypeScript 7; then Renovate rebases it and it merges when its checks are green.
 
+### Kit adoption (owner decision O142, branch `feat/kit-adoption`, not merged)
+
+- The game moves onto `@seasonal/kit` v0.11.1 in the kit plan's six steps (night chain 2026-11-23/24). The branch waits for its review (Plan-Claude in the browser, then the owner and the kit planning); a separate task merges it. Its draft PR is #52, whose CI is the proof (O147). Done so far: step 1, tokens, fonts, motion and theme (T411); step 2, the website sign-in and the chat link (T412); step 3, the server's sign-in, two-factor and open-rounds checks (T413); step 4, the toggle, the back link and the disclosure (T414); step 5, the fit (T415), the dock (T416), the start card (T417; the result frame not taken, T417) and the panels, full screen, phase strip and clock (T418; the bar kept, O143); step 6, the header and the dev tools (T419). The 24 px target check runs on every screen at two sizes (T420).
+- Kept in the game until a kit release has them (no kit code copied): the round's own `FocusBar`, because `GameBar` has no 'prefs' icon for Pre-picks (O143); `useFit`'s refit after web fonts load, which `watchFit` lacks (O144).
+- Waits for the kit's `GameBar` back-link place (OPEN (an) 1, O148): focus mode shows no "← Seasonal Entertainment" until the kit has a place for it and the game moves its bar to `GameBar`.
+
 ### Optional inputs
 
 - App icon (PNG 512×512) and sounds, as in Bingo's assets manifest
 
 ## Part two — closed
+
+- 2026-11-23: OPEN (an), the owner's answers: the back link in focus mode waits for the kit's `GameBar` place (O148, part one); the two-factor recovery codes are keyed with a secret of its own, `SMG_RECOVERY_KEY`, made once by the installer, and the plain-SHA-256 codes of master keep working (O149). _Closed by:_ branch `feat/kit-adoption`
 
 - 2026-11-23: Seasonal Mind Games' strip test compares the fill's width by value to three decimals of a percent, not as text: jsdom 31 prints "1.66667%" for 1.6666666666666667% (Renovate PR #46's only failure); no product change. _Closed by:_ branch `chore/test-fill-percent`
 - 2026-11-23: The phone's others' line in individual mode no longer cut at 375 × 667 (owner decision O141, DECISIONS T410): it breaks between players and keeps one line beside a board, the rest "+N more". _Closed by:_ branch `feat/owner-2026-11-22`

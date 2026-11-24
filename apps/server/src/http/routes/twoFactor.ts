@@ -9,8 +9,11 @@
  *                 (a TOTP or recovery code stamps the session), …/disable (needs a current
  *                 code). Codes are limited per account (RATE_RULES.twoFactor); a wrong one is
  *                 422 AUTH_2FA_INVALID. Enrol, confirm, disable and the use of a recovery code
- *                 are audited. With `features.twoFactor` on, the gate of ./adminGuard is
- *                 installed; with it off nothing changes for admin writes.
+ *                 are audited. The factor gets two keys, never the same (kit K20): the TOTP
+ *                 secrets are sealed with one derived from the round key, the recovery codes
+ *                 keyed with SMG_RECOVERY_KEY (O149). With
+ *                 `features.twoFactor` on, the gate of ./adminGuard is installed; with it off
+ *                 nothing changes for admin writes.
  * Depends on:     fastify, @smg/application (AuditLog), @smg/contracts, ../../auth/*,
  *                 ../../config/*, ../../db/pool
  * Used by:        ../app
@@ -24,7 +27,7 @@ import { RATE_RULES, RateLimiter } from '../../auth/rateLimit.js';
 import { TwoFactor } from '../../auth/twoFactor.js';
 import type { Env } from '../../config/env.js';
 import type { Features } from '../../config/features.js';
-import { derivedKey, roundKeyFrom } from '../../config/roundKey.js';
+import { derivedKey, recoveryKeyFrom, roundKeyFrom } from '../../config/roundKey.js';
 import type { DbPool } from '../../db/pool.js';
 
 interface Deps {
@@ -103,7 +106,12 @@ async function checked(ctx: Ctx, request: FastifyRequest, reply: FastifyReply) {
 }
 
 export function registerTwoFactor(app: FastifyInstance, deps: Deps): void {
-  const factor = new TwoFactor(deps.pool, derivedKey(roundKeyFrom(deps.env), 'smg totp secrets'));
+  // Two keys, never the same (kit K20): the TOTP secrets are sealed with a key derived from the
+  // round key, the recovery codes keyed with the secret of their own (SMG_RECOVERY_KEY).
+  const factor = new TwoFactor(deps.pool, {
+    secrets: derivedKey(roundKeyFrom(deps.env), 'smg totp secrets'),
+    recovery: recoveryKeyFrom(deps.env),
+  });
   const ctx: Ctx = { factor, limit: new RateLimiter(RATE_RULES.twoFactor), audit: deps.audit };
   if (deps.features.twoFactor) app.decorate('stepUpGate', (id: string) => factor.refusal(id));
   app.get('/api/v1/me/2fa', async (request, reply) => {

@@ -30,7 +30,7 @@
 import type { MatchDetailsView } from '@smg/contracts';
 import type { SettingValue } from '@smg/game-sdk';
 import { useState, type ReactElement, type SyntheticEvent } from 'react';
-import { useDisclosure } from '@smg/ui';
+import { useDisclosure } from '@seasonal/kit/react';
 
 import { ActionButton, Problem } from '../components/fields.js';
 import { useShowsSeason } from '../lobby/games.js';

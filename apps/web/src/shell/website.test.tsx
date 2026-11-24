@@ -8,10 +8,13 @@
  *                 route with the page shown as `next`; there is no Register, no "Dev sign-in"
  *                 (even in development), and the sign-in and register addresses show only the
  *                 website's sign-in; a signed-out visitor who opens a match gets a guest session
- *                 (POST /auth/guest) before the match is watched. Local mode keeps Register,
- *                 the form and the dev sign-in, and starts no guest session.
+ *                 (POST /auth/guest) before the match is watched; the bar starts with the way
+ *                 back to the website (the kit's BackLink to /games, GAME-INTEGRATION §8).
+ *                 Local mode keeps Register, the form and the dev sign-in, starts no guest
+ *                 session and shows no back link.
  * Depends on:     vitest, @testing-library/react, ./AppShell, ./session
- * Spec:           docs/spec/07-integration.md §7; DECISIONS T221, T238
+ * Spec:           docs/spec/07-integration.md §7; DECISIONS T221, T238; Seasonal Entertainment
+ *                 docs/GAME-INTEGRATION.md §8
  */
 import { act, cleanup, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -96,9 +99,14 @@ describe('website mode, signed out', () => {
     serve('website');
     window.location.hash = '#/leaderboard';
     await renderShell(true);
-    expect(screen.getByTestId('open-sign-in').getAttribute('href')).toBe(nextOf('#/leaderboard'));
-    expect(screen.queryByTestId('open-register')).toBeNull();
+    expect(screen.getByTestId('sign-in').getAttribute('href')).toBe(nextOf('#/leaderboard'));
+    expect(screen.queryByTestId('register')).toBeNull();
     expect(screen.queryByTestId('dev-menu')).toBeNull();
+    // The way back to the website, first in the bar (top left).
+    const back = screen.getByTestId('back-link');
+    expect(back.getAttribute('href')).toBe('/games');
+    expect(back.textContent).toBe('← Seasonal Entertainment');
+    expect(back.parentElement?.firstElementChild).toBe(back);
   });
 
   it('shows the website sign-in at the sign-in and register addresses, and in the lobby', async () => {
@@ -134,11 +142,12 @@ describe('local mode', () => {
     const calls = serve('local');
     window.location.hash = '#/match/ABC234';
     await renderShell(true);
-    expect(screen.getByTestId('open-sign-in').getAttribute('href')).toBe('#/sign-in');
-    expect(screen.getByTestId('open-register')).toBeTruthy();
+    expect(screen.getByTestId('sign-in').getAttribute('href')).toBe('#/sign-in');
+    expect(screen.getByTestId('register')).toBeTruthy();
     expect(await screen.findByTestId('dev-menu')).toBeTruthy();
     expect(calls).not.toContain('POST /auth/guest');
     expect(calls).toContain('intent');
+    expect(screen.queryByTestId('back-link')).toBeNull();
     cleanup();
     window.location.hash = '#/sign-in';
     await renderShell(false);

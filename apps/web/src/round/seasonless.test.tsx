@@ -101,12 +101,12 @@ describe('a round of a game that shows no season (O93)', () => {
   it('names the season on the intro, or the game with no season and no special', async () => {
     screenOf('seasonal', 'countdown');
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Autumn');
-    expect(screen.getByTestId('intro-special')).toBeTruthy();
+    expect(screen.getByTestId('start-card').querySelector('.sk-start-special')).not.toBeNull();
     cleanup();
     screenOf('plain', 'countdown');
     expect(await screen.findByRole('heading', { level: 1, name: 'Plain Game' })).toBeTruthy();
-    expect(screen.queryByTestId('intro-special')).toBeNull();
-    expect(screen.getByTestId('round-intro').dataset['season']).toBeUndefined();
+    expect(screen.getByTestId('start-card').querySelector('.sk-start-special')).toBeNull();
+    expect(screen.getByTestId('start-card').dataset['skSeason']).toBeUndefined();
     expect(screen.queryByText(/No special/)).toBeNull();
   });
 

@@ -7,17 +7,18 @@
  *                 focus mode (./FocusShell, O46: the slim bar, the panels on demand, full
  *                 screen): during the countdown the intro screen (./RoundIntro, O36); once
  *                 open the round's body (./RoundBody) in the layout the viewport gets, desktop
- *                 or phone (./useRoundView, T141), with only what matters for the next guess
+ *                 or phone (the kit's useDockView, T141), with only what matters for the next guess
  *                 (O54). The layout (./round.css) fits the viewport without a page scrollbar;
  *                 only the lists scroll inside themselves. The viewer's own colour is set
  *                 here for the list's own rows and a board game's own tiles. After the end the
  *                 result screen takes over, outside focus mode (T128).
  * Depends on:     react, @smg/contracts, @smg-game/registry/web, ../live/*, ../season/*,
  *                 ./FocusShell, ./ResultScreen, ./RoundBody, ./RoundIntro, ./RoundSide,
- *                 ./SeasonPill, ./useRoundView, ./round.css, ./roundSplit.css
+ *                 ./SeasonPill, @seasonal/kit/react (useDockView), ./round.css, ./roundSplit.css
  * Used by:        ../match/MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §4, §7, §11, §12; docs/spec/03-seasonal-specials.md §2, §6
  */
+import { useDockView } from '@seasonal/kit/react';
 import { GAME_SCREENS } from '@smg-game/registry/web';
 import type { MatchStandingView, RoundStateView, TeamName } from '@smg/contracts';
 import type { OwnMatchPart } from '@smg/game-sdk';
@@ -34,7 +35,6 @@ import { RoundBody } from './RoundBody.js';
 import { RoundIntro } from './RoundIntro.js';
 import { playerColor } from './RoundSide.js';
 import { ruleOf } from './SeasonPill.js';
-import { useRoundView } from './useRoundView.js';
 import { roundMarks } from './playerMarks.js';
 import './round.css';
 import './roundSplit.css';
@@ -71,7 +71,7 @@ const screenStyle = (state: RoundStateView, viewerKey: string | null, season: bo
 
 export function RoundScreen(props: RoundScreenProps): ReactElement {
   const { state } = props.live;
-  const view = useRoundView();
+  const view = useDockView();
   useTicker(state !== null && state.status !== 'ended' && state.status !== 'aborted');
   const game = GAME_SCREENS[props.gameId] ?? null;
   // No season: the game names itself (O93); no secret: no "Shared" or "Individual" (T347).

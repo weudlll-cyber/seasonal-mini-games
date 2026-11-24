@@ -4,19 +4,19 @@
  * @brief  The website's open-rounds status: the contract's shape, its limits and what it lists.
  *
  * Responsibility: owner decisions O124 and O125 against Postgres. `GET /api/public/open-rounds`
- *                 needs no sign-in, is cacheable for 30 s and passes the shared contract's
- *                 schema (version 1); it lists a match opened from the form (on by default) with
+ *                 needs no sign-in, is cacheable for 30 s and answers version 1 of the website's
+ *                 contract (the kit's openRoundsPage checks each entry); it lists a match opened from the form (on by default) with
  *                 the match code, its title, "Seasonal Mini Games · <game>", the player counts
  *                 and a https join URL to the match, and never a match its host switched off, an
  *                 ended or full one, or a Quick Test even with the option set; at most 20,
  *                 never a player's name. Only the host switches the option, never on a Quick
  *                 Test. With a public address the join URL is the match's page under it. The
  *                 matches made here are aborted.
- * Depends on:     vitest, fastify, @smg/contracts, ../src/http/routes/openRounds,
+ * Depends on:     vitest, fastify, @seasonal/kit/server (types), ../src/http/routes/openRounds,
  *                 ../src/match/matches, ./harness, ./session
  * Spec:           docs/spec/07-integration.md §8
  */
-import { openRoundsAnswer, type OpenRoundsAnswer } from '@smg/contracts';
+import type { OpenRoundsPage } from '@seasonal/kit/server';
 import Fastify from 'fastify';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
@@ -43,7 +43,9 @@ afterAll(async () => {
 
 const status = async () => {
   const r = await h.built.fastify.inject({ method: 'GET', url: '/api/public/open-rounds' });
-  return { r, body: openRoundsAnswer.parse(r.json()) };
+  const body = r.json<OpenRoundsPage>();
+  expect(body.version).toBe(1);
+  return { r, body };
 };
 const opened = async (title: string, change: object = {}) => {
   const r = await host.post('/api/v1/matches', {
@@ -138,7 +140,7 @@ describe('the open-rounds status: its limit and its join URL (O124)', () => {
       publicUrl: 'https://example.org/games/mini-games',
     });
     const r = await app.inject({ method: 'GET', url: '/api/public/open-rounds' });
-    const first = r.json<OpenRoundsAnswer>().rounds[0];
+    const first = r.json<OpenRoundsPage>().rounds[0];
     expect(first?.joinUrl).toBe(`https://example.org/games/mini-games/#/match/${first?.id ?? ''}`);
     await app.close();
   });

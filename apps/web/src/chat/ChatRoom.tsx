@@ -12,14 +12,18 @@
  *                 sent (T102), for viewers with chat.send (guests read only); a hint when the room
  *                 is locked or the viewer may not write now; the server's refusal of a message
  *                 in a plain sentence under the field. Each live message by another player is
- *                 told to the screen around it (./chatArrivals: the round's unread badge); a
- *                 screen that writes from elsewhere gets the room's writing part, which it shows
- *                 with this file's `Writer` (the docked chat's phone bar, T363).
- * Depends on:     react, @smg/contracts (views), ../round/PlayerName, ../shell/session,
+ *                 told to the screen around it (./chatArrivals: the round's unread badge; the
+ *                 kit's dock, `useDockArrivals`: its bar's count), and the dock is told the
+ *                 room's newest line of any kind for its bar; a screen that writes from
+ *                 elsewhere gets the room's writing part, which it shows with this file's
+ *                 `Writer` (the docked chat's phone bar, T363).
+ * Depends on:     react, @seasonal/kit/react (useDockArrivals), @smg/contracts (views),
+ *                 ../round/PlayerName, ../shell/session,
  *                 ./chatArrivals, ./ModActions, ./useChat
- * Used by:        ./ChatPanel, ../match/ChatDock (Writer)
+ * Used by:        ./ChatPanel, ../match/DockedMatch (Writer)
  * Spec:           docs/spec/07-integration.md §2; Bingo 06 §7, Bingo 03 §12
  */
+import { useDockArrivals } from '@seasonal/kit/react';
 import type { ChatMessageView, ChatRoomView } from '@smg/contracts';
 import {
   useContext,
@@ -123,21 +127,28 @@ export function ChatRoom({ target }: { readonly target: ChatTarget }): ReactElem
   const { session, can } = useSession();
   const me = session?.account?.displayName ?? null;
   const arrived = useContext(ChatArrivals);
+  const dock = useDockArrivals();
   // Unread counts another player's message, never the viewer's own or a system line.
   const { room, messages, problem, send } = useChatRoom(target, (m) => {
-    if (m.kind === 'player' && m.author !== me) arrived?.(m);
+    if (m.kind !== 'player' || m.author === me) return;
+    arrived?.(m);
+    dock?.arrived(m);
   });
   const offer = useContext(ChatComposerSlot);
   const writes = can('chat.send');
-  // A screen that shows the room from elsewhere gets its newest line and writing part (T363).
+  // The dock's bar shows the newest line of any kind (a system line too, MG-N8).
   const newest = messages.at(-1) ?? null;
   useEffect(() => {
+    if (dock !== null && newest !== null) dock.latest(newest);
+  }, [dock, newest]);
+  // A screen that writes from elsewhere gets the room's writing part (T363).
+  useEffect(() => {
     if (offer === null) return undefined;
-    offer(room === null ? null : { room, newest, send: writes ? send : null });
+    offer(room === null ? null : { room, send: writes ? send : null });
     return () => {
       offer(null);
     };
-  }, [offer, room, newest, send, writes]);
+  }, [offer, room, send, writes]);
   const list = useRef<HTMLOListElement>(null);
   // Follow the newest message at the bottom.
   useEffect(() => {

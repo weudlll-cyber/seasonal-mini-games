@@ -11,19 +11,19 @@
  *                 button ("Close chat") or Escape closes it again. The chat stays mounted
  *                 either way, so it keeps its room and what was typed (07 §2). While a round
  *                 runs the chat is a panel of the focus mode instead (./FocusShell, O46).
- * Depends on:     react, @smg/ui (useDisclosure), ./roundChat.css
+ * Depends on:     react, @seasonal/kit/react (useDisclosure), ./roundChat.css
  * Used by:        ../match/MatchPage
  * Spec:           docs/spec/07-integration.md §2; docs/spec/02-game-guess-the-number.md §12
  */
 import { useState, type CSSProperties, type ReactElement, type ReactNode } from 'react';
-import { useDisclosure } from '@smg/ui';
+import { useDisclosure } from '@seasonal/kit/react';
 
 import './roundChat.css';
 
 // Where the panel lies on a phone: between the app's bar and the Chat button, so the button
 // (to close it) stays in view.
 function overlayBox(button: HTMLElement): CSSProperties {
-  const top = document.querySelector('.shell-bar');
+  const top = document.querySelector('.sk-header');
   const gap = 8;
   return {
     top: `${String(Math.round((top?.getBoundingClientRect().bottom ?? 0) + gap))}px`,

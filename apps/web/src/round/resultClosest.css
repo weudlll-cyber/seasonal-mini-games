@@ -35,7 +35,7 @@
    is as without it. */
 .round-result[data-closest] {
   gap: calc(var(--fit, 1) * var(--space-2));
-  font-size: max(13px, calc(var(--fit, 1) * 1rem));
+  font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * 1rem));
 }
 
 .round-result[data-closest] .round-result-first {
@@ -80,7 +80,7 @@
 @media (max-width: 899px) {
   .round-result[data-closest] .round-all-placings,
   .round-result[data-closest] .round-all-guesses {
-    min-height: max(40px, calc(var(--fit, 1) * var(--hit-target)));
+    min-height: max(var(--sk-floor-target), calc(var(--fit, 1) * var(--hit-target)));
   }
 }
 

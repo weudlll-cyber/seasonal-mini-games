@@ -16,16 +16,17 @@
  *                 it is a path under the base path, else to the base path (Bingo D43).
  *                 GET <base>auth/website/login: a redirect to SMG_WEBSITE_LOGIN_PATH with the
  *                 sign-in route and `next` as return path (Bingo D43). Both rate-limited per
- *                 address. Adapted from Bingo's websiteSignIn.ts.
- * Depends on:     node:crypto, fastify, ../../auth/websiteIdentity, ../../auth/websiteAccounts, ./auth,
+ *                 address. The checks are the kit's (`websiteSignInCheck` with the game's header
+ *                 names and steps 'each', `safeNext`, `websiteLoginLocation`); the route, the
+ *                 accounts and the sessions are the game's. Adapted from Bingo's websiteSignIn.ts.
+ * Depends on:     fastify, @seasonal/kit/server, ../../auth/websiteAccounts, ./auth,
  *                 ../../auth/sessionPlugin (types), ../../auth/sessionEnds (types), ../../auth/sessions,
  *                 ../../auth/rateLimit, ../../config/env (types), ../../db/pool (types)
  * Used by:        ../app
  * Spec:           docs/spec/07-integration.md §7; docs/spec/05-security-threat-model.md §1;
  *                 Bingo 07 §2.3; Bingo 03 §2.2
  */
-import { createHash, timingSafeEqual } from 'node:crypto';
-
+import { safeNext, websiteLoginLocation, websiteSignInCheck } from '@seasonal/kit/server';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
 import { RATE_RULES, RateLimiter } from '../../auth/rateLimit.js';
@@ -33,7 +34,6 @@ import type { CookieConfig } from '../../auth/sessionPlugin.js';
 import type { SessionEnds } from '../../auth/sessionEnds.js';
 import { findSession, WEBSITE_SESSION_DAYS } from '../../auth/sessions.js';
 import { websiteAccount } from '../../auth/websiteAccounts.js';
-import { identityFrom, isWebsiteGuest, trustedPeers } from '../../auth/websiteIdentity.js';
 import type { Env } from '../../config/env.js';
 import type { DbPool } from '../../db/pool.js';
 import { openSession } from './auth.js';
@@ -47,28 +47,12 @@ interface WebsiteSignInDeps {
 
 type NextQuery = { Querystring: { next?: string } };
 
-// Where to go after signing in: a path under the base path (the client's page, its hash
-// included, percent-encoded), never another site: printable ASCII only, no "//", no backslash.
-function safeNext(next: unknown, basePath: string): string {
-  if (typeof next !== 'string' || next.length > 512 || !next.startsWith(basePath)) return basePath;
-  return /^[\x21-\x7e]+$/.test(next) && !/\/\/|\\/.test(next) ? next : basePath;
-}
-
-const digest = (value: string): Buffer => createHash('sha256').update(value).digest();
-
-// A test for the proxy secret header, in constant time (both sides hashed to one length).
-function proxySecret(expected: string): (sent: string | string[] | undefined) => boolean {
-  const want = digest(expected);
-  return (sent) => typeof sent === 'string' && timingSafeEqual(digest(sent), want);
-}
-
 // The website's login with the sign-in route and the wanted page as its return path (encoded
 // twice: the page is a parameter of the sign-in route, which is the login's parameter; D43).
 function toLogin(reply: FastifyReply, env: Env, next: unknown) {
-  const base = env.SMG_BASE_PATH;
-  const back = `${base}auth/website?next=${encodeURIComponent(safeNext(next, base))}`;
   reply.header('cache-control', 'no-store');
-  return reply.redirect(`${env.SMG_WEBSITE_LOGIN_PATH}${encodeURIComponent(back)}`, 302);
+  const login = websiteLoginLocation(env.SMG_WEBSITE_LOGIN_PATH, env.SMG_BASE_PATH, next);
+  return reply.redirect(login, 302);
 }
 
 function tooMany(reply: FastifyReply) {
@@ -93,24 +77,33 @@ export function registerWebsiteSignIn(app: FastifyInstance, deps: WebsiteSignInD
 // The sign-in itself: the proxy's checks, the account, the session, the redirect.
 function websiteSignIn(deps: WebsiteSignInDeps) {
   const { env } = deps;
-  const trusted = trustedPeers(env.SMG_TRUSTED_PROXIES);
   // checkWebsiteMode (../../config/env) makes sure the public address and the secret are set.
-  const fromProxy = proxySecret(env.SMG_WEBSITE_PROXY_SECRET ?? '');
+  const check = websiteSignInCheck({
+    trustedProxies: env.SMG_TRUSTED_PROXIES,
+    proxySecret: env.SMG_WEBSITE_PROXY_SECRET ?? '',
+    secretHeader: 'x-smg-proxy-secret',
+    // A bad step is dropped, never the sign-in (as before the kit).
+    steps: 'each',
+    names: {
+      id: env.SMG_WEBSITE_HEADER_ID,
+      name: env.SMG_WEBSITE_HEADER_NAME,
+      roles: env.SMG_WEBSITE_HEADER_ROLES,
+      emailVerified: env.SMG_WEBSITE_HEADER_EMAIL_VERIFIED,
+      canHost: env.SMG_WEBSITE_HEADER_CAN_HOST,
+      steps: env.SMG_WEBSITE_HEADER_STEPS,
+      guest: env.SMG_WEBSITE_HEADER_GUEST,
+    },
+  });
   const issuer = new URL(env.SMG_PUBLIC_URL ?? '').origin;
   return async (request: FastifyRequest<NextQuery>, reply: FastifyReply) => {
-    // The TCP peer, not X-Forwarded-For: only the website's proxy may name a visitor.
-    // And the proxy secret: another process on a trusted address names nobody.
-    if (
-      !trusted(request.socket.remoteAddress) ||
-      !fromProxy(request.headers['x-smg-proxy-secret'])
-    ) {
-      return reply.status(403).send({ code: 'UNTRUSTED_PROXY' });
-    }
+    // The TCP peer, never Fastify's request.ip (a forwarding header): only the website's
+    // proxy may name a visitor, and only with the proxy secret.
+    const decision = check(request.socket.remoteAddress, request.headers);
+    if (decision.kind === 'untrusted') return reply.status(403).send({ code: 'UNTRUSTED_PROXY' });
     // The website answers every visitor; a guest (signed out, locked, no 2FA) goes to its login.
-    if (isWebsiteGuest(request.headers, env)) return toLogin(reply, env, request.query.next);
-    const who = identityFrom(request.headers, env);
-    if (who === null) return reply.status(403).send({ code: 'NO_WEBSITE_USER' });
-    const accountId = await websiteAccount(deps.pool, issuer, who);
+    if (decision.kind === 'guest') return toLogin(reply, env, request.query.next);
+    if (decision.kind === 'invalid') return reply.status(403).send({ code: 'NO_WEBSITE_USER' });
+    const accountId = await websiteAccount(deps.pool, issuer, decision.identity);
     if (accountId === null) return reply.status(403).send({ code: 'ACCOUNT_SUSPENDED' });
     // This route is outside /api, where the session hook does not look: find the browser's
     // session here, so the new one replaces it (03 §3; Bingo audit-3 S2).

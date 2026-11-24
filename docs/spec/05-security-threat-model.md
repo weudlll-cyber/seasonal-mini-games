@@ -17,7 +17,7 @@ The whole of Bingo's security architecture applies, with the names of [04](04-so
 | Input handling (parameterized SQL, no HTML from users, strict DTOs, JSON limits) | Bingo 03 §6 | None. |
 | Browser security headers, CSP, separate admin CSP | Bingo 03 §7 | None. |
 | CSRF (SameSite plus synchronizer token, WS `Origin` check) | Bingo 03 §8 | None. |
-| Cryptography in transit and at rest, secrets handling | Bingo 03 §9 | Round seeds are encrypted with `SMG_ROUND_KEY` (§3). Bingo's built server uses one `SBR_SEED_KEY` for match seeds, while Bingo 03 §9 and 08 §5 name `SBR_MASTER_KEY`; this repo follows the built pattern for round seeds and adds `SMG_MASTER_KEY` only when TOTP or OIDC secrets are built. |
+| Cryptography in transit and at rest, secrets handling | Bingo 03 §9 | Round seeds are encrypted with `SMG_ROUND_KEY` (§3). Bingo's built server uses one `SBR_SEED_KEY` for match seeds, while Bingo 03 §9 and 08 §5 name `SBR_MASTER_KEY`; this repo follows the built pattern for round seeds and adds `SMG_MASTER_KEY` only when TOTP or OIDC secrets are built. TOTP secrets are sealed with a key derived from `SMG_ROUND_KEY`; the two-factor recovery codes are stored as HMAC-SHA-256 under `SMG_RECOVERY_KEY`, a secret of its own (owner decision O149, kit K20), and a code stored as plain SHA-256 before it (K27) still works until used. |
 | SSRF prevention (`SafeHttpClient`) | Bingo 03 §10 | Also used for the In Season feed ([07](07-integration.md) §5). The website's account-changes feed is read from the operator's local address in the env file, not through it ([07](07-integration.md) §7.3, DECISIONS T217). |
 | Anti-cheat principles | Bingo 03 §11 | Replaced for this game by §2–§7. The leaderboard write rules are kept. |
 | Chat safety | Bingo 03 §12 | None. |

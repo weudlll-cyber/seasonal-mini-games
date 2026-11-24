@@ -81,8 +81,10 @@ async function edges(target: Locator): Promise<{ top: number; bottom: number }> 
 // On a phone the docked chat's one-line bar, no field in it, opens the chat with its field as a
 // sheet above the bar; Escape (focus back on the bar), then Close.
 async function chatSheet(page: Page, barTop: number): Promise<void> {
-  const bar = page.getByTestId('chat-dock-bar');
-  await expect(page.getByTestId('chat-dock').locator(':scope > .chat-writer')).toHaveCount(0);
+  const bar = page.getByTestId('chat-bar');
+  await expect(
+    page.getByTestId('chat-dock').locator('.sk-chat-dock-row > .chat-writer'),
+  ).toHaveCount(0);
   const sheet = page.getByRole('dialog', { name: 'Chat' });
   await bar.click();
   await expect(sheet.getByRole('textbox')).toBeVisible();
@@ -107,7 +109,7 @@ async function dockedChat(page: Page, size: Size): Promise<void> {
   const above = wide ? page.getByTestId('round-view') : page.locator('.round-input');
   expect((await edges(above)).bottom, 'the chat under the round').toBeLessThanOrEqual(top + 1);
   if (!wide) return chatSheet(page, top);
-  await expect(page.getByTestId('chat-dock-bar')).toHaveCount(0);
+  await expect(page.getByTestId('chat-bar')).toHaveCount(0);
   await expect(dock.getByRole('textbox')).toBeVisible();
 }
 
@@ -128,7 +130,7 @@ async function panel(page: Page, button: string, name: string, size: Size): Prom
 }
 
 async function slimBar(page: Page, size: Size): Promise<void> {
-  await expect(page.locator('.shell-bar')).toBeHidden();
+  await expect(page.getByTestId('app-header')).toBeHidden();
   const bar = page.getByTestId('round-banner');
   const box = await bar.boundingBox();
   expect(box?.height ?? Infinity, 'the round bar').toBeLessThanOrEqual(size === WIDE ? 44 : 52);

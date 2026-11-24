@@ -39,7 +39,7 @@ const scrollers = (page: Page) =>
 // The content's and the bar's edges, and the page's own scroll.
 const edges = (page: Page) =>
   page.evaluate(() => {
-    const main = document.querySelector('.match-docked-main')?.getBoundingClientRect();
+    const main = document.querySelector('.sk-docked-main')?.getBoundingClientRect();
     const bar = document.querySelector('[data-testid="chat-dock"]')?.getBoundingClientRect();
     return {
       mainBottom: main?.bottom ?? 0,
@@ -56,7 +56,7 @@ async function oneScreen(page: Page, where: string): Promise<void> {
   );
   const s = await scrollers(page);
   expect(
-    s.every((c) => c.includes('match-docked-main')),
+    s.every((c) => c.includes('sk-docked-main')),
     `${where}: only the content scrolls (${s.join(', ')})`,
   ).toBe(true);
 }
@@ -85,13 +85,13 @@ test('journey 43: a phone has one scrolling area above the chat bar', async ({ b
     await field.fill('sent from the bar');
     await p.page.getByTestId('chat-dock').getByRole('button', { name: 'Send' }).click();
     await expect(field).toHaveValue('');
-    await expect(p.page.getByTestId('chat-dock-bar')).toHaveAttribute('aria-expanded', 'false');
-    await expect(p.page.getByTestId('chat-dock-bar')).toContainText('sent from the bar');
+    await expect(p.page.getByTestId('chat-bar')).toHaveAttribute('aria-expanded', 'false');
+    await expect(p.page.getByTestId('chat-bar')).toContainText('sent from the bar');
     await expect(p.page.getByTestId('result')).toBeVisible({ timeout: 60_000 });
     await oneScreen(p.page, 'the result');
     for (const id of ['winners', 'series-countdown']) await aboveBar(p.page, id);
     await expect(p.page.getByTestId('own-standing')).toContainText(/^\d+You · place \d+/);
-    await p.page.locator('.match-docked-main').evaluate((m) => {
+    await p.page.locator('.sk-docked-main').evaluate((m) => {
       m.scrollTop = m.scrollHeight;
     });
     const last = await p.page.locator('.round-standing').last().boundingBox();

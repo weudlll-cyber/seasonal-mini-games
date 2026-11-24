@@ -45,7 +45,7 @@ import { ClosestToWinning } from './ClosestToWinning.js';
 import { colorsOf } from './RoundSide.js';
 import { RoundStandings } from './RoundStandings.js';
 import { endHeadline, marginText } from './roundText.js';
-import { useFitScale } from './useFit.js';
+import { useScreenFit } from './useFit.js';
 import './result.css';
 import './resultBoard.css';
 import './resultOwn.css';
@@ -115,7 +115,7 @@ function OwnResult(p: ResultProps & { readonly game: GameWeb }): ReactElement {
   );
   // The grid fills the height above the chat; its next-round box (the fixed part) shows whole
   // at the screen's scale (O111).
-  const fit = useFitScale<HTMLElement>(`${state.roundId}|own`, true);
+  const fit = useScreenFit<HTMLElement>(`${state.roundId}|own`, true);
   return (
     <section
       ref={fit}
@@ -195,7 +195,7 @@ export function ResultScreen(props: ResultProps): ReactElement {
   // The game names best guesses (O110): "Closest to winning" stands for the full history.
   const closest = game?.text.best !== undefined && state.closest !== undefined ? game : null;
   // Its first part and "Closest to winning" fit the screen at the screen's scale (O111).
-  const fit = useFitScale<HTMLElement>(`${state.roundId}|${String(state.closest?.length)}`);
+  const fit = useScreenFit<HTMLElement>(`${state.roundId}|${String(state.closest?.length)}`);
   return (
     <section
       ref={closest === null ? undefined : fit}
@@ -206,7 +206,7 @@ export function ResultScreen(props: ResultProps): ReactElement {
       // A game with "Closest to winning" has the compact first part (./resultClosest.css).
       data-closest={closest !== null || undefined}
     >
-      <div className="smg-panel round-result-first" data-testid="result-first" data-fit-fixed="">
+      <div className="smg-panel round-result-first" data-testid="result-first" data-sk-fit-fixed="">
         <ResultHead state={state} game={game} />
         {/* The game's reveal (the secret, a board game's grid): the part that grows. */}
         <div className="round-result-game">{part('reveal')}</div>

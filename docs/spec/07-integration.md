@@ -107,6 +107,7 @@ The In Season season ([03](03-seasonal-specials.md) §3) and, where available, t
 | Names | Display name | Display name with the member's Discord steps (at most three) |
 | A deleted account | Its own deletion (`DELETE /me`) | Also through the website's feed: "Deleted player" in past rounds, gone from the boards (§7.3) |
 | Address | Own domain, base path `/` | `/games/mini-games` on the website's domain |
+| The way back | None | "← Seasonal Entertainment" at the top left of the app's bar (the shared kit's `BackLink`), to the website's games page `/games` (the website's GAME-INTEGRATION §8); on a phone its own first row. Focus mode, whose bar replaces the app's during a round, has none yet (DECISIONS T414) |
 | Chat | `builtin` | `hostEmbed`, room `mini-games` |
 | In Season | Only with a configured feed | From the website feed |
 | Halving days | Admin list | Website feed plus admin list |
@@ -134,7 +135,7 @@ browser ──GET /games/mini-games/auth/website?next=…──► website proxy
 - **One route reads identity headers:** `GET <base>auth/website`. The proxy protects exactly this route; every other path of the game is proxied without asking the website and without those headers, and no other code reads them.
 - **The website's session cookie stays with the website:** `__Host-se.sid` (`se.sid` without Secure; the website's server/src/http/session.js) reaches the authorize call, which needs it, but the proxy removes it from the Cookie the app gets on every path, HTTP and WebSocket; the game's own cookies pass unchanged (DECISIONS T281).
 - **Headers** (names configurable, `SMG_WEBSITE_HEADER_*`; the defaults are the website's):
-  - `X-Acting-User-Id` (numeric, never reused), `X-Acting-User` (username), `X-Acting-User-Roles` (`member`, `organiser`, `admin`, comma-separated), `X-Acting-User-Email-Verified` (`true` for a member in good standing).
+  - `X-Acting-User-Id` (numeric, never reused), `X-Acting-User` (username), `X-Acting-User-Roles` (exactly one of `member`, `organiser`, `admin`; a list or another value is no identity, 403, since the kit's check of 2026-11-23), `X-Acting-User-Email-Verified` (`true` for a member in good standing).
   - `X-Acting-User-Can-Host` (`true` or `false`: whether the member may host Mini Games, decided per game by the website, always `true` for its admins).
   - `X-Acting-User-Steps` (base64url of compact JSON: at most three `{ ladder: holder|farmer|investor, name, icon }`, `icon` a site path `/media/step-icons/<32 hex>.webp` or null).
   - The authorize endpoint always answers 204; anyone who is not a member in good standing (signed out, locked, no 2FA) gets only `X-Acting-Guest: true`.
@@ -145,7 +146,7 @@ browser ──GET /games/mini-games/auth/website?next=…──► website proxy
   - Roles are mapped and recomputed at every sign-in (`source=idp_mapping`, §1): `admin` → `game_admin`, `X-Acting-User-Can-Host: true` → `organizer`, everyone `player`; `super_admin` and `security_admin` are never granted by mapping: `super_admin` comes only from `smg admin promote-super` (DECISIONS T243), and an install may have several.
   - The e-mail verification is mirrored for league points. A suspended game account is refused (403).
 - **Steps:**
-  - Decoded and checked at each sign-in (zod `PlayerStep` in `packages/contracts/src/http/session.ts`); a step that does not hold (an unknown ladder, an icon that is no same-origin path) is dropped, and a bad header drops them all, never the sign-in.
+  - Decoded and checked at each sign-in (the shared kit's check, `websiteSignInCheck` with steps `each`, since 2026-11-23); a step that does not hold (an unknown ladder, an unknown field, an icon not exactly `/media/step-icons/<32 hex>.webp`) is dropped, and a bad header drops them all, never the sign-in.
   - They are stored with the account (`accounts.steps`) and sent as an optional `steps` field beside the name: the match's players and standings, the round state (`steps` by player key, beside `names`), leaderboard rows and the public profile; a standalone install sends none.
   - The client shows them after every other player's name (not after "You"): a small icon named by the step, or the step's name (DECISIONS T239). Icons are same-origin paths, so the CSP's `img-src 'self'` covers them; a step without an icon shows its name.
 - **Session:** a fresh, rotated game session (05 §1) that lives at most 7 days from this sign-in, as Bingo's (a guest session in website mode too; an admin session keeps its 8 hours absolute and 30 minutes idle; a standalone install keeps 30 days, DECISIONS T280), and a redirect to `next` when it is a same-origin path under the base path in printable ASCII without a scheme, host, `//` or backslash; anything else goes to the base path (the lobby) (Bingo D43).
@@ -177,7 +178,7 @@ browser ──GET /games/mini-games/auth/website?next=…──► website proxy
 
 ## 8. The website's open sign-ups (new)
 
-The Seasonal Entertainment website shows on its home page the rounds of its embedded games that are open for sign-up, as Bingo and Cases provide them (owner decision O124). Mini Games serves the website's shared contract (version 1, the website's `docs/OPEN-ROUNDS.md`; here `openRoundsAnswer` in `@smg/contracts`).
+The Seasonal Entertainment website shows on its home page the rounds of its embedded games that are open for sign-up, as Bingo and Cases provide them (owner decision O124). Mini Games serves the website's shared contract (version 1, the website's `docs/OPEN-ROUNDS.md`; the answer is built and checked by the shared kit's `openRoundsPage`, `@seasonal/kit/server`, since 2026-11-23).
 
 - **Route.** `GET /api/public/open-rounds`: public, no sign-in, JSON, `Cache-Control: public, max-age=30`. Behind the website the game lives under `/games/mini-games`, so the status URL is `/games/mini-games/api/public/open-rounds` on the website's own origin. The website derives it from the game's path; nobody enters it. The path stays stable: changing it breaks the website's list.
 - **Answer.** `{"version":1,"rounds":[…]}`, at most 20 entries, soonest first (the next round's opening, then matches without one in the order they were opened). Each entry:

@@ -9,10 +9,13 @@
  *                 aside: they quote the sources, comments included) contains a marker of
  *                 development code: the Quick Test route or page, the dev sign-in menu,
  *                 or the development server address; and the server bundle imports no
- *                 workspace package (@smg/*, @smg-game/*), which the image does not ship.
- *                 The pages and the early theme script, which Vite would ship as they are,
- *                 hold no comment (owner decision O128, ../../web/productionFiles).
- * Depends on:     vitest, node:child_process, node:fs
+ *                 workspace package (@smg/*, @smg-game/*) and not the shared kit (@seasonal/kit,
+ *                 a dev dependency), which the image does not ship.
+ *                 The pages and the kit's early theme script, which Vite and the kit's
+ *                 themeInit() would ship as they are, hold no comment (owner decision O128,
+ *                 ../../web/productionFiles).
+ * Depends on:     vitest, @seasonal/kit/devtools (devMarkersIn, KIT_DEV_MARKERS),
+ *                 node:child_process, node:fs
  * Spec:           Bingo 09 §1; Bingo 03 §13
  */
 import { spawnSync } from 'node:child_process';
@@ -20,6 +23,7 @@ import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { devMarkersIn, KIT_DEV_MARKERS } from '@seasonal/kit/devtools';
 import { afterAll, describe, expect, it } from 'vitest';
 
 const DEV_MARKERS = ['dev/quicktest', 'dev-sign-in', 'Quick Test', '127.0.0.1:3910'];
@@ -52,37 +56,29 @@ function viteBuild(appDir: string, name: string): string {
 
 const text = (dir: string, file: string) => readFileSync(path.join(dir, file), 'utf8');
 
-// "file: marker" for every shipped file below <dir> that holds a marker.
-function devMarkersIn(dir: string): string[] {
-  const found: string[] = [];
-  for (const entry of readdirSync(dir, { recursive: true, withFileTypes: true })) {
-    if (!entry.isFile() || entry.name.endsWith('.map')) continue;
-    const file = path.join(entry.parentPath, entry.name);
-    const text = readFileSync(file, 'latin1');
-    for (const marker of DEV_MARKERS) {
-      if (text.includes(marker)) found.push(`${path.relative(dir, file)}: ${marker}`);
-    }
-  }
-  return found;
-}
+// "file: marker" for every shipped file below <dir> that holds a marker: the kit's scan, with
+// its markers (its dev menu, its dev sign-in check) and the game's.
+const markersIn = (dir: string): readonly string[] =>
+  devMarkersIn(dir, [...KIT_DEV_MARKERS, ...DEV_MARKERS]);
 
 describe('production bundles', () => {
   it('leave the development modules out of the server bundle', () => {
     const dir = path.join(out, 'server');
     run(SERVER_DIR, ['build.mjs', dir]);
     expect(readdirSync(dir)).toContain('main.js');
-    expect(devMarkersIn(dir)).toEqual([]);
-    // The image ships no workspace package: each must be inside the bundle (a game's sources
-    // are TypeScript, which Node refuses to load from node_modules; found by the installer test).
+    expect(markersIn(dir)).toEqual([]);
+    // The image ships no workspace package and not the kit: each must be inside the bundle (a
+    // game's sources are TypeScript, which Node refuses to load from node_modules; found by the
+    // installer test; the kit is a dev dependency, its git-hosted install needs git).
     for (const entry of ['main.js', 'cli.js']) {
       const text = readFileSync(path.join(dir, entry), 'utf8');
-      expect(text, entry).not.toMatch(/from\s*["']@smg(-game)?\//);
+      expect(text, entry).not.toMatch(/from\s*["'](@smg(-game)?\/|@seasonal\/kit)/);
     }
   }, 60_000);
 
   it('leave Quick Test, the dev sign-in and the dev server address out of the client', () => {
     const dir = viteBuild(WEB_DIR, 'web');
-    expect(devMarkersIn(dir)).toEqual([]);
+    expect(markersIn(dir)).toEqual([]);
     expect(text(dir, 'index.html')).not.toMatch(COMMENT);
     expect(text(dir, 'theme-init.js')).not.toMatch(COMMENT);
     // Still the theme script: minified, not emptied.

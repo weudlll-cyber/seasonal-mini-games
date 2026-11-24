@@ -65,7 +65,7 @@ export async function prePick(page: Page, picks: Readonly<Record<number, string>
 export async function startRound(host: Person): Promise<void> {
   await hostMenu(host);
   await host.page.getByTestId('host-console').getByTestId('start-round').click();
-  await expect(host.page.getByTestId('round-intro')).toBeVisible();
+  await expect(host.page.getByTestId('start-card')).toBeVisible();
 }
 
 export const feedHead = (page: Page) => page.getByTestId('feed-head');

@@ -200,14 +200,17 @@
 }
 
 .gtn-secret {
-  font-size: max(13px, calc(var(--fit, 1) * var(--font-size-lead)));
+  font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * var(--font-size-lead)));
   margin: 0;
 }
 
 /* The number large on a line of its own, the range under it (the result's reveal, O110). */
 .gtn-secret strong {
   display: block;
-  font-size: max(24px, calc(var(--fit, 1) * clamp(1.75rem, 1.2rem + 1.2vw, 2.4rem)));
+  font-size: max(
+    var(--sk-floor-display),
+    calc(var(--fit, 1) * clamp(1.75rem, 1.2rem + 1.2vw, 2.4rem))
+  );
   line-height: 1.15;
   font-variant-numeric: tabular-nums;
 }

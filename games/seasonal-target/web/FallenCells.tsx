@@ -10,14 +10,14 @@
  *                 scrolls it (T408), on a
  *                 phone a "Fallen (N)" button that opens it as a sheet, closed by Close, the
  *                 button or Escape (T115). The grid shows the same tiles hatched.
- * Depends on:     react, @smg/game-sdk (Season), @smg/ui (useDisclosure),
+ * Depends on:     react, @smg/game-sdk (Season), @seasonal/kit/react (useDisclosure),
  *                 @smg-game/seasonal-target (types), ./words, ./fallen.css
  * Used by:        ./PlayerPanel, ./SpectatorPanel
  * Spec:           docs/spec/02d-game-seasonal-target.md §8.3, §11; docs/spec/03-seasonal-specials.md §2.3
  */
 import type { Cell } from '@smg-game/seasonal-target';
 import type { Season } from '@smg/game-sdk';
-import { useDisclosure } from '@smg/ui';
+import { useDisclosure } from '@seasonal/kit/react';
 import type { ReactElement } from 'react';
 
 import { cellText } from './words.js';

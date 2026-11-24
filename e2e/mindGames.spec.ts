@@ -101,7 +101,7 @@ async function watchLight(page: Page): Promise<void> {
     const w = window as unknown as { lit: boolean };
     w.lit = false;
     new MutationObserver(() => {
-      if (document.querySelector('.mg-option.smg-anim-win') !== null) w.lit = true;
+      if (document.querySelector('.mg-option.sk-anim-win') !== null) w.lit = true;
     }).observe(document.body, { subtree: true, childList: true, attributes: true });
   });
 }
@@ -177,7 +177,7 @@ async function lastPhases(p: Person, opened: number): Promise<void> {
 // sent, which the result must still show (the chat is mounted once).
 async function dockedChat(page: Page): Promise<void> {
   await expect(page.getByTestId('focus-chat')).toHaveCount(0);
-  await expect(page.getByTestId('chat-dock')).toHaveAttribute('data-view', 'desktop');
+  await expect(page.getByTestId('chat-dock')).toHaveAttribute('data-sk-view', 'desktop');
   await page.getByTestId('chat-dock').getByRole('textbox').fill(DRAFT);
 }
 
@@ -228,17 +228,19 @@ test('journey 38: one round of Seasonal Mind Games, everything one delay late', 
       fields: BY_HAND,
     });
     await startRound(p);
-    await expect(p.page.getByTestId('round-intro')).toContainText(
+    await expect(p.page.getByTestId('start-card')).toContainText(
       'Pick a season. The least chosen wins. Join within 0:30 · choices close at 0:50 · everyone sees the round 10 s late',
     );
     // No season in the game (O93): the intro is the game's, the bar has no season pill.
-    await expect(p.page.locator('#round-intro-season')).toHaveText('Seasonal Mind Games');
+    await expect(p.page.getByTestId('start-card').getByRole('heading', { level: 1 })).toHaveText(
+      'Seasonal Mind Games',
+    );
     await expect(p.page.getByTestId('round-season')).toHaveCount(0);
     await roundOpen(p.page);
     const opened = Date.now();
     // The strip marks the phase the round is in (O92).
-    await expect(p.page.locator('.mg-phase[aria-current="step"]')).toHaveAttribute(
-      'data-phase',
+    await expect(p.page.locator('.sk-phase[aria-current="step"]')).toHaveAttribute(
+      'data-sk-phase',
       'join',
     );
     await expect(p.page.getByTestId('delay-line')).toHaveText('You see the round 10 s late');
@@ -263,7 +265,7 @@ test('journey 38: one round of Seasonal Mind Games, everything one delay late', 
     await watchLight(p.page);
     await lastPhases(p, opened);
     await p.page.setViewportSize(PHONE);
-    await expect(p.page.getByTestId('chat-dock-bar')).toBeVisible();
+    await expect(p.page.getByTestId('chat-bar')).toBeVisible();
     await fitsScreen(p.page);
     await bandClear(p.page);
     await p.page.setViewportSize(WIDE);

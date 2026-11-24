@@ -5,7 +5,7 @@
  *
  * Responsibility: read a media query once and follow its `change` events; without matchMedia
  *                 (a non-browser environment such as jsdom) the query counts as not matching.
- *                 The round view's layout is ./round/useRoundView.
+ *                 The round view's layout is the kit's useDockView.
  * Depends on:     react
  * Used by:        ./round/ResultParts
  * Spec:           docs/spec/02-game-guess-the-number.md §12; Bingo 01 §13

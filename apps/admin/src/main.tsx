@@ -3,12 +3,14 @@
  * @module admin
  * @brief  Entry point of the admin app: design system and the app.
  *
- * Responsibility: load the shared design system from @smg/ui (fonts, tokens, base styles),
- *                 then render the app. Development builds offer the quick admin sign-in.
- * Depends on:     react-dom, @smg/ui (CSS), ./App
+ * Responsibility: load the design system (the kit's fonts and shared tokens, then the game's
+ *                 tokens and base styles from @smg/ui), then render the app. Development builds offer the quick admin sign-in.
+ * Depends on:     react-dom, @seasonal/kit (CSS), @smg/ui (CSS), ./App
  * Spec:           docs/spec/08-admin-settings.md §1
  */
-import '@smg/ui/fonts.css';
+// The kit's shared parts first; the game's own tokens and styles build on them.
+import '@seasonal/kit/fonts.css';
+import '@seasonal/kit/tokens.css';
 import '@smg/ui/tokens.css';
 import '@smg/ui/base.css';
 import './admin.css';

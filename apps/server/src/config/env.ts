@@ -86,6 +86,12 @@ const envSchema = z.object({
     .string()
     .regex(/^[0-9a-f]{64}$/i, '64 hex characters')
     .optional(),
+  // Keys the recovery codes' hashes (HMAC-SHA-256, kit K20): its own secret, never the round
+  // key and never the one that seals the TOTP secrets; same form and rule as the round key.
+  SMG_RECOVERY_KEY: z
+    .string()
+    .regex(/^[0-9a-f]{64}$/i, '64 hex characters')
+    .optional(),
   // Group commit of the round actor (04 §5.3, 08 §7) and the scheduler's poll interval.
   SMG_ENGINE_BATCH_MS: z.coerce.number().int().min(5).max(100).default(20),
   SMG_ENGINE_BATCH_MAX: z.coerce.number().int().min(50).max(1_000).default(200),

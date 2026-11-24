@@ -45,7 +45,7 @@ test('journey 1: a shared round from start to result, also on a phone', async ({
     });
     // The countdown is the intro screen (O36): no guess can be typed before the round opens.
     for (const p of [one, two]) {
-      await expect(p.page.getByTestId('round-intro')).toBeVisible();
+      await expect(p.page.getByTestId('start-card')).toBeVisible();
       await expect(p.page.getByTestId('guess-button')).toHaveCount(0);
     }
     await expect(one.page.getByTestId('guess-button')).toBeEnabled({ timeout: 15_000 });

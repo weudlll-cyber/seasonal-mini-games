@@ -12,13 +12,14 @@
  *                 refused; the sign-in route with the old cookie and the page as `next` gives a
  *                 fresh admin session and sends back to that page. A guest's ended session and
  *                 a live one carry no such header.
- * Depends on:     vitest, ../src/auth/sessionPlugin, ./harness, ./socketKit, ./websiteHelpers
+ * Depends on:     vitest, @smg/contracts (SESSION_ENDED_HEADER), ./harness, ./socketKit,
+ *                 ./websiteHelpers
  * Spec:           docs/spec/07-integration.md §7; Bingo 03 §3
  */
+import { SESSION_ENDED_HEADER } from '@smg/contracts';
 import type { Server } from 'socket.io';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { SESSION_ENDED_HEADER } from '../src/auth/sessionPlugin.js';
 import { startHarness, stopHarness, SUITE_TIMEOUT_MS, type Harness } from './harness.js';
 import { connectedOf, listening, socketOpener } from './socketKit.js';
 import {

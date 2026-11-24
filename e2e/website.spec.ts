@@ -135,11 +135,11 @@ async function chatBadge(player: Person): Promise<void> {
       (window as unknown as { arrive: () => void }).arrive();
     });
   }
-  await expect(page.getByTestId('chat-dock-unread')).toHaveText('2 unread');
-  await page.getByTestId('chat-dock-bar').click();
+  await expect(page.getByTestId('chat-unread')).toHaveText('2 unread');
+  await page.getByTestId('chat-bar').click();
   await expect(sight).toHaveText('visible');
-  await expect(page.getByTestId('chat-dock-unread')).toHaveCount(0);
-  await page.getByTestId('chat-dock-bar').click();
+  await expect(page.getByTestId('chat-unread')).toHaveCount(0);
+  await page.getByTestId('chat-bar').click();
   await expect(sight).toHaveText('hidden');
   await page.setViewportSize(DESKTOP);
   await expect(sight).toHaveText('visible');

@@ -2,7 +2,7 @@
 
 Source assets. Build steps copy optimized versions into the apps; files here are never edited in place.
 
-> **Licence note:** the Seasonal Tokens logo, season icons and the Luxora Grotesk font belong to the Seasonal Tokens project. They were copied unchanged from the Seasonal Bingo Royale repository (master `d294585`), which took them from the Seasonal Entertainment website repository, where the same files are public. They are not covered by this repository's AGPL licence. Operators can replace the branding in the admin panel (Appearance → Branding).
+> **Licence note:** the Seasonal Tokens logo and season icons belong to the Seasonal Tokens project. They were copied unchanged from the Seasonal Bingo Royale repository (master `d294585`), which took them from the Seasonal Entertainment website repository, where the same files are public. They are not covered by this repository's AGPL licence. Operators can replace the branding in the admin panel (Appearance → Branding).
 
 ## Received (2026-10-19, copied from the Seasonal Entertainment website repository)
 
@@ -12,7 +12,8 @@ Source assets. Build steps copy optimized versions into the apps; files here are
 | `seasons/source/*.svg` | `client/src/assets/seasons/source/` (originals) | Source for re-exports |
 | `brand/logo.svg` | `client/src/assets/seasonal-tokens.svg` | Source for the app icon until one is supplied (no longer in the top bar) |
 | `brand/colors.md` | `client/src/styles/tokens.css` | The four season colours |
-| `fonts/luxora-grotesk-*.woff2` (book, regular, bold, italic, light italic) | `client/src/assets/fonts/` | All UI text: Book for body, Bold for headings (the Heavy face was removed on 2026-10-21 when headings moved to Bold, as on the website) |
+
+The Luxora Grotesk font files came with the first set; since 2026-11-23 the game takes them from the shared kit (`@seasonal/kit/fonts.css` and its `fonts/`, licence note in the kit's `fonts/README.md`), so they are no longer kept here.
 
 ## Received (2026-10-21)
 

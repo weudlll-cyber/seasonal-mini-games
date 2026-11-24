@@ -86,7 +86,7 @@ export const ended: RoundStateView = {
   ownInactivity: null,
 };
 
-// The window's size for the round's layout (./useRoundView): jsdom starts at 1024 × 768, a
+// The window's size for the round's layout (the kit's useDockView): jsdom starts at 1024 × 768, a
 // desktop; a test that sets a phone puts the desktop back afterwards.
 export function viewport(width: number, height: number): void {
   Object.assign(window, { innerWidth: width, innerHeight: height });

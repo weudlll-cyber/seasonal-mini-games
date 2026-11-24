@@ -132,7 +132,7 @@ test('journey 12: the Quick Test through the lobby, two rounds, End match and th
     await hostMenu(p);
     await p.page.getByTestId('host-console').getByTestId('start-round').click();
     // The intro with the form's countdown (the setting's default), then the round (O36).
-    await expect(p.page.getByTestId('round-intro')).toContainText('Spring Herald');
+    await expect(p.page.getByTestId('start-card')).toContainText('Spring Herald');
     await roundOpen(p.page);
     await search(p);
     await resultShown(p.page);

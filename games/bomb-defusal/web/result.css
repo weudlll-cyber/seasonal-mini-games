@@ -18,7 +18,7 @@
 .bd-secret {
   display: grid;
   gap: calc(var(--fit, 1) * var(--space-1));
-  font-size: max(13px, calc(var(--fit, 1) * var(--font-size-lead)));
+  font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * var(--font-size-lead)));
 }
 
 .bd-secret p {

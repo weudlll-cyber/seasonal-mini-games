@@ -170,6 +170,7 @@ These are operator settings in `/etc/smg/<env>.env`, validated at start ([10](10
 | Variable | Default | Min | Max | Status |
 |---|---|---|---|---|
 | `SMG_ROUND_KEY` | generated at install (32 bytes) | — | — | technical |
+| `SMG_RECOVERY_KEY` | generated at install (32 bytes), made once and kept; an install made before it gains it on its next run | — | — | technical: keys the two-factor recovery codes' hashes (HMAC-SHA-256, kit K20), a secret of its own, never the round key and never the one that seals the TOTP secrets |
 | `SMG_ENGINE_BATCH_MS` | 20 | 5 | 100 | technical: group-commit window ([04](04-software-architecture.md) §5.3) |
 | `SMG_ENGINE_BATCH_MAX` | 200 | 50 | 1 000 | technical |
 | `SMG_SCHEDULER_POLL_MS` | 100 | 50 | 1 000 | technical |

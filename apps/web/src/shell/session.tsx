@@ -11,7 +11,7 @@
  *                 never undoes a sign-in). Screens read it through `useSession`.
  *                 Website mode (O66): a guest session for a signed-out visitor who watches a
  *                 match (`useWatchSession`, POST /auth/guest, DECISIONS T221); the sign-in
- *                 address is @smg/ui's `websiteSignInHref`.
+ *                 address is the kit's `websiteSignInHref`.
  * Depends on:     react, @smg/contracts (SessionView), ./http, ../live/socket
  * Used by:        ./AppShell and every screen that needs the account, ../account/*,
  *                 ../lobby/Lobby, ../main, ./DevTools

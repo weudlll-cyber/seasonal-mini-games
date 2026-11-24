@@ -3,10 +3,11 @@
  * @module web
  * @brief  WCAG AA contrast of the design tokens in the light and the dark theme (01 §13).
  *
- * Responsibility: read the shared tokens (@smg/ui) and check, in both themes, that body,
- *                 muted, winter and success text (Frost's line, "higher") keep 4.5:1 on the page, the opaque surfaces and the translucent
- *                 cards — composited over the base colour and over each of the four token
- *                 glows, as the website measures — and on the top bar's gradient stops; the
+ * Responsibility: read the tokens (the kit's shared ones, then the game's own from @smg/ui, as
+ *                 the clients load them) and check, in both themes, that body, muted, winter
+ *                 and success text (Frost's line, "higher") keep 4.5:1 on the page, the opaque
+ *                 surfaces and the translucent cards — composited over the base colour and
+ *                 over each of the four token glows, as the website measures — and on the top bar's gradient stops; the
  *                 solid pill keeps 4.5:1, and so do text and the pressed team button's icon on
  *                 the season colours in both themes (O26 asks 3:1 of the icon); the inactivity
  *                 countdown's text keeps 4.5:1 on the warning surface (O71); every text
@@ -14,20 +15,30 @@
  *                 colour (`--own-tint` into `--color-own-base`, T261); the board ink
  *                 keeps 7:1 (the hero element); and the motion file turns every animation off under
  *                 prefers-reduced-motion.
- * Depends on:     vitest, @smg/ui/tokens.css, @smg/ui/motion.css (raw)
+ * Depends on:     vitest, @seasonal/kit/tokens.css, @seasonal/kit/motion.css, @smg/ui/tokens.css
+ *                 (raw)
  * Spec:           Bingo 01 §13 (WCAG 2.2 AA)
  */
 import { describe, expect, it } from 'vitest';
 
-import motionCss from '@smg/ui/motion.css?raw';
-import tokensCss from '@smg/ui/tokens.css?raw';
+import motionCss from '@seasonal/kit/motion.css?raw';
+import kitTokensCss from '@seasonal/kit/tokens.css?raw';
+import gameTokensCss from '@smg/ui/tokens.css?raw';
+
+// The game's tokens follow the kit's, as main.tsx imports them: a later value wins.
+const tokensCss = `${kitTokensCss}\n${gameTokensCss}`;
 
 type Rgba = readonly [number, number, number, number];
 
-// The text of one block of tokens.css.
+// The text of every block of one selector, in order (the kit's, then the game's).
 function blockText(selector: string): string {
-  const start = tokensCss.indexOf(`${selector} {`);
-  return tokensCss.slice(start, tokensCss.indexOf('\n}', start));
+  const blocks: string[] = [];
+  for (let start = tokensCss.indexOf(`${selector} {`); start !== -1;) {
+    const end = tokensCss.indexOf('\n}', start);
+    blocks.push(tokensCss.slice(start, end));
+    start = tokensCss.indexOf(`${selector} {`, end);
+  }
+  return blocks.join('\n');
 }
 
 // A colour as #rrggbb or rgb(r g b / a%).

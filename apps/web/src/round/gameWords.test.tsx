@@ -90,7 +90,9 @@ describe('a game’s own sentence for its special', () => {
       game: {},
     };
     render(<RoundIntro state={counting} game={game} now={1_000} />);
-    expect(screen.getByTestId('intro-special').textContent).toContain('A digit falls out.');
+    expect(
+      screen.getByTestId('start-card').querySelector('.sk-start-special')?.textContent,
+    ).toContain('A digit falls out.');
     cleanup();
     render(<SeasonPill state={counting} rule={ruleOf(game, 'autumn')} note />);
     fireEvent.click(screen.getByTestId('special-info'));

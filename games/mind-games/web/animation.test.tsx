@@ -36,7 +36,7 @@ describe('Mind Games winners light up (02e §11.1)', () => {
     ['cy', 'winter'],
   ]);
   const lit = () =>
-    [...document.querySelectorAll('.smg-anim-win')].map((e) => e.getAttribute('data-choice'));
+    [...document.querySelectorAll('.sk-anim-win')].map((e) => e.getAttribute('data-choice'));
 
   it('lights the winning options for about 2 s once the result shows', () => {
     render(<ResultPanel view={r} names={names} colors={{}} viewerKey={null} part="reveal" />);

@@ -5,7 +5,8 @@
  *
  * Responsibility: without NODE_ENV and SMG_DEV the settings say production and no
  *                 development features; SMG_DEV=1 is refused for a public address and
- *                 accepted for localhost; the round key is required in production; website
+ *                 accepted for localhost; the round key and the recovery key are required in
+ *                 production, never the same; website
  *                 mode refuses to start without its settings, local mode is the default (O66).
  * Depends on:     vitest, ./env, ./roundKey
  * Spec:           Bingo 03 §3; Bingo 09 §1
@@ -13,7 +14,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { loadEnv } from './env.js';
-import { roundKeyFrom } from './roundKey.js';
+import { recoveryKeyFrom, roundKeyFrom } from './roundKey.js';
 
 const DB = { DATABASE_URL: 'postgres://u:p@localhost:5432/db' };
 
@@ -39,6 +40,18 @@ describe('the round key', () => {
     expect(roundKeyFrom(loadEnv({ ...DB, SMG_ROUND_KEY: key })).toString('hex')).toBe(key);
     expect(roundKeyFrom(loadEnv({ ...DB, SMG_DEV: '1' }))).toHaveLength(32);
     expect(() => loadEnv({ ...DB, SMG_ROUND_KEY: 'short' })).toThrow(/64 hex characters/);
+  });
+});
+
+describe('the recovery key (kit K20, O149)', () => {
+  it('is required in production, fixed only for development and tests, and never the round key', () => {
+    expect(() => recoveryKeyFrom(loadEnv(DB))).toThrow(/SMG_RECOVERY_KEY is required/);
+    const key = 'cd'.repeat(32);
+    expect(recoveryKeyFrom(loadEnv({ ...DB, SMG_RECOVERY_KEY: key })).toString('hex')).toBe(key);
+    expect(() => loadEnv({ ...DB, SMG_RECOVERY_KEY: 'short' })).toThrow(/64 hex characters/);
+    const dev = loadEnv({ ...DB, SMG_DEV: '1' });
+    expect(recoveryKeyFrom(dev)).toHaveLength(32);
+    expect(recoveryKeyFrom(dev).equals(roundKeyFrom(dev))).toBe(false);
   });
 });
 

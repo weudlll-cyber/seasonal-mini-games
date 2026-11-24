@@ -9,16 +9,19 @@
  *                 SMG_VITE_PORT and SMG_VITE_SERVER, 09 §1.1), inject the build badge's values
  *                 via `define` (`buildInfo`), keep HMR local, and send
  *                 the server's embed allowlist as `frame-ancestors`, as the server does in production. The build target is
- *                 modern browsers only (ES2023 lib); the built files carry no developer
- *                 comments (./productionFiles, O128). As the Vitest project config it
- *                 lets tests read motion.css and the design tokens (Vitest skips CSS by
- *                 default).
- * Depends on:     vite, @vitejs/plugin-react, node:child_process, git, ./productionFiles
+ *                 modern browsers only (ES2023 lib); the kit's themeInit() serves the early
+ *                 theme script; the built files carry no developer comments
+ *                 (./productionFiles, O128). As the Vitest project config it lets tests read
+ *                 the motion file and the design tokens, the kit's and the game's (Vitest
+ *                 skips CSS by default).
+ * Depends on:     vite, @vitejs/plugin-react, @seasonal/kit/vite, node:child_process, git,
+ *                 ./productionFiles
  * Spec:           Bingo 08 §1.1
  */
 /// <reference types="vitest/config" />
 import { execFileSync } from 'node:child_process';
 
+import { themeInit } from '@seasonal/kit/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
 
@@ -88,7 +91,7 @@ function frameAncestors(): Plugin {
 export default defineConfig(({ command }) => ({
   // Relative asset paths: one build serves at "/" or under "/games/mini-games/" (09 §1).
   base: './',
-  plugins: [react(), frameAncestors(), productionFiles()],
+  plugins: [react(), themeInit(), frameAncestors(), productionFiles()],
   server: {
     host: '127.0.0.1',
     port: PORT,

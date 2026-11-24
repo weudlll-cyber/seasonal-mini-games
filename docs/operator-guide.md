@@ -136,7 +136,7 @@ The server makes an encrypted backup every night at 03:30 in `/var/backups/smg/p
 5. Docker: `live-restore` on (`/etc/docker/daemon.json`: `{ "live-restore": true }`); log rotation is already set by the stack.
 6. Domain: a CAA record allowing your certificate authority (Let's Encrypt: `0 issue "letsencrypt.org"`), and DNSSEC if your registrar offers it.
 7. Optional: Cloudflare in front for DDoS protection; then the app must trust Cloudflare's addresses (`SMG_TRUSTED_PROXIES` in `/etc/smg/prod.env`).
-8. Keep `SMG_ROUND_KEY` in `/etc/smg/prod.env` as it is: it seals the seeds of running rounds; a new key would make them unrecoverable after a restart.
+8. Keep `SMG_ROUND_KEY` in `/etc/smg/prod.env` as it is: it seals the seeds of running rounds; a new key would make them unrecoverable after a restart. Keep `SMG_RECOVERY_KEY` there too: it keys the stored two-factor recovery codes, and the installer makes it once (an install made before it gains it on its next run); a new key would make the codes issued under the old one stop working (the authenticator app keeps working).
 
 ## 8. Good to know
 

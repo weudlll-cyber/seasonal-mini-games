@@ -17,11 +17,12 @@
  *                 seconds (O107); the bar counts to the plan's end and in the hold says
  *                 "Result in 0:04" (T386). The server enforces every phase; these only
  *                 show them.
- * Depends on:     @smg/game-sdk (clockText, PhasedTiming)
+ * Depends on:     @seasonal/kit (clockText), @smg/game-sdk (PhasedTiming)
  * Used by:        ./PhaseStrip, ./FeedPanels, ./MindInput
  * Spec:           docs/spec/02e-game-mind-games.md §4, §6, §11
  */
-import { clockText, type PhasedTiming } from '@smg/game-sdk';
+import { clockText } from '@seasonal/kit';
+import type { PhasedTiming } from '@smg/game-sdk';
 
 export type Phase = 'join' | 'play' | 'reveal' | 'over';
 

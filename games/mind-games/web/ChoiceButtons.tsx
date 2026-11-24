@@ -18,13 +18,14 @@
  *                 buttons and the counts, inside the cards' frames, runs the flight band
  *                 (./FlightBand, 02e §11.1, given the round's timing), which no button
  *                 overlaps. A spectator gets the same row without choosing.
- * Depends on:     react, @smg/game-sdk (clockText, PhasedTiming), @smg-game/mind-games (options, names,
+ * Depends on:     react, @seasonal/kit (clockText), @smg/game-sdk (PhasedTiming), @smg-game/mind-games (options, names,
  *                 views), ./FlightBand, ./seasons, ./text
  * Used by:        ./MindInput, ./FeedPanels
  * Spec:           docs/spec/02e-game-mind-games.md §6.1, §11
  */
 import { CHOICE_NAMES, optionsOf, type Choice, type SpectatorView } from '@smg-game/mind-games';
-import { clockText, type PhasedTiming } from '@smg/game-sdk';
+import { clockText } from '@seasonal/kit';
+import type { PhasedTiming } from '@smg/game-sdk';
 import { useRef, useState, type KeyboardEvent, type ReactElement } from 'react';
 
 import { FlightBand } from './FlightBand.js';

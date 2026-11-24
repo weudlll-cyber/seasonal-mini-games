@@ -5,7 +5,8 @@
  * @brief  The docked match chat (O97): mounted once under the round and the result; the phone's
  *         bar with the newest message, the unread count and its own field.
  *
- * Responsibility: what is typed in the docked chat stays when the page switches from the round
+ * Responsibility: the kit's dock (DockedScreen) as the match page uses it. What is typed in
+ *                 the docked chat stays when the page switches from the round
  *                 to the result and to the loading line; a desktop shows the chat at once,
  *                 without a bar; a phone shows the bar with "Chat · " and the room's newest
  *                 message and the count of others' messages that arrived while the sheet was
@@ -15,17 +16,18 @@
  *                 one-line bar (`bar` 'line', O109): the newest line and the count, no field of
  *                 its own; a tap opens the sheet with the chat and its field; on a desktop the
  *                 same dock as with the field.
- * Depends on:     vitest, @testing-library/react, ../chat/chatArrivals, ../round/fakes,
- *                 ./DockedMatch
+ * Depends on:     vitest, @testing-library/react, @seasonal/kit/react (useDockArrivals),
+ *                 ../chat/chatArrivals, ../round/fakes, ./DockedMatch
  * Spec:           docs/spec/02e-game-mind-games.md §11; docs/spec/02-game-guess-the-number.md §12;
  *                 docs/spec/07-integration.md §2
  */
+import { useDockArrivals } from '@seasonal/kit/react';
 import type { ChatRoomView } from '@smg/contracts';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { useContext, useEffect, useState, type ReactElement } from 'react';
+import { useContext, useEffect, type ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ChatArrivals, ChatComposerSlot } from '../chat/chatArrivals.js';
+import { ChatComposerSlot } from '../chat/chatArrivals.js';
 import { viewport } from '../round/fakes.js';
 import { DockedMatch } from './DockedMatch.js';
 
@@ -44,19 +46,16 @@ const ROOM: ChatRoomView = {
 };
 const sent = vi.fn((_text: string) => Promise.resolve(null));
 
-// A stand-in chat: a field (to see it stays mounted), a way to make a message arrive, and, as
-// the builtin room does, its newest line and writing part offered to the dock.
+// A stand-in chat: a field (to see it stays mounted), a way to make a message arrive told to
+// the kit's dock, and, as the builtin room does, its writing part offered to the page.
 function FakeChat(): ReactElement {
-  const arrived = useContext(ChatArrivals);
+  const dock = useDockArrivals();
   const offer = useContext(ChatComposerSlot);
-  const [newest, setNewest] = useState<{ author: string; text: string } | null>(null);
   useEffect(() => {
-    offer?.({ room: ROOM, newest, send: sent });
-  }, [offer, newest]);
+    offer?.({ room: ROOM, send: sent });
+  }, [offer]);
   const arrive = (): void => {
-    const m = { author: 'bot-01', text: 'Winter again?' };
-    setNewest(m);
-    arrived?.(m);
+    dock?.arrived({ author: 'bot-01', text: 'Winter again?' });
   };
   return (
     <div>
@@ -94,15 +93,15 @@ describe('the docked chat', () => {
   it('shows the chat itself on a desktop, without a bar', () => {
     viewport(1280, 720);
     render(page('live', 'The round'));
-    expect(screen.getByTestId('chat-dock').getAttribute('data-view')).toBe('desktop');
-    expect(screen.queryByTestId('chat-dock-bar')).toBeNull();
+    expect(screen.getByTestId('chat-dock').getAttribute('data-sk-view')).toBe('desktop');
+    expect(screen.queryByTestId('chat-bar')).toBeNull();
     expect(screen.getByLabelText('Draft')).toBeTruthy();
   });
 
   it('gives a phone a bar with the newest message and the unread count, cleared on opening', () => {
     viewport(390, 844);
     render(page('live', 'The round'));
-    const bar = screen.getByTestId('chat-dock-bar');
+    const bar = screen.getByTestId('chat-bar');
     expect(bar.textContent).toBe('Chat');
     expect(bar.getAttribute('aria-expanded')).toBe('false');
     act(() => {
@@ -112,12 +111,12 @@ describe('the docked chat', () => {
     expect(bar.textContent).toBe('Chat · bot-01: Winter again?2 unread');
     fireEvent.click(bar);
     expect(bar.getAttribute('aria-expanded')).toBe('true');
-    expect(screen.queryByTestId('chat-dock-unread')).toBeNull();
+    expect(screen.queryByTestId('chat-unread')).toBeNull();
     // Open, a message is in sight: nothing to count.
     act(() => {
       screen.getByText('A message arrives', { selector: 'button' }).click();
     });
-    expect(screen.queryByTestId('chat-dock-unread')).toBeNull();
+    expect(screen.queryByTestId('chat-unread')).toBeNull();
     fireEvent.keyDown(screen.getByRole('dialog', { name: 'Chat' }), { key: 'Escape' });
     expect(bar.getAttribute('aria-expanded')).toBe('false');
     expect(document.activeElement).toBe(bar);
@@ -138,7 +137,7 @@ describe("the docked chat's phone bar (MG-N8)", () => {
     await waitFor(() => {
       expect(sent).toHaveBeenCalledWith('Good round!');
     });
-    expect(screen.getByTestId('chat-dock-bar').getAttribute('aria-expanded')).toBe('false');
+    expect(screen.getByTestId('chat-bar').getAttribute('aria-expanded')).toBe('false');
     await waitFor(() => {
       expect((field as HTMLInputElement).value).toBe('');
     });
@@ -159,11 +158,11 @@ describe("the list games' one-line phone bar (O109)", () => {
   it('shows the newest line and the unread count, and no field of its own', () => {
     viewport(390, 844);
     render(page('live', 'The round', 'line'));
-    expect(screen.getByTestId('chat-dock').getAttribute('data-bar')).toBe('line');
+    expect(screen.getByTestId('chat-dock').getAttribute('data-sk-bar')).toBe('line');
     act(() => {
       screen.getByText('A message arrives', { selector: 'button' }).click();
     });
-    const bar = screen.getByTestId('chat-dock-bar');
+    const bar = screen.getByTestId('chat-bar');
     expect(bar.textContent).toBe('Chat · bot-01: Winter again?1 unread');
     // Nothing to write in the bar: the field is the sheet's.
     expect(screen.queryByPlaceholderText('Write a message…')).toBeNull();
@@ -175,20 +174,20 @@ describe("the list games' one-line phone bar (O109)", () => {
   it('opens the whole chat with its field as a sheet on a tap', () => {
     viewport(390, 844);
     render(page('live', 'The round', 'line'));
-    fireEvent.click(screen.getByTestId('chat-dock-bar'));
+    fireEvent.click(screen.getByTestId('chat-bar'));
     const sheet = screen.getByRole('dialog', { name: 'Chat' });
     expect(sheet.hidden).toBe(false);
     // The chat's own field is in the sheet, the bar has none.
     expect(sheet.contains(screen.getByLabelText('Draft'))).toBe(true);
     expect(screen.queryByPlaceholderText('Write a message…')).toBeNull();
-    expect(screen.getByTestId('chat-dock-bar').getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByTestId('chat-bar').getAttribute('aria-expanded')).toBe('true');
   });
 
   it('is a dock with the chat itself on a desktop, as the bar with the field is', () => {
     viewport(1440, 900);
     render(page('live', 'The round', 'line'));
-    expect(screen.getByTestId('chat-dock').getAttribute('data-view')).toBe('desktop');
-    expect(screen.queryByTestId('chat-dock-bar')).toBeNull();
+    expect(screen.getByTestId('chat-dock').getAttribute('data-sk-view')).toBe('desktop');
+    expect(screen.queryByTestId('chat-bar')).toBeNull();
     expect(screen.getByLabelText('Draft')).toBeTruthy();
   });
 });

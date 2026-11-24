@@ -10,12 +10,14 @@
  *                 (closed by Close, the button again or Escape). In the phone's sheet the list
  *                 has no row limit, so all show. With the range hidden it is, with the list's
  *                 rows, where the fallen numbers are named (T54).
- * Depends on:     react, @smg/game-sdk (formatNumber, Season), @smg/ui (useDisclosure, useFit)
+ * Depends on:     react, @smg/game-sdk (formatNumber, Season), @seasonal/kit/react
+ *                 (useDisclosure), @smg/ui (useFit)
  * Used by:        ./PlayerPanel, ./SpectatorPanel
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §2.3
  */
+import { useDisclosure } from '@seasonal/kit/react';
 import { formatNumber, type Season } from '@smg/game-sdk';
-import { useDisclosure, useFit } from '@smg/ui';
+import { useFit } from '@smg/ui';
 import type { ReactElement } from 'react';
 
 // The panel belongs to rounds where Leaf Fall is active: autumn with its special on.

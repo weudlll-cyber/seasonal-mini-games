@@ -81,7 +81,7 @@ test('journey 39: a series of three Mind Games rounds, the standings add up', as
     await call(two, 'POST', `/matches/${m.code}/join`, {});
     await prefs(two, m.code, { '2': 'winter' });
     await host.page.getByRole('button', { name: 'Start now' }).click();
-    await expect(host.page.getByTestId('round-intro')).toBeVisible({ timeout: 4_000 });
+    await expect(host.page.getByTestId('start-card')).toBeVisible({ timeout: 4_000 });
     await call(host, 'PUT', `/matches/${m.code}/next-round`, {
       season: 'winter',
       settings: settings(true),

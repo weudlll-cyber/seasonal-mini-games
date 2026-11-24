@@ -9,7 +9,9 @@
 #                 openssl rand and kept on every later run, the public URL, base path and
 #                 trusted proxy for the install type, admin e-mail, the operator's age key
 #                 (the round key SMG_ROUND_KEY seals round seeds at rest, 05 §3: made once,
-#                 never changed, or running rounds could not be recovered); the sign-in mode
+#                 never changed, or running rounds could not be recovered; the recovery key
+#                 SMG_RECOVERY_KEY keys the two-factor recovery codes, a secret of its own,
+#                 made once the same way, so an install made before it gains it on its next run); the sign-in mode
 #                 (SMG_AUTH_MODE: local standalone, website inside the website, O66) and for
 #                 website installs the website's settings (lib/website.sh), the proxy secret
 #                 (made once, kept) and the chat provider hostEmbed; write the install
@@ -62,11 +64,14 @@ website_env() {
 
 # write_env <env>: from the answers in SMG_* variables; secrets survive a re-run.
 write_env() {
-  local env=$1 file="$SMG_ETC/$1.env" pg round public base site tls key
+  local env=$1 file="$SMG_ETC/$1.env" pg round recovery public base site tls key
   pg=$(env_value "$file" POSTGRES_PASSWORD)
   round=$(env_value "$file" SMG_ROUND_KEY)
+  recovery=$(env_value "$file" SMG_RECOVERY_KEY)
   [[ -n $pg ]] || pg=$(secret 24)
   [[ -n $round ]] || round=$(secret 32)
+  # An install made before the recovery key gains it on its next run and keeps it after.
+  [[ -n $recovery ]] || recovery=$(secret 32)
   if [[ $SMG_TYPE == website ]]; then
     public="https://$SMG_WEBSITE_DOMAIN/games/mini-games/" base=/games/mini-games/ site='' tls=''
   else
@@ -84,6 +89,7 @@ write_env() {
     quoted POSTGRES_PASSWORD "$pg"
     quoted DATABASE_URL "postgres://smg:$pg@postgres:5432/smg"
     quoted SMG_ROUND_KEY "$round"
+    quoted SMG_RECOVERY_KEY "$recovery"
     quoted SMG_PUBLIC_URL "$public"
     quoted SMG_BASE_PATH "$base"
     quoted SMG_TRUSTED_PROXIES "$SMG_TRUSTED_PROXIES"
