@@ -13,7 +13,7 @@
  *                 keeps the host's controls, the chat and the players (./FocusShell, O46). The
  *                 card fills the space under the bar without a page scrollbar on desktop and
  *                 phone, at the screen's scale where it has not the room (the kit's fit, O111;
- *                 a font load counted into its signature fits it again, O144, ./useFit). A game
+ *                 a font load counted into its signature fits it again, T423 (3), ./useFit). A game
  *                 whose rounds show no season (O93) has its name as the heading, with no season
  *                 icon and no special block.
  * Depends on:     react, @seasonal/kit/react (StartCard), @smg/contracts,
@@ -67,7 +67,7 @@ export function RoundIntro(p: {
     // A phased round has no cooldown (04 §4.8 rule 4).
     state.plan === undefined ? `Cooldown ${seconds(state.cooldownMs)} between guesses` : null,
   ].filter((fact) => fact !== null);
-  // The card's content changes only with these, and with a font load (O144).
+  // The card's content changes only with these, and with a font load (T423 (3)).
   const loads = useFontLoads();
   return (
     <StartCard
