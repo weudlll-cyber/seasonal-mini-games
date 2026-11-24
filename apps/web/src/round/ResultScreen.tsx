@@ -197,7 +197,7 @@ export function ResultScreen(props: ResultProps): ReactElement {
   );
   // The game names best guesses (O110): "Closest to winning" stands for the full history.
   const closest = game?.text.best !== undefined && state.closest !== undefined ? game : null;
-  // The kit's frame fits again after a font load only through its signature (T423 (3)).
+  // The kit's frame fits again after a font load only through its signature (T423 (3), waiting for the kit).
   const loads = useFontLoads();
   const { headline, lines } = headlineOf(state, game);
   return (

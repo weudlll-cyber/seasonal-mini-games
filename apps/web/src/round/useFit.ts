@@ -2,17 +2,18 @@
  * @file   apps/web/src/round/useFit.ts
  * @module web/round
  * @brief  Fitting to the screen (O111): how many of a box's items fit, and the font-load count
- *         the start card still needs.
+ *         the result frame still needs.
  *
  * Responsibility: `useFit`: a box of a fixed height that never scrolls and never cuts an item
  *                 shows the items (`[data-fit]`) that fit whole and "+N more" for the rest (the
  *                 Others panel and line, O110). A screen's own scale is the kit's
- *                 `useFitScale('mini-games', …, { afterFonts: true })` (the result screens,
- *                 ./ResultScreen): the kit fits again after web fonts load, which T404 needed.
- *                 Its `StartCard` has no such option, so `useFontLoads` counts the font loads
- *                 for the intro's `signature` (./RoundIntro) until the kit's card has it.
+ *                 `useFitScale('mini-games', …, { afterFonts: true })` (a game's own result
+ *                 and, as `fit`, the start card, ./ResultScreen, ./RoundIntro): the kit fits
+ *                 again after web fonts load, which T404 needed. Its `ResultFrame` has no such
+ *                 option, so `useFontLoads` counts the font loads for the frame's `signature`
+ *                 (./ResultScreen) until the kit's frame has it (T423).
  * Depends on:     react
- * Used by:        ./OthersLine, ./RoundSide (useFit); ./RoundIntro (useFontLoads)
+ * Used by:        ./OthersLine, ./RoundSide (useFit); ./ResultScreen (useFontLoads)
  * Spec:           docs/spec/04-software-architecture.md §4.6; docs/spec/02-game-guess-the-number.md §12
  */
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react';

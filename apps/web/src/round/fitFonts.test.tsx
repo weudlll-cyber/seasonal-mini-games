@@ -7,10 +7,11 @@
  * Responsibility: the kit's `useFitScale` with `afterFonts` (the result screens' option) fits
  *                 its root at mount, again after `document.fonts` reports `loadingdone` (the
  *                 type swapped in after the first paint, font-display: swap, can wrap a line
- *                 anew; WebKit, journey 16), and no longer once the screen is gone; and
- *                 `useFontLoads`, the start card's count of those loads for its signature
- *                 (the kit's card has no such option). jsdom has no layout, so a fitting shows
- *                 as `data-sk-fit-scale` being written again.
+ *                 anew; WebKit, journey 16), and no longer once the screen is gone; the kit's
+ *                 `StartCard` does the same with the game's `fit` option (RoundIntro, K48);
+ *                 and `useFontLoads`, the result frame's count of those loads for its
+ *                 signature (the kit's frame has no such option). jsdom has no layout, so a
+ *                 fitting shows as `data-sk-fit-scale` being written again.
  * Depends on:     vitest, @testing-library/react, react, @seasonal/kit/react, ./useFit
  * Spec:           docs/spec/04-software-architecture.md §4.6
  */
@@ -18,7 +19,7 @@ import { act, cleanup, render } from '@testing-library/react';
 import type { ReactElement } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useFitScale } from '@seasonal/kit/react';
+import { StartCard, useFitScale } from '@seasonal/kit/react';
 
 import { useFontLoads } from './useFit.js';
 
@@ -59,12 +60,38 @@ describe('useFitScale with afterFonts', () => {
   });
 });
 
+function Intro(): ReactElement {
+  return (
+    <StartCard
+      game="mini-games"
+      season={null}
+      title="Card"
+      opensIn={3}
+      signature="a"
+      fit={{ afterFonts: true }}
+    />
+  );
+}
+
+describe('the start card with the fit option the intro passes', () => {
+  it('fits again once fonts have loaded', async () => {
+    const view = render(<Intro />);
+    const card = view.container.firstElementChild as HTMLElement;
+    await new Promise((r) => setTimeout(r, 50));
+    delete card.dataset['skFitScale'];
+    fonts.dispatchEvent(new Event('loadingdone'));
+    await vi.waitFor(() => {
+      expect(card.dataset['skFitScale']).toBe('1');
+    });
+  });
+});
+
 function Loads(): ReactElement {
   return <span data-testid="loads">{useFontLoads()}</span>;
 }
 
 describe('useFontLoads', () => {
-  it('counts the fonts loads while the card is shown', () => {
+  it('counts the fonts loads while the result is shown', () => {
     const view = render(<Loads />);
     expect(view.getByTestId('loads').textContent).toBe('0');
     act(() => {

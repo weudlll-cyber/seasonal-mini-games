@@ -45,8 +45,8 @@ For Phase 7:
 
 ### Kit adoption (owner decisions O142, O150)
 
-- On `master` at the kit's v0.11.1 since the merge commit `0bed072` (PR #52). The move to v0.14.0 is on `feat/kit-0.14` (draft PR #53, T422), not merged: it waits for the owner's look.
-- Stays the game's own after the move, with the reason or the kit release that replaces it: T423. Waiting for the kit: `StartCard` and `ResultFrame` taking `afterFonts` (v0.16.0, dated 2026-11-24), a host chat from another https origin (T412). Not yet taken, a later task may: the kit's `RateLimiter`, `SessionEnds` and `FailureBrake`.
+- On `master` at the kit's v0.11.1 since the merge commit `0bed072` (PR #52). The move to v0.17.0 is on `feat/kit-0.14` (draft PR #53, T422, T424, T425), not merged: it waits for the owner's look.
+- Stays the game's own after the move, with the reason or the kit release that replaces it: T423. Waiting for the kit: `ResultFrame` taking an `afterFonts` option (the game counts font loads into its signature), a host chat from another https origin (T412). Not yet taken, a later task may: the kit's `RateLimiter`, `SessionEnds` and `FailureBrake`.
 
 ### Optional inputs
 
@@ -54,6 +54,7 @@ For Phase 7:
 
 ## Part two — closed
 
+- 2026-11-24: The start card's own font-load counting (T423 (3), first half): the kit's `StartCard` takes `fit={{ afterFonts: true }}` since v0.16.0 (K48); and the check that nothing of the game's own CSS sets the open chat sheet's size or place, after the kit's v0.17.0 cap (K50): nothing did (T425). _Closed by:_ branch `feat/kit-0.14` (draft PR #53, not merged)
 - 2026-11-24: T416 (3) and the game's dock overrides: the list fits the height the dock leaves, the kit's `dock.css` alone draws the bar, the room's own field hides by the dock's `visible`; the platform result is the kit's `ResultFrame` with "Closest to winning" as `middle` (T424). _Closed by:_ branch `feat/kit-0.14` (draft PR #53, not merged)
 - 2026-11-24: The back link in focus mode (OPEN (an) 1, O148) and the game's own gaps with the kit (O143: the bar, O144: the refit after fonts for the result screens, T416 (1) and (2): the dock without a chat and a host chat's visibility): the round's bar is the kit's `GameBar` with its back link, the result screens use `afterFonts`, the page without a chat `withoutChat`, the host frame `useDockSight` (T422); T416 (3) measured in the real game and kept (T422). _Closed by:_ branch `feat/kit-0.14` (draft PR #53, not merged)
 - 2026-11-23: OPEN (an), the owner's answers: the back link in focus mode waits for the kit's `GameBar` place (O148, part one); the two-factor recovery codes are keyed with a secret of its own, `SMG_RECOVERY_KEY`, made once by the installer, and the plain-SHA-256 codes of master keep working (O149). _Closed by:_ branch `feat/kit-adoption`
