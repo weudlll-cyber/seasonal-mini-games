@@ -227,8 +227,8 @@ importers:
   apps/admin:
     dependencies:
       '@seasonal/kit':
-        specifier: github:weudlll-cyber/seasonal-kit#v0.17.0
-        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/72ec78da9eeb7b5d830c292840f01db8de8a2fe4(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
+        specifier: github:weudlll-cyber/seasonal-kit#v0.18.0
+        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/536477e5b4bf55525ad00bcbf451827af84353fb(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
       '@smg/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
@@ -315,8 +315,8 @@ importers:
         version: 4.6.7
     devDependencies:
       '@seasonal/kit':
-        specifier: github:weudlll-cyber/seasonal-kit#v0.17.0
-        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/72ec78da9eeb7b5d830c292840f01db8de8a2fe4(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
+        specifier: github:weudlll-cyber/seasonal-kit#v0.18.0
+        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/536477e5b4bf55525ad00bcbf451827af84353fb(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
       '@testcontainers/postgresql':
         specifier: 12.2.2
         version: 12.2.2(supports-color@7.2.0)
@@ -336,8 +336,8 @@ importers:
   apps/web:
     dependencies:
       '@seasonal/kit':
-        specifier: github:weudlll-cyber/seasonal-kit#v0.17.0
-        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/72ec78da9eeb7b5d830c292840f01db8de8a2fe4(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
+        specifier: github:weudlll-cyber/seasonal-kit#v0.18.0
+        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/536477e5b4bf55525ad00bcbf451827af84353fb(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
       '@smg-game/registry':
         specifier: workspace:*
         version: link:../../games/registry
@@ -435,8 +435,8 @@ importers:
         version: 4.6.7
     devDependencies:
       '@seasonal/kit':
-        specifier: github:weudlll-cyber/seasonal-kit#v0.17.0
-        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/72ec78da9eeb7b5d830c292840f01db8de8a2fe4(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
+        specifier: github:weudlll-cyber/seasonal-kit#v0.18.0
+        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/536477e5b4bf55525ad00bcbf451827af84353fb(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
       '@testing-library/dom':
         specifier: 10.4.2
         version: 10.4.2
@@ -472,8 +472,8 @@ importers:
         version: 4.6.7
     devDependencies:
       '@seasonal/kit':
-        specifier: github:weudlll-cyber/seasonal-kit#v0.17.0
-        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/72ec78da9eeb7b5d830c292840f01db8de8a2fe4(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
+        specifier: github:weudlll-cyber/seasonal-kit#v0.18.0
+        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/536477e5b4bf55525ad00bcbf451827af84353fb(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
       '@testing-library/dom':
         specifier: 10.4.2
         version: 10.4.2
@@ -589,8 +589,8 @@ importers:
         version: 4.6.7
     devDependencies:
       '@seasonal/kit':
-        specifier: github:weudlll-cyber/seasonal-kit#v0.17.0
-        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/72ec78da9eeb7b5d830c292840f01db8de8a2fe4(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
+        specifier: github:weudlll-cyber/seasonal-kit#v0.18.0
+        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/536477e5b4bf55525ad00bcbf451827af84353fb(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
       '@testing-library/dom':
         specifier: 10.4.2
         version: 10.4.2
@@ -1313,9 +1313,9 @@ packages:
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
 
-  '@seasonal/kit@https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/72ec78da9eeb7b5d830c292840f01db8de8a2fe4':
-    resolution: {gitHosted: true, integrity: sha512-4Agi8HSQYrYRtqwwGoN4yrvmuGajJt31c14d+9Zacva4UWeDL7gjsvIuO9m2UqSPHKpbyxdP3NJutRs/J7Ha5Q==, tarball: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/72ec78da9eeb7b5d830c292840f01db8de8a2fe4}
-    version: 0.17.0
+  '@seasonal/kit@https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/536477e5b4bf55525ad00bcbf451827af84353fb':
+    resolution: {gitHosted: true, integrity: sha512-uY+wyJ0eI9yVIUUG37Kj9HQAzhsKsrjZ0/GqO6SQ+K+jmCnvOfAYlHEMf4F0Jl80+BDVUXaPD8sQdPYwi6SAOw==, tarball: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/536477e5b4bf55525ad00bcbf451827af84353fb}
+    version: 0.18.0
     engines: {node: '>=22'}
     peerDependencies:
       react: ^19.3.1
@@ -3767,7 +3767,7 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.1': {}
 
-  '@seasonal/kit@https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/72ec78da9eeb7b5d830c292840f01db8de8a2fe4(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))':
+  '@seasonal/kit@https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/536477e5b4bf55525ad00bcbf451827af84353fb(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))':
     optionalDependencies:
       react: 19.3.1
       vite: 8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1)
