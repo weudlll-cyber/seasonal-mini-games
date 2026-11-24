@@ -23,7 +23,7 @@
  * Used by:        ./ChatPanel, ../match/DockedMatch (Writer)
  * Spec:           docs/spec/07-integration.md §2; Bingo 06 §7, Bingo 03 §12
  */
-import { useDockArrivals } from '@seasonal/kit/react';
+import { useDockArrivals, useDockSight, useDockView } from '@seasonal/kit/react';
 import type { ChatMessageView, ChatRoomView } from '@smg/contracts';
 import {
   useContext,
@@ -136,6 +136,11 @@ export function ChatRoom({ target }: { readonly target: ChatTarget }): ReactElem
   });
   const offer = useContext(ChatComposerSlot);
   const writes = can('chat.send');
+  // The dock's bar has the field (the form 'field' gave this room a slot for it) and the sheet is
+  // open on a phone: the room's own field would be a second one in the sheet (T416 (3)).
+  const sight = useDockSight();
+  const phone = useDockView() === 'phone';
+  const barHasField = offer !== null && phone && sight?.visible === true;
   // The dock's bar shows the newest line of any kind (a system line too, MG-N8).
   const newest = messages.at(-1) ?? null;
   useEffect(() => {
@@ -166,7 +171,9 @@ export function ChatRoom({ target }: { readonly target: ChatTarget }): ReactElem
         ))}
       </ol>
       {writes ? (
-        <Writer room={room} send={send} />
+        barHasField ? null : (
+          <Writer room={room} send={send} />
+        )
       ) : (
         <p className="smg-muted">Sign in to write in the chat.</p>
       )}

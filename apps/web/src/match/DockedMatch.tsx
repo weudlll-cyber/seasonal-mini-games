@@ -53,7 +53,9 @@ export function DockedMatch(p: {
         // No dock at all, but the page still follows the on-screen keyboard (T416).
         <DockedScreen withoutChat>{p.children}</DockedScreen>
       ) : (
-        <ChatComposerSlot.Provider value={setComposer}>
+        // Only the form 'field' has a field in its bar, so only then the room offers its writer
+        // (and hides its own in the open sheet, ../chat/ChatRoom).
+        <ChatComposerSlot.Provider value={p.bar === 'field' ? setComposer : null}>
           <DockedScreen chat={p.chat} bar={p.bar} field={field} callId={null}>
             {p.children}
           </DockedScreen>
