@@ -14,12 +14,17 @@
  *                 the size of the round list's "Log (N)". Colours only from @smg/ui tokens.
  * Spec:           docs/spec/02-game-guess-the-number.md §9
  */
+/* The card is the result frame's middle card (@seasonal/kit/frames.css); the screen's scale
+   (`--fit`, O111) shrinks its padding. */
+.sk-result-middle:has(> .round-closest) {
+  padding: calc(var(--fit, 1) * 0.75rem) calc(var(--fit, 1) * var(--sk-space-3));
+}
+
 .round-closest {
   display: grid;
   gap: calc(var(--fit, 1) * var(--sk-space-1));
   align-content: start;
   min-width: 0;
-  padding: calc(var(--fit, 1) * 0.75rem) calc(var(--fit, 1) * var(--sk-space-3));
 }
 
 .round-closest-head {

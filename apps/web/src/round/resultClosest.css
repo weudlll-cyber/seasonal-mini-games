@@ -19,11 +19,11 @@
   display: contents;
 }
 
-.round-result[data-closest] .round-placings {
+.sk-result:has([data-closest]) .round-placings {
   justify-items: stretch;
 }
 
-.round-result[data-closest] .round-placings-foot {
+.sk-result:has([data-closest]) .round-placings-foot {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -33,27 +33,27 @@
 /* The screen's scale (`--fit`, ./useFit, O111): the type of the whole result follows it from
    here (13 px at the least), and the sizes below that are not the text's own; at 1 every size
    is as without it. */
-.round-result[data-closest] {
+.sk-result:has([data-closest]) {
   gap: calc(var(--fit, 1) * var(--sk-space-2));
   font-size: max(var(--sk-floor-text), calc(var(--fit, 1) * 1rem));
 }
 
-.round-result[data-closest] .round-result-first {
+.sk-result:has([data-closest]) .sk-result-first {
   gap: calc(var(--fit, 1) * var(--sk-space-1));
   padding: calc(var(--fit, 1) * 0.875rem) calc(var(--fit, 1) * 1.125rem);
 }
 
-.round-result[data-closest] h1 {
+.sk-result:has([data-closest]) h1 {
   font-size: max(15px, calc(var(--fit, 1) * clamp(1.25rem, 1rem + 0.6vw, 1.5rem)));
 }
 
-.round-result[data-closest] .round-table th,
-.round-result[data-closest] .round-table td {
+.sk-result:has([data-closest]) .round-table th,
+.sk-result:has([data-closest]) .round-table td {
   padding: calc(var(--fit, 1) * var(--sk-space-1));
 }
 
 /* "All placings (N)": the size of the round list's "Log (N)" (../round/roundLog.css). */
-.round-result[data-closest] .round-all-placings {
+.sk-result:has([data-closest]) .round-all-placings {
   min-height: max(28px, calc(var(--fit, 1) * 2rem));
   padding-inline: 0.7rem;
   box-shadow: none;
@@ -62,36 +62,36 @@
 /* A phone: one column, the fairness proof's disclosure under the result's foot (the head's
    parts become the column's own, so the disclosure can go last). */
 @media (max-width: 899px) {
-  .round-result[data-closest] .round-result-first {
+  .sk-result:has([data-closest]) .sk-result-first {
     display: flex;
     flex-direction: column;
   }
 
-  .round-result[data-closest] .round-result-head {
+  .sk-result:has([data-closest]) .sk-result-head {
     display: contents;
   }
 
-  .round-result[data-closest] .round-proof {
+  .sk-result:has([data-closest]) .sk-result-proof {
     order: 1;
   }
 }
 
 /* A phone: the two buttons are touch targets of 40 px at the least. */
 @media (max-width: 899px) {
-  .round-result[data-closest] .round-all-placings,
-  .round-result[data-closest] .round-all-guesses {
+  .sk-result:has([data-closest]) .round-all-placings,
+  .sk-result:has([data-closest]) .round-all-guesses {
     min-height: max(var(--sk-floor-target), calc(var(--fit, 1) * var(--sk-hit-target)));
   }
 }
 
 @media (min-width: 900px) {
-  .round-result[data-closest] .round-result-first {
+  .sk-result:has([data-closest]) .sk-result-first {
     column-gap: calc(var(--fit, 1) * var(--sk-space-3));
     grid-template-columns: minmax(11rem, 15rem) minmax(0, 1fr);
   }
 
   /* The headline and the proof's disclosure on one row: no closest-miss line under it (O111). */
-  .round-result[data-closest] .round-result-head > .round-proof {
+  .sk-result:has([data-closest]) .sk-result-head > .sk-result-proof {
     grid-row: 1;
   }
 }

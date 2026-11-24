@@ -1,23 +1,25 @@
 /**
  * @file   apps/web/src/round/result.css
  * @module web/round
- * @brief  The result page: its first screen, the part below, the placings table, names, hex.
+ * @brief  The result page's parts the kit's frame does not draw: the placings table, names, hex.
  *
- * Responsibility: the result's first part is exactly the screen under the slim bar (T145,
- *                 `--result-top`, ../match/match.css) on a desktop and a phone: the headline
- *                 (at most two lines) with the margin or closest miss and the proof's
- *                 disclosure, the game's reveal taking the free height (a board game's grid as
- *                 large as it allows), and the top three placings with the team line, on a
- *                 desktop to the right of the reveal, on a phone under it; with "All
- *                 placings" open the part grows and the page scrolls. The parts below follow
- *                 on the page at their own height: every player's guesses in full (T150), the
- *                 team result and the match standings. The placings (and the match summary's standings) as a table with fixed
- *                 number columns that fits a 390 px phone without scrolling; a player's name on
- *                 one line, shrinking with an ellipsis at its end until focus or a tap shows it
- *                 whole (./PlayerName, ./playerName.css), "(you)" never cut; the viewer's own line highlighted;
- *                 the team result list. Colours only from @smg/ui tokens.
+ * Responsibility: the platform's result is the kit's `ResultFrame` (@seasonal/kit/frames.css,
+ *                 T424): its first part exactly the screen under the slim bar (T145,
+ *                 `--sk-result-top`, ../match/match.css) on a desktop and a phone, with the
+ *                 headline, the margin or closest miss, the proof, the game's reveal, the top
+ *                 placings with the team line, "Closest to winning" or every guess in full as
+ *                 its middle card (T150) and the team result and standings after it. Here:
+ *                 with "All placings" open the first part grows and the page scrolls; the
+ *                 placings (and the match summary's standings) as a table with fixed number
+ *                 columns that fits a 390 px phone without scrolling; a player's name on one
+ *                 line, shrinking with an ellipsis at its end until focus or a tap shows it
+ *                 whole (./PlayerName, ./playerName.css), "(you)" never cut; the viewer's own
+ *                 line highlighted; the team result list. Colours only from the tokens.
  * Spec:           docs/spec/02-game-guess-the-number.md §9, §12
  */
+/* The platform's result is the kit's `ResultFrame` (@seasonal/kit/frames.css: the first part one
+   screen high, its grid, the headline, the middle card, the card for the rest; T424); a game's
+   own result (`ownResult`, ./resultOwn.css) keeps this grid box. */
 .round-result {
   display: grid;
   gap: var(--sk-space-2);
@@ -25,73 +27,10 @@
   overflow-wrap: anywhere;
 }
 
-/* The first part: one screen under the bar (the page's top offset is ../match/match.css's). */
-.round-result-first {
-  display: grid;
-  gap: var(--sk-space-2);
-  height: calc(100dvh - var(--result-top, 4.5rem));
-  min-height: 0;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  grid-template-areas: 'head' 'game' 'places';
-  padding: var(--sk-space-2) var(--sk-space-3);
-}
-
-/* A list game's first part is as tall as its content (its reveal is a line or two), so no
-   empty card and no gap before the placings (night-7 review). A board game's grid keeps the
-   part's full height. */
-.round-result:not([data-layout='board']) .round-result-first {
-  height: auto;
-  grid-template-rows: auto auto auto;
-}
-
 /* Every placing shown: the part grows and the page scrolls. */
-.round-result-first:has([data-testid='all-placings'][aria-expanded='true']) {
+.sk-result-first:has([data-testid='all-placings'][aria-expanded='true']) {
   height: auto;
-  min-height: calc(100dvh - var(--result-top, 4.5rem));
-}
-
-.round-result-head {
-  grid-area: head;
-  display: grid;
-  gap: 0.25rem;
-}
-
-.round-result-head p {
-  margin: 0;
-}
-
-/* The headline at about half the page title's size, at most two lines (balanced). */
-.round-result h1 {
-  margin: 0;
-  font-size: clamp(1.25rem, 1rem + 0.6vw, 1.5rem);
-  text-wrap: balance;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.round-result-game {
-  grid-area: game;
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-}
-
-.round-result-game > * {
-  flex: 1;
-  min-height: 0;
-}
-
-.round-result-places {
-  grid-area: places;
-  min-width: 0;
-  display: grid;
-  align-content: start;
-  gap: var(--sk-space-1);
+  min-height: calc(100dvh - var(--sk-result-top));
 }
 
 .round-placings {
@@ -109,60 +48,24 @@
   font-weight: var(--sk-font-weight-strong);
 }
 
-/* Below the first part: every player's guesses in full, then the team result and the match
-   standings, each at its own height (no box that cuts a line, T150). */
-.round-result-history,
-.round-result-more {
-  display: grid;
-  gap: var(--sk-space-2);
-  align-content: start;
-  padding: var(--sk-space-2) var(--sk-space-3);
-}
-
-.round-result-more h2 {
+/* The team result and the match standings, in the frame's card for the rest, each at its own
+   height (no box that cuts a line, T150). */
+.sk-result-more h2 {
   margin: 0;
   font-size: var(--sk-font-size-lead);
 }
 
-/* A desktop: the visual on the left at the part's full height, the top three and the team
-   line in a column on its right; the proof's disclosure beside the headline. */
+/* A desktop: "took part" on one line; "Guesses" and "Points" apart. */
 @media (min-width: 900px) {
-  .round-result:not([data-layout='board']) .round-result-first {
-    grid-template-rows: auto auto;
-  }
-
-  .round-result-first {
-    grid-template-columns: minmax(0, 1fr) minmax(20rem, 28rem);
-    grid-template-rows: auto minmax(0, 1fr);
-    grid-template-areas:
-      'head head'
-      'game places';
-  }
-
-  .round-result-head {
-    grid-template-columns: minmax(0, 1fr) auto;
-  }
-
-  .round-result-head > :not(.round-proof) {
-    grid-column: 1;
-  }
-
-  .round-result-head > .round-proof {
-    grid-column: 2;
-    grid-row: 1 / span 3;
-    max-width: 24rem;
-  }
-
-  /* "took part" on one line; "Guesses" and "Points" apart. */
-  .round-result .round-col-place {
+  :is(.round-result, .sk-result) .round-col-place {
     width: 6.5rem;
   }
 
-  .round-result .round-col-num {
+  :is(.round-result, .sk-result) .round-col-num {
     width: 5.25rem;
   }
 
-  .round-result .round-table td:first-child {
+  :is(.round-result, .sk-result) .round-table td:first-child {
     white-space: nowrap;
   }
 }

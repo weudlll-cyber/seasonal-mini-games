@@ -102,7 +102,7 @@ describe('closest to winning', () => {
       .closest('.round-placings')
       ?.querySelector('.round-placings-foot');
     expect(foot?.querySelector('[data-testid="team-line"]')).not.toBeNull();
-    expect(screen.getByTestId('result').hasAttribute('data-closest')).toBe(true);
+    expect(screen.getByTestId('result').querySelector('[data-closest]')).not.toBeNull();
   });
 
   it('keeps every guess in full below the first part for a game without best guesses', () => {
@@ -112,7 +112,7 @@ describe('closest to winning', () => {
     // No rows from the server: the full history stays, without "All guesses".
     expect(screen.getByTestId('result-history').textContent).toContain('92 correct');
     expect(screen.queryByTestId('all-guesses')).toBeNull();
-    expect(screen.getByTestId('result').hasAttribute('data-closest')).toBe(false);
+    expect(screen.getByTestId('result').querySelector('[data-closest]')).toBeNull();
   });
 });
 

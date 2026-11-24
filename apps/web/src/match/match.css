@@ -55,12 +55,12 @@
 }
 
 /* After a round (T145): the app header hidden (`focus-mode`, ../round/focus.css), the slim
-   bar on top (./ResultBar); the result's first part one screen high under it (`--result-top`
+   bar on top (./ResultBar); the result's first part one screen high under it (`--sk-result-top`
    is everything above it: the page's padding, the bar and the gap), the page scrolling past
    it; the next round's box and the chat in a column beside it on a desktop, under it on a
    phone. */
 .match-result-page {
-  --result-top: calc(44px + 3 * var(--sk-space-1));
+  --sk-result-top: calc(44px + 3 * var(--sk-space-1));
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--sk-space-1);
@@ -96,7 +96,7 @@
   /* Beside the result: the next round's box, then the chat in what is left of the screen,
      so its field stays in view (night-7 review). */
   .match-after > .match-side {
-    max-height: calc(100dvh - var(--result-top));
+    max-height: calc(100dvh - var(--sk-result-top));
     display: flex;
     flex-direction: column;
     gap: var(--sk-space-2);
@@ -111,7 +111,7 @@
 
 @media (max-width: 899px) {
   .match-result-page {
-    --result-top: calc(52px + 3 * var(--sk-space-1));
+    --sk-result-top: calc(52px + 3 * var(--sk-space-1));
   }
 }
 

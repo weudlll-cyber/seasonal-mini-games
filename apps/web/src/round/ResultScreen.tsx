@@ -34,7 +34,7 @@
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §10; docs/spec/03-seasonal-specials.md §5
  */
-import { useFitScale } from '@seasonal/kit/react';
+import { ResultFrame, useFitScale } from '@seasonal/kit/react';
 import type { GameWeb } from '@smg-game/registry/web';
 import type { MatchStandingView, RoundStateView } from '@smg/contracts';
 import type { ReactElement, ReactNode } from 'react';
@@ -47,6 +47,7 @@ import { ClosestToWinning } from './ClosestToWinning.js';
 import { colorsOf } from './RoundSide.js';
 import { RoundStandings } from './RoundStandings.js';
 import { endHeadline, marginText } from './roundText.js';
+import { useFontLoads } from './useFit.js';
 import './result.css';
 import './resultBoard.css';
 import './resultOwn.css';
@@ -55,8 +56,8 @@ import './resultClosest.css';
 // The kit fits again once web fonts have loaded (T404; a WebKit wrap that ran 32 px over).
 const AFTER_FONTS = { afterFonts: true } as const;
 
-function Proof({ state }: { readonly state: RoundStateView }): ReactElement | null {
-  if (state.commitment === null) return null;
+// The fairness proof's disclosure: only a round with a commitment has one (the caller checks).
+function Proof({ state }: { readonly state: RoundStateView }): ReactElement {
   return (
     <details className="round-proof" data-testid="proof">
       <summary>Fairness proof</summary>
@@ -145,32 +146,30 @@ function OwnResult(p: ResultProps & { readonly game: GameWeb }): ReactElement {
   );
 }
 
-// The headline, the margin or, without one, the game's closest miss or guess (O22; none in a
-// game with "Closest to winning", whose rows say it, O111), and the fairness proof's disclosure.
-function ResultHead(p: {
-  readonly state: RoundStateView;
-  readonly game: GameWeb | null;
-}): ReactElement {
-  const { state } = p;
+// The end in plain words (the frame's headline), and under it the margin or, without one, the
+// game's closest miss or guess (O22; none in a game with "Closest to winning", whose rows say it,
+// O111): the frame's `lines`.
+function headlineOf(state: RoundStateView, game: GameWeb | null) {
   // The game's words for finding its secret, where it has its own (O137).
-  const found = p.game?.text.found;
+  const found = game?.text.found;
   const margin = marginText(state, found);
   const miss =
     margin === null
-      ? (p.game?.text.runnerUp?.(state.game, state.names, state.winner !== null) ?? null)
+      ? (game?.text.runnerUp?.(state.game, state.names, state.winner !== null) ?? null)
       : null;
-  return (
-    <header className="round-result-head">
-      <h1>{endHeadline(state, found)}</h1>
-      {margin === null ? null : <p data-testid="margin">{margin}</p>}
-      {miss === null ? null : <p data-testid="closest-miss">{miss}</p>}
-      <Proof state={state} />
-    </header>
-  );
+  return {
+    headline: endHeadline(state, found),
+    lines: (
+      <>
+        {margin === null ? null : <p data-testid="margin">{margin}</p>}
+        {miss === null ? null : <p data-testid="closest-miss">{miss}</p>}
+      </>
+    ),
+  };
 }
 
-// Under the first part: "Closest to winning" for a game that names best guesses (O110), with
-// every guess behind "All guesses"; else every guess in full (T150).
+// The frame's middle card: "Closest to winning" for a game that names best guesses (O110), with
+// every guess behind "All guesses"; else every guess in full (T150). The frame draws its card.
 function Guesses(p: {
   readonly state: RoundStateView;
   readonly closest: GameWeb | null;
@@ -180,16 +179,16 @@ function Guesses(p: {
     return <ClosestToWinning state={p.state} game={p.closest} history={p.history} />;
   }
   return (
-    <section
-      className="smg-panel round-result-history"
-      aria-label="Every guess"
-      data-testid="result-history"
-    >
+    <section aria-label="Every guess" data-testid="result-history">
       {p.history}
     </section>
   );
 }
 
+// The platform's result (T145) in the kit's `ResultFrame`: the first part one screen high (the
+// end, the margin, the proof, the game's reveal, the top placings and the team line), "Closest to
+// winning" or the full history as its middle card, fitted with the first part (O110, O111), and
+// the team result and the standings after it.
 export function ResultScreen(props: ResultProps): ReactElement {
   const { state, game, viewerKey, standings } = props;
   if (game?.ownResult === true) return <OwnResult {...props} game={game} />;
@@ -198,42 +197,37 @@ export function ResultScreen(props: ResultProps): ReactElement {
   );
   // The game names best guesses (O110): "Closest to winning" stands for the full history.
   const closest = game?.text.best !== undefined && state.closest !== undefined ? game : null;
-  // Its first part and "Closest to winning" fit the screen at the screen's scale (O111).
-  const fit = useFitScale<HTMLElement>(
-    'mini-games',
-    `${state.roundId}|${String(state.closest?.length)}`,
-    false,
-    AFTER_FONTS,
-  );
+  // The kit's frame fits again after a font load only through its signature (T423 (3)).
+  const loads = useFontLoads();
+  const { headline, lines } = headlineOf(state, game);
   return (
-    <section
-      ref={closest === null ? undefined : fit}
-      className="round-result"
-      data-testid="result"
+    <ResultFrame
+      game="mini-games"
+      headline={headline}
+      lines={lines}
+      proof={state.commitment === null ? undefined : <Proof state={state} />}
+      reveal={part('reveal')}
+      placings={
+        <Placings
+          state={state}
+          viewerKey={viewerKey}
+          marks={roundMarks(state, game, viewerKey)}
+          foot={<TeamLine state={state} />}
+        />
+      }
+      middle={<Guesses state={state} closest={closest} history={part('history')} />}
+      more={
+        <>
+          {props.next}
+          <Teams state={state} />
+          <MatchStandings standings={standings} viewerKey={viewerKey} />
+        </>
+      }
       // A board game's grid gets the free height of the first part (./resultBoard.css).
-      data-layout={game?.layout ?? 'list'}
-      // A game with "Closest to winning" has the compact first part (./resultClosest.css).
-      data-closest={closest !== null || undefined}
-    >
-      <div className="smg-panel round-result-first" data-testid="result-first" data-sk-fit-fixed="">
-        <ResultHead state={state} game={game} />
-        {/* The game's reveal (the secret, a board game's grid): the part that grows. */}
-        <div className="round-result-game">{part('reveal')}</div>
-        <div className="round-result-places">
-          <Placings
-            state={state}
-            viewerKey={viewerKey}
-            marks={roundMarks(state, game, viewerKey)}
-            foot={<TeamLine state={state} />}
-          />
-        </div>
-      </div>
-      <Guesses state={state} closest={closest} history={part('history')} />
-      <div className="smg-panel round-result-more">
-        {props.next}
-        <Teams state={state} />
-        <MatchStandings standings={standings} viewerKey={viewerKey} />
-      </div>
-    </section>
+      layout={game?.layout === 'board' ? 'board' : 'list'}
+      // A game with "Closest to winning" fits its first part and that card to the screen.
+      fitted={closest !== null}
+      signature={`${state.roundId}|${String(state.closest?.length)}|${String(loads)}`}
+    />
   );
 }
