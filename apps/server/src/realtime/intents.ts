@@ -18,7 +18,7 @@
  *                 HTTP, 05 §5), and the chat's
  *                 chat.join / chat.leave / chat.send (./chatIntents).
  *                 Adapted from Bingo's intents.ts.
- * Depends on:     zod, socket.io (types), ../auth/rateLimit, ../match/*, ./chatIntents,
+ * Depends on:     zod, socket.io (types), @seasonal/kit/server (RateLimiter), ../match/*, ./chatIntents,
  *                 ./gateway (types)
  * Used by:        ./gateway
  * Spec:           docs/spec/06-data-model-api-realtime.md §4.1–§4.3; docs/spec/05-security-threat-model.md §5
@@ -27,7 +27,7 @@ import type { Reply } from '@smg/domain';
 import type { Socket } from 'socket.io';
 import { z } from 'zod';
 
-import { RateLimiter } from '../auth/rateLimit.js';
+import { RateLimiter } from '@seasonal/kit/server';
 import { activePlayers, findMatch, matchById, type MatchRow } from '../match/matches.js';
 import { PlayError } from '../match/playError.js';
 import { chatIntent } from './chatIntents.js';

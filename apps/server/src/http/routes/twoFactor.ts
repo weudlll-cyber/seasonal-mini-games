@@ -23,7 +23,8 @@ import type { AuditActor, AuditLog } from '@smg/application';
 import { TwoFactorCodeBody } from '@smg/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
-import { RATE_RULES, RateLimiter } from '../../auth/rateLimit.js';
+import { RateLimiter } from '@seasonal/kit/server';
+import { RATE_RULES } from '../../auth/rateRules.js';
 import { TwoFactor } from '../../auth/twoFactor.js';
 import type { Env } from '../../config/env.js';
 import type { Features } from '../../config/features.js';

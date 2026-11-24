@@ -16,7 +16,7 @@
  *                 (`rate.teamChoosePerMin`, `rate.hostRoundCommandsPerMin`: one per 60 s ÷ the
  *                 setting) per account (05 §5). Bots have no account and raise nothing.
  * Depends on:     @smg/application (settings), @smg/contracts, @smg/domain (Reply),
- *                 @smg/game-sdk, ../auth/rateLimit, ../admin/abuse, ../db/pool
+ *                 @smg/game-sdk, @seasonal/kit/server (RateLimiter), ../admin/abuse, ../db/pool
  * Used by:        ./runtime, ../realtime/*, ../http/routes/rounds, ../http/routes/matches,
  *                 ../http/routes/series, ../../tools/testServer and test/harness (`aheadClock`)
  * Spec:           docs/spec/05-security-threat-model.md §2, §5, §7; docs/spec/08-admin-settings.md §6
@@ -27,7 +27,7 @@ import type { Reply } from '@smg/domain';
 import { resolveSettings } from '@smg/game-sdk';
 
 import { recordSignal } from '../admin/abuse.js';
-import { RateLimiter } from '../auth/rateLimit.js';
+import { RateLimiter } from '@seasonal/kit/server';
 import type { DbPool } from '../db/pool.js';
 
 // More guesses than this in one minute, each within the window after its cooldown's end, are
@@ -63,9 +63,12 @@ export function aheadClock(): () => number {
   return () => (t += 60_000);
 }
 
-// One call per interval: a bucket of one token, refilled in 60 s ÷ `perMin`.
+// One call per interval: a bucket of one token, refilled in 60 s ÷ `perMin`. The kit's limiter
+// takes a whole number of milliseconds, so 7 a minute (8571.43 ms) waits 8571 ms: a setting
+// that does not divide a minute still applies, and the wait differs by half a millisecond at
+// most (T423).
 const oneEvery = (perMin: number, now?: () => number) =>
-  new RateLimiter({ limit: 1, windowMs: 60_000 / perMin }, now);
+  new RateLimiter({ limit: 1, windowMs: Math.round(60_000 / perMin) }, now);
 
 // A count per account and minute: the count once it passes `over` (once a minute), else null.
 function counted(

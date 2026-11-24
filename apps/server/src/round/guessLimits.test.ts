@@ -5,7 +5,8 @@
  *
  * Responsibility: a team change and a host's round command each refuse the second call inside
  *                 their interval and allow it after, per account; a changed setting takes
- *                 effect at the next read (08 §6: immediate); accepted guesses that arrive
+ *                 effect at the next read (08 §6: immediate), also one whose interval is not a
+ *                 whole number of milliseconds (T427); accepted guesses that arrive
  *                 within `abuse.botTimingWindowMs` after the previous cooldown's end raise the
  *                 abuse score once more than BOT_TIMED_PER_MIN come in a minute, guesses outside
  *                 the window and refused guesses do not.
@@ -13,6 +14,8 @@
  * Spec:           docs/spec/05-security-threat-model.md §5, §7; docs/spec/08-admin-settings.md §6
  */
 import type { SettingsService } from '@smg/application';
+import { PLATFORM_SETTINGS } from '@smg/contracts';
+import { resolveSettings } from '@smg/game-sdk';
 import { describe, expect, it } from 'vitest';
 
 import type { DbPool } from '../db/pool.js';
@@ -20,9 +23,20 @@ import { BOT_TIMED_PER_MIN, GuessLimits } from './guessLimits.js';
 
 // Settings by document, changed by the test; the signals the pool was asked to insert.
 function setup(rates: Record<string, unknown> = {}, security: Record<string, unknown> = {}) {
+  // Whole documents, as the settings service gives them: every key, its default unless set here.
   const docs: Record<string, Record<string, unknown>> = {
-    rate_limits: { 'rate.teamChoosePerMin': 12, 'rate.hostRoundCommandsPerMin': 30, ...rates },
-    security: { 'abuse.botTimingWindowMs': 30, 'abuse.cooldownRejectsPerMin': 20, ...security },
+    rate_limits: {
+      ...resolveSettings(PLATFORM_SETTINGS.rate_limits ?? [], {}),
+      'rate.teamChoosePerMin': 12,
+      'rate.hostRoundCommandsPerMin': 30,
+      ...rates,
+    },
+    security: {
+      ...resolveSettings(PLATFORM_SETTINGS.security ?? [], {}),
+      'abuse.botTimingWindowMs': 30,
+      'abuse.cooldownRejectsPerMin': 20,
+      ...security,
+    },
   };
   const settings = { values: (id: string) => Promise.resolve(docs[id] ?? {}) };
   const signals: unknown[][] = [];
@@ -70,6 +84,18 @@ describe('the play limits (05 §5)', () => {
     await limits.refresh();
     expect(limits.allowHost('host')).toBe(true);
     clock.move(9_900);
+    expect(limits.allowHost('host')).toBe(false);
+    clock.move(100);
+    expect(limits.allowHost('host')).toBe(true);
+  });
+
+  it('takes a setting that does not divide a minute: 7 a minute waits 8571 ms (T423)', async () => {
+    const { limits, docs, clock } = setup();
+    await limits.refresh();
+    docs['rate_limits'] = { ...docs['rate_limits'], 'rate.hostRoundCommandsPerMin': 7 };
+    await limits.refresh();
+    expect(limits.allowHost('host')).toBe(true);
+    clock.move(8_500);
     expect(limits.allowHost('host')).toBe(false);
     clock.move(100);
     expect(limits.allowHost('host')).toBe(true);

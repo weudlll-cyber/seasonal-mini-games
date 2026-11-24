@@ -12,12 +12,12 @@
  * Used by:        ../app
  * Spec:           docs/spec/07-integration.md §1, §4; Bingo 07 §2.2, §3.4
  */
+import { RateLimiter, type SessionEnds } from '@seasonal/kit/server';
 import { HandoffBody } from '@smg/contracts';
 import type { FastifyInstance } from 'fastify';
 
 import { recordLogin } from '../../auth/accounts.js';
-import { RATE_RULES, RateLimiter } from '../../auth/rateLimit.js';
-import type { SessionEnds } from '../../auth/sessionEnds.js';
+import { RATE_RULES } from '../../auth/rateRules.js';
 import type { CookieConfig } from '../../auth/sessionPlugin.js';
 import type { DbPool } from '../../db/pool.js';
 import type { EmbedAllowlist } from '../../integration/embedOrigins.js';

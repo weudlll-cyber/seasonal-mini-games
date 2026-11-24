@@ -17,7 +17,7 @@
 import type { AuditLog } from '@smg/application';
 import type { FastifyInstance } from 'fastify';
 
-import type { SessionEnds } from '../auth/sessionEnds.js';
+import type { SessionEnds } from '@seasonal/kit/server';
 import type { CookieConfig } from '../auth/sessionPlugin.js';
 import { allowedOrigins, type Env } from '../config/env.js';
 import type { Features } from '../config/features.js';

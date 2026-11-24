@@ -12,7 +12,9 @@
  *                 uniformly and verifies a dummy hash for unknown e-mails, so timing and
  *                 text never reveal whether an account exists (03 §2.1); a wrong password for a
  *                 known account adds one abuse signal for moderators (05 §2). Login and
- *                 registration are rate-limited per IP and per account+IP (03 §13). E-mail
+ *                 registration are rate-limited per IP; a login is also braked per account+IP after
+ *                 5 failed sign-ins in 15 minutes (the kit's FailureBrake, right ones are not
+ *                 counted, T427), 03 §13. E-mail
  *                 verification and 2FA are behind feature flags that are off by default;
  *                 when verification is on, unverified accounts cannot sign in. In website
  *                 mode (O66, Bingo D37) registration and password sign-in do not exist (404):
@@ -21,8 +23,11 @@
  * Used by:        ../app, ./handoff (startSession), ./websiteSignIn (openSession)
  * Spec:           docs/spec/05-security-threat-model.md §1, §2; Bingo 05 §2.1; Bingo 03 §2.1, §2.3, §3, §13
  */
+import { FailureBrake, RateLimiter, type SessionEnds } from '@seasonal/kit/server';
 import type { SessionView } from '@smg/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { createHash } from 'node:crypto';
+
 import { z } from 'zod';
 
 import { recordSignal } from '../../admin/abuse.js';
@@ -34,13 +39,12 @@ import {
   registerAccount,
 } from '../../auth/accounts.js';
 import { dummyPasswordHash, passwordProblem, verifyPassword } from '../../auth/password.js';
-import { RATE_RULES, RateLimiter } from '../../auth/rateLimit.js';
+import { RATE_RULES } from '../../auth/rateRules.js';
 import {
   clearSessionCookie,
   setSessionCookie,
   type CookieConfig,
 } from '../../auth/sessionPlugin.js';
-import type { SessionEnds } from '../../auth/sessionEnds.js';
 import {
   accountSessionIds,
   createSession,
@@ -78,14 +82,15 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AuthDeps): void {
   const limits = {
     register: new RateLimiter(RATE_RULES.register),
     loginIp: new RateLimiter(RATE_RULES.loginIp),
-    loginAccountIp: new RateLimiter(RATE_RULES.loginAccountIp),
+    // Failed sign-ins per account and address; a right one is not counted (T427).
+    signInFailures: new FailureBrake(RATE_RULES.loginAccountIp),
     guest: new RateLimiter(RATE_RULES.guest),
   };
   app.get('/api/v1/session', (request) => sessionSummary(request, deps));
   app.post('/api/v1/auth/logout', async (request, reply) => {
     if (request.session !== null) {
       await revokeSession(deps.pool, request.session.id);
-      deps.sessionEnds.end([request.session.id]);
+      void deps.sessionEnds.end([request.session.id]);
     }
     clearSessionCookie(reply, deps.cookie);
     return reply.status(204).send();
@@ -110,11 +115,20 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AuthDeps): void {
   app.post('/api/v1/auth/login', async (request, reply) => {
     const parsed = loginBody.safeParse(request.body);
     if (!parsed.success) return reply.status(400).send(LOGIN_FAILED);
-    const key = `${parsed.data.email.toLowerCase()}|${request.ip}`;
-    if (!limits.loginIp.take(request.ip).allowed || !limits.loginAccountIp.take(key).allowed) {
+    // The brake's key is a hash: never a raw login name before sign-in (the kit's rule).
+    const key = createHash('sha256')
+      .update(`${parsed.data.email.toLowerCase()}|${request.ip}`)
+      .digest('hex');
+    // Looked at before the password is checked; the failure is counted after (T427).
+    if (!limits.loginIp.take(request.ip).allowed || limits.signInFailures.braked(key)) {
       return tooMany(reply);
     }
-    return login(request, reply, deps, parsed.data);
+    return login(request, reply, deps, {
+      body: parsed.data,
+      countFailure: () => {
+        limits.signInFailures.failed(key);
+      },
+    });
   });
 }
 
@@ -151,7 +165,7 @@ async function login(
   request: FastifyRequest,
   reply: FastifyReply,
   deps: AuthDeps,
-  body: z.infer<typeof loginBody>,
+  { body, countFailure }: { body: z.infer<typeof loginBody>; countFailure: () => void },
 ) {
   const account = await findLoginAccount(deps.pool, body.email);
   const encoded = account?.passwordHash ?? (await dummyPasswordHash());
@@ -164,7 +178,10 @@ async function login(
       weight: 1,
     });
   }
-  if (account === null || !valid) return reply.status(401).send(LOGIN_FAILED);
+  if (account === null || !valid) {
+    countFailure();
+    return reply.status(401).send(LOGIN_FAILED);
+  }
   if (deps.features.emailVerification && !account.emailVerified) {
     return reply.status(403).send({ code: 'EMAIL_NOT_VERIFIED' });
   }
@@ -187,7 +204,7 @@ export async function openSession(
 ): Promise<void> {
   if (request.session !== null) {
     await revokeSession(deps.pool, request.session.id);
-    deps.sessionEnds.end([request.session.id]);
+    void deps.sessionEnds.end([request.session.id]);
   }
   const { token } = await createSession(
     deps.pool,
@@ -242,7 +259,7 @@ async function deleteMe(request: FastifyRequest, reply: FastifyReply, deps: Auth
   if (confirmed !== 'ok') return reply.status(403).send({ code: confirmed });
   const sessions = await accountSessionIds(deps.pool, accountId);
   await deleteAccount(deps.pool, accountId);
-  deps.sessionEnds.end(sessions);
+  void deps.sessionEnds.end(sessions);
   clearSessionCookie(reply, deps.cookie);
   return reply.status(204).send();
 }

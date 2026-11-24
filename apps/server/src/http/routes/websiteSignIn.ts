@@ -20,18 +20,23 @@
  *                 names and steps 'each', `safeNext`, `websiteLoginLocation`); the route, the
  *                 accounts and the sessions are the game's. Adapted from Bingo's websiteSignIn.ts.
  * Depends on:     fastify, @seasonal/kit/server, ../../auth/websiteAccounts, ./auth,
- *                 ../../auth/sessionPlugin (types), ../../auth/sessionEnds (types), ../../auth/sessions,
- *                 ../../auth/rateLimit, ../../config/env (types), ../../db/pool (types)
+ *                 ../../auth/sessionPlugin (types), @seasonal/kit/server (SessionEnds, RateLimiter), ../../auth/sessions,
+ *                 ../../auth/rateRules, ../../config/env (types), ../../db/pool (types)
  * Used by:        ../app
  * Spec:           docs/spec/07-integration.md §7; docs/spec/05-security-threat-model.md §1;
  *                 Bingo 07 §2.3; Bingo 03 §2.2
  */
-import { safeNext, websiteLoginLocation, websiteSignInCheck } from '@seasonal/kit/server';
+import {
+  RateLimiter,
+  safeNext,
+  type SessionEnds,
+  websiteLoginLocation,
+  websiteSignInCheck,
+} from '@seasonal/kit/server';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 
-import { RATE_RULES, RateLimiter } from '../../auth/rateLimit.js';
+import { RATE_RULES } from '../../auth/rateRules.js';
 import type { CookieConfig } from '../../auth/sessionPlugin.js';
-import type { SessionEnds } from '../../auth/sessionEnds.js';
 import { findSession, WEBSITE_SESSION_DAYS } from '../../auth/sessions.js';
 import { websiteAccount } from '../../auth/websiteAccounts.js';
 import type { Env } from '../../config/env.js';
