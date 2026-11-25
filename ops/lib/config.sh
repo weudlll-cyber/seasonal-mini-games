@@ -121,7 +121,8 @@ SMG_REF=$SMG_REF
 EOF
 }
 
-# install_files <source dir of ops/>: the stack files and the CLI into /opt/smg.
+# install_files <source dir of ops/>: the stack files, the CLI and the kit's scripts into
+# /opt/smg.
 install_files() {
   local from=$1 name
   for name in compose.yml compose.website.yml compose.website-nginx.yml; do
@@ -133,6 +134,22 @@ install_files() {
   done
   put_file "$SMG_ROOT/smg" 0755 <"$from/smg"
   [[ -L /usr/local/bin/smg ]] || run ln -sf "$SMG_ROOT/smg" /usr/local/bin/smg
+  install_kit_ops "$SMG_IMAGE"
+}
+
+# install_kit_ops <image>: the kit's backup and pull scripts into /opt/smg/kit, from the image
+# that was just built, so they are the pinned kit version's (DECISIONS T431).
+install_kit_ops() {
+  local name script
+  if [[ $SMG_DRY_RUN == 1 ]]; then
+    info "  would copy the kit's backup and pull scripts from $1 into $SMG_ROOT/kit"
+    return 0
+  fi
+  for name in backup.sh pull-backups.sh pull-backups.ps1; do
+    script=$(docker run --rm --entrypoint cat "$1" "/app/node_modules/@seasonal/kit/ops/$name")
+    # World-readable: an operator copies the pull script to their own computer from here.
+    printf '%s\n' "$script" | put_file "$SMG_ROOT/kit/$name" 0755
+  done
 }
 
 # checkout_ref <dir>: the branch the checkout holding <dir> is on, its commit when detached,

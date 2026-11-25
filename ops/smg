@@ -52,7 +52,7 @@ usage: smg [--env prod|staging] [--yes] <command>
   confirm                        the update works: delete the pre-update dump and rollback data
   rollback                       back to the image (and data) before the last update
   backup                         encrypted backup now
-  restore <file> [--identity k]  put a backup back (k: your age key file for .age files;
+  restore <file> [--identity k]  put a backup back (k: your age key file;
           [--force-env]          --force-env: the backup is of another environment)
   restore --drill <file> [...]   restore into a throw-away database and check it
   logs [service]                 follow the logs (app, postgres, caddy)
@@ -172,7 +172,7 @@ cmd_rollback() {
   if ((restore)); then
     info "Restoring the dump taken before the update."
     compose "$env" stop app
-    restore_database "$env" "$dir/pre-update.dump"
+    restore_dump "$env" "$dir/pre-update.dump"
   fi
   compose "$env" up -d
   wait_ready "$env"
@@ -199,7 +199,7 @@ cmd_restore() {
     shift
   done
   [[ -f $file ]] || die "usage: smg restore [--drill] <file> [--identity <age key file>] [--force-env]"
-  if ((drill)); then do_drill "$file" "$identity"; else do_restore "$env" "$file" "$identity" "$force_env"; fi
+  if ((drill)); then do_drill "$env" "$file" "$identity"; else do_restore "$env" "$file" "$identity" "$force_env"; fi
 }
 
 # admin_create_super <env>: a local account with a password; a website install has none that

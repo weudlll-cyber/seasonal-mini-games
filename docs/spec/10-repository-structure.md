@@ -50,7 +50,7 @@ seasonal-mini-games/
 ├─ e2e/                    Playwright specs (journeys of 09 §4)
 ├─ load/                   guessStorm.mjs, mindStorm.mjs (09 §5)
 ├─ ops/                    install.sh, smg, lib/, compose.yml, compose.website.yml, compose.website-nginx.yml,
-│                          compose.dev.yml, Caddyfile, pull-backups.sh/.ps1, examples/, test/ (as Bingo, renamed)
+│                          compose.dev.yml, Caddyfile, examples/, test/ (as Bingo, renamed; backup and pull scripts: the kit's, T431)
 └─ docs/
    ├─ spec/                this specification
    ├─ BACKLOG.md  OPEN.md  DECISIONS.md  GAME-IDEAS.md

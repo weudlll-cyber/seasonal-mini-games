@@ -82,7 +82,7 @@ It says what it did, or why not: nobody with that id or name has signed in to th
 
 ## 5. Backups to your Windows PC
 
-The server makes an encrypted backup every night at 03:30 in `/var/backups/smg/prod/` and keeps the 14 newest plus one a week for 8 more weeks. The files belong to the group `smg-backup`, so a normal user can pull them; root login over SSH can stay off.
+The server makes an encrypted backup (the database and the uploads) every night at 03:30 in `/var/backups/smg/prod/` and keeps the 14 newest plus one a week for 8 more weeks. The scripts are the shared kit's. The files belong to the group `smg-backup`, so a normal user can pull them; root login over SSH can stay off.
 
 1. Once, on the server: a user for pulling, in the group `smg-backup`, with your SSH key:
    ```
@@ -92,20 +92,29 @@ The server makes an encrypted backup every night at 03:30 in `/var/backups/smg/p
    sudo cp ~/.ssh/authorized_keys /home/backup-pull/.ssh/ && sudo chown backup-pull: /home/backup-pull/.ssh/authorized_keys
    ```
    (With Bingo on the same server, the same user can also be in `sbr-backup`.)
-2. Pull the new ones to your PC (only files you do not have yet are copied; a copy counts only when it is complete), in PowerShell from the folder with the source (or copy `ops\pull-backups.ps1` anywhere):
+2. Pull the new ones to your PC. The pull script is the kit's; the installer put it on the server, so fetch it once (and again after a re-run of the installer), then run it in PowerShell (only files you do not have yet are copied; a copy counts only when it is complete):
    ```
-   powershell -ExecutionPolicy Bypass -File ops\pull-backups.ps1 -Server backup-pull@<VPS address>
+   scp <you>@<VPS address>:/opt/smg/kit/pull-backups.ps1 .
+   powershell -ExecutionPolicy Bypass -File pull-backups.ps1 -Server backup-pull@<VPS address> -RemoteDir /var/backups/smg/prod -Prefix smg -Target $HOME\Documents\smg-backups\prod
    ```
-   They land in `Documents\smg-backups\prod`. (Optional: run it daily with Windows Task Scheduler.) On Linux or macOS: `ops/pull-backups.sh backup-pull@<VPS address>`.
+   (Optional: run it daily with Windows Task Scheduler.) On Linux or macOS: `/opt/smg/kit/pull-backups.sh`, fetched the same way: `./pull-backups.sh backup-pull@<VPS address> /var/backups/smg/prod smg ~/smg-backups/prod`.
 3. A backup taken right now: `sudo smg backup`.
 4. Check that a backup can really be restored (monthly is good): copy your key up for a moment, run the drill, delete the key:
    ```
    scp $HOME\smg-age-key.txt <you>@<VPS address>:smg-age-key.txt
    ssh -t <you>@<VPS address> "sudo smg restore --drill /var/backups/smg/prod/<file> --identity smg-age-key.txt; rm smg-age-key.txt"
    ```
-   It restores into a throw-away database and says how many migrations, accounts, matches and round events came back.
-5. A real restore (replaces the live data; it asks first): the same, with `smg restore <file> --identity …` instead of `--drill`. It refuses a backup of another environment (a staging file on prod) unless you add `--force-env`.
-6. On a development machine the same drill runs against the dev database: `pnpm drill:dev` (with the dev stack up).
+   It restores into a throw-away database and compares every table's rows with the rows the backup carries; it ends with "drill passed".
+5. A real restore (replaces the database and the uploads; it asks first): the same, with `smg restore <file> --identity …` instead of `--drill`. It refuses a backup of another environment (a staging file on prod) unless you add `--force-env`.
+6. A backup made before 2026-11-25 (it holds `db.dump` and `uploads.tar` and no manifest) is refused as it is. Rewrite it once, on a computer with your age key and `age`, then restore the new file as above (use the environment it came from instead of `prod`, and your public key for `age1…`):
+   ```
+   mkdir old && age -d -i smg-age-key.txt <old file> | tar -C old -xf -
+   cd old && mv uploads.tar vol-smg-prod_uploads.tar
+   printf 'format=1\nprefix=smg\nenv=prod\n' > manifest.txt
+   tar -cf - db.dump manifest.txt vol-smg-prod_uploads.tar | age -r age1… > ../smg-prod-converted.tar.age
+   cd .. && rm -r old
+   ```
+7. On a development machine the drill runs against the dev database: `pnpm drill:dev` (with the dev stack up, `age` installed and `pnpm install` run).
 
 ## 6. Updating and rolling back
 

@@ -137,7 +137,7 @@ next_steps() {
     info "     (or --website-id <your website user id>; a name two members share is refused)."
     info "  The website's $SMG_WEBSITE_MODE already serves the route ($SMG_WEBSITE_ROUTE_FILE)."
   fi
-  info "  Backups run every night at 03:30 into $SMG_BACKUPS/$SMG_ENV/; pull them to your PC with ops/pull-backups.ps1."
+  info "  Backups run every night at 03:30 into $SMG_BACKUPS/$SMG_ENV/; pull them to your PC with $SMG_ROOT/kit/pull-backups.ps1 (docs/operator-guide.md §5)."
   info "  Status: sudo smg status"
 }
 

@@ -65,6 +65,11 @@ RUN apk upgrade --no-cache \
   && addgroup -S -g 10001 smg && adduser -S -u 10001 -G smg -H smg \
   && mkdir /data && chown 10001:10001 /data
 COPY --from=build /out ./
+# The installer copies the kit's backup and pull scripts out of the image (ops/lib/config.sh);
+# a kit that ships them elsewhere fails the build here.
+RUN test -f node_modules/@seasonal/kit/ops/backup.sh \
+  && test -f node_modules/@seasonal/kit/ops/pull-backups.sh \
+  && test -f node_modules/@seasonal/kit/ops/pull-backups.ps1
 USER 10001:10001
 EXPOSE 3100
 HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
