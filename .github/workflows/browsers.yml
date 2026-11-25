@@ -2,8 +2,8 @@
 # @module ci
 # @brief  The Playwright suite in Firefox and WebKit on master, every night and on demand.
 #
-# Responsibility: the merge gate and every push run the browser tests in Chromium only
-#                 (./ci.yml, job `e2e`); Firefox and WebKit (at a phone's viewport) run here,
+# Responsibility: the merge gate and every push to master run the browser tests in Chromium
+#                 only (./ci.yml, job `e2e`); Firefox and WebKit (at a phone's viewport) run here,
 #                 on master, at 02:30 UTC every night (03:30 in Vienna in winter, 04:30 in
 #                 summer, outside 06:00–09:00) and when started by hand (owner decision O103,
 #                 amending O69). Their specs first, then the timing specs one browser after the

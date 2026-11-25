@@ -4,19 +4,20 @@
 #
 # Responsibility: run what "pnpm verify" runs and the domain/application coverage, the
 #                 dependency/secret scans, the license check of the production
-#                 dependencies, the markdown link check and the Playwright suite in Chromium on
-#                 every push and pull request, master included (the merge gate is verify plus
-#                 Chromium; Firefox and WebKit run nightly in ./browsers.yml, DECISIONS O103,
-#                 amending O69); on the way to master also the image build, scan and size check. The
-#                 screenshot branches (`shots/**`, T146) run nothing. Any red job blocks merge.
+#                 dependencies, the markdown link check, the Playwright suite in Chromium and the
+#                 image build, scan and size check, on every pull request to master and on every
+#                 push to master (the merge gate is verify plus Chromium; Firefox and WebKit run
+#                 nightly in ./browsers.yml, DECISIONS O103, amending O69). A push to any other
+#                 branch runs nothing: its pull request's run is its only run (DECISIONS O156).
+#                 Any red job blocks merge.
 # Depends on:     .github/actions/setup, Dockerfile, osv-scanner.toml, e2e/
 # Spec:           Bingo 08 §3–§4, Bingo 03 §18
 name: CI
 
 on:
   push:
-    # Every branch but the screenshot branches, which hold images only (T146, T149).
-    branches: ['**', '!shots/**']
+    # Master only: a branch is checked by its pull request, once (O156).
+    branches: [master]
   pull_request:
     branches: [master]
 
@@ -24,7 +25,7 @@ permissions:
   contents: read
 
 concurrency:
-  # One group per branch and event, so a push and its PR do not cancel each other.
+  # One group per pull request's branch, one for master: a new push cancels the run before it.
   group: ci-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
   # Every merge commit on master must get its own finished run.
   cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
@@ -100,8 +101,8 @@ jobs:
             --exclude-path node_modules --exclude-path reports '**/*.md'
 
   e2e:
-    # On every push and pull request: a branch learns of a red browser test before it
-    # reaches master (MERGE-AUDIT-1: master went red four times on tests no branch had run).
+    # On every pull request too: a branch learns of a red browser test before it reaches
+    # master (MERGE-AUDIT-1: master went red four times on tests no branch had run).
     # Chromium only, everywhere (the merge gate and master, O103); Firefox and WebKit run
     # every night in ./browsers.yml.
     runs-on: ubuntu-latest
@@ -126,8 +127,6 @@ jobs:
           retention-days: 7
 
   image:
-    # Only on the way to master: PRs to master and pushes to master.
-    if: github.event_name == 'pull_request' || github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
     env:
       IMAGE: smg:ci
