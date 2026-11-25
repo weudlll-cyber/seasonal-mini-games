@@ -45,16 +45,10 @@ For Phase 7:
 
 ### Kit adoption (owner decisions O142, O150)
 
-- On `master` at the kit's v0.17.0 since the merge commit `52f996c` (PR #53, 2026-11-24; the first move to v0.11.1 was PR #52, `0bed072`); the server parts since `b542503` (PR #54, T427). The move to v0.18.0 is on `master` since the merge commit `1988346` (PR #55, T428).
-- Kit audit findings (2026-11-25, O154). Reference for both: seasonal-kit `docs/AUDIT-2026-11-25.md` and `docs/concepts/shared-server-parts.md`, sections 3 and 4; the kit's cookie helper, CSRF check and security header set are planned for v0.21.0; adopt them in their own task once the owner gives the word; no own fix.
-  - In website mode the session cookie has a fixed 30-day lifetime (`apps/server/src/auth/sessionPlugin.ts:119`) while the website's sessions end after 7 days; Bingo derives the lifetime from its session lengths.
-  - The content security policy allows `'unsafe-inline'` for styles (`apps/server/src/http/plugins/securityHeaders.ts:66`); scripts are already `'self'` only (`:67`). What needs inline styles or scripts today (searched in apps, games and packages; html, ts, tsx; production code, tests left out):
-    - Blocked by `style-src` without `'unsafe-inline'` (inline `<style>` and `style=""` attributes in served HTML): `apps/server/src/http/routes/placeholder.ts:37` (a `<style>` block in the server's start page), `:52`, `:53`, `:54` (`style="color:#04aaf7"` on three links), `apps/server/src/http/routes/webClient.ts:39` (`style="…"` on the body of `ADMIN_PLACEHOLDER`, shown when the admin app is not installed).
-    - Inline scripts: none. `apps/web/index.html:20` (`theme-init.js`) and `:24` (`main.tsx`) and `apps/admin/index.html:20` are external files; no `<script>` or `<style>` tag with a body exists in either `index.html` or in any other served page.
-    - Not blocked (CSSOM assignments from script on a CSP-covered page; `style-src` does not apply): `games/mind-games/web/FlightBand.tsx:81` (`probe.style.visibility`), and in `apps/embed-loader/src/index.ts:115` (`frame.style.cssText`) and `:118` (`frame.style.height`), which runs on the embedding site's page under that site's policy, not under the game's.
-    - Not blocked (React `style` props, which React sets through the DOM's style object): `apps/web/src/match/SeriesStatus.tsx:123`, `apps/web/src/match/WaitingArea.tsx:66`, `apps/web/src/round/ClosestToWinning.tsx:50`, `:77`, `apps/web/src/round/FocusShell.tsx:126`, `apps/web/src/round/GuessLine.tsx:97`, `:171`, `:252`, `apps/web/src/round/RoundChat.tsx:64`, `apps/web/src/round/RoundScreen.tsx:96`, `apps/web/src/round/RoundSide.tsx:68`, `:190`, `apps/web/src/season/SeasonIcon.tsx:39`, `:54`, `games/bomb-defusal/web/WireChip.tsx:30`, `games/mind-games/web/ChoiceButtons.tsx:112`, `:123`, `:141`, `games/mind-games/web/FlightBand.tsx:182`, `:231`, `:257`, `games/mind-games/web/ResultPanel.tsx:59`, `:136`, `games/seasonal-target/web/TileGrid.tsx:260`, `packages/ui/src/PlayerMark.tsx:29`. `FocusShell.tsx:48` only types the prop.
-    - Inline SVG (`<svg>` in components) carries no inline style; no `eval`, `innerHTML`, `dangerouslySetInnerHTML` or `javascript:` was found.
-- Stays the game's own after the move, with the reason or the kit release that replaces it: T423. The one kit-related stand-in left: a host chat from another https origin, which the kit defers (T412).
+- On `master` at the kit's v0.18.0 since the merge commit `1988346` (PR #55, T428; v0.17.0 `52f996c`, the server parts `b542503`). The move to v0.22.0 is on `feat/kit-0.22` (draft PR #57, O155, T429 to T433) and waits for the owner's look at the round screens.
+- Stays the game's own after the move, with the reason or the kit release that replaces it: T423. Kit-related stand-ins left: a host chat from another https origin, which the kit defers (T412), and `readLimited` for the account feed until the kit's fetch serves it (T429).
+- Owner question (ao): whether the encrypted backup also holds the round and recovery keys (T431, OPEN).
+- `ops/test/installer-test.sh` (by hand, 20 to 40 minutes) has not run since the backups became the kit's (T431); it runs the kit's backup and drill on a fresh server.
 
 ### Optional inputs
 
@@ -62,6 +56,7 @@ For Phase 7:
 
 ## Part two — closed
 
+- 2026-11-25: The two findings of the kit's audit (O154): the session cookie now lives as long as its session (7 days after a website sign-in), and `style-src` is `'self'`: the server's two pages take their styles from `/server-pages.css` (T430). _Closed by:_ branch `feat/kit-0.22` (draft PR #57)
 - 2026-11-24: The result frame's own font-load count (T423 (3), second half): the kit's `ResultFrame` takes `fit={{ afterFonts: true }}` since v0.18.0 (K55); `useFontLoads` is deleted (T428). _Closed by:_ PR #55, merge commit `1988346`
 - 2026-11-24: The sign-in's per-account limit counts only failed attempts: the kit's `FailureBrake` (the owner's answer, O153), with the same 5 in 15 minutes and the same 429 (T427 (4)). _Closed by:_ branch `feat/kit-server` (draft PR #54)
 - 2026-11-24: The game's own rate limiter and session-end notifier: the kit's `RateLimiter` and `SessionEnds` replace them, `auth/rateLimit.ts` keeps only the game's rules as `auth/rateRules.ts` (T427, O152). _Closed by:_ branch `feat/kit-server` (draft PR, not merged: the `FailureBrake` question is open)
