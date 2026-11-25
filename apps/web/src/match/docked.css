@@ -114,7 +114,10 @@
 /* A desktop: the reference's page padding (the shell's focus mode has 8 px). */
 @media (min-width: 900px) and (orientation: landscape) {
   #root .shell-main.shell-main:has(.match-docked) {
-    padding: 20px 28px;
+    /* Named for the round's bar, which reaches past it (../round/focus.css). */
+    --smg-round-inset: 28px;
+
+    padding: 20px var(--smg-round-inset);
   }
 }
 
@@ -136,7 +139,10 @@
     /* The containing block of what is placed inside (the visually hidden labels), so nothing
        of the scrolled content reaches past the screen and scrolls the page. */
     position: relative;
-    padding: 12px 14px 16px;
+
+    --smg-round-inset: 14px;
+
+    padding: 12px var(--smg-round-inset) 16px;
     overflow-y: auto;
   }
 
@@ -162,7 +168,10 @@
      so nothing hides behind it. */
   .match-docked .sk-docked-main:has(.round-live[data-layout='list']) {
     overflow: hidden;
-    padding: 8px 10px;
+
+    --smg-round-inset: 10px;
+
+    padding: 8px var(--smg-round-inset);
   }
 
   .match-docked .match-live:has(> .round-live[data-layout='list']) {
