@@ -57,7 +57,7 @@ export class ProviderKeys {
   private readonly sets = new Map<string, { keys: readonly Jwk[]; at: number }>();
 
   constructor(
-    // The SSRF-safe JSON fetch (../seasons/safeFetch with the install's options).
+    // The SSRF-safe JSON fetch (./outbound with the install's options).
     private readonly fetchJson: (url: string) => Promise<unknown>,
     private readonly now: () => number = Date.now,
   ) {}

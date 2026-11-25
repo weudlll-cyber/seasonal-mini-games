@@ -8,7 +8,7 @@
  *                 once, never listed, sealed at rest) and the audit keeps it without the secret;
  *                 opening a match, a round's countdown and its end (winner and placings by
  *                 display name) and closing the match queue one delivery each; the deliverer
- *                 sends them through the safe client (test CA, loopback allowed) signed with
+ *                 sends them through the guarded client (test CA, loopback allowed) signed with
  *                 HMAC-SHA256, retries the one the receiver refused, and the admin sees them.
  *                 The test delivers at the database's clock, which queued the deliveries, not at
  *                 its own: a delivery queued a moment before is then due (T374).
@@ -16,13 +16,13 @@
  * Spec:           docs/spec/07-integration.md §1, §3.2; Bingo 07 §5; docs/spec/09-testing-strategy.md §2
  */
 import { createHmac } from 'node:crypto';
-import { createServer, type Server } from 'node:https';
+import { createServer, globalAgent, type Server } from 'node:https';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { loadEnv } from '../src/config/env.js';
 import { derivedKey, roundKeyFrom } from '../src/config/roundKey.js';
-import { safePost } from '../src/integration/safePost.js';
+import { postWebhook } from '../src/integration/outbound.js';
 import { WebhookDelivery } from '../src/integration/webhookDelivery.js';
 import { WebhookStore } from '../src/integration/webhooks.js';
 import { SUITE_TIMEOUT_MS } from './harness.js';
@@ -60,18 +60,21 @@ beforeAll(async () => {
   await new Promise<void>((resolve) => receiver.listen(0, '127.0.0.1', resolve));
   const address = receiver.address();
   url = `https://127.0.0.1:${String(typeof address === 'object' && address ? address.port : 0)}/hook`;
-  // A deliverer as the server's own, with the test receiver's certificate trusted.
+  // A deliverer as the server's own, with the test receiver's certificate trusted: the kit's
+  // fetch takes no CA of its own, so the test gives it to the agent it connects through.
+  globalAgent.options.ca = tls.cert;
   const env = loadEnv({ NODE_ENV: 'test', DATABASE_URL: kit.harness.container.getConnectionUri() });
   const store = new WebhookStore(
     kit.harness.pool,
     derivedKey(roundKeyFrom(env), 'smg webhook secrets'),
   );
   delivery = new WebhookDelivery(store, (to, body, headers) =>
-    safePost(to, body, headers, { allowLocal: true, ca: tls.cert }),
+    postWebhook(to, body, headers, { allowLocal: true }),
   );
 }, SUITE_TIMEOUT_MS);
 
 afterAll(async () => {
+  delete globalAgent.options.ca;
   await new Promise((resolve) => receiver.close(resolve));
   await kit.close();
 }, SUITE_TIMEOUT_MS);

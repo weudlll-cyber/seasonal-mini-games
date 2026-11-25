@@ -1,20 +1,19 @@
 /**
  * @file   apps/server/src/integration/webhookDelivery.test.ts
  * @module server/integration
- * @brief  The webhook signature, the retry schedule, and the addresses the client refuses.
+ * @brief  The webhook signature and the retry schedule.
  *
  * Responsibility: `X-SMG-Signature: t=<ts>,v1=<hex>` is HMAC-SHA256 of `${t}.${body}` under the
  *                 endpoint's secret, as a receiver recomputes it, and changes with the body, the
- *                 time and the secret; retries wait 30 s, 2 min, 8 min; plain HTTP and private or
- *                 loopback addresses are refused before any connection.
- * Depends on:     vitest, node:crypto, ./webhookDelivery, ./safePost
+ *                 time and the secret; retries wait 30 s, 2 min, 8 min. The addresses the client
+ *                 refuses are ./outbound.test.
+ * Depends on:     vitest, node:crypto, ./webhookDelivery
  * Spec:           docs/spec/07-integration.md §3.2; Bingo 07 §5; Bingo 03 §10
  */
 import { createHmac } from 'node:crypto';
 
 import { describe, expect, it } from 'vitest';
 
-import { safePost } from './safePost.js';
 import { retryDelayMs, signatureHeader } from './webhookDelivery.js';
 
 describe('the webhook signature', () => {
@@ -40,21 +39,5 @@ describe('the webhook signature', () => {
 describe('the retries', () => {
   it('wait 30 s, 2 min and 8 min', () => {
     expect([1, 2, 3].map(retryDelayMs)).toEqual([30_000, 120_000, 480_000]);
-  });
-});
-
-describe('the webhook client', () => {
-  const strict = { allowLocal: false };
-
-  it('refuses plain HTTP and addresses that are not public', async () => {
-    for (const url of [
-      'http://hooks.example.org/x',
-      'https://127.0.0.1/x',
-      'https://10.1.2.3/x',
-      'https://169.254.169.254/latest',
-      'https://[::1]/x',
-    ]) {
-      await expect(safePost(url, '{}', {}, strict), url).rejects.toThrow();
-    }
   });
 });

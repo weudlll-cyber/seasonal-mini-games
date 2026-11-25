@@ -11,7 +11,8 @@
  *                 The current season is usable only while younger than `inSeason.staleAfterH`
  *                 (03 §3). Today is a halving day when `halving_days` lists the date of today
  *                 in `halving.timeZone` (03 §4). Unknown fields of the feed are ignored.
- * Depends on:     zod, @smg/application (settings), ../db/pool, ./safeFetch
+ * Depends on:     zod, @smg/application (settings), ../db/pool,
+ *                 ../integration/outbound
  * Used by:        ../round/runtime, ../match/play, ../http/routes/seasons
  * Spec:           docs/spec/03-seasonal-specials.md §3, §4; docs/spec/07-integration.md §5
  */
@@ -20,7 +21,7 @@ import type { Season } from '@smg/game-sdk';
 import { z } from 'zod';
 
 import type { DbPool } from '../db/pool.js';
-import { safeFetchJson } from './safeFetch.js';
+import { fetchJson } from '../integration/outbound.js';
 
 const SEASON = z.enum(['spring', 'summer', 'autumn', 'winter']);
 const feedSchema = z.object({
@@ -107,7 +108,7 @@ export class Seasons {
       this.devFeedUrl ?? ((await this.settings.values('seasons'))['seasons.feedUrl'] as string);
     if (url === '') return { ok: false, error: 'no feed configured' };
     try {
-      const fetched = await safeFetchJson(url, { allowLocal: this.devFeedUrl !== null });
+      const fetched = await fetchJson(url, { allowLocal: this.devFeedUrl !== null });
       const feed = feedSchema.parse(fetched);
       await this.keep(feed);
       return { ok: true };

@@ -12,19 +12,18 @@
  *                 successful poll is kept for `smg status` (GET /readyz, `feedLastSuccess`).
  *                 Errors back off (30 s doubling to 10 min) and are logged by their message only: the token is
  *                 never in a log line. A plain fetch with a 10 s timeout, no redirects and a
- *                 256 KiB cap, not the SafeHttpClient, which takes public https addresses only
- *                 (an SSRF guard for addresses admins type); this one is the operator's local
- *                 http address from the env file (DECISIONS T217).
- * Depends on:     zod, ../db/pool, @seasonal/kit/server (SessionEnds, type), ./accountChanges,
- *                 ../seasons/safeFetch (readLimited, FetchRefused)
+ *                 256 KiB cap, not the guarded fetch of ./outbound, which takes public https
+ *                 addresses only (an SSRF guard for addresses admins type); this one is the
+ *                 operator's local http address from the env file (DECISIONS T217, T429).
+ * Depends on:     zod, ../db/pool, @seasonal/kit/server (FetchRefused, SessionEnds type),
+ *                 ./accountChanges
  * Used by:        ../main, ../http/routes/health (feedLastSuccess), test/*
  * Spec:           docs/spec/07-integration.md §7; docs/spec/05-security-threat-model.md §1
  */
 import { z } from 'zod';
 
-import type { SessionEnds } from '@seasonal/kit/server';
+import { FetchRefused, type SessionEnds } from '@seasonal/kit/server';
 import type { DbPool } from '../db/pool.js';
-import { FetchRefused, readLimited } from '../seasons/safeFetch.js';
 import {
   ACCOUNT_CHANGE_KINDS,
   applyAccountChange,
@@ -61,6 +60,21 @@ export interface AccountFeedDeps {
   readonly log: FeedLog;
 }
 
+// An answer's body as text, refused past the cap as it arrives.
+async function readLimited(response: Response): Promise<string> {
+  if (response.body === null) return '';
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  for await (const chunk of response.body as AsyncIterable<Uint8Array>) {
+    size += chunk.byteLength;
+    if (size > LIMIT_BYTES) {
+      throw new FetchRefused(`the answer is larger than ${String(LIMIT_BYTES / 1024)} KiB`);
+    }
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks).toString('utf8');
+}
+
 async function fetchPage(deps: AccountFeedDeps, since: string): Promise<z.infer<typeof Page>> {
   const url = new URL(FEED_PATH, deps.localUrl);
   url.searchParams.set('since', since);
@@ -70,7 +84,7 @@ async function fetchPage(deps: AccountFeedDeps, since: string): Promise<z.infer<
     headers: { accept: 'application/json', 'x-games-sync-token': deps.token },
   });
   if (!response.ok) throw new FetchRefused(`the feed answered ${String(response.status)}`);
-  const page = Page.safeParse(JSON.parse(await readLimited(response, LIMIT_BYTES)));
+  const page = Page.safeParse(JSON.parse(await readLimited(response)));
   if (!page.success) throw new FetchRefused('the feed answer has the wrong shape');
   return page.data;
 }
