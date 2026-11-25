@@ -212,7 +212,7 @@ describe("the website's chat (07 §2)", () => {
   const configOf = (app: App, url: string) => app.fastify.inject({ method: 'GET', url });
   const frameSrc = (r: { headers: Record<string, unknown> }) =>
     String(r.headers['content-security-policy'])
-      .split(';')
+      .split('; ')
       .find((d) => d.startsWith('frame-src'));
 
   it('is the website room by default and the only frame; local mode is unchanged', async () => {
