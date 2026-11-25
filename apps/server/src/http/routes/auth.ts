@@ -102,8 +102,8 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AuthDeps): void {
     // A guest session lives as long as a player's: 7 days in website mode (T280).
     const days = deps.signInPath === null ? undefined : WEBSITE_SESSION_DAYS;
     const userAgent = request.headers['user-agent'] ?? null;
-    const { token } = await createSession(deps.pool, null, userAgent, days);
-    setSessionCookie(reply, deps.cookie, token);
+    const session = await createSession(deps.pool, null, userAgent, days);
+    setSessionCookie(reply, deps.cookie, session);
     return reply.status(201).send({ kind: 'guest' });
   });
   // Website mode: no registration and no password sign-in (the routes do not exist, 404).
@@ -206,13 +206,13 @@ export async function openSession(
     await revokeSession(deps.pool, request.session.id);
     void deps.sessionEnds.end([request.session.id]);
   }
-  const { token } = await createSession(
+  const session = await createSession(
     deps.pool,
     accountId,
     request.headers['user-agent'] ?? null,
     deps.playerDays,
   );
-  setSessionCookie(reply, deps.cookie, token);
+  setSessionCookie(reply, deps.cookie, session);
 }
 
 // A new session for the account, answered with its cookie (also after a handoff, ./handoff).

@@ -39,12 +39,15 @@ export interface Person {
   readonly page: Page;
 }
 
+// A browser's page names itself as the source of a write; Playwright's request context does
+// not, and the server refuses a write that names nobody (the kit's writeCheck, T430).
+export const FROM_THE_PAGE = { 'sec-fetch-site': 'same-origin' };
+
 export async function person(browser: Browser, who: Who, viewport = DESKTOP): Promise<Person> {
   const ctx = await browser.newContext({ baseURL: `${CLIENT_URL}/`, viewport });
-  const r =
-    who === 'guest'
-      ? await ctx.request.post('api/v1/auth/guest', { data: {} })
-      : await ctx.request.post('api/v1/dev/sign-in', { data: { as: who } });
+  const [path, data] =
+    who === 'guest' ? ['api/v1/auth/guest', {}] : ['api/v1/dev/sign-in', { as: who }];
+  const r = await ctx.request.post(path, { data, headers: FROM_THE_PAGE });
   expect(r.ok(), `${who} signed in`).toBe(true);
   const page = await ctx.newPage();
   await page.goto('./');
@@ -63,7 +66,7 @@ export async function attempt(
   };
   const r = await p.ctx.request.fetch(`api/v1${path}`, {
     method,
-    headers: { 'x-csrf-token': session.csrfToken ?? '' },
+    headers: { ...FROM_THE_PAGE, 'x-csrf-token': session.csrfToken ?? '' },
     ...(data === undefined ? {} : { data }),
   });
   return { status: r.status(), body: r.status() === 204 ? undefined : await r.json() };

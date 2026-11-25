@@ -22,7 +22,7 @@ import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 
 import { CLIENT_URL, HOST_PAGE_URL } from './testStack.js';
 import { registerHostSite, removeHostSite } from './hostSite.js';
-import { call, person, type Person } from './play.js';
+import { call, FROM_THE_PAGE, person, type Person } from './play.js';
 
 interface SessionView {
   readonly account: { readonly id: string; readonly displayName: string } | null;
@@ -61,7 +61,7 @@ async function deleteIfSignedIn(ctx: BrowserContext): Promise<void> {
   const session = await sessionOf(ctx);
   if (session.account === null) return;
   const r = await ctx.request.delete(`${CLIENT_URL}/api/v1/me`, {
-    headers: { 'x-csrf-token': session.csrfToken ?? '' },
+    headers: { ...FROM_THE_PAGE, 'x-csrf-token': session.csrfToken ?? '' },
     data: { confirm: session.account.displayName },
   });
   expect(r.status(), 'test account deleted').toBe(204);

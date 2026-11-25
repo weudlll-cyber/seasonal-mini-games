@@ -89,7 +89,7 @@ describe('server integration', () => {
     const trusted = "require-trusted-types-for 'script'";
     expect(response.headers['content-security-policy']).not.toContain(trusted);
     const admin = await app().inject({ method: 'GET', url: '/admin/' });
-    expect(admin.headers['content-security-policy']).toContain(`;${trusted}`);
+    expect(admin.headers['content-security-policy']).toContain(trusted);
   });
 
   it('returns problem+json on 404', async () => {

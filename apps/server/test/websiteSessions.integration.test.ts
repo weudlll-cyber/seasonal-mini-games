@@ -7,7 +7,7 @@
  *                 session from the website's sign-in and a website guest session end 7 days
  *                 after they start, the same as Bingo's; an admin session from the website
  *                 keeps 8 hours absolute and 30 minutes idle; a local player and a local guest
- *                 keep 30 days.
+ *                 keep 30 days. The cookie's Max-Age is the session's length (T430).
  * Depends on:     vitest, ../src/index (types), ./harness, ./websiteHelpers
  * Spec:           docs/spec/07-integration.md §7; Bingo 03 §3
  */
@@ -72,6 +72,7 @@ describe('session lifetimes in website mode (T280)', () => {
     });
     expect(guest.statusCode).toBe(201);
     expect((await lifetime(null))?.hours).toBe(7 * DAY_H);
+    expect(guest.cookies[0]?.maxAge).toBe(7 * DAY_H * 3600);
     const there = await local.fastify.inject({
       method: 'POST',
       url: '/api/v1/auth/guest',
@@ -79,6 +80,7 @@ describe('session lifetimes in website mode (T280)', () => {
     });
     expect(there.statusCode).toBe(201);
     expect((await lifetime(null))?.hours).toBe(30 * DAY_H);
+    expect(there.cookies[0]?.maxAge).toBe(30 * DAY_H * 3600);
   });
 
   it('keeps 30 days for a local player', async () => {

@@ -11,7 +11,7 @@
  *                 With SMG_ADMIN_DIR the admin app is served the same way under /admin/
  *                 (/admin redirects there, so its relative asset paths resolve; the same
  *                 security headers); without it /admin answers a placeholder.
- * Depends on:     fastify, node:fs, node:path
+ * Depends on:     fastify, node:fs, node:path, ./serverPageStyles
  * Used by:        ../app.ts (only when SMG_WEB_DIR is set, i.e. in the image)
  * Spec:           Bingo 09 §1; Bingo 08 §4
  */
@@ -19,6 +19,8 @@ import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import type { FastifyInstance, FastifyReply } from 'fastify';
+
+import { STYLESHEET_LINK } from './serverPageStyles.js';
 
 const TYPES: Readonly<Record<string, string>> = {
   '.html': 'text/html; charset=utf-8',
@@ -35,8 +37,9 @@ const TYPES: Readonly<Record<string, string>> = {
 
 const ADMIN_PLACEHOLDER = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Seasonal Mini Games — admin</title></head>
-<body style="font-family: system-ui, sans-serif; margin: 3rem;">
+<title>Seasonal Mini Games — admin</title>
+${STYLESHEET_LINK}</head>
+<body class="plain">
 <h1>Admin</h1><p>The admin app is not installed on this server. Hosts run their matches from the game itself.</p>
 </body></html>`;
 

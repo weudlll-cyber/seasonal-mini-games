@@ -17,7 +17,10 @@ import { LOAD_ORIGIN, LOAD_PORT } from './stack.mjs';
 
 // The load check's own server (./stack), never the developer's.
 export const BASE = `http://127.0.0.1:${LOAD_PORT}`;
+// The origin the sockets name (the server's allowlist).
 export const ORIGIN = LOAD_ORIGIN;
+// What a browser's page says of its own write; the server refuses a write that names nobody.
+export const FROM_THE_PAGE = { 'sec-fetch-site': 'same-origin' };
 
 export const problems = { http: 0, socket: 0, examples: [] };
 export function fail(kind, detail) {
@@ -28,7 +31,7 @@ export function fail(kind, detail) {
 export async function signIn(as) {
   const r = await fetch(`${BASE}/api/v1/dev/sign-in`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', origin: ORIGIN },
+    headers: { 'content-type': 'application/json', ...FROM_THE_PAGE },
     body: JSON.stringify({ as }),
   });
   if (!r.ok) fail('http', `sign-in ${as} → ${String(r.status)}`);
@@ -43,7 +46,7 @@ export async function call(client, method, path, body) {
     method,
     headers: {
       cookie: client.cookie,
-      origin: ORIGIN,
+      ...FROM_THE_PAGE,
       'x-csrf-token': client.csrf,
       ...(body === undefined ? {} : { 'content-type': 'application/json' }),
     },

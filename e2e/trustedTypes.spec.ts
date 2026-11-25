@@ -8,12 +8,13 @@
  *                 signed in as the development admin, every area opens with its heading, the
  *                 Integration area's tabs and a form open, and the page reports no CSP or
  *                 Trusted Types violation and logs no error to the console.
- * Depends on:     @playwright/test, ./builtAdmin
+ * Depends on:     @playwright/test, ./builtAdmin, ./play
  * Spec:           Bingo 03 §7; docs/security-pass.md; DECISIONS T178, T179
  */
 import { expect, test } from '@playwright/test';
 
 import { serveBuiltAdmin, type BuiltAdmin } from './builtAdmin.js';
+import { FROM_THE_PAGE } from './play.js';
 
 const AREAS = [
   ['Live', 'Live rounds'],
@@ -56,6 +57,7 @@ test('the built admin app runs with Trusted Types enforced and no violation', as
     });
   });
   const signedIn = await ctx.request.post(new URL('../api/v1/dev/sign-in', admin.url).href, {
+    headers: FROM_THE_PAGE,
     data: { as: 'admin' },
   });
   expect(signedIn.ok()).toBe(true);

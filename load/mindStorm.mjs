@@ -17,7 +17,7 @@
 import { writeFileSync } from 'node:fs';
 import { Worker } from 'node:worker_threads';
 
-import { BASE, ORIGIN, call, inGroups, problems, signIn } from './http.mjs';
+import { BASE, FROM_THE_PAGE, call, inGroups, problems, signIn } from './http.mjs';
 import { metricsSampler, spread } from './measure.mjs';
 import { withLoadStack } from './stack.mjs';
 
@@ -153,7 +153,7 @@ async function main() {
       });
     await fetch(`${BASE}/api/v1/dev/load-accounts`, {
       method: 'DELETE',
-      headers: { origin: ORIGIN },
+      headers: FROM_THE_PAGE,
     });
     const after = await call(ctx.admin, 'GET', '/admin/settings/matchmaking');
     await call(ctx.admin, 'PUT', '/admin/settings/matchmaking', {

@@ -5,7 +5,8 @@
  *
  * Responsibility: start one database per test file, migrate it and build the app with
  *                 test settings (overridable, e.g. NODE_ENV=production or feature flags);
- *                 `buildOn` builds a second app on the same database; a test may install the
+ *                 `buildOn` builds a second app on the same database; injected requests name
+ *                 the game's own page as their source unless they name one; a test may install the
  *                 phased fixture beside the registry's games. Every test file
  *                 stops its own container (Bingo 12 §7: data created by a test is removed),
  *                 also when a test failed; while it stops, the server's "terminating
@@ -16,6 +17,7 @@
  */
 import { PostgreSqlContainer, type StartedPostgreSqlContainer } from '@testcontainers/postgresql';
 import type { InstalledGame } from '@smg-game/registry';
+import type { InjectOptions } from 'fastify';
 import { vi } from 'vitest';
 
 import { buildApp, createPool, loadEnv, migrate, type App, type DbPool } from '../src/index.js';
@@ -59,7 +61,22 @@ export async function buildOn(
   });
   const built = await buildApp({ env, pool, limitsNow, ...(games === undefined ? {} : { games }) });
   await built.fastify.ready();
+  asFromItsOwnPage(built);
   return built;
+}
+
+// A browser names where a write comes from, and the server asks for it (the kit's writeCheck):
+// an injected request that names neither Origin nor Sec-Fetch-Site comes from the game's page.
+function asFromItsOwnPage(built: App): void {
+  const inject = built.fastify.inject.bind(built.fastify) as (o: unknown) => unknown;
+  built.fastify.inject = ((options: InjectOptions | string) => {
+    if (typeof options === 'string') return inject(options);
+    const headers = options.headers ?? {};
+    const named = 'origin' in headers || 'sec-fetch-site' in headers;
+    return inject(
+      named ? options : { ...options, headers: { ...headers, 'sec-fetch-site': 'same-origin' } },
+    );
+  }) as typeof built.fastify.inject;
 }
 
 export async function startHarness(

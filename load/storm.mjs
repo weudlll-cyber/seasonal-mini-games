@@ -15,7 +15,7 @@
  */
 import { Worker } from 'node:worker_threads';
 
-import { BASE, ORIGIN, call, inGroups, signIn } from './http.mjs';
+import { BASE, FROM_THE_PAGE, call, inGroups, signIn } from './http.mjs';
 import { firedSpecials, integrity, metricsSampler, spread } from './measure.mjs';
 
 // `count` load accounts from number `from` on (load-0001 …), signed in in paced groups.
@@ -68,7 +68,7 @@ export async function restoreLimit(admin, before) {
 export function deleteLoadAccounts() {
   return fetch(`${BASE}/api/v1/dev/load-accounts`, {
     method: 'DELETE',
-    headers: { origin: ORIGIN },
+    headers: FROM_THE_PAGE,
   });
 }
 

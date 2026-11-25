@@ -12,11 +12,12 @@
  *                 (DELETE /me), also when a step fails. In Chromium it saves the register,
  *                 sign-in and account screens (both sizes and themes) to reports/screens/latest/.
  *                 Taken over from Bingo; the match step moved to the round journeys.
- * Depends on:     @playwright/test, ./screens
+ * Depends on:     @playwright/test, ./play, ./screens
  * Spec:           docs/spec/09-testing-strategy.md §4; Bingo 05 §2.1; Bingo 03 §2.1, §13
  */
 import { expect, test, type Page } from '@playwright/test';
 
+import { FROM_THE_PAGE } from './play.js';
 import { captureLook, SHOTS_DIR } from './screens.js';
 
 const PASSWORD = 'correct horse battery staple';
@@ -25,13 +26,16 @@ const NEW_PASSWORD = 'another long passphrase';
 // Teardown: deletes the test account; a failed sign-in or deletion fails the test, so no
 // account is left behind unnoticed.
 async function deleteAccount(page: Page, email: string, password: string): Promise<void> {
-  const login = await page.request.post('/api/v1/auth/login', { data: { email, password } });
+  const login = await page.request.post('/api/v1/auth/login', {
+    headers: FROM_THE_PAGE,
+    data: { email, password },
+  });
   expect(login.status(), 'teardown signs in as the test account').toBe(200);
   const session = (await (await page.request.get('/api/v1/session')).json()) as {
     csrfToken: string | null;
   };
   const r = await page.request.delete('/api/v1/me', {
-    headers: { 'x-csrf-token': session.csrfToken ?? '' },
+    headers: { ...FROM_THE_PAGE, 'x-csrf-token': session.csrfToken ?? '' },
     data: { password },
   });
   expect(r.status(), 'test account deleted').toBe(204);

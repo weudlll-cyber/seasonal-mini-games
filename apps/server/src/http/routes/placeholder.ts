@@ -6,11 +6,13 @@
  * Responsibility: answer GET / with a minimal page the owner can open in the browser
  *                 after `pnpm dev`. In development the dev badge "Mini Games · dev · <port>"
  *                 is embedded (08 §1.1); in production the badge is left out.
- * Depends on:     fastify
+ * Depends on:     fastify, ./serverPageStyles
  * Used by:        ../app.ts
  * Spec:           docs/spec/10-repository-structure.md §4; Bingo 08 §1.1
  */
 import type { FastifyInstance } from 'fastify';
+
+import { STYLESHEET_LINK } from './serverPageStyles.js';
 
 interface PlaceholderOptions {
   readonly dev: boolean;
@@ -26,32 +28,23 @@ export function registerPlaceholder(app: FastifyInstance, options: PlaceholderOp
 
 function renderPage(options: PlaceholderOptions): string {
   const badge = options.dev ? renderBadge(options.port) : '';
-  // Styles stay inline so the CSP's style-src can keep 'unsafe-inline' without a
-  // separate stylesheet route. Content is intentionally minimal: the player client is a separate app.
+  // Content is intentionally minimal: the player client is a separate app.
   return `<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Seasonal Mini Games</title>
-  <style>
-    html, body { margin: 0; background: #0f1115; color: #e7ecf3; font-family: system-ui, sans-serif; }
-    main { min-height: 100vh; display: grid; place-items: center; padding: 2rem; }
-    .card { max-width: 32rem; text-align: center; }
-    h1 { margin: 0 0 .5rem; font-weight: 600; letter-spacing: .02em; }
-    p { margin: .25rem 0; color: #9aa5b2; }
-    .badge { position: fixed; left: .75rem; bottom: .75rem; padding: .25rem .5rem;
-             font-size: .75rem; background: #04aaf7; color: #0f1115; border-radius: .25rem; }
-  </style>
+  ${STYLESHEET_LINK}
 </head>
-<body>
+<body class="lobby">
   <main>
     <section class="card">
       <h1>Seasonal Mini Games</h1>
       <p>Server is up. In development the player client runs on port 5410.</p>
-      <p><a style="color:#04aaf7" href="/healthz">/healthz</a> &middot;
-         <a style="color:#04aaf7" href="/readyz">/readyz</a> &middot;
-         <a style="color:#04aaf7" href="/metrics">/metrics</a></p>
+      <p><a href="/healthz">/healthz</a> &middot;
+         <a href="/readyz">/readyz</a> &middot;
+         <a href="/metrics">/metrics</a></p>
     </section>
   </main>
   ${badge}

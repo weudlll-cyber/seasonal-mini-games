@@ -52,8 +52,8 @@ export function registerDevSignIn(
       await revokeSession(deps.pool, request.session.id);
       void deps.sessionEnds.end([request.session.id]);
     }
-    const { token } = await createSession(deps.pool, accountId, 'dev quick sign-in');
-    setSessionCookie(reply, deps.cookie, token);
+    const session = await createSession(deps.pool, accountId, 'dev quick sign-in');
+    setSessionCookie(reply, deps.cookie, session);
     return reply.status(200).send({ accountId, displayName: who.displayName });
   });
   // The load check removes its accounts afterwards (their sessions and roles go with them).

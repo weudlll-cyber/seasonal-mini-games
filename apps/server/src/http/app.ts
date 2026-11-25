@@ -33,7 +33,12 @@ import Fastify, { type FastifyInstance, type FastifyServerOptions } from 'fastif
 import { PgAuditLog } from '../admin/pgAuditLog.js';
 import { PgSettingsStore } from '../admin/pgSettingsStore.js';
 import { RATE_RULES } from '../auth/rateRules.js';
-import { cookieConfig, registerSessions, type CookieConfig } from '../auth/sessionPlugin.js';
+import {
+  cookieConfig,
+  registerSessions,
+  type CookieConfig,
+  type SessionGuard,
+} from '../auth/sessionPlugin.js';
 import { createChat, type Chat } from '../chat/chat.js';
 import { chatDefault, hostChatSource } from '../chat/provider.js';
 import type { Env } from '../config/env.js';
@@ -63,6 +68,7 @@ import { registerHealth } from './routes/health.js';
 import { createMetrics, registerMetrics, type MetricsHandle } from './routes/metrics.js';
 import { registerPasswordChange } from './routes/password.js';
 import { registerPlaceholder } from './routes/placeholder.js';
+import { registerServerPageStyles } from './routes/serverPageStyles.js';
 import { registerTwoFactor } from './routes/twoFactor.js';
 import { registerWebClient } from './routes/webClient.js';
 import { registerWebsiteSignIn } from './routes/websiteSignIn.js';
@@ -147,6 +153,8 @@ function registerBasics(fastify: FastifyInstance, deps: AppDeps, metrics: Metric
   registerMaintenance(fastify, maintenanceFlag(deps.env.SMG_DATA_DIR));
   registerMetrics(fastify, metrics);
   registerHealth(fastify, deps.pool, deps.env.SMG_AUTH_MODE === 'website');
+  // The stylesheet of the pages the server writes itself (the CSP allows no inline style).
+  registerServerPageStyles(fastify);
   // The built client in the image; the placeholder page in development (Vite serves it).
   if (deps.env.SMG_WEB_DIR === undefined) {
     registerPlaceholder(fastify, { dev: deps.env.SMG_DEV, port: deps.env.SMG_PORT });
@@ -165,6 +173,17 @@ function sessionEndsOf(fastify: FastifyInstance): SessionEnds {
 // Website mode's sign-in route (O66); null in local mode.
 function signInPathOf(env: AppDeps['env']): string | null {
   return env.SMG_AUTH_MODE === 'website' ? `${env.SMG_BASE_PATH}auth/website` : null;
+}
+
+// What the session hook checks requests against; checkWebsiteMode (../config/env) makes sure
+// website mode has its public address.
+function sessionGuardOf(env: AppDeps['env']): SessionGuard {
+  const website = env.SMG_AUTH_MODE === 'website';
+  return {
+    signInPath: signInPathOf(env),
+    trustedProxies: env.SMG_TRUSTED_PROXIES,
+    publicHost: website ? new URL(env.SMG_PUBLIC_URL ?? '').host : null,
+  };
 }
 
 // How players sign in: local accounts with passwords (and, in development, the quick
@@ -213,7 +232,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   registerBasics(fastify, deps, metrics);
   const cookie = cookieConfig(!isDev, deps.env.SMG_BASE_PATH);
   const sessionEnds = sessionEndsOf(fastify);
-  await registerSessions(fastify, deps.pool, cookie, signInPathOf(deps.env));
+  await registerSessions(fastify, deps.pool, cookie, sessionGuardOf(deps.env));
   const features = featuresFrom(deps.env);
   registerSignIn(fastify, { ...deps, cookie, features, sessionEnds });
   registerTwoFactor(fastify, { pool: deps.pool, env: deps.env, features, audit });
