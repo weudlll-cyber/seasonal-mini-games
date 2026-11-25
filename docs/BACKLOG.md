@@ -49,6 +49,7 @@ For Phase 7:
 - Stays the game's own after the move, with the reason or the kit release that replaces it: T423. Kit-related stand-ins left: a host chat from another https origin, which the kit defers (T412), and `readLimited` for the account feed until the kit's fetch serves it (T429).
 - Owner question (ao): whether the encrypted backup also holds the round and recovery keys (T431, OPEN).
 - `ops/test/installer-test.sh` (by hand, 20 to 40 minutes) has not run since the backups became the kit's (T431); it runs the kit's backup and drill on a fresh server.
+- Round screens at a 200 % root font (sweep of 2026-11-25, 360×780, 390×844, 1280×720): content is cut or hidden in several places, on `master` before the kit 0.22 move as after it: the guess list's head and rows, Safecracker's digit boxes and Bomb Defusal's wires on a phone, Mind Games' choice names and info line, the build badge past the left edge, and on a desktop the bar's mode fact ends in "…". With the move the phone's bar is one button row with whole facts (before: three rows, the mode fact cut); axe now reports the list's "Log" button at 390×844 as too small a target. At 100 % the one finding, on `master` too, is Mind Games' info line cut by a few pixels on a phone.
 
 ### Optional inputs
 
