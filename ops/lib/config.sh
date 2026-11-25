@@ -146,7 +146,7 @@ install_kit_ops() {
     return 0
   fi
   for name in backup.sh pull-backups.sh pull-backups.ps1; do
-    script=$(docker run --rm --entrypoint cat "$1" "/app/node_modules/@seasonal/kit/ops/$name")
+    script=$(docker run --rm --entrypoint cat "$1" "/app/kit-ops/$name")
     # World-readable: an operator copies the pull script to their own computer from here.
     printf '%s\n' "$script" | put_file "$SMG_ROOT/kit/$name" 0755
   done

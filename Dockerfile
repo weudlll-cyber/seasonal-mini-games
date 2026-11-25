@@ -38,9 +38,11 @@ ARG SMG_BUILD_COMMIT
 COPY . .
 RUN pnpm install --frozen-lockfile --offline
 RUN pnpm --filter @smg/web build && pnpm --filter @smg/admin build && pnpm --filter @smg/server build
-# The workspace packages are inside the bundle, so their copies are not shipped.
+# The workspace packages and the kit are inside the bundle, so their copies are not shipped; the
+# kit's ops scripts are, for the installer to copy out of the image (ops/lib/config.sh).
 RUN pnpm --filter @smg/server deploy --prod --legacy /out \
   && rm -rf /out/node_modules/@smg /out/node_modules/@smg-game \
+  && cp -r apps/server/node_modules/@seasonal/kit/ops /out/kit-ops \
   && cp -r apps/web/dist /out/web \
   && cp -r apps/admin/dist /out/admin
 
@@ -65,11 +67,6 @@ RUN apk upgrade --no-cache \
   && addgroup -S -g 10001 smg && adduser -S -u 10001 -G smg -H smg \
   && mkdir /data && chown 10001:10001 /data
 COPY --from=build /out ./
-# The installer copies the kit's backup and pull scripts out of the image (ops/lib/config.sh);
-# a kit that ships them elsewhere fails the build here.
-RUN test -f node_modules/@seasonal/kit/ops/backup.sh \
-  && test -f node_modules/@seasonal/kit/ops/pull-backups.sh \
-  && test -f node_modules/@seasonal/kit/ops/pull-backups.ps1
 USER 10001:10001
 EXPOSE 3100
 HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
