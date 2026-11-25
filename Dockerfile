@@ -14,7 +14,7 @@
 # Spec:           docs/spec/10-repository-structure.md §4, §5 (app port 3100); Bingo 08 §4, Bingo 03 §18
 
 # Base pinned by digest; Renovate keeps tag and digest current.
-FROM node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a AS base
+FROM node:22.23.5-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a AS base
 WORKDIR /app
 # CI=true keeps pnpm non-interactive and makes lefthook skip installing git hooks.
 ENV CI=true
@@ -45,7 +45,7 @@ RUN pnpm --filter @smg/server deploy --prod --legacy /out \
   && cp -r apps/admin/dist /out/admin
 
 # runtime: production files only, owned by root and therefore read-only for the app user.
-FROM node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a AS runtime
+FROM node:22.23.5-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a AS runtime
 ENV NODE_ENV=production \
     SMG_WEB_DIR=/app/web \
     SMG_ADMIN_DIR=/app/admin \
