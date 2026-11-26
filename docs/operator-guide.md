@@ -5,9 +5,9 @@ Two ways to install, chosen by the installer's first question:
 - **Standalone** — the games on their own domain (e.g. `games.example.org`) with their own HTTPS.
 - **Website** — the games inside the Seasonal Entertainment website on the same server, at `https://<website domain>/games/mini-games/`, behind the website's own proxy.
 
-Seasonal Mini Games can run **next to Seasonal Bingo Royale on the same server** (section 9). There is no signed release image yet, so the installer builds the app on the server from the source code (a few minutes). Commands in grey boxes are typed exactly as shown; `<…>` is replaced by your value.
+There is no signed release image yet, so the installer builds the app on the server from the source code (a few minutes). Commands in grey boxes are typed exactly as shown; `<…>` is replaced by your value.
 
-## 1. What to prepare (both types)
+## 1. What to prepare
 
 1. **A VPS** with Ubuntu 24.04. Good size: 4 CPU, 8 GB RAM, 100 GB disk. Smallest that works: 2 CPU, 4 GB RAM, 20 GB free disk.
 2. **An SSH key** on your Windows PC (skip if you have one). In PowerShell:
@@ -20,9 +20,10 @@ Seasonal Mini Games can run **next to Seasonal Bingo Royale on the same server**
    winget install FiloSottile.age
    age-keygen -o $HOME\smg-age-key.txt
    ```
-   It prints a line `Public key: age1…`; the installer asks for that public key. **Keep `smg-age-key.txt` safe and never leave it on the server**: without it no backup can be opened; with it anyone can. (If you run Bingo too, you may use the same key for both.)
-4. **Standalone only: a domain** (e.g. `games.example.org`) with an **A record** pointing at the VPS's IPv4 address (and an AAAA record for IPv6 if the VPS has one). Set it before installing; HTTPS certificates come automatically once the name points at the server. Without a domain you can install on the bare IP address, but browsers then warn about the certificate.
+   It prints a line `Public key: age1…`; the installer asks for that public key. **Keep `smg-age-key.txt` safe and never leave it on the server**: without it no backup can be opened; with it anyone can, and the backups also hold the game's secret keys. (If you run Bingo too, you may use the same key for both.)
+4. **Standalone only: a domain** (e.g. `games.example.org`) with an **A record** pointing at the VPS's IPv4 address (and an AAAA record for IPv6 if the VPS has one). Set it before installing; HTTPS certificates come automatically once the name points at the server. Without a domain you can install on the bare IP address, but browsers then warn about the certificate. A CAA record allowing Let's Encrypt (`0 issue "letsencrypt.org"`) and DNSSEC, if your registrar offers it, are good additions.
 5. **Website only:** the Seasonal Entertainment website must already run on this VPS with Mini Games switched on (its `docs/DEPLOYMENT.md`; section 3, step 2).
+6. **If your provider has a firewall of its own,** it must allow your SSH port, 80 and 443.
 
 ## 2. Install — standalone
 
@@ -35,9 +36,17 @@ Seasonal Mini Games can run **next to Seasonal Bingo Royale on the same server**
    git clone https://github.com/weudlll-cyber/seasonal-mini-games.git smg && sudo bash smg/ops/install.sh
    ```
    It builds the branch you cloned (`git clone -b <branch> …` for another one; `--ref <branch or tag>` overrides it, and a re-run keeps the ref of the last install, DECISIONS T244).
-3. Answer the questions: **standalone**; environment **prod**; your **domain** (or the IP address); your **e-mail** (for certificates); your **age public key** (`age1…`). For an unattended run every answer is a flag (top of `ops/install.sh`), with `--yes`.
-4. Wait until it says **Done**. It installs Docker if needed, builds the app, starts it and checks that it answers.
-5. Create the first admin (section 4), then open `https://<your domain>/`.
+3. Answer the questions: **standalone**; environment **prod**; your **domain** (or the IP address); your **age public key** (`age1…`). After the build it asks your **e-mail address** (for the certificates and as the server's contact), unless the server already has one in `/etc/seasonal/operator.env`, which every Seasonal installer shares. For an unattended run every answer is a flag (top of `ops/install.sh`; `--email <address>`), with `--yes`.
+4. Wait until it says **Done**. It installs Docker if needed, builds the app, sets up the database, starts everything and checks that it answers. It also secures the server: a firewall that allows your SSH port, 80 and 443, automatic security updates, and fail2ban against password guessing on SSH.
+5. **SSH is yours to set.** The installer says whether root and password login are allowed and changes nothing. Recommended: keys only (`PasswordAuthentication no`), no root login (`PermitRootLogin no` in `/etc/ssh/sshd_config`); work as your own user with `sudo`. Before turning root login off, check that your own user can log in and use `sudo`.
+6. **Create the first admin:**
+   ```
+   sudo smg admin create-super
+   ```
+   It asks for e-mail, display name (3–24 letters, digits, `_`, `.` or `-`) and a password of at least 12 characters (not shown while you type). This account can host matches and open the admin app.
+7. Open `https://<your domain>/`.
+
+Behind another proxy (your own nginx or Caddy): examples in `ops/examples/`.
 
 ## 3. Install — inside the Seasonal Entertainment website
 
@@ -52,37 +61,58 @@ Seasonal Mini Games can run **next to Seasonal Bingo Royale on the same server**
    git clone https://github.com/weudlll-cyber/seasonal-mini-games.git smg && sudo bash smg/ops/install.sh
    ```
 4. Answer the questions: **website**; environment **prod**; your **age public key** (`age1…`). Nothing else is asked: the installer finds the website (its own Caddy or nginx), its domain, its network and what the website prepared. It asks for the domain or the network only if it cannot tell.
-5. Wait until it says **Done**. It installs Docker if needed, builds and starts the app, and writes the game's route into the website's proxy: `/etc/seasonal/routes/mini-games.conf` for nginx, `mini-games.caddy` in the website's Caddy routes folder for Caddy (0600, it holds the proxy secret). It checks the website's configuration (`nginx -t` or `caddy validate`), reloads it and checks through the website that the games, the sign-in and the chat room `mini-games` answer. You edit no file of the website, and there is no step afterwards.
+5. Wait until it says **Done**. It installs Docker if needed, builds and starts the app, and writes the game's route into the website's proxy: `/etc/seasonal/routes/mini-games.conf` for nginx, `mini-games.caddy` in the website's Caddy routes folder for Caddy (0600, it holds the proxy secret). It checks the website's configuration (`nginx -t` or `caddy validate`), reloads it and checks through the website that the games, the sign-in and the chat room `mini-games` answer. You edit no file of the website, there is no step afterwards, and the server's security stays the website's.
 6. If the installer stops with "the website does not serve Mini Games yet", step 2 is missing: run the command it prints, then the installer again (it keeps your answers).
-7. Open `https://<website domain>/games/mini-games/` and sign in with your website account. Players sign in only through the website. Its admins are the game's admins, and members it lets start games may host. Guests can watch matches and leaderboards. The chat is the website's room `mini-games`.
-8. Make yourself the super admin (section 4, "On a website install") after that first sign-in.
-9. Nothing to enter for the website's list of open sign-ups: the website reads Mini Games' status at `/games/mini-games/api/public/open-rounds` on its own origin, a path it derives itself (spec 07 §8). A match appears there while it takes players and its host leaves "Show on the website" on; a Quick Test never does.
-
-## 4. Create the first admin
-
-**On a standalone install:**
-
-```
-sudo smg admin create-super
-```
-
-It asks for e-mail, display name (3–24 letters, digits, `_`, `.` or `-`) and a password of at least 12 characters (not shown while you type). This account can host matches and open the admin app.
-
-**On a website install** players sign in only through the website, so a local account could never sign in: `create-super` refuses there and names the command below. Instead, your website account becomes the super admin:
-
-1. Open `https://<website domain>/games/mini-games/` and sign in once with your website account (that makes its game account).
-2. On the server:
+7. Open `https://<website domain>/games/mini-games/` and sign in with your website account. Players sign in only through the website. Its admins are the game's admins, and members it lets start games may host. Guests can watch matches and leaderboards. The chat is the website's room `mini-games`. Only the website shows the games in a frame.
+8. **Make yourself the super admin,** after that first sign-in:
    ```
    sudo smg admin promote-super --name <your website name>
    ```
-   or, by your website user id, `sudo smg admin promote-super --website-id <id>`. The name is your website name or the name the games show (a number is added when another player has it); upper and lower case do not matter.
-3. Reload the games page: you are signed in again, now with the admin app.
+   or, by your website user id, `sudo smg admin promote-super --website-id <id>`. The name is your website name or the name the games show (a number is added when another player has it); upper and lower case do not matter. Reload the games page: you are signed in again, now with the admin app. It says what it did, or why not: nobody with that id or name has signed in to the games yet (sign in first), several members have that name (use `--website-id`; it lists their ids), or the account is suspended. The super admin role stays at every later sign-in: the website's roles only decide game admin and host rights. (A local account cannot sign in on a website install, so `create-super` refuses there.)
+9. Nothing to enter for the website's list of open sign-ups: the website reads Mini Games' status at `/games/mini-games/api/public/open-rounds` on its own origin, a path it derives itself (spec 07 §8). A match appears there while it takes players and its host leaves "Show on the website" on; a Quick Test never does.
 
-It says what it did, or why not: nobody with that id or name has signed in to the games yet (sign in first), several members have that name (use `--website-id`; it lists their ids), or the account is suspended. The super admin role stays at every later sign-in: the website's roles only decide game admin and host rights. Running it again only says that the account is super admin already.
+**Next to Seasonal Bingo Royale on one server.** Both can be installed as the website type on the same server, in either order. Nothing is shared:
 
-## 5. Backups to your Windows PC
+|                                         | Seasonal Mini Games                                 | Seasonal Bingo Royale                      |
+| --------------------------------------- | --------------------------------------------------- | ------------------------------------------ |
+| Install root, config, backups           | `/opt/smg`, `/etc/smg`, `/var/backups/smg`          | `/opt/sbr`, `/etc/sbr`, `/var/backups/sbr` |
+| CLI                                     | `smg`                                               | `sbr`                                      |
+| Compose project, containers, volumes    | `smg-prod` (`smg-prod-app-1`, `smg-prod_pgdata`, …) | `sbr-prod`                                 |
+| Name on the website's network, app port | `smg-mini-games-prod:3100`                          | `sbr-bingo-prod:3000`                      |
+| Behind nginx: loopback port, subnet     | `127.0.0.1:3920`, `172.30.250.0/24`                 | `127.0.0.1:3900`, `172.30.249.0/24`        |
+| Website route and route file            | `/games/mini-games/`, `mini-games.conf` / `.caddy`  | `/games/bingo/`, `bingo.conf` / `.caddy`   |
+| Backup group and timer                  | `smg-backup`, `smg-backup@prod.timer`               | `sbr-backup`, `sbr-backup@prod.timer`      |
 
-The server makes an encrypted backup (the database and the uploads) every night at 03:30 in `/var/backups/smg/prod/` and keeps the 14 newest plus one a week for 8 more weeks. The scripts are the shared kit's. The files belong to the group `smg-backup`, so a normal user can pull them; root login over SSH can stay off.
+Two **standalone** installs cannot share a server: both need ports 80 and 443, and the installer refuses when they are taken. A standalone Bingo and a website-type Mini Games cannot share a server either, because the website needs 80 and 443 too.
+
+## 4. Update
+
+1. Update to a newer version of the source (a branch, tag or commit):
+   ```
+   sudo smg update <git ref>
+   ```
+   It builds the new version, waits up to 10 minutes for running rounds to end (`--now` restarts at once; running rounds then resume from their event log, with their cooldowns and Frost-held answers), takes a backup and a plain database dump for a rollback, installs the new version's files and starts it (the games are away for a few seconds). A second update is refused until you confirmed or rolled back this one.
+2. All good? Confirm it, which deletes the plain dump (it is not encrypted) and frees the old image:
+   ```
+   sudo smg confirm
+   ```
+3. Something wrong after an update (before `smg confirm`)?
+   ```
+   sudo smg rollback
+   ```
+   It asks, takes a backup of the current state, and goes back to the version before, with its files and settings. **If the update changed the database layout, the database goes back to the moment before the update: accounts, matches and points since then are lost** (they stay in the backup it took first). Without a layout change the data stays as it is.
+4. Before a planned update you can stop new matches and rounds: `sudo smg maintenance on` (running rounds finish), and afterwards `sudo smg maintenance off`.
+5. Which version runs? Every game page ends with a small line at its bottom right, "Mini Games · <commit> · <build date>": the first seven characters of the commit `smg update` built, and the day it was built.
+6. **Only for a server installed before 2026-11-26:** its first update runs the older command, which does not install the new files. After it, fetch the new source and run the installer once more; it keeps your answers, takes a backup and sets up the database's two roles:
+   ```
+   git -C smg pull && sudo bash smg/ops/install.sh --yes
+   ```
+
+Running the installer again at any time keeps the secrets and your earlier answers and changes only what you changed; it never switches between standalone and website without asking. One environment per server for now: a staging install needs its own VPS, and the installer refuses a second environment on the same server.
+
+## 5. Backup, restore and the drill
+
+The server makes an encrypted backup every night at 03:30 in `/var/backups/smg/prod/` and keeps the 14 newest plus one a week for 8 more weeks. Each holds the database, the uploads and the game's two secret keys: `SMG_ROUND_KEY`, which seals the seeds of running rounds, and `SMG_RECOVERY_KEY`, which keys the stored two-factor recovery codes. The scripts are the shared kit's. The files belong to the group `smg-backup`, so a normal user can pull them; root login over SSH can stay off.
 
 1. Once, on the server: a user for pulling, in the group `smg-backup`, with your SSH key:
    ```
@@ -98,15 +128,30 @@ The server makes an encrypted backup (the database and the uploads) every night 
    powershell -ExecutionPolicy Bypass -File pull-backups.ps1 -Server backup-pull@<VPS address> -RemoteDir /var/backups/smg/prod -Prefix smg -Target $HOME\Documents\smg-backups\prod
    ```
    (Optional: run it daily with Windows Task Scheduler.) On Linux or macOS: `/opt/smg/kit/ops/pull-backups.sh`, fetched the same way: `./pull-backups.sh backup-pull@<VPS address> /var/backups/smg/prod smg ~/smg-backups/prod`.
-3. A backup taken right now: `sudo smg backup`.
-4. Check that a backup can really be restored (monthly is good): copy your key up for a moment, run the drill, delete the key:
+3. A backup taken right now:
+   ```
+   sudo smg backup
+   ```
+4. **The drill:** check that a backup can really be restored (monthly is good): copy your key up for a moment, run the drill, delete the key:
    ```
    scp $HOME\smg-age-key.txt <you>@<VPS address>:smg-age-key.txt
    ssh -t <you>@<VPS address> "sudo smg restore --drill /var/backups/smg/prod/<file> --identity smg-age-key.txt; rm smg-age-key.txt"
    ```
    It restores into a throw-away database and compares every table's rows with the rows the backup carries; it ends with "drill passed".
-5. A real restore (replaces the database and the uploads; it asks first): the same, with `smg restore <file> --identity …` instead of `--drill`. It refuses a backup of another environment (a staging file on prod) unless you add `--force-env`.
-6. A backup made before 2026-11-25 (it holds `db.dump` and `uploads.tar` and no manifest) is refused as it is. Rewrite it once, on a computer with your age key and `age`, then restore the new file as above (use the environment it came from instead of `prod`, and your public key for `age1…`):
+5. **A restore on the same server** replaces the database and the uploads; it asks first. The same two commands, with `smg restore <file> --identity …` instead of `--drill`. It refuses a backup of another environment (a staging file on prod) unless you add `--force-env`. It says that the backup holds a secret file; on the same server the keys are already there.
+6. **A restore on a new server** needs the old keys too:
+   1. Install as in section 2 or 3, with the same environment and age public key.
+   2. Copy the backup file and, for a moment, your age key to the server:
+      ```
+      scp <file> $HOME\smg-age-key.txt <you>@<new VPS address>:
+      ```
+   3. On the new server, first the keys, then the data:
+      ```
+      sudo smg keys <file> --identity smg-age-key.txt
+      sudo smg restore <file> --identity smg-age-key.txt
+      rm smg-age-key.txt
+      ```
+7. **A backup from before 2026-11-26** holds no keys: keep that server's `/etc/smg/prod.env` yourself for it. One made before 2026-11-25 (it holds `db.dump` and `uploads.tar` and no manifest) is refused as it is. Rewrite it once, on a computer with your age key and `age`, then restore the new file as above (use the environment it came from instead of `prod`, and your public key for `age1…`):
    ```
    mkdir old && age -d -i smg-age-key.txt <old file> | tar -C old -xf -
    cd old && mv uploads.tar vol-smg-prod_uploads.tar
@@ -114,65 +159,41 @@ The server makes an encrypted backup (the database and the uploads) every night 
    tar -cf - db.dump manifest.txt vol-smg-prod_uploads.tar | age -r age1… > ../smg-prod-converted.tar.age
    cd .. && rm -r old
    ```
-7. On a development machine the drill runs against the dev database: `pnpm drill:dev` (with the dev stack up, `age` installed and `pnpm install` run).
+8. On a development machine the drill runs against the dev database: `pnpm drill:dev` (with the dev stack up, `age` installed and `pnpm install` run).
 
-## 6. Updating and rolling back
+## 6. Uninstall
 
-1. Update to a newer version of the source (a branch, tag or commit):
+1. Pull your backups to your PC first (section 5).
+2. Remove the game:
    ```
-   sudo smg update <git ref>
+   sudo smg uninstall
    ```
-   It waits up to 10 minutes for running rounds to end (`--now` restarts at once; running rounds then resume from their event log, with their cooldowns and Frost-held answers), takes a backup and a plain database dump for a rollback, then builds and starts the new version (the games are away for a few seconds).
-2. All good? Confirm it, which deletes the plain dump (it is not encrypted) and frees the old image:
+   It says what goes and asks you to type the environment's name (`prod`). It removes the containers, **the database and the uploads**, the nightly backup timer, the settings with the secrets, the route file in the website's proxy, and, with the server's last environment, the images, the `smg` command and `/opt/smg`.
+3. **The backups stay** in `/var/backups/smg/`. Only this removes them too, for good:
    ```
-   sudo smg confirm
+   sudo smg uninstall --purge-backups
    ```
-3. Something wrong after an update (before `smg confirm`)?
+
+Kept in every case: Docker, the firewall and the other security settings, `/etc/seasonal/operator.env`, and the users and groups you made.
+
+## 7. When something fails
+
+1. **What runs?**
    ```
-   sudo smg rollback
+   sudo smg status
    ```
-   It takes a backup of the current state, asks, and goes back to the version before. **If the update changed the database layout, the database goes back to the moment before the update: accounts, matches and points since then are lost** (they stay in the backup it took first). Without a layout change the data stays as it is.
-4. Before a planned update you can stop new matches and rounds: `sudo smg maintenance on` (running rounds finish), and afterwards `sudo smg maintenance off`.
-5. Everyday checks: `sudo smg status` (what runs, health, rounds running, last backup) and `sudo smg logs app`.
-6. Which version runs? Every game page ends with a small line at its bottom right, "Mini Games · <commit> · <build date>": the first seven characters of the commit `smg update` built, and the day it was built.
+   The containers, readiness, the rounds running, the last and next backup (with a warning when the scheduled one failed), maintenance and, for website installs, the sign-in mode, whether the website's authorize endpoint answers, the account feed's last success and whether the proxy range still matches.
+2. **The logs:**
+   ```
+   sudo smg logs app
+   ```
+   JSON lines; each request has an id that error answers carry as `requestId`. `sudo smg logs migrate` shows the database's migration step, which runs before the app; `postgres` and `caddy` work too. Docker keeps at most 5 × 20 MB per service, compressed. Optional on the server: Docker's `live-restore` (`/etc/docker/daemon.json`: `{ "live-restore": true }`).
+3. **The installer stops** with a `STOP:` line that says why. Fix it and run it again; it keeps your answers.
+4. **The app does not become ready** after an update: `sudo smg logs migrate`, then `sudo smg logs app`, and `sudo smg rollback`.
+5. **A backup failed:** `journalctl -u smg-backup@prod`; then `sudo smg backup`.
+6. **Keys.** Settings and secrets live in `/etc/smg/prod.env` (readable by root only). Keep `SMG_ROUND_KEY` as it is: a new key would make running rounds unrecoverable after a restart. Keep `SMG_RECOVERY_KEY` too: a new key would make the recovery codes issued under the old one stop working (the authenticator app keeps working).
+7. **Watching it run:** the app serves Prometheus metrics at `/metrics` to scrapers on the server only; a request that came through a proxy gets 404. From the server: `sudo docker exec smg-prod-app-1 wget -qO- http://127.0.0.1:3100/metrics`. Worth watching: `smg_guess_ack_seconds` (a guess's answer time), `smg_round_queue_depth`, `smg_round_batch_seconds` (database commits), `smg_special_lag_seconds` and `smg_frost_delivery_lag_seconds` (timers running late), `smg_season_feed_age_seconds` (the In Season feed), `smg_http_requests_total` by status, and the Node process metrics. The full list is in the specification ([06 §4.6](spec/06-data-model-api-realtime.md)).
+8. While `smg maintenance on` holds, opening a match or a round answers "The games are being updated"; running rounds finish.
+9. Optional: Cloudflare in front for DDoS protection; then the app must trust Cloudflare's addresses (`SMG_TRUSTED_PROXIES` in `/etc/smg/prod.env`).
 
-## 7. Hardening checklist
-
-1. SSH: keys only, no passwords, no root login (`PasswordAuthentication no`, `PermitRootLogin no` in `/etc/ssh/sshd_config`); work as your own user with `sudo`, and pull backups as the user of section 5. Before turning root login off, check that your own user can log in and use `sudo`.
-2. Automatic security updates: `apt install unattended-upgrades` (on by default on Ubuntu 24.04).
-3. Firewall: allow only 22, 80 and 443 — `ufw allow 22/tcp; ufw allow 80/tcp; ufw allow 443/tcp; ufw enable`. (With the website installed, keep the website's own ports too, see its DEPLOYMENT.md.)
-4. fail2ban for SSH: `apt install fail2ban`.
-5. Docker: `live-restore` on (`/etc/docker/daemon.json`: `{ "live-restore": true }`); log rotation is already set by the stack.
-6. Domain: a CAA record allowing your certificate authority (Let's Encrypt: `0 issue "letsencrypt.org"`), and DNSSEC if your registrar offers it.
-7. Optional: Cloudflare in front for DDoS protection; then the app must trust Cloudflare's addresses (`SMG_TRUSTED_PROXIES` in `/etc/smg/prod.env`).
-8. Keep `SMG_ROUND_KEY` in `/etc/smg/prod.env` as it is: it seals the seeds of running rounds; a new key would make them unrecoverable after a restart. Keep `SMG_RECOVERY_KEY` there too: it keys the stored two-factor recovery codes, and the installer makes it once (an install made before it gains it on its next run); a new key would make the codes issued under the old one stop working (the authenticator app keeps working).
-
-## 8. Good to know
-
-- Settings and secrets live in `/etc/smg/prod.env` (readable by root only). Running the installer again (also with `--yes`) keeps the secrets and your earlier answers, and changes only what you changed; it never switches between standalone and website without asking.
-- One environment per server for now: a staging install needs its own VPS (standalone staging would need ports 80/443 of prod, website staging the same `/games/mini-games` route). The installer refuses a second environment on the same server.
-- Behind another proxy (nginx, your own Caddy): examples in `ops/examples/`.
-- Not there yet: a signed release image (the server builds from source), e-mail sending, a maintenance page for players (maintenance already stops new matches and rounds).
-
-## 9. Next to Seasonal Bingo Royale on one server
-
-Both can be installed as the **website** type on the same server, in either order. Nothing is shared:
-
-|                                         | Seasonal Mini Games                                 | Seasonal Bingo Royale                      |
-| --------------------------------------- | --------------------------------------------------- | ------------------------------------------ |
-| Install root, config, backups           | `/opt/smg`, `/etc/smg`, `/var/backups/smg`          | `/opt/sbr`, `/etc/sbr`, `/var/backups/sbr` |
-| CLI                                     | `smg`                                               | `sbr`                                      |
-| Compose project, containers, volumes    | `smg-prod` (`smg-prod-app-1`, `smg-prod_pgdata`, …) | `sbr-prod`                                 |
-| Name on the website's network, app port | `smg-mini-games-prod:3100`                          | `sbr-bingo-prod:3000`                      |
-| Behind nginx: loopback port, subnet     | `127.0.0.1:3920`, `172.30.250.0/24`                 | `127.0.0.1:3900`, `172.30.249.0/24`        |
-| Website route and route file            | `/games/mini-games/`, `mini-games.conf` / `.caddy`  | `/games/bingo/`, `bingo.conf` / `.caddy`   |
-| Backup group and timer                  | `smg-backup`, `smg-backup@prod.timer`               | `sbr-backup`, `sbr-backup@prod.timer`      |
-
-Two **standalone** installs cannot share a server: both need ports 80 and 443, and the installer refuses when they are taken. A standalone Bingo and a website-type Mini Games cannot share a server either, because the website needs 80 and 443 too.
-
-## 10. Watching it run
-
-- `sudo smg status`: the containers, readiness, the rounds running, the last and next backup, maintenance and, for website installs, the sign-in mode, whether the website's authorize endpoint answers, the account feed's last success and whether the proxy range still matches.
-- Logs: `sudo smg logs app` (JSON lines; each request has an id that error answers carry as `requestId`). Docker keeps at most 5 × 20 MB per service, compressed.
-- Metrics: the app serves Prometheus metrics at `/metrics` to scrapers on the server only; a request that came through a proxy gets 404. From the server: `sudo docker exec smg-prod-app-1 wget -qO- http://127.0.0.1:3100/metrics`. Worth watching: `smg_guess_ack_seconds` (a guess's answer time), `smg_round_queue_depth`, `smg_round_batch_seconds` (database commits), `smg_special_lag_seconds` and `smg_frost_delivery_lag_seconds` (timers running late), `smg_season_feed_age_seconds` (the In Season feed), `smg_http_requests_total` by status, and the Node process metrics. The full list is in the specification ([06 §4.6](spec/06-data-model-api-realtime.md)).
-- Maintenance: while `smg maintenance on` holds, opening a match or a round answers "The games are being updated"; running rounds finish.
+Not there yet: a signed release image (the server builds from source), e-mail sending, a maintenance page for players (maintenance already stops new matches and rounds).

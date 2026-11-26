@@ -1,31 +1,31 @@
 #!/usr/bin/env bash
 # @file   ops/smg
 # @module ops
-# @brief  The operator's CLI on the server: status, update, rollback, backup, restore, logs, admin, maintenance.
+# @brief  The operator's command on the server: the kit's admin command with this game's hooks.
 #
-# Responsibility: one command per task of Bingo 09 §4 for the environment of the install record
-#                 (or --env): status (type, address, image, containers, health, last
-#                 backup, timer, maintenance, rounds running; website installs also the
-#                 sign-in mode, whether the website's authorize endpoint answers, the account
-#                 feed's last success and the trusted proxy ranges); update <git ref> [--now]
-#                 (waits up to 10 minutes for running rounds to end unless --now; then
-#                 backup, plain pre-update dump for a rollback, image built from the ref,
-#                 restart, the app migrates on start, app images no environment uses
-#                 pruned); confirm (the update works:
-#                 the plain pre-update dump and the rollback data are deleted); rollback
-#                 (backup of the current state, confirmation, previous image and ref, and the
-#                 pre-update dump restored when the update migrated the schema — everything
-#                 since the update is then lost); backup; restore <file> and restore --drill
-#                 <file> (--identity <age key file> for encrypted backups, --force-env for
-#                 another environment's backup); logs [service]; admin create-super (the
-#                 first admin of a standalone install, password asked inside the app, never
-#                 echoed; refused on a website install); admin promote-super --website-id <id>
-#                 | --name <name> (website installs: a member who signed in once through the
-#                 website becomes super admin, DECISIONS T243); maintenance
-#                 on|off (a flag file the app reads: no new matches and no new rounds, running
-#                 rounds finish). --yes skips the confirmations. Adapted from Bingo's ops/sbr.
-# Depends on:     /opt/smg/lib/*.sh, Docker Compose, age
+# Responsibility: the verbs every game shares are the kit's (ops/lib/admin.sh, its
+#                 docs/OPERATIONS.md "The admin command"; DECISIONS T437): status, update <git
+#                 ref>, confirm, rollback, backup, restore [--drill] <file>, logs [service],
+#                 uninstall [--purge-backups]; --env <name> and --yes anywhere. Here: the
+#                 game's settings and hooks — update builds the ref, waits up to 10 minutes for
+#                 running rounds to end (--now: not at all), writes the keys the backups keep,
+#                 installs the ref's stack files and sets up the database roles before the new
+#                 image starts; status adds the type, the address, the rounds running,
+#                 maintenance and, for website installs, the sign-in mode, the authorize
+#                 endpoint, the account feed and the trusted proxy ranges; uninstall takes the
+#                 game's route file and keys with it — and its own verbs: admin create-super
+#                 (the first admin of a standalone install, password asked inside the app,
+#                 never echoed; refused on a website install), admin promote-super --website-id
+#                 <id> | --name <name> (website installs: a member who signed in once through
+#                 the website becomes super admin, DECISIONS T243), maintenance on|off (a flag
+#                 file the app reads: no new matches and no new rounds, running rounds finish)
+#                 and keys <backup> --identity <file> (the round and recovery keys of a backup
+#                 back into the env file, after a restore on a server set up anew).
+# Depends on:     /opt/smg/lib/*.sh, /opt/smg/kit/ops/ (admin.sh, backup.sh, website-route.sh),
+#                 Docker Compose, age
 # Spec:           docs/spec/10-repository-structure.md §6; Bingo 09 §4–§6
+# The kit calls the hooks below by name.
+# shellcheck disable=SC2329
 set -euo pipefail
 # Errors inside $(…) stop the script too (Bingo audit O1).
 shopt -s inherit_errexit
@@ -40,48 +40,41 @@ source "$HERE/lib/website.sh"
 # shellcheck source=lib/backup.sh
 source "$HERE/lib/backup.sh"
 
-ROLLBACK_DIR=/var/lib/smg
+# The kit library's settings (it reads them by name).
+# shellcheck disable=SC2034
+{
+  SK_ADMIN_NAME=smg SK_ADMIN_PREFIX=smg
+  SK_ADMIN_ETC=$SMG_ETC SK_ADMIN_STATE=${SMG_STATE:-/var/lib/smg} SK_ADMIN_ROOT=$SMG_ROOT
+  SK_ADMIN_IMAGE_REPO=smg-app SK_ADMIN_IMAGE_KEY=SMG_IMAGE SK_ADMIN_REF_KEY=SMG_REF
+  SK_ADMIN_DEFAULT_ENV=$(env_value "$SMG_ETC/install.conf" SMG_ENV)
+  SK_ADMIN_READY_URL=http://127.0.0.1:3100/readyz
+  # What an update replaces and a rollback puts back, under the install root.
+  SK_ADMIN_STACK_FILES='compose.yml compose.website.yml compose.website-nginx.yml caddy lib kit smg'
+}
+SMG_NOW=0
 
-usage() {
+game_compose() { compose "$@"; }
+game_backup_settings() { backup_settings "$1"; }
+
+game_usage() {
   cat <<'EOF'
-usage: smg [--env prod|staging] [--yes] <command>
-  status                         what runs, its health and the last backup
-  update <git ref> [--now]       wait for running rounds (10 min at most, --now: not at
-                                 all), backup, build the ref, restart (migrations run on
-                                 start; running rounds resume from their event log)
-  confirm                        the update works: delete the pre-update dump and rollback data
-  rollback                       back to the image (and data) before the last update
-  backup                         encrypted backup now
-  restore <file> [--identity k]  put a backup back (k: your age key file;
-          [--force-env]          --force-env: the backup is of another environment)
-  restore --drill <file> [...]   restore into a throw-away database and check it
-  logs [service]                 follow the logs (app, postgres, caddy)
+  update <git ref> [--now]       (it first waits for running rounds, 10 minutes at most;
+                                 --now: not at all; migrations run before the new app starts)
   admin create-super             create the first admin account (standalone installs)
   admin promote-super --website-id <id> | --name <name>
                                  website installs: make a website member, after their
                                  first sign-in, the super admin
   maintenance on|off             no new matches or rounds while on; running rounds finish
+  keys <file> --identity <k>     put a backup's round and recovery keys back, then restart
+          [--force-env]
 EOF
 }
 
-cmd_status() {
-  local env=$1 file="$SMG_ETC/$1.env" last
-  info "type:        $(env_value "$file" SMG_INSTALL_TYPE) (environment $env)"
+game_status() {
+  local env=$1 file="$SMG_ETC/$1.env"
+  info "type:        $(env_value "$file" SMG_INSTALL_TYPE)"
   info "address:     $(env_value "$file" SMG_PUBLIC_URL)"
-  info "image:       $(env_value "$file" SMG_IMAGE) (ref $(env_value "$SMG_ETC/install.conf" SMG_REF))"
-  compose "$env" ps --format 'table {{.Service}}\t{{.Status}}'
-  if compose "$env" exec -T app wget -qO- http://127.0.0.1:3100/readyz >/dev/null 2>&1; then
-    info "health:      ready"
-    info "rounds:      $(running_rounds "$env") running"
-  else
-    info "health:      NOT READY (smg logs app)"
-  fi
-  # The names carry the time, so the last in name order is the newest.
-  # Before the first backup the folder does not exist yet: that is no error (pipefail).
-  last=$({ find "$SMG_BACKUPS/$env" -maxdepth 1 -name 'smg-*.tar.age' 2>/dev/null || true; } | sort | tail -1)
-  info "last backup: ${last:-none yet}"
-  info "next backup: $(systemctl show "smg-backup@$env.timer" -p NextElapseUSecRealtime --value 2>/dev/null || echo unknown)"
-  [[ -f $ROLLBACK_DIR/$env/rollback.conf ]] && info "rollback:    possible (smg confirm deletes the pre-update dump)"
+  if sk_admin_ready "$env"; then info "rounds:      $(running_rounds "$env") running"; fi
   if compose "$env" exec -T app test -f /data/maintenance 2>/dev/null; then
     info "maintenance: ON (no new matches or rounds)"
   else
@@ -90,13 +83,10 @@ cmd_status() {
   if [[ $(env_value "$file" SMG_INSTALL_TYPE) == website ]]; then website_status "$env"; else info "sign-in:     local"; fi
 }
 
-migrations() { compose "$1" exec -T postgres psql -U smg -d smg -tA -c 'SELECT count(*) FROM smg.schema_migrations'; }
-
+database() { compose "$1" exec -T postgres psql -U smg -d smg -tA -c "$2"; }
+game_migrations() { database "$1" 'SELECT count(*) FROM smg.schema_migrations'; }
 # Rounds that would be cut short by a restart (they resume from their log, 04 §5.3).
-running_rounds() {
-  compose "$1" exec -T postgres psql -U smg -d smg -tA -c \
-    "SELECT count(*) FROM smg.rounds WHERE status IN ('countdown', 'open')"
-}
+running_rounds() { database "$1" "SELECT count(*) FROM smg.rounds WHERE status IN ('countdown', 'open')"; }
 
 # wait_rounds <env>: up to 10 minutes for running rounds to end (10 §6), checked every 10 s.
 wait_rounds() {
@@ -110,137 +100,103 @@ wait_rounds() {
   warn "rounds still running after 10 minutes; restarting now (they resume from their event log)"
 }
 
-# The images any environment runs or could roll back to; the others are pruned (Bingo audit O11).
-images_in_use() {
-  local file
-  for file in "$SMG_ETC"/*.env; do env_value "$file" SMG_IMAGE; done
-  for file in "$ROLLBACK_DIR"/*/rollback.conf; do [[ -f $file ]] && env_value "$file" PREVIOUS_IMAGE; done
-  return 0
+game_build() {
+  build_image "$(env_value "$SMG_ETC/install.conf" SMG_REPO)" "$2"
+  # shellcheck disable=SC2034 # read by the kit's update
+  SK_ADMIN_NEW_IMAGE=$SMG_IMAGE
 }
 
-cmd_update() {
-  local env=$1 ref=${2:-} now=${3:-} file="$SMG_ETC/$1.env" dir="$ROLLBACK_DIR/$1" conf="$SMG_ETC/install.conf"
-  [[ -n $ref && $ref != --now ]] || die "usage: smg update <git ref> [--now]"
-  [[ $now == --now ]] || wait_rounds "$env"
-  do_backup "$env"
-  info "Backup before the update: $BACKUP_FILE"
-  install -d -m 0700 "$dir"
-  # Written whole or not at all (Bingo audit O10); deleted by smg confirm (Bingo audit O3).
-  cleanup_path "$dir/pre-update.dump.partial"
-  (umask 077 && compose "$env" exec -T postgres pg_dump -U smg -Fc smg >"$dir/pre-update.dump.partial")
-  mv "$dir/pre-update.dump.partial" "$dir/pre-update.dump"
-  printf 'PREVIOUS_IMAGE=%s\nPREVIOUS_REF=%s\nMIGRATIONS_BEFORE=%s\n' "$(env_value "$file" SMG_IMAGE)" \
-    "$(env_value "$conf" SMG_REF)" "$(migrations "$env")" | put_file "$dir/rollback.conf" 0600
-  build_image "$(env_value "$conf" SMG_REPO)" "$ref"
-  set_env_value "$file" SMG_IMAGE "$SMG_IMAGE"
-  set_env_value "$conf" SMG_REF "$ref"
-  compose "$env" up -d
-  wait_ready "$env"
-  # shellcheck disable=SC2046 # one image name per word
-  prune_images $(images_in_use)
-  info "Updated to $ref ($SMG_IMAGE)."
-  info "Check the game, then: smg confirm (deletes the plain pre-update dump), or smg rollback."
+game_before_update() {
+  ((SMG_NOW)) || wait_rounds "$1"
+  # Before the update's backup, which keeps them.
+  write_keys "$1"
 }
 
-cmd_confirm() {
-  local dir="$ROLLBACK_DIR/$1"
-  [[ -f $dir/rollback.conf ]] || die "no update waiting for confirmation"
-  rm -f "$dir/pre-update.dump" "$dir/rollback.conf"
-  # shellcheck disable=SC2046 # one image name per word
-  prune_images $(images_in_use)
-  info "Update confirmed: the pre-update dump is deleted; a rollback is no longer possible."
+# The new ref's stack files, put in place by that ref's own installer library.
+game_install_stack() (
+  src="$SMG_ROOT/src"
+  git -C "$src" -c advice.detachedHead=false checkout --quiet --force "${SK_ADMIN_NEW_IMAGE#smg-app:}"
+  # shellcheck source=/dev/null
+  source "$src/ops/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$src/ops/lib/config.sh"
+  SMG_IMAGE=$SK_ADMIN_NEW_IMAGE
+  install_files "$src/ops"
+)
+
+# The env file as it was (a rollback puts it back), then what the new stack needs, made by the
+# installed (new) library.
+game_before_start() (
+  install -m 0600 "$SMG_ETC/$1.env" "$SK_ADMIN_STATE/$1/env.before"
+  # shellcheck source=/dev/null
+  source "$SMG_ROOT/lib/common.sh"
+  # shellcheck source=/dev/null
+  source "$SMG_ROOT/lib/config.sh"
+  prepare_database "$1"
+)
+
+# A rollback that restored the data: it belongs to the superuser until the roles are set again
+# (a stack from before the roles has none).
+game_after_restore() {
+  if (($2)) && [[ -n $(env_value "$SMG_ETC/$1.env" SMG_DB_APP_PASSWORD) ]]; then apply_db_roles "$1"; fi
 }
 
-cmd_rollback() {
-  local env=$1 dir="$ROLLBACK_DIR/$1" file="$SMG_ETC/$1.env" restore=0
-  [[ -f $dir/rollback.conf ]] || die "no update to roll back"
-  local previous_image previous_ref before now
-  previous_image=$(env_value "$dir/rollback.conf" PREVIOUS_IMAGE)
-  previous_ref=$(env_value "$dir/rollback.conf" PREVIOUS_REF)
-  before=$(env_value "$dir/rollback.conf" MIGRATIONS_BEFORE)
-  now=$(migrations "$env")
-  ((now <= before)) || restore=1
-  if ((restore)); then
-    confirm "Roll back to $previous_image? The update changed the database schema, so the data goes back to the moment before the update: everything since then is lost (a backup is taken first)."
-  else
-    confirm "Roll back to $previous_image? The data stays as it is."
-  fi
-  do_backup "$env"
-  info "Backup of the current state: $BACKUP_FILE"
-  set_env_value "$file" SMG_IMAGE "$previous_image"
-  if [[ -n $previous_ref ]]; then set_env_value "$SMG_ETC/install.conf" SMG_REF "$previous_ref"; fi
-  if ((restore)); then
-    info "Restoring the dump taken before the update."
-    compose "$env" stop app
-    restore_dump "$env" "$dir/pre-update.dump"
-    apply_db_roles "$env"
-  fi
-  compose "$env" up -d
-  wait_ready "$env"
-  rm -f "$dir/rollback.conf" "$dir/pre-update.dump"
-  info "Rolled back to $previous_image (ref ${previous_ref:-unknown})."
+game_route_settings() {
+  if [[ $(env_value "$SMG_ETC/$1.env" SMG_INSTALL_TYPE) == website ]]; then route_settings "$1"; fi
 }
 
-# do_backup runs as a plain command, so set -e stops it at the first error (Bingo audit O1).
-cmd_backup() {
-  do_backup "$1"
-  info "Backup written: $BACKUP_FILE"
-}
+game_uninstall_extra() { rm -f "$SMG_ETC/$1.keys"; }
 
-cmd_restore() {
-  local env=$1 drill=0 file='' identity='' force_env=0
-  shift
-  while (($#)); do
-    case $1 in
-      --drill) drill=1 ;;
-      --identity) identity=$2; shift ;;
-      --force-env) force_env=1 ;;
-      *) file=$1 ;;
-    esac
-    shift
-  done
-  [[ -f $file ]] || die "usage: smg restore [--drill] <file> [--identity <age key file>] [--force-env]"
-  if ((drill)); then do_drill "$env" "$file" "$identity"; else do_restore "$env" "$file" "$identity" "$force_env"; fi
-}
-
-# admin_create_super <env>: a local account with a password; a website install has none that
-# could sign in, so it is refused there before anything is asked (the app refuses too).
+# admin_create_super <env> <e-mail> <name>: a local account with a password; a website install
+# has none that could sign in, so it is refused there before anything is asked.
 admin_create_super() {
-  local env=$1 email name tty=()
+  local env=$1 email=$2 name=$3 tty=()
   if [[ $(env_value "$SMG_ETC/$env.env" SMG_AUTH_MODE) == website ]]; then
     die "this is a website install: players sign in only through the website, so a local admin account could never sign in. Sign in once through the website, then run: sudo smg admin promote-super --website-id <your website user id> (or --name <your display name>)"
   fi
-  email=${SMG_ADMIN_EMAIL_FLAG:-}
-  name=${SMG_ADMIN_NAME_FLAG:-}
   ask email "Admin e-mail" "$(env_value "$SMG_ETC/$env.env" SMG_ADMIN_EMAIL)"
   ask name "Admin display name (3–24 letters or digits)" admin
   [[ -t 0 ]] || tty=(-T)
   compose "$env" exec "${tty[@]}" app node dist/cli.js create-super --email "$email" --name "$name"
 }
 
-# admin_promote_super <env>: the website member by user id or name becomes super admin; the
-# app finds the account, refuses an unknown or shared name and says what it did.
+# admin_promote_super <env> <website id> <name>: the website member by user id or name becomes
+# super admin; the app finds the account, refuses an unknown or shared name and says what it did.
 admin_promote_super() {
   local env=$1 target=()
-  if [[ -n ${SMG_ADMIN_WEBSITE_ID_FLAG:-} ]]; then
-    target=(--website-id "$SMG_ADMIN_WEBSITE_ID_FLAG")
-  elif [[ -n ${SMG_ADMIN_NAME_FLAG:-} ]]; then
-    target=(--name "$SMG_ADMIN_NAME_FLAG")
+  if [[ -n $2 ]]; then
+    target=(--website-id "$2")
+  elif [[ -n $3 ]]; then
+    target=(--name "$3")
   else
     die "usage: smg admin promote-super --website-id <website user id> | --name <display name>"
   fi
   compose "$env" exec -T app node dist/cli.js promote-super "${target[@]}"
 }
 
-cmd_admin() {
-  case ${2:-} in
-    create-super) admin_create_super "$1" ;;
-    promote-super) admin_promote_super "$1" ;;
+game_cmd_admin() {
+  local env=$1 what=${2:-} email='' name='' id=''
+  # --yes (the kit's option) also answers this game's questions with their defaults.
+  # shellcheck disable=SC2034 # read by ask (lib/common.sh)
+  ((SK_ADMIN_YES)) && SMG_YES=1
+  shift 2 2>/dev/null || shift
+  while (($#)); do
+    case $1 in
+      --email) email=${2:?--email needs an address}; shift ;;
+      --name) name=${2:?--name needs a name}; shift ;;
+      --website-id) id=${2:?--website-id needs an id}; shift ;;
+      *) die "unknown option $1" ;;
+    esac
+    shift
+  done
+  case $what in
+    create-super) admin_create_super "$env" "$email" "$name" ;;
+    promote-super) admin_promote_super "$env" "$id" "$name" ;;
     *) die "usage: smg admin create-super | smg admin promote-super --website-id <id> | --name <name>" ;;
   esac
 }
 
-cmd_maintenance() {
+game_cmd_maintenance() {
   case ${2:-} in
     on) compose "$1" exec -T app touch /data/maintenance && info "maintenance on: no new matches or rounds; running rounds finish" ;;
     off) compose "$1" exec -T app rm -f /data/maintenance && info "maintenance off" ;;
@@ -248,38 +204,39 @@ cmd_maintenance() {
   esac
 }
 
-main() {
-  local env='' args=()
-  # The global options may stand anywhere (smg rollback --yes); the rest goes to the command.
+game_cmd_keys() {
+  local env=$1 file='' identity='' force=0
+  shift
   while (($#)); do
     case $1 in
-      --env) env=$2; shift ;;
-      --email) SMG_ADMIN_EMAIL_FLAG=$2; shift ;;
-      --name) SMG_ADMIN_NAME_FLAG=$2; shift ;;
-      --website-id) SMG_ADMIN_WEBSITE_ID_FLAG=$2; shift ;;
-      --yes) SMG_YES=1 ;;
-      *) args+=("$1") ;;
+      --identity) identity=${2:?--identity needs a file}; shift ;;
+      --force-env) force=1 ;;
+      *) file=$1 ;;
     esac
     shift
   done
-  set -- "${args[@]}"
-  [[ $EUID -eq 0 ]] || die "run as root: sudo smg $*"
-  env=${env:-$(env_value "$SMG_ETC/install.conf" SMG_ENV)}
-  [[ -n $env && -f $SMG_ETC/$env.env ]] || die "no installation found (run ops/install.sh first)"
-  local command=${1:-}
-  shift || true
-  case $command in
-    status) cmd_status "$env" ;;
-    update) cmd_update "$env" "$@" ;;
-    confirm) cmd_confirm "$env" ;;
-    rollback) cmd_rollback "$env" ;;
-    backup) cmd_backup "$env" ;;
-    restore) cmd_restore "$env" "$@" ;;
-    logs) compose "$env" logs -f --tail=200 "$@" ;;
-    admin) cmd_admin "$env" "$@" ;;
-    maintenance) cmd_maintenance "$env" "$@" ;;
-    *) usage; exit 2 ;;
-  esac
+  [[ -f $file && -n $identity ]] ||
+    die "usage: smg keys <backup file> --identity <age key file> [--force-env]"
+  sk_admin_confirm "Replace the round and recovery keys of $env with the backup's?"
+  restore_keys "$env" "$file" "$identity" "$force"
+  compose "$env" up -d
+  sk_admin_wait_ready "$env"
 }
 
-main "$@"
+# shellcheck source=/dev/null
+source "$SMG_ROOT/kit/ops/lib/admin.sh"
+
+main() {
+  local word args=()
+  # --now belongs to update; the kit knows only its own options.
+  for word in "$@"; do
+    if [[ $word == --now ]]; then SMG_NOW=1; else args+=("$word"); fi
+  done
+  sk_admin_main "${args[@]}"
+}
+
+# In braces and ended here: an update replaces this file while it runs.
+{
+  main "$@"
+  exit
+}

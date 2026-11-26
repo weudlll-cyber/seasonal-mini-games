@@ -7,7 +7,9 @@
 #                 domain and HTTPS, or integrated into the Seasonal Entertainment website on
 #                 this server behind its proxy at /games/mini-games (O67) — then only what that
 #                 type needs: the environment and the operator's age public key, standalone also
-#                 the address and admin e-mail; a website install finds the rest itself
+#                 the address and the operator's e-mail address (the kit's sk_operator_email:
+#                 --email, else /etc/seasonal/operator.env, else asked once); a website install
+#                 finds the rest itself
 #                 (lib/website.sh) and stops plainly when the website does not serve Mini Games
 #                 yet. Check the system; install Docker when missing; build the app image from a
 #                 git ref (no release image exists yet); write /etc/smg/<env>.env with fresh
@@ -15,8 +17,10 @@
 #                 made before them is converted once, after a backup); start the stack (the
 #                 migration step runs before the app) and wait for /readyz; website installs: the game's route file in the website's proxy,
 #                 checked and reloaded, sign-in only through the website (O66), and a check
-#                 through the website at the end (lib/website-route.sh), with no manual step;
-#                 install the backup timer; print the next steps. Re-running keeps
+#                 through the website at the end (lib/website.sh, the kit's route file), with no
+#                 manual step; install the backup timer; give a standalone server the kit's host
+#                 baseline (firewall, security updates, fail2ban; a website server is the
+#                 website's); print the next steps. Re-running keeps
 #                 the earlier answers (read back from /etc/smg/<env>.env, also with --yes),
 #                 changes only what changed and never switches the type without confirmation.
 #                 It installs beside Seasonal Bingo Royale on one server: every name, path,
@@ -24,7 +28,8 @@
 #                 Adapted from Bingo's ops/install.sh; Bingo's SMTP questions are left out
 #                 because this server sends no e-mail yet.
 # Depends on:     ops/lib/*.sh, ops/compose.yml, ops/compose.website.yml,
-#                 ops/compose.website-nginx.yml, ops/Caddyfile, ops/smg
+#                 ops/compose.website-nginx.yml, ops/Caddyfile, ops/smg, the kit's ops/lib
+#                 (operator.sh, host-baseline.sh, website-route.sh, db-roles.sh; from the image)
 # Spec:           docs/spec/10-repository-structure.md §6; Bingo 09 §1–§3, §6, §8
 #
 # Usage: sudo bash ops/install.sh [--type standalone|website] [--env prod|staging]
@@ -43,8 +48,6 @@ source "$OPS/lib/common.sh"
 source "$OPS/lib/host.sh"
 # shellcheck source=lib/website.sh
 source "$OPS/lib/website.sh"
-# shellcheck source=lib/website-route.sh
-source "$OPS/lib/website-route.sh"
 # shellcheck source=lib/config.sh
 source "$OPS/lib/config.sh"
 # shellcheck source=lib/backup.sh
@@ -101,9 +104,6 @@ ask_common() {
   fi
   # A re-run keeps what the last run wrote, unless a flag says otherwise (Bingo audit O4).
   read_saved_answers "$SMG_ENV"
-  # Inside the website there is no certificate of its own and the website's admins are the
-  # game's admins (O66): no e-mail to ask.
-  [[ $SMG_TYPE == website ]] || ask SMG_ADMIN_EMAIL "Admin e-mail (certificates and notices)"
   ask SMG_AGE_RECIPIENT "Your age public key for backups (age1…)"
   [[ $SMG_AGE_RECIPIENT == age1* ]] || die "an age public key starts with age1 (age-keygen prints it)"
 }
@@ -130,7 +130,6 @@ next_steps() {
     info "  1. Create the first admin:  sudo smg admin create-super"
     info "  2. Open https://$SMG_ADDRESS/"
     [[ $SMG_ADDRESS =~ ^[0-9.]+$|: ]] && warn "with an IP address the certificate comes from Caddy's own CA: browsers warn until you point a domain here and re-run with --address <domain>"
-    info "  3. Firewall: allow 22, 80 and 443 only (docs/operator-guide.md)."
   else
     info "  1. Open https://$SMG_WEBSITE_DOMAIN/games/mini-games/ and sign in with your website account:"
     info "     the website's admins are the game's admins, members it lets start games may host (O66)."
@@ -140,6 +139,31 @@ next_steps() {
   fi
   info "  Backups run every night at 03:30 into $SMG_BACKUPS/$SMG_ENV/; pull them to your PC with $SMG_ROOT/kit/ops/pull-backups.ps1 (docs/operator-guide.md §5)."
   info "  Status: sudo smg status"
+}
+
+# Standalone: the e-mail address for the certificates, shared by every Seasonal installer on
+# this server (the kit's operator.sh). Inside the website the certificate is the website's.
+operator_address() {
+  [[ $SMG_TYPE == standalone ]] || return 0
+  if [[ $SMG_DRY_RUN == 1 ]]; then
+    info "  would take the operator's e-mail address (--email, else /etc/seasonal/operator.env, else asked)"
+    return 0
+  fi
+  # shellcheck source=/dev/null
+  source "$SMG_ROOT/kit/ops/lib/operator.sh"
+  SMG_ADMIN_EMAIL=$(sk_operator_email "${SMG_ADMIN_EMAIL:-}") || die "no operator e-mail address (see above)"
+}
+
+# The kit's firewall, security updates and fail2ban on a standalone server; it says that a
+# website server is the website installer's.
+host_baseline() {
+  if [[ $SMG_DRY_RUN == 1 ]]; then
+    info "  would apply the host baseline ($SMG_TYPE): firewall, security updates, fail2ban"
+    return 0
+  fi
+  # shellcheck source=/dev/null
+  source "$SMG_ROOT/kit/ops/lib/host-baseline.sh"
+  sk_host_baseline "$SMG_TYPE" || die "installed and running, but the host baseline failed (see above); run the installer again once it is fixed"
 }
 
 # start_database <env> <convert 0|1>: the database alone, then its two roles; a database from
@@ -170,7 +194,7 @@ main() {
     # One environment per server for now (Bingo 09 §7): a second one would take over the
     # record, the website route or ports 80/443 of the first.
     if [[ -n ${SMG_ENV:-} && $SMG_ENV != "$recorded_env" ]]; then
-      die "this server runs $recorded_env; staging and prod need separate servers for now (docs/operator-guide.md §8)"
+      die "this server runs $recorded_env; staging and prod need separate servers for now (docs/operator-guide.md §4)"
     fi
     SMG_ENV=${SMG_ENV:-$recorded_env}
     SMG_ADDRESS=${SMG_ADDRESS:-$(env_value "$SMG_ETC/install.conf" SMG_ADDRESS)}
@@ -187,12 +211,16 @@ main() {
   info "Preparing the app"
   default_source
   build_image "$SMG_REPO" "$SMG_REF"
+  # The kit's scripts come out of the image, so they are the pinned kit version's.
+  install_kit_ops "$SMG_IMAGE"
+  operator_address
   local convert=0
   # An install made before the database roles: converted below, with a backup first.
   if [[ -f $SMG_ETC/$SMG_ENV.env && -z $(env_value "$SMG_ETC/$SMG_ENV.env" SMG_DB_APP_PASSWORD) ]]; then
     convert=1
   fi
   write_env "$SMG_ENV"
+  write_keys "$SMG_ENV"
   write_record
   install_files "$OPS"
   start_database "$SMG_ENV" "$convert"
@@ -208,6 +236,7 @@ main() {
   fi
   install_backup_units "$SMG_ENV"
   [[ $SMG_TYPE == standalone ]] || verify_website
+  host_baseline
   next_steps
 }
 

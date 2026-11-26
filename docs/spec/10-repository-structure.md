@@ -140,16 +140,16 @@ Bingo 09 applies with the names of [04](04-software-architecture.md) §2.2:
 - single VPS with Docker Compose (§1);
 - files on the server (§2);
 - the one-command installer with both install types and every answer as a flag (§3);
-- the `smg` CLI with `status`, `update`, `confirm`, `rollback`, `backup`, `restore`, `logs`, `admin create-super` (standalone; a website install promotes a website account with `admin promote-super`, DECISIONS T243), `maintenance` (§4);
+- the `smg` CLI (§4): the kit's admin command (`status`, `update`, `confirm`, `rollback`, `backup`, `restore`, `logs`, `uninstall`) with the game's `admin create-super` (standalone; a website install promotes a website account with `admin promote-super`, DECISIONS T243), `maintenance` and `keys` (DECISIONS T437);
 - bootstrap (§5);
-- age-encrypted backups pulled to the operator's machine (§6);
+- age-encrypted backups pulled to the operator's machine (§6), which also hold the round and recovery keys (owner decision 157);
 - one environment per server (§7);
 - variants (§8);
-- the hardening checklist (§9).
+- the hardening checklist (§9): a standalone install applies the kit's host baseline itself (firewall, security updates, fail2ban; SSH stays the operator's).
 
 Differences:
 
-- **One installer for both types (O67):** `sudo bash ops/install.sh` asks the type first, then only what that type needs. Standalone asks the environment, the address, the admin e-mail and the age key. Website asks the environment and the age key; it finds everything else on the server. A re-run keeps the earlier answers and, when nothing changed, changes nothing.
+- **One installer for both types (O67):** `sudo bash ops/install.sh` asks the type first, then only what that type needs. Standalone asks the environment, the address, the age key and the operator's e-mail address (the kit's `/etc/seasonal/operator.env`, shared by the Seasonal installers). Website asks the environment and the age key; it finds everything else on the server. A re-run keeps the earlier answers and, when nothing changed, changes nothing.
 - **Website install type (O66):** players sign in only through the website's login, as in Bingo (`SMG_AUTH_MODE=website`). `SMG_BASE_PATH=/games/mini-games/`. The installer does the whole setup and never edits a website file (DECISIONS T230–T234):
   - It detects the website's mode: its own Caddy (compose project `seasonal-site`) or host nginx in front of the site container. It reads what the website's installer prepared: the routes folder (`/etc/seasonal/routes/` for nginx; for Caddy, the host folder mounted at `/etc/caddy/routes` in the website's Caddy container), the site's local port (`/etc/seasonal/site-local-port`, nginx) and the sync token (`/etc/seasonal/games-sync-token`).
   - It probes `/api/games/mini-games/authorize` from the server. A 404, or a missing token, means the website has Mini Games switched off: the installer stops and names the website's command, `cd <website checkout> && sudo ./deploy/install.sh --update --mini-games`.
@@ -165,4 +165,5 @@ Differences:
 - **Next to Bingo on one server:** both can be installed as the website type on the same server. They keep separate databases, containers, volumes, env files, route files, loopback ports (3920 and Bingo's 3900), edge subnets (`172.30.250.0/24` and Bingo's `172.30.249.0/24`) and backup timers. Two **standalone** installs cannot share a server, because both need ports 80 and 443. The installer's port check refuses, as Bingo's does (Bingo `ops/lib/host.sh`).
 - **Maintenance:** `smg maintenance on` stops new matches and new rounds (503 `MAINTENANCE` for opening a match, creating a round and the Quick Test). Running rounds finish (DECISIONS T95).
 - **Updates during play:** `smg update` waits up to 10 minutes for open rounds to end, or with `--now` restarts at once. Open rounds then resume from their event log ([04](04-software-architecture.md) §5.3); cooldowns and Frost-held answers are rebuilt.
-- **Secrets generated at install:** `SMG_ROUND_KEY` and `SMG_RECOVERY_KEY` (32 random bytes each, made once and kept; an install made before the second gains it on its next run) in addition to Bingo's set.
+- **Secrets generated at install:** `SMG_ROUND_KEY` and `SMG_RECOVERY_KEY` (32 random bytes each, made once and kept; an install made before the second gains it on its next run) in addition to Bingo's set, and the passwords of the two database roles ([06](06-data-model-api-realtime.md) §1). The operator guide ([../operator-guide.md](../operator-guide.md)) follows the kit's section order.
+- **Containers:** every service of `ops/compose.yml` carries the kit's hardening (read-only root, no new privileges, all capabilities dropped but those it is shown to need); `apps/server/test/containers.test.ts` holds the file to it.

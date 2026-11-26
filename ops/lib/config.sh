@@ -20,13 +20,13 @@
 #                 record /etc/smg/install.conf; copy the compose files, Caddyfile, the smg CLI and its
 #                 library and the kit's whole ops folder (from the built image) to /opt/smg; set up
 #                 the two database roles (the kit's db-roles script, on install, for the
-#                 one-time conversion of an older install and after a restore);
+#                 one-time conversion of an older install, on an update and after a restore);
 #                 build the app image on the server from a git ref (until a signed release
 #                 image exists; by default the installer checkout's own branch, checkout_ref),
-#                 skipping it when the image of that commit is there, and drop app images
-#                 older than the current and the previous one.
-# Depends on:     ./common.sh (put_file, run, env_value), git, docker, openssl
-# Used by:        ops/install.sh, ops/smg (update)
+#                 skipping it when the image of that commit is there.
+# Depends on:     ./common.sh (put_file, run, env_value, set_env_value, compose), git, docker,
+#                 openssl
+# Used by:        ops/install.sh, ops/smg
 # Spec:           docs/spec/10-repository-structure.md §6; Bingo 09 §2, §3
 
 # secret <bytes>: hex from openssl rand (a dry run, which installs nothing, may lack it).
@@ -168,10 +168,24 @@ install_kit_ops() {
   done < <(find "$from" -type f -print0)
 }
 
+# prepare_database <env>: the two roles' passwords and the app role's address in an env file
+# that lacks them (an install from before the roles), then the roles themselves.
+prepare_database() {
+  local file="$SMG_ETC/$1.env" app
+  if [[ -z $(env_value "$file" SMG_DB_APP_PASSWORD) ]]; then
+    app=$(secret 24)
+    set_env_value "$file" SMG_DB_OWNER_PASSWORD "$(secret 24)"
+    set_env_value "$file" SMG_DB_APP_PASSWORD "$app"
+    set_env_value "$file" DATABASE_URL "postgres://smg_app:$app@postgres:5432/smg"
+  fi
+  apply_db_roles "$1"
+}
+
 # apply_db_roles <env>: the owner and app database roles (kit K90), sent to the superuser's psql
 # in the database container; the passwords go on standard input only. Then the one right more
 # the owner needs: migration 0011 makes a temporary table, which the kit's script leaves to
 # nobody (T436).
+# shellcheck disable=SC2034 # the kit's script reads the SK_DB_* names
 apply_db_roles() (
   file="$SMG_ETC/$1.env"
   # shellcheck source=/dev/null
@@ -216,12 +230,4 @@ build_image() {
   # The build badge names the commit (the build has no .git, DECISIONS T346).
   docker build --quiet --build-arg SMG_BUILD_COMMIT="${commit:0:7}" -t "$SMG_IMAGE" "$src"
   SMG_CHANGES=$((SMG_CHANGES + 1))
-}
-
-# prune_images <keep…>: removes smg-app images other than the ones named (current, previous).
-prune_images() {
-  local image
-  for image in $(docker image ls smg-app --format '{{.Repository}}:{{.Tag}}'); do
-    [[ " $* " == *" $image "* ]] || docker image rm "$image" >/dev/null 2>&1 || true
-  done
 }

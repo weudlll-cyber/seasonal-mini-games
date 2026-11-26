@@ -10,7 +10,11 @@
 #                 the app, the migration step (the app image, `cli.js migrate`) connects as
 #                 the database's owner, applies pending migrations, grants the app role and
 #                 ends; the app connects as that role, which only reads and writes rows, and
-#                 gets neither the owner's nor the superuser's password (kit K90).
+#                 gets neither the owner's nor the superuser's password (kit K90). Every
+#                 service carries the kit's container hardening (K89, its docs/OPERATIONS.md):
+#                 a read-only root filesystem, no new privileges and no capability but the
+#                 ones it is shown to need (PostgreSQL's four; the proxy's NET_BIND_SERVICE
+#                 for ports 80 and 443); a test holds the file to it.
 #                 Standalone installs add Caddy (profile "standalone") with automatic HTTPS
 #                 on 80/443. Website installs (ops/compose.website.yml on top): the app joins
 #                 the website's network, where the website's Caddy forwards /games/mini-games
@@ -102,6 +106,20 @@ services:
       POSTGRES_USER: smg
       POSTGRES_DB: smg
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in the env file}
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # PostgreSQL's image gives its files to its own user and switches to it.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - SETGID
+      - SETUID
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -124,6 +142,16 @@ services:
       SMG_SITE_ADDRESS: ${SMG_SITE_ADDRESS:-}
       SMG_TLS: ${SMG_TLS:-}
       SMG_ACME_EMAIL: ${SMG_ADMIN_EMAIL:-}
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Ports 80 and 443.
+    cap_add:
+      - NET_BIND_SERVICE
     ports:
       - '80:80'
       - '443:443'
