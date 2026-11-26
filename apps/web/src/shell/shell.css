@@ -55,10 +55,13 @@ html:has(.one-screen) {
   padding: var(--sk-space-2) var(--page-gutter);
 }
 
-/* The lobby's open matches (../lobby/Lobby): each title a full target (44 px, journey 47). */
+/* The lobby's open matches (../lobby/Lobby): each title a full target (44 px, journey 47); a
+   title with a long word breaks inside the window. */
 [data-testid='matches'] a {
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
   min-width: var(--sk-hit-target);
   min-height: var(--sk-hit-target);
+  overflow-wrap: anywhere;
 }

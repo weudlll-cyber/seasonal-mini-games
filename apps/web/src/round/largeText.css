@@ -178,6 +178,19 @@
   }
 }
 
+/* The closest guesses (./closest.css) on a desktop at large text (a result page under 50 rem
+   wide; 53 rem at the least on a desktop at 100 %): the name whole, the words under it. */
+@container (max-width: 50rem) {
+  .match-result-page .round-closest-row.round-closest-row {
+    flex-wrap: wrap;
+  }
+
+  .match-result-page .round-closest-row .round-who {
+    flex: none;
+    max-width: 100%;
+  }
+}
+
 /* The waiting area's players (../match/match.css): the name on a line of its own. */
 @container (max-width: 16rem) {
   .match-waiting .match-players.match-players {
