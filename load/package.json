@@ -9,6 +9,7 @@
     "guess-storm": "node guessStorm.mjs"
   },
   "dependencies": {
+    "@seasonal/kit": "github:weudlll-cyber/seasonal-kit#v0.32.0",
     "socket.io-client": "4.8.4"
   }
 }

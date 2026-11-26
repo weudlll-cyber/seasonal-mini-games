@@ -19,6 +19,7 @@
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 12); docs/spec/02-game-guess-the-number.md §2, §9
  */
 import { expect, test, type Page } from '@playwright/test';
+import { PHONE } from '@seasonal/kit/testing';
 
 import {
   abortMatch,
@@ -33,7 +34,6 @@ import {
   search,
   type Person,
 } from './play.js';
-import { PHONE } from './screens.js';
 
 const WIDE = { width: 1280, height: 720 };
 

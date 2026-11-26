@@ -15,10 +15,11 @@
  *                 4.5:1 in light and dark (./contrast); on the phone the app header is hidden
  *                 and the round's own bar is one row of at most 64 px (O46). The Quick Test
  *                 player hosts and plays (O16).
- * Depends on:     @playwright/test, ./contrast, ./play, ./screens
+ * Depends on:     @playwright/test, ./contrast, ./play, @seasonal/kit/testing
  * Spec:           docs/spec/02-game-guess-the-number.md §3, §5.1, §12; docs/spec/09-testing-strategy.md §4
  */
 import { expect, test, type Page } from '@playwright/test';
+import { PHONE } from '@seasonal/kit/testing';
 
 import { readable } from './contrast.js';
 import {
@@ -34,7 +35,6 @@ import {
   search,
   shownNumber,
 } from './play.js';
-import { PHONE } from './screens.js';
 
 interface Started {
   readonly matchCode: string;

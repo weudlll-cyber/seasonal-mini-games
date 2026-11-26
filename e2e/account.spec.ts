@@ -12,13 +12,14 @@
  *                 (DELETE /me), also when a step fails. In Chromium it saves the register,
  *                 sign-in and account screens (both sizes and themes) to reports/screens/latest/.
  *                 Taken over from Bingo; the match step moved to the round journeys.
- * Depends on:     @playwright/test, ./play, ./screens
+ * Depends on:     @playwright/test, ./play, @seasonal/kit/testing
  * Spec:           docs/spec/09-testing-strategy.md §4; Bingo 05 §2.1; Bingo 03 §2.1, §13
  */
 import { expect, test, type Page } from '@playwright/test';
+import { captureLook } from '@seasonal/kit/testing';
 
+import { SHOTS_DIR } from './testStack.js';
 import { FROM_THE_PAGE } from './play.js';
-import { captureLook, SHOTS_DIR } from './screens.js';
 
 const PASSWORD = 'correct horse battery staple';
 const NEW_PASSWORD = 'another long passphrase';

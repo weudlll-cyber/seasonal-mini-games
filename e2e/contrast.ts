@@ -13,13 +13,12 @@
  *                 (relative luminance, 2.x). The screenshot is decoded on a canvas in the
  *                 page itself, so no image library is needed. Transitions are held still
  *                 while measuring.
- * Depends on:     @playwright/test, ./screens
+ * Depends on:     @playwright/test, @seasonal/kit/testing
  * Used by:        ./inactivity.spec, ./range.spec, ./specials.spec
  * Spec:           docs/spec/02-game-guess-the-number.md §12; WCAG 2.2 SC 1.4.3
  */
 import { expect, type Page } from '@playwright/test';
-
-import { setTheme } from './screens.js';
+import { setTheme } from '@seasonal/kit/testing';
 
 interface TextBox {
   readonly text: string;
@@ -184,5 +183,5 @@ export async function readable(
     );
     expect(await failures(page), `text below 4.5:1 on the ${where}, ${theme}`).toEqual([]);
   }
-  await setTheme(page, before ?? 'light');
+  await setTheme(page, before === 'dark' ? 'dark' : 'light');
 }

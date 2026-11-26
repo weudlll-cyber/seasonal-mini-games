@@ -16,15 +16,15 @@
  *                 one: 40 bots, switches `visible`, All on. Round two: 12 bots, switches
  *                 `hidden`: a switch flies without a name, a first choice with one (on the
  *                 desktop windows).
- * Depends on:     @playwright/test, ./flightProbe, ./mindGames, ./play, ./screens
+ * Depends on:     @playwright/test, ./flightProbe, ./mindGames, ./play, @seasonal/kit/testing
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 44); docs/spec/02e-game-mind-games.md §11.1
  */
 import { expect, test, type Browser } from '@playwright/test';
+import { PHONE } from '@seasonal/kit/testing';
 
 import { probeScript, type ProbeResult } from './flightProbe.js';
 import { mindQuickTest, startRound } from './mindGames.js';
 import { abortMatch, closeAll, person, visit, type Person } from './play.js';
-import { PHONE } from './screens.js';
 
 // A flight's fixed times (games/mind-games/web/flights.ts FADE_MS, GONE_MS); the probe reads
 // each wave's flight and stand from its CSS, shortened near the round's end.

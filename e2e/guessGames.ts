@@ -7,14 +7,14 @@
  *                 start the round from the host menu, or start one directly through the API
  *                 (individual rounds, other seasons); check that the round view fits one
  *                 screen at 1280 × 720 and, after a reload at that size, at 390 × 844.
- * Depends on:     @playwright/test, ./play, ./screens
+ * Depends on:     @playwright/test, ./play, @seasonal/kit/testing
  * Used by:        ./safecracker.spec, ./bombDefusal.spec, ./target.spec
  * Spec:           docs/spec/09-testing-strategy.md §4 (journeys 20–22)
  */
 import { expect, type Page } from '@playwright/test';
+import { PHONE } from '@seasonal/kit/testing';
 
 import { call, fitsScreen, hostMenu, playerRow, roundOpen, type Person } from './play.js';
-import { PHONE } from './screens.js';
 
 export const WIDE = { width: 1280, height: 720 };
 

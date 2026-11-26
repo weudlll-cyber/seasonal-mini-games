@@ -14,13 +14,13 @@
  *                 count and the newest three and its sheet lists every fallen number (after a
  *                 reload at that size), closed by its Close button. The match is aborted at
  *                 the end.
- * Depends on:     @playwright/test, ./play, ./screens
+ * Depends on:     @playwright/test, ./play, @seasonal/kit/testing
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 18); docs/spec/03-seasonal-specials.md §2.3
  */
 import { expect, test, type Page } from '@playwright/test';
+import { PHONE } from '@seasonal/kit/testing';
 
 import { abortMatch, call, closeAll, fitsScreen, person, roundOpen, type Person } from './play.js';
-import { PHONE } from './screens.js';
 
 const WIDE = { width: 1280, height: 720 };
 

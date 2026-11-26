@@ -17,8 +17,10 @@
 import { writeFileSync } from 'node:fs';
 import { Worker } from 'node:worker_threads';
 
+import { latencies } from '@seasonal/kit/testing';
+
 import { BASE, FROM_THE_PAGE, call, inGroups, problems, signIn } from './http.mjs';
-import { metricsSampler, spread } from './measure.mjs';
+import { sampleServer } from './measure.mjs';
 import { withLoadStack } from './stack.mjs';
 
 const PLAYERS = Number(process.argv[2] ?? 500);
@@ -85,8 +87,7 @@ async function setUp(host) {
 }
 
 async function playRound(ctx) {
-  const sampler = metricsSampler();
-  await sampler.read();
+  const sampler = sampleServer();
   const round = await call(ctx.host, 'POST', `/matches/${ctx.match.code}/rounds`, {
     season: 'winter',
     settings: { 'round.seasonSource': 'manual', 'round.countdownS': 5 },
@@ -101,7 +102,7 @@ async function playRound(ctx) {
       plan: state.plan,
     });
   await untilEnded(ctx.host, round.id);
-  const server = sampler.stop();
+  const server = await sampler.stop();
   const records = (
     await Promise.all(
       ctx.workers.map((w) => (w.worker.postMessage({ t: 'stop' }), w.next('record'))),
@@ -112,8 +113,8 @@ async function playRound(ctx) {
   for (const r of records)
     for (const [k, n] of Object.entries(r.refused)) refused[k] = (refused[k] ?? 0) + n;
   return {
-    ackMs: spread(records.flatMap((r) => r.ack)),
-    tickOffMs: spread(records.flatMap((r) => tickOff(r.frames))),
+    ackMs: latencies(records.flatMap((r) => r.ack)),
+    tickOffMs: latencies(records.flatMap((r) => tickOff(r.frames))),
     released: released(records, result),
     refused,
     server,

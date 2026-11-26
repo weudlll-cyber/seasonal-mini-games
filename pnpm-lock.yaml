@@ -187,6 +187,9 @@ importers:
       '@playwright/test':
         specifier: 1.65.1
         version: 1.65.1
+      '@seasonal/kit':
+        specifier: github:weudlll-cyber/seasonal-kit#v0.32.0
+        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/0016e862614e15855f4c5c06c18bac843b8c0105(@playwright/test@1.65.1)(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
       '@smg/contracts':
         specifier: workspace:*
         version: link:packages/contracts
@@ -615,6 +618,9 @@ importers:
 
   load:
     dependencies:
+      '@seasonal/kit':
+        specifier: github:weudlll-cyber/seasonal-kit#v0.32.0
+        version: https://codeload.github.com/weudlll-cyber/seasonal-kit/tar.gz/0016e862614e15855f4c5c06c18bac843b8c0105(@playwright/test@1.65.1)(react@19.3.1)(vite@8.3.8(@types/node@22.20.5)(esbuild@0.28.2)(tsx@4.23.15)(yaml@2.9.1))
       socket.io-client:
         specifier: 4.8.4
         version: 4.8.4(supports-color@7.2.0)
