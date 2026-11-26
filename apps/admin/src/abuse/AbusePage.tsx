@@ -50,7 +50,7 @@ function Suspend({
       />
       <button
         type="button"
-        className="smg-btn smg-btn--danger"
+        className="sk-btn sk-btn--danger"
         disabled={reason.trim().length < 3}
         onClick={suspend}
       >
@@ -70,7 +70,7 @@ export function AbusePage({ canSuspend }: { readonly canSuspend: boolean }): Rea
     void load();
   }, [load]);
   return (
-    <section className="smg-panel smg-stack">
+    <section className="sk-panel smg-stack">
       <h1>Abuse</h1>
       <p className="smg-muted">
         Scores add up the weighted signals of the last 7 days. A score never sanctions by itself.

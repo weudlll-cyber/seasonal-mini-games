@@ -29,7 +29,7 @@ export function Secrets(p: PartProps & { readonly secrets: unknown }): ReactElem
   const roster = new Set(p.proof.roster.map((r) => r.playerId));
   const lines = secretLines(p.secrets, (key) => (roster.has(key) ? p.name(key) : null));
   return (
-    <section className="smg-panel smg-stack" aria-labelledby="verify-secrets">
+    <section className="sk-panel smg-stack" aria-labelledby="verify-secrets">
       <h2 id="verify-secrets">Recomputed from the seed</h2>
       <ul className="boards-list" data-testid="secrets">
         {lines.map((l) => (
@@ -45,7 +45,7 @@ export function Secrets(p: PartProps & { readonly secrets: unknown }): ReactElem
 export function Settings({ proof, name }: PartProps): ReactElement {
   const mode = proof.config['secretMode'] === 'shared' ? 'Shared' : 'Individual';
   return (
-    <section className="smg-panel smg-stack" aria-labelledby="verify-settings">
+    <section className="sk-panel smg-stack" aria-labelledby="verify-settings">
       <h2 id="verify-settings">Settings and players</h2>
       <p>
         {proof.season === null ? null : (
@@ -74,7 +74,7 @@ export function Settings({ proof, name }: PartProps): ReactElement {
 
 export function Guesses({ proof, name }: PartProps): ReactElement {
   return (
-    <section className="smg-panel smg-stack" aria-labelledby="verify-guesses">
+    <section className="sk-panel smg-stack" aria-labelledby="verify-guesses">
       <h2 id="verify-guesses">Accepted guesses in receive order</h2>
       {proof.guesses.length === 0 ? (
         <p>No guesses were accepted.</p>

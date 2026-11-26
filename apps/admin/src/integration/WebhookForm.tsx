@@ -57,7 +57,7 @@ export function WebhookForm(p: {
     });
   };
   return (
-    <form className="smg-panel smg-panel--inset smg-stack" onSubmit={save}>
+    <form className="sk-panel sk-panel--inset smg-stack" onSubmit={save}>
       <h3>{p.endpoint === null ? 'New webhook endpoint' : `Change ${p.endpoint.url}`}</h3>
       <TextInput label="Address (https)" visible value={url} onChange={setUrl} maxLength={500} />
       <fieldset className="smg-row">

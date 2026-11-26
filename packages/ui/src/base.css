@@ -1,18 +1,18 @@
 /**
  * @file   packages/ui/src/base.css
  * @module ui
- * @brief  Base styles and the small set of shared components (buttons, panels, fields).
+ * @brief  The page's base styles and what the kit's components leave to this game.
  *
  * Responsibility: the Seasonal Entertainment website's look on the tokens of ./tokens.css:
  *                 the page background with its four token glows (the root's background, sized
  *                 to the whole page, so it covers every height), type, a visible accent focus
- *                 ring on every control, buttons as pills (primary solid, secondary glass with
- *                 a hairline, disabled muted on the second surface) and fields at least 44 px high (--sk-hit-target), a disabled
- *                 field locked in look (muted fill and text, dashed edge, not-allowed cursor, O97), panels as
- *                 translucent cards with the card radius, chips and the LIVE badge; a number field
- *                 that allows negatives has the square ± button beside it (./SignToggle) and its
- *                 help line turns to the danger colour while the value is out of range. Layout
- *                 works from 360 px phone width up; nothing here sets colours of its own.
+ *                 ring, muted and visually hidden text, the stack and row layouts. Buttons,
+ *                 panels, fields, selects, chips and the LIVE badge are the kit's
+ *                 (@seasonal/kit/components.css, `.sk-…`, imported before this file; DECISIONS
+ *                 T442). The game's own on them: the padlock mark of a field that cannot be
+ *                 changed now (O97), the field with the square ± button beside it
+ *                 (./SignToggle), the season tint of a hint (O56) and a name cut to one line.
+ *                 Layout works from 360 px phone width up; nothing here sets colours of its own.
  * Spec:           Bingo 01 §13; Seasonal Entertainment docs/DESIGN.md
  */
 
@@ -73,18 +73,6 @@ a {
   white-space: nowrap;
 }
 
-/* Panels: translucent cards with the card radius, so the page glow shows through */
-.smg-panel {
-  background: var(--sk-color-card);
-  border: 1px solid var(--sk-color-border);
-  border-radius: var(--sk-radius-card);
-  padding: var(--sk-space-3);
-}
-
-.smg-panel--inset {
-  background: var(--sk-color-surface-2);
-}
-
 .smg-stack {
   display: grid;
   gap: var(--sk-space-2);
@@ -97,112 +85,13 @@ a {
   gap: var(--sk-space-1);
 }
 
-/* Buttons */
-.smg-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  min-height: var(--sk-hit-target);
-  padding: 0 1.1rem;
-  border: 1px solid var(--sk-color-border);
-  border-radius: var(--sk-radius-pill);
-  background: var(--sk-color-glass);
-  color: var(--sk-color-text);
-  font: inherit;
-  font-weight: var(--sk-font-weight-strong);
-  text-decoration: none;
-  cursor: pointer;
-  transition:
-    background var(--sk-duration-fast) var(--sk-ease-out),
-    transform var(--sk-duration-fast) var(--sk-ease-out);
-}
-
-.smg-btn:hover:not(:disabled) {
-  background: var(--sk-color-active-bg);
-}
-
-.smg-btn:active:not(:disabled) {
-  transform: translateY(1px);
-}
-
-/* Disabled: muted text on the second surface, 6.6:1 light and 8.0:1 dark, for every kind of
-   button (fading the whole button took its text below 2:1, DECISIONS T68) */
-.smg-btn:disabled {
-  border-color: var(--sk-color-border);
-  background: var(--sk-color-surface-2);
-  color: var(--sk-color-text-muted);
-  cursor: not-allowed;
-}
-
-.smg-btn--primary {
-  border-color: transparent;
-  background: var(--sk-color-solid);
-  color: var(--sk-color-on-solid);
-}
-
-.smg-btn--primary:hover:not(:disabled) {
-  background: var(--sk-color-solid);
-  opacity: 0.88;
-}
-
-.smg-btn--danger {
-  border-color: var(--sk-color-danger);
-  color: var(--sk-color-danger);
-  background: transparent;
-}
-
-.smg-btn--big {
-  min-height: 4rem;
-  padding: 0 2rem;
-  font-size: var(--sk-font-size-lead);
-}
-
-/* Fields */
-.smg-field {
-  display: grid;
-  gap: 0.35rem;
-  font-weight: var(--sk-font-weight-strong);
-}
-
-.smg-field > span {
-  font-size: var(--sk-font-size-small);
-  color: var(--sk-color-text-muted);
-}
-
-.smg-input,
-.smg-select {
-  min-height: var(--sk-hit-target);
-  width: 100%;
-  padding: 0 0.85rem;
-  border: 1px solid var(--sk-color-border-strong);
-  border-radius: var(--sk-radius);
-  background: var(--sk-color-surface);
-  color: var(--sk-color-text);
-  font: inherit;
-}
-
-/* A field that cannot be changed now (it follows another value, or holds for the match): it
-   looks locked as well as being so (O97): a muted fill, muted text (6.6:1 light, 8.0:1 dark,
-   as a disabled button's), a dashed edge and the not-allowed cursor; the form's padlock mark
-   beside the label says it in words. */
-.smg-input:disabled,
-.smg-select:disabled {
-  border-style: dashed;
-  border-color: var(--sk-color-border-strong);
-  background: var(--sk-color-surface-2);
-  color: var(--sk-color-text-muted);
-  -webkit-text-fill-color: var(--sk-color-text-muted);
-  opacity: 1;
-  cursor: not-allowed;
-}
-
+/* Fields: the kit's `.sk-field`; a box that cannot be ticked says so with its cursor too. */
 input[type='checkbox']:disabled {
   cursor: not-allowed;
 }
 
 /* At the top right of its field, in the label's row (the field is a grid, ../fields). */
-.smg-field:has(> .smg-field-lock) {
+.sk-field:has(> .smg-field-lock) {
   position: relative;
 }
 
@@ -223,12 +112,6 @@ input[type='checkbox']:disabled {
   height: 0.85em;
 }
 
-/* Placeholders (e.g. a default value shown in an empty field) stay readable: 4.5:1 */
-.smg-input::placeholder {
-  color: var(--sk-color-text-muted);
-  opacity: 1;
-}
-
 /* A field with the ± button (./SignToggle): the control and the button share a row, the
    help line runs under both. */
 .smg-field--signed {
@@ -247,24 +130,6 @@ input[type='checkbox']:disabled {
   font-size: var(--sk-font-size-lead);
 }
 
-/* The help line names the bounds while the typed value is outside them */
-.smg-field-help--error {
-  color: var(--sk-color-danger);
-}
-
-/* Chips and badges */
-.smg-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.2rem 0.7rem;
-  border-radius: var(--sk-radius-pill);
-  background: var(--sk-color-surface-2);
-  border: 1px solid var(--sk-color-border);
-  font-size: var(--sk-font-size-small);
-  font-weight: var(--sk-font-weight-strong);
-}
-
 /* A player's name in a game's own lists (a result's history): one line, at most half of it,
    cut with an ellipsis at its end; the full name is the element's title (T202). */
 .smg-one-line {
@@ -281,14 +146,4 @@ input[type='checkbox']:disabled {
 .smg-hint {
   border-color: var(--season, var(--sk-color-accent));
   background: color-mix(in srgb, var(--season, var(--sk-color-accent)) 22%, var(--sk-color-card));
-}
-
-.smg-badge-live {
-  padding: 0.15rem 0.55rem;
-  border-radius: var(--sk-radius-pill);
-  background: var(--sk-color-live);
-  color: var(--sk-color-on-live);
-  font-size: 0.75rem;
-  font-weight: var(--sk-font-weight-heading);
-  letter-spacing: 0.06em;
 }

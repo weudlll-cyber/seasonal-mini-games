@@ -52,7 +52,7 @@ export function RoundChat({ chat }: { readonly chat: ReactNode }): ReactElement 
         <button
           ref={panel.button}
           type="button"
-          className="smg-btn round-chat-toggle"
+          className="sk-btn round-chat-toggle"
           aria-expanded={panel.open}
           aria-controls={panel.panelId}
           data-testid="round-chat-toggle"

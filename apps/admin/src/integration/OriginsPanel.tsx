@@ -67,7 +67,7 @@ function OriginForm(p: {
       });
   };
   return (
-    <form className="smg-panel smg-panel--inset smg-stack" onSubmit={save}>
+    <form className="sk-panel sk-panel--inset smg-stack" onSubmit={save}>
       <h3>{p.origin === null ? 'New embed origin' : `Change ${p.origin.origin}`}</h3>
       {p.origin === null ? (
         <TextInput
@@ -105,7 +105,7 @@ function OriginsTable(p: {
           <td className="smg-row">
             <button
               type="button"
-              className="smg-btn"
+              className="sk-btn"
               onClick={() => {
                 p.edit(o);
               }}
@@ -114,7 +114,7 @@ function OriginsTable(p: {
             </button>
             <button
               type="button"
-              className="smg-btn smg-btn--danger"
+              className="sk-btn sk-btn--danger"
               onClick={() => {
                 p.open(removeRequest(o));
               }}
@@ -148,7 +148,7 @@ export function OriginsPanel(): ReactElement {
       />
     );
   return (
-    <section className="smg-panel smg-stack" aria-label="Embed origins">
+    <section className="sk-panel smg-stack" aria-label="Embed origins">
       <h2>Embed origins</h2>
       <p className="smg-muted">
         Sites that may frame a standalone install; a website install is framed by its website alone.

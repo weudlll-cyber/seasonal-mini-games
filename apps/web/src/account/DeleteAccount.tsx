@@ -44,7 +44,7 @@ const KEPT = [
 export function DeleteAccount({ displayName }: { readonly displayName: string }): ReactElement {
   const [open, setOpen] = useState(false);
   return (
-    <section className="smg-panel account-form" aria-labelledby="delete-account-title">
+    <section className="sk-panel account-form" aria-labelledby="delete-account-title">
       <h2 id="delete-account-title">Delete my account</h2>
       {open ? (
         <DeleteForm
@@ -151,7 +151,7 @@ function DeleteForm(p: { readonly displayName: string; readonly cancel: () => vo
       <div className="smg-row">
         <button
           type="submit"
-          className="smg-btn smg-btn--danger"
+          className="sk-btn sk-btn--danger"
           disabled={!ready}
           data-testid="delete-account-submit"
         >
@@ -166,7 +166,7 @@ function DeleteForm(p: { readonly displayName: string; readonly cancel: () => vo
 // After the deletion: the session is gone; this page only says so (#/account/deleted).
 export function AccountDeleted(): ReactElement {
   return (
-    <section className="smg-panel account-form" data-testid="account-deleted">
+    <section className="sk-panel account-form" data-testid="account-deleted">
       <h1>Account deleted</h1>
       <p role="status">Your account was deleted and you are signed out.</p>
       <p>

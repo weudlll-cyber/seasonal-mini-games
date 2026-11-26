@@ -74,7 +74,7 @@ function Row(p: {
       <td className="smg-row">
         <button
           type="button"
-          className="smg-btn"
+          className="sk-btn"
           onClick={() => {
             p.edit(v);
           }}
@@ -83,7 +83,7 @@ function Row(p: {
         </button>
         <button
           type="button"
-          className="smg-btn"
+          className="sk-btn"
           onClick={() => {
             if (v.enabled) p.open(disableRequest(v));
             else p.enable(v);
@@ -93,7 +93,7 @@ function Row(p: {
         </button>
         <button
           type="button"
-          className="smg-btn smg-btn--danger"
+          className="sk-btn sk-btn--danger"
           onClick={() => {
             p.open(removeRequest(v));
           }}
@@ -128,7 +128,7 @@ export function ProvidersPanel(): ReactElement {
       />
     );
   return (
-    <section className="smg-panel smg-stack" aria-label="Identity providers">
+    <section className="sk-panel smg-stack" aria-label="Identity providers">
       <h2>Identity providers</h2>
       <p className="smg-muted">
         Hosts that sign their users in here with a JWT handoff (audience seasonal-mini-games). A

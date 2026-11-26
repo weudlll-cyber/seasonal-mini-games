@@ -117,7 +117,7 @@
   gap: var(--sk-space-1);
 }
 
-.chat-form .smg-input {
+.chat-form .sk-input {
   flex: 1;
   min-width: 0;
 }

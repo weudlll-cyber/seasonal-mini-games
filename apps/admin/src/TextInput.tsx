@@ -27,7 +27,7 @@ interface TextInputProps {
 export function TextInput(p: TextInputProps): ReactElement {
   const input = (
     <input
-      className="smg-input"
+      className="sk-input"
       type={p.type ?? 'text'}
       aria-label={p.visible === true ? undefined : p.label}
       placeholder={p.placeholder}
@@ -41,7 +41,7 @@ export function TextInput(p: TextInputProps): ReactElement {
   );
   if (p.visible !== true) return input;
   return (
-    <label className="smg-field">
+    <label className="sk-field">
       <span>{p.label}</span>
       {input}
     </label>

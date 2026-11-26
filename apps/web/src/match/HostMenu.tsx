@@ -116,7 +116,7 @@ function RoundForm({ match, doc, last, done }: RoundFormProps): ReactElement {
       </div>
       <Problem text={problems.form} />
       <div className="smg-row">
-        <button type="submit" className="smg-btn smg-btn--primary" data-testid="create-start">
+        <button type="submit" className="sk-btn sk-btn--primary" data-testid="create-start">
           Create and start round
         </button>
         <ActionButton
@@ -228,7 +228,7 @@ export function HostMenu(p: HostMenuProps): ReactElement | null {
       <button
         ref={menu.button}
         type="button"
-        className="smg-btn host-menu-button"
+        className="sk-btn host-menu-button"
         aria-expanded={menu.open}
         aria-controls={menu.panelId}
         data-testid="host-menu"

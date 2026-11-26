@@ -73,7 +73,7 @@ export function MatchPage({ code }: { readonly code: string }): ReactElement {
   const live = useRound(match?.round?.id ?? null);
   if (missing)
     return (
-      <section className="smg-panel">
+      <section className="sk-panel">
         <h1>No such match</h1>
         <p>Check the code and try again.</p>
       </section>
@@ -262,10 +262,10 @@ function LobbyView(p: LobbyProps): ReactElement {
     <div className="smg-stack" data-testid="match">
       <header className="match-head">
         <h1>{match.title}</h1>
-        <span className="smg-chip" data-testid="match-game">
+        <span className="sk-chip" data-testid="match-game">
           {gameName(games, match.gameId)}
         </span>
-        <span className="smg-chip">
+        <span className="sk-chip">
           Code {match.code} · {match.status}
         </span>
         {p.hostMenu}

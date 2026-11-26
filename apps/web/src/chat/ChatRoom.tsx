@@ -100,7 +100,7 @@ export function Writer(p: {
       {hint === null || refusal !== null ? null : <p className="smg-muted">{hint}</p>}
       <form className="chat-form" onSubmit={submit}>
         <input
-          className="smg-input"
+          className="sk-input"
           aria-label="Message"
           placeholder={p.placeholder ?? 'Write a message'}
           maxLength={300}
@@ -110,7 +110,7 @@ export function Writer(p: {
             setText(e.target.value);
           }}
         />
-        <button type="submit" className="smg-btn" disabled={text.trim() === '' || sending}>
+        <button type="submit" className="sk-btn" disabled={text.trim() === '' || sending}>
           Send
         </button>
       </form>

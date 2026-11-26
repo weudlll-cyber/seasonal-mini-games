@@ -30,7 +30,7 @@ export function ResultBar(p: {
   return (
     <header className="result-bar" data-testid="result-bar">
       <strong className="result-bar-title">{p.title}</strong>
-      <span className="smg-chip result-bar-game" title={p.game} data-testid="match-game">
+      <span className="sk-chip result-bar-game" title={p.game} data-testid="match-game">
         {p.game}
       </span>
       <span className="result-bar-code" data-testid="result-code">
@@ -39,7 +39,7 @@ export function ResultBar(p: {
       </span>
       <span className="result-bar-actions">
         {p.host}
-        <a className="smg-btn result-bar-link" href={hrefOf({ name: 'lobby' })}>
+        <a className="sk-btn result-bar-link" href={hrefOf({ name: 'lobby' })}>
           Play
         </a>
       </span>

@@ -56,7 +56,7 @@ export function RunningControls({
           }}
         />
         <input
-          className="smg-input"
+          className="sk-input"
           placeholder="Reason to abort"
           value={reason}
           onChange={(e) => {

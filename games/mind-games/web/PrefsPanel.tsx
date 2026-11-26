@@ -64,7 +64,7 @@ function RoundPick(p: {
       {/* The small label above its select (the design of MG-N7). */}
       <span>Round {p.round}</span>{' '}
       <select
-        className="smg-select"
+        className="sk-select"
         value={p.value}
         onChange={(e) => {
           p.pick(p.round, e.target.value);

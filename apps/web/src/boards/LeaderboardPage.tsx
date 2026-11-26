@@ -80,10 +80,10 @@ export function LeaderboardPage({ periodId }: { readonly periodId: string | null
         <>
           <Pickers periods={periods} chosen={chosen} game={game} setGame={setGame} />
           <div className="boards-grid">
-            <section className="smg-panel" aria-label="Players">
+            <section className="sk-panel" aria-label="Players">
               <PlayerBoard key={`${chosen.id}${game}`} period={chosen} game={filter} />
             </section>
-            <section className="smg-panel" aria-label="Teams">
+            <section className="sk-panel" aria-label="Teams">
               <TeamBoard key={`${chosen.id}${game}`} period={chosen} game={filter} />
             </section>
           </div>

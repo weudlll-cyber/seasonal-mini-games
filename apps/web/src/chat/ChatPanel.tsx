@@ -123,7 +123,7 @@ function Panel({ target, bare = false, config }: ChatPanelProps): ReactElement |
   }
   return (
     <section
-      className="smg-panel chat-panel chat-panel--page"
+      className="sk-panel chat-panel chat-panel--page"
       aria-labelledby="chat-title"
       data-testid="chat-panel"
     >

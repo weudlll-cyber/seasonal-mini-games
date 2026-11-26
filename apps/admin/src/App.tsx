@@ -126,7 +126,7 @@ export function App({ dev }: { readonly dev: boolean }): ReactElement {
   if (session.account === null && session.signInPath !== null) {
     return (
       <main className="admin-main">
-        <p className="smg-panel admin-sign-in">
+        <p className="sk-panel admin-sign-in">
           <a href={websiteSignInHref(session.signInPath)}>Sign in through the website</a>
         </p>
       </main>
@@ -150,7 +150,7 @@ export function App({ dev }: { readonly dev: boolean }): ReactElement {
             </a>
           ))}
         </nav>
-        <span className="smg-chip">{session.account.displayName}</span>
+        <span className="sk-chip">{session.account.displayName}</span>
       </header>
       <StepUp />
       <main className="admin-main">

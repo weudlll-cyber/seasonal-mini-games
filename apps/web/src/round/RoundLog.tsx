@@ -121,7 +121,7 @@ function Head(p: LogProps & { readonly count: number; readonly all: number }): R
         <button
           ref={p.more.button}
           type="button"
-          className="smg-btn round-log-all"
+          className="sk-btn round-log-all"
           aria-expanded={p.more.open}
           data-testid="list-all"
           onClick={p.more.toggle}

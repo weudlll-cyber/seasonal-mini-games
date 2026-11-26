@@ -61,7 +61,7 @@ function Teams({ match, viewerKey, reload }: Props): ReactElement {
           <button
             key={t}
             type="button"
-            className="smg-btn"
+            className="sk-btn"
             aria-pressed={mine === t}
             style={{ '--season': seasonColor(t) } as CSSProperties}
             onClick={() => void choose(t)}
@@ -142,7 +142,7 @@ export function WaitingArea(p: Props): ReactElement {
   const choosing = match.teamMatch && match.youPlayer && !match.teamLocked;
   return (
     <section
-      className="smg-panel smg-stack match-waiting"
+      className="sk-panel smg-stack match-waiting"
       aria-labelledby="waiting-title"
       data-testid="waiting-area"
     >

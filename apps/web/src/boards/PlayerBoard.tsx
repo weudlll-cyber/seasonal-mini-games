@@ -141,7 +141,7 @@ export function PlayerBoard({
     <div className="smg-stack">
       <BoardTable caption={`Players — ${period.name}`} rows={shown.rows} testId="board" />
       {shown.next === null ? null : (
-        <button type="button" className="smg-btn boards-more" onClick={loadMore}>
+        <button type="button" className="sk-btn boards-more" onClick={loadMore}>
           Show more
         </button>
       )}

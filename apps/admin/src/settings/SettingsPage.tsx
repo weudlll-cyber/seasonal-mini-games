@@ -131,7 +131,7 @@ function SaveBar(p: {
       />
       <button
         type="button"
-        className="smg-btn smg-btn--primary"
+        className="sk-btn sk-btn--primary"
         onClick={p.save}
         data-testid="save-settings"
       >
@@ -192,7 +192,7 @@ function Document({ id }: { readonly id: string }): ReactElement {
     });
   };
   return (
-    <section className="smg-panel smg-stack">
+    <section className="sk-panel smg-stack">
       <h2>
         {documentName(id)} <small className="smg-muted">version {doc.version}</small>
       </h2>
@@ -229,7 +229,7 @@ export function SettingsPage(): ReactElement {
           <button
             key={d}
             type="button"
-            className="smg-btn"
+            className="sk-btn"
             aria-pressed={d === id}
             onClick={() => {
               setId(d);

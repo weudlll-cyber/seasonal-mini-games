@@ -227,7 +227,7 @@ export function TargetInput(props: StInputProps): ReactElement {
           {props.ring}
           <button
             type="button"
-            className="smg-btn smg-btn--primary st-go"
+            className="sk-btn sk-btn--primary st-go"
             disabled={!props.canAct || t.sending || t.blocked !== null}
             onClick={guess}
             data-testid="guess-button"

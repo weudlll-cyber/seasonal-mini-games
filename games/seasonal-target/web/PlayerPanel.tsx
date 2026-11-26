@@ -62,7 +62,7 @@ export function InfoLine(props: SpectatorPanelProps): ReactElement {
   if (shrunk === null && v.hint !== null) {
     return (
       <span className="st-line" data-testid="st-line">
-        <span className="smg-chip smg-hint">{shortHint(v.hint)}</span>
+        <span className="sk-chip smg-hint">{shortHint(v.hint)}</span>
       </span>
     );
   }

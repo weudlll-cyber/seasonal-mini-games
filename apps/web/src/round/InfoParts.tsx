@@ -106,7 +106,7 @@ export function PhoneLine(p: {
       <button
         ref={panels.button('game')}
         type="button"
-        className="smg-panel round-line"
+        className="sk-panel round-line"
         aria-expanded={panels.open === 'game'}
         data-testid="info-line"
         onClick={() => {

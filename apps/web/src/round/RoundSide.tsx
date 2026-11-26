@@ -140,7 +140,7 @@ export function OthersPanel(p: {
   if (others.length === 0) return null;
   const rest = others.length - fit.shown;
   return (
-    <section className="smg-panel round-others" aria-label="Other players">
+    <section className="sk-panel round-others" aria-label="Other players">
       <h2 className="round-others-title">Other players</h2>
       <ul ref={fit.ref} className="round-player-list" data-testid="others-panel">
         {others.slice(0, fit.shown).map((r) => (

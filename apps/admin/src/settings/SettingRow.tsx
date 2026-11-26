@@ -78,7 +78,7 @@ function ValueEditor({ def, override, change, disabled = false }: EditorProps): 
     const options = def.kind === 'bool' ? ['on', 'off'] : def.options;
     return (
       <select
-        className="smg-select"
+        className="sk-select"
         aria-label={label}
         value={shown(override.value)}
         disabled={disabled}
@@ -95,7 +95,7 @@ function ValueEditor({ def, override, change, disabled = false }: EditorProps): 
   }
   return (
     <input
-      className="smg-input"
+      className="sk-input"
       aria-label={label}
       placeholder="as catalogue"
       defaultValue={shown(override.value)}
@@ -115,7 +115,7 @@ function BoundEditor({
   const word = side === 'min' ? 'lowest' : 'highest';
   return (
     <input
-      className="smg-input"
+      className="sk-input"
       type="number"
       aria-label={`${def.label}: ${word} allowed`}
       placeholder={`${side} ${String(def[side])}`}
@@ -202,7 +202,7 @@ export function SettingRow({
             {problem === undefined ? null : (
               <small
                 role="alert"
-                className="smg-muted smg-field-help--error"
+                className="smg-muted sk-field-help--error"
                 data-testid="setting-problem"
               >
                 {problem}

@@ -45,13 +45,13 @@ export function JoinLeave({
   return (
     <div className="smg-row">
       {match.youPlayer ? (
-        <button type="button" className="smg-btn" onClick={() => void go('leave')}>
+        <button type="button" className="sk-btn" onClick={() => void go('leave')}>
           Leave match
         </button>
       ) : (
         <button
           type="button"
-          className="smg-btn smg-btn--primary"
+          className="sk-btn sk-btn--primary"
           onClick={() => void go('join')}
           data-testid="join"
         >

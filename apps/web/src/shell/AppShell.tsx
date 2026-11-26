@@ -118,7 +118,7 @@ function Header({ route, dev }: { readonly route: ShellRoute; readonly dev: bool
       {...(devTools === undefined ? {} : { devTools })}
       // A new route or account closes the folded menu.
       closeKey={`${route.name}|${account?.id ?? 'guest'}`}
-      buttonClassName="smg-btn"
+      buttonClassName="sk-btn"
     />
   );
 }

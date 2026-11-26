@@ -58,6 +58,7 @@ For Phase 7:
 
 ## Part two — closed
 
+- 2026-11-26: The kit's base components and header looks at v0.34.0 (T442). _Closed by:_ branch `feat/kit-0.22` (draft PR #57)
 - 2026-11-26: The kit's test tools for screens, colours, contrast and load measurements (T438). _Closed by:_ branch `feat/kit-0.22` (draft PR #57)
 - 2026-11-26: The kit's ops parts at v0.32.0: admin command with `uninstall`, route file, operator address, host baseline, container hardening, the operator guide's section order, and the round and recovery keys inside the backup (OPEN (ao), the owner's answer, O157) (T437). _Closed by:_ branch `feat/kit-0.22` (draft PR #57)
 - 2026-11-26: The kit's server parts at v0.32.0: headers (website mode framed by the website only), the named cross-origin write, the local origin of the account feed (T435) and the two database roles (T436); the server rehearsal is still to come. _Closed by:_ branch `feat/kit-0.22` (draft PR #57)

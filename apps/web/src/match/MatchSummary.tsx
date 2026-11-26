@@ -103,7 +103,7 @@ export function MatchSummary({
         code={match.code}
         host={null}
       />
-      <section className="smg-panel match-summary" data-testid="match-summary">
+      <section className="sk-panel match-summary" data-testid="match-summary">
         <header className="match-summary-head">
           <h1>Match over</h1>
           {end === null ? null : <p data-testid="match-end">{endText(match.status, end)}</p>}
@@ -119,7 +119,7 @@ export function MatchSummary({
           <RoundWords end={end} />
           <Teams match={match} />
           <p>
-            <a className="smg-btn smg-btn--primary" href={hrefOf({ name: 'lobby' })}>
+            <a className="sk-btn sk-btn--primary" href={hrefOf({ name: 'lobby' })}>
               Back to Play
             </a>
           </p>

@@ -191,7 +191,7 @@ export function Placings(p: {
         {rows.length <= TOP ? null : (
           <button
             type="button"
-            className="smg-btn round-all-placings"
+            className="sk-btn round-all-placings"
             aria-expanded={all}
             data-testid="all-placings"
             onClick={() => {

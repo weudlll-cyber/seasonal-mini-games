@@ -130,7 +130,7 @@ function OwnResult(p: ResultProps & { readonly game: GameWeb }): ReactElement {
       <div className="round-result-first" data-testid="result-first">
         {part('reveal')}
         <details className="round-result-lines" data-testid="result-history">
-          <summary className="smg-btn">Every line</summary>
+          <summary className="sk-btn">Every line</summary>
           <div className="round-result-lines-body">{part('history')}</div>
         </details>
       </div>

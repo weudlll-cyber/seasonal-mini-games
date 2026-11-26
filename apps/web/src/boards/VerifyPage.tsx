@@ -48,7 +48,7 @@ function Check({ proof }: { readonly proof: Proof }): ReactElement {
 
 function Seed({ proof }: { readonly proof: Proof }): ReactElement {
   return (
-    <section className="smg-panel smg-stack" aria-labelledby="verify-seed">
+    <section className="sk-panel smg-stack" aria-labelledby="verify-seed">
       <h2 id="verify-seed">Commitment and seed</h2>
       <p>
         Published when the round was created, <code>sha256(seed)</code>:{' '}
@@ -75,7 +75,7 @@ function Intro({
   readonly roundId: string;
 }) {
   return (
-    <header className="smg-panel smg-stack">
+    <header className="sk-panel smg-stack">
       <h1>Verify this round</h1>
       <p>
         Before the round started, the server published a fingerprint (a SHA-256 hash) of a secret
@@ -86,7 +86,7 @@ function Intro({
       {answer === null ? null : (
         <button
           type="button"
-          className="smg-btn boards-more"
+          className="sk-btn boards-more"
           onClick={() => {
             downloadJson(`round-${roundId}-proof.json`, answer);
           }}

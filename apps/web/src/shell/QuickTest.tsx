@@ -277,7 +277,7 @@ export function QuickTest(): ReactElement {
       });
   };
   return (
-    <form className="smg-panel smg-stack" onSubmit={start} data-testid="quick-test">
+    <form className="sk-panel smg-stack" onSubmit={start} data-testid="quick-test">
       <h1>Quick Test</h1>
       <p className="smg-muted">
         One round against bots, which you host and play: from the lobby, where the bots join and you
@@ -292,7 +292,7 @@ export function QuickTest(): ReactElement {
         game={games.find((g) => g.id === extra.gameId)}
       />
       <Problem text={problems.form} />
-      <button type="submit" className="smg-btn smg-btn--primary" data-testid="start-quick-test">
+      <button type="submit" className="sk-btn sk-btn--primary" data-testid="start-quick-test">
         Start Quick Test
       </button>
     </form>

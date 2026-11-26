@@ -29,7 +29,7 @@ afterEach(() => {
 // Each field's label and the help line its control points to.
 function helpByLabel(): Map<string, string> {
   const out = new Map<string, string>();
-  for (const field of document.querySelectorAll('.smg-field')) {
+  for (const field of document.querySelectorAll('.sk-field')) {
     const label = field.querySelector('label > span')?.textContent ?? '';
     const control = field.querySelector('input, select');
     const helpId = control?.getAttribute('aria-describedby') ?? '';

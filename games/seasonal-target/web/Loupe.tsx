@@ -92,7 +92,7 @@ export function Loupe(p: {
       />
       <div className="st-loupe-row">
         <Steer selected={p.selected} select={p.pick} />
-        <button type="button" className="smg-btn st-loupe-close" onClick={sheet.close}>
+        <button type="button" className="sk-btn st-loupe-close" onClick={sheet.close}>
           Close
         </button>
       </div>

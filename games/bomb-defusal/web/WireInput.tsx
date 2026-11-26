@@ -101,7 +101,7 @@ function WireButton(p: {
   return (
     <button
       type="button"
-      className="smg-btn bd-wire"
+      className="sk-btn bd-wire"
       data-harmless={p.harmless}
       aria-label={p.harmless ? `${p.wire}, harmless` : undefined}
       disabled={used || p.harmless || p.full}
@@ -153,17 +153,12 @@ export function WireInput(props: PlayerPanelProps & { readonly ring?: ReactNode 
       <WireButtons view={view} seq={s} />
       <div className="bd-actions">
         {props.ring}
-        <button
-          type="button"
-          className="smg-btn bd-action"
-          onClick={s.undo}
-          disabled={!s.removable}
-        >
+        <button type="button" className="sk-btn bd-action" onClick={s.undo} disabled={!s.removable}>
           Undo
         </button>
         <button
           type="button"
-          className="smg-btn bd-action"
+          className="sk-btn bd-action"
           onClick={s.clear}
           disabled={!s.removable}
         >
@@ -171,7 +166,7 @@ export function WireInput(props: PlayerPanelProps & { readonly ring?: ReactNode 
         </button>
         <button
           type="button"
-          className="smg-btn smg-btn--primary bd-cut"
+          className="sk-btn sk-btn--primary bd-cut"
           onClick={s.cut}
           disabled={!s.full || !props.canAct || s.sending}
           data-testid="cut-button"

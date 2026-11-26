@@ -62,7 +62,7 @@ function Labelled({
   const ids = [help === undefined ? '' : helpId, problem === undefined ? '' : problemId];
   const described = ids.filter((id) => id !== '').join(' ');
   return (
-    <div className={after === undefined ? 'smg-field' : 'smg-field smg-field--signed'}>
+    <div className={after === undefined ? 'sk-field' : 'sk-field smg-field--signed'}>
       <label>
         <span>{label}</span>
         {described === '' ? children : cloneElement(children, { 'aria-describedby': described })}
@@ -79,7 +79,7 @@ function Labelled({
         <small
           id={problemId}
           role={alert ? 'alert' : undefined}
-          className="smg-muted smg-field-help--error"
+          className="smg-muted sk-field-help--error"
           data-testid="field-problem"
         >
           {problem}
@@ -100,7 +100,7 @@ export function TextField(
   return (
     <Labelled label={p.label} help={p.help} problem={p.problem} disabled={p.disabled}>
       <input
-        className="smg-input"
+        className="sk-input"
         value={p.value}
         maxLength={p.maxLength}
         placeholder={p.placeholder}
@@ -190,7 +190,7 @@ export function NumberField(p: NumberProps): ReactElement {
       disabled={p.disabled}
     >
       <input
-        className="smg-input"
+        className="sk-input"
         type="number"
         // The off value lies below the bounds (0 under 20): the browser must let it through.
         min={p.off === undefined ? p.min : Math.min(p.min, p.off)}
@@ -219,7 +219,7 @@ export function ChoiceField<T extends string>(
   return (
     <Labelled label={p.label} help={p.help} problem={p.problem} disabled={p.disabled}>
       <select
-        className="smg-select"
+        className="sk-select"
         value={p.value}
         data-testid={p.testId}
         disabled={p.disabled}
@@ -270,7 +270,7 @@ export function ActionButton(p: {
   return (
     <button
       type="button"
-      className={p.kind === undefined ? 'smg-btn' : `smg-btn smg-btn--${p.kind}`}
+      className={p.kind === undefined ? 'sk-btn' : `sk-btn sk-btn--${p.kind}`}
       disabled={p.disabled}
       data-testid={p.testId}
       onClick={p.onClick}

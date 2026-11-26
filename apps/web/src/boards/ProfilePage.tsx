@@ -51,7 +51,7 @@ function Facts({ p }: { readonly p: PlayerProfileView }): ReactElement {
 
 function Boards({ p }: { readonly p: PlayerProfileView }): ReactElement {
   return (
-    <section className="smg-panel smg-stack" aria-labelledby="profile-boards">
+    <section className="sk-panel smg-stack" aria-labelledby="profile-boards">
       <h2 id="profile-boards">Boards</h2>
       {p.boards.length === 0 ? (
         <p>Not on a board yet.</p>
@@ -72,7 +72,7 @@ function Boards({ p }: { readonly p: PlayerProfileView }): ReactElement {
 function Recent({ p }: { readonly p: PlayerProfileView }): ReactElement {
   const games = useGames();
   return (
-    <section className="smg-panel smg-stack" aria-labelledby="profile-recent">
+    <section className="sk-panel smg-stack" aria-labelledby="profile-recent">
       <h2 id="profile-recent">Last rounds</h2>
       {p.recent.length === 0 ? (
         <p>No rounds yet.</p>
@@ -115,7 +115,7 @@ function Recent({ p }: { readonly p: PlayerProfileView }): ReactElement {
 
 function Adjustments({ p }: { readonly p: PlayerProfileView }): ReactElement {
   return (
-    <section className="smg-panel smg-stack" aria-labelledby="profile-adjustments">
+    <section className="sk-panel smg-stack" aria-labelledby="profile-adjustments">
       <h2 id="profile-adjustments">Staff adjustments</h2>
       {p.adjustments.length === 0 ? (
         <p>No staff adjustments.</p>
@@ -137,7 +137,7 @@ export function ProfilePage({ displayName }: { readonly displayName: string }): 
   const profile = useApiGet<PlayerProfileView>(api, path);
   if (profile.kind === 'failed' && profile.error.status === 404) {
     return (
-      <section className="smg-panel" data-testid="profile-missing">
+      <section className="sk-panel" data-testid="profile-missing">
         <h1>No player with that name.</h1>
       </section>
     );
@@ -147,7 +147,7 @@ export function ProfilePage({ displayName }: { readonly displayName: string }): 
   const data = profile.value;
   return (
     <div className="smg-stack boards-page" data-testid="profile">
-      <header className="smg-panel smg-stack">
+      <header className="sk-panel smg-stack">
         <h1>
           {data.displayName}
           <StepBadges steps={data.steps} />

@@ -110,7 +110,7 @@ export function SeriesCountdown(p: {
         {p.match.youHost && !s.last ? (
           <button
             type="button"
-            className="smg-btn next-round-start"
+            className="sk-btn next-round-start"
             disabled={s.busy}
             title={START_TIP}
             onClick={s.startNow}

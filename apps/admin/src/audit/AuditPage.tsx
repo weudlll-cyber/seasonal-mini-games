@@ -83,7 +83,7 @@ export function AuditPage(): ReactElement {
     });
   };
   return (
-    <section className="smg-panel smg-stack">
+    <section className="sk-panel smg-stack">
       <h1>Audit log</h1>
       <div className="smg-row">
         <TextInput
@@ -92,14 +92,14 @@ export function AuditPage(): ReactElement {
           value={action}
           onChange={setAction}
         />
-        <button type="button" className="smg-btn" onClick={verify} data-testid="verify-chain">
+        <button type="button" className="sk-btn" onClick={verify} data-testid="verify-chain">
           Check the chain
         </button>
         {chain === null ? null : <span role="status">{chain}</span>}
       </div>
       <AuditTable items={items} />
       {items.length >= 50 ? (
-        <button type="button" className="smg-btn" onClick={() => void load(items.at(-1)?.id)}>
+        <button type="button" className="sk-btn" onClick={() => void load(items.at(-1)?.id)}>
           Older
         </button>
       ) : null}

@@ -82,7 +82,7 @@ function Rows({
               <td>
                 <button
                   type="button"
-                  className="smg-btn"
+                  className="sk-btn"
                   onClick={() => {
                     open(r.roundId);
                   }}
@@ -113,7 +113,7 @@ export function LivePage({ rights }: { readonly rights: Rights }): ReactElement 
   }, [load]);
   return (
     <div className="smg-stack">
-      <section className="smg-panel smg-stack">
+      <section className="sk-panel smg-stack">
         <h1>Live rounds</h1>
         {rounds === null ? (
           <p className="smg-muted">Loading…</p>
