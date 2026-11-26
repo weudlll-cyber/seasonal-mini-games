@@ -28,7 +28,7 @@
  *                 §2, §7; DECISIONS T221, T236–T239, T241, T282; Seasonal Entertainment docs/EMBED.md
  */
 import { expect, test, type Browser, type BrowserContext } from '@playwright/test';
-import { DESKTOP, PHONE } from '@seasonal/kit/testing';
+import { DESKTOP, PHONE, type StandInMember } from '@seasonal/kit/testing';
 
 import { WEBSITE_URL } from './testStack.js';
 import {
@@ -46,17 +46,16 @@ import {
   type Who,
 } from './play.js';
 import { startWebsiteStack, type WebsiteStack } from './websiteStack.js';
-import type { StubMember } from './websiteStub.js';
 
 const GAME = `${WEBSITE_URL}/games/mini-games/`;
 // Website user ids are never reused: new ones each run, as the journey's database is kept.
 const RUN = Date.now();
 const tag = String(RUN).slice(-6);
-const HOST: StubMember = { id: RUN * 10 + 1, name: `Host${tag}`, canHost: true, steps: [] };
-const PLAYER: StubMember = {
+const HOST: StandInMember = { id: RUN * 10 + 1, name: `Host${tag}`, role: 'member', canHost: true };
+const PLAYER: StandInMember = {
   id: RUN * 10 + 2,
   name: `Walter${tag}`,
-  canHost: false,
+  role: 'member',
   steps: [
     {
       ladder: 'holder',
@@ -92,7 +91,7 @@ async function visitor(browser: Browser, who: Who): Promise<Person> {
 }
 
 // A member the website already knows signs in through the sign-in route.
-async function member(browser: Browser, m: StubMember): Promise<Person> {
+async function member(browser: Browser, m: StandInMember): Promise<Person> {
   const p = await visitor(browser, 'host');
   await p.ctx.addCookies([{ name: 'se.sid', value: String(m.id), url: WEBSITE_URL }]);
   await p.page.goto(`auth/website?next=${encodeURIComponent('/games/mini-games/')}`);
@@ -107,8 +106,8 @@ async function watchWithChat(guest: Person, code: string): Promise<void> {
   const frame = chat.getByTestId('chat-frame');
   await expect(frame).toHaveAttribute('title', 'Chat');
   await expect(frame).toHaveAttribute('src', '/embed/chat?room=mini-games&theme=light');
-  await expect(chat.frameLocator('[data-testid="chat-frame"]').getByTestId('stub-chat')).toHaveText(
-    'Stub chat: room mini-games, theme light',
+  await expect(chat.frameLocator('[data-testid="chat-frame"]').locator('p')).toHaveText(
+    'chat (stand-in)',
   );
   const logIn = chat.getByTestId('chat-log-in');
   await expect(logIn).toHaveAttribute(
@@ -119,7 +118,7 @@ async function watchWithChat(guest: Person, code: string): Promise<void> {
 
 // "Log in": the sign-in route, the website's login (which names the member), back to the match.
 async function signInFromChat(guest: Person, site: WebsiteStack['site'], code: string) {
-  site.loginAs = PLAYER.id;
+  site.signInAs(PLAYER.id);
   await guest.page.getByTestId('round-chat').getByTestId('chat-log-in').click();
   await guest.page.waitForURL(`${GAME}#/match/${code}`);
   await expect(guest.page.getByTestId('match')).toBeVisible();
@@ -127,28 +126,42 @@ async function signInFromChat(guest: Person, site: WebsiteStack['site'], code: s
   expect((await sessionOf(guest.ctx)).account?.displayName).toBe(PLAYER.name);
 }
 
+// What the stand-in's chat frame keeps and says (the kit's frame: the game's messages in
+// `received`, `say` posts the website's).
+interface ChatFrame {
+  readonly received: readonly { readonly type: string; readonly visible?: boolean }[];
+  readonly say: (type: string, fields: Readonly<Record<string, unknown>>) => void;
+}
+
 // The website's chat docked under the round (T237, O109): on a phone, told hidden while the
-// bar's sheet is closed, its unread count on the bar, told visible (and the count gone) once
-// the sheet opens; back on a desktop the dock is in sight, so it is told visible.
+// bar's sheet is closed, its unread count on the bar, told visible (and, once the chat says it
+// is read, the count gone) when the sheet opens; back on a desktop the dock is in sight, so it
+// is told visible.
 async function chatBadge(player: Person): Promise<void> {
   const page = player.page;
   await page.setViewportSize(PHONE);
   const chat = page.frameLocator('[data-testid="chat-dock"] [data-testid="chat-frame"]');
-  const sight = chat.getByTestId('stub-chat-sight');
-  await expect(sight).toHaveText('hidden');
-  for (let i = 0; i < 2; i += 1) {
-    await sight.evaluate(() => {
-      (window as unknown as { arrive: () => void }).arrive();
+  const frame = chat.locator('body');
+  const sight = () =>
+    frame.evaluate(() => {
+      const told = (window as unknown as ChatFrame).received.filter((m) => m.type === 'visible');
+      return told.at(-1)?.visible;
     });
-  }
+  const unread = (count: number) =>
+    frame.evaluate((_body, n) => {
+      (window as unknown as ChatFrame).say('unread', { room: 'mini-games', count: n });
+    }, count);
+  await expect.poll(sight).toBe(false);
+  await unread(2);
   await expect(page.getByTestId('chat-unread')).toHaveText('2 unread');
   await page.getByTestId('chat-bar').click();
-  await expect(sight).toHaveText('visible');
+  await expect.poll(sight).toBe(true);
+  await unread(0);
   await expect(page.getByTestId('chat-unread')).toHaveCount(0);
   await page.getByTestId('chat-bar').click();
-  await expect(sight).toHaveText('hidden');
+  await expect.poll(sight).toBe(false);
   await page.setViewportSize(DESKTOP);
-  await expect(sight).toHaveText('visible');
+  await expect.poll(sight).toBe(true);
 }
 
 // A shared round the host starts; the member's one guess comes back; the host ends the round.
@@ -187,7 +200,7 @@ test('journey 36: inside the website a guest watches, chats, signs in, plays and
 }) => {
   test.setTimeout(150_000);
   const site = (stack as WebsiteStack).site;
-  site.members.set(HOST.id, HOST).set(PLAYER.id, PLAYER);
+  site.members.push(HOST, PLAYER);
   const host = await member(browser, HOST);
   const guest = await visitor(browser, 'guest');
   let code = '';
