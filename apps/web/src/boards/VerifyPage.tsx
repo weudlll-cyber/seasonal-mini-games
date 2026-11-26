@@ -101,9 +101,10 @@ function Intro({
 export function VerifyPage({ roundId }: { readonly roundId: string }): ReactElement {
   const id = encodeURIComponent(roundId);
   const verify = useApiGet<ProofAnswer>(api, `/rounds/${id}/verify`);
-  // Only for the players' names; without it the page shows their keys.
+  // Only for the players' names; without them (no answer yet, or none in it) the page shows
+  // their keys.
   const result = useApiGet<RoundStateView>(api, `/rounds/${id}/result`);
-  const names = result.kind === 'ready' ? result.value.names : {};
+  const names = (result.kind === 'ready' ? result.value : null)?.names ?? {};
   const name = (key: string): string => names[key] ?? key;
   const answer = verify.kind === 'ready' ? verify.value : null;
   const proof = answer === null ? null : readProof(answer);

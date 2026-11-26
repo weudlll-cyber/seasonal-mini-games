@@ -78,6 +78,15 @@ describe('the verification page', () => {
     expect(check.dataset['ok']).toBe('false');
   });
 
+  it('shows the player keys when the result carries no names', async () => {
+    serve({
+      '/rounds/r1/verify': [200, proofAnswer(sha)],
+      '/rounds/r1/result': [200, {}],
+    });
+    await show(<VerifyPage roundId="r1" />);
+    expect(screen.getByTestId('secrets').textContent).toBe('w: 412a: 77');
+  });
+
   it('words a round without a proof', async () => {
     serve({ '/rounds/r2/verify': [409, { code: 'NO_PROOF' }] });
     await show(<VerifyPage roundId="r2" />);
