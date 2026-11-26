@@ -7,18 +7,17 @@
  *                 its Players panel and the chat where the size folds them away), result and
  *                 verify page, and the admin areas. A page is loaded anew for each window
  *                 size (the sweep resizes before `open`), its fonts and themes sharing that
- *                 load; a game's matches are made on first use (a start card and a running
- *                 round anew before they end, the one before aborted) and those still open
- *                 listed for the caller to abort. What a screen leaves out of the findings is
- *                 named with its reason.
- * Depends on:     @playwright/test, @seasonal/kit/testing, ./play, ./testStack
+ *                 load; a game's matches are ./sweepMatches'. What a screen leaves out of the
+ *                 findings is named with its reason.
+ * Depends on:     @playwright/test, @seasonal/kit/testing, ./play, ./sweepMatches, ./testStack
  * Used by:        ./sweep.spec
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 47)
  */
 import { expect, type Page } from '@playwright/test';
 import type { SweepScreen } from '@seasonal/kit/testing';
 
-import { abortMatch, call, hostMenu, roundOpen, type Person } from './play.js';
+import { hostMenu, roundOpen, type Person } from './play.js';
+import { matchesOf, type Matches } from './sweepMatches.js';
 import { ADMIN_URL } from './testStack.js';
 
 // What each page last loaded: its address and the window it loaded in.
@@ -95,78 +94,6 @@ const ROUND = [GUESS_ROW, COMMENT, CHAT_BAR, BAR_FACT];
 const CARD = [BAR_FACT, 'clipped fitted root: [start-card]'];
 // Kit css/frames.css:199-207: the result's headline is two lines at the most.
 const RESULT = [CHAT_BAR, BAR_FACT, 'cut text: [result-first] h1'];
-
-// A start card keeps this long before the sweep takes a new one (its countdown runs 30 s).
-const CARD_FRESH_MS = 15_000;
-
-// A running round is taken anew after this long: its bots guess again after 120 s and could
-// end it under the sweep.
-const ROUND_FRESH_MS = 90_000;
-
-// The matches one game's screens use, made when a screen first needs one; one taken anew
-// aborts the one before, so a run never holds many rounds open.
-function matchesOf(p: Person, game: string, codes: string[]) {
-  const make = async (body: Readonly<Record<string, unknown>>): Promise<string> => {
-    const started = await call<{ matchCode: string }>(p, 'POST', '/dev/quicktest', {
-      gameId: game,
-      seedText: 'acorn',
-      bots: 3,
-      rangeHigh: 1_000_000,
-      botDelayS: 120,
-      fast: false,
-      // A round that stays: nobody timed out while the sweep looks, and Mind Games one long
-      // round rather than a series that moves on.
-      settings: {
-        'round.inactivityLimitS': 0,
-        // A series of long rounds, so a result always has a pause and a next round after it.
-        ...(game === 'mind-games'
-          ? { 'mind.totalS': 600, 'mind.rounds': 10, 'mind.pauseS': 120 }
-          : {}),
-      },
-      ...body,
-    });
-    codes.push(started.matchCode);
-    return started.matchCode;
-  };
-  // A match that stays fresh for `ms`; `keep` holds the one in use from then on.
-  const lasting = (ms: number, body: Readonly<Record<string, unknown>>) => {
-    let current = { code: '', at: 0 };
-    let kept = false;
-    return {
-      code: async (): Promise<string> => {
-        if (current.code === '' || (!kept && Date.now() - current.at > ms)) {
-          if (current.code !== '') await end(current.code);
-          current = { code: await make(body), at: Date.now() };
-        }
-        return current.code;
-      },
-      keep: () => {
-        kept = true;
-      },
-      // The one in use is over: the next ask makes another.
-      drop: async (): Promise<void> => {
-        await end(current.code);
-        current = { code: '', at: 0 };
-      },
-    };
-  };
-  const end = async (code: string): Promise<void> => {
-    await abortMatch(p, code);
-    codes.splice(codes.indexOf(code), 1);
-  };
-  const waiting = lasting(Number.POSITIVE_INFINITY, { lobby: true });
-  const round = lasting(ROUND_FRESH_MS, { countdownS: 3 });
-  const card = lasting(CARD_FRESH_MS, { countdownS: 30 });
-  return {
-    waiting: waiting.code,
-    round: round.code,
-    card: card.code,
-    keepRound: round.keep,
-    dropRound: round.drop,
-  };
-}
-
-type Matches = ReturnType<typeof matchesOf>;
 
 // The running round, open; true when this look loaded it. A bot can solve a round at any
 // guess: then another is taken.
@@ -254,6 +181,11 @@ export function gameScreens(p: Person, game: string, codes: string[]): readonly 
     unfolded('players', 'focus-players', matches),
     unfolded('chat', 'chat-bar', matches, [...ROUND, UNDER_SHEET]),
     { name: 'result', allow: RESULT, open: result },
+    {
+      name: 'match over',
+      allow: [BAR_FACT],
+      open: opening((page) => match(page, matches.over(), 'match-summary')),
+    },
   ];
   // Mind Games shows no fairness proof, so it has no verify page.
   if (game !== 'mind-games') screens.push({ name: 'verify', open: verifyOf(result) });

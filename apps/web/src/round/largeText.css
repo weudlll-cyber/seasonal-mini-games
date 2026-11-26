@@ -19,7 +19,8 @@
 .round-log,
 .round-players,
 .match-waiting,
-.match-result-page {
+.match-result-page,
+.match-summary-page {
   container-type: inline-size;
 }
 
@@ -125,7 +126,7 @@
     overflow-wrap: anywhere;
   }
 
-  .match-result-page .result-bar {
+  :is(.match-result-page, .match-summary-page) .result-bar {
     flex-wrap: wrap;
     max-height: none;
     white-space: normal;

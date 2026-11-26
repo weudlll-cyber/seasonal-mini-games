@@ -149,7 +149,7 @@
 }
 
 .result-bar-link {
-  min-height: 36px;
+  min-height: var(--sk-hit-target);
   box-shadow: none;
 }
 
