@@ -166,8 +166,9 @@ host_baseline() {
   sk_host_baseline "$SMG_TYPE" || die "installed and running, but the host baseline failed (see above); run the installer again once it is fixed"
 }
 
-# start_database <env> <convert 0|1>: the database alone, then its two roles; a database from
-# before them is backed up first.
+# start_database <env>: the database alone, then its two roles. A database with the game's data
+# but no app role yet (an install from before the roles) is backed up first; asked of the
+# database itself, so a run after a stopped one still backs up.
 start_database() {
   info "Starting the database"
   run compose "$1" up -d --wait postgres
@@ -175,9 +176,12 @@ start_database() {
     info "  would set up the database roles smg_owner and smg_app"
     return 0
   fi
-  if (($2)); then
+  local older
+  older=$(compose "$1" exec -T postgres psql -X -U smg -d smg -tA -c \
+    "SELECT to_regnamespace('smg') IS NOT NULL AND NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'smg_app')")
+  if [[ $older == t ]]; then
+    info "  a database from before its two roles: backed up first"
     do_backup "$1"
-    info "  Backup before the database roles: $BACKUP_FILE"
   fi
   apply_db_roles "$1"
 }
@@ -214,16 +218,11 @@ main() {
   # The kit's scripts come out of the image, so they are the pinned kit version's.
   install_kit_ops "$SMG_IMAGE"
   operator_address
-  local convert=0
-  # An install made before the database roles: converted below, with a backup first.
-  if [[ -f $SMG_ETC/$SMG_ENV.env && -z $(env_value "$SMG_ETC/$SMG_ENV.env" SMG_DB_APP_PASSWORD) ]]; then
-    convert=1
-  fi
   write_env "$SMG_ENV"
   write_keys "$SMG_ENV"
   write_record
   install_files "$OPS"
-  start_database "$SMG_ENV" "$convert"
+  start_database "$SMG_ENV"
   info "Starting the stack"
   run compose "$SMG_ENV" up -d --remove-orphans
   [[ $SMG_DRY_RUN == 1 ]] || wait_ready "$SMG_ENV"
