@@ -1,7 +1,7 @@
 /**
  * @file   apps/server/src/cliCommands.ts
  * @module server
- * @brief  The operator commands themselves: create-super and promote-super, by name.
+ * @brief  The operator commands themselves: create-super, promote-super and migrate, by name.
  *
  * Responsibility: `create-super --email <e-mail> --name <display name>` (standalone) asks for
  *                 the password (not echoed on a terminal; read from standard input otherwise),
@@ -11,11 +11,14 @@
  *                 could never sign in there. `promote-super --website-id <id> | --name <name>`
  *                 (website installs only) makes the website member's game account, made at its
  *                 first sign-in, the super admin instead (./auth/superPromotion, DECISIONS T243).
+ *                 `migrate` is the install's migration step (kit K90, T436): DATABASE_URL then
+ *                 names the database's owner; it applies pending migrations, grants the app
+ *                 role and says which were applied.
  *                 `runCommand` runs one by name and answers its exit code (-1: no such command),
  *                 so the entry (./cli) and a test in the same process run the same code. The
  *                 password is never printed or logged.
- * Depends on:     ./config/env (types), ./db/pool, ./auth/accounts, ./auth/password,
- *                 ./auth/superPromotion, node:readline
+ * Depends on:     ./config/env (types), ./db/pool, ./db/migrator, ./auth/accounts,
+ *                 ./auth/password, ./auth/superPromotion, node:readline
  * Used by:        ./cli, ../test/superPromotion.integration.test.ts
  * Spec:           Bingo 09 §4, §5; Bingo 03 §2.1; docs/spec/07-integration.md §7
  */
@@ -26,6 +29,7 @@ import { registerAccount } from './auth/accounts.js';
 import { passwordProblem } from './auth/password.js';
 import { promoteWebsiteSuper, type PromoteResult } from './auth/superPromotion.js';
 import type { Env } from './config/env.js';
+import { migrate } from './db/migrator.js';
 import { createPool, type DbPool } from './db/pool.js';
 
 const PROMOTE_USAGE = 'promote-super --website-id <website user id> | --name <display name>';
@@ -147,13 +151,20 @@ async function promoteSuper(env: Env, args: readonly string[]): Promise<number> 
   return reportPromotion(result, asked);
 }
 
+async function migrateDatabase(env: Env): Promise<number> {
+  const applied = await withPool(env, migrate);
+  console.log(`Database up to date (${String(applied.length)} migration(s) applied).`);
+  return 0;
+}
+
 const COMMANDS: Record<string, (env: Env, args: readonly string[]) => Promise<number>> = {
   'create-super': createSuper,
   'promote-super': promoteSuper,
+  migrate: migrateDatabase,
 };
 
 // The usage line the entry prints for an unknown command.
-export const USAGE = `commands: create-super --email <e-mail> --name <name>; ${PROMOTE_USAGE}`;
+export const USAGE = `commands: create-super --email <e-mail> --name <name>; ${PROMOTE_USAGE}; migrate`;
 
 // One command by name with the environment it reads (asked only for a known command); its
 // exit code, or -1 when there is no such command.

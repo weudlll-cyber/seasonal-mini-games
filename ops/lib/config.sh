@@ -7,7 +7,9 @@
 #                 re-run (also with --yes) keeps them; write that file (0600, values
 #                 single-quoted for Compose, written atomically) — secrets made once with
 #                 openssl rand and kept on every later run, the public URL, base path and
-#                 trusted proxy for the install type, admin e-mail, the operator's age key
+#                 trusted proxy for the install type, the database's three passwords (the
+#                 superuser's, and the owner and app roles', kit K90; DATABASE_URL is the app
+#                 role's), admin e-mail, the operator's age key
 #                 (the round key SMG_ROUND_KEY seals round seeds at rest, 05 §3: made once,
 #                 never changed, or running rounds could not be recovered; the recovery key
 #                 SMG_RECOVERY_KEY keys the two-factor recovery codes, a secret of its own,
@@ -16,7 +18,9 @@
 #                 website installs the website's settings (lib/website.sh), the proxy secret
 #                 (made once, kept) and the chat provider hostEmbed; write the install
 #                 record /etc/smg/install.conf; copy the compose files, Caddyfile, the smg CLI and its
-#                 library to /opt/smg;
+#                 library and the kit's whole ops folder (from the built image) to /opt/smg; set up
+#                 the two database roles (the kit's db-roles script, on install, for the
+#                 one-time conversion of an older install and after a restore);
 #                 build the app image on the server from a git ref (until a signed release
 #                 image exists; by default the installer checkout's own branch, checkout_ref),
 #                 skipping it when the image of that commit is there, and drop app images
@@ -64,11 +68,16 @@ website_env() {
 
 # write_env <env>: from the answers in SMG_* variables; secrets survive a re-run.
 write_env() {
-  local env=$1 file="$SMG_ETC/$1.env" pg round recovery public base site tls key
+  local env=$1 file="$SMG_ETC/$1.env" pg owner app round recovery public base site tls key
   pg=$(env_value "$file" POSTGRES_PASSWORD)
   round=$(env_value "$file" SMG_ROUND_KEY)
   recovery=$(env_value "$file" SMG_RECOVERY_KEY)
   [[ -n $pg ]] || pg=$(secret 24)
+  # An install made before the database roles gains them on its next run and keeps them after.
+  owner=$(env_value "$file" SMG_DB_OWNER_PASSWORD)
+  app=$(env_value "$file" SMG_DB_APP_PASSWORD)
+  [[ -n $owner ]] || owner=$(secret 24)
+  [[ -n $app ]] || app=$(secret 24)
   [[ -n $round ]] || round=$(secret 32)
   # An install made before the recovery key gains it on its next run and keeps it after.
   [[ -n $recovery ]] || recovery=$(secret 32)
@@ -87,7 +96,9 @@ write_env() {
     quoted SMG_ENV_FILE "$file"
     quoted SMG_IMAGE "$SMG_IMAGE"
     quoted POSTGRES_PASSWORD "$pg"
-    quoted DATABASE_URL "postgres://smg:$pg@postgres:5432/smg"
+    quoted SMG_DB_OWNER_PASSWORD "$owner"
+    quoted SMG_DB_APP_PASSWORD "$app"
+    quoted DATABASE_URL "postgres://smg_app:$app@postgres:5432/smg"
     quoted SMG_ROUND_KEY "$round"
     quoted SMG_RECOVERY_KEY "$recovery"
     quoted SMG_PUBLIC_URL "$public"
@@ -137,20 +148,41 @@ install_files() {
   install_kit_ops "$SMG_IMAGE"
 }
 
-# install_kit_ops <image>: the kit's backup and pull scripts into /opt/smg/kit, from the image
-# that was just built, so they are the pinned kit version's (DECISIONS T431).
+# install_kit_ops <image>: the kit's whole ops folder, its layout kept, into /opt/smg/kit/ops,
+# from the image that was just built, so it is the pinned kit version's (T431, T436).
 install_kit_ops() {
-  local name script
+  local container from file name
   if [[ $SMG_DRY_RUN == 1 ]]; then
-    info "  would copy the kit's backup and pull scripts from $1 into $SMG_ROOT/kit"
+    info "  would copy the kit's ops folder from $1 into $SMG_ROOT/kit/ops"
     return 0
   fi
-  for name in backup.sh pull-backups.sh pull-backups.ps1; do
-    script=$(docker run --rm --entrypoint cat "$1" "/app/kit-ops/$name")
+  from=$(mktemp -d)
+  cleanup_path "$from"
+  container=$(docker create "$1")
+  cleanup_container "$container"
+  docker cp "$container:/app/kit-ops/." "$from"
+  while IFS= read -r -d '' file; do
+    name=${file#"$from/"}
     # World-readable: an operator copies the pull script to their own computer from here.
-    printf '%s\n' "$script" | put_file "$SMG_ROOT/kit/$name" 0755
-  done
+    put_file "$SMG_ROOT/kit/ops/$name" 0755 <"$file"
+  done < <(find "$from" -type f -print0)
 }
+
+# apply_db_roles <env>: the owner and app database roles (kit K90), sent to the superuser's psql
+# in the database container; the passwords go on standard input only. Then the one right more
+# the owner needs: migration 0011 makes a temporary table, which the kit's script leaves to
+# nobody (T436).
+apply_db_roles() (
+  file="$SMG_ETC/$1.env"
+  # shellcheck source=/dev/null
+  source "$SMG_ROOT/kit/ops/lib/db-roles.sh"
+  SK_DB_PREFIX=smg
+  SK_DB_OWNER_PASSWORD=$(env_value "$file" SMG_DB_OWNER_PASSWORD)
+  SK_DB_APP_PASSWORD=$(env_value "$file" SMG_DB_APP_PASSWORD)
+  psql=(compose "$1" exec -T postgres psql -X -q -v ON_ERROR_STOP=1 -U smg -d smg)
+  sk_db_roles_apply "${psql[@]}" &&
+    "${psql[@]}" -c 'GRANT TEMPORARY ON DATABASE smg TO smg_owner'
+)
 
 # checkout_ref <dir>: the branch the checkout holding <dir> is on, its commit when detached,
 # nothing outside a checkout: the code the operator cloned is the code that gets built.

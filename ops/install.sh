@@ -11,8 +11,9 @@
 #                 (lib/website.sh) and stops plainly when the website does not serve Mini Games
 #                 yet. Check the system; install Docker when missing; build the app image from a
 #                 git ref (no release image exists yet); write /etc/smg/<env>.env with fresh
-#                 secrets; start the stack (the app migrates the database on start) and wait
-#                 for /readyz; website installs: the game's route file in the website's proxy,
+#                 secrets; start the database and set up its owner and app roles (an install
+#                 made before them is converted once, after a backup); start the stack (the
+#                 migration step runs before the app) and wait for /readyz; website installs: the game's route file in the website's proxy,
 #                 checked and reloaded, sign-in only through the website (O66), and a check
 #                 through the website at the end (lib/website-route.sh), with no manual step;
 #                 install the backup timer; print the next steps. Re-running keeps
@@ -137,8 +138,24 @@ next_steps() {
     info "     (or --website-id <your website user id>; a name two members share is refused)."
     info "  The website's $SMG_WEBSITE_MODE already serves the route ($SMG_WEBSITE_ROUTE_FILE)."
   fi
-  info "  Backups run every night at 03:30 into $SMG_BACKUPS/$SMG_ENV/; pull them to your PC with $SMG_ROOT/kit/pull-backups.ps1 (docs/operator-guide.md §5)."
+  info "  Backups run every night at 03:30 into $SMG_BACKUPS/$SMG_ENV/; pull them to your PC with $SMG_ROOT/kit/ops/pull-backups.ps1 (docs/operator-guide.md §5)."
   info "  Status: sudo smg status"
+}
+
+# start_database <env> <convert 0|1>: the database alone, then its two roles; a database from
+# before them is backed up first.
+start_database() {
+  info "Starting the database"
+  run compose "$1" up -d --wait postgres
+  if [[ $SMG_DRY_RUN == 1 ]]; then
+    info "  would set up the database roles smg_owner and smg_app"
+    return 0
+  fi
+  if (($2)); then
+    do_backup "$1"
+    info "  Backup before the database roles: $BACKUP_FILE"
+  fi
+  apply_db_roles "$1"
 }
 
 main() {
@@ -170,9 +187,15 @@ main() {
   info "Preparing the app"
   default_source
   build_image "$SMG_REPO" "$SMG_REF"
+  local convert=0
+  # An install made before the database roles: converted below, with a backup first.
+  if [[ -f $SMG_ETC/$SMG_ENV.env && -z $(env_value "$SMG_ETC/$SMG_ENV.env" SMG_DB_APP_PASSWORD) ]]; then
+    convert=1
+  fi
   write_env "$SMG_ENV"
   write_record
   install_files "$OPS"
+  start_database "$SMG_ENV" "$convert"
   info "Starting the stack"
   run compose "$SMG_ENV" up -d --remove-orphans
   [[ $SMG_DRY_RUN == 1 ]] || wait_ready "$SMG_ENV"

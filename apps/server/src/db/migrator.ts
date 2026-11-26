@@ -6,9 +6,12 @@
  * Responsibility: apply pending migrations under a single transaction each, record the
  *                 result in smg.schema_migrations (name + sha256 + applied_at). Reject a
  *                 migration whose checksum no longer matches the recorded one — a published
- *                 migration file is immutable (10 §2, 04 §6).
- * Depends on:     pg, node:fs, node:crypto, ./pool
- * Used by:        ../main.ts, test/*, ../index
+ *                 migration file is immutable (10 §2, 04 §6). After them, where the app role
+ *                 exists (an installed server, kit K90), grant it its rights: rows only, the
+ *                 event logs append-only, the migration record read-only (the kit's
+ *                 grantAppRole); the connection is then the database owner's.
+ * Depends on:     pg, node:fs, node:crypto, @seasonal/kit/server (grantAppRole), ./pool
+ * Used by:        ../server, ../cliCommands, ../../tools/database, ../../test/*
  * Spec:           Bingo 04 §6, Bingo 02 §7
  */
 import { createHash } from 'node:crypto';
@@ -16,9 +19,20 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
+import { grantAppRole } from '@seasonal/kit/server';
+
 import type { DbPool } from './pool.js';
 
 const migrationsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 'migrations');
+
+// The running game's database role and its rights (ops/lib/db.sh makes the role): the tables
+// whose rows are never changed or removed are those the migrations guard with triggers.
+export const APP_ROLE = {
+  schema: 'smg',
+  role: 'smg_app',
+  appendOnly: ['audit_log', 'round_events', 'leaderboard_adjustments'],
+  readOnly: ['schema_migrations'],
+} as const;
 
 interface MigrationFile {
   readonly id: string;
@@ -44,6 +58,7 @@ export async function migrate(pool: DbPool): Promise<readonly string[]> {
       );
     }
   }
+  await grantAppRole(pool, APP_ROLE);
   return newlyApplied;
 }
 

@@ -40,6 +40,10 @@ const envSchema = z.object({
   SMG_PORT: z.coerce.number().int().min(0).max(65535).default(3910),
   // One libpq URL; the integration test overrides it with the Testcontainers URL.
   DATABASE_URL: z.url(),
+  // Whether the server migrates the database as it starts (development and tests). An install
+  // sets it to false: there the migration step (`cli.js migrate`) connects as the database's
+  // owner before the app, which only reads and writes rows (kit K90).
+  SMG_MIGRATE_ON_START: z.stringbool().default(true),
   SMG_LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal']).default('info'),
   // Feature flags (./features): e-mail verification, 2FA and outbound webhooks off, guests on.
   SMG_FEATURE_EMAIL_VERIFICATION: z.stringbool().default(false),

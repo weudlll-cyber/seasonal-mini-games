@@ -5,20 +5,22 @@
 #
 # Responsibility: backups, restore and drill are the kit's ops/backup.sh (DECISIONS T431; its
 #                 docs/OPERATIONS.md says what a backup is, what is kept and what a restore
-#                 refuses), taken from the running app image into /opt/smg/kit by the installer.
+#                 refuses), taken from the app image into /opt/smg/kit/ops by the installer.
 #                 Here: the settings of one environment (prefix smg, /var/backups/smg/<env>/,
 #                 the group smg-backup, the database in its compose container with the schema
 #                 smg, the uploads volume without the maintenance flag), asking before a restore,
-#                 stopping and starting the app around it, restoring a plain dump for a rollback,
+#                 stopping the app before it and, after it, setting up the database roles again
+#                 (a restored database belongs to the superuser) and starting the stack, whose
+#                 migration step grants the app role; restoring a plain dump for a rollback,
 #                 and the systemd timer that runs `smg --env <env> backup` at 03:30.
-# Depends on:     ./common.sh (compose, run, put_file, env_value, confirm), the kit's
-#                 backup.sh, age, docker
+# Depends on:     ./common.sh (compose, run, put_file, env_value, confirm), ./config.sh
+#                 (apply_db_roles), the kit's backup.sh, age, docker
 # Used by:        ops/smg, ops/install.sh (timer), ops/dev-drill.sh (PG_IMAGE)
 # Spec:           docs/spec/10-repository-structure.md §6; Bingo 09 §6; Bingo 03 §15
 
 PG_IMAGE=postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
 BACKUP_GROUP=smg-backup
-KIT_BACKUP=${KIT_BACKUP:-$SMG_ROOT/kit/backup.sh}
+KIT_BACKUP=${KIT_BACKUP:-$SMG_ROOT/kit/ops/backup.sh}
 
 # kit_database <env>: names the environment's database for the kit's script.
 kit_database() {
@@ -62,10 +64,18 @@ do_restore() {
   [[ -z $3 ]] || options+=(--identity "$3")
   [[ $4 != 1 ]] || options+=(--force-env)
   confirm "Restore $(basename "$file") over the live $env data? Everything since that backup is lost."
-  in_shell="source $(printf '%q' "$SMG_ROOT/lib/common.sh") && compose $(printf '%q' "$env")"
-  SK_BACKUP_STOP_CMD="$in_shell stop app" SK_BACKUP_START_CMD="$in_shell start app" \
+  in_shell="set -e; source $(printf '%q' "$SMG_ROOT/lib/common.sh"); source $(printf '%q' "$SMG_ROOT/lib/config.sh")"
+  SK_BACKUP_STOP_CMD="$in_shell; compose $(printf '%q' "$env") stop app" \
+    SK_BACKUP_START_CMD="$in_shell; start_after_restore $(printf '%q' "$env")" \
     kit_backup "$env" restore "$file" "${options[@]}"
   wait_ready "$env"
+}
+
+# start_after_restore <env>: the roles again, then the whole stack (`up`, not `start`: the
+# migration step must run again to grant the app role).
+start_after_restore() {
+  apply_db_roles "$1"
+  compose "$1" up -d
 }
 
 # restore_dump <env> <dump>: a plain pg_dump file (a rollback's) over the schema, with the kit's

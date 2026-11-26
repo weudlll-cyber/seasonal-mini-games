@@ -1,12 +1,13 @@
 /**
  * @file   apps/server/src/server.ts
  * @module server
- * @brief  Composition root: loads env, migrates the database, starts Fastify and the gateway.
+ * @brief  Composition root: loads env, starts Fastify and the gateway.
  *
  * Responsibility: `startServer`, run by ./main (`pnpm dev`, `node dist/main.js`, the
  *                 Dockerfile `server` command) and by the automated runs' test server with
  *                 their clock for the play limits (../tools/testServer, DECISIONS T406);
- *                 attaches the realtime gateway, recovers every
+ *                 migrates the database first unless the install's migration step does
+ *                 (SMG_MIGRATE_ON_START, T436); attaches the realtime gateway, recovers every
  *                 running round and starts its timers, starts the retention jobs (sessions,
  *                 handoff replay cache, chat messages), with SMG_FEATURE_WEBHOOKS the webhook
  *                 deliveries, in website mode the poller of the website's account-changes feed
@@ -34,7 +35,7 @@ export async function startServer(
 ): Promise<void> {
   const env = loadEnv();
   const pool = createPool(env.DATABASE_URL);
-  const applied = await migrate(pool);
+  const applied = env.SMG_MIGRATE_ON_START ? await migrate(pool) : [];
   const app = await buildApp({ env, pool, ...extra });
   if (applied.length > 0) app.fastify.log.info({ migrations: applied }, 'applied migrations');
   const io = attachGateway(app.fastify.server, {

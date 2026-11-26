@@ -1,11 +1,16 @@
 # @file   ops/compose.yml
 # @module ops
-# @brief  The production stack on one VPS: app, PostgreSQL 17 and, standalone, Caddy.
+# @brief  The production stack on one VPS: migration step, app, PostgreSQL 17 and, standalone,
+#         Caddy.
 #
 # Responsibility: the app image (built on the server from a git ref until a release image
 #                 exists) runs as uid 10001 on a read-only root filesystem with /tmp in
 #                 memory and one writable volume for uploads and the maintenance flag;
-#                 PostgreSQL sits on an internal network without a published port.
+#                 PostgreSQL sits on an internal network without a published port. Before
+#                 the app, the migration step (the app image, `cli.js migrate`) connects as
+#                 the database's owner, applies pending migrations, grants the app role and
+#                 ends; the app connects as that role, which only reads and writes rows, and
+#                 gets neither the owner's nor the superuser's password (kit K90).
 #                 Standalone installs add Caddy (profile "standalone") with automatic HTTPS
 #                 on 80/443. Website installs (ops/compose.website.yml on top): the app joins
 #                 the website's network, where the website's Caddy forwards /games/mini-games
@@ -28,6 +33,31 @@ x-logging: &logging
     max-file: '5'
 
 services:
+  migrate:
+    image: ${SMG_IMAGE:?set SMG_IMAGE in the env file}
+    command: ['node', '--enable-source-maps', 'dist/cli.js', 'migrate']
+    env_file: ${SMG_ENV_FILE:?set SMG_ENV_FILE in the env file}
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://smg_owner:${SMG_DB_OWNER_PASSWORD:?run ops/install.sh again, it adds the database roles}@postgres:5432/smg
+      POSTGRES_PASSWORD: ''
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - data
+    cpus: 1
+    mem_limit: 768m
+    logging: *logging
+    restart: 'no'
+
   app:
     image: ${SMG_IMAGE:?set SMG_IMAGE in the env file}
     env_file: ${SMG_ENV_FILE:?set SMG_ENV_FILE in the env file}
@@ -36,6 +66,10 @@ services:
       SMG_HOST: 0.0.0.0
       SMG_PORT: '3100'
       SMG_DATA_DIR: /data
+      SMG_MIGRATE_ON_START: 'false'
+      # The app connects as the app role (DATABASE_URL); the other passwords stay outside.
+      POSTGRES_PASSWORD: ''
+      SMG_DB_OWNER_PASSWORD: ''
     read_only: true
     tmpfs:
       - /tmp
@@ -46,8 +80,8 @@ services:
     volumes:
       - uploads:/data
     depends_on:
-      postgres:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     healthcheck:
       test: ['CMD', 'wget', '-qO-', 'http://127.0.0.1:3100/healthz']
       interval: 15s

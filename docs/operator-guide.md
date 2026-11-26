@@ -94,10 +94,10 @@ The server makes an encrypted backup (the database and the uploads) every night 
    (With Bingo on the same server, the same user can also be in `sbr-backup`.)
 2. Pull the new ones to your PC. The pull script is the kit's; the installer put it on the server, so fetch it once (and again after a re-run of the installer), then run it in PowerShell (only files you do not have yet are copied; a copy counts only when it is complete):
    ```
-   scp <you>@<VPS address>:/opt/smg/kit/pull-backups.ps1 .
+   scp <you>@<VPS address>:/opt/smg/kit/ops/pull-backups.ps1 .
    powershell -ExecutionPolicy Bypass -File pull-backups.ps1 -Server backup-pull@<VPS address> -RemoteDir /var/backups/smg/prod -Prefix smg -Target $HOME\Documents\smg-backups\prod
    ```
-   (Optional: run it daily with Windows Task Scheduler.) On Linux or macOS: `/opt/smg/kit/pull-backups.sh`, fetched the same way: `./pull-backups.sh backup-pull@<VPS address> /var/backups/smg/prod smg ~/smg-backups/prod`.
+   (Optional: run it daily with Windows Task Scheduler.) On Linux or macOS: `/opt/smg/kit/ops/pull-backups.sh`, fetched the same way: `./pull-backups.sh backup-pull@<VPS address> /var/backups/smg/prod smg ~/smg-backups/prod`.
 3. A backup taken right now: `sudo smg backup`.
 4. Check that a backup can really be restored (monthly is good): copy your key up for a moment, run the drill, delete the key:
    ```

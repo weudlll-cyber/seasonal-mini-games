@@ -173,6 +173,7 @@ cmd_rollback() {
     info "Restoring the dump taken before the update."
     compose "$env" stop app
     restore_dump "$env" "$dir/pre-update.dump"
+    apply_db_roles "$env"
   fi
   compose "$env" up -d
   wait_ready "$env"
