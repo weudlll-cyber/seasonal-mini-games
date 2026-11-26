@@ -20,13 +20,13 @@
  * Used by:        ./MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §2, §12; docs/spec/03-seasonal-specials.md §5
  */
+import { SeasonIcon } from '@seasonal/kit/react';
 import type { MatchDetailsView, MatchEndView } from '@smg/contracts';
 import { formatNumber } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
 import { gameName, useGames } from '../lobby/games.js';
 import { MatchStandings } from '../round/MatchStandings.js';
-import { SeasonIcon } from '../season/SeasonIcon.js';
 import { teamName } from '../season/season.js';
 import { hrefOf } from '../shell/router.js';
 import { ResultBar } from './ResultBar.js';

@@ -140,7 +140,7 @@ Bingo 09 applies with the names of [04](04-software-architecture.md) §2.2:
 - single VPS with Docker Compose (§1);
 - files on the server (§2);
 - the one-command installer with both install types and every answer as a flag (§3);
-- the `smg` CLI (§4): the kit's admin command (`status`, `update`, `confirm`, `rollback`, `backup`, `restore`, `logs`, `uninstall`) with the game's `admin create-super` (standalone; a website install promotes a website account with `admin promote-super`, DECISIONS T243), `maintenance` and `keys` (DECISIONS T437);
+- the `smg` CLI (§4): the kit's admin command (`status`, `update`, `confirm`, `rollback`, `backup`, `restore`, `logs`, `uninstall`) with the game's `admin create-super` (standalone; a website install promotes a website account with `admin promote-super`, DECISIONS T243), and `maintenance` (DECISIONS T437, T443);
 - bootstrap (§5);
 - age-encrypted backups pulled to the operator's machine (§6), which also hold the round and recovery keys (owner decision 157);
 - one environment per server (§7);

@@ -51,9 +51,8 @@
   justify-content: center;
 }
 
-.mg-flight img {
-  width: 26px;
-  height: 26px;
+.mg-flight {
+  --mg-glyph: 26px;
 }
 
 /* All's four icons in a square at its button's proportions (31 px each in 64 px). */
@@ -62,9 +61,8 @@
   gap: 2px;
 }
 
-.mg-flight [data-choice='all'] img {
-  width: 17px;
-  height: 17px;
+.mg-flight [data-choice='all'] {
+  --mg-glyph: 17px;
 }
 
 .mg-flight-from {

@@ -95,9 +95,8 @@
   gap: 1px;
 }
 
-.mg-option .mg-icons img {
-  width: var(--mg-icon);
-  height: var(--mg-icon);
+.mg-option .mg-icons {
+  --mg-glyph: var(--mg-icon);
 }
 
 /* Five cards (All on): a little tighter, so every name stays whole beside its count (T365). */
@@ -114,9 +113,8 @@
 }
 
 /* All's four icons in a square of the same size. */
-.mg-option[data-choice='all'] .mg-icons img {
-  width: calc(var(--mg-icon) / 2 - 1px);
-  height: calc(var(--mg-icon) / 2 - 1px);
+.mg-option[data-choice='all'] .mg-icons {
+  --mg-glyph: calc(var(--mg-icon) / 2 - 1px);
 }
 
 .mg-option .mg-name {

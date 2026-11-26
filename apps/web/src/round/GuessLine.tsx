@@ -27,13 +27,13 @@
  *                 the others fade. Another player's Discord steps follow the name (website
  *                 mode, the kit's StepBadges). Moved out of ./RoundLog to keep each file under the size
  *                 limit.
- * Depends on:     react, @seasonal/kit/react (StepBadges), @smg/contracts, @smg/game-sdk (rows,
- *                 formatNumber, marks), @smg/ui (PlayerMark, highlight), ../season/SeasonIcon,
+ * Depends on:     react, @seasonal/kit/react (SeasonIcon, StepBadges), @smg/contracts,
+ *                 @smg/game-sdk (rows, formatNumber, marks), @smg/ui (PlayerMark, highlight),
  *                 ./RoundSide (colours), ./roundMarks.css
  * Used by:        ./RoundLog, ./ClosestToWinning (`GuessValue`)
  * Spec:           docs/spec/02-game-guess-the-number.md §6.2, §6.3, §12; docs/spec/03-seasonal-specials.md §2.4
  */
-import { StepBadges } from '@seasonal/kit/react';
+import { SeasonIcon, StepBadges } from '@seasonal/kit/react';
 import type { RoundStateView } from '@smg/contracts';
 import {
   formatNumber,
@@ -45,7 +45,6 @@ import {
 import { PlayerMark, useHighlightRow } from '@smg/ui';
 import type { CSSProperties, ReactElement, ReactNode } from 'react';
 
-import { SeasonIcon } from '../season/SeasonIcon.js';
 import { playerColor } from './RoundSide.js';
 import './roundMarks.css';
 

@@ -11,12 +11,11 @@
  * Used by:        ./LeaderboardPage
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/03-seasonal-specials.md §5, §6
  */
-import { useApiGet } from '@seasonal/kit/react';
+import { SeasonIcon, useApiGet } from '@seasonal/kit/react';
 import type { LeaderboardPeriodView, TeamLeagueRowView } from '@smg/contracts';
 import type { ReactElement } from 'react';
 
 import { Problem } from '../components/fields.js';
-import { SeasonIcon } from '../season/SeasonIcon.js';
 import { teamName } from '../season/season.js';
 import { api } from '../shell/http.js';
 import { refusalText, withGame } from './boardsText.js';

@@ -145,9 +145,8 @@
   gap: 2px;
 }
 
-.mg-icons img {
-  width: 64px;
-  height: 64px;
+.mg-icons {
+  --mg-glyph: 64px;
 }
 
 /* All's four icons in a square of the same size. */
@@ -155,9 +154,8 @@
   width: 64px;
 }
 
-.mg-choice[data-choice='all'] .mg-icons img {
-  width: 31px;
-  height: 31px;
+.mg-choice[data-choice='all'] .mg-icons {
+  --mg-glyph: 31px;
 }
 
 .mg-yours {
@@ -240,18 +238,16 @@
 /* The phone layout (the platform's: under 900 px or upright): the cards with icon, name and
    count, the choice in a line of its own. */
 @media (max-width: 899px), (orientation: portrait) {
-  .mg-icons img {
-    width: 32px;
-    height: 32px;
+  .mg-icons {
+    --mg-glyph: 32px;
   }
 
   .mg-choice[data-choice='all'] .mg-icons {
     width: 32px;
   }
 
-  .mg-choice[data-choice='all'] .mg-icons img {
-    width: 15px;
-    height: 15px;
+  .mg-choice[data-choice='all'] .mg-icons {
+    --mg-glyph: 15px;
   }
 
   .mg-choice {

@@ -25,13 +25,13 @@
  * Used by:        ./MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §2, §4; docs/spec/03-seasonal-specials.md §5
  */
+import { SeasonIcon } from '@seasonal/kit/react';
 import type { MatchDetailsView, TeamName } from '@smg/contracts';
 import { useState, type CSSProperties, type ReactElement } from 'react';
 
 import { intent } from '../live/socket.js';
 import { PlayerName } from '../round/PlayerName.js';
 import { codeText } from '../round/roundText.js';
-import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASONS, seasonColor, teamName } from '../season/season.js';
 import { TeamIcon } from '../season/TeamIcon.js';
 import { GamePrefs } from './GamePrefs.js';

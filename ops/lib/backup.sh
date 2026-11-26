@@ -12,10 +12,11 @@
 #                 a restore and, after it, setting up the database roles again (a restored
 #                 database belongs to the superuser) and starting the stack, whose migration
 #                 step grants the app role. The round and recovery keys are kept inside each
-#                 backup as the secret file /etc/smg/<env>.keys, written from the env file
-#                 (owner decision 2026-11-25, T437); `restore_keys` puts a backup's keys back
-#                 into the env file, with the kit's own unpacking. The systemd timer runs
-#                 `smg --env <env> backup` at 03:30.
+#                 backup as the secret file /etc/smg/keys/<env>.keys, written from the env
+#                 file (owner decision 2026-11-25, T437); the kit's restore puts a backup's
+#                 file back there (SK_ADMIN_SECRETS_DIR, ops/smg), and before the stack
+#                 starts again its keys go into the env file the app reads (T443). The systemd
+#                 timer runs `smg --env <env> backup` at 03:30.
 # Depends on:     ./common.sh (compose, run, put_file, env_value, set_env_value), ./config.sh
 #                 (apply_db_roles), the kit's backup.sh, age, docker
 # Used by:        ops/smg, ops/install.sh (keys, first backup, timer), ops/dev-drill.sh
@@ -25,6 +26,8 @@
 PG_IMAGE=postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
 BACKUP_GROUP=smg-backup
 KIT_BACKUP=${KIT_BACKUP:-$SMG_ROOT/kit/ops/backup.sh}
+# A folder of its own: a restore puts the secret files there and makes it root's alone.
+SMG_KEYS=$SMG_ETC/keys
 
 # write_keys <env>: the secret file every backup keeps, from the env file's two keys.
 write_keys() {
@@ -34,7 +37,20 @@ write_keys() {
     [[ -n $value || $SMG_DRY_RUN == 1 ]] || die "$key is missing in $file: run ops/install.sh again"
     text+="$key='$value'"$'\n'
   done
-  printf '%s' "$text" | put_file "$SMG_ETC/$1.keys" 0600
+  run install -d -m 0700 "$SMG_KEYS"
+  printf '%s' "$text" | put_file "$SMG_KEYS/$1.keys" 0600
+}
+
+# apply_keys <env>: the keys file's two keys into the env file; a restore may have put a
+# backup's file there (a server set up anew has keys of its own until then).
+apply_keys() {
+  local keys="$SMG_KEYS/$1.keys" file="$SMG_ETC/$1.env" key value
+  [[ -f $keys ]] || return 0
+  for key in SMG_ROUND_KEY SMG_RECOVERY_KEY; do
+    value=$(env_value "$keys" "$key")
+    [[ -n $value ]] || die "$keys lacks $key: nothing changed"
+    [[ $(env_value "$file" "$key") == "$value" ]] || set_env_value "$file" "$key" "$value"
+  done
 }
 
 # backup_settings <env>: exports the kit's SK_BACKUP_* settings of this environment.
@@ -46,7 +62,7 @@ backup_settings() {
   # The uploads volume; the maintenance flag in it is live state, not data.
   export SK_BACKUP_VOLUMES="smg-${env}_uploads" SK_BACKUP_VOLUME_EXCLUDES=./maintenance
   # The keys without which a restored database cannot open what it sealed.
-  export SK_BACKUP_SECRET_FILES="$SMG_ETC/$env.keys"
+  export SK_BACKUP_SECRET_FILES="$SMG_KEYS/$env.keys"
   SK_BACKUP_AGE_RECIPIENT=$(env_value "$file" SMG_AGE_RECIPIENT)
   SK_BACKUP_HELPER_IMAGE=$(env_value "$file" SMG_IMAGE)
   export SK_BACKUP_AGE_RECIPIENT SK_BACKUP_HELPER_IMAGE
@@ -58,9 +74,10 @@ backup_settings() {
   export SK_BACKUP_STOP_CMD SK_BACKUP_START_CMD
 }
 
-# start_after_restore <env>: the roles again, then the whole stack (`up`, not `start`: the
-# migration step must run again to grant the app role).
+# start_after_restore <env>: the restored keys, the roles again, then the whole stack (`up`, not
+# `start`: the migration step must run again to grant the app role).
 start_after_restore() {
+  apply_keys "$1"
   apply_db_roles "$1"
   compose "$1" up -d
   wait_ready "$1"
@@ -71,29 +88,6 @@ do_backup() (
   backup_settings "$1"
   [[ -f $KIT_BACKUP ]] || die "the backup script is missing ($KIT_BACKUP): run ops/install.sh again"
   bash "$KIT_BACKUP" backup
-)
-
-# restore_keys <env> <backup> <age identity file> <force 0|1>: the backup's round and recovery
-# keys into the env file (a server set up anew has keys of its own); the caller restarts.
-restore_keys() (
-  env=$1
-  backup_settings "$env"
-  # shellcheck source=/dev/null
-  SK_BACKUP_SOURCE_ONLY=1 source "$KIT_BACKUP"
-  check_env "$2" "$4"
-  new_work
-  unpack "$2" "$3" "$WORK"
-  check_manifest "$WORK" "$4"
-  restore_secrets "$WORK" "$WORK/keys" 1 >/dev/null
-  keys=$(find "$WORK" -path '*/keys/*.keys' | head -n 1)
-  [[ -n $keys ]] || die "$(basename "$2") holds no keys (a backup from before 2026-11-26)"
-  for key in SMG_ROUND_KEY SMG_RECOVERY_KEY; do
-    value=$(env_value "$keys" "$key")
-    [[ -n $value ]] || die "the backup's keys lack $key: nothing changed"
-    set_env_value "$SMG_ETC/$env.env" "$key" "$value"
-  done
-  write_keys "$env"
-  info "The round and recovery keys of $(basename "$2") are in $SMG_ETC/$env.env."
 )
 
 # install_backup_units <env>: the backup group and folder, age, and the systemd timer for 03:30.

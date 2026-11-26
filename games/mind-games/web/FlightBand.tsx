@@ -22,6 +22,7 @@
  * Used by:        ./ChoiceButtons
  * Spec:           docs/spec/02e-game-mind-games.md §11.1
  */
+import { SeasonIcon } from '@seasonal/kit/react';
 import { optionsOf, type Choice, type SpectatorView } from '@smg-game/mind-games';
 import type { PhasedTiming } from '@smg/game-sdk';
 import {
@@ -47,7 +48,7 @@ import {
   type Placed,
   type Timed,
 } from './flights.js';
-import { iconsOf } from './seasons.js';
+import { seasonsOf } from './seasons.js';
 
 // The platform's phone layout (./mind.css): no names, first choices rise from below.
 const PHONE = '(max-width: 899px), (orientation: portrait)';
@@ -152,8 +153,8 @@ function useWaves(
 function Coin(p: { readonly choice: Choice; readonly className: string }): ReactElement {
   return (
     <span className={p.className} data-choice={p.choice}>
-      {iconsOf(p.choice).map((src) => (
-        <img key={src} src={src} alt="" />
+      {seasonsOf(p.choice).map((s) => (
+        <SeasonIcon key={s} season={s} size="var(--mg-glyph)" decorative />
       ))}
     </span>
   );

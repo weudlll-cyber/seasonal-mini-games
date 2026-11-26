@@ -27,12 +27,12 @@
  *                 ./InputRow, ./OthersLine, ./ResultScreen, ./ClosestToWinning
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §5
  */
+import { SeasonIcon } from '@seasonal/kit/react';
 import type { RoundStateView, TeamName } from '@smg/contracts';
 import { formatNumber, type PlayerMark } from '@smg/game-sdk';
 import { PlayerMark as PlayerMarkView } from '@smg/ui';
 import type { CSSProperties, ReactElement } from 'react';
 
-import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASONS, seasonColor, teamName } from '../season/season.js';
 import { TeamIcon } from '../season/TeamIcon.js';
 import { PlayerName } from './PlayerName.js';

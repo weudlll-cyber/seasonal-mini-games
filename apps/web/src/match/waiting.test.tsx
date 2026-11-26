@@ -70,11 +70,11 @@ describe('the waiting area before the player’s first round', () => {
     const pressed = teamButtons().filter((b) => b.ariaPressed === 'true');
     expect(pressed.map((b) => b.textContent)).toEqual([' Team Summer✓']);
     expect(teamButtons()).toHaveLength(4);
-    // The pressed team's icon is drawn in the button's text colour (a mask), not as a picture.
-    const icon = pressed[0]?.querySelector<HTMLElement>('[role="img"]');
+    // The pressed team's icon alone is drawn in the button's text colour (the kit's mono form).
+    const icon = pressed[0]?.querySelector('[role="img"]');
     expect(icon?.getAttribute('aria-label')).toBe('Summer');
-    expect(icon?.style.background).toBe('currentcolor');
-    expect(teamButtons()[0]?.querySelector('img')).not.toBeNull();
+    expect(icon?.hasAttribute('data-sk-mono')).toBe(true);
+    expect(teamButtons()[0]?.querySelector('[data-sk-season]:not([data-sk-mono])')).not.toBeNull();
   });
 
   it('offers a watcher no team buttons', () => {

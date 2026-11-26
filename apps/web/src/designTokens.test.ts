@@ -10,7 +10,8 @@
  *                 on its gradient; the solid pill; danger and success on the surfaces; the
  *                 inactivity countdown on the warning surface (O71); text and the pressed team
  *                 button's icon on every season colour (O26); the board ink at 7:1 (the hero
- *                 element). The own-row tint, a colour the page mixes, is ./ownRowTint.test.
+ *                 element); a row's text on the viewer's own-row tint of each season colour,
+ *                 the mix the page makes (T261), on the panel's card over the page.
  * Depends on:     vitest, @seasonal/kit/testing, @seasonal/kit/tokens.css, @smg/ui/tokens.css
  *                 (raw)
  * Spec:           Bingo 01 §13 (WCAG 2.2 AA)
@@ -20,15 +21,7 @@ import { findLowContrast, type ContrastPair } from '@seasonal/kit/testing';
 import gameCss from '@smg/ui/tokens.css?raw';
 import { describe, expect, it } from 'vitest';
 
-// The kit's guard reads colours, not references: the two text colours the dark theme takes from
-// the kit's tokens are named to it by their values.
-const kitValue = (name: string): string =>
-  [...kitCss.matchAll(new RegExp(`${name}: (#[0-9a-f]{6});`, 'gi'))].at(-1)?.[1] ?? '';
-const darkValues = `:root[data-theme='dark'] {
-  --color-winter-text: ${kitValue('--sk-color-winter')};
-  --color-success-text: ${kitValue('--sk-color-success')};
-}`;
-
+const SEASONS = ['spring', 'summer', 'autumn', 'winter'];
 const PAGE = ['--sk-color-background'] as const;
 const GLOWS = [...PAGE, '--sk-page-background'] as const;
 // Everything text sits on: page, surfaces, cards over the base and over each glow.
@@ -47,6 +40,11 @@ const TEXTS = [
   '--color-winter-text',
   '--color-success-text',
 ];
+// The text of a row: names and comments, Frost's held answer, "higher", "lower" and "Boom!".
+const ROW_TEXT = [...TEXTS, '--sk-color-danger'];
+// A season's own-row tint as round/players.css and round/roundLog.css mix it.
+const ownTint = (season: string): string =>
+  `color-mix(in srgb, var(--sk-color-${season}) var(--own-tint), var(--color-own-base))`;
 
 const pairs: readonly ContrastPair[] = [
   ...TEXTS.flatMap((text) => BACKGROUNDS.map((on) => ({ text, on }))),
@@ -56,16 +54,16 @@ const pairs: readonly ContrastPair[] = [
     ['--sk-color-surface', '--sk-color-surface-2'].map((bg) => ({ text, on: [bg] })),
   ),
   { text: '--sk-color-text', on: ['--sk-color-warning-surface'] },
-  ...['spring', 'summer', 'autumn', 'winter'].map((season) => ({
-    text: '--sk-color-on-season',
-    on: [`--sk-color-${season}`],
-  })),
+  ...SEASONS.map((season) => ({ text: '--sk-color-on-season', on: [`--sk-color-${season}`] })),
+  ...SEASONS.flatMap((season) =>
+    ROW_TEXT.map((text) => ({ text, on: [...PAGE, '--sk-color-card', ownTint(season)] })),
+  ),
   { text: '--color-board-ink', on: ['--color-board'], min: 7 },
   { text: '--color-board-marked-ink', on: ['--color-board-marked'], min: 7 },
 ];
 
 describe('token contrast (WCAG AA), light and dark', () => {
   it('keeps every pair readable', () => {
-    expect(findLowContrast({ css: [kitCss, gameCss, darkValues], pairs })).toEqual([]);
+    expect(findLowContrast({ css: [kitCss, gameCss], pairs })).toEqual([]);
   });
 });

@@ -15,7 +15,7 @@ import type { AbuseRowView } from '@smg/contracts';
 import { useCallback, useEffect, useState, type ReactElement } from 'react';
 
 import { DisplayName } from '../DisplayName.js';
-import { api, ApiError } from '../http.js';
+import { api, isRefusal } from '../http.js';
 import { TextInput } from '../TextInput.js';
 
 const KINDS: Readonly<Record<string, string>> = {
@@ -37,7 +37,7 @@ function Suspend({
     api(`/admin/accounts/${row.accountId}/suspend`, { method: 'POST', body: { reason } })
       .then(done)
       .catch((e: unknown) => {
-        setProblem(e instanceof ApiError ? `Not suspended (${e.code}).` : 'Not suspended.');
+        setProblem(isRefusal(e) ? `Not suspended (${e.code}).` : 'Not suspended.');
       });
   };
   return (

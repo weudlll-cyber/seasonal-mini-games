@@ -4,7 +4,7 @@
  * @brief  The game's rules on the kit's headers: chat frame, who may frame it, admin, no inline.
  *
  * Responsibility: in website mode `frame-src` is the website's `/embed/chat` by its path while
- *                 the chat is hostEmbed ('self' on a plain-http development website), 'none'
+ *                 the chat is hostEmbed (a plain-http development website's too), 'none'
  *                 without a host chat, and the website alone frames the game, whatever the
  *                 embed allowlist holds; standalone keeps the host chat's origin, else 'self'
  *                 (DECISIONS T91, T236), and the allowlist's sites may frame it. No policy
@@ -47,7 +47,9 @@ describe('frame-src', () => {
     expect(await frameSrc('website', 'https://example.org/embed/chat')).toBe(
       'frame-src https://example.org/embed/chat',
     );
-    expect(await frameSrc('website', 'http://127.0.0.1:5430/embed/chat')).toBe("frame-src 'self'");
+    expect(await frameSrc('website', 'http://127.0.0.1:5430/embed/chat')).toBe(
+      'frame-src http://127.0.0.1:5430/embed/chat',
+    );
     expect(await frameSrc('website', '')).toBe("frame-src 'none'");
   });
 

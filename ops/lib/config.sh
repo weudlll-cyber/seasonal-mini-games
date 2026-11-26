@@ -182,9 +182,7 @@ prepare_database() {
 }
 
 # apply_db_roles <env>: the owner and app database roles (kit K90), sent to the superuser's psql
-# in the database container; the passwords go on standard input only. Then the one right more
-# the owner needs: migration 0011 makes a temporary table, which the kit's script leaves to
-# nobody (T436).
+# in the database container; the passwords go on standard input only.
 # shellcheck disable=SC2034 # the kit's script reads the SK_DB_* names
 apply_db_roles() (
   file="$SMG_ETC/$1.env"
@@ -193,9 +191,7 @@ apply_db_roles() (
   SK_DB_PREFIX=smg
   SK_DB_OWNER_PASSWORD=$(env_value "$file" SMG_DB_OWNER_PASSWORD)
   SK_DB_APP_PASSWORD=$(env_value "$file" SMG_DB_APP_PASSWORD)
-  psql=(compose "$1" exec -T postgres psql -X -q -v ON_ERROR_STOP=1 -U smg -d smg)
-  sk_db_roles_apply "${psql[@]}" &&
-    "${psql[@]}" -c 'GRANT TEMPORARY ON DATABASE smg TO smg_owner'
+  sk_db_roles_apply compose "$1" exec -T postgres psql -X -q -v ON_ERROR_STOP=1 -U smg -d smg
 )
 
 # checkout_ref <dir>: the branch the checkout holding <dir> is on, its commit when detached,

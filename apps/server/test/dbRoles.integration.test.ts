@@ -5,9 +5,8 @@
  *         them, and what the app role may and may not do afterwards (kit K90).
  *
  * Responsibility: a database migrated by the superuser (as an older install) is converted with
- *                 the kit's db-roles.sql and the game's one grant more (as ops/lib/config.sh
- *                 apply_db_roles does it); the owner then runs the migration step, which grants
- *                 the app role; the app role reads and writes rows, only adds to the event
+ *                 the kit's db-roles.sql (as ops/lib/config.sh apply_db_roles sends it); the
+ *                 owner then runs the migration step, which grants the app role; the app role reads and writes rows, only adds to the event
  *                 logs, only reads the migration record and creates, alters and drops nothing.
  *                 A fresh database migrates as the owner from nothing.
  * Depends on:     vitest, node:fs, pg (through ../src/db/pool), ./harness, ../src/db/migrator,
@@ -35,14 +34,6 @@ function kitRolesSql(): string {
     .replaceAll('__APP__', APP_ROLE.role)
     .replaceAll('__OWNER_PASSWORD__', PASSWORD.smg_owner)
     .replaceAll('__APP_PASSWORD__', PASSWORD.smg_app);
-}
-
-// What apply_db_roles runs: the kit's script, then the owner's temporary tables (migration
-// 0011), on the database the connection is on.
-async function applyRoles(admin: DbPool): Promise<void> {
-  await admin.query(kitRolesSql());
-  const r = await admin.query<{ name: string }>('SELECT current_database() AS name');
-  await admin.query(`GRANT TEMPORARY ON DATABASE "${r.rows[0]?.name ?? ''}" TO smg_owner`);
 }
 
 let harness: Harness;
@@ -79,9 +70,9 @@ describe('the database roles (kit K90)', () => {
     async () => {
       // The harness's database is migrated by the superuser: an install from before the roles.
       const database = new URL(harness.container.getConnectionUri()).pathname.slice(1);
-      await applyRoles(harness.pool);
+      await harness.pool.query(kitRolesSql());
       // Idempotent, as the installer runs it again on every re-run and after a restore.
-      await applyRoles(harness.pool);
+      await harness.pool.query(kitRolesSql());
       expect(await migrate(poolOn(database, 'smg_owner'))).toEqual([]);
       const app = poolOn(database, 'smg_app');
       const record = await app.query('SELECT count(*)::int AS n FROM smg.schema_migrations');
@@ -108,7 +99,7 @@ describe('the database roles (kit K90)', () => {
     async () => {
       await harness.pool.query('CREATE DATABASE smg_fresh');
       const admin = poolOn('smg_fresh');
-      await applyRoles(admin);
+      await admin.query(kitRolesSql());
       const applied = await migrate(poolOn('smg_fresh', 'smg_owner'));
       expect(applied.length).toBeGreaterThan(0);
       const app = poolOn('smg_fresh', 'smg_app');

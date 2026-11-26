@@ -138,19 +138,19 @@ The server makes an encrypted backup every night at 03:30 in `/var/backups/smg/p
    ssh -t <you>@<VPS address> "sudo smg restore --drill /var/backups/smg/prod/<file> --identity smg-age-key.txt; rm smg-age-key.txt"
    ```
    It restores into a throw-away database and compares every table's rows with the rows the backup carries; it ends with "drill passed".
-5. **A restore on the same server** replaces the database and the uploads; it asks first. The same two commands, with `smg restore <file> --identity …` instead of `--drill`. It refuses a backup of another environment (a staging file on prod) unless you add `--force-env`. It says that the backup holds a secret file; on the same server the keys are already there.
-6. **A restore on a new server** needs the old keys too:
+5. **A restore on the same server** replaces the database and the uploads; it asks first. The same two commands, with `smg restore <file> --identity …` instead of `--drill`. It refuses a backup of another environment (a staging file on prod), or one whose keys differ from this server's, unless you add `--force-env`. On the same server the keys are the same.
+6. **A restore on a new server** brings the old keys back too:
    1. Install as in section 2 or 3, with the same environment and age public key.
    2. Copy the backup file and, for a moment, your age key to the server:
       ```
       scp <file> $HOME\smg-age-key.txt <you>@<new VPS address>:
       ```
-   3. On the new server, first the keys, then the data:
+   3. On the new server:
       ```
-      sudo smg keys <file> --identity smg-age-key.txt
-      sudo smg restore <file> --identity smg-age-key.txt
+      sudo smg restore <file> --identity smg-age-key.txt --force-env
       rm smg-age-key.txt
       ```
+      `--force-env` is needed because the new server made keys of its own, and the restore refuses to replace a differing key file without it; the backup's keys then go into the settings before the app starts. Use it only with a backup of the same environment.
 7. **A backup from before 2026-11-26** holds no keys: keep that server's `/etc/smg/prod.env` yourself for it. One made before 2026-11-25 (it holds `db.dump` and `uploads.tar` and no manifest) is refused as it is. Rewrite it once, on a computer with your age key and `age`, then restore the new file as above (use the environment it came from instead of `prod`, and your public key for `age1…`):
    ```
    mkdir old && age -d -i smg-age-key.txt <old file> | tar -C old -xf -

@@ -23,13 +23,12 @@
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §2, §6
  */
-import { StartCard } from '@seasonal/kit/react';
+import { SeasonIcon, StartCard } from '@seasonal/kit/react';
 import type { GameWeb } from '@smg-game/registry/web';
 import type { RoundStateView } from '@smg/contracts';
 import type { ReactElement, ReactNode } from 'react';
 
 import { useClockOffset } from '../live/socket.js';
-import { SeasonIcon } from '../season/SeasonIcon.js';
 import { NO_SPECIAL, SEASON_NAMES, SPECIALS } from '../season/season.js';
 import { seconds } from './roundText.js';
 import { ruleOf } from './SeasonPill.js';

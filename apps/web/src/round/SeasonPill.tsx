@@ -21,9 +21,8 @@
 import type { GameWeb } from '@smg-game/registry/web';
 import type { RoundStateView, SeasonName } from '@smg/contracts';
 import type { ReactElement } from 'react';
-import { useDisclosure } from '@seasonal/kit/react';
+import { SeasonIcon, useDisclosure } from '@seasonal/kit/react';
 
-import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASON_NAMES, SPECIALS } from '../season/season.js';
 import './roundSpecials.css';
 

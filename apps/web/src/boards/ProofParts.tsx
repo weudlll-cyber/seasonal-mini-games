@@ -12,9 +12,9 @@
  * Used by:        ./VerifyPage
  * Spec:           docs/spec/02-game-guess-the-number.md §9, §10
  */
+import { SeasonIcon } from '@seasonal/kit/react';
 import type { ReactElement } from 'react';
 
-import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASON_NAMES } from '../season/season.js';
 import { actionText, secretLines, type Proof } from './proof.js';
 

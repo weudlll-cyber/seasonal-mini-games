@@ -43,12 +43,11 @@ interface HeaderRules {
   readonly embedOrigins: () => readonly string[];
 }
 
-// What a page may frame, as the kit takes it: an origin or an https address with its path.
+// What a page may frame without a host chat or with one: the kit takes an origin, an https
+// address with its path, and a plain-http path on a development host.
 function framesOf(chat: string, website: boolean): readonly string[] {
-  if (chat === '') return website ? [] : ["'self'"];
-  // A website served over plain http (development only): the kit takes no such path, and the
-  // website's chat is on the game's own origin there.
-  return [chat.startsWith('http://') && !PLAIN_ORIGIN.test(chat) ? "'self'" : chat];
+  if (chat !== '') return [chat];
+  return website ? [] : ["'self'"];
 }
 
 function headersFor(url: string, rules: HeaderRules): SecurityHeaderSet {
