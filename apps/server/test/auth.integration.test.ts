@@ -166,6 +166,21 @@ describe('login, CSRF and limits', () => {
   });
 });
 
+describe('sign-in guesses sent together', () => {
+  it('lets no more than five guesses through when they arrive together (T441)', async () => {
+    const guess = () =>
+      app().inject({
+        method: 'POST',
+        url: '/api/v1/auth/login',
+        remoteAddress: '10.0.0.99',
+        payload: { email: 'together@example.com', password: 'x' },
+      });
+    const codes = (await Promise.all(Array.from({ length: 9 }, guess))).map((r) => r.statusCode);
+    expect(codes.filter((c) => c === 401)).toHaveLength(5);
+    expect(codes.filter((c) => c === 429)).toHaveLength(4);
+  });
+});
+
 describe('deleting the own account (DELETE /me)', () => {
   it('needs the password, then removes the account and its session', async () => {
     // From its own address: the suite's earlier registrations count against the limit.

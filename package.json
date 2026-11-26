@@ -26,7 +26,7 @@
     "@axe-core/playwright": "4.14.0",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.65.1",
-    "@seasonal/kit": "github:weudlll-cyber/seasonal-kit#v0.32.0",
+    "@seasonal/kit": "github:weudlll-cyber/seasonal-kit#v0.34.0",
     "@smg/contracts": "workspace:*",
     "@types/node": "22.20.5",
     "@vitest/coverage-v8": "5.1.1",

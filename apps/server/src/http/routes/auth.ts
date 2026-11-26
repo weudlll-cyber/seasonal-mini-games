@@ -14,7 +14,8 @@
  *                 known account adds one abuse signal for moderators (05 §2). Login and
  *                 registration are rate-limited per IP; a login is also braked per account+IP after
  *                 5 failed sign-ins in 15 minutes (the kit's FailureBrake, right ones are not
- *                 counted, T427), 03 §13. E-mail
+ *                 counted, T427; each try holds one of the five places while its password is
+ *                 checked, so tries sent together cannot slip past, T441), 03 §13. E-mail
  *                 verification and 2FA are behind feature flags that are off by default;
  *                 when verification is on, unverified accounts cannot sign in. In website
  *                 mode (O66, Bingo D37) registration and password sign-in do not exist (404):
@@ -76,6 +77,9 @@ const registerBody = z.object({
 });
 const loginBody = z.object({ email: z.email().max(254), password: z.string().max(128) });
 
+// One try holding a place in the brake (the kit's FailureBrake reserve).
+type Attempt = NonNullable<ReturnType<FailureBrake['reserve']>>;
+
 const LOGIN_FAILED = { code: 'LOGIN_FAILED', message: 'Invalid e-mail or password.' };
 
 export function registerAuthRoutes(app: FastifyInstance, deps: AuthDeps): void {
@@ -119,16 +123,16 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AuthDeps): void {
     const key = createHash('sha256')
       .update(`${parsed.data.email.toLowerCase()}|${request.ip}`)
       .digest('hex');
-    // Looked at before the password is checked; the failure is counted after (T427).
-    if (!limits.loginIp.take(request.ip).allowed || limits.signInFailures.braked(key)) {
-      return tooMany(reply);
+    if (!limits.loginIp.take(request.ip).allowed) return tooMany(reply);
+    // One of the key's places, held while the password is checked (T427, T441).
+    const attempt = limits.signInFailures.reserve(key);
+    if (attempt === null) return tooMany(reply);
+    try {
+      return await login(request, reply, deps, { body: parsed.data, attempt });
+    } finally {
+      // Frees the place unless the password was wrong: only the first of the two ends counts.
+      attempt.passed();
     }
-    return login(request, reply, deps, {
-      body: parsed.data,
-      countFailure: () => {
-        limits.signInFailures.failed(key);
-      },
-    });
   });
 }
 
@@ -165,7 +169,7 @@ async function login(
   request: FastifyRequest,
   reply: FastifyReply,
   deps: AuthDeps,
-  { body, countFailure }: { body: z.infer<typeof loginBody>; countFailure: () => void },
+  { body, attempt }: { body: z.infer<typeof loginBody>; attempt: Attempt },
 ) {
   const account = await findLoginAccount(deps.pool, body.email);
   const encoded = account?.passwordHash ?? (await dummyPasswordHash());
@@ -179,7 +183,7 @@ async function login(
     });
   }
   if (account === null || !valid) {
-    countFailure();
+    attempt.failed();
     return reply.status(401).send(LOGIN_FAILED);
   }
   if (deps.features.emailVerification && !account.emailVerified) {
