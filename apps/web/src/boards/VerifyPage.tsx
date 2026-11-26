@@ -11,20 +11,21 @@
  *                 the accepted guesses in receive order in a list that scrolls inside itself;
  *                 and save the whole answer as a file. A round without a proof, or one still
  *                 running, says so in one sentence.
- * Depends on:     react, @smg/contracts (RoundStateView), ../components/fields, ../season/*,
- *                 ./proof, ./ProofParts, ./useApi, ./boardsText, ./boards.css,
- *                 ../round/result.css
+ * Depends on:     react, @seasonal/kit/react (useApiGet), @smg/contracts (RoundStateView),
+ *                 ../components/fields, ../season/*, ../shell/http, ./proof, ./ProofParts,
+ *                 ./boardsText, ./boards.css, ../round/result.css
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/02-game-guess-the-number.md §9, §10; docs/DECISIONS.md O9
  */
+import { useApiGet } from '@seasonal/kit/react';
 import type { RoundStateView } from '@smg/contracts';
 import { useEffect, useState, type ReactElement } from 'react';
 
 import { Problem } from '../components/fields.js';
+import { api } from '../shell/http.js';
 import { refusalText } from './boardsText.js';
 import { downloadJson, readProof, seedMatches, type Proof, type ProofAnswer } from './proof.js';
 import { Guesses, Secrets, Settings } from './ProofParts.js';
-import { useApi } from './useApi.js';
 import '../round/result.css';
 import './boards.css';
 
@@ -99,20 +100,18 @@ function Intro({
 
 export function VerifyPage({ roundId }: { readonly roundId: string }): ReactElement {
   const id = encodeURIComponent(roundId);
-  const verify = useApi<ProofAnswer>(`/rounds/${id}/verify`);
+  const verify = useApiGet<ProofAnswer>(api, `/rounds/${id}/verify`);
   // Only for the players' names; without it the page shows their keys.
-  const result = useApi<RoundStateView>(`/rounds/${id}/result`);
-  const names = result.data?.names ?? {};
+  const result = useApiGet<RoundStateView>(api, `/rounds/${id}/result`);
+  const names = result.kind === 'ready' ? result.value.names : {};
   const name = (key: string): string => names[key] ?? key;
-  const answer = verify.data;
+  const answer = verify.kind === 'ready' ? verify.value : null;
   const proof = answer === null ? null : readProof(answer);
   return (
     <div className="smg-stack boards-page" data-testid="verify">
       <Intro answer={answer} roundId={roundId} />
-      <Problem text={verify.error === null ? null : refusalText(verify.error)} />
-      {verify.data === null && verify.error === null ? (
-        <p className="smg-muted">Loading the proof…</p>
-      ) : null}
+      <Problem text={verify.kind === 'failed' ? refusalText(verify.error) : null} />
+      {verify.kind === 'loading' ? <p className="smg-muted">Loading the proof…</p> : null}
       {proof === null || answer === null ? null : (
         <>
           <Seed proof={proof} />

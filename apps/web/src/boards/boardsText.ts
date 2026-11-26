@@ -6,7 +6,8 @@
  * Responsibility: one wording for the leaderboard, the profile and the verification page:
  *                 a date in plain English ("27 October 2026"), "1 point" / "5 points", a
  *                 signed adjustment ("+50 points"), the place of a round ("took part" or "not
- *                 solved" without one), and every server code these pages can get, in a plain sentence.
+ *                 solved" without one), and every server code these pages can get, in a plain
+ *                 sentence; `withGame` adds a board's game filter to its path (O44, T126).
  * Depends on:     ../shell/http (ApiError)
  * Used by:        ./PlayerBoard, ./ProfilePage, ./VerifyPage, ./LeaderboardPage
  * Spec:           docs/spec/02-game-guess-the-number.md §8, §9, §12
@@ -26,6 +27,10 @@ export function pointsText(points: number): string {
 export function deltaText(delta: number): string {
   return `${delta > 0 ? '+' : ''}${pointsText(delta)}`;
 }
+
+// A board path for one game, or for every game when `game` is null (O44, T126).
+export const withGame = (path: string, game: string | null): string =>
+  game === null ? path : `${path}${path.includes('?') ? '&' : '?'}game=${encodeURIComponent(game)}`;
 
 // A round without a place: the player took part (shared) or did not solve (individual, 02 §8).
 export function placeText(place: number | null, mode: 'shared' | 'individual'): string {

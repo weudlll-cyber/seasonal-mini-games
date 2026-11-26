@@ -3,21 +3,21 @@
  * @module web/season
  * @brief  The four seasons on screen: names, colours, icons and specials.
  *
- * Responsibility: the original Seasonal Tokens icons from assets/seasons (Vite copies them
- *                 into the bundle, used as delivered, never redrawn), each season's colour
+ * Responsibility: the website's season drawings from the shared kit (its package paths, so
+ *                 Vite copies them into the bundle; never a copy here), each season's colour
  *                 token, its name, and its special's name and the one plain sentence on what
  *                 it does, in the owner's words (O35, O36; 03 §2, §6).
  *                 Adapted from Bingo's seasonIcons.ts and types.ts.
- * Depends on:     @smg/contracts (SeasonName), assets/seasons/*.svg
+ * Depends on:     @smg/contracts (SeasonName), @seasonal/kit/seasons/*.svg
  * Used by:        ./SeasonIcon, ../round/*, ../match/*, ../lobby/*
- * Spec:           docs/spec/03-seasonal-specials.md §2, §6
+ * Spec:           docs/spec/03-seasonal-specials.md §2, §6; kit DECISIONS K83
  */
 import type { SeasonName } from '@smg/contracts';
 
-import autumn from '../../../../assets/seasons/autumn.svg';
-import spring from '../../../../assets/seasons/spring.svg';
-import summer from '../../../../assets/seasons/summer.svg';
-import winter from '../../../../assets/seasons/winter.svg';
+import autumn from '@seasonal/kit/seasons/autumn.svg';
+import spring from '@seasonal/kit/seasons/spring.svg';
+import summer from '@seasonal/kit/seasons/summer.svg';
+import winter from '@seasonal/kit/seasons/winter.svg';
 
 export const SEASONS: readonly SeasonName[] = ['spring', 'summer', 'autumn', 'winter'];
 

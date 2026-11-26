@@ -8,7 +8,7 @@
  *                 until focus or a tap shows it whole. Moved out of ./result.css (T202) since
  *                 every place that shows a name uses it: the round's lists, the Players
  *                 panels, the result tables, the waiting area and the chat. A website
- *                 member's Discord steps beside the name (./PlayerSteps, O66).
+ *                 member's Discord steps beside the name are the kit's (@seasonal/kit/steps.css, O66).
  * Spec:           docs/spec/02-game-guess-the-number.md §9, §12; docs/spec/07-integration.md §7
  */
 /* In full wherever its box has room, an ellipsis only when the box is too narrow (T150). */
@@ -28,7 +28,7 @@
   overflow-wrap: anywhere;
 }
 
-/* A name with its Discord steps (./PlayerSteps): the name gives way, the steps never. */
+/* A name with its Discord steps (the kit's StepBadges): the name gives way, the steps never. */
 .player-named {
   display: inline-flex;
   align-items: center;
@@ -41,23 +41,6 @@
   min-width: 0;
 }
 
-.player-steps {
-  display: inline-flex;
+.player-named > .sk-steps {
   flex: none;
-  align-items: center;
-  gap: 0.2em;
-  /* Apart from the name before it, without a space in the text. */
-  margin-inline-start: 0.3em;
-  vertical-align: middle;
-}
-
-.player-step-icon {
-  width: 1.1em;
-  height: 1.1em;
-}
-
-.player-step-name {
-  font-size: var(--sk-font-size-small);
-  color: var(--sk-color-text-muted);
-  white-space: nowrap;
 }

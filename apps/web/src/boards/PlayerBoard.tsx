@@ -9,12 +9,13 @@
  *                 for a signed-in viewer who is not among the rows shown, the rows around
  *                 the viewer from `/me`. An empty board says so in one sentence. Ranks come
  *                 from the server (shared on equal points, wins and solves). A website
- *                 member's Discord steps follow the name (../round/PlayerSteps, 07 §7).
- * Depends on:     react, @smg/contracts (shapes), ../shell/http, ../shell/router,
- *                 ../shell/session, ../round/PlayerSteps, ./useApi, ./boardsText
+ *                 member's Discord steps follow the name (the kit's StepBadges, 07 §7).
+ * Depends on:     react, @seasonal/kit/react (useApiGet, StepBadges), @smg/contracts (shapes),
+ *                 ../shell/http, ../shell/router, ../shell/session, ./boardsText
  * Used by:        ./LeaderboardPage
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/06-data-model-api-realtime.md §2.6, §3.1
  */
+import { StepBadges, useApiGet } from '@seasonal/kit/react';
 import type {
   LeaderboardPageView,
   LeaderboardPeriodView,
@@ -23,12 +24,10 @@ import type {
 import { useEffect, useState, type ReactElement } from 'react';
 
 import { Problem } from '../components/fields.js';
-import { PlayerSteps } from '../round/PlayerSteps.js';
 import { api } from '../shell/http.js';
 import { hrefOf } from '../shell/router.js';
 import { useSession } from '../shell/session.js';
-import { refusalText } from './boardsText.js';
-import { useApi, withGame } from './useApi.js';
+import { refusalText, withGame } from './boardsText.js';
 
 function BoardTable(p: {
   readonly caption: string;
@@ -61,7 +60,7 @@ function BoardTable(p: {
                 >
                   {r.displayName}
                 </a>
-                <PlayerSteps steps={r.steps} />
+                <StepBadges steps={r.steps} />
                 {r.you ? ' (you)' : ''}
               </td>
               <td>{r.points}</td>
@@ -83,10 +82,10 @@ interface Pages {
 
 // The pages loaded so far; "Show more" appends the next one.
 function usePages(periodId: string, game: string | null) {
-  const first = useApi<LeaderboardPageView>(withGame(`/leaderboards/${periodId}`, game));
+  const first = useApiGet<LeaderboardPageView>(api, withGame(`/leaderboards/${periodId}`, game));
   const [more, setMore] = useState<Pages | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
-  const shown = more ?? first.data;
+  const shown = more ?? (first.kind === 'ready' ? first.value : null);
   const loadMore = (): void => {
     if (shown?.next == null) return;
     const path = withGame(`/leaderboards/${periodId}?offset=${String(shown.next)}`, game);
@@ -100,7 +99,8 @@ function usePages(periodId: string, game: string | null) {
       },
     );
   };
-  return { shown, error: first.error, problem, loadMore };
+  const error = first.kind === 'failed' ? first.error : null;
+  return { shown, error, problem, loadMore };
 }
 
 // The rows around a signed-in viewer; nothing for a guest or a viewer without a row.

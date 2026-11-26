@@ -49,10 +49,10 @@ describe('the platform words of a phased round (T332)', () => {
 
   it('leaves the cooldown out of a phased round’s intro', () => {
     const counting = { ...ended, status: 'countdown' as const, opensAt: 5_000, game: null };
-    render(<RoundIntro state={counting} game={null} now={0} />);
+    render(<RoundIntro state={counting} game={null} />);
     expect(screen.getByText(/between guesses/)).toBeTruthy();
     cleanup();
-    render(<RoundIntro state={{ ...counting, plan }} game={null} now={0} />);
+    render(<RoundIntro state={{ ...counting, plan }} game={null} />);
     expect(screen.queryByText(/between guesses/)).toBeNull();
   });
 

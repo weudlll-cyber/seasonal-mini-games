@@ -106,7 +106,7 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
     >
       {(panels) =>
         state.status === 'countdown' ? (
-          <RoundIntro state={state} game={game} now={now} noSeason={noSeason} />
+          <RoundIntro state={state} game={game} noSeason={noSeason} />
         ) : (
           <RoundBody
             state={state}

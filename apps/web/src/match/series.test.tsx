@@ -24,7 +24,9 @@ vi.mock('../shell/http.js', () => ({
     return Promise.resolve(null);
   },
 }));
-vi.mock('../live/socket.js', () => ({ serverNow: () => 100_000 }));
+// The server's clock stands at 100 000: the offset is measured against a still page clock.
+vi.useFakeTimers({ toFake: ['Date'], now: 0 });
+vi.mock('../live/socket.js', () => ({ useClockOffset: () => 100_000 }));
 
 const { SeriesStatus } = await import('./SeriesStatus.js');
 const { roundRequest } = await import('./roundRequest.js');

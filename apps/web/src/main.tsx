@@ -21,6 +21,7 @@ import '@seasonal/kit/shell.css';
 import '@seasonal/kit/fit.css';
 import '@seasonal/kit/frames.css';
 import '@seasonal/kit/bar.css';
+import '@seasonal/kit/steps.css';
 import '@smg/ui/tokens.css';
 import '@smg/ui/base.css';
 

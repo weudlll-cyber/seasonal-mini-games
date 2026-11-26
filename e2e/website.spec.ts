@@ -57,7 +57,13 @@ const PLAYER: StubMember = {
   id: RUN * 10 + 2,
   name: `Walter${tag}`,
   canHost: false,
-  steps: [{ ladder: 'holder', name: 'Gold', icon: null }],
+  steps: [
+    {
+      ladder: 'holder',
+      name: 'Gold',
+      icon: `/media/step-icons/${'0123456789abcdef'.repeat(2)}.webp`,
+    },
+  ],
 };
 
 interface SessionView {
@@ -194,7 +200,7 @@ test('journey 36: inside the website a guest watches, chats, signs in, plays and
     await guest.page.getByTestId('join').click();
     const row = playerRow(host, PLAYER.name);
     await expect(row).toContainText('online');
-    await expect(row.getByTestId('player-steps')).toHaveText('Gold');
+    await expect(row.getByTestId('steps').locator('img')).toHaveAttribute('alt', 'Gold');
     await playOneGuess(host, guest);
     // The website deletes the member and changes the host's rights; the server's next poll
     // (every 15 s) ends both game sessions.

@@ -89,7 +89,7 @@ describe('a game’s own sentence for its special', () => {
       opensAt: 9_000,
       game: {},
     };
-    render(<RoundIntro state={counting} game={game} now={1_000} />);
+    render(<RoundIntro state={counting} game={game} />);
     expect(
       screen.getByTestId('start-card').querySelector('.sk-start-special')?.textContent,
     ).toContain('A digit falls out.');

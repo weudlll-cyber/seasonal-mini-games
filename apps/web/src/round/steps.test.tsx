@@ -2,12 +2,12 @@
 /**
  * @file   apps/web/src/round/steps.test.tsx
  * @module web/round
- * @brief  A website member's Discord steps beside the name (O66): icon, name, or nothing.
+ * @brief  A website member's Discord steps beside the name (O66): the kit's icons, or nothing.
  *
- * Responsibility: a step with an icon is a small image named by the step, one without shows
- *                 its name as text; without steps a name is the bare name as before (a
- *                 standalone install); the round's result, the leaderboard row and the
- *                 profile heading show them.
+ * Responsibility: a step with one of the website's icons is a small image named by the step
+ *                 (the kit's StepBadges), one without an icon is left out; without steps a
+ *                 name is the bare name (a standalone install); the round's result, the
+ *                 leaderboard row and the profile heading show them.
  * Depends on:     vitest, @testing-library/react, ./PlayerName, ./RoundScreen, ./fakes,
  *                 ../boards/*
  * Spec:           docs/spec/07-integration.md §7
@@ -31,24 +31,31 @@ afterEach(() => {
 });
 
 const STEPS: readonly PlayerStepView[] = [
-  { ladder: 'holder', name: 'Diamond Hands', icon: '/media/step-icons/0123456789abcdef.webp' },
+  {
+    ladder: 'holder',
+    name: 'Diamond Hands',
+    icon: '/media/step-icons/0123456789abcdef0123456789abcdef.webp',
+  },
   { ladder: 'farmer', name: 'Seedling', icon: null },
 ];
 
 describe('steps beside a name', () => {
-  it('shows an icon named by its step, or the step name as text', () => {
+  it('shows an icon named by its step, and leaves out a step without one', () => {
     render(<PlayerName name="Walter" steps={STEPS} />);
-    const steps = screen.getByTestId('player-steps');
+    const steps = screen.getByTestId('steps');
     const icon = screen.getByRole('img', { name: 'Diamond Hands' });
-    expect(icon.getAttribute('src')).toBe('/media/step-icons/0123456789abcdef.webp');
+    expect(icon.getAttribute('src')).toBe(
+      '/media/step-icons/0123456789abcdef0123456789abcdef.webp',
+    );
     expect(steps.contains(icon)).toBe(true);
-    expect(steps.textContent).toBe('Seedling');
+    expect(steps.querySelectorAll('img')).toHaveLength(1);
+    expect(steps.textContent).toBe('');
     expect(screen.getByTitle('Walter').textContent).toBe('Walter');
   });
 
   it('leaves a name without steps as it was', () => {
     const { container } = render(<PlayerName name="Walter" steps={[]} />);
-    expect(screen.queryByTestId('player-steps')).toBeNull();
+    expect(screen.queryByTestId('steps')).toBeNull();
     expect(container.innerHTML).toBe(
       '<span class="player-name" data-full="false" title="Walter" tabindex="0">Walter</span>',
     );
@@ -110,7 +117,7 @@ describe('steps where names appear', () => {
     });
     await show(<ProfilePage displayName="Walter" />);
     const heading = screen.getByRole('heading', { level: 1 });
-    expect(heading.textContent).toBe('WalterSeedling');
+    expect(heading.textContent).toBe('Walter');
     expect(heading.querySelector('img')?.getAttribute('alt')).toBe('Diamond Hands');
   });
 });

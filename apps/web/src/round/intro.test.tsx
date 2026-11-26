@@ -16,14 +16,18 @@
  */
 import type { RoundStateView, SeasonName } from '@smg/contracts';
 import { cleanup, render, screen } from '@testing-library/react';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ended } from './fakes.js';
 import { RoundIntro } from './RoundIntro.js';
 import { RoundScreen } from './RoundScreen.js';
 
+// The server's clock and the page's are one here; the page's stands still where a test sets it.
+vi.mock('../live/socket.js', () => ({ useClockOffset: () => 0, serverNow: () => Date.now() }));
+
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
 });
 
 const counting: RoundStateView = {
@@ -37,8 +41,10 @@ const game = {
   text: { intro: (_view: unknown, mode: string) => `${mode} number between 1 and 100` },
 } as never;
 
-const show = (state: RoundStateView, now = 2_100) =>
-  render(<RoundIntro state={state} game={game} now={now} />);
+const show = (state: RoundStateView, now = 2_100) => {
+  vi.useFakeTimers({ toFake: ['Date'], now });
+  return render(<RoundIntro state={state} game={game} />);
+};
 
 const SENTENCES: readonly [SeasonName, string, string, string][] = [
   ['spring', 'Spring', 'Spring Herald', 'Everyone gets one free hint when the round opens.'],

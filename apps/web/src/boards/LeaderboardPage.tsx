@@ -11,21 +11,22 @@
  *                 picker shows the total over every game (the default) or one game's board
  *                 (O44, T126).
  * Depends on:     react, @smg/contracts (shapes), ../components/fields, ../shell/router,
- *                 ../lobby/games, ./PlayerBoard, ./TeamBoard, ./useApi, ./boardsText,
- *                 ./boards.css, ../round/result.css (tables)
+ *                 ../lobby/games, ../shell/http, ./PlayerBoard, ./TeamBoard, ./boardsText,
+ *                 ./boards.css, ../round/result.css (tables), @seasonal/kit/react (useApiGet)
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/06-data-model-api-realtime.md §2.6, §3.1
  */
+import { useApiGet } from '@seasonal/kit/react';
 import type { LeaderboardPeriodView } from '@smg/contracts';
 import { useState, type ReactElement } from 'react';
 
 import { ChoiceField, Problem } from '../components/fields.js';
 import { useGames } from '../lobby/games.js';
+import { api } from '../shell/http.js';
 import { navigate } from '../shell/router.js';
 import { refusalText } from './boardsText.js';
 import { PlayerBoard } from './PlayerBoard.js';
 import { TeamBoard } from './TeamBoard.js';
-import { useApi } from './useApi.js';
 import '../round/result.css';
 import './boards.css';
 
@@ -63,18 +64,18 @@ function Pickers(p: {
 }
 
 export function LeaderboardPage({ periodId }: { readonly periodId: string | null }): ReactElement {
-  const { data, error } = useApi<{ periods: LeaderboardPeriodView[] }>('/leaderboards');
+  const boards = useApiGet<{ periods: LeaderboardPeriodView[] }>(api, '/leaderboards');
   // '' is the total over every game.
   const [game, setGame] = useState('');
-  const periods = data?.periods ?? [];
+  const periods = boards.kind === 'ready' ? boards.value.periods : [];
   const chosen = periods.find((p) => p.id === periodId) ?? periods[0] ?? null;
   const filter = game === '' ? null : game;
   return (
     <section className="smg-stack" aria-labelledby="boards-title" data-testid="leaderboard">
       <h1 id="boards-title">Leaderboard</h1>
-      <Problem text={error === null ? null : refusalText(error)} />
-      {data === null && error === null ? <p className="smg-muted">Loading the boards…</p> : null}
-      {data !== null && chosen === null ? <p>There are no boards yet.</p> : null}
+      <Problem text={boards.kind === 'failed' ? refusalText(boards.error) : null} />
+      {boards.kind === 'loading' ? <p className="smg-muted">Loading the boards…</p> : null}
+      {boards.kind === 'ready' && chosen === null ? <p>There are no boards yet.</p> : null}
       {chosen === null ? null : (
         <>
           <Pickers periods={periods} chosen={chosen} game={game} setGame={setGame} />

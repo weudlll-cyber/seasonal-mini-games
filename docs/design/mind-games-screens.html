@@ -5,7 +5,7 @@
 <title>Seasonal Mind Games — screen reference (owner-approved, 2026-11-15)</title>
 <!--
   Design reference for Seasonal Mind Games. Not product code.
-  Open in a browser from docs/design/ so the icons resolve (../../assets/seasons/*.svg).
+  Open in a browser from docs/design/ so the icons resolve (../../apps/web/node_modules/@seasonal/kit/seasons/*.svg).
   1  Desktop, during a round (1440 x 900) - already built and approved; keep as is.
   2A Desktop, result and pause, one winner, 5 players (1440 x 900).
   2B Desktop, result and pause, 36 winners, 160 players, long names (1440 x 900).
@@ -107,7 +107,7 @@
 <body>
 <div id="root"></div>
 <script>
-  const ICON = (s) => '../../assets/seasons/' + s + '.svg';
+  const ICON = (s) => '../../apps/web/node_modules/@seasonal/kit/seasons/' + s + '.svg';
   const COLORS = { spring: '#afb84e', summer: '#e06e22', autumn: '#f9a825', winter: '#04aaf7' };
   const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 

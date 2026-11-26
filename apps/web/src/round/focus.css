@@ -5,11 +5,10 @@
  *
  * Responsibility: the app header hidden and the page's column as wide as the screen while
  *                 the focus mode lasts; the bar (the kit's GameBar, @seasonal/kit/bar.css:
- *                 small text, its buttons 44 px, ./FocusBar) placed as the round view's `bar`
- *                 area, with the season pill's own size in it. The bar's inset is the kit's
- *                 alone (T433): it reaches past the inline padding of whatever box holds the
- *                 round view, which each such box names in --smg-round-inset (here and in
- *                 ../match/docked.css). A panel
+ *                 small text, its buttons 44 px, on a phone its facts on a second line when
+ *                 they do not fit, ./FocusBar) placed as the round view's `bar` area, with no
+ *                 inset of its own (the page around it has the gutter, `--sk-bar-gutter: 0`)
+ *                 and with the season pill's own size in it. A panel
  *                 (./FocusPanel) on a desktop is a third column of 360 px of the round view's
  *                 grid (./round.css), so it pushes the game aside and covers nothing (O48); in
  *                 the phone layout it is a sheet over the rows between the bar and the action
@@ -28,24 +27,23 @@
 /* Through #root: the shell's one-screen padding (../shell/shell.css, loaded after this
    file) has the same weight and won, so a phone kept a 16 px gutter (night 7, T144). */
 #root .shell-main:has(.focus-mode) {
-  --smg-round-inset: var(--sk-gutter);
-
   max-width: none;
-  padding: var(--sk-space-1) var(--smg-round-inset);
+  padding: var(--sk-space-1) var(--sk-gutter);
 }
 
 @media (max-width: 640px) {
   #root .shell-main:has(.focus-mode) {
-    --smg-round-inset: 0.5rem;
+    padding: var(--sk-space-1) 0.5rem;
   }
 }
 
 /* The kit's game bar (@seasonal/kit/bar.css) is the round view's `bar` area; its buttons are the
-   kit's 44 px ones, and its inline padding is its only inset. The season pill in it keeps the
-   game's 36 px on a desktop. */
+   kit's 44 px ones. The page around the round view has the gutter, so the bar adds none. The
+   season pill in it keeps the game's 36 px on a desktop. */
 .round-live > .sk-game-bar {
+  --sk-bar-gutter: 0;
+
   grid-area: bar;
-  margin-inline: calc(-1 * var(--smg-round-inset, 0px));
 }
 
 .sk-game-bar .round-season {
@@ -118,9 +116,7 @@
 
 /* The round view in full screen keeps the page's colours and a margin. */
 .round-live:fullscreen {
-  --smg-round-inset: var(--sk-space-2);
-
-  padding: var(--smg-round-inset);
+  padding: var(--sk-space-2);
   background: var(--sk-page-background);
 }
 

@@ -45,7 +45,7 @@ For Phase 7:
 
 ### Kit adoption (owner decisions O142, O150)
 
-- On `master` at the kit's v0.18.0 since the merge commit `1988346` (PR #55, T428; v0.17.0 `52f996c`, the server parts `b542503`). The move to v0.22.0 is on `feat/kit-0.22` (draft PR #57, O155, T429 to T433) and waits for the owner's look at the round screens.
+- On `master` at the kit's v0.18.0 since the merge commit `1988346` (PR #55, T428; v0.17.0 `52f996c`, the server parts `b542503`). The move to v0.22.0 and on to v0.32.0 is on `feat/kit-0.22` (draft PR #57, O155, O157, T429 and after) and waits for the owner's look; its progress is in [NIGHT-2026-11-26-kit-0.32.md](NIGHT-2026-11-26-kit-0.32.md).
 - Stays the game's own after the move, with the reason or the kit release that replaces it: T423. Kit-related stand-ins left: a host chat from another https origin, which the kit defers (T412), and `readLimited` for the account feed until the kit's fetch serves it (T429).
 - Owner question (ao): whether the encrypted backup also holds the round and recovery keys (T431, OPEN).
 - `ops/test/installer-test.sh` (by hand, 20 to 40 minutes) has not run since the backups became the kit's (T431); it runs the kit's backup and drill on a fresh server.
@@ -57,6 +57,7 @@ For Phase 7:
 
 ## Part two — closed
 
+- 2026-11-26: The kit's client parts at v0.32.0 (bar gutter, step badges, countdowns, API client, season drawings, header and dock) (T434). _Closed by:_ branch `feat/kit-0.22` (draft PR #57)
 - 2026-11-25: The two findings of the kit's audit (O154): the session cookie now lives as long as its session (7 days after a website sign-in), and `style-src` is `'self'`: the server's two pages take their styles from `/server-pages.css` (T430). _Closed by:_ branch `feat/kit-0.22` (draft PR #57)
 - 2026-11-24: The result frame's own font-load count (T423 (3), second half): the kit's `ResultFrame` takes `fit={{ afterFonts: true }}` since v0.18.0 (K55); `useFontLoads` is deleted (T428). _Closed by:_ PR #55, merge commit `1988346`
 - 2026-11-24: The sign-in's per-account limit counts only failed attempts: the kit's `FailureBrake` (the owner's answer, O153), with the same 5 in 15 minutes and the same 429 (T427 (4)). _Closed by:_ branch `feat/kit-server` (draft PR #54)
