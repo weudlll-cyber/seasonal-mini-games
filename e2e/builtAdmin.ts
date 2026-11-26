@@ -53,15 +53,10 @@ export function viteBuild(appDir: string, outDir: string): void {
   if (result.status !== 0) throw new Error(`build of ${appDir} failed: ${result.stderr}`);
 }
 
-// Helmet's `upgrade-insecure-requests` (a default directive) is left out of the copy: this
-// page is plain http on 127.0.0.1, which Chromium and Firefox never upgrade but WebKit does,
-// so its scripts would fail the TLS handshake (CI, PR #1). Production is always behind TLS.
-const UPGRADE = /;?\s*upgrade-insecure-requests/;
-
 async function serverHeaders(): Promise<Record<string, string>> {
   const answer = await fetch(`${SERVER_URL}/admin/`, { redirect: 'manual' });
-  const pairs = COPIED.map((h) => [h, answer.headers.get(h)?.replace(UPGRADE, '')] as const);
-  return Object.fromEntries(pairs.filter((p): p is [string, string] => p[1] !== undefined));
+  const pairs = COPIED.map((h) => [h, answer.headers.get(h)] as const);
+  return Object.fromEntries(pairs.filter((p): p is [string, string] => p[1] !== null));
 }
 
 // Only the run's server (3740) is reached: the path (an /api/ path, checked by the caller) is

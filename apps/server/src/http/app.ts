@@ -177,12 +177,13 @@ function signInPathOf(env: AppDeps['env']): string | null {
 
 // What the session hook checks requests against; checkWebsiteMode (../config/env) makes sure
 // website mode has its public address.
-function sessionGuardOf(env: AppDeps['env']): SessionGuard {
+function sessionGuardOf(env: AppDeps['env'], embeds: EmbedAllowlist): SessionGuard {
   const website = env.SMG_AUTH_MODE === 'website';
   return {
     signInPath: signInPathOf(env),
     trustedProxies: env.SMG_TRUSTED_PROXIES,
     publicHost: website ? new URL(env.SMG_PUBLIC_URL ?? '').host : null,
+    handoffOrigins: () => embeds.config().handoffOrigins,
   };
 }
 
@@ -219,12 +220,14 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   const embeds = new EmbedAllowlist(deps.pool);
   await embeds.list();
   // The CSP lets the host's chat room load in a frame while the provider is hostEmbed (in
-  // website mode nothing else, 07 §2), and the allowlisted sites frame the game.
+  // website mode nothing else, 07 §2); standalone, the allowlisted sites frame the game.
   const chatFallback = chatDefault(deps.env);
   const website = deps.env.SMG_AUTH_MODE === 'website';
   await registerSecurityHeaders(fastify, {
+    mode: website ? 'website' : 'standalone',
+    // As the session cookie below: everything but development is behind TLS.
+    secure: !isDev,
     chat: hostChatSource(settings, chatFallback, deps.env.SMG_PUBLIC_URL),
-    chatOnly: website,
     embedOrigins: () => embeds.config().origins,
   });
   const metrics = createMetrics();
@@ -232,7 +235,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   registerBasics(fastify, deps, metrics);
   const cookie = cookieConfig(!isDev, deps.env.SMG_BASE_PATH);
   const sessionEnds = sessionEndsOf(fastify);
-  await registerSessions(fastify, deps.pool, cookie, sessionGuardOf(deps.env));
+  await registerSessions(fastify, deps.pool, cookie, sessionGuardOf(deps.env, embeds));
   const features = featuresFrom(deps.env);
   registerSignIn(fastify, { ...deps, cookie, features, sessionEnds });
   registerTwoFactor(fastify, { pool: deps.pool, env: deps.env, features, audit });

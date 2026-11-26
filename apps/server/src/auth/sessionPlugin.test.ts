@@ -6,8 +6,8 @@
  * Responsibility: the cookie is named and scoped as 03 §3 says and lives as long as its
  *                 session; a state-changing API call that names another site, or nobody, is
  *                 CSRF_INVALID, one from the game's own page passes on; in website mode the
- *                 public address's host counts, whatever Host the proxy sends; the handoff,
- *                 cross-origin by design, is left to its own check.
+ *                 public address's host counts, whatever Host the proxy sends; the handoff, and
+ *                 it alone, may also come from an allowlisted origin as the list is now.
  * Depends on:     vitest, fastify, ./sessionPlugin
  * Spec:           Bingo 03 §3, §8; DECISIONS T430
  */
@@ -22,7 +22,12 @@ import {
   type SessionGuard,
 } from './sessionPlugin.js';
 
-const LOCAL: SessionGuard = { signInPath: null, trustedProxies: [], publicHost: null };
+const LOCAL: SessionGuard = {
+  signInPath: null,
+  trustedProxies: [],
+  publicHost: null,
+  handoffOrigins: () => [],
+};
 
 // The status of a POST with these headers: 200 when the hook lets it through.
 async function post(url: string, headers: Record<string, string>, guard = LOCAL): Promise<number> {
@@ -83,8 +88,19 @@ describe('where a write came from', () => {
     expect(await post(guest, { ...behind, origin: 'https://evil.example' }, website)).toBe(403);
   });
 
-  it('leaves the handoff to its own Origin check', async () => {
+  it('lets an allowlisted origin make the handoff, and nothing else', async () => {
     const origin = 'https://host.example';
-    expect(await post('/api/v1/auth/handoff', { host, origin })).toBe(200);
+    const cross = { host, origin, 'sec-fetch-site': 'cross-site' };
+    const listed: string[] = [];
+    const guard: SessionGuard = { ...LOCAL, handoffOrigins: () => listed };
+    const handoff = '/api/v1/auth/handoff';
+    expect(await post(handoff, cross, guard)).toBe(403);
+    listed.push(origin, 'not an origin');
+    expect(await post(handoff, cross, guard)).toBe(200);
+    expect(await post(`${handoff}?x=1`, cross, guard)).toBe(200);
+    expect(await post(handoff, { host, origin: 'https://evil.example' }, guard)).toBe(403);
+    expect(await post(guest, cross, guard)).toBe(403);
+    // The game's own pages write to it as to any route.
+    expect(await post(handoff, { host, origin: `https://${host}` }, guard)).toBe(200);
   });
 });

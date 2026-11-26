@@ -2,16 +2,17 @@
  * @file   apps/server/src/http/plugins/securityHeaders.ts
  * @brief  The kit's security header set with the game's frame rules, on every response.
  *
- * Responsibility: hard-set the headers of 03 §7. The set is the kit's `securityHeaderSet`
- *                 (self scripts and styles, no inline style, frame and referrer rules, nosniff,
- *                 a Permissions-Policy that denies camera, microphone, geolocation and
- *                 payment, T430) with the game's rules: `frame-ancestors` admits the embed
- *                 allowlist (07 §1, Bingo 07 §3.4) and X-Frame-Options is dropped where it
- *                 would contradict it; the admin app is framed by nobody and requires Trusted
- *                 Types for scripts (enforced since the built app was checked in Chromium,
- *                 DECISIONS T178); `frame-src` admits the host chat while the chat provider is
- *                 hostEmbed, else 'self'; in website mode only the website's own
- *                 `/embed/chat` (by path, 07 §2), else 'none'. Helmet adds the headers the
+ * Responsibility: hard-set the headers of 03 §7 with the kit's `securityHeaderSet` (self
+ *                 scripts and styles, no inline style or event handler, referrer rules,
+ *                 nosniff, a Permissions-Policy that denies camera, microphone, geolocation
+ *                 and payment; over https, `upgrade-insecure-requests`). Standalone, the embed
+ *                 allowlist may frame the game (07 §1, Bingo 07 §3.4) and X-Frame-Options is
+ *                 dropped where it would contradict that; in website mode the website alone
+ *                 frames it (kit K81, O157). The admin app is framed by nobody and requires
+ *                 Trusted Types for scripts (DECISIONS T178). `frame-src` admits the host chat
+ *                 while the chat provider is hostEmbed: its origin standalone, the website's
+ *                 `/embed/chat` by its path in website mode (07 §2); without a host chat
+ *                 'self' standalone and 'none' in website mode. Helmet adds the headers the
  *                 kit's set does not name. HSTS comes from the TLS proxy.
  * Depends on:     @fastify/helmet, @seasonal/kit/server (securityHeaderSet, securityHeadersHook)
  * Used by:        ../app.ts
@@ -31,40 +32,39 @@ const ADMIN = /\/admin(\/|\?|$)/;
 // refuses any other, so a bad stored one is left out here rather than failing the response.
 const PLAIN_ORIGIN = /^https?:\/\/[A-Za-z0-9.-]+(:\d{1,5})?$/;
 
-interface FrameRules {
+interface HeaderRules {
+  readonly mode: 'website' | 'standalone';
+  // Served over https (as the session cookie is told): browsers upgrade http addresses.
+  readonly secure: boolean;
   // The host's chat room pages may frame with the provider hostEmbed (07 §2), read per
   // response: an origin, or the website's room as origin and path; '' for none.
   readonly chat: () => string;
-  // Website mode: nothing but that chat room may be framed, not even this origin (O66).
-  readonly chatOnly: boolean;
-  // The sites that may frame the game (the embed allowlist), read per response.
+  // Standalone: the sites that may frame the game (the embed allowlist), read per response.
   readonly embedOrigins: () => readonly string[];
 }
 
-// The kit's set with the two rules it cannot say, and two directives it does not set.
-function headersFor(url: string, frames: FrameRules): SecurityHeaderSet {
-  const set = securityHeaderSet({
-    // Both modes: the embed allowlist's sites may frame the game (the kit's website mode
-    // admits only the website itself).
-    mode: 'standalone',
-    ancestors: frames.embedOrigins().filter((o) => PLAIN_ORIGIN.test(o)),
+// What a page may frame, as the kit takes it: an origin or an https address with its path.
+function framesOf(chat: string, website: boolean): readonly string[] {
+  if (chat === '') return website ? [] : ["'self'"];
+  // A website served over plain http (development only): the kit takes no such path, and the
+  // website's chat is on the game's own origin there.
+  return [chat.startsWith('http://') && !PLAIN_ORIGIN.test(chat) ? "'self'" : chat];
+}
+
+function headersFor(url: string, rules: HeaderRules): SecurityHeaderSet {
+  const website = rules.mode === 'website';
+  return securityHeaderSet({
+    mode: rules.mode,
+    ...(website ? {} : { ancestors: rules.embedOrigins().filter((o) => PLAIN_ORIGIN.test(o)) }),
     admin: ADMIN.test(url),
+    secure: rules.secure,
+    frames: framesOf(rules.chat(), website),
   });
-  return {
-    headers: set.headers,
-    directives: {
-      ...set.directives,
-      // The website's chat room is one path on the public origin; the kit takes origins only.
-      'frame-src': [frames.chat() || (frames.chatOnly ? "'none'" : "'self'")],
-      'script-src-attr': ["'none'"],
-      'upgrade-insecure-requests': [],
-    },
-  };
 }
 
 export async function registerSecurityHeaders(
   app: FastifyInstance,
-  frames: FrameRules,
+  rules: HeaderRules,
 ): Promise<void> {
   // Helmet for the other headers only; everything the kit's set names comes from the hook.
   await app.register(helmet, {
@@ -79,6 +79,6 @@ export async function registerSecurityHeaders(
   });
   app.addHook(
     'onRequest',
-    securityHeadersHook((url) => headersFor(url, frames)),
+    securityHeadersHook((url) => headersFor(url, rules)),
   );
 }

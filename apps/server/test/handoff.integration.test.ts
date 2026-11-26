@@ -205,7 +205,8 @@ describe('the handoff from a host page', () => {
     expect(ok.headers['access-control-allow-credentials']).toBe('true');
     for (const origin of ['https://widgets.example', 'https://evil.example']) {
       const refused = await handoff(token({ sub: 'user-5' }), origin);
-      expect(refused.json<unknown>()).toEqual({ code: 'ORIGIN_NOT_ALLOWED' });
+      // Refused by the server's write check, before the route (T435).
+      expect(refused.json<unknown>()).toEqual({ code: 'CSRF_INVALID' });
       expect(refused.headers['access-control-allow-origin']).toBeUndefined();
     }
     const preflight = (origin: string) =>

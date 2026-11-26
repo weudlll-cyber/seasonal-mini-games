@@ -11,7 +11,9 @@
  *                 JSON bodies so a cross-site form cannot reach them. Before that, as a second
  *                 layer, the kit's `writeCheck` (T430): a state-changing call must come from the
  *                 game's own pages (`Sec-Fetch-Site`, `Origin` against the host; in website mode
- *                 the public address's host), the handoff excepted. Limit every session
+ *                 the public address's host). The one write another site may make is named to
+ *                 it: the handoff, from an allowlisted origin that may hand off a sign-in
+ *                 (07 §1; the list as it is now). Limit every session
  *                 to 120 API calls a minute, and requests without a session to 600 a minute
  *                 per address. The cookie's name and attributes are the kit's (03 §3:
  *                 `__Host-` at the root, `__Secure-` with the base path, plain in development);
@@ -61,21 +63,23 @@ export interface SessionGuard {
   // Website mode: the public address's host, which a browser's Origin names; the website's
   // proxy may send the game another Host. null: the request's own host counts.
   readonly publicHost: string | null;
+  // The allowlisted origins that may hand off a sign-in (07 §1), read per handoff.
+  readonly handoffOrigins: () => readonly string[];
 }
 
+// Called from the host sites' pages by design; the route answers their CORS
+// (../http/routes/handoff).
+const HANDOFF = '/api/v1/auth/handoff';
 // Routes that start a session: no CSRF token exists yet (03 §8, SameSite=Lax + JSON only).
 const SESSION_STARTERS = new Set([
   '/api/v1/auth/register',
   '/api/v1/auth/login',
   '/api/v1/auth/guest',
-  '/api/v1/auth/handoff',
+  HANDOFF,
   '/api/v1/dev/sign-in',
 ]);
 // Development only and outside any session: the load check's cleanup (no CSRF token).
 const DEV_UNSESSIONED = new Set(['/api/v1/dev/load-accounts']);
-// Called from the host sites' pages by design: it checks its own Origin allowlist
-// (../http/routes/handoff).
-const CROSS_ORIGIN = '/api/v1/auth/handoff';
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 export async function registerSessions(
@@ -88,7 +92,7 @@ export async function registerSessions(
   app.decorateRequest('session', null);
   const apiLimit = new RateLimiter(RATE_RULES.api);
   const anonymousLimit = new RateLimiter(RATE_RULES.anonymous);
-  const fromOwnPages = ownPagesCheck(guard);
+  const fromAllowedPages = writeOrigins(guard);
   app.addHook('onRequest', async (request, reply) => {
     if (!request.url.startsWith('/api/')) return;
     const token = request.cookies[config.name];
@@ -104,24 +108,37 @@ export async function registerSessions(
         : apiLimit.take(request.session.id).allowed;
     if (!allowed) return reply.status(429).send({ code: 'RATE_LIMITED' });
     const path = request.url.split('?')[0] ?? '';
-    if (path !== CROSS_ORIGIN && !fromOwnPages(request)) {
+    if (!fromAllowedPages(request, path)) {
       return reply.status(403).send({ code: 'CSRF_INVALID' });
     }
     return checkCsrf(request, reply, path);
   });
 }
 
-// The kit's writeCheck on a Fastify request: safe methods pass, a write must name this site.
-function ownPagesCheck({ trustedProxies, publicHost }: SessionGuard) {
-  const check = writeCheck({ trustedProxies });
-  return (request: FastifyRequest): boolean => {
+// A stored origin written as a browser writes it; the kit refuses a list with any other.
+const isExactOrigin = (o: string): boolean => URL.canParse(o) && new URL(o).origin === o;
+
+// The kit's writeCheck on a Fastify request: safe methods pass, a write must name this site,
+// or for the handoff one of the origins that may make it.
+function writeOrigins({ trustedProxies, publicHost, handoffOrigins }: SessionGuard) {
+  const ownOnly = writeCheck({ trustedProxies });
+  // Built per handoff: an admin may change the list at any time.
+  const withHandoff = () =>
+    writeCheck({
+      trustedProxies,
+      crossOrigin: [
+        { method: 'POST', path: HANDOFF, origins: handoffOrigins().filter(isExactOrigin) },
+      ],
+    });
+  return (request: FastifyRequest, path: string): boolean => {
     const headers =
       publicHost === null
         ? request.headers
         : { ...request.headers, host: publicHost, 'x-forwarded-host': undefined };
     // The TCP peer, never request.ip (a forwarding header).
     const peer = request.socket.remoteAddress;
-    const decision = check({ method: request.method, headers, peer });
+    const check = path === HANDOFF ? withHandoff() : ownOnly;
+    const decision = check({ method: request.method, headers, peer, url: request.url });
     if (!decision.ok) request.log.info({ reason: decision.reason }, 'cross-site write refused');
     return decision.ok;
   };

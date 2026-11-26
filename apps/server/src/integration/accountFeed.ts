@@ -11,18 +11,17 @@
  *                 logged once per process and handled like `rights`. The time of the last
  *                 successful poll is kept for `smg status` (GET /readyz, `feedLastSuccess`).
  *                 Errors back off (30 s doubling to 10 min) and are logged by their message only: the token is
- *                 never in a log line. A plain fetch with a 10 s timeout, no redirects and a
- *                 256 KiB cap, not the guarded fetch of ./outbound, which takes public https
- *                 addresses only (an SSRF guard for addresses admins type); this one is the
- *                 operator's local http address from the env file (DECISIONS T217, T429).
- * Depends on:     zod, ../db/pool, @seasonal/kit/server (FetchRefused, SessionEnds type),
- *                 ./accountChanges
+ *                 never in a log line. The kit's guarded fetch with this one local origin named
+ *                 (`localOrigins`: the operator's http address from the env file, never one an
+ *                 admin types, DECISIONS T217), a 10 s limit, no redirects and a 256 KiB cap.
+ * Depends on:     zod, ../db/pool, @seasonal/kit/server (guardedFetch, FetchRefused,
+ *                 SessionEnds type), ./accountChanges
  * Used by:        ../main, ../http/routes/health (feedLastSuccess), test/*
  * Spec:           docs/spec/07-integration.md §7; docs/spec/05-security-threat-model.md §1
  */
 import { z } from 'zod';
 
-import { FetchRefused, type SessionEnds } from '@seasonal/kit/server';
+import { FetchRefused, guardedFetch, type SessionEnds } from '@seasonal/kit/server';
 import type { DbPool } from '../db/pool.js';
 import {
   ACCOUNT_CHANGE_KINDS,
@@ -60,31 +59,21 @@ export interface AccountFeedDeps {
   readonly log: FeedLog;
 }
 
-// An answer's body as text, refused past the cap as it arrives.
-async function readLimited(response: Response): Promise<string> {
-  if (response.body === null) return '';
-  const chunks: Uint8Array[] = [];
-  let size = 0;
-  for await (const chunk of response.body as AsyncIterable<Uint8Array>) {
-    size += chunk.byteLength;
-    if (size > LIMIT_BYTES) {
-      throw new FetchRefused(`the answer is larger than ${String(LIMIT_BYTES / 1024)} KiB`);
-    }
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks).toString('utf8');
-}
-
 async function fetchPage(deps: AccountFeedDeps, since: string): Promise<z.infer<typeof Page>> {
   const url = new URL(FEED_PATH, deps.localUrl);
   url.searchParams.set('since', since);
-  const response = await fetch(url, {
-    redirect: 'error',
-    signal: AbortSignal.timeout(TIMEOUT_MS),
+  // The one origin that may be plain http and private: the website beside the game.
+  const send = guardedFetch({
+    localOrigins: [url.origin],
+    allowedHosts: [url.hostname],
+    timeoutMs: TIMEOUT_MS,
+    maxBytes: LIMIT_BYTES,
+  });
+  const response = await send(url.href, {
     headers: { accept: 'application/json', 'x-games-sync-token': deps.token },
   });
   if (!response.ok) throw new FetchRefused(`the feed answered ${String(response.status)}`);
-  const page = Page.safeParse(JSON.parse(await readLimited(response)));
+  const page = Page.safeParse(await response.json());
   if (!page.success) throw new FetchRefused('the feed answer has the wrong shape');
   return page.data;
 }
@@ -137,11 +126,8 @@ export async function feedLastSuccess(pool: DbPool): Promise<Date | null> {
 }
 
 // A failure's message without anything sent (the token is a header, never in an error).
-function reason(error: unknown): string {
-  if (!(error instanceof Error)) return 'unknown error';
-  const cause = (error.cause as { code?: unknown } | undefined)?.code;
-  return typeof cause === 'string' ? `${error.message} (${cause})` : error.message;
-}
+const reason = (error: unknown): string =>
+  error instanceof Error ? error.message : 'unknown error';
 
 // Starts the poller; the returned function stops it.
 export function startAccountFeed(deps: AccountFeedDeps): () => void {
