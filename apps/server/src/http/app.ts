@@ -187,6 +187,18 @@ function sessionGuardOf(env: AppDeps['env'], embeds: EmbedAllowlist): SessionGua
   };
 }
 
+// What the pages may frame and be framed by: the host's chat room while the provider is
+// hostEmbed (in website mode nothing else, 07 §2); standalone, the allowlisted sites frame
+// the game. Everything but development is behind TLS, as the session cookie is told.
+function headerRulesOf(env: AppDeps['env'], embeds: EmbedAllowlist, chat: () => string) {
+  return {
+    mode: env.SMG_AUTH_MODE === 'website' ? ('website' as const) : ('standalone' as const),
+    secure: !env.SMG_DEV,
+    chat,
+    embedOrigins: () => embeds.config().origins,
+  };
+}
+
 // How players sign in: local accounts with passwords (and, in development, the quick
 // sign-in), or in website mode only through the website's proxy (O66, Bingo D37).
 function registerSignIn(
@@ -219,17 +231,10 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   // Loaded before the first request: the CSP's frame-ancestors and the CORS checks read it.
   const embeds = new EmbedAllowlist(deps.pool);
   await embeds.list();
-  // The CSP lets the host's chat room load in a frame while the provider is hostEmbed (in
-  // website mode nothing else, 07 §2); standalone, the allowlisted sites frame the game.
   const chatFallback = chatDefault(deps.env);
   const website = deps.env.SMG_AUTH_MODE === 'website';
-  await registerSecurityHeaders(fastify, {
-    mode: website ? 'website' : 'standalone',
-    // As the session cookie below: everything but development is behind TLS.
-    secure: !isDev,
-    chat: hostChatSource(settings, chatFallback, deps.env.SMG_PUBLIC_URL),
-    embedOrigins: () => embeds.config().origins,
-  });
+  const chatSource = hostChatSource(settings, chatFallback, deps.env.SMG_PUBLIC_URL);
+  await registerSecurityHeaders(fastify, headerRulesOf(deps.env, embeds, chatSource));
   const metrics = createMetrics();
   const observe = metrics.rounds;
   registerBasics(fastify, deps, metrics);
