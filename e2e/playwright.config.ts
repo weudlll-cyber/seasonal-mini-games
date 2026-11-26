@@ -14,7 +14,7 @@
  *                 run afterwards, one at a time and one browser after the other, as Bingo learned
  *                 to (its NIGHT-3); WebKit records no trace there. Specs in CHROMIUM_ONLY run in
  *                 Chromium alone (journey 36 starts its own website-mode server and nginx,
- *                 ./websiteStack).
+ *                 ./websiteStack; journey 47, the layout sweep, its tests side by side).
  * Depends on:     @playwright/test, ./testStack
  * Spec:           docs/spec/09-testing-strategy.md §1.1, §4; Bingo 12 §7
  */
@@ -85,8 +85,9 @@ const TIMING = [
   'mindGamesLastMove.spec.ts',
 ];
 // Specs that run in Chromium only: journey 36 starts its own server and nginx container, and
-// proves the server and the proxy, not the browser (DECISIONS T241).
-const CHROMIUM_ONLY = ['website.spec.ts'];
+// proves the server and the proxy, not the browser (DECISIONS T241); journey 47 looks at every
+// screen 28 times, once per size, font and theme (T444).
+const CHROMIUM_ONLY = ['website.spec.ts', 'sweep.spec.ts'];
 const BROWSERS = [
   { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
   { name: 'firefox', use: { ...devices['Desktop Firefox'] } },

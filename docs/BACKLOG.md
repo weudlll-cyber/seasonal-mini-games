@@ -48,9 +48,7 @@ For Phase 7:
 - On `master` at the kit's v0.18.0 since the merge commit `1988346` (PR #55, T428; v0.17.0 `52f996c`, the server parts `b542503`). The move to v0.22.0 and on to v0.32.0 is on `feat/kit-0.22` (draft PR #57, O155, O157, T429 and after) and waits for the owner's look; its progress is in [NIGHT-2026-11-26-kit-0.32.md](NIGHT-2026-11-26-kit-0.32.md), then to v0.34.0 (O158, [NIGHT-2026-11-26-kit-0.34.md](NIGHT-2026-11-26-kit-0.34.md)).
 - Stays the game's own after the move, with the reason or the kit release that replaces it: T423. Kit-related stand-in left: a host chat from another https origin, which the kit defers (T412).
 - `ops/test/installer-test.sh` (by hand, 20 to 40 minutes) has not run since the backups became the kit's (T431) and the admin command, route file, operator address and host baseline too (T437): it belongs to the server rehearsal.
-- Round screens at a 200 % root font (sweep of 2026-11-25, 360×780, 390×844, 1280×720): content is cut or hidden in several places, on `master` before the kit 0.22 move as after it: the guess list's head and rows, Safecracker's digit boxes and Bomb Defusal's wires on a phone, Mind Games' choice names and info line, the build badge past the left edge, and on a desktop the bar's mode fact ends in "…". With the move the phone's bar is one button row with whole facts (before: three rows, the mode fact cut); axe now reports the list's "Log" button at 390×844 as too small a target. At 100 % the one finding, on `master` too, is Mind Games' info line cut by a few pixels on a phone.
-- The kit's sweep (K67, ADOPTION "Since v0.23.0") is not adopted: its probe reports the 200 % findings above, so a sweep spec would fail from its first run; the owner decides whether it starts with them allowed or after they are fixed.
-- Seen on 2026-11-26 (not compared on `master`; the bar is unchanged by the kit move): at a 200 % root font Seasonal Target's result scrolls sideways on a phone, its result bar's buttons past the edge. The public result answer (`GET /rounds/:id/result`) carried no `names` in journey 13, so the verification page shows player keys there.
+- Seen on 2026-11-26: the public result answer (`GET /rounds/:id/result`) carried no `names` in journey 13, so the verification page shows player keys there.
 
 ### Optional inputs
 
@@ -58,6 +56,7 @@ For Phase 7:
 
 ## Part two — closed
 
+- 2026-11-26: The kit's layout sweep over every screen (journey 47) and the 200 % text clipping it reported (O158, O159, T444). _Closed by:_ branch `feat/kit-0.22` (draft PR #57)
 - 2026-11-26: The seven findings of this game's report, taken from the kit at v0.34.0: TEMPORARY grant, restored secret files (`smg keys` gone), season icon, admin step-up retry, development chat frame, tint contrast, stand-in secret refusal (T443). _Closed by:_ branch `feat/kit-0.22` (draft PR #57)
 - 2026-11-26: The kit's base components and header looks at v0.34.0 (T442). _Closed by:_ branch `feat/kit-0.22` (draft PR #57)
 - 2026-11-26: The kit's test tools for screens, colours, contrast and load measurements (T438). _Closed by:_ branch `feat/kit-0.22` (draft PR #57)

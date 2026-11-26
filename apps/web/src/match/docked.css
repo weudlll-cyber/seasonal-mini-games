@@ -223,7 +223,9 @@
 
 /* The accent blue of the round's winter and the focus ring, with dark text (8.4:1). */
 .next-round-start {
-  min-height: max(32px, calc(var(--fit, 1) * var(--sk-hit-target)));
+  /* A full target that takes the screen's scale only in the room it asks for (journey 47). */
+  min-height: var(--sk-hit-target);
+  margin-block: min(0px, calc((var(--fit, 1) - 1) * var(--sk-hit-target) / 2));
   border-color: transparent;
   border-radius: 999px;
   background: var(--sk-color-accent);

@@ -260,6 +260,7 @@
 }
 
 .round-line-body > * > * {
+  max-width: 100%;
   flex: none;
   white-space: nowrap;
 }

@@ -25,7 +25,7 @@
  *                 (./GuessLine); on a phone the newest row's comment shows under it and a tap
  *                 on a row shows or hides its own.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (rows), @smg-game/registry/web (types),
- *                 ../live/useRound, ./GuessLine, ./OthersLine, ./SpecialBanner, ./roundText, ./roundColumns.css, ./roundLog.css
+ *                 ../components/scrollTabStop, ../live/useRound, ./GuessLine, ./OthersLine, ./SpecialBanner, ./roundText, ./roundColumns.css, ./roundLog.css
  * Used by:        ./RoundBody
  * Spec:           docs/spec/02-game-guess-the-number.md §6.2, §6.3, §12; docs/spec/03-seasonal-specials.md §2.4;
  *                 docs/spec/07-integration.md §7
@@ -35,6 +35,7 @@ import type { RoundStateView } from '@smg/contracts';
 import type { FeedLine, GuessRow } from '@smg/game-sdk';
 import { useState, type ReactElement } from 'react';
 
+import { scrollTabStop } from '../components/scrollTabStop.js';
 import type { FeedItem } from '../live/useRound.js';
 import { EventLine, GuessLine } from './GuessLine.js';
 import { OthersLine } from './OthersLine.js';
@@ -170,6 +171,7 @@ export function RoundLog(p: LogProps): ReactElement {
         <p className="smg-muted round-log-empty">No {actionWords(p.state).many} yet.</p>
       ) : (
         <ol
+          ref={scrollTabStop}
           data-testid={LIST_IDS[p.kind]}
           data-columns={p.columns === true ? '2' : undefined}
           aria-live="polite"

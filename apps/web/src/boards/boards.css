@@ -49,7 +49,7 @@
 /* The profile's numbers: label over value, as many per row as fit. */
 .boards-facts {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(9rem, 100%), 1fr));
   gap: var(--sk-space-2);
   margin: 0;
 }

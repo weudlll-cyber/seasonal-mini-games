@@ -36,6 +36,8 @@ import { AppShell } from './shell/AppShell.js';
 import { redeemHandoffLanding } from './shell/handoffLanding.js';
 import { parseRoute } from './shell/router.js';
 import { SessionProvider } from './shell/session.js';
+// After the parts' own style sheets: what they do at large text in a narrow place.
+import './round/largeText.css';
 
 const rootElement = document.getElementById('root');
 if (rootElement === null) throw new Error('missing #root element');

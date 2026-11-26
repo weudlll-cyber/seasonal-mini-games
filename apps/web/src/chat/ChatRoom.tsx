@@ -18,7 +18,7 @@
  *                 elsewhere gets the room's writing part, which it shows with this file's
  *                 `Writer` (the docked chat's phone bar, T363).
  * Depends on:     react, @seasonal/kit/react (useDockArrivals), @smg/contracts (views),
- *                 ../round/PlayerName, ../shell/session,
+ *                 ../components/scrollTabStop, ../round/PlayerName, ../shell/session,
  *                 ./chatArrivals, ./ModActions, ./useChat
  * Used by:        ./ChatPanel, ../match/DockedMatch (Writer)
  * Spec:           docs/spec/07-integration.md §2; Bingo 06 §7, Bingo 03 §12
@@ -26,6 +26,7 @@
 import { useDockArrivals, useDockSight, useDockView } from '@seasonal/kit/react';
 import type { ChatMessageView, ChatRoomView } from '@smg/contracts';
 import {
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -34,6 +35,7 @@ import {
   type SyntheticEvent,
 } from 'react';
 
+import { scrollTabStop } from '../components/scrollTabStop.js';
 import { PlayerName } from '../round/PlayerName.js';
 import { useSession } from '../shell/session.js';
 import { ChatArrivals, ChatComposerSlot } from './chatArrivals.js';
@@ -158,7 +160,11 @@ export function ChatRoom({ target }: { readonly target: ChatTarget }): ReactElem
       offer(null);
     };
   }, [offer, room, send, writes]);
-  const list = useRef<HTMLOListElement>(null);
+  const list = useRef<HTMLOListElement | null>(null);
+  const attach = useCallback((el: HTMLOListElement | null) => {
+    list.current = el;
+    return scrollTabStop(el);
+  }, []);
   // Follow the newest message at the bottom.
   useEffect(() => {
     const el = list.current;
@@ -168,7 +174,7 @@ export function ChatRoom({ target }: { readonly target: ChatTarget }): ReactElem
   if (room === null) return <p className="smg-muted">Loading the chat…</p>;
   return (
     <>
-      <ol ref={list} className="chat-list" data-testid="chat-messages" aria-live="polite">
+      <ol ref={attach} className="chat-list" data-testid="chat-messages" aria-live="polite">
         {messages.length === 0 ? <li className="smg-muted">No messages yet.</li> : null}
         {messages.map((m) => (
           <Line key={m.id} message={m} me={me} room={room} canReport={writes} />

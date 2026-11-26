@@ -22,7 +22,8 @@
  *                 game's input with the cooldown ring, or the solved notice). "All (N)" opens
  *                 the whole list with the events as a panel on demand (O48): a third column on
  *                 a desktop, a sheet on a phone that ends above the dock.
- * Depends on:     react, @smg/contracts, @smg-game/registry/web, ../live/useRound, ./FocusPanel,
+ * Depends on:     react, @smg/contracts, @smg-game/registry/web, ../components/scrollTabStop,
+ *                 ../live/useRound, ./FocusPanel,
  *                 ./InfoParts, ./InputRow, ./playerMarks, ./RoundLog, ./RoundSide,
  *                 ./SpecialBanner, ./panels
  * Used by:        ./RoundScreen
@@ -33,6 +34,7 @@ import type { RoundStateView } from '@smg/contracts';
 import type { OwnMatchPart } from '@smg/game-sdk';
 import { useState, type ReactElement } from 'react';
 
+import { scrollTabStop } from '../components/scrollTabStop.js';
 import type { RoundLive } from '../live/useRound.js';
 import { FocusPanel } from './FocusPanel.js';
 import { GamePart, PhoneLine, SpecialLine } from './InfoParts.js';
@@ -178,9 +180,13 @@ export function RoundBody(p: BodyProps): ReactElement {
           {dock}
         </section>
       )}
-      <aside className="round-column" aria-label="About this round">
+      <aside ref={scrollTabStop} className="round-column" aria-label="About this round">
         <SpecialLine state={p.state} rule={p.rule} />
-        {panel === null ? null : <div className="sk-panel round-panel">{panel}</div>}
+        {panel === null ? null : (
+          <div ref={scrollTabStop} className="sk-panel round-panel">
+            {panel}
+          </div>
+        )}
         <Others {...p} onMore={onOthers} />
         {board ? (
           <>

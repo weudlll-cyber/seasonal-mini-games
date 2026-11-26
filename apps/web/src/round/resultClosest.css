@@ -52,9 +52,11 @@
   padding: calc(var(--fit, 1) * var(--sk-space-1));
 }
 
-/* "All placings (N)": the size of the round list's "Log (N)" (../round/roundLog.css). */
+/* "All placings (N)": the size of the round list's "Log (N)" (../round/roundLog.css): a full
+   target that takes no more height in the column than its line (journey 47). */
 .sk-result:has([data-closest]) .round-all-placings {
-  min-height: max(28px, calc(var(--fit, 1) * 2rem));
+  min-height: var(--sk-hit-target);
+  margin-block: min(0px, calc((var(--fit, 1) * 2rem - var(--sk-hit-target)) / 2));
   padding-inline: 0.7rem;
   box-shadow: none;
 }
@@ -76,11 +78,12 @@
   }
 }
 
-/* A phone: the two buttons are touch targets of 40 px at the least. */
+/* A phone: the two buttons are full touch targets in the column too. */
 @media (max-width: 899px) {
   .sk-result:has([data-closest]) .round-all-placings,
   .sk-result:has([data-closest]) .round-all-guesses {
-    min-height: max(var(--sk-floor-target), calc(var(--fit, 1) * var(--sk-hit-target)));
+    min-height: var(--sk-hit-target);
+    margin-block: 0;
   }
 }
 

@@ -49,6 +49,10 @@ h3 {
   font-weight: var(--sk-font-weight-heading);
   line-height: 1.15;
   letter-spacing: -0.01em;
+  /* A long word breaks (with a hyphen where the browser knows the language) rather than
+     widening the page at 200 % text on a narrow phone (journey 47). */
+  overflow-wrap: anywhere;
+  hyphens: auto;
 }
 
 a {
@@ -73,8 +77,11 @@ a {
   white-space: nowrap;
 }
 
+/* A column no wider than its place: at 200 % text on a narrow phone a long button or field
+   narrows with it instead of widening the page (journey 47). */
 .smg-stack {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sk-space-2);
 }
 
@@ -85,7 +92,24 @@ a {
   gap: var(--sk-space-1);
 }
 
-/* Fields: the kit's `.sk-field`; a box that cannot be ticked says so with its cursor too. */
+.smg-row > .sk-field {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Fields: the kit's `.sk-field`. A tick box's label is its target, as high as one (44 px,
+   journey 47); a box that cannot be ticked says so with its cursor too. */
+label:has(> input[type='checkbox']) {
+  min-height: var(--sk-hit-target);
+  align-content: center;
+}
+
+/* A disclosure's line is its target (44 px, journey 47). */
+summary {
+  min-height: var(--sk-hit-target);
+  align-content: center;
+}
+
 input[type='checkbox']:disabled {
   cursor: not-allowed;
 }

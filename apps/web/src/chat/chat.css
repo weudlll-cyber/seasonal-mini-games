@@ -112,13 +112,15 @@
   margin: 0;
 }
 
+/* Send goes under the field where both do not fit (200 % text on a phone). */
 .chat-form {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--sk-space-1);
 }
 
 .chat-form .sk-input {
-  flex: 1;
+  flex: 1 1 6rem;
   min-width: 0;
 }
 

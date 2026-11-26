@@ -16,8 +16,7 @@
  *                 T75), its strength and base the theme's (`--own-tint`, T261); Frost's held
  *                 answer with its seconds in a small badge; an event is one quieter line, a
  *                 special's own row (Leaf Fall) on the season's outline with its icon in bold
- *                 (T115). The pegs and colour dots are ./roundMarks.css. Colours only from
- *                 @smg/ui tokens.
+ *                 (T115). Pegs and colour dots: ./roundMarks.css; colours: @smg/ui tokens.
  * Spec:           docs/spec/02-game-guess-the-number.md §6.3, §12
  */
 .round-log {
@@ -51,7 +50,8 @@
 
 .round-log-all {
   flex: none;
-  min-height: 2rem;
+  min-height: var(--sk-hit-target);
+  margin-block: min(0px, calc((2rem - var(--sk-hit-target)) / 2));
   margin-left: auto;
   padding-inline: 0.7rem;
   font-size: inherit;
@@ -277,10 +277,10 @@ button.round-row-line {
   color: var(--color-success-text);
 }
 
-/* A phone: closer parts; "Log (M)" a full touch target (night-7 review). */
+/* A phone: closer parts; the head as high as "Log (M)" (night-7 review). */
 @media (max-width: 899px) {
   .round-log-all {
-    min-height: var(--sk-hit-target);
+    margin-block: 0;
   }
 
   .round-row-line {

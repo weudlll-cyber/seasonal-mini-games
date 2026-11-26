@@ -1,0 +1,194 @@
+/*
+ * @file   apps/web/src/round/largeText.css
+ * @module web/round
+ * @brief  Large text in a narrow place (200 % text on a phone): parts wrap and scroll, nothing
+ *         is cut.
+ *
+ * Responsibility: container queries in rem, so they apply only where a part is narrow for the
+ *                 text's size (under 16 rem: never at 100 % on a 320 px phone or wider). The
+ *                 running round's one-screen view scrolls as a whole instead of squeezing its
+ *                 rows; the guess list's head, banner and rows wrap, in one column; the result's
+ *                 bar wraps, its first part grows with its content, its tables size by content
+ *                 and names break instead of ending in an ellipsis; the waiting area's and the
+ *                 Players panel's rows give the name its room. At 100 % the layouts of the other files stand
+ *                 (the sweep, journey 47).
+ * Used by:        ../main.tsx (after the files it narrows)
+ * Spec:           WCAG 2.2 SC 1.4.4, 1.4.10; docs/spec/02-game-guess-the-number.md §12
+ */
+.match-docked,
+.round-log,
+.round-players,
+.match-waiting,
+.match-result-page {
+  container-type: inline-size;
+}
+
+/* The running round (./round.css: `.match-live` is a size container; a docked list game's is
+   not on a phone, ../match/docked.css, so `.match-docked` answers there). */
+@container (max-width: 16rem) {
+  .match-live > .round-live.round-live[data-view='phone'][data-layout] {
+    grid-template-rows: none;
+    grid-auto-rows: max-content;
+    align-content: start;
+    overflow-y: auto;
+  }
+
+  .round-live .round-line.round-line {
+    max-height: none;
+  }
+
+  .round-live .round-line-body > *,
+  .round-live .round-line-body > * > * {
+    white-space: normal;
+  }
+}
+
+/* A desktop at 200 % text: the round view is under 33 rem high there (`.match-live`; 37 rem at
+   the least on a 600 px high window at 100 %). The info column scrolls with every part at its
+   own height, the guesses take one column, and a row's comment goes whole to a line of its own.
+   At 100 % the comment keeps giving way with its ellipsis (DECISIONS T150). */
+.round-column {
+  overflow-y: auto;
+}
+
+@container (max-height: 33rem) {
+  .round-live[data-view='desktop'] .round-column > * {
+    flex: none;
+  }
+
+  .round-live[data-view='desktop'] .round-panel.round-panel {
+    max-height: none;
+  }
+
+  .round-live[data-view='desktop'] :is(.round-main.round-main, .round-own.round-own) {
+    min-height: max-content;
+  }
+
+  .round-live[data-view='desktop'] .round-log.round-log ol[data-columns='2'] {
+    display: grid;
+    column-count: auto;
+    overflow-y: auto;
+  }
+
+  .round-live[data-view='desktop'] .round-log .round-row-line {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .round-live[data-view='desktop'] .round-log .round-who {
+    max-width: 100%;
+  }
+
+  .round-live[data-view='desktop'] .round-log .round-answer {
+    flex: 0 1 auto;
+    min-width: 0;
+    white-space: normal;
+  }
+
+  .round-live[data-view='desktop'] .round-row-line .round-comment.round-comment {
+    flex: 1 0 100%;
+    overflow: visible;
+    white-space: normal;
+  }
+}
+
+/* The guess list (./roundLog.css). */
+@container (max-width: 16rem) {
+  .round-log .round-log-head {
+    flex-wrap: wrap;
+  }
+
+  .round-log .round-log-title,
+  .round-log .round-banner,
+  .round-log .round-row-line {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .round-log .round-who {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .round-log .round-answer {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+}
+
+/* The result (../match/match.css and ./result.css). */
+@container (max-width: 16rem) {
+  /* A game's own result (./resultOwn.css): its history's names break like the others. */
+  .match-result-page .smg-one-line {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .match-result-page .result-bar {
+    flex-wrap: wrap;
+    max-height: none;
+    white-space: normal;
+  }
+
+  .match-result-page .sk-result .sk-result-first.sk-result-first {
+    height: auto;
+  }
+
+  .match-result-page .round-table.round-table {
+    table-layout: auto;
+  }
+
+  .match-result-page .round-table.round-table :is(th, td) {
+    padding-inline: 2px;
+    overflow-wrap: anywhere;
+  }
+
+  .match-result-page .round-table col:is(.round-col-place, .round-col-num) {
+    width: auto;
+  }
+
+  .match-result-page .round-closest-row.round-closest-row {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+
+  .match-result-page .round-player {
+    flex-wrap: wrap;
+    white-space: normal;
+  }
+
+  .match-result-page.match-result-page :is(.player-name, .round-who) {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* The Players panel (./players.css): the name beside the dot, the rest on lines under it. */
+@container (max-width: 16rem) {
+  .round-players .round-player-list.round-player-list {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .round-players .player-name {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* The waiting area's players (../match/match.css): the name on a line of its own. */
+@container (max-width: 16rem) {
+  .match-waiting .match-players.match-players {
+    grid-template-columns: minmax(0, 1fr) max-content;
+  }
+
+  .match-waiting .match-players li > :first-child {
+    grid-column: 1 / -1;
+  }
+
+  .match-waiting .player-name {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+}

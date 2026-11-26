@@ -25,7 +25,10 @@
   width: 100%;
   max-width: var(--sk-content-width);
   margin: 0 auto;
-  padding: var(--sk-space-3) var(--sk-gutter) var(--sk-space-4);
+  /* At 200 % text a narrow phone keeps its width for the page: the side gutter grows with
+     the font only where the window has room (journey 47); at 100 % it is the token's. */
+  --page-gutter: min(var(--sk-gutter), max(16px, 5vw));
+  padding: var(--sk-space-3) var(--page-gutter) var(--sk-space-4);
 }
 
 /* A one-screen view (a running round, a match summary) makes the page exactly one screen:
@@ -49,5 +52,5 @@ html:has(.one-screen) {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: var(--sk-space-2) var(--sk-gutter);
+  padding: var(--sk-space-2) var(--page-gutter);
 }
