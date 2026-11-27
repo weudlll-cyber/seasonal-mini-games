@@ -45,11 +45,12 @@ For Phase 7:
 
 ### Kit adoption (owner decisions O142, O150)
 
-- On `master` at the kit's v0.18.0 since the merge commit `1988346` (PR #55, T428; v0.17.0 `52f996c`, the server parts `b542503`). The move to v0.22.0 and on to v0.32.0 is on `feat/kit-0.22` (draft PR #57, O155, O157, T429 and after) and waits for the owner's look; its progress is in [NIGHT-2026-11-26-kit-0.32.md](NIGHT-2026-11-26-kit-0.32.md), then to v0.34.0 (O158, [NIGHT-2026-11-26-kit-0.34.md](NIGHT-2026-11-26-kit-0.34.md)), to v0.38.0 (O160, [NIGHT-2026-11-27-kit-0.38.md](NIGHT-2026-11-27-kit-0.38.md)) and to v0.39.1 ([NIGHT-2026-11-27-kit-0.39.md](NIGHT-2026-11-27-kit-0.39.md)).
+- On `master` at the kit's v0.18.0 since the merge commit `1988346` (PR #55, T428; v0.17.0 `52f996c`, the server parts `b542503`). The move to v0.22.0 and on to v0.32.0 is on `feat/kit-0.22` (draft PR #57, O155, O157, T429 and after) and waits for the owner's look; its progress is in [NIGHT-2026-11-26-kit-0.32.md](NIGHT-2026-11-26-kit-0.32.md), then to v0.34.0 (O158, [NIGHT-2026-11-26-kit-0.34.md](NIGHT-2026-11-26-kit-0.34.md)), to v0.38.0 (O160, [NIGHT-2026-11-27-kit-0.38.md](NIGHT-2026-11-27-kit-0.38.md)) to v0.39.1 ([NIGHT-2026-11-27-kit-0.39.md](NIGHT-2026-11-27-kit-0.39.md)) and to v0.40.0 ([NIGHT-2026-11-27-kit-0.40.md](NIGHT-2026-11-27-kit-0.40.md)).
 - Stays the game's own after the move, with the reason or the kit release that replaces it: T423. Kit-related stand-in left: a host chat from another https origin, which the kit defers (T412).
 - `ops/test/installer-test.sh` (by hand, 20 to 40 minutes) has not run since the backups became the kit's (T431) and the admin command, route file, operator address and host baseline too (T437): it belongs to the server rehearsal.
 - The way to production, waiting for Mini Games' own server (O160, kit v0.35.0): `docs/PRIVACY-DATA.md` and its test, the kit's scan call in place of the Trivy step, the signed release with `sk_cosign_install` and `sk_image_verify`, `SK_ROUTE_TRUSTED`, no full browser suite on pull requests; with them the database health checks (`ops/compose.yml`, and the development one) ask over TCP, rehearsed with a fresh install (kit K125, OPERATIONS.md "Waiting for the database"). The rehearsal on a real server comes before the first deployment (O164).
 - Seen on 2026-11-27: the server's database pool has no listener for errors (`apps/server/src/db/pool.ts`), so a connection the database closes while it is idle (a database restart) ends the server's process; the browser tests' teardown showed it. Proposal: log the error and let the pool open a new connection.
+- Seen on 2026-11-27 in the preview: the result's bar in website mode has no link back to the website; the owner says whether it gets one.
 - Seen on 2026-11-26: the public result answer (`GET /rounds/:id/result`) carried no `names` in journey 13, so the verification page shows player keys there.
 
 ### Optional inputs
@@ -58,6 +59,7 @@ For Phase 7:
 
 ## Part two — closed
 
+- 2026-11-27: The move to the kit's v0.40.0: its scroll Tab stop's ref callback, the countdown as intended motion, fixed seeds, test databases dropped, the website-mode preview, and the match page's lost panel fixed (O166, O167, T450). _Closed by:_ branch `feat/kit-0.22` (draft PR #57)
 - 2026-11-27: The development database, which kept the tests' Quick Test matches, is recreated (O165). _Closed by:_ the hand-over of the move to v0.39.1
 - 2026-11-27: The move to the kit's v0.39.1: the kit's scroll Tab stop in place of the game's, the sweep's scoped exemptions and intended overlaps, the badge in a landmark, the fallen chip uncut (T449). _Closed by:_ branch `feat/kit-0.22` (draft PR #57)
 - 2026-11-27: The move to the kit's v0.38.0: its large-text fixes in place of the game's, the keys through its backup hook, the website's shared call in website mode, the sweep's setup and guess-list floors (O160 to O164, T445 to T448). _Closed by:_ branch `feat/kit-0.22` (draft PR #57)
