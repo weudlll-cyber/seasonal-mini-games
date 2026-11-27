@@ -26,12 +26,12 @@
 import { useDockArrivals, useDockSight, useDockView, useScrollTabStop } from '@seasonal/kit/react';
 import type { ChatMessageView, ChatRoomView } from '@smg/contracts';
 import {
+  useCallback,
   useContext,
   useEffect,
   useRef,
   useState,
   type ReactElement,
-  type ReactNode,
   type SyntheticEvent,
 } from 'react';
 
@@ -132,23 +132,23 @@ function useBarHasField(slot: boolean): boolean {
   return slot && phone && sight?.visible === true;
 }
 
-// The room's messages in their own scrolling box, which follows the newest at the bottom and
-// is a Tab stop while it scrolls.
-function MessageList(p: {
-  readonly messages: readonly ChatMessageView[];
-  readonly children: ReactNode;
-}): ReactElement {
-  const list = useRef<HTMLOListElement>(null);
-  useScrollTabStop(list);
+// The messages' scrolling box: it follows the newest at the bottom and is a Tab stop while it
+// scrolls. The returned ref goes on the list, which renders once the room is there.
+function useMessageList(messages: readonly ChatMessageView[]) {
+  const list = useRef<HTMLElement | null>(null);
+  const tabStop = useScrollTabStop();
+  const attach = useCallback(
+    (el: HTMLOListElement | null) => {
+      list.current = el;
+      return tabStop(el);
+    },
+    [tabStop],
+  );
   useEffect(() => {
     const el = list.current;
     if (el !== null) el.scrollTop = el.scrollHeight;
-  }, [p.messages]);
-  return (
-    <ol ref={list} className="chat-list" data-testid="chat-messages" aria-live="polite">
-      {p.children}
-    </ol>
-  );
+  }, [messages]);
+  return attach;
 }
 
 export function ChatRoom({ target }: { readonly target: ChatTarget }): ReactElement {
@@ -178,16 +178,17 @@ export function ChatRoom({ target }: { readonly target: ChatTarget }): ReactElem
       offer(null);
     };
   }, [offer, room, send, writes]);
+  const list = useMessageList(messages);
   if (problem !== null) return <p className="smg-muted">{problem}</p>;
   if (room === null) return <p className="smg-muted">Loading the chat…</p>;
   return (
     <>
-      <MessageList messages={messages}>
+      <ol ref={list} className="chat-list" data-testid="chat-messages" aria-live="polite">
         {messages.length === 0 ? <li className="smg-muted">No messages yet.</li> : null}
         {messages.map((m) => (
           <Line key={m.id} message={m} me={me} room={room} canReport={writes} />
         ))}
-      </MessageList>
+      </ol>
       {writes ? (
         barHasField ? null : (
           <Writer room={room} send={send} />

@@ -22,7 +22,7 @@
  *                 game's input with the cooldown ring, or the solved notice). "All (N)" opens
  *                 the whole list with the events as a panel on demand (O48): a third column on
  *                 a desktop, a sheet on a phone that ends above the dock.
- * Depends on:     react, @smg/contracts, @smg-game/registry/web, ../components/ScrollBox,
+ * Depends on:     react, @smg/contracts, @smg-game/registry/web, @seasonal/kit/react (useScrollTabStop),
  *                 ../live/useRound, ./FocusPanel,
  *                 ./InfoParts, ./InputRow, ./playerMarks, ./RoundLog, ./RoundSide,
  *                 ./SpecialBanner, ./panels
@@ -32,9 +32,9 @@
 import type { GameWeb } from '@smg-game/registry/web';
 import type { RoundStateView } from '@smg/contracts';
 import type { OwnMatchPart } from '@smg/game-sdk';
+import { useScrollTabStop } from '@seasonal/kit/react';
 import { useState, type ReactElement } from 'react';
 
-import { ScrollBox } from '../components/ScrollBox.js';
 import type { RoundLive } from '../live/useRound.js';
 import { FocusPanel } from './FocusPanel.js';
 import { GamePart, PhoneLine, SpecialLine } from './InfoParts.js';
@@ -153,6 +153,8 @@ function Others(p: BodyProps & { readonly onMore: () => void }): ReactElement | 
 
 export function RoundBody(p: BodyProps): ReactElement {
   const { board, panel, stageBox, dock, all, main, columns, own, onOthers } = useParts(p);
+  // The info column and its panel are Tab stops while they scroll (WCAG 2.1.1).
+  const scrolls = useScrollTabStop();
   const mainBox = (
     <section
       className="sk-panel round-main"
@@ -180,12 +182,12 @@ export function RoundBody(p: BodyProps): ReactElement {
           {dock}
         </section>
       )}
-      <ScrollBox as="aside" className="round-column" aria-label="About this round">
+      <aside ref={scrolls} className="round-column" aria-label="About this round">
         <SpecialLine state={p.state} rule={p.rule} />
         {panel === null ? null : (
-          <ScrollBox as="div" className="sk-panel round-panel">
+          <div ref={scrolls} className="sk-panel round-panel">
             {panel}
-          </ScrollBox>
+          </div>
         )}
         <Others {...p} onMore={onOthers} />
         {board ? (
@@ -196,7 +198,7 @@ export function RoundBody(p: BodyProps): ReactElement {
         ) : (
           own
         )}
-      </ScrollBox>
+      </aside>
       {all}
     </>
   );
