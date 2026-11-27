@@ -45,7 +45,7 @@ For Phase 7:
 
 ### Kit adoption (owner decisions O142, O150)
 
-- On `master` at the kit's v0.18.0 since the merge commit `1988346` (PR #55, T428; v0.17.0 `52f996c`, the server parts `b542503`). The move to v0.22.0 and on to v0.32.0 is on `feat/kit-0.22` (draft PR #57, O155, O157, T429 and after) and waits for the owner's look; its progress is in [NIGHT-2026-11-26-kit-0.32.md](NIGHT-2026-11-26-kit-0.32.md), then to v0.34.0 (O158, [NIGHT-2026-11-26-kit-0.34.md](NIGHT-2026-11-26-kit-0.34.md)).
+- On `master` at the kit's v0.18.0 since the merge commit `1988346` (PR #55, T428; v0.17.0 `52f996c`, the server parts `b542503`). The move to v0.22.0 and on to v0.32.0 is on `feat/kit-0.22` (draft PR #57, O155, O157, T429 and after) and waits for the owner's look; its progress is in [NIGHT-2026-11-26-kit-0.32.md](NIGHT-2026-11-26-kit-0.32.md), then to v0.34.0 (O158, [NIGHT-2026-11-26-kit-0.34.md](NIGHT-2026-11-26-kit-0.34.md)) and to v0.38.0 (O160, [NIGHT-2026-11-27-kit-0.38.md](NIGHT-2026-11-27-kit-0.38.md)).
 - Stays the game's own after the move, with the reason or the kit release that replaces it: T423. Kit-related stand-in left: a host chat from another https origin, which the kit defers (T412).
 - `ops/test/installer-test.sh` (by hand, 20 to 40 minutes) has not run since the backups became the kit's (T431) and the admin command, route file, operator address and host baseline too (T437): it belongs to the server rehearsal.
 - Seen on 2026-11-26: the public result answer (`GET /rounds/:id/result`) carried no `names` in journey 13, so the verification page shows player keys there.
