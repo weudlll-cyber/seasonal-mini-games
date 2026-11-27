@@ -14,7 +14,8 @@
  *                 Linux the container shares the host's network; elsewhere (Docker Desktop) it
  *                 publishes 127.0.0.1:5430 and reaches the host as host.docker.internal. Either
  *                 way the server sees the proxy as 127.0.0.1, its only trusted proxy. `close`
- *                 stops the server, removes the container and the stand-in, and the build.
+ *                 stops the server, drops its database, removes the container and the stand-in,
+ *                 and the build.
  *                 Its own database, not the run's smg_test: two servers on one database would
  *                 both run the round scheduler and recovery, and a round runs on one instance
  *                 only (DECISIONS T4, T13, T241).
@@ -37,6 +38,7 @@ import {
   WEBSITE_SERVER_PORT,
   WEBSITE_URL,
   databaseUrl,
+  dropTestDatabase,
 } from './testStack.js';
 import { nginxConf, startStubSite, type StubSite } from './websiteStub.js';
 
@@ -159,6 +161,7 @@ export async function startWebsiteStack(): Promise<WebsiteStack> {
   const server = startServer(site, secret, dir);
   const close = async (): Promise<void> => {
     await stopServer(server);
+    dropTestDatabase(DATABASE);
     docker(['rm', '-f', CONTAINER]);
     await site.close();
     rmSync(dir, { recursive: true, force: true });

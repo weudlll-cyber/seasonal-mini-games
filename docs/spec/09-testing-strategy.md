@@ -16,16 +16,16 @@
 
 ### 1.1 Databases and ports of the automated tests
 
-No automated test uses the developer's database (`smg` in the development PostgreSQL on 5510) or the ports of `pnpm dev` (server 3910, player client 5410, admin app 5411); starting or stopping a run never starts, stops or restarts `pnpm dev` (DECISIONS T345).
+No automated test, sweep or measurement uses the developer's database (`smg` in the development PostgreSQL on 5510) or the ports of `pnpm dev` (server 3910, player client 5410, admin app 5411); starting or stopping a run never starts, stops or restarts `pnpm dev` (DECISIONS T345, T450). Each run's database is made empty at its start and dropped at its end.
 
 | Suite | Database | Ports |
 |---|---|---|
 | Unit, property, component, conformance (`pnpm test`, every project but the server's integration tests) | none | none |
 | Server integration (`apps/server/test`, `pnpm test`) | its own PostgreSQL 17 container per test file (Testcontainers), removed afterwards | an ephemeral port per app (port 0) |
-| Browser tests (`pnpm e2e`, Playwright) | `smg_test` in the development PostgreSQL, dropped and created empty at every run's start and migrated by the test server (`apps/server/tools/testServer.ts`, which also starts that PostgreSQL) | server 3740, player client 5740, admin app 5741, test host site 5420; journey 36 its own database `smg_e2e_website`, recreated the same way at its start, and ports 3960 and 5430 |
-| Load check (`node load/guessStorm.mjs`, 5) | `smg_load` in the development PostgreSQL, recreated the same way (`load/stack.mjs`) | server 3950 |
+| Browser tests (`pnpm e2e`, Playwright) | `smg_test` in the development PostgreSQL, dropped and created empty at every run's start and migrated by the test server (`apps/server/tools/testServer.ts`, which also starts that PostgreSQL) | server 3740, player client 5740, admin app 5741, test host site 5420; journey 36 its own database `smg_e2e_website`, recreated the same way at its start and dropped at its end, and ports 3960 and 5430 |
+| Load check (`node load/guessStorm.mjs`, 5) | `smg_load` in the development PostgreSQL, recreated the same way and dropped at the end (`load/stack.mjs`) | server 3950 |
 
-A browser-test run starts its own stack and reuses none: a port already taken stops the run instead. The test server refuses any database but `smg_test` and `smg_load`. The developer's database gets a clean start only by hand, with `pnpm dev:reset-db` ([10](10-repository-structure.md) §4).
+A browser-test run starts its own stack and reuses none: a port already taken stops the run instead. The test server and the tool that drops a run's database (`apps/server/tools/dropTestDatabase`) refuse any database but `smg_test`, `smg_e2e_website` and `smg_load`. The developer's database gets a clean start only by hand, with `pnpm dev:reset-db` ([10](10-repository-structure.md) §4).
 
 ## 2. Levels specific to this platform
 

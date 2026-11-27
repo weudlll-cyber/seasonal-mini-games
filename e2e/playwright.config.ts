@@ -8,14 +8,15 @@
  *                 also starts the development PostgreSQL), the player client on 5740 and the
  *                 admin app on 5741, both pointed at it, and the test host site on 5420
  *                 (development only, ./host-page); a running `pnpm dev` (3910, 5410, 5411) is
- *                 neither reused nor touched, and a port already taken stops the run. Then run
+ *                 neither reused nor touched, and a port already taken stops the run; the run's
+ *                 database is dropped at its end (./globalTeardown). Then run
  *                 the specs in Chromium, Firefox and WebKit at a phone viewport. Specs listed in
  *                 TIMING (their checks depend on browser timers, or they change shared settings)
  *                 run afterwards, one at a time and one browser after the other, as Bingo learned
  *                 to (its NIGHT-3); WebKit records no trace there. Specs in CHROMIUM_ONLY run in
  *                 Chromium alone (journey 36 starts its own website-mode server and nginx,
  *                 ./websiteStack; journey 47, the layout sweep, its tests side by side).
- * Depends on:     @playwright/test, ./testStack
+ * Depends on:     @playwright/test, ./globalTeardown, ./testStack
  * Spec:           docs/spec/09-testing-strategy.md §1.1, §4; Bingo 12 §7
  */
 import { defineConfig, devices } from '@playwright/test';
@@ -96,6 +97,7 @@ const BROWSERS = [
 
 export default defineConfig({
   testDir: '.',
+  globalTeardown: './globalTeardown.ts',
   outputDir: '../test-results',
   timeout: 90_000,
   forbidOnly: CI,

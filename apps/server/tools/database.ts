@@ -1,17 +1,20 @@
 /**
  * @file   apps/server/tools/database.ts
  * @module server/tools
- * @brief  Development and test only: recreate a database of the local PostgreSQL and migrate it.
+ * @brief  Development and test only: recreate, migrate and drop a database of the local
+ *         PostgreSQL.
  *
  * Responsibility: `recreateDatabase` drops the database a libpq URL names (closing its
- *                 connections) and creates it empty, through the server's maintenance database
- *                 `postgres`, so no row is ever deleted past a trigger or constraint: the whole
- *                 database is replaced (DECISIONS T345); `migrateDatabase` applies the server's
+ *                 connections) and creates it empty, `dropDatabase` drops it for good, both
+ *                 through the server's maintenance database `postgres`, so no row is ever
+ *                 deleted past a trigger or constraint: the whole database is replaced
+ *                 (DECISIONS T345); `testDatabase` refuses any database but those of the
+ *                 automated runs; `migrateDatabase` applies the server's
  *                 migrations; `startDevPostgres` starts the PostgreSQL of ops/compose.dev.yml
  *                 (left as it is when it is up). Only for the local machine: a URL whose host is
  *                 not 127.0.0.1 or localhost is refused. Never part of the server bundle.
  * Depends on:     pg, node:child_process, ../src/db/pool, ../src/db/migrator, docker
- * Used by:        ./testServer, ./resetDevDatabase
+ * Used by:        ./testServer, ./dropTestDatabase, ./resetDevDatabase, ./previewWebsite
  * Spec:           docs/spec/09-testing-strategy.md §1.1; docs/operator-guide.md "Development"
  */
 import { execFileSync } from 'node:child_process';
@@ -44,18 +47,41 @@ export function localDatabase(url: string): LocalDatabase {
   return { url, name, port: parsed.port };
 }
 
-// Drop and create the database (WITH (FORCE) ends the connections still open to it).
-export async function recreateDatabase(db: LocalDatabase): Promise<void> {
+// The automated runs' databases (09 §1.1): Playwright's, journey 36's and the load check's.
+const TEST_DATABASES = new Set(['smg_test', 'smg_e2e_website', 'smg_load']);
+
+export function testDatabase(url: string): LocalDatabase {
+  const db = localDatabase(url);
+  if (!TEST_DATABASES.has(db.name)) {
+    const names = [...TEST_DATABASES].join(', ');
+    throw new Error(`refused: ${db.name} is not a test database (${names})`);
+  }
+  return db;
+}
+
+// Statements about a whole database, from the server's maintenance database.
+async function maintain(db: LocalDatabase, statements: readonly string[]): Promise<void> {
   const maintenance = new URL(db.url);
   maintenance.pathname = '/postgres';
   const client = new pg.Client({ connectionString: maintenance.toString() });
   await client.connect();
   try {
-    await client.query(`DROP DATABASE IF EXISTS ${db.name} WITH (FORCE)`);
-    await client.query(`CREATE DATABASE ${db.name}`);
+    for (const statement of statements) await client.query(statement);
   } finally {
     await client.end();
   }
+}
+
+// WITH (FORCE) ends the connections still open to it.
+const drop = (db: LocalDatabase): string => `DROP DATABASE IF EXISTS ${db.name} WITH (FORCE)`;
+
+export async function dropDatabase(db: LocalDatabase): Promise<void> {
+  await maintain(db, [drop(db)]);
+}
+
+// Drop and create the database.
+export async function recreateDatabase(db: LocalDatabase): Promise<void> {
+  await maintain(db, [drop(db), `CREATE DATABASE ${db.name}`]);
 }
 
 export async function migrateDatabase(db: LocalDatabase): Promise<readonly string[]> {
