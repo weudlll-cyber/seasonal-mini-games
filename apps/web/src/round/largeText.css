@@ -95,6 +95,21 @@
     overflow: visible;
     white-space: normal;
   }
+
+  /* A list game's stage scrolls where the list and the input no longer fit it, and a split
+     game's whole view, so neither reaches over the chat under it. */
+  .round-live[data-view='desktop'] .round-stage.round-stage--list {
+    overflow-y: auto;
+  }
+
+  .round-live[data-view='desktop'] .round-stage--list > .round-log {
+    flex: 1 0 12rem;
+  }
+
+  .round-live.round-live[data-view='desktop'][data-layout='split'] {
+    grid-template-rows: auto auto minmax(max-content, 1fr);
+    overflow-y: auto;
+  }
 }
 
 /* The guess list (./roundLog.css). */
@@ -192,6 +207,18 @@
   .match-result-page .round-closest-row .round-who {
     flex: none;
     max-width: 100%;
+  }
+}
+
+/* The match's closing page (../match/summary.css) at large text on a phone: its card scrolls,
+   so nothing reaches over the line under it. */
+@container (max-width: 16rem) {
+  .match-summary-page .match-summary.match-summary {
+    overflow-y: auto;
+  }
+
+  .match-summary-page .match-summary-standings {
+    min-height: max-content;
   }
 }
 

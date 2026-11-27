@@ -108,8 +108,9 @@ async function watchWithChat(guest: Person, code: string): Promise<void> {
   const frame = chat.getByTestId('chat-frame');
   await expect(frame).toHaveAttribute('title', 'Chat');
   await expect(frame).toHaveAttribute('src', '/embed/chat?room=mini-games&theme=light');
+  // The stand-in shows what the game asked it for (the kit, since v0.36.0).
   await expect(chat.frameLocator('[data-testid="chat-frame"]').locator('p')).toHaveText(
-    'chat (stand-in)',
+    'chat (stand-in), room mini-games, theme light',
   );
   const logIn = chat.getByTestId('chat-log-in');
   await expect(logIn).toHaveAttribute(

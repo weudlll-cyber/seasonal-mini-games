@@ -17,7 +17,7 @@
    2/5 under the strip; an open panel is the third column beside both. */
 .round-live[data-view='desktop'][data-layout='split'] {
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
-  grid-template-rows: 44px auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
   grid-template-areas:
     'bar bar'
     'strip strip'

@@ -191,6 +191,22 @@
   }
 }
 
+/* A short phone (640 px and less) with the chat sheet open, which takes its own room there
+   (the kit): a list game's running round keeps the height its parts need and the content
+   scrolls above the sheet. */
+@media (max-height: 640px) {
+  .match-docked:has(.sk-chat-bar[aria-expanded='true'])
+    .sk-docked-main:has(.round-live[data-layout='list']) {
+    overflow-y: auto;
+  }
+
+  .match-docked:has(.sk-chat-bar[aria-expanded='true'])
+    .match-live:has(> .round-live[data-layout='list']) {
+    flex: 1 0 auto;
+    min-height: 24rem;
+  }
+}
+
 /* The next round's box under a game's own result (./NextRound, the reference of MG-N8): a
    column, one row with "Round 3 in 0:11" and the host's Start now, the 6 px bar, then the
    game's panel (the pre-picks) filling the rest. */

@@ -76,13 +76,36 @@ const opening =
     await open(page);
   };
 
-// What the sweep leaves out: two things the owner decided, which stay as they are (O159).
+// What the sweep leaves out: things the owner decided, which stay as they are, and one finding
+// whose cause is in the kit.
 // O134 (WCAG 2.5.8; O109's rows on a phone): a phone's guess row, a button, is 24 px high.
 const GUESS_ROW = 'small control: [guess-list] button.round-row-line';
 // T150, at 100 % text: a desktop row's comment gives way first, with an ellipsis, its whole
 // text in its tooltip; never the guess or the answer.
 const COMMENT = 'cut text: [guess-list] span.round-comment';
-const ROUND = [GUESS_ROW, COMMENT];
+// O109: a list game's desktop guesses stand in two columns; the rows past them are not shown
+// ("Log (N)" has them all), which a round with many players has.
+const PAST_COLUMNS = [
+  'outside the window: [guess-list] li.round-row',
+  'cut text: [guess-list] span.round-who',
+  'cut text: [guess-list] span.round-value',
+  'cut text: [guess-list] span.round-answer',
+  'cut text: [guess-list] span.round-arriving',
+];
+// Kit src/testing/probeRules.ts:74 (`wideBoxes`): the chat bar's newest message, which ends in the
+// kit's own ellipsis, is still reported as outside the window by its box inside it.
+const CHAT_BAR = 'outside the window: [chat-bar] span.sk-chat-bar-last';
+const ROUND = [GUESS_ROW, COMMENT, CHAT_BAR, ...PAST_COLUMNS];
+// O97 (T351): Seasonal Mind Games' desktop stage spans the whole view as a grid, and the list's
+// column stands in its free cell.
+const ON_SPLIT_STAGE = 'over [round-view] div.round-stage';
+const roundAllow = (game: string): readonly string[] =>
+  game === 'mind-games' ? [...ROUND, ON_SPLIT_STAGE] : ROUND;
+// O48: on a phone a panel is a sheet from under the bar to above the input, over the round.
+const SHEET = [
+  'over [players-drawer] section.focus-panel',
+  '[players-drawer] button.sk-btn "Close" over',
+];
 
 // The guess rows a list game's running round shows whole at 1280 × 720 at least, under the
 // docked chat: the owner's decisions, declared to the sweep (K116).
@@ -98,7 +121,7 @@ function listRound(game: string, matches: Matches): SweepScreen {
   const floor = ROWS[game];
   return {
     name: 'round',
-    allow: ROUND,
+    allow: roundAllow(game),
     ...(floor === undefined
       ? {}
       : { floors: [{ selector: GUESS_ROWS, ...floor, sizes: [{ width: 1280, height: 720 }] }] }),
@@ -111,27 +134,32 @@ function listRound(game: string, matches: Matches): SweepScreen {
 }
 
 // The running round, open; true when this look loaded it. A bot can solve a round at any
-// guess: then another is taken.
+// guess, also while the page opens: then another is taken, three at the most.
 async function showRound(page: Page, matches: Matches): Promise<boolean> {
+  const open = page.locator('[data-testid="round-view"][data-status="open"]');
+  const result = page.getByTestId('result').first();
   const url = async () => `./#/match/${await matches.round()}`;
   let anew = await load(page, await url());
-  const result = page.getByTestId('result').first();
-  await expect(result.or(page.getByTestId('round-view')).first()).toBeVisible({
-    timeout: 20_000,
-  });
-  if (await result.isVisible()) {
+  for (let taken = 0; taken < 3; taken += 1) {
+    await expect(open.or(result).first()).toBeVisible({ timeout: 20_000 });
+    if (!(await result.isVisible())) return anew;
     await matches.dropRound();
-    anew = await show(page, await url(), 'round-view');
+    anew = await load(page, await url());
   }
-  await roundOpen(page);
+  await expect(open).toBeVisible({ timeout: 20_000 });
   return anew;
 }
 
 // The running round with a folded part unfolded.
-function unfolded(name: string, button: string, matches: Matches): SweepScreen {
+function unfolded(
+  name: string,
+  button: string,
+  matches: Matches,
+  allow: readonly string[],
+): SweepScreen {
   return {
     name: `round, ${name}`,
-    allow: ROUND,
+    allow,
     open: async (page) => {
       if (await showRound(page, matches)) await unfold(page, button);
     },
@@ -187,9 +215,9 @@ export function gameScreens(p: Person, game: string, codes: string[]): readonly 
       open: opening((page) => match(page, matches.card(), 'start-card')),
     },
     listRound(game, matches),
-    unfolded('players', 'focus-players', matches),
-    unfolded('chat', 'chat-bar', matches),
-    { name: 'result', open: result },
+    unfolded('players', 'focus-players', matches, [...roundAllow(game), ...SHEET]),
+    unfolded('chat', 'chat-bar', matches, roundAllow(game)),
+    { name: 'result', allow: [CHAT_BAR], open: result },
     {
       name: 'match over',
       open: opening((page) => match(page, matches.over(), 'match-summary')),
