@@ -16,7 +16,9 @@
  *                 chat, docked under the round (O109), tells the website's chat on a phone that
  *                 it is hidden while the bar's sheet is closed, the chat's two `unread` messages
  *                 show "2" on the bar, opening the sheet tells it visible and clears the count,
- *                 and back on a desktop the dock in sight tells it visible (T237); the website
+ *                 and back on a desktop the dock in sight tells it visible (T237); on the result
+ *                 the website's shared call shows while it is live, with "Back to the call", and
+ *                 goes when it is unshared (T446); the website
  *                 deletes the member and changes the host's rights, the server's next poll of the
  *                 account feed ends both sessions, the host's reload signs in again through the
  *                 website without a form, back on the match page (T282), and shows "Deleted
@@ -195,6 +197,33 @@ async function deleteIfSignedIn(p: Person): Promise<void> {
   expect(r.status, `${account.displayName} deleted`).toBe(204);
 }
 
+// The website's one shared call on the docked result (kit K77, its CHANGELOG v0.37.0): shown
+// only while the view says it is live, with the way back to it; gone once it is unshared.
+async function sharedCall(p: Person): Promise<void> {
+  const slot = p.page.getByTestId('shared-call-slot');
+  const back = p.page.getByTestId('back-to-call');
+  const view = p.page.frameLocator('[data-testid="shared-call-frame"]').locator('body');
+  // The stand-in view's own `say`, as the website's view posts its messages.
+  const say = (type: string, fields: Readonly<Record<string, unknown>>) =>
+    view.evaluate(
+      (_, message) => {
+        const page = window as unknown as { say: (t: string, f: object) => void };
+        page.say(message.type, message.fields);
+      },
+      { type, fields },
+    );
+  await expect(
+    p.page.frameLocator('[data-testid="shared-call-frame"]').locator('p'),
+  ).toBeAttached();
+  await expect(slot).toBeHidden();
+  await say('ready', { call: 7, status: 'live', signedIn: true });
+  await expect(slot).toBeVisible();
+  await expect(back).toHaveAttribute('href', '/calls/7');
+  await say('ended', { reason: 'unshared' });
+  await expect(slot).toBeHidden();
+  await expect(back).toHaveCount(0);
+}
+
 test('journey 36: inside the website a guest watches, chats, signs in, plays and is deleted', async ({
   browser,
 }) => {
@@ -215,6 +244,7 @@ test('journey 36: inside the website a guest watches, chats, signs in, plays and
     await expect(row).toContainText('online');
     await expect(row.getByTestId('steps').locator('img')).toHaveAttribute('alt', 'Gold');
     await playOneGuess(host, guest);
+    await sharedCall(guest);
     // The website deletes the member and changes the host's rights; the server's next poll
     // (every 15 s) ends both game sessions.
     site.remove(PLAYER.id);

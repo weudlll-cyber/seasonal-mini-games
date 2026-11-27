@@ -11,7 +11,8 @@
  *                 frames it (kit K81, O157). The admin app is framed by nobody and requires
  *                 Trusted Types for scripts (DECISIONS T178). `frame-src` admits the host chat
  *                 while the chat provider is hostEmbed: its origin standalone, the website's
- *                 `/embed/chat` by its path in website mode (07 §2); without a host chat
+ *                 `/embed/chat` by its path in website mode (07 §2), where it also admits the
+ *                 website's shared call view `/embed/call/shared` (kit K77); without either
  *                 'self' standalone and 'none' in website mode. Helmet adds the headers the
  *                 kit's set does not name. HSTS comes from the TLS proxy.
  * Depends on:     @fastify/helmet, @seasonal/kit/server (securityHeaderSet, securityHeadersHook)
@@ -39,15 +40,18 @@ interface HeaderRules {
   // The host's chat room pages may frame with the provider hostEmbed (07 §2), read per
   // response: an origin, or the website's room as origin and path; '' for none.
   readonly chat: () => string;
+  // Website mode: the website's shared call view, as origin and path; '' standalone.
+  readonly sharedCall: string;
   // Standalone: the sites that may frame the game (the embed allowlist), read per response.
   readonly embedOrigins: () => readonly string[];
 }
 
-// What a page may frame without a host chat or with one: the kit takes an origin, an https
-// address with its path, and a plain-http path on a development host.
-function framesOf(chat: string, website: boolean): readonly string[] {
-  if (chat !== '') return [chat];
-  return website ? [] : ["'self'"];
+// What a page may frame: the host chat and the website's shared call, as the kit takes them
+// (an origin, an https address with its path, a plain-http path on a development host).
+function framesOf(rules: HeaderRules): readonly string[] {
+  const frames = [rules.chat(), rules.sharedCall].filter((source) => source !== '');
+  if (frames.length > 0) return frames;
+  return rules.mode === 'website' ? [] : ["'self'"];
 }
 
 function headersFor(url: string, rules: HeaderRules): SecurityHeaderSet {
@@ -57,7 +61,7 @@ function headersFor(url: string, rules: HeaderRules): SecurityHeaderSet {
     ...(website ? {} : { ancestors: rules.embedOrigins().filter((o) => PLAIN_ORIGIN.test(o)) }),
     admin: ADMIN.test(url),
     secure: rules.secure,
-    frames: framesOf(rules.chat(), website),
+    frames: framesOf(rules),
   });
 }
 

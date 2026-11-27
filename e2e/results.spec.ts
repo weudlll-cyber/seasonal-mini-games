@@ -135,6 +135,8 @@ for (const gameId of ['guess-the-number', 'safecracker', 'bomb-defusal', 'season
       await hostMenu(p);
       await p.page.getByTestId('host-console').getByTestId('end-round').click();
       await expect(p.page.getByTestId('result')).toBeVisible({ timeout: 15_000 });
+      // Standalone there is no website: no shared call is framed (kit K77).
+      await expect(p.page.getByTestId('shared-call-slot')).toHaveCount(0);
       await firstPartFits(p.page);
       if (list) await closestDocked(p.page, true);
       await p.page.setViewportSize(PHONE);

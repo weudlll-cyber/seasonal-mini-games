@@ -4,9 +4,9 @@
  * @brief  The game's rules on the kit's headers: chat frame, who may frame it, admin, no inline.
  *
  * Responsibility: in website mode `frame-src` is the website's `/embed/chat` by its path while
- *                 the chat is hostEmbed (a plain-http development website's too), 'none'
- *                 without a host chat, and the website alone frames the game, whatever the
- *                 embed allowlist holds; standalone keeps the host chat's origin, else 'self'
+ *                 the chat is hostEmbed (a plain-http development website's too) and the
+ *                 shared call view by its path, the latter alone without a host chat, and the
+ *                 website alone frames the game, whatever the embed allowlist holds; standalone keeps the host chat's origin, else 'self'
  *                 (DECISIONS T91, T236), and the allowlist's sites may frame it. No policy
  *                 allows an inline style; only a served-over-https install upgrades http
  *                 addresses; nobody frames the admin app, which requires Trusted Types.
@@ -26,6 +26,7 @@ async function headersOf(url: string, change: Partial<Rules> = {}) {
     mode: 'standalone',
     secure: true,
     chat: () => '',
+    sharedCall: '',
     embedOrigins: () => [],
     ...change,
   });
@@ -39,8 +40,10 @@ async function headersOf(url: string, change: Partial<Rules> = {}) {
 const policyOf = async (change: Partial<Rules> = {}, url = '/') =>
   String((await headersOf(url, change))['content-security-policy']);
 
-const frameSrc = async (mode: Rules['mode'], chat: string) =>
-  (await policyOf({ mode, chat: () => chat })).split('; ').find((d) => d.startsWith('frame-src'));
+const frameSrc = async (mode: Rules['mode'], chat: string, sharedCall = '') =>
+  (await policyOf({ mode, chat: () => chat, sharedCall }))
+    .split('; ')
+    .find((d) => d.startsWith('frame-src'));
 
 describe('frame-src', () => {
   it("admits only the website's own /embed/chat in website mode", async () => {
@@ -51,6 +54,14 @@ describe('frame-src', () => {
       'frame-src http://127.0.0.1:5430/embed/chat',
     );
     expect(await frameSrc('website', '')).toBe("frame-src 'none'");
+  });
+
+  it("admits the website's shared call view beside its chat, and alone without one", async () => {
+    const call = 'https://example.org/embed/call/shared';
+    expect(await frameSrc('website', 'https://example.org/embed/chat', call)).toBe(
+      `frame-src https://example.org/embed/chat ${call}`,
+    );
+    expect(await frameSrc('website', '', call)).toBe(`frame-src ${call}`);
   });
 
   it('stays as it was standalone', async () => {

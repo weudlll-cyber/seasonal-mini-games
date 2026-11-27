@@ -188,13 +188,16 @@ function sessionGuardOf(env: AppDeps['env'], embeds: EmbedAllowlist): SessionGua
 }
 
 // What the pages may frame and be framed by: the host's chat room while the provider is
-// hostEmbed (in website mode nothing else, 07 §2); standalone, the allowlisted sites frame
-// the game. Everything but development is behind TLS, as the session cookie is told.
+// hostEmbed, and in website mode the website's shared call view, nothing else there (07 §2);
+// standalone, the allowlisted sites frame the game. Everything but development is behind TLS,
+// as the session cookie is told.
 function headerRulesOf(env: AppDeps['env'], embeds: EmbedAllowlist, chat: () => string) {
+  const website = env.SMG_AUTH_MODE === 'website';
   return {
-    mode: env.SMG_AUTH_MODE === 'website' ? ('website' as const) : ('standalone' as const),
+    mode: website ? ('website' as const) : ('standalone' as const),
     secure: !env.SMG_DEV,
     chat,
+    sharedCall: website ? new URL('/embed/call/shared', env.SMG_PUBLIC_URL).href : '',
     embedOrigins: () => embeds.config().origins,
   };
 }

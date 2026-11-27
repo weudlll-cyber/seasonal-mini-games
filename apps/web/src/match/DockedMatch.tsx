@@ -18,9 +18,13 @@
  *                 through `ChatComposerSlot`, T363) sits under the bar. On a phone the content
  *                 scrolls alone above the chat bar (a list game's running round fills it
  *                 instead, its guesses scrolling inside, O109; ./docked.css). Without a chat
- *                 (the provider `none`) there is no dock: the kit's `withoutChat`.
- * Depends on:     react, @seasonal/kit/react (DockedScreen), @seasonal/kit/dock.css,
- *                 ../chat/chatArrivals (ChatComposerSlot), ../chat/ChatRoom (Writer), ./docked.css
+ *                 (the provider `none`) there is no dock: the kit's `withoutChat`. In website mode
+ *                 the dock's call place holds the website's one shared call while it is live (the
+ *                 kit's `onSharedCall`, K77; its id to ./ResultBar through ./sharedCall);
+ *                 standalone nothing is framed.
+ * Depends on:     react, @seasonal/kit/react (DockedScreen), @seasonal/kit (dock.css, call.css),
+ *                 ../chat/chatArrivals (ChatComposerSlot), ../chat/ChatRoom (Writer),
+ *                 ../shell/session (useWebsiteMode), ./sharedCall, ./docked.css
  * Used by:        ./MatchPage
  * Spec:           docs/spec/02e-game-mind-games.md §11; docs/spec/02-game-guess-the-number.md §12;
  *                 docs/spec/07-integration.md §2
@@ -30,7 +34,10 @@ import { useState, type ReactElement, type ReactNode } from 'react';
 
 import { ChatComposerSlot, type ChatComposer } from '../chat/chatArrivals.js';
 import { Writer } from '../chat/ChatRoom.js';
+import { useWebsiteMode } from '../shell/session.js';
+import { SharedCallContext } from './sharedCall.js';
 import '@seasonal/kit/dock.css';
+import '@seasonal/kit/call.css';
 import './docked.css';
 
 export function DockedMatch(p: {
@@ -43,6 +50,10 @@ export function DockedMatch(p: {
 }): ReactElement {
   // The room's writing part, for the phone bar's own field (T363).
   const [composer, setComposer] = useState<ChatComposer | null>(null);
+  // The website's shared call, if one is live (website mode only: standalone there is no
+  // website to frame).
+  const website = useWebsiteMode();
+  const [call, setCall] = useState<number | null>(null);
   const field =
     composer?.send == null ? null : (
       <Writer room={composer.room} send={composer.send} placeholder="Write a message…" />
@@ -56,8 +67,14 @@ export function DockedMatch(p: {
         // Only the form 'field' has a field in its bar, so only then the room offers its writer
         // (and hides its own in the open sheet, ../chat/ChatRoom).
         <ChatComposerSlot.Provider value={p.bar === 'field' ? setComposer : null}>
-          <DockedScreen chat={p.chat} bar={p.bar} field={field} callId={null}>
-            {p.children}
+          <DockedScreen
+            chat={p.chat}
+            bar={p.bar}
+            field={field}
+            callId={null}
+            onSharedCall={website ? setCall : undefined}
+          >
+            <SharedCallContext.Provider value={call}>{p.children}</SharedCallContext.Provider>
           </DockedScreen>
         </ChatComposerSlot.Provider>
       )}
