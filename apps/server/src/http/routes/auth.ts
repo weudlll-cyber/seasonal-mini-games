@@ -24,7 +24,7 @@
  * Used by:        ../app, ./handoff (startSession), ./websiteSignIn (openSession)
  * Spec:           docs/spec/05-security-threat-model.md §1, §2; Bingo 05 §2.1; Bingo 03 §2.1, §2.3, §3, §13
  */
-import { FailureBrake, RateLimiter, type SessionEnds } from '@seasonal/kit/server';
+import { FailureBrake, RateLimiter, type SessionEnds, type Attempt } from '@seasonal/kit/server';
 import type { SessionView } from '@smg/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { createHash } from 'node:crypto';
@@ -76,9 +76,6 @@ const registerBody = z.object({
   password: z.string(),
 });
 const loginBody = z.object({ email: z.email().max(254), password: z.string().max(128) });
-
-// One try holding a place in the brake (the kit's FailureBrake reserve).
-type Attempt = NonNullable<ReturnType<FailureBrake['reserve']>>;
 
 const LOGIN_FAILED = { code: 'LOGIN_FAILED', message: 'Invalid e-mail or password.' };
 

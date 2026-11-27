@@ -13,18 +13,12 @@ body {
   margin: 0;
 }
 
-/* The side gutter grows with 200 % text only where the window has room (journey 47). */
-.admin-bar,
-.admin-main {
-  --page-gutter: min(var(--sk-gutter), max(16px, 5vw));
-}
-
 .admin-bar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--sk-space-3);
-  padding: var(--sk-space-2) var(--page-gutter);
+  padding: var(--sk-space-2) var(--sk-gutter);
   background: var(--sk-color-surface);
   border-bottom: 1px solid var(--sk-color-border);
 }
@@ -53,7 +47,7 @@ body {
 .admin-main {
   max-width: 96rem;
   margin: 0 auto;
-  padding: var(--sk-space-3) var(--page-gutter);
+  padding: var(--sk-space-3) var(--sk-gutter);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--sk-space-3);

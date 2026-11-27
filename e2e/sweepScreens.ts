@@ -76,24 +76,13 @@ const opening =
     await open(page);
   };
 
-// What the sweep leaves out: two things the owner decided, which stay as they are, and findings
-// whose cause is in a kit part (the night sheet's list for the kit planning, DECISIONS T444).
-// Intended (O134, WCAG 2.5.8; O109's rows on a phone): a phone's guess row is 24 px high.
+// What the sweep leaves out: two things the owner decided, which stay as they are (O159).
+// O134 (WCAG 2.5.8; O109's rows on a phone): a phone's guess row, a button, is 24 px high.
 const GUESS_ROW = 'small control: [guess-list] button.round-row-line';
-// Intended (T150, at 100 % text): a desktop row's comment gives way first, with an ellipsis,
-// its whole text in its tooltip; never the guess or the answer.
+// T150, at 100 % text: a desktop row's comment gives way first, with an ellipsis, its whole
+// text in its tooltip; never the guess or the answer.
 const COMMENT = 'cut text: [guess-list] span.round-comment';
-// Kit css/dock.css:154-164: the bar's newest message ends in an ellipsis inside its own box.
-const CHAT_BAR = 'sk-chat-bar-last';
-// Kit css/bar.css:49-55: a desktop's bar fact ends in an ellipsis where the bar is full.
-const BAR_FACT = 'cut text: [game-bar] span.sk-bar-fact';
-// Kit css/dock.css:177-202: the open chat sheet covers part of the round's "Log (N)".
-const UNDER_SHEET = 'axe: target-size: .round-log-all';
-const ROUND = [GUESS_ROW, COMMENT, CHAT_BAR, BAR_FACT];
-// Kit css/frames.css:38-53: the start card cuts what its smallest scale cannot fit.
-const CARD = [BAR_FACT, 'clipped fitted root: [start-card]'];
-// Kit css/frames.css:199-207: the result's headline is two lines at the most.
-const RESULT = [CHAT_BAR, BAR_FACT, 'cut text: [result-first] h1'];
+const ROUND = [GUESS_ROW, COMMENT];
 
 // The running round, open; true when this look loaded it. A bot can solve a round at any
 // guess: then another is taken.
@@ -113,15 +102,10 @@ async function showRound(page: Page, matches: Matches): Promise<boolean> {
 }
 
 // The running round with a folded part unfolded.
-function unfolded(
-  name: string,
-  button: string,
-  matches: Matches,
-  allow: readonly string[] = ROUND,
-): SweepScreen {
+function unfolded(name: string, button: string, matches: Matches): SweepScreen {
   return {
     name: `round, ${name}`,
-    allow: [...allow],
+    allow: ROUND,
     open: async (page) => {
       if (await showRound(page, matches)) await unfold(page, button);
     },
@@ -174,16 +158,14 @@ export function gameScreens(p: Person, game: string, codes: string[]): readonly 
     { name: 'waiting', open: opening((page) => match(page, matches.waiting(), 'waiting-area')) },
     {
       name: 'start card',
-      allow: CARD,
       open: opening((page) => match(page, matches.card(), 'start-card')),
     },
     { name: 'round', allow: ROUND, open: opening((page) => showRound(page, matches)) },
     unfolded('players', 'focus-players', matches),
-    unfolded('chat', 'chat-bar', matches, [...ROUND, UNDER_SHEET]),
-    { name: 'result', allow: RESULT, open: result },
+    unfolded('chat', 'chat-bar', matches),
+    { name: 'result', open: result },
     {
       name: 'match over',
-      allow: [BAR_FACT],
       open: opening((page) => match(page, matches.over(), 'match-summary')),
     },
   ];

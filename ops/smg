@@ -8,13 +8,13 @@
 #                 ref>, confirm, rollback, backup, restore [--drill] <file>, logs [service],
 #                 uninstall [--purge-backups]; --env <name> and --yes anywhere. Here: the
 #                 game's settings and hooks — update builds the ref, waits up to 10 minutes for
-#                 running rounds to end (--now: not at all), writes the keys the backups keep,
-#                 installs the ref's stack files and sets up the database roles before the new
+#                 running rounds to end (--now: not at all), installs the ref's stack files and sets up the database roles before the new
 #                 image starts; status adds the type, the address, the rounds running,
 #                 maintenance and, for website installs, the sign-in mode, the authorize
 #                 endpoint, the account feed and the trusted proxy ranges; uninstall takes the
-#                 game's route file and keys with it; restore puts the backup's keys back
-#                 (SK_ADMIN_SECRETS_DIR) — and its own verbs: admin create-super
+#                 game's route file and keys with it; every backup (an update's too) first
+#                 writes the keys file it carries, status and the other verbs write nothing;
+#                 restore puts the backup's keys back (SK_ADMIN_SECRETS_DIR) — and its own verbs: admin create-super
 #                 (the first admin of a standalone install, password asked inside the app,
 #                 never echoed; refused on a website install), admin promote-super --website-id
 #                 <id> | --name <name> (website installs: a member who signed in once through
@@ -56,6 +56,9 @@ SMG_NOW=0
 
 game_compose() { compose "$@"; }
 game_backup_settings() { backup_settings "$1"; }
+# The secret file every backup carries, from the env file's keys: the kit calls this before a
+# backup alone (an update's too), so status and the other verbs write nothing.
+game_backup_secrets() { write_keys "$1"; }
 
 game_usage() {
   cat <<'EOF'
@@ -107,8 +110,6 @@ game_build() {
 
 game_before_update() {
   ((SMG_NOW)) || wait_rounds "$1"
-  # Before the update's backup, which keeps them.
-  write_keys "$1"
 }
 
 # The new ref's stack files, put in place by that ref's own installer library.
