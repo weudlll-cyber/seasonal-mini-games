@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "pnpm --parallel --filter @smg/server --filter @smg/web --filter @smg/admin run dev",
     "dev:reset-db": "pnpm --filter @smg/server db:reset-dev",
+    "preview:website": "pnpm --filter @smg/server preview:website",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier . --write",
     "format:check": "prettier . --check --cache --cache-strategy content",

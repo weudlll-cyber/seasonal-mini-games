@@ -98,6 +98,7 @@ Every port of this repository differs from every port used in the Bingo reposito
 | Browser tests' own server, player client and admin app ([09](09-testing-strategy.md) §1.1; 3940, 5440 and 5441 until 2026-11-21, when another project on the development machine took 3940, DECISIONS T398) | **3740**, **5740**, **5741** | — |
 | Journey 36's website-mode server and stand-in website | **3960**, **5430** | — |
 | Load check's own server ([09](09-testing-strategy.md) §1.1) | **3950** | — |
+| Website-mode preview (`pnpm preview:website`, DECISIONS O166, T450): the game's server and the kit's stand-in website, on a database of its own | **3965**, **4400** | — |
 | Metrics port inside its container | **9465** (reserved, not used: `/metrics` is served on the app's own port) | 9464 |
 
 Container-side ports of the third-party images (PostgreSQL 5432, Mailpit 1025 and 8025) are not bound on the host and are the same in both repositories.
