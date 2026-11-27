@@ -129,6 +129,7 @@ for (const s of SEASONS) {
     let code = '';
     try {
       const started = await call<{ matchCode: string }>(p, 'POST', '/dev/quicktest', {
+        seedText: 'acorn',
         season: s.season,
         bots: 1,
         rangeHigh: 1_000_000,
@@ -187,6 +188,7 @@ test('journey 17: a match without teams shows no team anywhere', async ({ browse
   let code = '';
   try {
     const started = await call<{ matchCode: string }>(p, 'POST', '/dev/quicktest', {
+      seedText: 'acorn',
       season: 'spring',
       bots: 2,
       rangeHigh: 1_000_000,

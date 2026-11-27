@@ -85,6 +85,7 @@ test('journey 15: a special default changed and rolled back, a live round aborte
   const admin = await adminCtx.newPage();
   const player = await person(browser, 'player-1');
   const started = await call<{ matchCode: string }>(player, 'POST', '/dev/quicktest', {
+    seedText: 'acorn',
     bots: 1,
     season: 'autumn',
     cooldownS: 10,

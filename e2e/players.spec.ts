@@ -85,6 +85,7 @@ test('journey 6: a reload mid-round keeps the cooldown and delivers the held ans
 }) => {
   const p = await person(browser, 'player-1');
   const started = await call<{ matchCode: string }>(p, 'POST', '/dev/quicktest', {
+    seedText: 'acorn',
     bots: 1,
     season: 'winter',
     cooldownS: 10,
@@ -111,6 +112,7 @@ test('journey 7: a guest sees guesses happen but no number under own', async ({ 
   const p = await person(browser, 'player-1');
   const guest = await person(browser, 'guest');
   const started = await call<{ matchCode: string }>(p, 'POST', '/dev/quicktest', {
+    seedText: 'acorn',
     bots: 3,
     visibility: 'own',
     cooldownS: 3,

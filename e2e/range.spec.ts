@@ -45,6 +45,7 @@ test('journey 10: a hidden range reaches no screen and a guess outside it is ans
 }) => {
   const p = await person(browser, 'player-1', { width: 1280, height: 720 });
   const started = await call<Started>(p, 'POST', '/dev/quicktest', {
+    seedText: 'acorn',
     bots: 1,
     cooldownS: 3,
     rangeLow: -4_321,

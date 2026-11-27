@@ -164,6 +164,7 @@ test('journey 19: the summary of a 12-player match fits one screen', async ({ br
   let code = '';
   try {
     const started = await call<{ matchCode: string }>(p, 'POST', '/dev/quicktest', {
+      seedText: 'acorn',
       season: 'autumn',
       bots: 11,
       rangeHigh: 1_000_000,

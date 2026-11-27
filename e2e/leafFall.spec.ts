@@ -144,6 +144,7 @@ test('journey 18: Leaf Fall drops only still-possible numbers, in the Fallen pan
       'POST',
       '/dev/quicktest',
       {
+        seedText: 'acorn',
         season: 'autumn',
         bots: 1,
         rangeHigh: 1_000_000,

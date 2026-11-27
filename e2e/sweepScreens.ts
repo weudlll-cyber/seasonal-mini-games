@@ -8,14 +8,14 @@
  *                 verify page, and the admin areas. A page is loaded anew for each window
  *                 size (the sweep resizes before `open`), its fonts and themes sharing that
  *                 load; a game's matches are ./sweepMatches'. What a screen leaves out of the
- *                 findings, or declares as an intended overlap, is named with the owner's
- *                 decision.
+ *                 findings, or declares as an intended overlap or motion, is named with the
+ *                 owner's decision.
  * Depends on:     @playwright/test, @seasonal/kit/testing, ./play, ./sweepMatches, ./testStack
  * Used by:        ./sweep.spec
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 47)
  */
 import { expect, type Page } from '@playwright/test';
-import type { IntendedOverlap, SweepScreen } from '@seasonal/kit/testing';
+import type { IntendedMotion, IntendedOverlap, SweepScreen } from '@seasonal/kit/testing';
 
 import { hostMenu, roundOpen, type Person } from './play.js';
 import { matchesOf, type Matches } from './sweepMatches.js';
@@ -98,8 +98,8 @@ const PAST_COLUMNS: NonNullable<SweepScreen['allow']> = [
 const PAST_ROWS = { finding: 'cut text: [fallen-list] li', onlyNotVisible: true as const };
 const ROUND = [GUESS_ROW, COMMENT, PAST_ROWS, ...PAST_COLUMNS];
 // O99 (the owner's reference): in a series' pause the bar under "Round 3 in 0:11" runs down to
-// the next round, a step a second, so it never rests.
-const COUNTDOWN_BAR = 'still moving after 5 s: span.next-round-fill';
+// the next round, a step a second, so it is meant to keep moving.
+const COUNTDOWN: IntendedMotion = { selector: '.next-round-fill', decision: 'O99' };
 // O97 (T351): Seasonal Mind Games' desktop stage spans the whole view as a grid, and the info
 // column stands in its free cell.
 const ON_SPLIT_STAGE: IntendedOverlap = {
@@ -228,7 +228,7 @@ export function gameScreens(p: Person, game: string, codes: string[]): readonly 
     listRound(game, matches),
     unfolded('players', 'focus-players', matches, [...stageOverlaps(game), ...SHEET]),
     unfolded('chat', 'chat-bar', matches, stageOverlaps(game)),
-    { name: 'result', allow: game === 'mind-games' ? [COUNTDOWN_BAR] : [], open: result },
+    { name: 'result', intendedMotion: game === 'mind-games' ? [COUNTDOWN] : [], open: result },
     {
       name: 'match over',
       open: opening((page) => match(page, matches.over(), 'match-summary')),
