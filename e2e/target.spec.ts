@@ -25,10 +25,11 @@
 import { expect, test, type Page } from '@playwright/test';
 
 import { direct, fitsBoth, fromLobby, WIDE } from './guessGames.js';
-import { abortMatch, closeAll, ownRows, person, roundOpen } from './play.js';
+import { abortMatch, closeAll, ownRows, person, roundOpen, type Person } from './play.js';
 
 // Distance only (O43): the tiles away ("9 away" in the list) and no compass direction.
-const DISTANCE = /^\d+ away$|correct/;
+const DISTANCE = /^\d+ away$/;
+const FOUND = 'Target found!';
 
 // Select by click, move by an arrow button and by an arrow key; the coordinates as text. The
 // arrows are behind "Type coordinates" (O51); on a touch screen with tiles under 44 px the
@@ -113,6 +114,35 @@ async function smallPhone(page: Page): Promise<void> {
   await page.setViewportSize(WIDE);
 }
 
+// Individual, autumn, distance only (set explicitly) with a first guess that missed: tiles
+// fall, then the distance in the answer. The fall before any guess: a fall takes only tiles
+// that fit every answer so far, and two distance answers to two targets leave almost none; a
+// 60 s cooldown keeps the bot from finding its target and ending the round (CI, night 6). A
+// standing tile can be the player's own target, and then no distance shows (CI run
+// 46033228480): another round is taken then, three at the most.
+async function missedRound(p: Person, codes: string[]): Promise<void> {
+  const answer = ownRows(p.page).first().locator('.round-answer');
+  for (const seedText of ['acorn', 'birch', 'cedar']) {
+    const started = await direct(p, {
+      gameId: 'seasonal-target',
+      mode: 'individual',
+      season: 'autumn',
+      cooldownS: 60,
+      seedText,
+      settings: { 'target.feedback': 'distance' },
+    });
+    codes.push(started.matchCode);
+    await expect(p.page.locator('[data-testid="tile"][data-fallen="true"]').first()).toBeVisible({
+      timeout: 30_000,
+    });
+    await standingSelected(p.page);
+    await p.page.getByTestId('guess-button').click();
+    await expect(answer).toHaveText(/away|Target found!/, { timeout: 10_000 });
+    if ((await answer.textContent()) !== FOUND) break;
+  }
+  await expect(answer).toHaveText(DISTANCE);
+}
+
 test('journey 22: Seasonal Target, warm/cold only (the default) and distance only', async ({
   browser,
 }) => {
@@ -144,26 +174,8 @@ test('journey 22: Seasonal Target, warm/cold only (the default) and distance onl
     await expect(own).not.toHaveText(/\d/);
     await fitsBoth(p.page);
 
-    // Individual, autumn, distance only (set explicitly): tiles fall, then the distance in the
-    // answer and on the tile. The fall before any guess: a fall takes only tiles that fit
-    // every answer so far, and two distance answers to two targets leave almost none; a 60 s
-    // cooldown keeps the bot from finding its target and ending the round (CI, night 6).
-    const started = await direct(p, {
-      gameId: 'seasonal-target',
-      mode: 'individual',
-      season: 'autumn',
-      cooldownS: 60,
-      settings: { 'target.feedback': 'distance' },
-    });
-    codes.push(started.matchCode);
-    await expect(p.page.locator('[data-testid="tile"][data-fallen="true"]').first()).toBeVisible({
-      timeout: 30_000,
-    });
-    await standingSelected(p.page);
-    await p.page.getByTestId('guess-button').click();
-    await expect(ownRows(p.page).first().locator('.round-answer')).toHaveText(DISTANCE, {
-      timeout: 10_000,
-    });
+    // The distance in the answer and on the tile.
+    await missedRound(p, codes);
     await expect(own).toHaveAttribute('data-step', /^([1-5]|k[1-7]|correct)$/);
     await expect(own).toHaveText(/\d/);
     await fitsBoth(p.page);
