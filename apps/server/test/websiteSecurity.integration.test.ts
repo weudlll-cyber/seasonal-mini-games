@@ -215,7 +215,7 @@ describe("the website's chat (07 §2)", () => {
       .split('; ')
       .find((d) => d.startsWith('frame-src'));
 
-  it('is the website room by default and the only frame; local mode is unchanged', async () => {
+  it('is the website room by default, framed with the shared call alone; local is unchanged', async () => {
     const url = `${BASE}api/v1/chat/config`;
     expect((await configOf(website(), url)).json()).toEqual({
       provider: 'hostEmbed',
@@ -224,7 +224,8 @@ describe("the website's chat (07 §2)", () => {
     // The frame source is read in the background: the first answers may still say 'none'.
     await until(
       async () =>
-        frameSrc(await configOf(website(), url)) === 'frame-src https://example.org/embed/chat',
+        frameSrc(await configOf(website(), url)) ===
+        'frame-src https://example.org/embed/chat https://example.org/embed/call/shared',
     );
     const standalone = await configOf(local, '/api/v1/chat/config');
     expect(standalone.json()).toEqual({ provider: 'builtin', hostChatUrl: null });

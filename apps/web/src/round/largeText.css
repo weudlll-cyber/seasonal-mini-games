@@ -47,8 +47,8 @@
 }
 
 /* A desktop at 200 % text: the round view (`.match-live`) is at most 30 rem high and yet
-   more than 480 px, which at 100 % text (30 rem there) no window is, so nothing here ever
-   applies at 100 %: a docked list game's view is 513 px high at 1280 x 720 and keeps its two
+   more than 480 px, or at most 32 rem and yet more than 512 px (Seasonal Target's at
+   1920 x 1080, 1015 px); at 100 % text no height is both, so nothing here ever applies there: a docked list game's view is 513 px high at 1280 x 720 and keeps its two
    columns and its rows (O109). The info column scrolls with every part at its own height, the
    guesses take one column, and a row's comment goes whole to a line of its own. At 100 % the
    comment keeps giving way with its ellipsis (DECISIONS T150). */
@@ -56,7 +56,8 @@
   overflow-y: auto;
 }
 
-@container (max-height: 30rem) and (min-height: 481px) {
+@container ((max-height: 30rem) and (min-height: 481px)) or
+  ((max-height: 32rem) and (min-height: 513px)) {
   .round-live[data-view='desktop'] .round-column > * {
     flex: none;
   }
