@@ -57,7 +57,8 @@ SMG_NOW=0
 game_compose() { compose "$@"; }
 game_backup_settings() { backup_settings "$1"; }
 # The secret file every backup carries, from the env file's keys: the kit calls this before a
-# backup alone (an update's too), so status and the other verbs write nothing.
+# backup (an update's too) and before a restore compares the file with the backup's, so status
+# and the other verbs write nothing.
 game_backup_secrets() { write_keys "$1"; }
 
 game_usage() {

@@ -13,10 +13,11 @@
 #                 database belongs to the superuser) and starting the stack, whose migration
 #                 step grants the app role. The round and recovery keys are kept inside each
 #                 backup as the secret file /etc/smg/keys/<env>.keys, written from the env
-#                 file (owner decision 2026-11-25, T437); the kit's restore puts a backup's
-#                 file back there (SK_ADMIN_SECRETS_DIR, ops/smg), and before the stack
-#                 starts again its keys go into the env file the app reads (T443). The systemd
-#                 timer runs `smg --env <env> backup` at 03:30.
+#                 file (owner decision 2026-11-25, T437); the kit's restore compares it, as
+#                 written just before (ops/smg), and puts a backup's file back there
+#                 (SK_ADMIN_SECRETS_DIR), and before the stack starts again its keys go into
+#                 the env file the app reads (T443). The systemd timer runs
+#                 `smg --env <env> backup` at 03:30.
 # Depends on:     ./common.sh (compose, run, put_file, env_value, set_env_value), ./config.sh
 #                 (apply_db_roles), the kit's backup.sh, age, docker
 # Used by:        ops/smg, ops/install.sh (keys, first backup, timer), ops/dev-drill.sh

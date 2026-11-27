@@ -8,13 +8,14 @@
  *                 verify page, and the admin areas. A page is loaded anew for each window
  *                 size (the sweep resizes before `open`), its fonts and themes sharing that
  *                 load; a game's matches are ./sweepMatches'. What a screen leaves out of the
- *                 findings is named with its reason.
+ *                 findings, or declares as an intended overlap, is named with the owner's
+ *                 decision.
  * Depends on:     @playwright/test, @seasonal/kit/testing, ./play, ./sweepMatches, ./testStack
  * Used by:        ./sweep.spec
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 47)
  */
 import { expect, type Page } from '@playwright/test';
-import type { SweepScreen } from '@seasonal/kit/testing';
+import type { IntendedOverlap, SweepScreen } from '@seasonal/kit/testing';
 
 import { hostMenu, roundOpen, type Person } from './play.js';
 import { matchesOf, type Matches } from './sweepMatches.js';
@@ -76,35 +77,37 @@ const opening =
     await open(page);
   };
 
-// What the sweep leaves out: things the owner decided, which stay as they are, and one finding
-// whose cause is in the kit.
+// What the sweep leaves out: things the owner decided, which stay as they are.
 // O134 (WCAG 2.5.8; O109's rows on a phone): a phone's guess row, a button, is 24 px high.
 const GUESS_ROW = 'small control: [guess-list] button.round-row-line';
 // T150, at 100 % text: a desktop row's comment gives way first, with an ellipsis, its whole
 // text in its tooltip; never the guess or the answer.
 const COMMENT = 'cut text: [guess-list] span.round-comment';
 // O109: a list game's desktop guesses stand in two columns; the rows past them are not shown
-// ("Log (N)" has them all), which a round with many players has.
-const PAST_COLUMNS = [
+// ("Log (N)" has them all), which a round with many players has. Only where nothing of the row
+// can be seen: a name cut in a visible row is reported.
+const PAST_COLUMNS: NonNullable<SweepScreen['allow']> = [
   'outside the window: [guess-list] li.round-row',
   'cut text: [guess-list] span.round-who',
   'cut text: [guess-list] span.round-value',
   'cut text: [guess-list] span.round-answer',
   'cut text: [guess-list] span.round-arriving',
-];
-// Kit src/testing/probeRules.ts:74 (`wideBoxes`): the chat bar's newest message, which ends in the
-// kit's own ellipsis, is still reported as outside the window by its box inside it.
-const CHAT_BAR = 'outside the window: [chat-bar] span.sk-chat-bar-last';
-const ROUND = [GUESS_ROW, COMMENT, CHAT_BAR, ...PAST_COLUMNS];
-// O97 (T351): Seasonal Mind Games' desktop stage spans the whole view as a grid, and the list's
+].map((finding) => ({ finding, onlyNotVisible: true }));
+const ROUND = [GUESS_ROW, COMMENT, ...PAST_COLUMNS];
+// O97 (T351): Seasonal Mind Games' desktop stage spans the whole view as a grid, and the info
 // column stands in its free cell.
-const ON_SPLIT_STAGE = 'over [round-view] div.round-stage';
-const roundAllow = (game: string): readonly string[] =>
-  game === 'mind-games' ? [...ROUND, ON_SPLIT_STAGE] : ROUND;
+const ON_SPLIT_STAGE: IntendedOverlap = {
+  control: '.round-column',
+  over: '.round-stage',
+  decision: 'O97',
+};
+const stageOverlaps = (game: string): readonly IntendedOverlap[] =>
+  game === 'mind-games' ? [ON_SPLIT_STAGE] : [];
 // O48: on a phone a panel is a sheet from under the bar to above the input, over the round.
-const SHEET = [
-  'over [players-drawer] section.focus-panel',
-  '[players-drawer] button.sk-btn "Close" over',
+const DRAWER = '[data-testid="players-drawer"]';
+const SHEET: readonly IntendedOverlap[] = [
+  { control: '.round-live > *', over: DRAWER, decision: 'O48' },
+  { control: DRAWER, over: '.round-live > *', decision: 'O48' },
 ];
 
 // The guess rows a list game's running round shows whole at 1280 × 720 at least, under the
@@ -121,7 +124,8 @@ function listRound(game: string, matches: Matches): SweepScreen {
   const floor = ROWS[game];
   return {
     name: 'round',
-    allow: roundAllow(game),
+    allow: ROUND,
+    intendedOverlaps: stageOverlaps(game),
     ...(floor === undefined
       ? {}
       : { floors: [{ selector: GUESS_ROWS, ...floor, sizes: [{ width: 1280, height: 720 }] }] }),
@@ -155,11 +159,12 @@ function unfolded(
   name: string,
   button: string,
   matches: Matches,
-  allow: readonly string[],
+  intendedOverlaps: readonly IntendedOverlap[],
 ): SweepScreen {
   return {
     name: `round, ${name}`,
-    allow,
+    allow: ROUND,
+    intendedOverlaps,
     open: async (page) => {
       if (await showRound(page, matches)) await unfold(page, button);
     },
@@ -215,9 +220,9 @@ export function gameScreens(p: Person, game: string, codes: string[]): readonly 
       open: opening((page) => match(page, matches.card(), 'start-card')),
     },
     listRound(game, matches),
-    unfolded('players', 'focus-players', matches, [...roundAllow(game), ...SHEET]),
-    unfolded('chat', 'chat-bar', matches, roundAllow(game)),
-    { name: 'result', allow: [CHAT_BAR], open: result },
+    unfolded('players', 'focus-players', matches, [...stageOverlaps(game), ...SHEET]),
+    unfolded('chat', 'chat-bar', matches, stageOverlaps(game)),
+    { name: 'result', open: result },
     {
       name: 'match over',
       open: opening((page) => match(page, matches.over(), 'match-summary')),
