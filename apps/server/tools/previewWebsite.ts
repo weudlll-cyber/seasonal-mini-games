@@ -54,7 +54,11 @@ function previewDatabase() {
 async function portFree(port: number): Promise<void> {
   await new Promise<void>((free, taken) => {
     const probe = createServer().once('error', taken);
-    probe.listen(port, '127.0.0.1', () => probe.close(() => free()));
+    probe.listen(port, '127.0.0.1', () => {
+      probe.close(() => {
+        free();
+      });
+    });
   });
 }
 
