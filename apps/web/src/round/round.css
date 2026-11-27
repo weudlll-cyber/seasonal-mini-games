@@ -227,8 +227,9 @@
   font-size: var(--sk-font-size-small);
 }
 
-/* The phone's info line: the game's line, at most 48 px; the game's parts sit side by side
-   and are never cut: one that has no room left goes whole to a second row (T150). The games
+/* The phone's info line: the game's line, 48 px with its parts in two rows; the game's parts
+   sit side by side and are never cut: one that has no room left goes whole to a second row
+   (T150), and a chip longer than a row wraps in it, the line then taller (T449). The games
    keep their parts short, the details are in the sheet (games/registry/web). */
 .round-line {
   grid-area: line;
@@ -236,7 +237,6 @@
   align-items: center;
   gap: var(--sk-space-1);
   min-height: var(--sk-hit-target);
-  max-height: 48px;
   padding: 0.2rem 0.75rem;
   color: var(--sk-color-text);
   font: inherit;
@@ -264,6 +264,10 @@
   max-width: 100%;
   flex: none;
   white-space: nowrap;
+}
+
+.round-line-body > * > .sk-chip {
+  white-space: normal;
 }
 
 .round-line-more {

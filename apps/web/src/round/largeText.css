@@ -36,10 +36,6 @@
     overflow-y: auto;
   }
 
-  .round-live .round-line.round-line {
-    max-height: none;
-  }
-
   .round-live .round-line-body > *,
   .round-live .round-line-body > * > * {
     white-space: normal;

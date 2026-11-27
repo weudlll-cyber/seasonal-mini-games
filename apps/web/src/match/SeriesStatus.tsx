@@ -120,7 +120,7 @@ export function SeriesCountdown(p: {
         ) : null}
       </div>
       <span className="next-round-bar" aria-hidden="true">
-        <span style={{ width: `${String(share * 100)}%` }} />
+        <span className="next-round-fill" style={{ width: `${String(share * 100)}%` }} />
       </span>
     </>
   );

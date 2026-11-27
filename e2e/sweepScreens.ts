@@ -93,7 +93,13 @@ const PAST_COLUMNS: NonNullable<SweepScreen['allow']> = [
   'cut text: [guess-list] span.round-answer',
   'cut text: [guess-list] span.round-arriving',
 ].map((finding) => ({ finding, onlyNotVisible: true }));
-const ROUND = [GUESS_ROW, COMMENT, ...PAST_COLUMNS];
+// O58: Guess The Number's fallen numbers keep three rows on a desktop; those past them are not
+// shown there ("+N more" has every one).
+const PAST_ROWS = { finding: 'cut text: [fallen-list] li', onlyNotVisible: true as const };
+const ROUND = [GUESS_ROW, COMMENT, PAST_ROWS, ...PAST_COLUMNS];
+// O99 (the owner's reference): in a series' pause the bar under "Round 3 in 0:11" runs down to
+// the next round, a step a second, so it never rests.
+const COUNTDOWN_BAR = 'still moving after 5 s: span.next-round-fill';
 // O97 (T351): Seasonal Mind Games' desktop stage spans the whole view as a grid, and the info
 // column stands in its free cell.
 const ON_SPLIT_STAGE: IntendedOverlap = {
@@ -222,7 +228,7 @@ export function gameScreens(p: Person, game: string, codes: string[]): readonly 
     listRound(game, matches),
     unfolded('players', 'focus-players', matches, [...stageOverlaps(game), ...SHEET]),
     unfolded('chat', 'chat-bar', matches, stageOverlaps(game)),
-    { name: 'result', open: result },
+    { name: 'result', allow: game === 'mind-games' ? [COUNTDOWN_BAR] : [], open: result },
     {
       name: 'match over',
       open: opening((page) => match(page, matches.over(), 'match-summary')),

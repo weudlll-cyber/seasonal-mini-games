@@ -263,7 +263,7 @@
   background: color-mix(in srgb, var(--sk-color-text) 10%, transparent);
 }
 
-.next-round-bar > span {
+.next-round-fill {
   display: block;
   height: 100%;
   background: var(--sk-color-accent);
@@ -271,7 +271,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .next-round-bar > span {
+  .next-round-fill {
     transition: none;
   }
 }
