@@ -7,15 +7,16 @@
  *                 game's screens and the admin areas, at the kit's seven sizes (down to
  *                 320 × 568), at 100 % and 200 % root font, light and dark: no sideways scroll,
  *                 nothing outside the window, no cut text, no control under 44 px, no clipped
- *                 fitted screen and no axe violation. A signed-in test signs in afresh before
- *                 each screen, within the server's request limit. Chromium only: the same
+ *                 fitted screen, no control over another, the guess lists' floors of rows and no
+ *                 axe violation. A signed-in test signs in afresh before each screen (the
+ *                 sweep's `setup`), within the server's request limit. Chromium only: the same
  *                 layout engine runs 28 looks a screen.
  * Depends on:     @playwright/test, @axe-core/playwright, @seasonal/kit/testing, ./play,
  *                 ./sweepScreens, ./testStack
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 47); kit docs, K67
  */
 import { AxeBuilder } from '@axe-core/playwright';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { axeFinder, sweep, type SweepOptions, type SweepScreen } from '@seasonal/kit/testing';
 
 import { abortMatch, closeAll, FROM_THE_PAGE, person, type Person } from './play.js';
@@ -35,24 +36,9 @@ async function freshSession(p: Person): Promise<void> {
   expect(r.ok(), `${p.who} signed in again`).toBe(true);
 }
 
-// Each screen swept on its own: the kit's sweep ends at the first screen that does not open,
-// which would hide every screen after it. One run reports all.
-async function sweepAll(
-  page: Page,
-  screens: readonly SweepScreen[],
-  between: () => Promise<void> = () => Promise.resolve(),
-): Promise<void> {
-  const failed: string[] = [];
-  for (const screen of screens) {
-    await between();
-    try {
-      await sweep(page, [screen], LOOKS);
-    } catch (error) {
-      failed.push(`${screen.name}: ${String(error)}`);
-    }
-  }
-  expect(failed, failed.join('\n\n')).toEqual([]);
-}
+// The screens with a new session before each one's looks (the sweep's `setup`).
+const signedInAnew = (p: Person, screens: readonly SweepScreen[]): readonly SweepScreen[] =>
+  screens.map((screen) => ({ ...screen, setup: () => freshSession(p) }));
 const GAMES = ['guess-the-number', 'safecracker', 'bomb-defusal', 'seasonal-target', 'mind-games'];
 
 // A screen takes up to four minutes for its 28 looks (Seasonal Target's 400 tiles), so the
@@ -65,7 +51,7 @@ test.use({ trace: 'off' });
 test('journey 47: the player pages pass the sweep, signed out', async ({ browser }) => {
   const ctx = await browser.newContext({ baseURL: `${CLIENT_URL}/` });
   try {
-    await sweepAll(await ctx.newPage(), SIGNED_OUT);
+    await sweep(await ctx.newPage(), SIGNED_OUT, LOOKS);
   } finally {
     await ctx.close();
   }
@@ -74,7 +60,7 @@ test('journey 47: the player pages pass the sweep, signed out', async ({ browser
 test('journey 47: the player pages pass the sweep, signed in', async ({ browser }) => {
   const p = await person(browser, 'player-1');
   try {
-    await sweepAll(p.page, PLAYER_PAGES, () => freshSession(p));
+    await sweep(p.page, signedInAnew(p, PLAYER_PAGES), LOOKS);
   } finally {
     await closeAll([p]);
   }
@@ -85,7 +71,7 @@ for (const game of GAMES) {
     const p = await person(browser, 'host');
     const codes: string[] = [];
     try {
-      await sweepAll(p.page, gameScreens(p, game, codes), () => freshSession(p));
+      await sweep(p.page, signedInAnew(p, gameScreens(p, game, codes)), LOOKS);
     } finally {
       await freshSession(p);
       for (const code of codes) await abortMatch(p, code);
@@ -101,7 +87,7 @@ test('journey 47: the admin areas pass the sweep', async ({ browser }) => {
     await admin.goto('./');
     await admin.getByTestId('dev-admin').click();
     await expect(admin.getByRole('navigation', { name: 'Areas' })).toBeVisible();
-    await sweepAll(admin, ADMIN_SCREENS);
+    await sweep(admin, ADMIN_SCREENS, LOOKS);
   } finally {
     await ctx.close();
   }

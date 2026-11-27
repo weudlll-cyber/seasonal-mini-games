@@ -84,6 +84,32 @@ const GUESS_ROW = 'small control: [guess-list] button.round-row-line';
 const COMMENT = 'cut text: [guess-list] span.round-comment';
 const ROUND = [GUESS_ROW, COMMENT];
 
+// The guess rows a list game's running round shows whole at 1280 × 720 at least, under the
+// docked chat: the owner's decisions, declared to the sweep (K116).
+const ROWS: Readonly<Record<string, { readonly least: number; readonly decision: string }>> = {
+  'guess-the-number': { least: 26, decision: 'O50, O109' },
+  safecracker: { least: 20, decision: 'O109' },
+  'bomb-defusal': { least: 16, decision: 'O109' },
+};
+const GUESS_ROWS = '[data-testid="guess-list"] li.round-row';
+
+// A list game's running round with its floor, opened once its rows are there.
+function listRound(game: string, matches: Matches): SweepScreen {
+  const floor = ROWS[game];
+  return {
+    name: 'round',
+    allow: ROUND,
+    ...(floor === undefined
+      ? {}
+      : { floors: [{ selector: GUESS_ROWS, ...floor, sizes: [{ width: 1280, height: 720 }] }] }),
+    open: async (page) => {
+      await showRound(page, matches);
+      if (floor === undefined) return;
+      await expect.poll(() => page.locator(GUESS_ROWS).count()).toBeGreaterThanOrEqual(floor.least);
+    },
+  };
+}
+
 // The running round, open; true when this look loaded it. A bot can solve a round at any
 // guess: then another is taken.
 async function showRound(page: Page, matches: Matches): Promise<boolean> {
@@ -150,7 +176,7 @@ function verifyOf(result: (page: Page) => Promise<void>): (page: Page) => Promis
 }
 
 export function gameScreens(p: Person, game: string, codes: string[]): readonly SweepScreen[] {
-  const matches = matchesOf(p, game, codes);
+  const matches = matchesOf(p, game, codes, ROWS[game]?.least ?? null);
   const result = resultOf(p, matches);
   const match = async (page: Page, code: Promise<string>, ready: string) =>
     show(page, `./#/match/${await code}`, ready);
@@ -160,7 +186,7 @@ export function gameScreens(p: Person, game: string, codes: string[]): readonly 
       name: 'start card',
       open: opening((page) => match(page, matches.card(), 'start-card')),
     },
-    { name: 'round', allow: ROUND, open: opening((page) => showRound(page, matches)) },
+    listRound(game, matches),
     unfolded('players', 'focus-players', matches),
     unfolded('chat', 'chat-bar', matches),
     { name: 'result', open: result },

@@ -97,11 +97,14 @@ function endedMatch({ make, end }: Maker): () => Promise<string> {
   };
 }
 
-// The matches one game's screens use, each made when a screen first needs it.
-export function matchesOf(p: Person, game: string, codes: string[]) {
+// The matches one game's screens use, each made when a screen first needs it. A running round
+// with `rows` guesses has bots enough for them and a seed of its own each time, since a fixed
+// one that a bot solves at once would be solved again every time.
+export function matchesOf(p: Person, game: string, codes: string[], rows: number | null) {
   const maker = makerOf(p, game, codes);
   const waiting = lasting(maker, Number.POSITIVE_INFINITY, { lobby: true });
-  const round = lasting(maker, ROUND_FRESH_MS, { countdownS: 3 });
+  const crowd = rows === null ? {} : { bots: rows + 4, seedText: undefined };
+  const round = lasting(maker, ROUND_FRESH_MS, { countdownS: 3, ...crowd });
   const card = lasting(maker, CARD_FRESH_MS, { countdownS: 30 });
   return {
     over: endedMatch(maker),
