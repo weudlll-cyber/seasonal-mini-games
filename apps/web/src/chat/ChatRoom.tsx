@@ -17,25 +17,24 @@
  *                 room's newest line of any kind for its bar; a screen that writes from
  *                 elsewhere gets the room's writing part, which it shows with this file's
  *                 `Writer` (the docked chat's phone bar, T363).
- * Depends on:     react, @seasonal/kit/react (useDockArrivals), @smg/contracts (views),
- *                 ../components/scrollTabStop, ../round/PlayerName, ../shell/session,
- *                 ./chatArrivals, ./ModActions, ./useChat
+ * Depends on:     react, @seasonal/kit/react (useDockArrivals, useScrollTabStop),
+ *                 @smg/contracts (views), ../round/PlayerName, ../shell/session, ./chatArrivals,
+ *                 ./ModActions, ./useChat
  * Used by:        ./ChatPanel, ../match/DockedMatch (Writer)
  * Spec:           docs/spec/07-integration.md §2; Bingo 06 §7, Bingo 03 §12
  */
-import { useDockArrivals, useDockSight, useDockView } from '@seasonal/kit/react';
+import { useDockArrivals, useDockSight, useDockView, useScrollTabStop } from '@seasonal/kit/react';
 import type { ChatMessageView, ChatRoomView } from '@smg/contracts';
 import {
-  useCallback,
   useContext,
   useEffect,
   useRef,
   useState,
   type ReactElement,
+  type ReactNode,
   type SyntheticEvent,
 } from 'react';
 
-import { scrollTabStop } from '../components/scrollTabStop.js';
 import { PlayerName } from '../round/PlayerName.js';
 import { useSession } from '../shell/session.js';
 import { ChatArrivals, ChatComposerSlot } from './chatArrivals.js';
@@ -133,6 +132,25 @@ function useBarHasField(slot: boolean): boolean {
   return slot && phone && sight?.visible === true;
 }
 
+// The room's messages in their own scrolling box, which follows the newest at the bottom and
+// is a Tab stop while it scrolls.
+function MessageList(p: {
+  readonly messages: readonly ChatMessageView[];
+  readonly children: ReactNode;
+}): ReactElement {
+  const list = useRef<HTMLOListElement>(null);
+  useScrollTabStop(list);
+  useEffect(() => {
+    const el = list.current;
+    if (el !== null) el.scrollTop = el.scrollHeight;
+  }, [p.messages]);
+  return (
+    <ol ref={list} className="chat-list" data-testid="chat-messages" aria-live="polite">
+      {p.children}
+    </ol>
+  );
+}
+
 export function ChatRoom({ target }: { readonly target: ChatTarget }): ReactElement {
   const { session, can } = useSession();
   const me = session?.account?.displayName ?? null;
@@ -160,26 +178,16 @@ export function ChatRoom({ target }: { readonly target: ChatTarget }): ReactElem
       offer(null);
     };
   }, [offer, room, send, writes]);
-  const list = useRef<HTMLOListElement | null>(null);
-  const attach = useCallback((el: HTMLOListElement | null) => {
-    list.current = el;
-    return scrollTabStop(el);
-  }, []);
-  // Follow the newest message at the bottom.
-  useEffect(() => {
-    const el = list.current;
-    if (el !== null) el.scrollTop = el.scrollHeight;
-  }, [messages]);
   if (problem !== null) return <p className="smg-muted">{problem}</p>;
   if (room === null) return <p className="smg-muted">Loading the chat…</p>;
   return (
     <>
-      <ol ref={attach} className="chat-list" data-testid="chat-messages" aria-live="polite">
+      <MessageList messages={messages}>
         {messages.length === 0 ? <li className="smg-muted">No messages yet.</li> : null}
         {messages.map((m) => (
           <Line key={m.id} message={m} me={me} room={room} canReport={writes} />
         ))}
-      </ol>
+      </MessageList>
       {writes ? (
         barHasField ? null : (
           <Writer room={room} send={send} />

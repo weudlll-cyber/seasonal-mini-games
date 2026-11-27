@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@seasonal/kit": "github:weudlll-cyber/seasonal-kit#v0.38.0",
+    "@seasonal/kit": "github:weudlll-cyber/seasonal-kit#v0.39.1",
     "@smg/contracts": "workspace:*",
     "@smg/game-sdk": "workspace:*",
     "@smg/ui": "workspace:*",
