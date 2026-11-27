@@ -33,21 +33,32 @@ function loadGames(): Promise<readonly GameInfoView[]> {
   return loading;
 }
 
-export function useGames(): readonly GameInfoView[] {
-  const [games, setGames] = useState<readonly GameInfoView[]>([]);
+// The list, and whether its request has ended, with the list or without it: a screen whose
+// layout depends on the list (the match page's docked chat) waits for that.
+export function useGameList(): {
+  readonly games: readonly GameInfoView[];
+  readonly settled: boolean;
+} {
+  const [list, setList] = useState<{ games: readonly GameInfoView[]; settled: boolean }>({
+    games: [],
+    settled: false,
+  });
   useEffect(() => {
     let live = true;
     loadGames()
-      .then((list) => {
-        if (live) setGames(list);
+      .catch(() => [])
+      .then((games) => {
+        if (live) setList({ games, settled: true });
       })
       .catch(() => undefined);
     return () => {
       live = false;
     };
   }, []);
-  return games;
+  return list;
 }
+
+export const useGames = (): readonly GameInfoView[] => useGameList().games;
 
 export const gameName = (games: readonly GameInfoView[], id: string): string =>
   games.find((g) => g.id === id)?.name ?? id;

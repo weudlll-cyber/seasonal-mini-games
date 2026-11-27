@@ -13,7 +13,7 @@
  *                 height, `--sk-visible-height`, so the bar stays above the on-screen keyboard,
  *                 MG-N8, T364). The chat keeps its place in this box whatever is above it, so it
  *                 is mounted once and keeps its room and what was typed between the round and
- *                 the result (07 §2). The bar's form is the game's (`meta.chatBar`): in the form
+ *                 the result (07 §2); what is above it keeps its state when the chat arrives. The bar's form is the game's (`meta.chatBar`): in the form
  *                 'field' the room's own field with Send (../chat/ChatRoom `Writer`, offered
  *                 through `ChatComposerSlot`, T363) sits under the bar. On a phone the content
  *                 scrolls alone above the chat bar (a list game's running round fills it
@@ -58,26 +58,29 @@ export function DockedMatch(p: {
     composer?.send == null ? null : (
       <Writer room={composer.room} send={composer.send} placeholder="Write a message…" />
     );
+  // Without a chat there is no dock, but the page still follows the on-screen keyboard (T416).
+  const dock =
+    p.chat === null
+      ? { withoutChat: true as const }
+      : {
+          chat: p.chat,
+          bar: p.bar,
+          field,
+          callId: null,
+          onSharedCall: website ? setCall : undefined,
+        };
+  // Only the form 'field' has a field in its bar, so only then the room offers its writer (and
+  // hides its own in the open sheet, ../chat/ChatRoom).
+  const offers = p.chat !== null && p.bar === 'field';
+  // One tree with and without a chat: what is shown above keeps its state (an open panel) when
+  // the chat's settings arrive after it.
   return (
     <div className="match-docked one-screen focus-mode" data-testid="match" data-phase={p.phase}>
-      {p.chat === null ? (
-        // No dock at all, but the page still follows the on-screen keyboard (T416).
-        <DockedScreen withoutChat>{p.children}</DockedScreen>
-      ) : (
-        // Only the form 'field' has a field in its bar, so only then the room offers its writer
-        // (and hides its own in the open sheet, ../chat/ChatRoom).
-        <ChatComposerSlot.Provider value={p.bar === 'field' ? setComposer : null}>
-          <DockedScreen
-            chat={p.chat}
-            bar={p.bar}
-            field={field}
-            callId={null}
-            onSharedCall={website ? setCall : undefined}
-          >
-            <SharedCallContext.Provider value={call}>{p.children}</SharedCallContext.Provider>
-          </DockedScreen>
-        </ChatComposerSlot.Provider>
-      )}
+      <ChatComposerSlot.Provider value={offers ? setComposer : null}>
+        <DockedScreen {...dock}>
+          <SharedCallContext.Provider value={call}>{p.children}</SharedCallContext.Provider>
+        </DockedScreen>
+      </ChatComposerSlot.Provider>
     </div>
   );
 }

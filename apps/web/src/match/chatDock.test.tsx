@@ -127,6 +127,22 @@ describe('the docked chat', () => {
   });
 });
 
+describe('a chat whose settings arrive late', () => {
+  it('keeps what is above it when the chat arrives after it', () => {
+    viewport(390, 844);
+    const shown = (chat: ReactElement | null) => (
+      <DockedMatch phase="live" chat={chat} bar="line">
+        <input aria-label="Above" />
+      </DockedMatch>
+    );
+    const view = render(shown(null));
+    fireEvent.change(screen.getByLabelText('Above'), { target: { value: 'still here' } });
+    view.rerender(shown(<FakeChat />));
+    expect(screen.getByTestId('chat-dock')).toBeTruthy();
+    expect(screen.getByLabelText<HTMLInputElement>('Above').value).toBe('still here');
+  });
+});
+
 // A host chat's frame in the dock (any origin): told whether the sheet is open, its unread count
 // going to the phone bar (the kit's useDockSight, T416).
 function HostFrame(): ReactElement {

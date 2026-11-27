@@ -40,7 +40,7 @@ import { useChatConfig } from '../chat/useChat.js';
 import { useMatch } from '../live/useMatch.js';
 import { useRound, type RoundLive } from '../live/useRound.js';
 import { RoundChat } from '../round/RoundChat.js';
-import { chatBarOf, docksChat, gameName, useGames } from '../lobby/games.js';
+import { chatBarOf, docksChat, gameName, useGameList, useGames } from '../lobby/games.js';
 import { RoundScreen } from '../round/RoundScreen.js';
 import { DockedMatch } from './DockedMatch.js';
 import { HostConsole, HostMenu, hosts, type Values } from './HostMenu.js';
@@ -71,6 +71,9 @@ function phaseOf(match: MatchDetailsView, status: string | null): Phase {
 export function MatchPage({ code }: { readonly code: string }): ReactElement {
   const { match, missing, reload } = useMatch(code);
   const live = useRound(match?.round?.id ?? null);
+  // Whether the game docks its chat decides the page's layout: shown only once that is known, so
+  // the round view is not built a second time under a finger.
+  const { settled } = useGameList();
   if (missing)
     return (
       <section className="sk-panel">
@@ -78,7 +81,7 @@ export function MatchPage({ code }: { readonly code: string }): ReactElement {
         <p>Check the code and try again.</p>
       </section>
     );
-  if (match === null) return <p className="smg-muted">Loading the match…</p>;
+  if (match === null || !settled) return <p className="smg-muted">Loading the match…</p>;
   // An ended match stays readable at its address as its summary (O27).
   if (match.ended !== null) return <MatchSummary match={match} viewerKey={match.you} />;
   return <MatchView match={match} live={live} reload={reload} />;
