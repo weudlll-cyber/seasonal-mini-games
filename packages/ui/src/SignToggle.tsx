@@ -25,7 +25,7 @@ export function SignToggle(p: {
   readonly onFlip: () => void;
 }): ReactElement {
   return (
-    <button type="button" className="smg-btn smg-sign" onClick={p.onFlip} aria-label={p.label}>
+    <button type="button" className="sk-btn smg-sign" onClick={p.onFlip} aria-label={p.label}>
       ±
     </button>
   );

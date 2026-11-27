@@ -89,6 +89,7 @@
   container-type: inline-size;
   display: grid;
   gap: var(--sk-space-1);
+  grid-template-columns: minmax(0, 1fr);
 }
 
 /* The picker's help line: small, one line on a desktop, at most two on a phone. */
@@ -104,11 +105,14 @@
   padding: 0;
   list-style: none;
   display: flex;
+  flex-wrap: wrap;
   gap: 0.3rem;
 }
 
+/* One row at 100 % text (the basis is 0); with larger text a slot asks for the room its colour
+   name needs, and the slots take a second row (journey 47). */
 .bd-slot {
-  flex: 1 1 0;
+  flex: 1 1 calc((1rem - 16px) * 10);
   min-width: 0;
   min-height: var(--sk-hit-target);
   display: flex;
@@ -205,6 +209,7 @@
   display: flex;
   align-items: center;
   gap: var(--sk-space-1);
+  flex-wrap: wrap;
 }
 
 .bd-action {

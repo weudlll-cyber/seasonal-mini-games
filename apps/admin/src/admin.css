@@ -30,6 +30,15 @@ body {
   flex: 1;
 }
 
+/* Each area's link a full target (44 px, journey 47). */
+.admin-bar nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--sk-hit-target);
+  min-height: var(--sk-hit-target);
+}
+
 .admin-bar nav a[aria-current='page'] {
   font-weight: var(--sk-font-weight-strong);
   text-decoration: underline;
@@ -40,6 +49,7 @@ body {
   margin: 0 auto;
   padding: var(--sk-space-3) var(--sk-gutter);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sk-space-3);
 }
 
@@ -130,7 +140,7 @@ body {
 
 .admin-codes {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(8rem, 100%), 1fr));
   gap: var(--sk-space-1);
   padding-left: 0;
   list-style: none;

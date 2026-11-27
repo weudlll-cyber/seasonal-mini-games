@@ -38,9 +38,11 @@ ARG SMG_BUILD_COMMIT
 COPY . .
 RUN pnpm install --frozen-lockfile --offline
 RUN pnpm --filter @smg/web build && pnpm --filter @smg/admin build && pnpm --filter @smg/server build
-# The workspace packages are inside the bundle, so their copies are not shipped.
+# The workspace packages and the kit are inside the bundle, so their copies are not shipped; the
+# kit's ops scripts are, for the installer to copy out of the image (ops/lib/config.sh).
 RUN pnpm --filter @smg/server deploy --prod --legacy /out \
   && rm -rf /out/node_modules/@smg /out/node_modules/@smg-game \
+  && cp -r apps/server/node_modules/@seasonal/kit/ops /out/kit-ops \
   && cp -r apps/web/dist /out/web \
   && cp -r apps/admin/dist /out/admin
 

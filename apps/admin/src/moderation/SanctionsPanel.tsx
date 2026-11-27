@@ -81,10 +81,10 @@ function Duration(p: {
   readonly set: (m: number) => void;
 }): ReactElement {
   return (
-    <label className="smg-field">
+    <label className="sk-field">
       <span>For</span>
       <select
-        className="smg-select"
+        className="sk-select"
         value={p.minutes}
         onChange={(e) => {
           p.set(Number(e.target.value));
@@ -110,10 +110,10 @@ function NewSanction({ open }: { readonly open: (r: ConfirmRequest) => void }): 
   return (
     <div className="smg-row">
       <TextInput label="Display name" visible value={name} onChange={setName} maxLength={24} />
-      <label className="smg-field">
+      <label className="sk-field">
         <span>Kind</span>
         <select
-          className="smg-select"
+          className="sk-select"
           value={kind}
           onChange={(e) => {
             setKind(e.target.value as 'mute' | 'ban');
@@ -136,7 +136,7 @@ function NewSanction({ open }: { readonly open: (r: ConfirmRequest) => void }): 
       )}
       <button
         type="button"
-        className="smg-btn smg-btn--danger"
+        className="sk-btn sk-btn--danger"
         disabled={name.trim().length < 3}
         onClick={() => {
           open(sanctionRequest({ name, kind, minutes, where }));
@@ -180,7 +180,7 @@ function Rows(p: {
                 {s.liftedAt === null ? (
                   <button
                     type="button"
-                    className="smg-btn"
+                    className="sk-btn"
                     onClick={() => {
                       open(liftRequest(s));
                     }}
@@ -213,7 +213,7 @@ export function SanctionsPanel(): ReactElement {
     void load();
   }, [load]);
   return (
-    <section className="smg-panel smg-stack" aria-label="Sanctions">
+    <section className="sk-panel smg-stack" aria-label="Sanctions">
       <NewSanction open={open} />
       {problem === null ? null : <p role="alert">{problem}</p>}
       {items === null || items.length === 0 ? (

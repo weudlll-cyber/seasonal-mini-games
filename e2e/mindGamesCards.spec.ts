@@ -10,14 +10,14 @@
  *                 choices close, a click in a card's middle chooses nothing. At most 4 choices
  *                 a second per account (`rate.guessPerAccountPerS`), so the clicks are paced.
  *                 The page reloads after the switch to the phone size (WebKit keeps the old scale).
- * Depends on:     @playwright/test, ./mindGames, ./play, ./screens
+ * Depends on:     @playwright/test, ./mindGames, ./play, @seasonal/kit/testing
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 45); docs/spec/02e-game-mind-games.md §11
  */
 import { expect, test, type Page } from '@playwright/test';
+import { DESKTOP, PHONE } from '@seasonal/kit/testing';
 
 import { mindQuickTest, startRound } from './mindGames.js';
 import { abortMatch, closeAll, person, roundOpen } from './play.js';
-import { DESKTOP, PHONE } from './screens.js';
 
 const OPTIONS = ['spring', 'summer', 'autumn', 'winter', 'all'] as const;
 const PLACES = ['top', 'middle', 'bottom'] as const;

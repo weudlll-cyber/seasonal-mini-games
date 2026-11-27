@@ -35,6 +35,7 @@ interface Started {
 // A Quick Test round (fast specials, range 1–1 000 000 so the bots take long) and its page.
 async function quickRound(p: Person, body: Record<string, unknown>): Promise<string> {
   const started = await call<Started>(p, 'POST', '/dev/quicktest', {
+    seedText: 'acorn',
     bots: 1,
     rangeHigh: 1_000_000,
     fast: true,

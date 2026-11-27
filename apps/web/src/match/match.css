@@ -149,7 +149,7 @@
 }
 
 .result-bar-link {
-  min-height: 36px;
+  min-height: var(--sk-hit-target);
   box-shadow: none;
 }
 
@@ -311,7 +311,7 @@
 .host-form {
   display: grid;
   gap: var(--sk-space-2);
-  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(12rem, 100%), 1fr));
 }
 
 /* The heading row over the team column ("Team"), in the muted small type (T212). */

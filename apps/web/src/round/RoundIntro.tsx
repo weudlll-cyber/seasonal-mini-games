@@ -9,7 +9,8 @@
  *                 special's name and its one plain sentence, in the game's words where it has
  *                 its own (T119) ("No special this round." when it is off), the game's line on
  *                 the secret and its range ("Shared number between 1 and 100", "Hidden range"),
- *                 the cooldown, and the seconds until the round opens. The round bar above it
+ *                 the cooldown, and the seconds until the round opens (the card's `opensAt` on
+ *                 the server's clock, nothing until it is measured). The round bar above it
  *                 keeps the host's controls, the chat and the players (./FocusShell, O46). The
  *                 card fills the space under the bar without a page scrollbar on desktop and
  *                 phone, at the screen's scale where it has not the room (the kit's fit, O111;
@@ -17,17 +18,17 @@
  *                 whose rounds show no season (O93) has its name as the heading, with no season
  *                 icon and no special block.
  * Depends on:     react, @seasonal/kit/react (StartCard), @smg/contracts,
- *                 @smg-game/registry/web (types), ../season/*, ./roundText, ./SeasonPill
- *                 (ruleOf), ./roundIntro.css
+ *                 @smg-game/registry/web (types), ../live/socket (the clock offset),
+ *                 ../season/*, ./roundText, ./SeasonPill (ruleOf), ./roundIntro.css
  * Used by:        ./RoundScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §2, §6
  */
-import { StartCard } from '@seasonal/kit/react';
+import { SeasonIcon, StartCard } from '@seasonal/kit/react';
 import type { GameWeb } from '@smg-game/registry/web';
 import type { RoundStateView } from '@smg/contracts';
 import type { ReactElement, ReactNode } from 'react';
 
-import { SeasonIcon } from '../season/SeasonIcon.js';
+import { useClockOffset } from '../live/socket.js';
 import { NO_SPECIAL, SEASON_NAMES, SPECIALS } from '../season/season.js';
 import { seconds } from './roundText.js';
 import { ruleOf } from './SeasonPill.js';
@@ -35,11 +36,6 @@ import './roundIntro.css';
 
 // The card fits again once web fonts have loaded (kit v0.16.0, K48; T404).
 const FIT = { afterFonts: true } as const;
-
-// Seconds until the round opens.
-function opensIn(state: RoundStateView, now: number): number {
-  return state.opensAt === null ? 0 : (state.opensAt - now) / 1_000;
-}
 
 // The season's special and its sentence, or "No special this round.".
 function special(state: RoundStateView, game: GameWeb | null): ReactNode {
@@ -56,11 +52,11 @@ function special(state: RoundStateView, game: GameWeb | null): ReactNode {
 export function RoundIntro(p: {
   readonly state: RoundStateView;
   readonly game: GameWeb | null;
-  readonly now: number;
   // The game's name, for a game whose rounds show no season (O93); null shows the season.
   readonly noSeason?: string | null;
 }): ReactElement {
   const { state } = p;
+  const offsetMs = useClockOffset();
   const noSeason = p.noSeason ?? null;
   const secret =
     state.game === null ? null : (p.game?.text.intro?.(state.game, state.secretMode) ?? null);
@@ -78,7 +74,7 @@ export function RoundIntro(p: {
       badge={state.halving ? <span className="round-badge">Halving round</span> : undefined}
       special={noSeason === null ? special(state, p.game) : undefined}
       facts={facts}
-      opensIn={opensIn(state, p.now)}
+      opensAt={{ at: state.opensAt, offsetMs }}
       // The card's content changes only with these.
       signature={`${state.roundId}|${String(secret)}|${String(noSeason)}`}
       fit={FIT}

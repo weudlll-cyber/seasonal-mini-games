@@ -12,10 +12,11 @@
  *                 column's Others panel with their guesses and "solved" (T260), the round ends with
  *                 "time is up" and a "not solved" row for the player who did not play (the
  *                 inactivity limit set to 0, off, in the host form, O71).
- * Depends on:     @playwright/test, ./play, ./screens
+ * Depends on:     @playwright/test, ./play, @seasonal/kit/testing
  * Spec:           docs/spec/09-testing-strategy.md §4 (journeys 1, 2); docs/spec/02-game-guess-the-number.md §4–§9
  */
 import { expect, test } from '@playwright/test';
+import { PHONE } from '@seasonal/kit/testing';
 
 import {
   abortMatch,
@@ -28,7 +29,6 @@ import {
   search,
   type Person,
 } from './play.js';
-import { PHONE } from './screens.js';
 
 test('journey 1: a shared round from start to result, also on a phone', async ({ browser }) => {
   const host = await person(browser, 'host');

@@ -11,14 +11,14 @@
  *                 bar without scrolling, the standings start with the viewer's own line, and
  *                 after scrolling to the end the last standings row is whole above the bar; a
  *                 message sent from the bar's field arrives without opening the chat's sheet.
- * Depends on:     @playwright/test, ./mindGames, ./play, ./screens
+ * Depends on:     @playwright/test, ./mindGames, ./play, @seasonal/kit/testing
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 43); docs/spec/02e-game-mind-games.md §9, §11
  */
 import { expect, test, type Page } from '@playwright/test';
+import { PHONE } from '@seasonal/kit/testing';
 
 import { mindQuickTest, startRound } from './mindGames.js';
 import { abortMatch, closeAll, person, roundOpen } from './play.js';
-import { PHONE } from './screens.js';
 
 // Every box that scrolls now (its content taller than it and its overflow scrolling).
 const scrollers = (page: Page) =>

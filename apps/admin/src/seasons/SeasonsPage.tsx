@@ -50,11 +50,11 @@ function Feed(): ReactElement {
     void api('/admin/seasons/feed/refresh', { method: 'POST', body: {} }).then(load);
   };
   return (
-    <section className="smg-panel smg-stack" data-testid="feed">
+    <section className="sk-panel smg-stack" data-testid="feed">
       <h2>In Season feed</h2>
       {feed === null ? <p className="smg-muted">Loading…</p> : <p>{feedText(feed)}</p>}
       {feed?.lastError == null ? null : <p role="alert">Last error: {feed.lastError}</p>}
-      <button type="button" className="smg-btn" onClick={refresh}>
+      <button type="button" className="sk-btn" onClick={refresh}>
         Refresh now
       </button>
     </section>
@@ -80,7 +80,7 @@ function AddDay({ done }: { readonly done: () => Promise<void> }): ReactElement 
       />
       <button
         type="submit"
-        className="smg-btn smg-btn--primary"
+        className="sk-btn sk-btn--primary"
         disabled={day === '' || token.trim() === ''}
       >
         Add halving day
@@ -103,7 +103,7 @@ function HalvingDays(): ReactElement {
     }).then(load);
   };
   return (
-    <section className="smg-panel smg-stack" data-testid="halving-days">
+    <section className="sk-panel smg-stack" data-testid="halving-days">
       <h2>Halving days</h2>
       <ul>
         {days.map((d) => (
@@ -111,7 +111,7 @@ function HalvingDays(): ReactElement {
             {d.day} · {d.token} <small className="smg-muted">({d.source})</small>{' '}
             <button
               type="button"
-              className="smg-btn"
+              className="sk-btn"
               onClick={() => {
                 remove(d);
               }}

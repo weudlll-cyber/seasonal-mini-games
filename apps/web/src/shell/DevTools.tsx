@@ -36,14 +36,14 @@ export function DevSignIn(): ReactElement {
     <KitDevSignIn
       identities={DEV_IDENTITIES}
       onSignIn={(as) => (isIdentity(as) ? devSignIn(as) : Promise.resolve())}
-      buttonClassName="smg-btn"
+      buttonClassName="sk-btn"
     />
   );
 }
 
 export function QuickTestLink(): ReactElement {
   return (
-    <a className="smg-btn" href={hrefOf({ name: 'quickTest' })} data-testid="quick-test-link">
+    <a className="sk-btn" href={hrefOf({ name: 'quickTest' })} data-testid="quick-test-link">
       Quick Test against bots
     </a>
   );

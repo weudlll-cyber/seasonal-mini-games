@@ -30,7 +30,7 @@ function Field(p: { label: string; value: number; set: (v: number) => void }): R
     <label className="st-field">
       {p.label}
       <input
-        className="smg-input"
+        className="sk-input"
         type="number"
         inputMode="numeric"
         value={p.value}
@@ -74,7 +74,7 @@ export function Steer({ selected, select }: SteerProps): ReactElement {
           <button
             key={dir}
             type="button"
-            className={`smg-btn st-move st-move--${dir}`}
+            className={`sk-btn st-move st-move--${dir}`}
             aria-label={`Move ${dir}`}
             onClick={() => {
               select(selected, [dx, dy]);
@@ -96,7 +96,7 @@ export function TypedSteer(p: SteerProps): ReactElement {
       <button
         ref={typed.button}
         type="button"
-        className="smg-btn st-typed-toggle"
+        className="sk-btn st-typed-toggle"
         aria-expanded={typed.open}
         aria-controls={typed.panelId}
         onClick={typed.toggle}

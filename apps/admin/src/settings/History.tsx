@@ -73,7 +73,7 @@ function Version(p: {
         {props.canEdit && v.version !== props.current ? (
           <button
             type="button"
-            className="smg-btn"
+            className="sk-btn"
             onClick={() => {
               p.open(rollbackRequest(props, v.version));
             }}
@@ -109,7 +109,7 @@ function FirstVersion(p: {
       {p.props.canEdit ? (
         <button
           type="button"
-          className="smg-btn"
+          className="sk-btn"
           onClick={() => {
             p.open(rollbackRequest(p.props, 1));
           }}

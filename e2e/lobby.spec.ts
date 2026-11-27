@@ -19,6 +19,7 @@
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 12); docs/spec/02-game-guess-the-number.md §2, §9
  */
 import { expect, test, type Page } from '@playwright/test';
+import { PHONE } from '@seasonal/kit/testing';
 
 import {
   abortMatch,
@@ -33,7 +34,6 @@ import {
   search,
   type Person,
 } from './play.js';
-import { PHONE } from './screens.js';
 
 const WIDE = { width: 1280, height: 720 };
 
@@ -72,7 +72,7 @@ async function startFromLobby(p: Person): Promise<string> {
   // The bots arrive one after another, each with a team, and online.
   for (const bot of ['bot-01', 'bot-02', 'bot-03'])
     await expect(playerRow(p, bot)).toContainText('online', { timeout: 10_000 });
-  await expect(p.page.getByTestId('match-players').locator('li img')).toHaveCount(3);
+  await expect(p.page.getByTestId('match-players').locator('li [data-sk-season]')).toHaveCount(3);
   // The team column is a named icon (T212); no team yet is a named dash.
   await expect(
     playerRow(p, 'dev-player-1').getByRole('img', { name: 'no team yet' }),
@@ -164,6 +164,7 @@ test('journey 19: the summary of a 12-player match fits one screen', async ({ br
   let code = '';
   try {
     const started = await call<{ matchCode: string }>(p, 'POST', '/dev/quicktest', {
+      seedText: 'acorn',
       season: 'autumn',
       bots: 11,
       rangeHigh: 1_000_000,

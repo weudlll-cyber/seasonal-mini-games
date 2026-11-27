@@ -27,12 +27,12 @@
  *                 ./InputRow, ./OthersLine, ./ResultScreen, ./ClosestToWinning
  * Spec:           docs/spec/02-game-guess-the-number.md §12; docs/spec/03-seasonal-specials.md §5
  */
+import { SeasonIcon } from '@seasonal/kit/react';
 import type { RoundStateView, TeamName } from '@smg/contracts';
 import { formatNumber, type PlayerMark } from '@smg/game-sdk';
 import { PlayerMark as PlayerMarkView } from '@smg/ui';
 import type { CSSProperties, ReactElement } from 'react';
 
-import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASONS, seasonColor, teamName } from '../season/season.js';
 import { TeamIcon } from '../season/TeamIcon.js';
 import { PlayerName } from './PlayerName.js';
@@ -140,7 +140,7 @@ export function OthersPanel(p: {
   if (others.length === 0) return null;
   const rest = others.length - fit.shown;
   return (
-    <section className="smg-panel round-others" aria-label="Other players">
+    <section className="sk-panel round-others" aria-label="Other players">
       <h2 className="round-others-title">Other players</h2>
       <ul ref={fit.ref} className="round-player-list" data-testid="others-panel">
         {others.slice(0, fit.shown).map((r) => (

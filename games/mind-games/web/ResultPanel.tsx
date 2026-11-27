@@ -23,6 +23,7 @@
  * Used by:        ./index
  * Spec:           docs/spec/02e-game-mind-games.md §8, §9
  */
+import { SeasonIcon } from '@seasonal/kit/react';
 import {
   CHOICE_NAMES,
   optionsOf,
@@ -35,7 +36,7 @@ import {
 import type { ResultPanelProps } from '@smg/game-sdk';
 import { useEffect, useState, type ReactElement } from 'react';
 
-import { colorOf, iconsOf } from './seasons.js';
+import { colorOf, seasonsOf } from './seasons.js';
 import { WinnersPanel } from './WinnersPanel.js';
 import { lineText } from './text.js';
 
@@ -61,8 +62,8 @@ function OptionCard(p: {
       {/* The top line: icon, name, count; no player names in a card (O99). */}
       <span className="mg-card-top">
         <span className="mg-icons" aria-hidden="true">
-          {iconsOf(c).map((src) => (
-            <img key={src} src={src} alt="" />
+          {seasonsOf(c).map((s) => (
+            <SeasonIcon key={s} season={s} size="var(--mg-glyph)" decorative />
           ))}
         </span>
         <strong className="mg-name">{CHOICE_NAMES[c]}</strong>

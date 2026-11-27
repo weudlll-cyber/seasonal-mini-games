@@ -9,7 +9,8 @@
  *                 Vite config (`__SMG_BUILD__`: git at the build or at the dev server's start;
  *                 a Docker build passes the commit in SMG_BUILD_COMMIT). It stands in the page's
  *                 flow after the main column, never over it (./buildBadge.css), so it covers no
- *                 chat, round view or button (owner, 2026-11-14; DECISIONS T346).
+ *                 chat, round view or button (owner, 2026-11-14; DECISIONS T346). It is the
+ *                 page's footer, so it lies in a landmark of its own (journey 47).
  * Depends on:     react, ./buildBadge.css
  * Used by:        ./AppShell
  * Spec:           docs/spec/10-repository-structure.md §4
@@ -34,8 +35,8 @@ export function buildLabel(build: BuildInfo, dev: boolean): string {
 
 export function BuildBadge(): ReactElement {
   return (
-    <p className="build-badge smg-muted" data-testid="build-badge">
+    <footer className="build-badge smg-muted" data-testid="build-badge">
       {buildLabel(__SMG_BUILD__, import.meta.env.DEV)}
-    </p>
+    </footer>
   );
 }

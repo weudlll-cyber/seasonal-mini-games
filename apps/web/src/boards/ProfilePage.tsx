@@ -10,23 +10,22 @@
  *                 part", points, a link to the round's verification page); and every staff
  *                 adjustment with its reason, public by design (Bingo 03 §11). An unknown
  *                 name says "No player with that name." A website member's Discord steps
- *                 follow the name in the heading (../round/PlayerSteps, 07 §7).
- * Depends on:     react, @smg/contracts (PlayerProfileView), ../components/fields,
- *                 ../lobby/games, ../round/PlayerSteps, ../shell/router, ./useApi,
- *                 ./boardsText, ./boards.css,
- *                 ../round/result.css
+ *                 follow the name in the heading (the kit's StepBadges, 07 §7).
+ * Depends on:     react, @seasonal/kit/react (useApiGet, StepBadges), @smg/contracts
+ *                 (PlayerProfileView), ../components/fields, ../lobby/games, ../shell/http,
+ *                 ../shell/router, ./boardsText, ./boards.css, ../round/result.css
  * Used by:        ../shell/AppShell
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/06-data-model-api-realtime.md §3.1
  */
+import { StepBadges, useApiGet } from '@seasonal/kit/react';
 import type { PlayerProfileView } from '@smg/contracts';
 import type { ReactElement } from 'react';
 
 import { Problem } from '../components/fields.js';
 import { gameName, useGames } from '../lobby/games.js';
-import { PlayerSteps } from '../round/PlayerSteps.js';
+import { api } from '../shell/http.js';
 import { hrefOf } from '../shell/router.js';
 import { dateText, deltaText, placeText, pointsText, refusalText } from './boardsText.js';
-import { useApi } from './useApi.js';
 import '../round/result.css';
 import './boards.css';
 
@@ -52,7 +51,7 @@ function Facts({ p }: { readonly p: PlayerProfileView }): ReactElement {
 
 function Boards({ p }: { readonly p: PlayerProfileView }): ReactElement {
   return (
-    <section className="smg-panel smg-stack" aria-labelledby="profile-boards">
+    <section className="sk-panel smg-stack" aria-labelledby="profile-boards">
       <h2 id="profile-boards">Boards</h2>
       {p.boards.length === 0 ? (
         <p>Not on a board yet.</p>
@@ -73,7 +72,7 @@ function Boards({ p }: { readonly p: PlayerProfileView }): ReactElement {
 function Recent({ p }: { readonly p: PlayerProfileView }): ReactElement {
   const games = useGames();
   return (
-    <section className="smg-panel smg-stack" aria-labelledby="profile-recent">
+    <section className="sk-panel smg-stack" aria-labelledby="profile-recent">
       <h2 id="profile-recent">Last rounds</h2>
       {p.recent.length === 0 ? (
         <p>No rounds yet.</p>
@@ -116,7 +115,7 @@ function Recent({ p }: { readonly p: PlayerProfileView }): ReactElement {
 
 function Adjustments({ p }: { readonly p: PlayerProfileView }): ReactElement {
   return (
-    <section className="smg-panel smg-stack" aria-labelledby="profile-adjustments">
+    <section className="sk-panel smg-stack" aria-labelledby="profile-adjustments">
       <h2 id="profile-adjustments">Staff adjustments</h2>
       {p.adjustments.length === 0 ? (
         <p>No staff adjustments.</p>
@@ -134,22 +133,24 @@ function Adjustments({ p }: { readonly p: PlayerProfileView }): ReactElement {
 }
 
 export function ProfilePage({ displayName }: { readonly displayName: string }): ReactElement {
-  const { data, error } = useApi<PlayerProfileView>(`/players/${encodeURIComponent(displayName)}`);
-  if (error?.status === 404) {
+  const path = `/players/${encodeURIComponent(displayName)}`;
+  const profile = useApiGet<PlayerProfileView>(api, path);
+  if (profile.kind === 'failed' && profile.error.status === 404) {
     return (
-      <section className="smg-panel" data-testid="profile-missing">
+      <section className="sk-panel" data-testid="profile-missing">
         <h1>No player with that name.</h1>
       </section>
     );
   }
-  if (error !== null) return <Problem text={refusalText(error)} />;
-  if (data === null) return <p className="smg-muted">Loading the profile…</p>;
+  if (profile.kind === 'failed') return <Problem text={refusalText(profile.error)} />;
+  if (profile.kind !== 'ready') return <p className="smg-muted">Loading the profile…</p>;
+  const data = profile.value;
   return (
     <div className="smg-stack boards-page" data-testid="profile">
-      <header className="smg-panel smg-stack">
+      <header className="sk-panel smg-stack">
         <h1>
           {data.displayName}
-          <PlayerSteps steps={data.steps} />
+          <StepBadges steps={data.steps} />
         </h1>
         <p className="smg-muted">Member since {dateText(data.memberSince)}</p>
         <Facts p={data} />

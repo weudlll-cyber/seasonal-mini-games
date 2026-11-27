@@ -23,7 +23,7 @@ import type { SettingOverride } from '@smg/game-sdk';
 import { useCallback, useEffect, useState, type ReactElement } from 'react';
 
 import { useConfirm, type ConfirmRequest } from '../ConfirmDialog.js';
-import { api, ApiError } from '../http.js';
+import { api, ApiError, isRefusal, refusalOf } from '../http.js';
 import { TextInput } from '../TextInput.js';
 import { History } from './History.js';
 import { SettingRow } from './SettingRow.js';
@@ -48,18 +48,19 @@ interface RowProblem {
   readonly text: string;
 }
 
-const rowProblemOf = (error: unknown): RowProblem | null =>
-  error instanceof ApiError && error.code === 'SETTING_INVALID' && error.field !== null
-    ? { key: error.field, text: error.detail ?? 'This value is not allowed.' }
-    : null;
+function rowProblemOf(error: unknown): RowProblem | null {
+  if (!(error instanceof ApiError) || error.code !== 'SETTING_INVALID') return null;
+  const { field, detail } = refusalOf(error);
+  return field === null ? null : { key: field, text: detail ?? 'This value is not allowed.' };
+}
 
 function problemText(error: unknown): string {
-  if (!(error instanceof ApiError)) return 'Saving failed.';
+  if (!isRefusal(error)) return 'Saving failed.';
   if (error.code === 'CONFIG_VERSION_CONFLICT') {
     return 'Someone changed this document meanwhile. It was loaded again; please repeat your change.';
   }
   if (error.code === 'FORBIDDEN') return 'You may not change one of these settings.';
-  return error.detail ?? 'A value is not allowed.';
+  return refusalOf(error).detail ?? 'A value is not allowed.';
 }
 
 function Table({
@@ -131,7 +132,7 @@ function SaveBar(p: {
       />
       <button
         type="button"
-        className="smg-btn smg-btn--primary"
+        className="sk-btn sk-btn--primary"
         onClick={p.save}
         data-testid="save-settings"
       >
@@ -192,7 +193,7 @@ function Document({ id }: { readonly id: string }): ReactElement {
     });
   };
   return (
-    <section className="smg-panel smg-stack">
+    <section className="sk-panel smg-stack">
       <h2>
         {documentName(id)} <small className="smg-muted">version {doc.version}</small>
       </h2>
@@ -229,7 +230,7 @@ export function SettingsPage(): ReactElement {
           <button
             key={d}
             type="button"
-            className="smg-btn"
+            className="sk-btn"
             aria-pressed={d === id}
             onClick={() => {
               setId(d);

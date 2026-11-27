@@ -9,14 +9,14 @@
  *                 next wire fills it; a cut; then the host ends the round and the result's
  *                 revealed sequence and history neither scroll sideways nor cut a colour at
  *                 1280 × 720, 1920 × 1080 and 390 × 844. The match is aborted.
- * Depends on:     @playwright/test, ./guessGames, ./play, ./screens
+ * Depends on:     @playwright/test, ./guessGames, ./play, @seasonal/kit/testing
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 33); docs/spec/02c-game-bomb-defusal.md §9, §11
  */
 import { expect, test, type Page } from '@playwright/test';
+import { PHONE } from '@seasonal/kit/testing';
 
 import { direct, WIDE } from './guessGames.js';
 import { abortMatch, closeAll, hostMenu, ownRows, person } from './play.js';
-import { PHONE } from './screens.js';
 
 const WIRES = ['red', 'blue', 'yellow', 'green', 'white', 'black', 'orange', 'purple'];
 const FULL_HD = { width: 1920, height: 1080 };

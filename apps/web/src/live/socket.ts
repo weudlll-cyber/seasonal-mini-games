@@ -6,15 +6,18 @@
  * Responsibility: open `/ws` namespace `/play` once (WebSocket only), send intents
  *                 `{ t, seq, data }` and wait for their answer, reconnect with a fresh cookie
  *                 after a sign-in or sign-out, and measure the clock offset with three
- *                 `time.sync` round trips, keeping the shortest (06 §4.1); each sync carries the
- *                 round trip measured before it, which the server keeps as a metric (06 §4.6). The offset is used
- *                 for display only and never sent. A refused handshake asks GET /session once,
- *                 so an ended website session signs in again (T282). Adapted from Bingo's
- *                 game/socket.ts.
- * Depends on:     socket.io-client, ../shell/http
- * Used by:        ./useMatch, ./useRound, ../shell/session
+ *                 `time.sync` round trips, of which the kit's clockOffset keeps the shortest
+ *                 (06 §4.1); each sync carries the round trip measured before it, which the
+ *                 server keeps as a metric (06 §4.6). The offset is used for display only and
+ *                 never sent: `serverNow`, and `useClockOffset` for the kit's countdowns (null
+ *                 until measured). A refused handshake asks GET /session once, so an ended
+ *                 website session signs in again (T282). Adapted from Bingo's game/socket.ts.
+ * Depends on:     react, socket.io-client, @seasonal/kit (clockOffset), ../shell/http
+ * Used by:        ./useMatch, ./useRound, ../shell/session, ../round/*, ../match/SeriesStatus
  * Spec:           docs/spec/06-data-model-api-realtime.md §4.1, §4.3
  */
+import { clockOffset, type ClockSample } from '@seasonal/kit';
+import { useSyncExternalStore } from 'react';
 import { io, type Socket } from 'socket.io-client';
 
 import { api, BASE_PATH } from '../shell/http.js';
@@ -30,7 +33,9 @@ export interface IntentAnswer {
 
 let socket: Socket | null = null;
 let seq = 0;
-let offsetMs = 0;
+// Server time minus this page's time; null until the first measurement.
+let offsetMs: number | null = null;
+const offsetListeners = new Set<() => void>();
 
 export function gameSocket(): Socket {
   if (socket === null) {
@@ -66,11 +71,23 @@ export async function intent(t: string, data: unknown): Promise<IntentAnswer> {
 
 // Server time now, as well as this page can tell it.
 export function serverNow(): number {
-  return Date.now() + offsetMs;
+  return Date.now() + (offsetMs ?? 0);
+}
+
+function onOffset(listener: () => void): () => void {
+  offsetListeners.add(listener);
+  return () => {
+    offsetListeners.delete(listener);
+  };
+}
+
+// The measured offset, re-rendering when it arrives: a countdown shows nothing until then.
+export function useClockOffset(): number | null {
+  return useSyncExternalStore(onOffset, () => offsetMs);
 }
 
 async function syncClock(): Promise<void> {
-  let best: { rtt: number; offset: number } | null = null;
+  const samples: ClockSample[] = [];
   let last: number | undefined;
   for (let i = 0; i < 3; i += 1) {
     const sent = Date.now();
@@ -79,9 +96,11 @@ async function syncClock(): Promise<void> {
     const back = Date.now();
     const serverTime = (answer.data as { serverTime?: number } | undefined)?.serverTime;
     if (!answer.ok || serverTime === undefined) continue;
-    const rtt = back - sent;
-    last = rtt;
-    if (best === null || rtt < best.rtt) best = { rtt, offset: serverTime - (sent + back) / 2 };
+    last = back - sent;
+    samples.push({ sentAt: sent, receivedAt: back, serverTime });
   }
-  if (best !== null) offsetMs = best.offset;
+  const measured = clockOffset(samples);
+  if (measured === null) return;
+  offsetMs = measured;
+  for (const listener of offsetListeners) listener();
 }

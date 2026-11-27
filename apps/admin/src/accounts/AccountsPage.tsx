@@ -82,7 +82,7 @@ function Row(p: {
               <button
                 key={role}
                 type="button"
-                className="smg-btn"
+                className="sk-btn"
                 aria-pressed={a.roles.includes(role)}
                 onClick={() => {
                   open(roleRequest(a, role));
@@ -102,7 +102,7 @@ function Row(p: {
         <td>
           <button
             type="button"
-            className="smg-btn"
+            className="sk-btn"
             onClick={() => {
               open(suspendRequest(a));
             }}
@@ -138,7 +138,7 @@ export function AccountsPage({ rights }: { readonly rights: AccountRights }): Re
     ...(rights.suspend ? ['Action'] : []),
   ];
   return (
-    <section className="smg-panel smg-stack">
+    <section className="sk-panel smg-stack">
       <h1>Accounts</h1>
       <TextInput label="Search by name" visible value={query} onChange={setQuery} maxLength={40} />
       {items === null ? (

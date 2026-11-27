@@ -25,13 +25,13 @@
  * Used by:        ./MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §2, §4; docs/spec/03-seasonal-specials.md §5
  */
+import { SeasonIcon } from '@seasonal/kit/react';
 import type { MatchDetailsView, TeamName } from '@smg/contracts';
 import { useState, type CSSProperties, type ReactElement } from 'react';
 
 import { intent } from '../live/socket.js';
 import { PlayerName } from '../round/PlayerName.js';
 import { codeText } from '../round/roundText.js';
-import { SeasonIcon } from '../season/SeasonIcon.js';
 import { SEASONS, seasonColor, teamName } from '../season/season.js';
 import { TeamIcon } from '../season/TeamIcon.js';
 import { GamePrefs } from './GamePrefs.js';
@@ -61,7 +61,7 @@ function Teams({ match, viewerKey, reload }: Props): ReactElement {
           <button
             key={t}
             type="button"
-            className="smg-btn"
+            className="sk-btn"
             aria-pressed={mine === t}
             style={{ '--season': seasonColor(t) } as CSSProperties}
             onClick={() => void choose(t)}
@@ -142,7 +142,7 @@ export function WaitingArea(p: Props): ReactElement {
   const choosing = match.teamMatch && match.youPlayer && !match.teamLocked;
   return (
     <section
-      className="smg-panel smg-stack match-waiting"
+      className="sk-panel smg-stack match-waiting"
       aria-labelledby="waiting-title"
       data-testid="waiting-area"
     >

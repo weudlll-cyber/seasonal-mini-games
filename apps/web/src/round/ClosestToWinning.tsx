@@ -81,7 +81,7 @@ export function ClosestToWinning(p: {
         {total === 0 ? null : (
           <button
             type="button"
-            className="smg-btn round-log-all round-all-guesses"
+            className="sk-btn round-log-all round-all-guesses"
             aria-expanded={all}
             data-testid="all-guesses"
             onClick={() => {

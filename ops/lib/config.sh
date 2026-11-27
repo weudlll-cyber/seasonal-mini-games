@@ -7,7 +7,9 @@
 #                 re-run (also with --yes) keeps them; write that file (0600, values
 #                 single-quoted for Compose, written atomically) — secrets made once with
 #                 openssl rand and kept on every later run, the public URL, base path and
-#                 trusted proxy for the install type, admin e-mail, the operator's age key
+#                 trusted proxy for the install type, the database's three passwords (the
+#                 superuser's, and the owner and app roles', kit K90; DATABASE_URL is the app
+#                 role's), admin e-mail, the operator's age key
 #                 (the round key SMG_ROUND_KEY seals round seeds at rest, 05 §3: made once,
 #                 never changed, or running rounds could not be recovered; the recovery key
 #                 SMG_RECOVERY_KEY keys the two-factor recovery codes, a secret of its own,
@@ -16,13 +18,15 @@
 #                 website installs the website's settings (lib/website.sh), the proxy secret
 #                 (made once, kept) and the chat provider hostEmbed; write the install
 #                 record /etc/smg/install.conf; copy the compose files, Caddyfile, the smg CLI and its
-#                 library to /opt/smg;
+#                 library and the kit's whole ops folder (from the built image) to /opt/smg; set up
+#                 the two database roles (the kit's db-roles script, on install, for the
+#                 one-time conversion of an older install, on an update and after a restore);
 #                 build the app image on the server from a git ref (until a signed release
 #                 image exists; by default the installer checkout's own branch, checkout_ref),
-#                 skipping it when the image of that commit is there, and drop app images
-#                 older than the current and the previous one.
-# Depends on:     ./common.sh (put_file, run, env_value), git, docker, openssl
-# Used by:        ops/install.sh, ops/smg (update)
+#                 skipping it when the image of that commit is there.
+# Depends on:     ./common.sh (put_file, run, env_value, set_env_value, compose), git, docker,
+#                 openssl
+# Used by:        ops/install.sh, ops/smg
 # Spec:           docs/spec/10-repository-structure.md §6; Bingo 09 §2, §3
 
 # secret <bytes>: hex from openssl rand (a dry run, which installs nothing, may lack it).
@@ -64,11 +68,16 @@ website_env() {
 
 # write_env <env>: from the answers in SMG_* variables; secrets survive a re-run.
 write_env() {
-  local env=$1 file="$SMG_ETC/$1.env" pg round recovery public base site tls key
+  local env=$1 file="$SMG_ETC/$1.env" pg owner app round recovery public base site tls key
   pg=$(env_value "$file" POSTGRES_PASSWORD)
   round=$(env_value "$file" SMG_ROUND_KEY)
   recovery=$(env_value "$file" SMG_RECOVERY_KEY)
   [[ -n $pg ]] || pg=$(secret 24)
+  # An install made before the database roles gains them on its next run and keeps them after.
+  owner=$(env_value "$file" SMG_DB_OWNER_PASSWORD)
+  app=$(env_value "$file" SMG_DB_APP_PASSWORD)
+  [[ -n $owner ]] || owner=$(secret 24)
+  [[ -n $app ]] || app=$(secret 24)
   [[ -n $round ]] || round=$(secret 32)
   # An install made before the recovery key gains it on its next run and keeps it after.
   [[ -n $recovery ]] || recovery=$(secret 32)
@@ -87,7 +96,9 @@ write_env() {
     quoted SMG_ENV_FILE "$file"
     quoted SMG_IMAGE "$SMG_IMAGE"
     quoted POSTGRES_PASSWORD "$pg"
-    quoted DATABASE_URL "postgres://smg:$pg@postgres:5432/smg"
+    quoted SMG_DB_OWNER_PASSWORD "$owner"
+    quoted SMG_DB_APP_PASSWORD "$app"
+    quoted DATABASE_URL "postgres://smg_app:$app@postgres:5432/smg"
     quoted SMG_ROUND_KEY "$round"
     quoted SMG_RECOVERY_KEY "$recovery"
     quoted SMG_PUBLIC_URL "$public"
@@ -121,7 +132,8 @@ SMG_REF=$SMG_REF
 EOF
 }
 
-# install_files <source dir of ops/>: the stack files and the CLI into /opt/smg.
+# install_files <source dir of ops/>: the stack files, the CLI and the kit's scripts into
+# /opt/smg.
 install_files() {
   local from=$1 name
   for name in compose.yml compose.website.yml compose.website-nginx.yml; do
@@ -133,7 +145,54 @@ install_files() {
   done
   put_file "$SMG_ROOT/smg" 0755 <"$from/smg"
   [[ -L /usr/local/bin/smg ]] || run ln -sf "$SMG_ROOT/smg" /usr/local/bin/smg
+  install_kit_ops "$SMG_IMAGE"
 }
+
+# install_kit_ops <image>: the kit's whole ops folder, its layout kept, into /opt/smg/kit/ops,
+# from the image that was just built, so it is the pinned kit version's (T431, T436).
+install_kit_ops() {
+  local container from file name
+  if [[ $SMG_DRY_RUN == 1 ]]; then
+    info "  would copy the kit's ops folder from $1 into $SMG_ROOT/kit/ops"
+    return 0
+  fi
+  from=$(mktemp -d)
+  cleanup_path "$from"
+  container=$(docker create "$1")
+  cleanup_container "$container"
+  docker cp "$container:/app/kit-ops/." "$from"
+  while IFS= read -r -d '' file; do
+    name=${file#"$from/"}
+    # World-readable: an operator copies the pull script to their own computer from here.
+    put_file "$SMG_ROOT/kit/ops/$name" 0755 <"$file"
+  done < <(find "$from" -type f -print0)
+}
+
+# prepare_database <env>: the two roles' passwords and the app role's address in an env file
+# that lacks them (an install from before the roles), then the roles themselves.
+prepare_database() {
+  local file="$SMG_ETC/$1.env" app
+  if [[ -z $(env_value "$file" SMG_DB_APP_PASSWORD) ]]; then
+    app=$(secret 24)
+    set_env_value "$file" SMG_DB_OWNER_PASSWORD "$(secret 24)"
+    set_env_value "$file" SMG_DB_APP_PASSWORD "$app"
+    set_env_value "$file" DATABASE_URL "postgres://smg_app:$app@postgres:5432/smg"
+  fi
+  apply_db_roles "$1"
+}
+
+# apply_db_roles <env>: the owner and app database roles (kit K90), sent to the superuser's psql
+# in the database container; the passwords go on standard input only.
+# shellcheck disable=SC2034 # the kit's script reads the SK_DB_* names
+apply_db_roles() (
+  file="$SMG_ETC/$1.env"
+  # shellcheck source=/dev/null
+  source "$SMG_ROOT/kit/ops/lib/db-roles.sh"
+  SK_DB_PREFIX=smg
+  SK_DB_OWNER_PASSWORD=$(env_value "$file" SMG_DB_OWNER_PASSWORD)
+  SK_DB_APP_PASSWORD=$(env_value "$file" SMG_DB_APP_PASSWORD)
+  sk_db_roles_apply compose "$1" exec -T postgres psql -X -q -v ON_ERROR_STOP=1 -U smg -d smg
+)
 
 # checkout_ref <dir>: the branch the checkout holding <dir> is on, its commit when detached,
 # nothing outside a checkout: the code the operator cloned is the code that gets built.
@@ -167,12 +226,4 @@ build_image() {
   # The build badge names the commit (the build has no .git, DECISIONS T346).
   docker build --quiet --build-arg SMG_BUILD_COMMIT="${commit:0:7}" -t "$SMG_IMAGE" "$src"
   SMG_CHANGES=$((SMG_CHANGES + 1))
-}
-
-# prune_images <keep…>: removes smg-app images other than the ones named (current, previous).
-prune_images() {
-  local image
-  for image in $(docker image ls smg-app --format '{{.Repository}}:{{.Tag}}'); do
-    [[ " $* " == *" $image "* ]] || docker image rm "$image" >/dev/null 2>&1 || true
-  done
 }

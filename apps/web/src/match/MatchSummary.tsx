@@ -20,13 +20,13 @@
  * Used by:        ./MatchPage
  * Spec:           docs/spec/02-game-guess-the-number.md §2, §12; docs/spec/03-seasonal-specials.md §5
  */
+import { SeasonIcon } from '@seasonal/kit/react';
 import type { MatchDetailsView, MatchEndView } from '@smg/contracts';
 import { formatNumber } from '@smg/game-sdk';
 import type { ReactElement } from 'react';
 
 import { gameName, useGames } from '../lobby/games.js';
 import { MatchStandings } from '../round/MatchStandings.js';
-import { SeasonIcon } from '../season/SeasonIcon.js';
 import { teamName } from '../season/season.js';
 import { hrefOf } from '../shell/router.js';
 import { ResultBar } from './ResultBar.js';
@@ -103,7 +103,7 @@ export function MatchSummary({
         code={match.code}
         host={null}
       />
-      <section className="smg-panel match-summary" data-testid="match-summary">
+      <section className="sk-panel match-summary" data-testid="match-summary">
         <header className="match-summary-head">
           <h1>Match over</h1>
           {end === null ? null : <p data-testid="match-end">{endText(match.status, end)}</p>}
@@ -119,7 +119,7 @@ export function MatchSummary({
           <RoundWords end={end} />
           <Teams match={match} />
           <p>
-            <a className="smg-btn smg-btn--primary" href={hrefOf({ name: 'lobby' })}>
+            <a className="sk-btn sk-btn--primary" href={hrefOf({ name: 'lobby' })}>
               Back to Play
             </a>
           </p>

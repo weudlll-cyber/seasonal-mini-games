@@ -21,12 +21,12 @@
  * Used by:        ./ResultScreen
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/03-seasonal-specials.md §5
  */
+import { SeasonIcon } from '@seasonal/kit/react';
 import type { RoundStateView } from '@smg/contracts';
 import { compareNames, formatNumber, type PlayerMark } from '@smg/game-sdk';
 import { useHighlightRow } from '@smg/ui';
 import { useState, type ReactElement, type ReactNode } from 'react';
 
-import { SeasonIcon } from '../season/SeasonIcon.js';
 import { teamName } from '../season/season.js';
 import { useMediaQuery } from '../useMediaQuery.js';
 import { PlayerName } from './PlayerName.js';
@@ -191,7 +191,7 @@ export function Placings(p: {
         {rows.length <= TOP ? null : (
           <button
             type="button"
-            className="smg-btn round-all-placings"
+            className="sk-btn round-all-placings"
             aria-expanded={all}
             data-testid="all-placings"
             onClick={() => {

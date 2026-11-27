@@ -62,7 +62,7 @@ function serve(authMode: 'website' | 'local'): string[] {
       if (path.startsWith('/matches/')) {
         return Promise.resolve(new Response('{"code":"NOT_FOUND"}', { status: 404 }));
       }
-      const body = path === '/session' ? session() : { matches: [], games: [] };
+      const body = path === '/session' ? session() : { matches: [], games: [], periods: [] };
       return Promise.resolve(new Response(JSON.stringify(body)));
     }),
   );

@@ -7,14 +7,15 @@
  * Responsibility: `startWebsiteStack` makes the journey's own database in the dev PostgreSQL
  *                 (smg_e2e_website, recreated empty at every run, T345),
  *                 builds the player client as production does (./builtAdmin `viteBuild`), starts
- *                 the stand-in website (./websiteStub) and a server in website mode on 3960
- *                 (SMG_AUTH_MODE=website under /games/mini-games/, its feed at the stand-in,
+ *                 the stand-in website and its account feed (./websiteStub) and a server in
+ *                 website mode on 3960 (SMG_AUTH_MODE=website under /games/mini-games/,
  *                 the built client from SMG_WEB_DIR), then the nginx container smg-e2e-website on
  *                 5430 with the website's server block and the game's route (`nginxConf`). On
  *                 Linux the container shares the host's network; elsewhere (Docker Desktop) it
  *                 publishes 127.0.0.1:5430 and reaches the host as host.docker.internal. Either
  *                 way the server sees the proxy as 127.0.0.1, its only trusted proxy. `close`
- *                 stops the server, removes the container and the stand-in, and the build.
+ *                 stops the server, drops its database, removes the container and the stand-in,
+ *                 and the build.
  *                 Its own database, not the run's smg_test: two servers on one database would
  *                 both run the round scheduler and recovery, and a round runs on one instance
  *                 only (DECISIONS T4, T13, T241).
@@ -37,6 +38,7 @@ import {
   WEBSITE_SERVER_PORT,
   WEBSITE_URL,
   databaseUrl,
+  dropTestDatabase,
 } from './testStack.js';
 import { nginxConf, startStubSite, type StubSite } from './websiteStub.js';
 
@@ -97,7 +99,7 @@ function startServer(site: StubSite, secret: string, dir: string): ChildProcess 
     SMG_PUBLIC_URL: `${WEBSITE_URL}/games/mini-games/`,
     SMG_TRUSTED_PROXIES: '127.0.0.1',
     SMG_WEBSITE_PROXY_SECRET: secret,
-    SMG_WEBSITE_LOCAL_URL: `http://127.0.0.1:${String(site.port)}`,
+    SMG_WEBSITE_LOCAL_URL: `http://127.0.0.1:${String(site.feedPort)}`,
     SMG_WEBSITE_SYNC_TOKEN: site.token,
   };
   const cwd = path.join(REPO_ROOT, 'apps/server');
@@ -151,10 +153,15 @@ export async function startWebsiteStack(): Promise<WebsiteStack> {
   const secret = randomBytes(32).toString('hex');
   recreateDatabase();
   viteBuild(path.join(REPO_ROOT, 'apps/web'), path.join(dir, 'web'));
-  const site = await startStubSite();
+  const site = await startStubSite({
+    app: `http://127.0.0.1:${String(WEBSITE_SERVER_PORT)}`,
+    secretHeader: 'X-Smg-Proxy-Secret',
+    secret,
+  });
   const server = startServer(site, secret, dir);
   const close = async (): Promise<void> => {
     await stopServer(server);
+    dropTestDatabase(DATABASE);
     docker(['rm', '-f', CONTAINER]);
     await site.close();
     rmSync(dir, { recursive: true, force: true });

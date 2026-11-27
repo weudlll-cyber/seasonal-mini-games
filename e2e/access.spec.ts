@@ -38,6 +38,7 @@ test('journey 9: lobby, round and result pass axe; a guess by keyboard only', as
   const p = await person(browser, 'player-1');
   await noSeriousViolations(p.page, 'lobby');
   const started = await call<{ matchCode: string }>(p, 'POST', '/dev/quicktest', {
+    seedText: 'acorn',
     bots: 1,
     cooldownS: 3,
     rangeHigh: 1_000_000,
@@ -136,6 +137,7 @@ async function adminPages(browser: Browser, size: Size): Promise<void> {
 async function focusMode(browser: Browser, size: Size): Promise<void> {
   const p = await person(browser, 'player-1', size);
   const started = await call<{ matchCode: string }>(p, 'POST', '/dev/quicktest', {
+    seedText: 'acorn',
     bots: 1,
     cooldownS: 3,
     fast: false,

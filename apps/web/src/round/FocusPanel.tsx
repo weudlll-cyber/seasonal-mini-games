@@ -61,7 +61,7 @@ export function FocusPanel(p: FocusPanelProps): ReactElement | null {
     >
       <header className="focus-panel-head">
         <h2 id={`${id}-title`}>{p.title}</h2>
-        <button type="button" className="smg-btn" onClick={p.onClose}>
+        <button type="button" className="sk-btn" onClick={p.onClose}>
           Close
         </button>
       </header>

@@ -144,8 +144,14 @@ export default defineConfig(
   },
   {
     // Tool config files must default-export their configuration (Vite, Vitest, etc.);
-    // so must Playwright's global setup.
-    files: ['*.config.js', '*.config.ts', '**/*.config.js', '**/*.config.ts'],
+    // so must Playwright's global setup and teardown.
+    files: [
+      '*.config.js',
+      '*.config.ts',
+      '**/*.config.js',
+      '**/*.config.ts',
+      'e2e/globalTeardown.ts',
+    ],
     rules: { 'no-restricted-syntax': 'off' },
   },
   prettier,

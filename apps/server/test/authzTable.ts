@@ -85,6 +85,7 @@ export const ROUTES: readonly RouteCase[] = [
   { method: 'POST', path: '/api/v1/auth/handoff', body: {}, allow: ALL },
   { method: 'OPTIONS', path: '/api/v1/auth/handoff', allow: ALL },
   { method: 'GET', path: '/auth/handoff', allow: ALL },
+  { method: 'GET', path: '/server-pages.css', allow: ALL },
   { method: 'GET', path: '/embed.js', allow: ALL },
   { method: 'POST', path: '/api/v1/auth/logout', body: {}, allow: SESSION },
   { method: 'DELETE', path: '/api/v1/me', body: { password: 'not the password' }, allow: ACCOUNTS },

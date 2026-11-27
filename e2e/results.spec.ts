@@ -16,14 +16,14 @@
  *                 "Closest to winning" show without scrolling at the screen's scale, or the
  *                 scale stands at its floor, and no closest-miss line shows (O111). The
  *                 matches are aborted.
- * Depends on:     @playwright/test, ./guessGames, ./play, ./screens
+ * Depends on:     @playwright/test, ./guessGames, ./play, @seasonal/kit/testing
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 28); docs/spec/02-game-guess-the-number.md §9
  */
 import { expect, test, type Page } from '@playwright/test';
+import { PHONE } from '@seasonal/kit/testing';
 
 import { direct, WIDE } from './guessGames.js';
 import { abortMatch, closeAll, hostMenu, person, roundOpen } from './play.js';
-import { PHONE } from './screens.js';
 
 // The first part inside the screen, the headline at most two lines, the bar not the header.
 async function firstPartFits(page: Page): Promise<void> {
@@ -135,6 +135,8 @@ for (const gameId of ['guess-the-number', 'safecracker', 'bomb-defusal', 'season
       await hostMenu(p);
       await p.page.getByTestId('host-console').getByTestId('end-round').click();
       await expect(p.page.getByTestId('result')).toBeVisible({ timeout: 15_000 });
+      // Standalone there is no website: no shared call is framed (kit K77).
+      await expect(p.page.getByTestId('shared-call-slot')).toHaveCount(0);
       await firstPartFits(p.page);
       if (list) await closestDocked(p.page, true);
       await p.page.setViewportSize(PHONE);

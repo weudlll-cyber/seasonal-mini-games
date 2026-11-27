@@ -157,12 +157,14 @@
 .gtn-input {
   display: grid;
   gap: var(--sk-space-1);
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .gtn-guess {
   display: flex;
   align-items: center;
   gap: var(--sk-space-1);
+  flex-wrap: wrap;
 }
 
 .gtn-guess input {

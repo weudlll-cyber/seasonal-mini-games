@@ -16,16 +16,16 @@
 
 ### 1.1 Databases and ports of the automated tests
 
-No automated test uses the developer's database (`smg` in the development PostgreSQL on 5510) or the ports of `pnpm dev` (server 3910, player client 5410, admin app 5411); starting or stopping a run never starts, stops or restarts `pnpm dev` (DECISIONS T345).
+No automated test, sweep or measurement uses the developer's database (`smg` in the development PostgreSQL on 5510) or the ports of `pnpm dev` (server 3910, player client 5410, admin app 5411); starting or stopping a run never starts, stops or restarts `pnpm dev` (DECISIONS T345, T450). Each run's database is made empty at its start and dropped at its end.
 
 | Suite | Database | Ports |
 |---|---|---|
 | Unit, property, component, conformance (`pnpm test`, every project but the server's integration tests) | none | none |
 | Server integration (`apps/server/test`, `pnpm test`) | its own PostgreSQL 17 container per test file (Testcontainers), removed afterwards | an ephemeral port per app (port 0) |
-| Browser tests (`pnpm e2e`, Playwright) | `smg_test` in the development PostgreSQL, dropped and created empty at every run's start and migrated by the test server (`apps/server/tools/testServer.ts`, which also starts that PostgreSQL) | server 3740, player client 5740, admin app 5741, test host site 5420; journey 36 its own database `smg_e2e_website`, recreated the same way at its start, and ports 3960 and 5430 |
-| Load check (`node load/guessStorm.mjs`, 5) | `smg_load` in the development PostgreSQL, recreated the same way (`load/stack.mjs`) | server 3950 |
+| Browser tests (`pnpm e2e`, Playwright) | `smg_test` in the development PostgreSQL, dropped and created empty at every run's start and migrated by the test server (`apps/server/tools/testServer.ts`, which also starts that PostgreSQL) | server 3740, player client 5740, admin app 5741, test host site 5420; journey 36 its own database `smg_e2e_website`, recreated the same way at its start and dropped at its end, and ports 3960 and 5430 |
+| Load check (`node load/guessStorm.mjs`, 5) | `smg_load` in the development PostgreSQL, recreated the same way and dropped at the end (`load/stack.mjs`) | server 3950 |
 
-A browser-test run starts its own stack and reuses none: a port already taken stops the run instead. The test server refuses any database but `smg_test` and `smg_load`. The developer's database gets a clean start only by hand, with `pnpm dev:reset-db` ([10](10-repository-structure.md) §4).
+A browser-test run starts its own stack and reuses none: a port already taken stops the run instead. The test server and the tool that drops a run's database (`apps/server/tools/dropTestDatabase`) refuse any database but `smg_test`, `smg_e2e_website` and `smg_load`. The developer's database gets a clean start only by hand, with `pnpm dev:reset-db` ([10](10-repository-structure.md) §4).
 
 ## 2. Levels specific to this platform
 
@@ -164,6 +164,7 @@ A browser-test run starts its own stack and reuses none: a port already taken st
     - nothing of a wave is left after its flight, stand and fade (2.4 s, shorter near the end, each wave's own times read from its CSS), judged on the page's own timers so that a page held up by the probe's measuring is not counted against it, and no wave is removed early.
 45. Seasonal Mind Games' cards choose anywhere (DECISIONS T379; `e2e/mindGamesCards.spec.ts`): in a Quick Test round with All on, every card clicked at its top, its middle (the flight band) and its bottom (the count) chooses its season, at 1280 × 800 and then 390 × 844 (the page reloaded after the switch: WebKit's phone emulation keeps the desktop's scale), the clicks paced to the 4 choices a second an account may send; after choices close, a click in a card's middle changes nothing.
 46. Seasonal Mind Games' last move and the hold (DECISIONS T380, T384; `e2e/mindGamesLastMove.spec.ts`, Chromium): in a Quick Test round (total 30 s, the default hold of 5 s) the player switches every 0.26 s until the server refuses; the status line says "Choices closed · result in …" and the stage stands 4–6.5 s from then to the result; before the result screen the stage's newest own line is the last accepted switch, shown for at least 3 s, its counts equal the result's, and that switch's coin flies in full (1.6 s) and lands before the result.
+47. The layout sweep (the kit's K67; DECISIONS O158, O159, T444; `e2e/sweep.spec.ts` with `e2e/sweepScreens.ts`, Chromium): every screen of every game, the player's pages signed out and in and the admin areas at 1920 × 1080, 1536 × 768, 1280 × 720, 390 × 844, 375 × 667, 360 × 780 and 320 × 568, at 16 and 32 px root text, light and dark: no sideways scroll, nothing outside the window, no cut text, no control under 44 px or over another, no clipped fitted screen and no axe violation (WCAG 2.2 AA, and content inside landmarks), but for the findings the file names and the overlaps and motion it declares as intended, each with an owner's decision (T449, T450); a list game's running round shows at least 26 (Guess The Number), 20 (Safecracker) or 16 (Bomb Defusal) guess rows whole, nothing over them, at 1280 × 720 (O50, O109; T447, T450); its rounds' seeds are fixed (T450).
 
 Journeys 1–19 are Guess The Number's and run unchanged on the guess engine (DECISIONS T117).
 

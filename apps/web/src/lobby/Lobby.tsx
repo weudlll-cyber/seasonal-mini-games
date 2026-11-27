@@ -105,7 +105,7 @@ function OpenMatch(): ReactElement {
     openWith({ gameId, title, maxPlayers, teamMatch, showOnWebsite });
   };
   return (
-    <form className="smg-panel smg-stack" onSubmit={open} data-testid="open-match">
+    <form className="sk-panel smg-stack" onSubmit={open} data-testid="open-match">
       <h2>Open a match</h2>
       <ChoiceField
         label="Game"
@@ -142,7 +142,7 @@ function OpenMatch(): ReactElement {
       )}
       <button
         type="submit"
-        className="smg-btn smg-btn--primary"
+        className="sk-btn sk-btn--primary"
         disabled={games.length === 0 || title.trim() === ''}
       >
         Open match
@@ -164,14 +164,14 @@ function ByCode(): ReactElement {
       <label htmlFor="match-code">Match code</label>
       <input
         id="match-code"
-        className="smg-input"
+        className="sk-input"
         maxLength={16}
         value={code}
         onChange={(e) => {
           setCode(e.target.value);
         }}
       />
-      <button type="submit" className="smg-btn" disabled={code.trim() === ''}>
+      <button type="submit" className="sk-btn" disabled={code.trim() === ''}>
         Go
       </button>
     </form>
@@ -225,7 +225,7 @@ export function Lobby({ dev }: { readonly dev: boolean }): ReactElement {
   const host = can('match.create');
   return (
     <div className="smg-stack" data-testid="lobby">
-      <section className="smg-panel smg-stack">
+      <section className="sk-panel smg-stack">
         <h1>Seasonal Mini Games</h1>
         <Greeting name={name} host={host} website={session?.authMode === 'website'} />
         <ByCode />
@@ -235,7 +235,7 @@ export function Lobby({ dev }: { readonly dev: boolean }): ReactElement {
           </Suspense>
         ) : null}
       </section>
-      <section className="smg-panel smg-stack" aria-labelledby="matches-title">
+      <section className="sk-panel smg-stack" aria-labelledby="matches-title">
         <h2 id="matches-title">Matches</h2>
         {matches === null ? (
           <p className="smg-muted">Loading…</p>

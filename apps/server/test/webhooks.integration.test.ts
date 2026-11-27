@@ -8,7 +8,7 @@
  *                 once, never listed, sealed at rest) and the audit keeps it without the secret;
  *                 opening a match, a round's countdown and its end (winner and placings by
  *                 display name) and closing the match queue one delivery each; the deliverer
- *                 sends them through the safe client (test CA, loopback allowed) signed with
+ *                 sends them through the guarded client (test CA, loopback allowed) signed with
  *                 HMAC-SHA256, retries the one the receiver refused, and the admin sees them.
  *                 The test delivers at the database's clock, which queued the deliveries, not at
  *                 its own: a delivery queued a moment before is then due (T374).
@@ -17,12 +17,13 @@
  */
 import { createHmac } from 'node:crypto';
 import { createServer, type Server } from 'node:https';
+import { getCACertificates, setDefaultCACertificates } from 'node:tls';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { loadEnv } from '../src/config/env.js';
 import { derivedKey, roundKeyFrom } from '../src/config/roundKey.js';
-import { safePost } from '../src/integration/safePost.js';
+import { postWebhook } from '../src/integration/outbound.js';
 import { WebhookDelivery } from '../src/integration/webhookDelivery.js';
 import { WebhookStore } from '../src/integration/webhooks.js';
 import { SUITE_TIMEOUT_MS } from './harness.js';
@@ -43,6 +44,8 @@ const received: Received[] = [];
 // The receiver's answers, one per request; 200 once they run out.
 const answers: number[] = [];
 const tls = selfSignedCert();
+// The certificates the process trusted before this file added the test receiver's.
+const trusted = getCACertificates('default');
 let delivery: WebhookDelivery;
 
 beforeAll(async () => {
@@ -60,18 +63,22 @@ beforeAll(async () => {
   await new Promise<void>((resolve) => receiver.listen(0, '127.0.0.1', resolve));
   const address = receiver.address();
   url = `https://127.0.0.1:${String(typeof address === 'object' && address ? address.port : 0)}/hook`;
-  // A deliverer as the server's own, with the test receiver's certificate trusted.
+  // A deliverer as the server's own, with the test receiver's certificate trusted: the kit's
+  // fetch takes no CA of its own and opens a connection of its own for every call, so the test
+  // adds the certificate to the process's trusted ones for as long as it runs.
+  setDefaultCACertificates([...trusted, tls.cert]);
   const env = loadEnv({ NODE_ENV: 'test', DATABASE_URL: kit.harness.container.getConnectionUri() });
   const store = new WebhookStore(
     kit.harness.pool,
     derivedKey(roundKeyFrom(env), 'smg webhook secrets'),
   );
   delivery = new WebhookDelivery(store, (to, body, headers) =>
-    safePost(to, body, headers, { allowLocal: true, ca: tls.cert }),
+    postWebhook(to, body, headers, { allowLocal: true }),
   );
 }, SUITE_TIMEOUT_MS);
 
 afterAll(async () => {
+  setDefaultCACertificates(trusted);
   await new Promise((resolve) => receiver.close(resolve));
   await kit.close();
 }, SUITE_TIMEOUT_MS);

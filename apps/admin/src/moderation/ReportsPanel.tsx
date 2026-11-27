@@ -54,7 +54,7 @@ function Report(p: {
 }): ReactElement {
   const { r, open } = p;
   return (
-    <li className="smg-panel smg-panel--inset smg-stack">
+    <li className="sk-panel sk-panel--inset smg-stack">
       <p>
         <strong>{r.message.author ?? 'removed account'}</strong>:{' '}
         {r.message.text ?? <em>deleted</em>}
@@ -68,7 +68,7 @@ function Report(p: {
           {r.message.text === null ? null : (
             <button
               type="button"
-              className="smg-btn smg-btn--danger"
+              className="sk-btn sk-btn--danger"
               onClick={() => {
                 open(deleteRequest(r));
               }}
@@ -78,7 +78,7 @@ function Report(p: {
           )}
           <button
             type="button"
-            className="smg-btn"
+            className="sk-btn"
             onClick={() => {
               open(resolveRequest(r, 'actioned'));
             }}
@@ -87,7 +87,7 @@ function Report(p: {
           </button>
           <button
             type="button"
-            className="smg-btn"
+            className="sk-btn"
             onClick={() => {
               open(resolveRequest(r, 'dismissed'));
             }}
@@ -120,11 +120,11 @@ export function ReportsPanel(): ReactElement {
     void load();
   }, [load]);
   return (
-    <section className="smg-panel smg-stack" aria-label="Reports">
-      <label className="smg-field">
+    <section className="sk-panel smg-stack" aria-label="Reports">
+      <label className="sk-field">
         <span>Status</span>
         <select
-          className="smg-select"
+          className="sk-select"
           value={status}
           onChange={(e) => {
             setStatus(e.target.value as Status);

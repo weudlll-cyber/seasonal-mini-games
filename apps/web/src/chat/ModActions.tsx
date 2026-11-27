@@ -116,7 +116,7 @@ function Confirm(p: {
       </p>
       {asks ? (
         <input
-          className="smg-input"
+          className="sk-input"
           aria-label="Reason"
           placeholder="Reason"
           maxLength={p.step === 'report' ? 300 : 500}
@@ -129,12 +129,12 @@ function Confirm(p: {
       <span className="smg-row">
         <button
           type="submit"
-          className="smg-btn smg-btn--danger"
+          className="sk-btn sk-btn--danger"
           disabled={asks && reason.trim().length < minReason}
         >
           Confirm
         </button>
-        <button type="button" className="smg-btn" onClick={p.onCancel}>
+        <button type="button" className="sk-btn" onClick={p.onCancel}>
           Cancel
         </button>
       </span>

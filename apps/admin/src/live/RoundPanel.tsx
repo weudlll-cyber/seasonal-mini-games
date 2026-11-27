@@ -115,12 +115,12 @@ function PlayerRow(p: {
       ))}
       <td>
         {canKick ? (
-          <button type="button" className="smg-btn" onClick={action(requests(view).kick)}>
+          <button type="button" className="sk-btn" onClick={action(requests(view).kick)}>
             Kick
           </button>
         ) : null}
         {canRemove ? (
-          <button type="button" className="smg-btn" onClick={action(requests(view).remove)}>
+          <button type="button" className="sk-btn" onClick={action(requests(view).remove)}>
             Remove result
           </button>
         ) : null}
@@ -180,7 +180,7 @@ export function RoundPanel(p: {
   }, [load]);
   if (view === null) return <p className="smg-muted">Loading…</p>;
   return (
-    <section className="smg-panel smg-stack" data-testid="round-panel">
+    <section className="sk-panel smg-stack" data-testid="round-panel">
       <h2>
         {view.match.title} <small className="smg-muted">{view.match.code}</small>
       </h2>
@@ -193,7 +193,7 @@ export function RoundPanel(p: {
         {p.rights.abort && RUNNING.has(view.status) ? (
           <button
             type="button"
-            className="smg-btn smg-btn--danger"
+            className="sk-btn sk-btn--danger"
             onClick={() => {
               open(requests(view).abort());
             }}
@@ -201,7 +201,7 @@ export function RoundPanel(p: {
             Abort round
           </button>
         ) : null}
-        <button type="button" className="smg-btn" onClick={p.close}>
+        <button type="button" className="sk-btn" onClick={p.close}>
           Close
         </button>
       </div>

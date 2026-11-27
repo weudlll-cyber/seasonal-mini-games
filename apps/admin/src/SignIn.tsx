@@ -37,7 +37,7 @@ export function SignIn({ dev, done }: SignInProps): ReactElement {
   };
   return (
     <main className="admin-main">
-      <form className="smg-panel smg-stack admin-sign-in" onSubmit={signIn}>
+      <form className="sk-panel smg-stack admin-sign-in" onSubmit={signIn}>
         <h1>Admin sign-in</h1>
         <TextInput
           label="E-mail"
@@ -56,11 +56,11 @@ export function SignIn({ dev, done }: SignInProps): ReactElement {
           onChange={setPassword}
         />
         {problem === null ? null : <p role="alert">{problem}</p>}
-        <button type="submit" className="smg-btn smg-btn--primary">
+        <button type="submit" className="sk-btn sk-btn--primary">
           Sign in
         </button>
         {dev ? (
-          <button type="button" className="smg-btn" onClick={asAdmin} data-testid="dev-admin">
+          <button type="button" className="sk-btn" onClick={asAdmin} data-testid="dev-admin">
             Sign in as admin (development)
           </button>
         ) : null}

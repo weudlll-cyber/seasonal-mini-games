@@ -40,7 +40,9 @@ function serve(permissions: readonly string[]): void {
     vi.fn((url: string) =>
       Promise.resolve(
         new Response(
-          JSON.stringify(url.endsWith('/session') ? session : { matches: [], games: [] }),
+          JSON.stringify(
+            url.endsWith('/session') ? session : { matches: [], games: [], periods: [] },
+          ),
         ),
       ),
     ),
@@ -59,8 +61,9 @@ async function renderShell(dev: boolean): Promise<void> {
       <AppShell dev={dev} />
     </SessionProvider>,
   );
+  // The session's answer arrives after a few turns of the event loop.
   await act(async () => {
-    await Promise.resolve();
+    await new Promise((r) => setTimeout(r, 0));
   });
 }
 

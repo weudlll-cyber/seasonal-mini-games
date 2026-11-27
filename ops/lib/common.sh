@@ -4,7 +4,7 @@
 # @brief  Shared helpers of ops/install.sh and ops/smg: messages, questions, files, compose.
 #
 # Responsibility: plain messages (info, warn, die), a question that takes a flag value or
-#                 asks (never in --yes mode) and a yes/no confirmation; running a command or
+#                 asks (never in --yes mode); running a command or
 #                 only showing it (--dry-run); writing a file only when its content changed
 #                 (so a second install run changes nothing), atomically; reading a value of
 #                 an env file or replacing one value in it; removing work files and throw-away containers on exit; and
@@ -50,14 +50,6 @@ ask() {
   fi
   read -r -p "$question${default:+ [$default]}: " answer
   printf -v "$var" '%s' "${answer:-$default}"
-}
-
-# confirm <question>: goes on after "yes" (or --yes), stops otherwise.
-confirm() {
-  local answer
-  [[ ${SMG_YES:-0} == 1 ]] && return 0
-  read -r -p "$1 Type yes to go on: " answer
-  [[ $answer == yes ]] || die "stopped; nothing changed"
 }
 
 # The value of a key in an env file without its quotes, or nothing (also without a file).

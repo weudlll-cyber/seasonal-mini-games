@@ -94,7 +94,7 @@ export function GuessInput(props: GtnPlayerProps): ReactElement {
         </label>
         <input
           id="gtn-value"
-          className="smg-input"
+          className="sk-input"
           inputMode="numeric"
           autoComplete="off"
           enterKeyHint="send"
@@ -108,7 +108,7 @@ export function GuessInput(props: GtnPlayerProps): ReactElement {
         />
         {negative ? <SignToggle label="Change the sign" onFlip={flip} /> : null}
         <button
-          className="smg-btn smg-btn--primary gtn-go"
+          className="sk-btn sk-btn--primary gtn-go"
           type="submit"
           disabled={!props.canAct || sending}
           data-testid="guess-button"

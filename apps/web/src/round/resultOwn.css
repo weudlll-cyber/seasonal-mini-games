@@ -178,8 +178,11 @@
   right: 0;
 }
 
+/* A small button to the eye and a full target (44 px, journey 47) in the line's own height. */
 .round-result-lines > summary {
-  min-height: 36px;
+  min-height: var(--sk-hit-target);
+  /* Downwards only: above it is the screen's edge. */
+  margin-block: 0 -8px;
   padding-inline: 0.85rem;
   font-size: var(--sk-font-size-small);
   list-style: none;
@@ -265,6 +268,6 @@
   }
 
   .round-result-lines > summary {
-    min-height: var(--sk-hit-target);
+    margin-block: 0;
   }
 }

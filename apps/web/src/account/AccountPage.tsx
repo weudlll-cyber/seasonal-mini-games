@@ -44,7 +44,7 @@ export function AccountPage(): ReactElement {
   const account = session?.account ?? null;
   if (account === null) {
     return (
-      <p className="smg-panel">
+      <p className="sk-panel">
         <SignInLink>Sign in</SignInLink> to see your account.
       </p>
     );
@@ -61,7 +61,7 @@ export function AccountPage(): ReactElement {
         <ChangePassword heading={heading} />
       ) : (
         // A website account has no password to change (T201): it signs in through the website.
-        <div className="smg-panel account-form" data-testid="account-no-password">
+        <div className="sk-panel account-form" data-testid="account-no-password">
           {heading}
           <p>You sign in through the website, so this account has no password here.</p>
         </div>
@@ -91,7 +91,7 @@ function ChangePassword({ heading }: { readonly heading: ReactElement }): ReactE
       });
   };
   return (
-    <form className="smg-panel account-form" onSubmit={submit} data-testid="password-form">
+    <form className="sk-panel account-form" onSubmit={submit} data-testid="password-form">
       {heading}
       <h2>Change password</h2>
       <PasswordFields values={values} onChange={setValues} />
@@ -101,7 +101,7 @@ function ChangePassword({ heading }: { readonly heading: ReactElement }): ReactE
           Password changed. Every other device was signed out.
         </p>
       ) : null}
-      <button type="submit" className="smg-btn smg-btn--primary" data-testid="password-submit">
+      <button type="submit" className="sk-btn sk-btn--primary" data-testid="password-submit">
         Change password
       </button>
     </form>

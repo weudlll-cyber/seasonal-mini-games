@@ -11,14 +11,14 @@
  *                 on none of them is it drawn over a button, a link, a field, the round view or
  *                 the chat (where one of those lies over the badge, the badge covers nothing).
  *                 The match is aborted.
- * Depends on:     @playwright/test, ./guessGames, ./play, ./screens
+ * Depends on:     @playwright/test, ./guessGames, ./play, @seasonal/kit/testing
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 42); docs/spec/10-repository-structure.md §4
  */
 import { expect, test, type Page } from '@playwright/test';
+import { PHONE, setTheme } from '@seasonal/kit/testing';
 
 import { direct, WIDE } from './guessGames.js';
 import { abortMatch, closeAll, fitsScreen, hostMenu, person, roundOpen } from './play.js';
-import { PHONE, setTheme } from './screens.js';
 
 // The development build's label: dev, the branch (or "detached HEAD"), the commit, the day.
 const LABEL = /^Mini Games · dev · .+ · [0-9a-f]{7} · \d{4}-\d{2}-\d{2}$/;
@@ -61,7 +61,7 @@ test('journey 42: the build badge covers nothing', async ({ browser }) => {
     code = (await direct(host, { gameId: 'guess-the-number', cooldownS: 30 })).matchCode;
     for (const size of [WIDE, PHONE]) {
       await host.page.setViewportSize(size);
-      for (const theme of ['light', 'dark']) {
+      for (const theme of ['light', 'dark'] as const) {
         const where = `${String(size.width)} ${theme}`;
         await host.page.goto('./');
         await setTheme(host.page, theme);
@@ -85,7 +85,7 @@ test('journey 42: the build badge covers nothing', async ({ browser }) => {
     await expect(host.page.getByTestId('result')).toBeVisible({ timeout: 15_000 });
     for (const size of [WIDE, PHONE]) {
       await host.page.setViewportSize(size);
-      for (const theme of ['light', 'dark']) {
+      for (const theme of ['light', 'dark'] as const) {
         await setTheme(host.page, theme);
         await coversNothing(host.page, `${String(size.width)} ${theme} result`);
       }

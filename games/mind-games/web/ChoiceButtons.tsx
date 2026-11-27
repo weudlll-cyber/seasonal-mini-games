@@ -23,13 +23,14 @@
  * Used by:        ./MindInput, ./FeedPanels
  * Spec:           docs/spec/02e-game-mind-games.md §6.1, §11
  */
+import { SeasonIcon } from '@seasonal/kit/react';
 import { CHOICE_NAMES, optionsOf, type Choice, type SpectatorView } from '@smg-game/mind-games';
 import { clockText } from '@seasonal/kit';
 import type { PhasedTiming } from '@smg/game-sdk';
 import { useRef, useState, type KeyboardEvent, type ReactElement } from 'react';
 
 import { FlightBand } from './FlightBand.js';
-import { colorOf, iconsOf } from './seasons.js';
+import { colorOf, seasonsOf } from './seasons.js';
 import { delayS } from './text.js';
 
 interface ChoiceButtonsProps {
@@ -59,8 +60,8 @@ const tint = (c: Choice) => ({ ['--mg-color' as string]: colorOf(c) });
 function Icons(p: { readonly choice: Choice }): ReactElement {
   return (
     <span className="mg-icons" aria-hidden="true">
-      {iconsOf(p.choice).map((src) => (
-        <img key={src} src={src} alt="" />
+      {seasonsOf(p.choice).map((s) => (
+        <SeasonIcon key={s} season={s} size="var(--mg-glyph)" decorative />
       ))}
     </span>
   );

@@ -193,7 +193,7 @@ export function ProviderForm(p: {
       });
   };
   return (
-    <form className="smg-panel smg-panel--inset smg-stack" onSubmit={save}>
+    <form className="sk-panel sk-panel--inset smg-stack" onSubmit={save}>
       <h3>{p.provider === null ? 'New identity provider' : `Change ${p.provider.name}`}</h3>
       <TextInput label="Name" visible value={d.name} onChange={on('name')} />
       <TextInput

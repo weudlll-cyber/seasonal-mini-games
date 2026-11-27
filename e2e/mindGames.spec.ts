@@ -24,11 +24,12 @@
  *                 the intro or in the bar (O93), the strip's current phase and its delay line
  *                 (O92); every input
  *                 has a tooltip; axe passes.
- * Depends on:     @playwright/test, @axe-core/playwright, ./mindGames, ./play, ./screens
+ * Depends on:     @playwright/test, @axe-core/playwright, ./mindGames, ./play, @seasonal/kit/testing
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 38); docs/spec/02e-game-mind-games.md
  */
 import { AxeBuilder } from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
+import { PHONE } from '@seasonal/kit/testing';
 
 import {
   feedHead,
@@ -48,7 +49,6 @@ import {
   visit,
   type Person,
 } from './play.js';
-import { PHONE } from './screens.js';
 
 const WIDE = { width: 1280, height: 720 };
 const DRAFT = 'half a sentence';

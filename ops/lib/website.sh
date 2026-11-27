@@ -20,12 +20,20 @@
 #                 network's subnets; nginx, the app's fixed edge subnet and the website network
 #                 (Docker's port proxy connects from the gateway of either). For smg status:
 #                 the sign-in mode, the authorize endpoint's answer, the feed's last success,
-#                 and whether the trusted ranges still match.
-# Depends on:     ./common.sh (info, warn, die, ask, env_value, compose), docker, curl, ss
-# Used by:        ops/install.sh, ops/lib/website-route.sh, ops/smg (status)
+#                 and whether the trusted ranges still match. The game's route file in the
+#                 website's proxy is the kit's (ops/lib/website-route.sh, T437): here its
+#                 settings (the game, its path, the app's address, the proxy secret, nginx or
+#                 Caddy with their check and reload), its install, and the end-of-install check
+#                 through the website: /games/mini-games/ answers, the sign-in route without a
+#                 session ends at the website's /login?next=…, and /embed/chat?room=mini-games
+#                 answers.
+# Depends on:     ./common.sh (info, warn, die, ask, env_value, compose), the kit's
+#                 website-route.sh, docker, curl, ss
+# Used by:        ops/install.sh, ops/smg (status, uninstall)
 # Spec:           docs/spec/10-repository-structure.md §6; docs/spec/07-integration.md §2; Bingo ops/lib/website.sh
 
 WEBSITE_PROJECT=seasonal-site
+BASE=/games/mini-games
 SEASONAL_ETC=/etc/seasonal
 # The website's endpoint that tells the game's proxy who the visitor is (O66, as Bingo D37).
 AUTHORIZE_PATH=/api/games/mini-games/authorize
@@ -213,4 +221,70 @@ website_status() {
   else
     warn "the website's network is now $now, the app trusts $trusted: run the installer again to update it"
   fi
+}
+
+# route_settings <env>: the kit's route file settings of this install (K72). The secret is read
+# from the env file, never put on a command line.
+# shellcheck disable=SC2034 # read by the kit's website-route.sh by name
+route_settings() {
+  local file="$SMG_ETC/$1.env" caddy
+  SK_ROUTE_GAME=mini-games SK_ROUTE_BASE=$BASE SK_ROUTE_SECRET_HEADER=X-Smg-Proxy-Secret
+  SK_ROUTE_SECRET=$(env_value "$file" SMG_WEBSITE_PROXY_SECRET)
+  SK_ROUTE_MODE=$(env_value "$file" SMG_WEBSITE_MODE)
+  SK_ROUTE_FILE=$(env_value "$file" SMG_WEBSITE_ROUTE_FILE)
+  SK_ROUTE_WEBSITE=$(env_value "$file" SMG_WEBSITE_UPSTREAM)
+  if [[ $SK_ROUTE_MODE == nginx ]]; then
+    SK_ROUTE_APP=127.0.0.1:$(env_value "$file" SMG_APP_PORT)
+    SK_ROUTE_CHECK_CMD='nginx -t -q' SK_ROUTE_RELOAD_CMD='systemctl reload nginx'
+  else
+    caddy=$(website_caddy)
+    SK_ROUTE_APP=smg-mini-games-$1:3100
+    SK_ROUTE_CHECK_CMD="docker exec $caddy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile"
+    SK_ROUTE_RELOAD_CMD="docker exec $caddy caddy reload --config /etc/caddy/Caddyfile --adapter caddyfile"
+  fi
+}
+
+# install_route <env>: writes the route file; the website's proxy checks it (a refusal puts the
+# earlier state back) and reloads.
+install_route() {
+  if [[ $SMG_DRY_RUN == 1 ]]; then
+    info "  would write the game's route file into the website's proxy, check it and reload it"
+    return 0
+  fi
+  (
+    route_settings "$1"
+    # shellcheck source=/dev/null
+    source "$SMG_ROOT/kit/ops/lib/website-route.sh"
+    sk_route_install
+  ) || die "the website's route was not installed (see above)"
+}
+
+# site_fetch <path> [curl args…]: "<status> <last URL>" of one request to the website through
+# its proxy on this server: https first, plain http when nothing answers there.
+site_fetch() {
+  local path=$1 domain=$SMG_WEBSITE_DOMAIN out
+  shift
+  out=$(curl -s -o /dev/null -m 10 --resolve "$domain:443:127.0.0.1" -w '%{http_code} %{url_effective}' "$@" "https://$domain$path" || true)
+  [[ $out != 000* ]] ||
+    out=$(curl -s -o /dev/null -m 10 --resolve "$domain:80:127.0.0.1" -w '%{http_code} %{url_effective}' "$@" "http://$domain$path" || true)
+  printf '%s' "$out"
+}
+
+# verify_website: the end-of-install check through the website; stops naming what failed.
+verify_website() {
+  local failed=() got
+  [[ $SMG_DRY_RUN != 1 ]] || { info "  would check $BASE/, the sign-in route and /embed/chat through the website"; return 0; }
+  info "Checking through the website (https://$SMG_WEBSITE_DOMAIN)"
+  got=$(site_fetch "$BASE/")
+  if [[ $got == 200* ]]; then info "  ok: $BASE/ answers"; else failed+=("$BASE/ answered ${got%% *}"); fi
+  # Without a session the website answers as for a guest; the app sends to its login.
+  got=$(site_fetch "$BASE/auth/website?next=%2Fgames%2Fmini-games%2F" -L --max-redirs 5)
+  if [[ ${got#* } == *"${SMG_WEBSITE_LOGIN_PATH%%\?*}?"* ]]; then
+    info "  ok: the sign-in route reaches the website's authorize endpoint and its login"
+  else
+    failed+=("the sign-in route ended at ${got#* } (status ${got%% *}), not at the website's ${SMG_WEBSITE_LOGIN_PATH}…")
+  fi
+  got=$(site_fetch '/embed/chat?room=mini-games')
+  if [[ $got == 2* ]]; then info "  ok: the website's chat room mini-games answers"; else failed+=("/embed/chat?room=mini-games answered ${got%% *}"); fi
+  ((${#failed[@]} == 0)) || die "installed, but the check through the website failed: $(printf '%s; ' "${failed[@]}")see sudo smg status and sudo smg logs app"
 }

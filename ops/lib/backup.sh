@@ -1,124 +1,97 @@
 #!/usr/bin/env bash
 # @file   ops/lib/backup.sh
 # @module ops
-# @brief  Backups: pg_dump + uploads → age → /var/backups/smg/<env>/, retention, restore, drill, timer.
+# @brief  This server's settings for the kit's backup script, the keys it keeps, and the timer.
 #
-# Responsibility: a backup is a tar of the database dump (pg_dump -Fc, inside the postgres
-#                 container) and the uploads volume (read by a helper container, so a
-#                 crash-looping app does not block it), encrypted with the operator's age
-#                 public key (the server never holds the private key), written as .partial
-#                 and renamed when complete; kept: the 14 newest plus the newest of each of 8
-#                 older weeks. The plain dump lives in a work folder removed on exit. Files
-#                 are readable by the group smg-backup (pulling without root). A restore asks
-#                 first, refuses another environment's backup unless --force-env, and needs
-#                 the operator's age identity file; a drill restores into a throw-away
-#                 PostgreSQL container (readiness wait capped at 60 s) and counts the rows;
-#                 the systemd timer runs `smg --env <env> backup` at 03:30.
-# Depends on:     ./common.sh (compose, run, put_file, env_value, confirm, cleanup), age, docker
-# Used by:        ops/smg, ops/install.sh (timer)
+# Responsibility: backups, restore and drill are the kit's ops/backup.sh (DECISIONS T431; its
+#                 docs/OPERATIONS.md says what a backup is, what is kept and what a restore
+#                 refuses), taken from the app image into /opt/smg/kit/ops by the installer.
+#                 Here: the settings of one environment (prefix smg, /var/backups/smg/<env>/,
+#                 the group smg-backup, the database in its compose container with the schema
+#                 smg, the uploads volume without the maintenance flag); stopping the app before
+#                 a restore and, after it, setting up the database roles again (a restored
+#                 database belongs to the superuser) and starting the stack, whose migration
+#                 step grants the app role. The round and recovery keys are kept inside each
+#                 backup as the secret file /etc/smg/keys/<env>.keys, written from the env
+#                 file (owner decision 2026-11-25, T437); the kit's restore compares it, as
+#                 written just before (ops/smg), and puts a backup's file back there
+#                 (SK_ADMIN_SECRETS_DIR), and before the stack starts again its keys go into
+#                 the env file the app reads (T443). The systemd timer runs
+#                 `smg --env <env> backup` at 03:30.
+# Depends on:     ./common.sh (compose, run, put_file, env_value, set_env_value), ./config.sh
+#                 (apply_db_roles), the kit's backup.sh, age, docker
+# Used by:        ops/smg, ops/install.sh (keys, first backup, timer), ops/dev-drill.sh
+#                 (PG_IMAGE)
 # Spec:           docs/spec/10-repository-structure.md §6; Bingo 09 §6; Bingo 03 §15
 
 PG_IMAGE=postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
 BACKUP_GROUP=smg-backup
+KIT_BACKUP=${KIT_BACKUP:-$SMG_ROOT/kit/ops/backup.sh}
+# A folder of its own: a restore puts the secret files there and makes it root's alone.
+SMG_KEYS=$SMG_ETC/keys
 
-# do_backup <env>: sets BACKUP_FILE to the new file (runs in this shell, so errors stop it).
-do_backup() {
-  local env=$1 dir="$SMG_BACKUPS/$1" work stamp out recipient image
-  recipient=$(env_value "$SMG_ETC/$env.env" SMG_AGE_RECIPIENT)
-  image=$(env_value "$SMG_ETC/$env.env" SMG_IMAGE)
-  [[ -n $recipient ]] || die "no age public key in $SMG_ETC/$env.env (SMG_AGE_RECIPIENT)"
-  command -v age >/dev/null || die "age is not installed (apt-get install age)"
-  work=$(mktemp -d)
-  cleanup_path "$work"
-  stamp=$(date -u +%Y%m%dT%H%M%SZ)
-  out="$dir/smg-$env-$stamp.tar.age"
-  compose "$env" exec -T postgres pg_dump -U smg -Fc smg >"$work/db.dump"
-  docker run --rm --entrypoint tar -v "smg-${env}_uploads:/data:ro" "$image" -C /data -cf - . >"$work/uploads.tar"
-  install -d -m 0750 -g "$BACKUP_GROUP" "$SMG_BACKUPS" "$dir"
-  cleanup_path "$out.partial"
-  tar -C "$work" -cf - db.dump uploads.tar | age -r "$recipient" >"$out.partial"
-  chgrp "$BACKUP_GROUP" "$out.partial"
-  chmod 0640 "$out.partial"
-  mv "$out.partial" "$out"
-  prune_backups "$dir"
-  # shellcheck disable=SC2034 # read by ops/smg after the call
-  BACKUP_FILE=$out
-}
-
-# prune_backups <dir>: keeps the 14 newest (daily), and of the older ones the newest of each
-# week for 8 weeks (weekly, counted apart from the dailies).
-prune_backups() {
-  local dir=$1 file week kept=0 weeks=()
-  while IFS= read -r file; do
-    kept=$((kept + 1))
-    ((kept <= 14)) && continue
-    week=$(date -u -d "$(basename "$file" | sed -E 's/.*-([0-9]{8})T.*/\1/')" +%G%V)
-    if [[ " ${weeks[*]} " != *" $week "* && ${#weeks[@]} -lt 8 ]]; then
-      weeks+=("$week")
-    else
-      rm -f "$file"
-    fi
-  done < <(find "$dir" -maxdepth 1 -name 'smg-*.tar.age' | sort -r)
-}
-
-# unpack <file> <identity> <dir>: decrypts (when .age) and unpacks a backup into <dir>.
-unpack() {
-  local file=$1 identity=$2 dir=$3
-  if [[ $file == *.age ]]; then
-    [[ -n $identity ]] || die "this backup is encrypted: pass your age key file with --identity <file>"
-    age -d -i "$identity" "$file" | tar -C "$dir" -xf -
-  else
-    tar -C "$dir" -xf "$file"
-  fi
-  [[ -s $dir/db.dump ]] || die "no database dump in $file"
-}
-
-# do_restore <env> <file> <identity> <force-env>: replaces the database and the uploads.
-do_restore() {
-  local env=$1 file=$2 work
-  if [[ $(basename "$file") != smg-"$env"-* && $4 != 1 ]]; then
-    die "$(basename "$file") is not a backup of $env; pass --force-env to restore it anyway"
-  fi
-  confirm "Restore $(basename "$file") over the live $env data? Everything since that backup is lost."
-  work=$(mktemp -d)
-  cleanup_path "$work"
-  unpack "$file" "$3" "$work"
-  compose "$env" stop app
-  restore_database "$env" "$work/db.dump"
-  compose "$env" run --rm -T --no-deps --entrypoint sh app -c 'rm -rf /data/* && tar -C /data -xf -' <"$work/uploads.tar"
-  compose "$env" start app
-  wait_ready "$env"
-}
-
-# restore_database <env> <dump>: empties the schema, then restores in one transaction that
-# stops at the first error (no half-restored database).
-restore_database() {
-  compose "$1" exec -T postgres psql -U smg -d smg -q -c 'DROP SCHEMA IF EXISTS smg CASCADE'
-  compose "$1" exec -T postgres pg_restore -U smg -d smg --no-owner --single-transaction --exit-on-error <"$2"
-}
-
-# do_drill <file> <identity>: restores into a throw-away database and counts what came back.
-do_drill() {
-  local work name="smg-drill-$$" counts i
-  work=$(mktemp -d)
-  cleanup_path "$work"
-  unpack "$1" "$2" "$work"
-  cleanup_container "$name"
-  docker run -d --rm --name "$name" -e POSTGRES_USER=smg -e POSTGRES_PASSWORD=drill -e POSTGRES_DB=smg "$PG_IMAGE" >/dev/null
-  for i in $(seq 1 60); do
-    docker exec "$name" pg_isready -U smg -d smg >/dev/null 2>&1 && break
-    ((i < 60)) || die "the throw-away database did not start within 60 s"
-    sleep 1
+# write_keys <env>: the secret file every backup keeps, from the env file's two keys.
+write_keys() {
+  local file="$SMG_ETC/$1.env" key value text=''
+  for key in SMG_ROUND_KEY SMG_RECOVERY_KEY; do
+    value=$(env_value "$file" "$key")
+    [[ -n $value || $SMG_DRY_RUN == 1 ]] || die "$key is missing in $file: run ops/install.sh again"
+    text+="$key='$value'"$'\n'
   done
-  sleep 2
-  docker exec -i "$name" pg_restore -U smg -d smg --no-owner --exit-on-error <"$work/db.dump"
-  counts=$(docker exec "$name" psql -U smg -d smg -tA -c \
-    "SELECT (SELECT count(*) FROM smg.schema_migrations) || ' migrations, ' || (SELECT count(*) FROM smg.accounts) || ' accounts, ' || (SELECT count(*) FROM smg.matches) || ' matches, ' || (SELECT count(*) FROM smg.round_events) || ' events'")
-  [[ -n $counts ]] || die "the drill restored nothing readable"
-  info "drill passed: $counts; uploads $(tar -tf "$work/uploads.tar" | wc -l) entries"
+  run install -d -m 0700 "$SMG_KEYS"
+  printf '%s' "$text" | put_file "$SMG_KEYS/$1.keys" 0600
 }
 
-# install_backup_units <env>: the backup group, age, and the systemd timer for 03:30.
+# apply_keys <env>: the keys file's two keys into the env file; a restore may have put a
+# backup's file there (a server set up anew has keys of its own until then).
+apply_keys() {
+  local keys="$SMG_KEYS/$1.keys" file="$SMG_ETC/$1.env" key value
+  [[ -f $keys ]] || return 0
+  for key in SMG_ROUND_KEY SMG_RECOVERY_KEY; do
+    value=$(env_value "$keys" "$key")
+    [[ -n $value ]] || die "$keys lacks $key: nothing changed"
+    [[ $(env_value "$file" "$key") == "$value" ]] || set_env_value "$file" "$key" "$value"
+  done
+}
+
+# backup_settings <env>: exports the kit's SK_BACKUP_* settings of this environment.
+backup_settings() {
+  local env=$1 file="$SMG_ETC/$1.env" here part
+  export SK_BACKUP_PREFIX=smg SK_BACKUP_ENV="$env" SK_BACKUP_DIR="$SMG_BACKUPS/$env"
+  export SK_BACKUP_DB_CONTAINER="smg-$env-postgres-1" SK_BACKUP_DB_USER=smg SK_BACKUP_DB_NAME=smg
+  export SK_BACKUP_DB_SCHEMA=smg SK_BACKUP_GROUP="$BACKUP_GROUP" SK_BACKUP_PG_IMAGE="$PG_IMAGE"
+  # The uploads volume; the maintenance flag in it is live state, not data.
+  export SK_BACKUP_VOLUMES="smg-${env}_uploads" SK_BACKUP_VOLUME_EXCLUDES=./maintenance
+  # The keys without which a restored database cannot open what it sealed.
+  export SK_BACKUP_SECRET_FILES="$SMG_KEYS/$env.keys"
+  SK_BACKUP_AGE_RECIPIENT=$(env_value "$file" SMG_AGE_RECIPIENT)
+  SK_BACKUP_HELPER_IMAGE=$(env_value "$file" SMG_IMAGE)
+  export SK_BACKUP_AGE_RECIPIENT SK_BACKUP_HELPER_IMAGE
+  # A restore stops the app before and starts the stack after, each in a shell of its own.
+  here='set -e'
+  for part in common config backup; do here+="; source $(printf '%q' "$SMG_ROOT/lib/$part.sh")"; done
+  SK_BACKUP_STOP_CMD="$here; compose $(printf '%q' "$env") stop app"
+  SK_BACKUP_START_CMD="$here; start_after_restore $(printf '%q' "$env")"
+  export SK_BACKUP_STOP_CMD SK_BACKUP_START_CMD
+}
+
+# start_after_restore <env>: the restored keys, the roles again, then the whole stack (`up`, not
+# `start`: the migration step must run again to grant the app role).
+start_after_restore() {
+  apply_keys "$1"
+  apply_db_roles "$1"
+  compose "$1" up -d
+  wait_ready "$1"
+}
+
+# do_backup <env>: one backup now, for the installer; the kit says the new file's name.
+do_backup() (
+  backup_settings "$1"
+  [[ -f $KIT_BACKUP ]] || die "the backup script is missing ($KIT_BACKUP): run ops/install.sh again"
+  bash "$KIT_BACKUP" backup
+)
+
+# install_backup_units <env>: the backup group and folder, age, and the systemd timer for 03:30.
 install_backup_units() {
   local env=$1
   getent group "$BACKUP_GROUP" >/dev/null || run groupadd --system "$BACKUP_GROUP"
@@ -126,6 +99,8 @@ install_backup_units() {
     run apt-get update -q
     run apt-get install -y -q age
   fi
+  # The folder above the environment's: readable by the pulling group, as the files are.
+  run install -d -m 0750 -g "$BACKUP_GROUP" "$SMG_BACKUPS"
   put_file /etc/systemd/system/smg-backup@.service 0644 <<'EOF'
 [Unit]
 Description=Seasonal Mini Games backup (%i)

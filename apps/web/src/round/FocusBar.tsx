@@ -83,7 +83,7 @@ export function FocusBar(p: FocusBarProps): ReactElement {
       actions={actionsOf(p)}
       panels={p.panels}
       fullscreen={p.fullscreen}
-      buttonClassName="smg-btn"
+      buttonClassName="sk-btn"
     />
   );
 }

@@ -176,7 +176,8 @@ test('a site that is not on the allowlist can neither frame the game nor hand of
     data: { token },
   });
   expect(answer.status()).toBe(403);
-  expect(await answer.json()).toEqual({ code: 'ORIGIN_NOT_ALLOWED' });
+  // The server's write check refuses it: the origin is not one that may make this write.
+  expect(await answer.json()).toEqual({ code: 'CSRF_INVALID' });
   expect(answer.headers()['access-control-allow-origin']).toBeUndefined();
   await ctx.close();
 });

@@ -57,7 +57,7 @@ export function FallenNumbers({ removed }: { readonly removed: readonly number[]
         <button
           ref={sheet.button}
           type="button"
-          className="smg-btn gtn-fallen-more"
+          className="sk-btn gtn-fallen-more"
           aria-expanded={sheet.open}
           aria-controls={sheet.panelId}
           onClick={sheet.toggle}
@@ -69,7 +69,7 @@ export function FallenNumbers({ removed }: { readonly removed: readonly number[]
       <div id={sheet.panelId} className="gtn-fallen-body" hidden={!sheet.open}>
         <div className="gtn-fallen-head">
           <h3>Fallen numbers ({formatNumber(n)})</h3>
-          <button type="button" className="smg-btn gtn-fallen-close" onClick={sheet.close}>
+          <button type="button" className="sk-btn gtn-fallen-close" onClick={sheet.close}>
             Close
           </button>
         </div>

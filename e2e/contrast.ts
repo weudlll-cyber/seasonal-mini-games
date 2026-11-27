@@ -13,13 +13,12 @@
  *                 (relative luminance, 2.x). The screenshot is decoded on a canvas in the
  *                 page itself, so no image library is needed. Transitions are held still
  *                 while measuring.
- * Depends on:     @playwright/test, ./screens
+ * Depends on:     @playwright/test, @seasonal/kit/testing
  * Used by:        ./inactivity.spec, ./range.spec, ./specials.spec
  * Spec:           docs/spec/02-game-guess-the-number.md §12; WCAG 2.2 SC 1.4.3
  */
 import { expect, type Page } from '@playwright/test';
-
-import { setTheme } from './screens.js';
+import { setTheme } from '@seasonal/kit/testing';
 
 interface TextBox {
   readonly text: string;
@@ -170,19 +169,10 @@ export async function readable(
 ): Promise<void> {
   const before = await page.evaluate(() => document.documentElement.getAttribute('data-theme'));
   for (const theme of themes) {
+    // The kit's wait for motion: a special's banner fades in, and measured in its first frames
+    // its text is still nearly transparent (1.29:1 once in a full run).
     await setTheme(page, theme);
-    // A special's banner fades in: measured in its first frames its text is still nearly
-    // transparent (1.29:1 once in a full run). Every running animation that ends (not an
-    // endless glow) ends first.
-    await page.evaluate(() =>
-      Promise.all(
-        document
-          .getAnimations()
-          .filter((a) => a.effect?.getTiming().iterations !== Infinity)
-          .map((a) => a.finished.catch(() => undefined)),
-      ),
-    );
     expect(await failures(page), `text below 4.5:1 on the ${where}, ${theme}`).toEqual([]);
   }
-  await setTheme(page, before ?? 'light');
+  await setTheme(page, before === 'dark' ? 'dark' : 'light');
 }

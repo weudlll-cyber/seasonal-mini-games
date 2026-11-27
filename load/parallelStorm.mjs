@@ -17,8 +17,10 @@
  */
 import { writeFileSync } from 'node:fs';
 
+import { latencies } from '@seasonal/kit/testing';
+
 import { call, problems, signIn } from './http.mjs';
-import { metricsSampler, spread } from './measure.mjs';
+import { sampleServer } from './measure.mjs';
 import { ROUNDS } from './scenarios.mjs';
 import { withLoadStack } from './stack.mjs';
 import * as storm from './storm.mjs';
@@ -59,22 +61,21 @@ async function main() {
   let games = [];
   try {
     games = await setUp(host);
-    const sampler = metricsSampler();
-    await sampler.read();
+    const sampler = sampleServer();
     const startedAt = Date.now();
     const played = await Promise.all(
       games.map((g) =>
         storm.playRound(g, g.mode, g.round, { sampler: false, acks: true, pollMs: 5_000 }),
       ),
     );
-    const server = sampler.stop();
+    const server = await sampler.stop();
     const summary = {
       scenario: 'parallel',
       matches: MATCHES,
       players: PLAYERS,
       spectators: SPECTATORS,
       runS: Math.round((Date.now() - startedAt) / 1000),
-      ackMs: spread(played.flatMap((r) => r.acks)),
+      ackMs: latencies(played.flatMap((r) => r.acks)),
       server,
       rounds: played.map(({ acks, ...round }) => ({ ...round, acks: acks.length })),
       problems: { http: problems.http, examples: problems.examples.slice(0, 10) },

@@ -25,7 +25,7 @@
  *                 (./GuessLine); on a phone the newest row's comment shows under it and a tap
  *                 on a row shows or hides its own.
  * Depends on:     react, @smg/contracts, @smg/game-sdk (rows), @smg-game/registry/web (types),
- *                 ../live/useRound, ./GuessLine, ./OthersLine, ./SpecialBanner, ./roundText, ./roundColumns.css, ./roundLog.css
+ *                 @seasonal/kit/react (useScrollTabStop), ../live/useRound, ./GuessLine, ./OthersLine, ./SpecialBanner, ./roundText, ./roundColumns.css, ./roundLog.css
  * Used by:        ./RoundBody
  * Spec:           docs/spec/02-game-guess-the-number.md §6.2, §6.3, §12; docs/spec/03-seasonal-specials.md §2.4;
  *                 docs/spec/07-integration.md §7
@@ -33,6 +33,7 @@
 import type { GameWeb } from '@smg-game/registry/web';
 import type { RoundStateView } from '@smg/contracts';
 import type { FeedLine, GuessRow } from '@smg/game-sdk';
+import { useScrollTabStop } from '@seasonal/kit/react';
 import { useState, type ReactElement } from 'react';
 
 import type { FeedItem } from '../live/useRound.js';
@@ -121,7 +122,7 @@ function Head(p: LogProps & { readonly count: number; readonly all: number }): R
         <button
           ref={p.more.button}
           type="button"
-          className="smg-btn round-log-all"
+          className="sk-btn round-log-all"
           aria-expanded={p.more.open}
           data-testid="list-all"
           onClick={p.more.toggle}
@@ -148,6 +149,8 @@ function useComments() {
 
 export function RoundLog(p: LogProps): ReactElement {
   const comments = useComments();
+  // The list is a Tab stop while it scrolls (WCAG 2.1.1).
+  const scrolls = useScrollTabStop();
   const shown = guessesOf(p);
   const events = p.kind === 'main' || p.kind === 'all' ? eventsOf(p) : [];
   const rows = (p.kind === 'all' ? [...shown, ...events] : shown).sort((a, b) => b.at - a.at);
@@ -170,6 +173,7 @@ export function RoundLog(p: LogProps): ReactElement {
         <p className="smg-muted round-log-empty">No {actionWords(p.state).many} yet.</p>
       ) : (
         <ol
+          ref={scrolls}
           data-testid={LIST_IDS[p.kind]}
           data-columns={p.columns === true ? '2' : undefined}
           aria-live="polite"

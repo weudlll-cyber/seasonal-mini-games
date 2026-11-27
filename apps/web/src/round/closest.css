@@ -68,6 +68,19 @@
   white-space: nowrap;
 }
 
+/* A phone: a name is whole up to most of the row (a longer one ends in its ellipsis), and the
+   answer's words go under it where the row has no room (journey 47). */
+@media (max-width: 899px) {
+  .round-closest-row {
+    flex-wrap: wrap;
+  }
+
+  .round-closest-row .round-who {
+    flex: none;
+    max-width: 60%;
+  }
+}
+
 .round-closest-rank {
   flex: none;
   min-width: 1.25rem;

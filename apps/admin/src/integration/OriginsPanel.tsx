@@ -1,7 +1,7 @@
 /**
  * @file   apps/admin/src/integration/OriginsPanel.tsx
  * @module admin/integration
- * @brief  The embed allowlist: the sites that may frame the game, list, add, change, remove.
+ * @brief  The embed allowlist: the approved sites, list, add, change, remove.
  *
  * Responsibility: the origins (`GET /admin/embed-origins`) with their label, whether they may
  *                 hand off a sign-in, and when they were added; a form checked with
@@ -67,7 +67,7 @@ function OriginForm(p: {
       });
   };
   return (
-    <form className="smg-panel smg-panel--inset smg-stack" onSubmit={save}>
+    <form className="sk-panel sk-panel--inset smg-stack" onSubmit={save}>
       <h3>{p.origin === null ? 'New embed origin' : `Change ${p.origin.origin}`}</h3>
       {p.origin === null ? (
         <TextInput
@@ -105,7 +105,7 @@ function OriginsTable(p: {
           <td className="smg-row">
             <button
               type="button"
-              className="smg-btn"
+              className="sk-btn"
               onClick={() => {
                 p.edit(o);
               }}
@@ -114,7 +114,7 @@ function OriginsTable(p: {
             </button>
             <button
               type="button"
-              className="smg-btn smg-btn--danger"
+              className="sk-btn sk-btn--danger"
               onClick={() => {
                 p.open(removeRequest(o));
               }}
@@ -148,14 +148,15 @@ export function OriginsPanel(): ReactElement {
       />
     );
   return (
-    <section className="smg-panel smg-stack" aria-label="Embed origins">
+    <section className="sk-panel smg-stack" aria-label="Embed origins">
       <h2>Embed origins</h2>
       <p className="smg-muted">
-        Sites that may frame the game. The list drives frame-ancestors, the frames&apos; messages,
-        the socket&apos;s Origin check and the public API&apos;s CORS.
+        Sites that may frame a standalone install; a website install is framed by its website alone.
+        The list drives frame-ancestors there, and the frames&apos; messages, the socket&apos;s
+        Origin check, the sign-in handoff and the public API&apos;s CORS.
       </p>
       {origins === null ? <p className="smg-muted">Loading…</p> : null}
-      {origins?.length === 0 ? <p>No site may frame the game.</p> : null}
+      {origins?.length === 0 ? <p>No site is on the list.</p> : null}
       {origins === null || origins.length === 0 ? null : (
         <OriginsTable origins={origins} edit={setEditing} open={list.open} />
       )}

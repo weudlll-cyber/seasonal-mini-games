@@ -1,0 +1,262 @@
+/**
+ * @file   e2e/sweepScreens.ts
+ * @module e2e
+ * @brief  The screens of the layout sweep (K67) and how each one opens itself.
+ *
+ * Responsibility: the player's pages, each game's waiting area, start card, running round (with
+ *                 its Players panel and the chat where the size folds them away), result and
+ *                 verify page, and the admin areas. A page is loaded anew for each window
+ *                 size (the sweep resizes before `open`), its fonts and themes sharing that
+ *                 load; a game's matches are ./sweepMatches'. What a screen leaves out of the
+ *                 findings, or declares as an intended overlap or motion, is named with the
+ *                 owner's decision.
+ * Depends on:     @playwright/test, @seasonal/kit/testing, ./play, ./sweepMatches, ./testStack
+ * Used by:        ./sweep.spec
+ * Spec:           docs/spec/09-testing-strategy.md §4 (journey 47)
+ */
+import { expect, type Page } from '@playwright/test';
+import type { IntendedMotion, IntendedOverlap, SweepScreen } from '@seasonal/kit/testing';
+
+import { hostMenu, roundOpen, type Person } from './play.js';
+import { matchesOf, type Matches } from './sweepMatches.js';
+import { ADMIN_URL } from './testStack.js';
+
+// What each page last loaded: its address and the window it loaded in.
+const loaded = new WeakMap<Page, string>();
+
+// A page of an app, loaded anew for each address and window size (the fonts and themes of one
+// size share a load: the sweep sets both on the page). True when it did load.
+async function load(page: Page, url: string): Promise<boolean> {
+  const size = page.viewportSize();
+  const key = `${url} ${String(size?.width)}x${String(size?.height)}`;
+  if (loaded.get(page) === key) return false;
+  await page.goto(url);
+  await page.reload();
+  loaded.set(page, key);
+  return true;
+}
+
+// The same, then waits for the part that says the page is there.
+async function show(page: Page, url: string, ready: string | RegExp): Promise<boolean> {
+  const anew = await load(page, url);
+  await expect(page.getByTestId(ready).first()).toBeVisible({ timeout: 20_000 });
+  return anew;
+}
+
+const pageScreen = (name: string, hash: string, ready: string | RegExp): SweepScreen => ({
+  name,
+  open: async (page) => {
+    await show(page, `./#/${hash}`, ready);
+  },
+});
+
+export const SIGNED_OUT: readonly SweepScreen[] = [
+  pageScreen('lobby signed out', '', 'lobby'),
+  pageScreen('sign-in', 'sign-in', 'sign-in-form'),
+  pageScreen('leaderboard signed out', 'leaderboard', 'leaderboard'),
+];
+
+export const PLAYER_PAGES: readonly SweepScreen[] = [
+  pageScreen('lobby', '', 'lobby'),
+  pageScreen('quick test', 'quick-test', 'quick-test'),
+  pageScreen('leaderboard', 'leaderboard', 'leaderboard'),
+  pageScreen('profile', 'players/dev-player-1', /^profile-(facts|missing)$/),
+  pageScreen('account', 'account', /^(account-no-password|password-form)$/),
+];
+
+// A part the size folds behind a button: opened where the button shows, else the screen as is.
+async function unfold(page: Page, button: string): Promise<void> {
+  const control = page.getByTestId(button);
+  if (await control.isVisible()) await control.click();
+}
+
+// A screen's open from one that says whether it loaded the page.
+const opening =
+  (open: (page: Page) => Promise<unknown>) =>
+  async (page: Page): Promise<void> => {
+    await open(page);
+  };
+
+// What the sweep leaves out: things the owner decided, which stay as they are.
+// O134 (WCAG 2.5.8; O109's rows on a phone): a phone's guess row, a button, is 24 px high.
+const GUESS_ROW = 'small control: [guess-list] button.round-row-line';
+// T150, at 100 % text: a desktop row's comment gives way first, with an ellipsis, its whole
+// text in its tooltip; never the guess or the answer.
+const COMMENT = 'cut text: [guess-list] span.round-comment';
+// O109: a list game's desktop guesses stand in two columns; the rows past them are not shown
+// ("Log (N)" has them all), which a round with many players has. Only where nothing of the row
+// can be seen: a name cut in a visible row is reported.
+const PAST_COLUMNS: NonNullable<SweepScreen['allow']> = [
+  'outside the window: [guess-list] li.round-row',
+  'cut text: [guess-list] span.round-who',
+  'cut text: [guess-list] span.round-value',
+  'cut text: [guess-list] span.round-answer',
+  'cut text: [guess-list] span.round-arriving',
+].map((finding) => ({ finding, onlyNotVisible: true }));
+// O58: Guess The Number's fallen numbers keep three rows on a desktop; those past them are not
+// shown there ("+N more" has every one).
+const PAST_ROWS = { finding: 'cut text: [fallen-list] li', onlyNotVisible: true as const };
+const ROUND = [GUESS_ROW, COMMENT, PAST_ROWS, ...PAST_COLUMNS];
+// O99 (the owner's reference): in a series' pause the bar under "Round 3 in 0:11" runs down to
+// the next round, a step a second, so it is meant to keep moving.
+const COUNTDOWN: IntendedMotion = { selector: '.next-round-fill', decision: 'O99' };
+// O97 (T351): Seasonal Mind Games' desktop stage spans the whole view as a grid, and the info
+// column stands in its free cell.
+const ON_SPLIT_STAGE: IntendedOverlap = {
+  control: '.round-column',
+  over: '.round-stage',
+  decision: 'O97',
+};
+const stageOverlaps = (game: string): readonly IntendedOverlap[] =>
+  game === 'mind-games' ? [ON_SPLIT_STAGE] : [];
+// O48: on a phone a panel is a sheet from under the bar to above the input, over the round.
+const DRAWER = '[data-testid="players-drawer"]';
+const SHEET: readonly IntendedOverlap[] = [
+  { control: '.round-live > *', over: DRAWER, decision: 'O48' },
+  { control: DRAWER, over: '.round-live > *', decision: 'O48' },
+];
+
+// The guess rows a list game's running round shows whole at 1280 × 720 at least, under the
+// docked chat: the owner's decisions, declared to the sweep (K116).
+const ROWS: Readonly<Record<string, { readonly least: number; readonly decision: string }>> = {
+  'guess-the-number': { least: 26, decision: 'O50, O109' },
+  safecracker: { least: 20, decision: 'O109' },
+  'bomb-defusal': { least: 16, decision: 'O109' },
+};
+const GUESS_ROWS = '[data-testid="guess-list"] li.round-row';
+
+// A list game's running round with its floor, opened once its rows are there.
+function listRound(game: string, matches: Matches): SweepScreen {
+  const floor = ROWS[game];
+  return {
+    name: 'round',
+    allow: ROUND,
+    intendedOverlaps: stageOverlaps(game),
+    ...(floor === undefined
+      ? {}
+      : { floors: [{ selector: GUESS_ROWS, ...floor, sizes: [{ width: 1280, height: 720 }] }] }),
+    open: async (page) => {
+      await showRound(page, matches);
+      if (floor === undefined) return;
+      await expect.poll(() => page.locator(GUESS_ROWS).count()).toBeGreaterThanOrEqual(floor.least);
+    },
+  };
+}
+
+// The running round, open; true when this look loaded it. A bot can solve a round at any
+// guess, also while the page opens: then another is taken, three at the most.
+async function showRound(page: Page, matches: Matches): Promise<boolean> {
+  const open = page.locator('[data-testid="round-view"][data-status="open"]');
+  const result = page.getByTestId('result').first();
+  const url = async () => `./#/match/${await matches.round()}`;
+  let anew = await load(page, await url());
+  for (let taken = 0; taken < 3; taken += 1) {
+    await expect(open.or(result).first()).toBeVisible({ timeout: 20_000 });
+    if (!(await result.isVisible())) return anew;
+    await matches.dropRound();
+    anew = await load(page, await url());
+  }
+  await expect(open).toBeVisible({ timeout: 20_000 });
+  return anew;
+}
+
+// The running round with a folded part unfolded.
+function unfolded(
+  name: string,
+  button: string,
+  matches: Matches,
+  intendedOverlaps: readonly IntendedOverlap[],
+): SweepScreen {
+  return {
+    name: `round, ${name}`,
+    allow: ROUND,
+    intendedOverlaps,
+    open: async (page) => {
+      if (await showRound(page, matches)) await unfold(page, button);
+    },
+  };
+}
+
+// The round's result: where the page shows the round running (the first time, or a series that
+// went on to its next round) the host ends it.
+function resultOf(p: Person, matches: Matches): (page: Page) => Promise<void> {
+  return async (page) => {
+    const anew = await load(page, `./#/match/${await matches.round()}`);
+    const result = page.getByTestId('result').first();
+    await expect(result.or(page.getByTestId('round-view')).first()).toBeVisible({
+      timeout: 20_000,
+    });
+    if (!anew || (await result.isVisible())) return;
+    await roundOpen(page);
+    await hostMenu(p);
+    await page.getByTestId('end-round').click();
+    await expect(result).toBeVisible({ timeout: 20_000 });
+    matches.keepRound();
+    // Loaded afresh next time, as the result's own page.
+    loaded.delete(page);
+    await load(page, page.url());
+    await expect(result).toBeVisible({ timeout: 20_000 });
+  };
+}
+
+// The verify page of that result, found once from its fairness proof.
+function verifyOf(result: (page: Page) => Promise<void>): (page: Page) => Promise<void> {
+  let verify = '';
+  return async (page) => {
+    if (verify === '') {
+      await result(page);
+      await page.getByTestId('proof').getByText('Fairness proof').click();
+      await page.getByRole('link', { name: 'Verify this round' }).click();
+      await expect(page.getByTestId('seed-check')).toBeVisible();
+      verify = page.url();
+    }
+    await show(page, verify, 'seed-check');
+  };
+}
+
+export function gameScreens(p: Person, game: string, codes: string[]): readonly SweepScreen[] {
+  const matches = matchesOf(p, game, codes, ROWS[game]?.least ?? null);
+  const result = resultOf(p, matches);
+  const match = async (page: Page, code: Promise<string>, ready: string) =>
+    show(page, `./#/match/${await code}`, ready);
+  const screens: SweepScreen[] = [
+    { name: 'waiting', open: opening((page) => match(page, matches.waiting(), 'waiting-area')) },
+    {
+      name: 'start card',
+      open: opening((page) => match(page, matches.card(), 'start-card')),
+    },
+    listRound(game, matches),
+    unfolded('players', 'focus-players', matches, [...stageOverlaps(game), ...SHEET]),
+    unfolded('chat', 'chat-bar', matches, stageOverlaps(game)),
+    { name: 'result', intendedMotion: game === 'mind-games' ? [COUNTDOWN] : [], open: result },
+    {
+      name: 'match over',
+      open: opening((page) => match(page, matches.over(), 'match-summary')),
+    },
+  ];
+  // Mind Games shows no fairness proof, so it has no verify page.
+  if (game !== 'mind-games') screens.push({ name: 'verify', open: verifyOf(result) });
+  return screens;
+}
+
+const ADMIN_AREAS = [
+  'live',
+  'settings',
+  'accounts',
+  'seasons',
+  'moderation',
+  'abuse',
+  'audit',
+  'integration',
+  'two-factor',
+];
+
+export const ADMIN_SCREENS: readonly SweepScreen[] = ADMIN_AREAS.map((area) => ({
+  name: `admin ${area}`,
+  open: async (page) => {
+    await load(page, `${ADMIN_URL}/#/${area}`);
+    const main = page.locator('.admin-main');
+    await expect(main.locator('h1, h2').first()).toBeVisible({ timeout: 20_000 });
+    await expect(main).not.toContainText('Loading');
+  },
+}));

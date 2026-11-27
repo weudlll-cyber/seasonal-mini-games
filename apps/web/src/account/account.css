@@ -13,6 +13,7 @@
   display: grid;
   gap: var(--sk-space-2);
   max-width: 28rem;
+  grid-template-columns: minmax(0, 1fr);
   margin: 0 auto;
 }
 

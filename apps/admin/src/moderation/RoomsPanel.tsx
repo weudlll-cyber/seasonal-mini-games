@@ -67,7 +67,7 @@ function RoomSettings(p: {
       </label>
       <button
         type="button"
-        className="smg-btn smg-btn--primary"
+        className="sk-btn sk-btn--primary"
         disabled={!/^\d{1,4}$/.test(slow)}
         onClick={() => {
           open(roomRequest(room, Number(slow), locked));
@@ -108,7 +108,7 @@ function Room({ open }: { readonly open: (r: ConfirmRequest) => void }): ReactEl
           onChange={setCode}
           maxLength={6}
         />
-        <button type="button" className="smg-btn" onClick={find}>
+        <button type="button" className="sk-btn" onClick={find}>
           Find room
         </button>
       </div>
@@ -139,19 +139,19 @@ function List({
       });
   };
   return (
-    <label className="smg-field">
+    <label className="sk-field">
       <span>
         {list.id} ({list.terms.length} terms, changed {new Date(list.updatedAt).toLocaleString()})
       </span>
       <textarea
-        className="smg-input"
+        className="sk-input"
         rows={6}
         value={text}
         onChange={(e) => {
           setText(e.target.value);
         }}
       />
-      <button type="button" className="smg-btn" onClick={save}>
+      <button type="button" className="sk-btn" onClick={save}>
         Save {list.id} list
       </button>
       {problem === null ? null : <span role="alert">{problem}</span>}
@@ -169,7 +169,7 @@ export function RoomsPanel(): ReactElement {
     void load();
   }, [load]);
   return (
-    <section className="smg-panel smg-stack" aria-label="Rooms and word lists">
+    <section className="sk-panel smg-stack" aria-label="Rooms and word lists">
       <Room open={open} />
       <h2>Word lists</h2>
       {lists.map((l) => (

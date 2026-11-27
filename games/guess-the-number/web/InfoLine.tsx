@@ -40,11 +40,11 @@ export function InfoLine(props: SpectatorPanelProps): ReactElement {
           : `${formatNumber(v.range.low)}–${formatNumber(v.range.high)}`}
       </strong>
       {leafFallOn(props) ? (
-        <span className="smg-chip" data-testid="gtn-line-fallen">
+        <span className="sk-chip" data-testid="gtn-line-fallen">
           {fallenText(v)}
         </span>
       ) : null}
-      {v.hint === null ? null : <span className="smg-chip smg-hint">{shortHint(v.hint)}</span>}
+      {v.hint === null ? null : <span className="sk-chip smg-hint">{shortHint(v.hint)}</span>}
     </span>
   );
 }

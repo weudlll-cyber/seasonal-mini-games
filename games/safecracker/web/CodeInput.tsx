@@ -191,7 +191,7 @@ export function CodeInput(props: CodeInputProps): ReactElement {
           ))}
         </div>
         <button
-          className="smg-btn smg-btn--primary sc-go"
+          className="sk-btn sk-btn--primary sc-go"
           type="submit"
           disabled={!props.canAct || send.sending || !send.complete}
           data-testid="guess-button"

@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "pnpm --parallel --filter @smg/server --filter @smg/web --filter @smg/admin run dev",
     "dev:reset-db": "pnpm --filter @smg/server db:reset-dev",
+    "preview:website": "pnpm --filter @smg/server preview:website",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier . --write",
     "format:check": "prettier . --check --cache --cache-strategy content",
@@ -26,6 +27,7 @@
     "@axe-core/playwright": "4.14.0",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.65.1",
+    "@seasonal/kit": "github:weudlll-cyber/seasonal-kit#v0.40.0",
     "@smg/contracts": "workspace:*",
     "@types/node": "22.20.5",
     "@vitest/coverage-v8": "5.1.1",

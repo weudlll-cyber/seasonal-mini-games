@@ -16,17 +16,18 @@
  *                 from the Quick Test round's 20 s and 10 s (O75). Light
  *                 screenshots of each step go to reports/screens/latest/ (O70). The match is
  *                 aborted.
- * Depends on:     @playwright/test, node:path, ./contrast, ./guessGames, ./play, ./screens
+ * Depends on:     @playwright/test, node:path, ./contrast, ./guessGames, ./play, @seasonal/kit/testing
  * Spec:           docs/spec/09-testing-strategy.md §4 (journey 37); docs/spec/02-game-guess-the-number.md §5.3
  */
 import path from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
+import { PHONE } from '@seasonal/kit/testing';
 
+import { SHOTS_DIR } from './testStack.js';
 import { readable } from './contrast.js';
 import { direct, WIDE } from './guessGames.js';
 import { abortMatch, closeAll, hostMenu, person } from './play.js';
-import { PHONE, SHOTS_DIR } from './screens.js';
 
 const shot = (page: Page, name: string) =>
   page.screenshot({ path: path.join(SHOTS_DIR, `inactivity-${name}.png`) });

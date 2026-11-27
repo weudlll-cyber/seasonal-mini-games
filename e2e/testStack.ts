@@ -11,13 +11,18 @@
  *                 5411), and the URL of a database of the development PostgreSQL built from its
  *                 env file: the run's own `smg_test` (recreated empty at every start by
  *                 apps/server/tools/testServer), or another one (journey 36's, recreated by
- *                 ./websiteStack), never the developer's `smg` (09 §1.1, DECISIONS T345).
- * Depends on:     ops/.env.dev.example
- * Used by:        ./playwright.config.ts, ./play, ./screens, ./builtAdmin, ./hostSite, the
- *                 specs that open the admin app, the host site or the database, ./websiteStack
+ *                 ./websiteStack), never the developer's `smg` (09 §1.1, DECISIONS T345);
+ *                 `dropTestDatabase` throws one away when its run ends.
+ * Depends on:     node:child_process, apps/server/tools/dropTestDatabase,
+ *                 ops/.env.dev.example
+ * Used by:        ./playwright.config.ts, ./play, ./builtAdmin, ./hostSite, the specs that
+ *                 open the admin app, the host site or the database or save screenshots,
+ *                 ./websiteStack, ./globalTeardown
  * Spec:           docs/spec/09-testing-strategy.md §1.1; docs/spec/10-repository-structure.md §4
  */
+import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const REPO_ROOT = fileURLToPath(new URL('..', import.meta.url));
@@ -37,6 +42,8 @@ export const HOST_PAGE_URL = 'http://127.0.0.1:5420';
 // nginx, which serves the game under /games/mini-games/ as the real website does.
 export const WEBSITE_SERVER_PORT = 3960;
 export const WEBSITE_URL = 'http://127.0.0.1:5430';
+// Where the latest run's screenshots go (git-ignored; every run replaces them).
+export const SHOTS_DIR = path.join(REPO_ROOT, 'reports', 'screens', 'latest');
 
 function readEnvFile(): Map<string, string> {
   const text = readFileSync(new URL(`../${ENV_FILE}`, import.meta.url), 'utf8');
@@ -62,4 +69,13 @@ export function databaseUrl(database = TEST_DATABASE): string {
   const user = encodeURIComponent(get('POSTGRES_USER'));
   const password = encodeURIComponent(get('POSTGRES_PASSWORD'));
   return `postgres://${user}:${password}@127.0.0.1:${get('SMG_DEV_POSTGRES_PORT')}/${database}`;
+}
+
+// Drops a run's database, so nothing it wrote is left behind (kit K125).
+export function dropTestDatabase(database = TEST_DATABASE): void {
+  execFileSync(process.execPath, ['--import=tsx', 'tools/dropTestDatabase.ts'], {
+    cwd: path.join(REPO_ROOT, 'apps/server'),
+    env: { ...process.env, DATABASE_URL: databaseUrl(database) },
+    stdio: 'inherit',
+  });
 }

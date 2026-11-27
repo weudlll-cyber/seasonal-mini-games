@@ -23,14 +23,14 @@
  *                 the phone through the loupe, in a match of its own. The round's bot waits
  *                 60 s after each of its tries, so it cannot end the round while the journey
  *                 runs, however slow the machine (T373). The matches are aborted.
- * Depends on:     @playwright/test, ./guessGames, ./play, ./screens
+ * Depends on:     @playwright/test, ./guessGames, ./play, @seasonal/kit/testing
  * Spec:           docs/spec/09-testing-strategy.md §4 (journeys 24–27); docs/spec/02-game-guess-the-number.md §12
  */
 import { expect, test, type Browser, type Locator, type Page } from '@playwright/test';
+import { PHONE } from '@seasonal/kit/testing';
 
 import { direct, WIDE } from './guessGames.js';
 import { abortMatch, closeAll, fitsScreen, listRoom, ownRows, person, roundOpen } from './play.js';
-import { PHONE } from './screens.js';
 
 type Size = typeof WIDE;
 // What each size must reach (T141–T144): rows the guess list has room for, a tile's size.

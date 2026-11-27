@@ -28,7 +28,7 @@ export function SignIn(): ReactElement {
   const [password, setPassword] = useState('');
   const { error, busy, submit } = useAccountSubmit(() => signIn(email.trim(), password));
   return (
-    <form className="smg-panel account-form" onSubmit={submit} data-testid="sign-in-form">
+    <form className="sk-panel account-form" onSubmit={submit} data-testid="sign-in-form">
       <h1>Sign in</h1>
       <AccountField
         label="E-mail"
@@ -49,7 +49,7 @@ export function SignIn(): ReactElement {
       <FormError text={error} testId="sign-in-error" />
       <button
         type="submit"
-        className="smg-btn smg-btn--primary"
+        className="sk-btn sk-btn--primary"
         disabled={busy}
         data-testid="sign-in-submit"
       >
@@ -84,10 +84,10 @@ export function SignInLink(p: {
 // Website mode: the sign-in and register addresses lead to the website's sign-in instead.
 export function WebsiteSignIn(): ReactElement {
   return (
-    <section className="smg-panel account-form" data-testid="website-sign-in">
+    <section className="sk-panel account-form" data-testid="website-sign-in">
       <h1>Sign in</h1>
       <p>Players sign in with their Seasonal Entertainment account.</p>
-      <SignInLink className="smg-btn smg-btn--primary">Sign in</SignInLink>
+      <SignInLink className="sk-btn sk-btn--primary">Sign in</SignInLink>
     </section>
   );
 }

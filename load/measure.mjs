@@ -1,66 +1,24 @@
 /**
  * @file   load/measure.mjs
  * @module load
- * @brief  What the load check measures: server samples, percentiles, the log's integrity.
+ * @brief  What the load check measures: server samples and the log's integrity.
  *
- * Responsibility: sample the server's CPU, memory and event-loop lag from /metrics every 2 s;
- *                 percentiles of a list of times; the fairness checks over a round's log
+ * Responsibility: the server's samples (the kit's watchServer with this game's metric prefix;
+ *                 the percentiles of a list of times are the kit's `latencies`, nearest rank,
+ *                 kit K73); the fairness checks over a round's log
  *                 (every acknowledged guess in the log once under its player, receive numbers
  *                 gap-free, each player's acknowledgements in send order, one winner); the
  *                 specials a round fired, once each, with how late they were.
- * Depends on:     ./http
+ * Depends on:     @seasonal/kit/testing (latencies, watchServer), ./http
  * Used by:        ./storm, ./parallelStorm, ./mindStorm
  * Spec:           docs/spec/09-testing-strategy.md §5 (pass criteria)
  */
+import { latencies, watchServer } from '@seasonal/kit/testing';
+
 import { BASE } from './http.mjs';
 
-// Server samples every 2 s: CPU in cores, resident memory, event-loop lag p99.
-export function metricsSampler() {
-  const samples = [];
-  let last = null;
-  const read = async () => {
-    const text = await (await fetch(`${BASE}/metrics`)).text();
-    const value = (name) =>
-      Number(new RegExp(`^${name} ([0-9.e+-]+)$`, 'm').exec(text)?.[1] ?? 'NaN');
-    const now = {
-      at: Date.now(),
-      cpu: value('smg_process_cpu_seconds_total'),
-      rss: value('smg_process_resident_memory_bytes'),
-      lag: value('smg_nodejs_eventloop_lag_p99_seconds'),
-    };
-    if (last !== null)
-      samples.push({
-        cpu: (now.cpu - last.cpu) / ((now.at - last.at) / 1000),
-        rss: now.rss,
-        lag: now.lag,
-      });
-    last = now;
-  };
-  const timer = setInterval(() => void read().catch(() => undefined), 2_000);
-  const stop = () => {
-    clearInterval(timer);
-    const n = Math.max(1, samples.length);
-    return {
-      cpuPeakCores: Math.max(...samples.map((x) => x.cpu)).toFixed(2),
-      cpuMeanCores: (samples.reduce((a, x) => a + x.cpu, 0) / n).toFixed(2),
-      rssPeakMiB: Math.round(Math.max(...samples.map((x) => x.rss)) / 1_048_576),
-      loopLagP99PeakMs: Math.round(Math.max(...samples.map((x) => x.lag)) * 1000),
-    };
-  };
-  return { read, stop };
-}
-
-const pct = (xs, p) => {
-  if (xs.length === 0) return null;
-  const s = [...xs].sort((a, b) => a - b);
-  return Math.round(s[Math.min(s.length - 1, Math.floor((p / 100) * s.length))]);
-};
-export const spread = (xs) => ({
-  p50: pct(xs, 50),
-  p95: pct(xs, 95),
-  p99: pct(xs, 99),
-  count: xs.length,
-});
+// The server's CPU, memory and event-loop lag from its /metrics every 2 s; `stop()` sums up.
+export const sampleServer = () => watchServer({ url: `${BASE}/metrics`, prefix: 'smg_' });
 
 // Players are named by their number in the match in the log as on the wire (DECISIONS T104).
 export function integrity(records, verify) {
@@ -95,7 +53,7 @@ export function firedSpecials(records) {
   const fired = [...once.values()];
   return {
     fired: fired.map((f) => `${f.special}/${String(f.index)}`),
-    lateMs: spread(fired.map((f) => f.lateMs)),
-    seenLateMs: spread(fired.map((f) => f.seenLateMs)),
+    lateMs: latencies(fired.map((f) => Math.round(f.lateMs))),
+    seenLateMs: latencies(fired.map((f) => Math.round(f.seenLateMs))),
   };
 }

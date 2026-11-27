@@ -62,7 +62,7 @@ function Secret(p: {
   readonly close: () => void;
 }): ReactElement {
   return (
-    <section className="smg-panel smg-panel--inset smg-stack" aria-label="Signing secret">
+    <section className="sk-panel sk-panel--inset smg-stack" aria-label="Signing secret">
       <h3>Signing secret</h3>
       <p>
         The receiver checks each call&apos;s HMAC-SHA256 signature with this secret. Store it now:
@@ -71,7 +71,7 @@ function Secret(p: {
       <code className="admin-diff" data-testid="webhook-secret">
         {p.made.secret}
       </code>
-      <button type="button" className="smg-btn" onClick={p.close}>
+      <button type="button" className="sk-btn" onClick={p.close}>
         I have stored it
       </button>
     </section>
@@ -87,12 +87,12 @@ interface RowActions {
 function Row({ w, a }: { readonly w: WebhookEndpointView; readonly a: RowActions }): ReactElement {
   const [deliveries, setDeliveries] = useState(false);
   const button = (label: string, act: () => void, danger = false) => (
-    <button type="button" className={`smg-btn${danger ? ' smg-btn--danger' : ''}`} onClick={act}>
+    <button type="button" className={`sk-btn${danger ? ' sk-btn--danger' : ''}`} onClick={act}>
       {label}
     </button>
   );
   return (
-    <li className="smg-panel smg-panel--inset smg-stack" data-testid={`webhook-${w.url}`}>
+    <li className="sk-panel sk-panel--inset smg-stack" data-testid={`webhook-${w.url}`}>
       <strong className="admin-diff">{w.url}</strong>
       <span>
         {w.events.join(', ')} · {w.enabled ? 'enabled' : 'disabled'} · last delivery: {lastText(w)}
@@ -149,7 +149,7 @@ export function WebhooksPanel(): ReactElement {
       />
     );
   return (
-    <section className="smg-panel smg-stack" aria-label="Webhooks">
+    <section className="sk-panel smg-stack" aria-label="Webhooks">
       <h2>Webhooks</h2>
       <p className="smg-muted" data-testid="webhook-feature">
         {list.data?.feature === false

@@ -5,9 +5,9 @@
  *
  * Responsibility: the owner's reference of 2026-11-15 (MG-N8): the title (15 px bold) with its
  *                 short line (13 px muted); one row per round still to play, the label at the left
- *                 and a select 170 px wide and 44 px high at the right (less, at least 32 px, at the
- *                 screen's scale, `--fit`, O111, where the result has not the room), the list the only
- *                 part that scrolls when the box is short; "Hide my switches" at the foot. On a
+ *                 and a select 170 px wide and 44 px high at the right (its row less, at least 36 px,
+ *                 at the screen's scale, `--fit`, O111, where the result has not the room), the list
+ *                 the only part that scrolls when the box is short; "Hide my switches" at the foot. On a
  *                 phone the rounds two to a row, the label above its select. In the waiting area
  *                 and the next round's box alike (02e §7, §11). Colours only from the tokens.
  * Spec:           docs/spec/02e-game-mind-games.md §7, §11
@@ -50,7 +50,10 @@
 .mg-prefs-round select {
   flex: none;
   width: 170px;
-  min-height: max(32px, calc(var(--fit, 1) * var(--sk-hit-target)));
+  /* A full target at every scale: where the screen is scaled its row gives up to 8 px of it,
+     which reaches into the gaps (journey 47). */
+  min-height: var(--sk-hit-target);
+  margin-block: max(-4px, min(0px, calc((var(--fit, 1) - 1) * var(--sk-hit-target) / 2)));
 }
 
 .mg-prefs-note {

@@ -3,253 +3,67 @@
  * @module web
  * @brief  WCAG AA contrast of the design tokens in the light and the dark theme (01 §13).
  *
- * Responsibility: read the tokens (the kit's shared ones, then the game's own from @smg/ui, as
- *                 the clients load them) and check, in both themes, that body, muted, winter
- *                 and success text (Frost's line, "higher") keep 4.5:1 on the page, the opaque
- *                 surfaces and the translucent cards — composited over the base colour and
- *                 over each of the four token glows, as the website measures — and on the top bar's gradient stops; the
- *                 solid pill keeps 4.5:1, and so do text and the pressed team button's icon on
- *                 the season colours in both themes (O26 asks 3:1 of the icon); the inactivity
- *                 countdown's text keeps 4.5:1 on the warning surface (O71); every text
- *                 colour of a row keeps 4.5:1 on the viewer's own-row tint of each season
- *                 colour (`--own-tint` into `--color-own-base`, T261); the board ink
- *                 keeps 7:1 (the hero element); and the motion file turns every animation off under
- *                 prefers-reduced-motion.
- * Depends on:     vitest, @seasonal/kit/tokens.css, @seasonal/kit/motion.css, @smg/ui/tokens.css
+ * Responsibility: the kit's `findLowContrast` over the tokens as the clients load them (the
+ *                 kit's, then the game's own from @smg/ui) with this game's pairs: body, muted,
+ *                 winter (Frost's line) and success text ("higher") on the page, the opaque
+ *                 surfaces and the translucent cards over each token glow; the top bar's text
+ *                 on its gradient; the solid pill; danger and success on the surfaces; the
+ *                 inactivity countdown on the warning surface (O71); text and the pressed team
+ *                 button's icon on every season colour (O26); the board ink at 7:1 (the hero
+ *                 element); a row's text on the viewer's own-row tint of each season colour,
+ *                 the mix the page makes (T261), on the panel's card over the page.
+ * Depends on:     vitest, @seasonal/kit/testing, @seasonal/kit/tokens.css, @smg/ui/tokens.css
  *                 (raw)
  * Spec:           Bingo 01 §13 (WCAG 2.2 AA)
  */
+import kitCss from '@seasonal/kit/tokens.css?raw';
+import { findLowContrast, type ContrastPair } from '@seasonal/kit/testing';
+import gameCss from '@smg/ui/tokens.css?raw';
 import { describe, expect, it } from 'vitest';
 
-import motionCss from '@seasonal/kit/motion.css?raw';
-import kitTokensCss from '@seasonal/kit/tokens.css?raw';
-import gameTokensCss from '@smg/ui/tokens.css?raw';
+const SEASONS = ['spring', 'summer', 'autumn', 'winter'];
+const PAGE = ['--sk-color-background'] as const;
+const GLOWS = [...PAGE, '--sk-page-background'] as const;
+// Everything text sits on: page, surfaces, cards over the base and over each glow.
+const BACKGROUNDS: readonly (readonly string[])[] = [
+  PAGE,
+  ['--sk-color-surface'],
+  ['--sk-color-surface-2'],
+  [...PAGE, '--sk-color-card'],
+  GLOWS,
+  [...GLOWS, '--sk-color-card'],
+];
+const TEXTS = [
+  '--sk-color-text',
+  // Muted text on surface-2 is also every disabled button (base.css).
+  '--sk-color-text-muted',
+  '--color-winter-text',
+  '--color-success-text',
+];
+// The text of a row: names and comments, Frost's held answer, "higher", "lower" and "Boom!".
+const ROW_TEXT = [...TEXTS, '--sk-color-danger'];
+// A season's own-row tint as round/players.css and round/roundLog.css mix it.
+const ownTint = (season: string): string =>
+  `color-mix(in srgb, var(--sk-color-${season}) var(--own-tint), var(--color-own-base))`;
 
-// The game's tokens follow the kit's, as main.tsx imports them: a later value wins.
-const tokensCss = `${kitTokensCss}\n${gameTokensCss}`;
-
-type Rgba = readonly [number, number, number, number];
-
-// The text of every block of one selector, in order (the kit's, then the game's).
-function blockText(selector: string): string {
-  const blocks: string[] = [];
-  for (let start = tokensCss.indexOf(`${selector} {`); start !== -1;) {
-    const end = tokensCss.indexOf('\n}', start);
-    blocks.push(tokensCss.slice(start, end));
-    start = tokensCss.indexOf(`${selector} {`, end);
-  }
-  return blocks.join('\n');
-}
-
-// A colour as #rrggbb or rgb(r g b / a%).
-function parse(value: string): Rgba {
-  const hex = /#([0-9a-f]{6})/i.exec(value)?.[1];
-  if (hex !== undefined) {
-    return [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16)).concat(1) as unknown as Rgba;
-  }
-  const m = /rgb\((\d+) (\d+) (\d+)(?: \/ (\d+)%)?\)/.exec(value);
-  if (m === null) throw new Error(`not a colour: ${value}`);
-  return [Number(m[1]), Number(m[2]), Number(m[3]), m[4] === undefined ? 1 : Number(m[4]) / 100];
-}
-
-// A property's name without the kit's `--sk-` prefix: the tests below name a token the way the
-// game's CSS and the website do (`color-text`), whoever declares it.
-const bare = (name: string): string => name.replace(/^sk-/, '');
-
-// The single-colour custom properties of a block, by bare name.
-function colours(selector: string): Record<string, string> {
-  const entries = [
-    ...blockText(selector).matchAll(/--([\w-]+):\s*(#[0-9a-f]{6}|rgb\([^)]*\)|var\(--[\w-]+\));/gi),
-  ].map((m): [string, string] => [bare(m[1] ?? ''), m[2] ?? '']);
-  return Object.fromEntries(entries);
-}
-
-// Every rgb()/hex colour inside one multi-part token (the glows, the gradient stops).
-function parts(selector: string, name: string): Rgba[] {
-  const text = blockText(selector);
-  const start = text.indexOf(`--sk-${name}:`);
-  const body = text.slice(start, text.indexOf(';', start));
-  return [...body.matchAll(/#[0-9a-f]{6}|rgb\([^)]*\)/gi)].map((m) => parse(m[0]));
-}
-
-// A translucent colour laid over an opaque one.
-function over(top: Rgba, base: Rgba): Rgba {
-  const a = top[3];
-  return [0, 1, 2]
-    .map((i) => (top[i] ?? 0) * a + (base[i] ?? 0) * (1 - a))
-    .concat(1) as unknown as Rgba;
-}
-
-function luminance(c: Rgba): number {
-  const channel = (v: number) => {
-    const s = v / 255;
-    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
-  };
-  return 0.2126 * channel(c[0]) + 0.7152 * channel(c[1]) + 0.0722 * channel(c[2]);
-}
-
-function contrast(a: Rgba, b: Rgba): number {
-  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
-  return (hi + 0.05) / (lo + 0.05);
-}
-
-const THEMES = {
-  light: { selector: ':root', set: colours(':root') },
-  dark: {
-    selector: ":root[data-theme='dark']",
-    set: { ...colours(':root'), ...colours(":root[data-theme='dark']") },
-  },
-} as const;
-
-// Everything text sits on in a theme: page, surfaces, cards over the base and each glow.
-function backgrounds(theme: keyof typeof THEMES): [string, Rgba][] {
-  const { selector, set } = THEMES[theme];
-  const c = (name: string) => parse(set[name] ?? '');
-  const base = c('color-background');
-  const glows = parts(selector, 'page-background')
-    .filter((g) => g[3] < 1)
-    .map((g) => over(g, base));
-  const list: [string, Rgba][] = [
-    ['page', base],
-    ['surface', c('color-surface')],
-    ['surface-2', c('color-surface-2')],
-    ['card', over(c('color-card'), base)],
-    ...glows.map((g, i): [string, Rgba] => [`glow ${String(i + 1)}`, g]),
-    ...glows.map((g, i): [string, Rgba] => [
-      `card on glow ${String(i + 1)}`,
-      over(c('color-card'), g),
-    ]),
-  ];
-  return list;
-}
-
-// A token's colour, following `var(--other)` to the token it names.
-function resolved(set: Readonly<Record<string, string>>, name: string): string {
-  const value = set[name] ?? '';
-  const ref = /^var\(--([\w-]+)\)$/.exec(value)?.[1];
-  return ref === undefined ? value : resolved(set, bare(ref));
-}
+const pairs: readonly ContrastPair[] = [
+  ...TEXTS.flatMap((text) => BACKGROUNDS.map((on) => ({ text, on }))),
+  { text: '--sk-color-text', on: [...PAGE, '--sk-sidebar-background'] },
+  { text: '--sk-color-on-solid', on: ['--sk-color-solid'] },
+  ...['--sk-color-danger', '--sk-color-success'].flatMap((text) =>
+    ['--sk-color-surface', '--sk-color-surface-2'].map((bg) => ({ text, on: [bg] })),
+  ),
+  { text: '--sk-color-text', on: ['--sk-color-warning-surface'] },
+  ...SEASONS.map((season) => ({ text: '--sk-color-on-season', on: [`--sk-color-${season}`] })),
+  ...SEASONS.flatMap((season) =>
+    ROW_TEXT.map((text) => ({ text, on: [...PAGE, '--sk-color-card', ownTint(season)] })),
+  ),
+  { text: '--color-board-ink', on: ['--color-board'], min: 7 },
+  { text: '--color-board-marked-ink', on: ['--color-board-marked'], min: 7 },
+];
 
 describe('token contrast (WCAG AA), light and dark', () => {
-  it.each(['light', 'dark'] as const)('%s: text, muted and winter text keep 4.5:1', (theme) => {
-    const set = THEMES[theme].set;
-    for (const [where, bg] of backgrounds(theme)) {
-      // Muted text on surface-2 is also every disabled button (base.css).
-      for (const text of [
-        'color-text',
-        'color-text-muted',
-        'color-winter-text',
-        'color-success-text',
-      ]) {
-        expect(
-          contrast(parse(resolved(set, text)), bg),
-          `${theme}: ${text} on ${where}`,
-        ).toBeGreaterThanOrEqual(4.5);
-      }
-    }
-  });
-
-  it.each(['light', 'dark'] as const)(
-    '%s: the top bar, the solid pill, danger and success',
-    (theme) => {
-      const { selector, set } = THEMES[theme];
-      const text = parse(set['color-text'] ?? '');
-      const stops = parts(selector, 'sidebar-background');
-      // Dark: the translucent token tints lie over the bar's own opaque colour (the last part).
-      const opaque = stops.at(-1) ?? [0, 0, 0, 1];
-      for (const stop of stops) {
-        expect(
-          contrast(text, stop[3] < 1 ? over(stop, opaque) : stop),
-          `${theme}: bar text`,
-        ).toBeGreaterThanOrEqual(4.5);
-      }
-      expect(
-        contrast(parse(set['color-on-solid'] ?? ''), parse(set['color-solid'] ?? '')),
-      ).toBeGreaterThanOrEqual(4.5);
-      for (const status of ['color-danger', 'color-success']) {
-        for (const bg of ['color-surface', 'color-surface-2']) {
-          expect(
-            contrast(parse(set[status] ?? ''), parse(set[bg] ?? '')),
-            `${theme}: ${status} on ${bg}`,
-          ).toBeGreaterThanOrEqual(4.5);
-        }
-      }
-    },
-  );
-
-  // The inactivity countdown line (round.css): body text on the warning surface; the danger
-  // colour is only its edge.
-  it.each(['light', 'dark'] as const)('%s: the inactivity countdown', (theme) => {
-    const c = (name: string) => parse(resolved(THEMES[theme].set, name));
-    expect(contrast(c('color-text'), c('color-warning-surface'))).toBeGreaterThanOrEqual(4.5);
-  });
-});
-
-// CSS color-mix(in srgb, top pct, base): premultiplied by alpha, as the browser mixes.
-function mixed(top: Rgba, base: Rgba, pct: number): Rgba {
-  const a = top[3] * pct + base[3] * (1 - pct);
-  const rgb = [0, 1, 2].map(
-    (i) => ((top[i] ?? 0) * top[3] * pct + (base[i] ?? 0) * base[3] * (1 - pct)) / a,
-  );
-  return [...rgb, a] as unknown as Rgba;
-}
-
-describe('the own-row tint (T261)', () => {
-  // The text of a row: names and comments, Frost's held answer, "higher", "lower" and "Boom!".
-  const ROW_TEXT = [
-    'color-text',
-    'color-text-muted',
-    'color-winter-text',
-    'color-success-text',
-    'color-danger',
-  ];
-
-  it.each(['light', 'dark'] as const)(
-    '%s: a row’s text keeps 4.5:1 on every own colour',
-    (theme) => {
-      const set = THEMES[theme].set;
-      const c = (name: string) => parse(resolved(set, name));
-      const pct = Number(/--own-tint: (\d+)%;/.exec(blockText(THEMES[theme].selector))?.[1]) / 100;
-      for (const season of ['spring', 'summer', 'autumn', 'winter']) {
-        const tint = mixed(c(`color-${season}`), c('color-own-base'), pct);
-        // A translucent tint lies on the panel's card over the page (T75's base in light).
-        const bg = over(tint, over(c('color-card'), c('color-background')));
-        for (const text of ROW_TEXT) {
-          expect(contrast(c(text), bg), `${theme}: ${text} on ${season}`).toBeGreaterThanOrEqual(
-            4.5,
-          );
-        }
-      }
-    },
-  );
-});
-
-describe('token contrast (WCAG AA), board and seasons', () => {
-  // Text on a season colour, and the pressed team button's icon drawn in that text colour
-  // (O26 checks: 3:1 for the icon; the 4.5:1 of text covers it), in both themes.
-  it.each(['light', 'dark'] as const)('%s: text and icons on every season colour', (theme) => {
-    const set = THEMES[theme].set;
-    const c = (name: string) => parse(resolved(set, name));
-    for (const season of ['spring', 'summer', 'autumn', 'winter']) {
-      expect(
-        contrast(c('color-on-season'), c(`color-${season}`)),
-        `${theme}: on ${season}`,
-      ).toBeGreaterThanOrEqual(4.5);
-    }
-  });
-
-  it('keeps the board ink readable', () => {
-    const set = THEMES.light.set;
-    const c = (name: string) => parse(set[name] ?? '');
-    expect(contrast(c('color-board-ink'), c('color-board'))).toBeGreaterThanOrEqual(7);
-    expect(contrast(c('color-board-marked-ink'), c('color-board-marked'))).toBeGreaterThanOrEqual(
-      7,
-    );
-  });
-
-  it('switches every animation off under prefers-reduced-motion', () => {
-    expect(motionCss).toMatch(
-      /@media \(prefers-reduced-motion: reduce\)[\s\S]*animation: none !important/,
-    );
+  it('keeps every pair readable', () => {
+    expect(findLowContrast({ css: [kitCss, gameCss], pairs })).toEqual([]);
   });
 });

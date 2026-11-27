@@ -89,7 +89,13 @@ describe('the main list', () => {
 
   it('shows each other player’s Discord steps beside their name in that row (07 §7)', () => {
     const steps = {
-      w: [{ ladder: 'holder' as const, name: 'Diamond Hands', icon: '/media/s.webp' }],
+      w: [
+        {
+          ladder: 'holder' as const,
+          name: 'Diamond Hands',
+          icon: '/media/step-icons/0123456789abcdef0123456789abcdef.webp',
+        },
+      ],
     };
     show({ state: { ...open, secretMode: 'individual', steps }, phone: true });
     const line = screen.getByTestId('others-line');

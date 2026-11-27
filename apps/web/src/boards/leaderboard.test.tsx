@@ -47,7 +47,7 @@ describe('the leaderboard', () => {
       '60Anna (you)2123',
     );
     expect(rowsOf('team-board')).toEqual(['1 Team Winter44']);
-    expect(screen.getByAltText('Winter')).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Winter' })).toBeTruthy();
   });
 
   it('adds the next page with "Show more" and drops the neighbourhood once the viewer shows', async () => {

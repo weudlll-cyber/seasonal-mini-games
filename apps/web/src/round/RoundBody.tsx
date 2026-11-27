@@ -22,7 +22,8 @@
  *                 game's input with the cooldown ring, or the solved notice). "All (N)" opens
  *                 the whole list with the events as a panel on demand (O48): a third column on
  *                 a desktop, a sheet on a phone that ends above the dock.
- * Depends on:     react, @smg/contracts, @smg-game/registry/web, ../live/useRound, ./FocusPanel,
+ * Depends on:     react, @smg/contracts, @smg-game/registry/web, @seasonal/kit/react (useScrollTabStop),
+ *                 ../live/useRound, ./FocusPanel,
  *                 ./InfoParts, ./InputRow, ./playerMarks, ./RoundLog, ./RoundSide,
  *                 ./SpecialBanner, ./panels
  * Used by:        ./RoundScreen
@@ -31,6 +32,7 @@
 import type { GameWeb } from '@smg-game/registry/web';
 import type { RoundStateView } from '@smg/contracts';
 import type { OwnMatchPart } from '@smg/game-sdk';
+import { useScrollTabStop } from '@seasonal/kit/react';
 import { useState, type ReactElement } from 'react';
 
 import type { RoundLive } from '../live/useRound.js';
@@ -135,7 +137,7 @@ function useParts(p: BodyProps) {
   // "Your guesses" beside a list game's stage, in shared mode only (individual: the same rows).
   const own =
     playing !== null && !board && state.secretMode === 'shared' ? (
-      <section className="smg-panel round-own" aria-label="Your guesses">
+      <section className="sk-panel round-own" aria-label="Your guesses">
         <RoundLog {...log} phone={false} kind="own" />
       </section>
     ) : null;
@@ -151,9 +153,11 @@ function Others(p: BodyProps & { readonly onMore: () => void }): ReactElement | 
 
 export function RoundBody(p: BodyProps): ReactElement {
   const { board, panel, stageBox, dock, all, main, columns, own, onOthers } = useParts(p);
+  // The info column and its panel are Tab stops while they scroll (WCAG 2.1.1).
+  const scrolls = useScrollTabStop();
   const mainBox = (
     <section
-      className="smg-panel round-main"
+      className="sk-panel round-main"
       aria-label={`This round's ${actionWords(p.state).many}`}
     >
       {main}
@@ -173,14 +177,18 @@ export function RoundBody(p: BodyProps): ReactElement {
   return (
     <>
       {stageBox ?? (
-        <section className="smg-panel round-stage round-stage--list" aria-label="This round">
+        <section className="sk-panel round-stage round-stage--list" aria-label="This round">
           {columns}
           {dock}
         </section>
       )}
-      <aside className="round-column" aria-label="About this round">
+      <aside ref={scrolls} className="round-column" aria-label="About this round">
         <SpecialLine state={p.state} rule={p.rule} />
-        {panel === null ? null : <div className="smg-panel round-panel">{panel}</div>}
+        {panel === null ? null : (
+          <div ref={scrolls} className="sk-panel round-panel">
+            {panel}
+          </div>
+        )}
         <Others {...p} onMore={onOthers} />
         {board ? (
           <>

@@ -10,7 +10,7 @@
  *                 SMG_FEATURE_WEBHOOKS, the lifecycle events queued for delivery. The delivery
  *                 loop itself is started by ../main (as the retention jobs), so tests drive it.
  * Depends on:     fastify, @smg/application (audit), ../config/*, ../integration/*, ../round/runtime,
- *                 ../seasons/safeFetch, ../dev/embedLoader (development only), ./routes/*
+ *                 ../dev/embedLoader (development only), ./routes/*
  * Used by:        ./app
  * Spec:           docs/spec/07-integration.md §1, §3.2, §4, §8; Bingo 07 §2.2, §3, §5, §7
  */
@@ -26,12 +26,11 @@ import type { DbPool } from '../db/pool.js';
 import { devEmbedScript } from '../dev/embedLoader.js';
 import type { EmbedAllowlist } from '../integration/embedOrigins.js';
 import { ProviderKeys } from '../integration/keys.js';
-import { safePost } from '../integration/safePost.js';
+import { fetchJson, postWebhook } from '../integration/outbound.js';
 import { WebhookDelivery } from '../integration/webhookDelivery.js';
 import { queueLifecycleWebhooks } from '../integration/webhookEvents.js';
 import { WebhookStore } from '../integration/webhooks.js';
 import type { RoundRuntime } from '../round/runtime.js';
-import { safeFetchJson } from '../seasons/safeFetch.js';
 import { registerAdminIntegration } from './routes/adminIntegration.js';
 import { registerAdminWebhooks } from './routes/adminWebhooks.js';
 import { bundledEmbedScript, registerEmbedRoutes } from './routes/embed.js';
@@ -55,7 +54,7 @@ export function registerIntegration(app: FastifyInstance, deps: IntegrationDeps)
   const { env, pool, embeds, audit } = deps;
   // Development only: a local JWKS or receiver on a private address (as SMG_DEV_FEED_URL).
   const allowLocal = env.SMG_DEV;
-  const keys = new ProviderKeys((url) => safeFetchJson(url, { allowLocal }));
+  const keys = new ProviderKeys((url) => fetchJson(url, { allowLocal }));
   registerHandoffRoutes(app, {
     pool,
     keys,
@@ -72,6 +71,6 @@ export function registerIntegration(app: FastifyInstance, deps: IntegrationDeps)
   registerAdminWebhooks(app, { store, audit, enabled: deps.features.webhooks });
   if (deps.features.webhooks) queueLifecycleWebhooks(store, deps.runtime.play);
   return new WebhookDelivery(store, (url, body, headers) =>
-    safePost(url, body, headers, { allowLocal }),
+    postWebhook(url, body, headers, { allowLocal }),
   );
 }

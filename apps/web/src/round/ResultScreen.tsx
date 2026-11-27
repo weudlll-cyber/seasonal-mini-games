@@ -130,7 +130,7 @@ function OwnResult(p: ResultProps & { readonly game: GameWeb }): ReactElement {
       <div className="round-result-first" data-testid="result-first">
         {part('reveal')}
         <details className="round-result-lines" data-testid="result-history">
-          <summary className="smg-btn">Every line</summary>
+          <summary className="sk-btn">Every line</summary>
           <div className="round-result-lines-body">{part('history')}</div>
         </details>
       </div>
@@ -184,9 +184,6 @@ function Guesses(p: {
   );
 }
 
-// The fitting option of the result frame, as the start card's (RoundIntro): fit again after fonts.
-const FIT = { afterFonts: true } as const;
-
 // The platform's result (T145) in the kit's `ResultFrame`: the first part one screen high (the
 // end, the margin, the proof, the game's reveal, the top placings and the team line), "Closest to
 // winning" or the full history as its middle card, fitted with the first part (O110, O111), and
@@ -228,7 +225,7 @@ export function ResultScreen(props: ResultProps): ReactElement {
       // A game with "Closest to winning" fits its first part and that card to the screen.
       fitted={closest !== null}
       // The fit again after web fonts have loaded is the kit's (v0.18.0, K55, T423 (3)).
-      fit={FIT}
+      fit={AFTER_FONTS}
       signature={`${state.roundId}|${String(state.closest?.length)}`}
     />
   );

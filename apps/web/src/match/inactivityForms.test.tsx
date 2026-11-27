@@ -29,26 +29,16 @@ import { keptOf } from './roundFields.js';
 
 // The server's answer to the next POST: a refused setting, or a refusal without a field.
 const answer = vi.hoisted(() => ({ refusal: null as { field: string; detail: string } | null }));
-vi.mock('../shell/http.js', () => {
-  class ApiError extends Error {
-    constructor(
-      readonly status: number,
-      readonly code: string,
-      readonly reason: string | null = null,
-      readonly refusal: { field: string; detail: string } | null = null,
-    ) {
-      super(code);
-    }
-  }
+vi.mock('../shell/http.js', async (actual) => {
+  const real = await actual<typeof import('../shell/http.js')>();
   return {
+    ...real,
     api: (path: string) => {
       if (path === '/seasons/current')
         return Promise.resolve({ inSeason: null, halvingToday: null });
       if (path === '/games') return Promise.resolve({ games: [] });
-      return Promise.reject(new ApiError(422, 'ROUND_SETTINGS_INVALID', null, answer.refusal));
+      return Promise.reject(new real.ApiError(422, 'ROUND_SETTINGS_INVALID', null, answer.refusal));
     },
-    ApiError,
-    BASE_PATH: '/',
   };
 });
 

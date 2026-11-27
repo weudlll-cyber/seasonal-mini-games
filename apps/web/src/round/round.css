@@ -67,15 +67,16 @@
 
 /* A board game on a desktop: the stage is as wide as it is tall, so the square board keeps its
    full height and size, and the info column takes all the room beside it (at least 340 px),
-   so the list's rows have room for their comments (O62's review: messages readable). The bar
-   row is its fixed 44 px, which the stage's height is reckoned from. */
+   so the list's rows have room for their comments (O62's review: messages readable). The
+   stage's height is reckoned from the kit's bar in its one row of 44 px; where large text
+   gives the bar two rows (the kit), the board is the smaller for it. */
 .round-live[data-view='desktop'][data-layout='board'] {
   --board-side: min(
     calc(100cqh - 44px - var(--sk-space-1)),
     calc(100cqw - 340px - var(--sk-space-1))
   );
   grid-template-columns: var(--board-side) minmax(340px, 1fr);
-  grid-template-rows: 44px minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .round-live[data-view='desktop'][data-layout='board'][data-panel] {
@@ -226,8 +227,9 @@
   font-size: var(--sk-font-size-small);
 }
 
-/* The phone's info line: the game's line, at most 48 px; the game's parts sit side by side
-   and are never cut: one that has no room left goes whole to a second row (T150). The games
+/* The phone's info line: the game's line, 48 px with its parts in two rows; the game's parts
+   sit side by side and are never cut: one that has no room left goes whole to a second row
+   (T150), and a chip longer than a row wraps in it, the line then taller (T449). The games
    keep their parts short, the details are in the sheet (games/registry/web). */
 .round-line {
   grid-area: line;
@@ -235,7 +237,6 @@
   align-items: center;
   gap: var(--sk-space-1);
   min-height: var(--sk-hit-target);
-  max-height: 48px;
   padding: 0.2rem 0.75rem;
   color: var(--sk-color-text);
   font: inherit;
@@ -260,8 +261,13 @@
 }
 
 .round-line-body > * > * {
+  max-width: 100%;
   flex: none;
   white-space: nowrap;
+}
+
+.round-line-body > * > .sk-chip {
+  white-space: normal;
 }
 
 .round-line-more {

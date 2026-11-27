@@ -56,10 +56,10 @@ export function TextArea(p: {
   readonly placeholder?: string;
 }): ReactElement {
   return (
-    <label className="smg-field">
+    <label className="sk-field">
       <span>{p.label}</span>
       <textarea
-        className="smg-input admin-textarea"
+        className="sk-input admin-textarea"
         rows={4}
         placeholder={p.placeholder}
         value={p.value}
@@ -81,10 +81,10 @@ export function FormEnd(p: {
     <>
       {p.problem === null ? null : <p role="alert">{p.problem}</p>}
       <div className="smg-row">
-        <button type="submit" className="smg-btn smg-btn--primary">
+        <button type="submit" className="sk-btn sk-btn--primary">
           {p.saveLabel}
         </button>
-        <button type="button" className="smg-btn" onClick={p.cancel}>
+        <button type="button" className="sk-btn" onClick={p.cancel}>
           Cancel
         </button>
       </div>
@@ -100,7 +100,7 @@ export function NewOrForm(p: {
 }): ReactElement {
   if (p.form !== null) return p.form;
   return (
-    <button type="button" className="smg-btn smg-btn--primary" onClick={p.start}>
+    <button type="button" className="sk-btn sk-btn--primary" onClick={p.start}>
       {p.label}
     </button>
   );

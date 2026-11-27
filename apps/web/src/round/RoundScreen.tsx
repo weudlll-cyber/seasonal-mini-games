@@ -83,7 +83,7 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
     return <ResultScreen {...props} state={state} game={game} />;
   }
   if (state.status === 'aborted') {
-    return <p className="smg-panel">The round was aborted: {state.abortReason}</p>;
+    return <p className="sk-panel">The round was aborted: {state.abortReason}</p>;
   }
   const now = serverNow();
   const rule = ruleOf(game, state.season);
@@ -106,7 +106,7 @@ export function RoundScreen(props: RoundScreenProps): ReactElement {
     >
       {(panels) =>
         state.status === 'countdown' ? (
-          <RoundIntro state={state} game={game} now={now} noSeason={noSeason} />
+          <RoundIntro state={state} game={game} noSeason={noSeason} />
         ) : (
           <RoundBody
             state={state}

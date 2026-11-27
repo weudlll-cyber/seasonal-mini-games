@@ -31,7 +31,7 @@ export function Register(): ReactElement {
     () => registerProblem(v),
   );
   return (
-    <form className="smg-panel account-form" onSubmit={submit} data-testid="register-form">
+    <form className="sk-panel account-form" onSubmit={submit} data-testid="register-form">
       <h1>Register</h1>
       <AccountField
         label="Display name"
@@ -63,7 +63,7 @@ export function Register(): ReactElement {
       <FormError text={error} testId="register-error" />
       <button
         type="submit"
-        className="smg-btn smg-btn--primary"
+        className="sk-btn sk-btn--primary"
         disabled={busy}
         data-testid="register-submit"
       >

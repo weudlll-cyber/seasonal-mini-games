@@ -34,7 +34,7 @@ export function IntegrationPage(): ReactElement {
           <button
             key={t.id}
             type="button"
-            className="smg-btn"
+            className="sk-btn"
             aria-pressed={t.id === tab}
             onClick={() => {
               setTab(t.id);

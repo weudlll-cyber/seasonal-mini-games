@@ -81,6 +81,8 @@ server() {
   put "$name" smg.bundle /root/smg.bundle
   on "$name" "git clone --quiet -b '$REF' /root/smg.bundle /root/smg"
   on "$name" 'apt-get update -q >/dev/null && apt-get install -y -q age >/dev/null'
+  # As on a real server the SSH server runs: the host baseline asks it for its ports.
+  on "$name" 'systemctl start ssh'
   on "$name" 'age-keygen -o /root/key.txt 2>&1 | sed -n "s/^Public key: //p" > /root/key.pub'
 }
 

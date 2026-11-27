@@ -6,16 +6,18 @@
  * Responsibility: `withLoadStack(work)` starts the test server (apps/server/tools/testServer:
  *                 the development PostgreSQL, the database smg_load recreated empty and
  *                 migrated, the development features on) on 3950, waits for /readyz, runs
- *                 `work` and stops the server whatever happened, waiting for it to exit. With
+ *                 `work`, stops the server whatever happened, waiting for it to exit, and drops
+ *                 the database (tools/dropTestDatabase, kit K125). With
  *                 `SMG_LOAD_CPU_PROF` set to a directory the server runs under V8's CPU profiler
  *                 and writes its profile there when it exits (09 §5). The developer's `pnpm dev`
  *                 (3910, database smg) and a browser-test run (3740, smg_test) are never used
  *                 or touched (docs/spec/09-testing-strategy.md §1.1, DECISIONS T345).
- * Depends on:     node:child_process, node:fs, ops/.env.dev.example, apps/server (test-server)
+ * Depends on:     node:child_process, node:fs, ops/.env.dev.example, apps/server (test-server,
+ *                 tools/dropTestDatabase)
  * Used by:        ./guessStorm, ./parallelStorm, ./mindStorm, ./http
  * Spec:           docs/spec/09-testing-strategy.md §1.1, §5
  */
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -57,9 +59,11 @@ function serverArgs() {
   return [...prof, '--import=tsx', 'tools/testServer.ts'];
 }
 
+const SERVER_DIR = fileURLToPath(new URL('../apps/server', import.meta.url));
+
 export async function withLoadStack(work) {
   const server = spawn(process.execPath, serverArgs(), {
-    cwd: fileURLToPath(new URL('../apps/server', import.meta.url)),
+    cwd: SERVER_DIR,
     env: {
       ...process.env,
       DATABASE_URL: databaseUrl(),
@@ -79,5 +83,10 @@ export async function withLoadStack(work) {
       server.exitCode === null ? new Promise((done) => server.once('exit', done)) : null;
     server.kill();
     if (exited !== null) await Promise.race([exited, new Promise((d) => setTimeout(d, 30_000))]);
+    execFileSync(process.execPath, ['--import=tsx', 'tools/dropTestDatabase.ts'], {
+      cwd: SERVER_DIR,
+      env: { ...process.env, DATABASE_URL: databaseUrl() },
+      stdio: 'inherit',
+    });
   }
 }

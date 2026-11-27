@@ -6,19 +6,19 @@
  * Responsibility: the team league of a board as a table beside the player board (below it
  *                 on a phone, ./boards.css); each team by its season icon and name, so colour
  *                 never carries the meaning alone. An empty league says so in one sentence.
- * Depends on:     react, @smg/contracts (shapes), ../season/*, ../components/fields, ./useApi,
- *                 ./boardsText
+ * Depends on:     react, @seasonal/kit/react (useApiGet), @smg/contracts (shapes), ../season/*,
+ *                 ../components/fields, ../shell/http, ./boardsText
  * Used by:        ./LeaderboardPage
  * Spec:           docs/spec/02-game-guess-the-number.md §9; docs/spec/03-seasonal-specials.md §5, §6
  */
+import { SeasonIcon, useApiGet } from '@seasonal/kit/react';
 import type { LeaderboardPeriodView, TeamLeagueRowView } from '@smg/contracts';
 import type { ReactElement } from 'react';
 
 import { Problem } from '../components/fields.js';
-import { SeasonIcon } from '../season/SeasonIcon.js';
 import { teamName } from '../season/season.js';
-import { refusalText } from './boardsText.js';
-import { useApi, withGame } from './useApi.js';
+import { api } from '../shell/http.js';
+import { refusalText, withGame } from './boardsText.js';
 
 export function TeamBoard({
   period,
@@ -27,12 +27,14 @@ export function TeamBoard({
   readonly period: LeaderboardPeriodView;
   readonly game: string | null;
 }): ReactElement {
-  const { data, error } = useApi<{ rows: TeamLeagueRowView[] }>(
+  const teams = useApiGet<{ rows: TeamLeagueRowView[] }>(
+    api,
     withGame(`/leaderboards/${period.id}/teams`, game),
   );
-  if (error !== null) return <Problem text={refusalText(error)} />;
-  if (data === null) return <p className="smg-muted">Loading the teams…</p>;
-  if (data.rows.length === 0) return <p>No team points on this board yet.</p>;
+  if (teams.kind === 'failed') return <Problem text={refusalText(teams.error)} />;
+  if (teams.kind !== 'ready') return <p className="smg-muted">Loading the teams…</p>;
+  const { rows } = teams.value;
+  if (rows.length === 0) return <p>No team points on this board yet.</p>;
   return (
     <div className="round-table-wrap">
       <table className="round-table" data-testid="team-board">
@@ -46,7 +48,7 @@ export function TeamBoard({
           </tr>
         </thead>
         <tbody>
-          {data.rows.map((r) => (
+          {rows.map((r) => (
             <tr key={r.team}>
               <td>{r.rank}</td>
               <td>

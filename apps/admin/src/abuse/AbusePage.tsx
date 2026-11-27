@@ -15,7 +15,7 @@ import type { AbuseRowView } from '@smg/contracts';
 import { useCallback, useEffect, useState, type ReactElement } from 'react';
 
 import { DisplayName } from '../DisplayName.js';
-import { api, ApiError } from '../http.js';
+import { api, isRefusal } from '../http.js';
 import { TextInput } from '../TextInput.js';
 
 const KINDS: Readonly<Record<string, string>> = {
@@ -37,7 +37,7 @@ function Suspend({
     api(`/admin/accounts/${row.accountId}/suspend`, { method: 'POST', body: { reason } })
       .then(done)
       .catch((e: unknown) => {
-        setProblem(e instanceof ApiError ? `Not suspended (${e.code}).` : 'Not suspended.');
+        setProblem(isRefusal(e) ? `Not suspended (${e.code}).` : 'Not suspended.');
       });
   };
   return (
@@ -50,7 +50,7 @@ function Suspend({
       />
       <button
         type="button"
-        className="smg-btn smg-btn--danger"
+        className="sk-btn sk-btn--danger"
         disabled={reason.trim().length < 3}
         onClick={suspend}
       >
@@ -70,7 +70,7 @@ export function AbusePage({ canSuspend }: { readonly canSuspend: boolean }): Rea
     void load();
   }, [load]);
   return (
-    <section className="smg-panel smg-stack">
+    <section className="sk-panel smg-stack">
       <h1>Abuse</h1>
       <p className="smg-muted">
         Scores add up the weighted signals of the last 7 days. A score never sanctions by itself.

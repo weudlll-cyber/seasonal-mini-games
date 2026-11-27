@@ -14,7 +14,8 @@
  *                 known account adds one abuse signal for moderators (05 §2). Login and
  *                 registration are rate-limited per IP; a login is also braked per account+IP after
  *                 5 failed sign-ins in 15 minutes (the kit's FailureBrake, right ones are not
- *                 counted, T427), 03 §13. E-mail
+ *                 counted, T427; each try holds one of the five places while its password is
+ *                 checked, so tries sent together cannot slip past, T441), 03 §13. E-mail
  *                 verification and 2FA are behind feature flags that are off by default;
  *                 when verification is on, unverified accounts cannot sign in. In website
  *                 mode (O66, Bingo D37) registration and password sign-in do not exist (404):
@@ -23,7 +24,7 @@
  * Used by:        ../app, ./handoff (startSession), ./websiteSignIn (openSession)
  * Spec:           docs/spec/05-security-threat-model.md §1, §2; Bingo 05 §2.1; Bingo 03 §2.1, §2.3, §3, §13
  */
-import { FailureBrake, RateLimiter, type SessionEnds } from '@seasonal/kit/server';
+import { FailureBrake, RateLimiter, type SessionEnds, type Attempt } from '@seasonal/kit/server';
 import type { SessionView } from '@smg/contracts';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { createHash } from 'node:crypto';
@@ -102,8 +103,8 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AuthDeps): void {
     // A guest session lives as long as a player's: 7 days in website mode (T280).
     const days = deps.signInPath === null ? undefined : WEBSITE_SESSION_DAYS;
     const userAgent = request.headers['user-agent'] ?? null;
-    const { token } = await createSession(deps.pool, null, userAgent, days);
-    setSessionCookie(reply, deps.cookie, token);
+    const session = await createSession(deps.pool, null, userAgent, days);
+    setSessionCookie(reply, deps.cookie, session);
     return reply.status(201).send({ kind: 'guest' });
   });
   // Website mode: no registration and no password sign-in (the routes do not exist, 404).
@@ -119,16 +120,16 @@ export function registerAuthRoutes(app: FastifyInstance, deps: AuthDeps): void {
     const key = createHash('sha256')
       .update(`${parsed.data.email.toLowerCase()}|${request.ip}`)
       .digest('hex');
-    // Looked at before the password is checked; the failure is counted after (T427).
-    if (!limits.loginIp.take(request.ip).allowed || limits.signInFailures.braked(key)) {
-      return tooMany(reply);
+    if (!limits.loginIp.take(request.ip).allowed) return tooMany(reply);
+    // One of the key's places, held while the password is checked (T427, T441).
+    const attempt = limits.signInFailures.reserve(key);
+    if (attempt === null) return tooMany(reply);
+    try {
+      return await login(request, reply, deps, { body: parsed.data, attempt });
+    } finally {
+      // Frees the place unless the password was wrong: only the first of the two ends counts.
+      attempt.passed();
     }
-    return login(request, reply, deps, {
-      body: parsed.data,
-      countFailure: () => {
-        limits.signInFailures.failed(key);
-      },
-    });
   });
 }
 
@@ -165,7 +166,7 @@ async function login(
   request: FastifyRequest,
   reply: FastifyReply,
   deps: AuthDeps,
-  { body, countFailure }: { body: z.infer<typeof loginBody>; countFailure: () => void },
+  { body, attempt }: { body: z.infer<typeof loginBody>; attempt: Attempt },
 ) {
   const account = await findLoginAccount(deps.pool, body.email);
   const encoded = account?.passwordHash ?? (await dummyPasswordHash());
@@ -179,7 +180,7 @@ async function login(
     });
   }
   if (account === null || !valid) {
-    countFailure();
+    attempt.failed();
     return reply.status(401).send(LOGIN_FAILED);
   }
   if (deps.features.emailVerification && !account.emailVerified) {
@@ -206,13 +207,13 @@ export async function openSession(
     await revokeSession(deps.pool, request.session.id);
     void deps.sessionEnds.end([request.session.id]);
   }
-  const { token } = await createSession(
+  const session = await createSession(
     deps.pool,
     accountId,
     request.headers['user-agent'] ?? null,
     deps.playerDays,
   );
-  setSessionCookie(reply, deps.cookie, token);
+  setSessionCookie(reply, deps.cookie, session);
 }
 
 // A new session for the account, answered with its cookie (also after a handoff, ./handoff).

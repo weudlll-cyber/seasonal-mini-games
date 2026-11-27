@@ -40,7 +40,7 @@ import { ChoiceField, NumberField, plain, SwitchField } from '../components/fiel
 import { codeText } from '../round/roundText.js';
 import { SEASON_NAMES, SEASONS } from '../season/season.js';
 import { FORM_HELP } from './formHelp.js';
-import { api, ApiError } from '../shell/http.js';
+import { api, ApiError, refusalOf } from '../shell/http.js';
 
 type Doc = NonNullable<MatchDetailsView['nextRoundDefaults']>;
 
@@ -54,7 +54,7 @@ export interface FormProblems {
 export const NO_PROBLEMS: FormProblems = { fields: {}, form: null };
 
 export function problemsOf(error: unknown, shown: readonly string[], other: string): FormProblems {
-  const refusal = error instanceof ApiError ? error.refusal : null;
+  const refusal = refusalOf(error);
   if (refusal === null) return { fields: {}, form: other };
   if (!shown.includes(refusal.field)) return { fields: {}, form: refusal.detail };
   return { fields: { [refusal.field]: refusal.detail }, form: null };

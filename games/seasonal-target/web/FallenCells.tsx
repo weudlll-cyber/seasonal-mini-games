@@ -41,7 +41,7 @@ export function FallenCells({ fallen }: { readonly fallen: readonly Cell[] }): R
       <button
         ref={sheet.button}
         type="button"
-        className="smg-btn st-fallen-toggle"
+        className="sk-btn st-fallen-toggle"
         aria-expanded={sheet.open}
         aria-controls={sheet.panelId}
         onClick={sheet.toggle}
@@ -54,7 +54,7 @@ export function FallenCells({ fallen }: { readonly fallen: readonly Cell[] }): R
           <h3 id={`${sheet.panelId}-title`} data-testid="fallen">
             Fallen ({n})
           </h3>
-          <button type="button" className="smg-btn st-fallen-close" onClick={sheet.close}>
+          <button type="button" className="sk-btn st-fallen-close" onClick={sheet.close}>
             Close
           </button>
         </div>

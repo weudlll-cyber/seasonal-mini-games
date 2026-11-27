@@ -61,7 +61,7 @@ function Enrol({ done }: { readonly done: (codes: string[]) => void }): ReactEle
   if (setup === null) {
     return (
       <div className="smg-stack">
-        <button type="button" className="smg-btn smg-btn--primary" onClick={start}>
+        <button type="button" className="sk-btn sk-btn--primary" onClick={start}>
           Set up two-factor sign-in
         </button>
         {problem === null ? null : <p role="alert">{problem}</p>}
@@ -81,7 +81,7 @@ function Enrol({ done }: { readonly done: (codes: string[]) => void }): ReactEle
         />
         <button
           type="button"
-          className="smg-btn smg-btn--primary"
+          className="sk-btn sk-btn--primary"
           disabled={code.length !== 6}
           onClick={confirm}
         >
@@ -95,7 +95,7 @@ function Enrol({ done }: { readonly done: (codes: string[]) => void }): ReactEle
 
 function Codes({ codes }: { readonly codes: readonly string[] }): ReactElement {
   return (
-    <section className="smg-panel smg-panel--inset smg-stack" aria-label="Recovery codes">
+    <section className="sk-panel sk-panel--inset smg-stack" aria-label="Recovery codes">
       <h2>Recovery codes</h2>
       <p>
         Keep these ten codes somewhere safe. Each one works once instead of a code of the app. They
@@ -135,7 +135,7 @@ export function TwoFactorPage(): ReactElement {
     });
   };
   return (
-    <section className="smg-panel smg-stack">
+    <section className="sk-panel smg-stack">
       <h1>Two-factor sign-in</h1>
       <p role="status" data-testid="two-factor-status">
         {status.enrolled
@@ -144,7 +144,7 @@ export function TwoFactorPage(): ReactElement {
       </p>
       {codes === null ? null : <Codes codes={codes} />}
       {status.enrolled ? (
-        <button type="button" className="smg-btn smg-btn--danger" onClick={disable}>
+        <button type="button" className="sk-btn sk-btn--danger" onClick={disable}>
           Disable two-factor sign-in
         </button>
       ) : (

@@ -18,6 +18,7 @@
 .st-player,
 .st-input {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--sk-space-1);
   min-width: 0;
 }

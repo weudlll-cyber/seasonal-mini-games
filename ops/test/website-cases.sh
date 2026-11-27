@@ -25,7 +25,8 @@
 #                 subnet differ from Bingo's, `smg status` names the sign-in mode, the authorize
 #                 endpoint's 204 and the feed's last success; a re-run changes nothing.
 #                 Sourced by installer-test.sh (its on, put, server, step, fail, WORK, REF).
-# Depends on:     ./stub-website.py, ./stub-app.py, ../install.sh, docker
+# Depends on:     ./stub-website.py, ./stub-app.py, ../install.sh, docker, the kit's ops folder
+#                 (node_modules of this checkout, for the stand-in image)
 # Spec:           docs/spec/10-repository-structure.md §6; Bingo ops/test/website-vps.sh
 
 PY_IMAGE=python:3.12-alpine@sha256:e6dae589c1c05976188fd3bd019afd091445fc533ed2ea29001beddc7368a9c8
@@ -41,7 +42,11 @@ stub_app_image() {
   tag="smg-app:$(git -C "$(native "$REPO")" rev-parse --short=12 "$REF^{commit}")"
   mkdir -p "$WORK/app"
   cp "$HERE/stub-app.py" "$WORK/app/"
-  printf 'FROM %s\nCOPY stub-app.py /stub-app.py\nUSER 10001\nCMD ["python3", "-u", "/stub-app.py"]\n' "$PY_IMAGE" >"$WORK/app/Dockerfile"
+  # As in the real image: the kit's ops scripts, which the installer copies out. The migration
+  # step runs `node … migrate`; the stand-in has nothing to migrate.
+  cp -RL "$REPO/apps/server/node_modules/@seasonal/kit/ops" "$WORK/app/kit-ops"
+  printf '#!/bin/sh\nexit 0\n' >"$WORK/app/node"
+  printf 'FROM %s\nCOPY stub-app.py /stub-app.py\nCOPY kit-ops /app/kit-ops\nCOPY --chmod=755 node /usr/local/bin/node\nUSER 10001\nCMD ["python3", "-u", "/stub-app.py"]\n' "$PY_IMAGE" >"$WORK/app/Dockerfile"
   (cd "$WORK/app" && docker build -q -t "$tag" . >/dev/null)
   docker save "$tag" -o "$(native "$WORK")/stub-app.tar"
   docker image rm "$tag" >/dev/null
@@ -181,7 +186,7 @@ website_checks() {
   fi
   check "forged headers sent to the app past the proxy sign nobody in" "$direct" 403
   check "metrics stay inside" "$(on "$s" "curl -s -o /dev/null -w '%{http_code}' $H $URL/metrics")" 404
-  # smg status counts running rounds: the stand-in app made no schema, so a minimal one.
+  # smg status counts running rounds: the stand-in app made no tables, so a minimal one.
   on "$s" "docker exec smg-prod-postgres-1 psql -q -U smg -d smg -c 'CREATE SCHEMA IF NOT EXISTS smg; CREATE TABLE IF NOT EXISTS smg.rounds (status text)'"
   status=$(on "$s" 'smg status 2>&1')
   check "smg status names the sign-in mode" "$status" "sign-in:     website (the website's $mode)"

@@ -14,10 +14,11 @@
  *                 the round view fits both sizes. Journey 17 — a Quick Test without teams
  *                 (O34): the waiting area has no team text, buttons or column, the round no
  *                 team tiles, the result no team result. Every match is aborted at the end.
- * Depends on:     @playwright/test, ./play, ./screens
+ * Depends on:     @playwright/test, ./play, @seasonal/kit/testing
  * Spec:           docs/spec/09-testing-strategy.md §4 (journeys 16, 17); docs/spec/03-seasonal-specials.md §2, §5, §6
  */
 import { expect, test, type Page } from '@playwright/test';
+import { PHONE } from '@seasonal/kit/testing';
 
 import {
   abortMatch,
@@ -30,7 +31,6 @@ import {
   roundOpen,
   type Person,
 } from './play.js';
-import { PHONE } from './screens.js';
 
 const WIDE = { width: 1280, height: 720 };
 
@@ -129,6 +129,7 @@ for (const s of SEASONS) {
     let code = '';
     try {
       const started = await call<{ matchCode: string }>(p, 'POST', '/dev/quicktest', {
+        seedText: 'acorn',
         season: s.season,
         bots: 1,
         rangeHigh: 1_000_000,
@@ -187,6 +188,7 @@ test('journey 17: a match without teams shows no team anywhere', async ({ browse
   let code = '';
   try {
     const started = await call<{ matchCode: string }>(p, 'POST', '/dev/quicktest', {
+      seedText: 'acorn',
       season: 'spring',
       bots: 2,
       rangeHigh: 1_000_000,

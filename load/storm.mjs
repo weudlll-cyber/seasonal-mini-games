@@ -15,8 +15,10 @@
  */
 import { Worker } from 'node:worker_threads';
 
-import { BASE, ORIGIN, call, inGroups, signIn } from './http.mjs';
-import { firedSpecials, integrity, metricsSampler, spread } from './measure.mjs';
+import { latencies } from '@seasonal/kit/testing';
+
+import { BASE, FROM_THE_PAGE, call, inGroups, signIn } from './http.mjs';
+import { firedSpecials, integrity, sampleServer } from './measure.mjs';
 
 // `count` load accounts from number `from` on (load-0001 …), signed in in paced groups.
 export function signInLoad(from, count) {
@@ -68,7 +70,7 @@ export async function restoreLimit(admin, before) {
 export function deleteLoadAccounts() {
   return fetch(`${BASE}/api/v1/dev/load-accounts`, {
     method: 'DELETE',
-    headers: { origin: ORIGIN },
+    headers: FROM_THE_PAGE,
   });
 }
 
@@ -123,8 +125,7 @@ async function verified(host, roundId) {
 export async function playRound(ctx, name, round, opts = {}) {
   const { burst = false, sampler = true, acks = false, pollMs = 1_000 } = opts;
   const { host, match, workers } = ctx;
-  const metrics = sampler ? metricsSampler() : null;
-  await metrics?.read();
+  const metrics = sampler ? sampleServer() : null;
   const created = await call(host, 'POST', `/matches/${match.code}/rounds`, {
     ...round,
     startNow: true,
@@ -135,7 +136,7 @@ export async function playRound(ctx, name, round, opts = {}) {
   for (const w of workers)
     w.worker.postMessage({ t: 'play', roundId: created.id, opensAt, frostDelayMs, burst });
   const ended = await untilEnded(host, created.id, pollMs);
-  const server = metrics?.stop() ?? null;
+  const server = (await metrics?.stop()) ?? null;
   const results = await Promise.all(
     workers.map((w) => (w.worker.postMessage({ t: 'stop' }), w.next('record'))),
   );
@@ -151,9 +152,9 @@ export async function playRound(ctx, name, round, opts = {}) {
     halving: state.halving,
     roundS: Math.round(((ended?.endedAt ?? Date.now()) - opensAt) / 1000),
     cooldownAtEndMs: ended?.cooldownMs ?? null,
-    ackMs: spread(records.flatMap((r) => r.ack)),
-    ownAnswerMs: spread(records.flatMap((r) => r.answer)),
-    frostLateMs: frostDelayMs === null ? null : spread(records.flatMap((r) => r.frostLate)),
+    ackMs: latencies(records.flatMap((r) => r.ack)),
+    ownAnswerMs: latencies(records.flatMap((r) => r.answer)),
+    frostLateMs: frostDelayMs === null ? null : latencies(records.flatMap((r) => r.frostLate)),
     specials: firedSpecials(records),
     refused,
     integrity: integrity(records, verify),

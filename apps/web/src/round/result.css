@@ -160,6 +160,24 @@
     width: 4.25rem;
   }
 
+  /* The match standings' short numbers need little: "dev-host (you)" whole at 360 px. */
+  .round-table[data-testid='match-standings'] .round-col-place {
+    width: 2.25rem;
+  }
+
+  .round-table[data-testid='match-standings'] .round-col-num {
+    width: 3rem;
+  }
+
+  .round-table[data-testid='match-standings'] :is(th, td) {
+    padding-inline: 2px;
+  }
+
+  /* "(you)" goes under a name that has no room beside it. */
+  .round-table[data-testid='match-standings'] .round-player {
+    flex-wrap: wrap;
+  }
+
   /* The last column ("Pts", "Wins") needs less than "Guesses". */
   .round-col-num:last-child {
     width: 3.25rem;

@@ -43,7 +43,7 @@ function Buttons(b: {
     <div className="smg-row">
       <button
         type="button"
-        className="smg-btn"
+        className="sk-btn"
         onClick={() => {
           b.p.onClose(false);
         }}
@@ -52,7 +52,7 @@ function Buttons(b: {
       </button>
       <button
         type="button"
-        className={`smg-btn ${b.p.danger === true ? 'smg-btn--danger' : 'smg-btn--primary'}`}
+        className={`sk-btn ${b.p.danger === true ? 'sk-btn--danger' : 'sk-btn--primary'}`}
         disabled={!b.ready}
         onClick={b.confirm}
         data-testid="confirm-action"
@@ -89,7 +89,7 @@ export function ConfirmDialog(p: ConfirmProps): ReactElement {
     <div className="admin-scrim">
       <div
         ref={box}
-        className="smg-panel smg-stack admin-dialog"
+        className="sk-panel smg-stack admin-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}

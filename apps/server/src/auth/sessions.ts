@@ -48,6 +48,13 @@ function tokenHash(token: string): Buffer {
   return createHash('sha256').update(token).digest();
 }
 
+export interface NewSession {
+  readonly token: string;
+  readonly csrfToken: string;
+  // From now to the session's absolute end: the cookie's lifetime.
+  readonly absoluteDays: number;
+}
+
 // playerDays: a player or guest session's absolute lifetime (WEBSITE_SESSION_DAYS in website
 // mode); admin sessions keep 8 hours either way.
 export async function createSession(
@@ -55,10 +62,10 @@ export async function createSession(
   accountId: string | null,
   userAgent: string | null,
   playerDays = 30,
-): Promise<{ readonly token: string; readonly csrfToken: string }> {
+): Promise<NewSession> {
   const token = randomBytes(32).toString('base64url');
   const csrfToken = randomBytes(32).toString('base64url');
-  await pool.query(
+  const made = await pool.query<{ lifetime_s: number }>(
     `INSERT INTO smg.sessions (account_id, token_hash, csrf_token, kind, expires_at, idle_expires_at, user_agent)
      SELECT $1, $2, $3, k.kind,
        now() + CASE k.kind WHEN 'admin' THEN interval '8 hours' ELSE make_interval(days => $6) END,
@@ -67,10 +74,13 @@ export async function createSession(
        WHEN $1::uuid IS NULL THEN 'guest'
        WHEN EXISTS (SELECT 1 FROM smg.role_assignments ra
                      WHERE ra.account_id = $1::uuid AND ra.role_id = ANY($5)) THEN 'admin'
-       ELSE 'player' END AS kind) k`,
+       ELSE 'player' END AS kind) k
+     RETURNING extract(epoch FROM expires_at - now())::float8 AS lifetime_s`,
     [accountId, tokenHash(token), csrfToken, userAgent, ADMIN_ROLES, playerDays],
   );
-  return { token, csrfToken };
+  const lifetimeS = made.rows[0]?.lifetime_s;
+  if (lifetimeS === undefined) throw new Error('no session was made');
+  return { token, csrfToken, absoluteDays: lifetimeS / 86_400 };
 }
 
 interface SessionRow {

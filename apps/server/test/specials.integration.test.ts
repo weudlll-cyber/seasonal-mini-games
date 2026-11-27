@@ -41,14 +41,16 @@ let admin: Client;
 const opened: string[] = [];
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-// Reads `read` every 200 ms until `done` holds or 20 s pass, and gives the last value: a special
-// fires on the server's schedule, which a busy machine runs late, so a fixed margin after it
-// raced it (DECISIONS T206).
+// Reads `read` until `done` holds or 20 s pass, and gives the last value: a special fires on
+// the server's schedule, which a busy machine runs late, so a fixed margin after it raced it
+// (DECISIONS T206). Slower than a session's API limit (120 a minute, so 2 a second refill): one
+// player's polls through this file never run out of it.
+const POLL_MS = 600;
 async function until<T>(read: () => Promise<T>, done: (v: T) => boolean): Promise<T> {
   const end = Date.now() + 20_000;
   let value = await read();
   while (!done(value) && Date.now() < end) {
-    await sleep(200);
+    await sleep(POLL_MS);
     value = await read();
   }
   return value;
@@ -89,7 +91,10 @@ async function quick(season: string, extra: Record<string, unknown> = {}): Promi
 }
 
 async function state(id: string, who: Client = kit.clients['player-1']) {
-  return (await who.get(`/api/v1/rounds/${id}/state`)).json<{
+  const read = await who.get(`/api/v1/rounds/${id}/state`);
+  // A refused read says why here, not as a view with a part missing.
+  expect(read.statusCode, read.body).toBe(200);
+  return read.json<{
     status: string;
     cooldownMs: number;
     opensAt: number;
