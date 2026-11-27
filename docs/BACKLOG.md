@@ -45,11 +45,10 @@ For Phase 7:
 
 ### Kit adoption (owner decisions O142, O150)
 
-- On `master` at the kit's v0.18.0 since the merge commit `1988346` (PR #55, T428; v0.17.0 `52f996c`, the server parts `b542503`). The move to v0.22.0 and on to v0.32.0 is on `feat/kit-0.22` (draft PR #57, O155, O157, T429 and after) and waits for the owner's look; its progress is in [NIGHT-2026-11-26-kit-0.32.md](NIGHT-2026-11-26-kit-0.32.md), then to v0.34.0 (O158, [NIGHT-2026-11-26-kit-0.34.md](NIGHT-2026-11-26-kit-0.34.md)) and to v0.38.0 (O160, [NIGHT-2026-11-27-kit-0.38.md](NIGHT-2026-11-27-kit-0.38.md)).
+- On `master` at the kit's v0.18.0 since the merge commit `1988346` (PR #55, T428; v0.17.0 `52f996c`, the server parts `b542503`). The move to v0.22.0 and on to v0.32.0 is on `feat/kit-0.22` (draft PR #57, O155, O157, T429 and after) and waits for the owner's look; its progress is in [NIGHT-2026-11-26-kit-0.32.md](NIGHT-2026-11-26-kit-0.32.md), then to v0.34.0 (O158, [NIGHT-2026-11-26-kit-0.34.md](NIGHT-2026-11-26-kit-0.34.md)), to v0.38.0 (O160, [NIGHT-2026-11-27-kit-0.38.md](NIGHT-2026-11-27-kit-0.38.md)) and to v0.39.1 ([NIGHT-2026-11-27-kit-0.39.md](NIGHT-2026-11-27-kit-0.39.md)).
 - Stays the game's own after the move, with the reason or the kit release that replaces it: T423. Kit-related stand-in left: a host chat from another https origin, which the kit defers (T412).
 - `ops/test/installer-test.sh` (by hand, 20 to 40 minutes) has not run since the backups became the kit's (T431) and the admin command, route file, operator address and host baseline too (T437): it belongs to the server rehearsal.
-- The way to production, waiting for Mini Games' own server (O160, kit v0.35.0): `docs/PRIVACY-DATA.md` and its test, the kit's scan call in place of the Trivy step, the signed release with `sk_image_verify`, `SK_ROUTE_TRUSTED`, no full browser suite on pull requests. The rehearsal on a real server comes before the first deployment (O164).
-- The development database keeps the tests' Quick Test matches (append-only event log); the owner says whether it is recreated.
+- The way to production, waiting for Mini Games' own server (O160, kit v0.35.0): `docs/PRIVACY-DATA.md` and its test, the kit's scan call in place of the Trivy step, the signed release with `sk_cosign_install` and `sk_image_verify`, `SK_ROUTE_TRUSTED`, no full browser suite on pull requests. The rehearsal on a real server comes before the first deployment (O164).
 - Seen on 2026-11-26: the public result answer (`GET /rounds/:id/result`) carried no `names` in journey 13, so the verification page shows player keys there.
 
 ### Optional inputs
@@ -58,6 +57,8 @@ For Phase 7:
 
 ## Part two — closed
 
+- 2026-11-27: The development database, which kept the tests' Quick Test matches, is recreated (O165). _Closed by:_ the hand-over of the move to v0.39.1
+- 2026-11-27: The move to the kit's v0.39.1: the kit's scroll Tab stop in place of the game's, the sweep's scoped exemptions and intended overlaps, the badge in a landmark, the fallen chip uncut (T449). _Closed by:_ branch `feat/kit-0.22` (draft PR #57)
 - 2026-11-27: The move to the kit's v0.38.0: its large-text fixes in place of the game's, the keys through its backup hook, the website's shared call in website mode, the sweep's setup and guess-list floors (O160 to O164, T445 to T448). _Closed by:_ branch `feat/kit-0.22` (draft PR #57)
 - 2026-11-26: The kit's layout sweep over every screen (journey 47) and the 200 % text clipping it reported (O158, O159, T444). _Closed by:_ branch `feat/kit-0.22` (draft PR #57)
 - 2026-11-26: The seven findings of this game's report, taken from the kit at v0.34.0: TEMPORARY grant, restored secret files (`smg keys` gone), season icon, admin step-up retry, development chat frame, tint contrast, stand-in secret refusal (T443). _Closed by:_ branch `feat/kit-0.22` (draft PR #57)
