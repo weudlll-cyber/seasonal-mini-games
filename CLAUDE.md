@@ -73,6 +73,22 @@ and a line under Git differ for a task, the task block names which holds.
 - Never re-run a check on an unchanged tree. Wait for CI with one blocking command.
 - Until Mini Games' own way to the server, the full browser suite stays on pull requests (O160).
 
+### Where a check may look and write
+
+The kit's handbook, "Where a check may look and write" (kit K125; taken with the move to v0.40.0,
+T450).
+
+| Rule                                                                                                                                                                                                     | Why                                                                                                                                                  |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A change that matters only on a server (a database health check over TCP, say) is made with the game's way to the server and rehearsed there with a fresh install, not as a change of its own before it. | Where it matters is the only place it can be seen to work; a change made apart is checked by nothing and found wrong during the move to the server.  |
+| Browser tests, sweeps and measurements never write the owner's development database: they use their own database or schema, created fresh and thrown away.                                               | The owner looks at the game in that database; test accounts and matches left there cannot be told from the owner's own, and some tables only append. |
+| Browser journeys use fixed seeds and handle every outcome chance can give. A test that fails on a lucky outcome is a test defect, not a flaky run to repeat.                                             | A run repeated until it passes hides the defect and costs a run each time; the same seed shows the same screen to whoever reads the failure.         |
+| A website-mode part is looked at in the local preview before a merge (OPERATIONS.md "The local website-mode preview"); the real shared call only on the website.                                         | The back link, the step badges, the header and the call's slot appear in website mode only, and the preview's call is a stand-in.                    |
+
+Here: the runs' databases are `smg_test`, `smg_e2e_website` and `smg_load`, dropped at each run's
+end (docs/spec/09-testing-strategy.md §1.1); a measurement by hand runs against such a stack, never
+against `pnpm dev`; the preview is `pnpm preview:website`.
+
 ## Working cheaply
 
 Spend fewer tokens without testing or checking less (the rules Seasonal Bingo Royale has had since 2026-11-06, DECISIONS T421).
