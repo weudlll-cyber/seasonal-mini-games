@@ -4,8 +4,10 @@
  * @brief  Large text in a narrow place (200 % text on a phone): parts wrap and scroll, nothing
  *         is cut.
  *
- * Responsibility: container queries in rem, so they apply only where a part is narrow for the
- *                 text's size (under 16 rem: never at 100 % on a 320 px phone or wider). The
+ * Responsibility: container queries in rem, so they apply only where a part is narrow or low
+ *                 for the text's size: under 16 rem wide (never at 100 % on a 320 px phone or
+ *                 wider), or, on a desktop, within a limit in rem and over the same limit in
+ *                 the pixels it has at 100 %. The
  *                 running round's one-screen view scrolls as a whole instead of squeezing its
  *                 rows; the guess list's head, banner and rows wrap, in one column; the result's
  *                 bar wraps, its first part grows with its content, its tables size by content
@@ -44,15 +46,17 @@
   }
 }
 
-/* A desktop at 200 % text: the round view is under 33 rem high there (`.match-live`; 37 rem at
-   the least on a 600 px high window at 100 %). The info column scrolls with every part at its
-   own height, the guesses take one column, and a row's comment goes whole to a line of its own.
-   At 100 % the comment keeps giving way with its ellipsis (DECISIONS T150). */
+/* A desktop at 200 % text: the round view (`.match-live`) is at most 30 rem high and yet
+   more than 480 px, which at 100 % text (30 rem there) no window is, so nothing here ever
+   applies at 100 %: a docked list game's view is 513 px high at 1280 x 720 and keeps its two
+   columns and its rows (O109). The info column scrolls with every part at its own height, the
+   guesses take one column, and a row's comment goes whole to a line of its own. At 100 % the
+   comment keeps giving way with its ellipsis (DECISIONS T150). */
 .round-column {
   overflow-y: auto;
 }
 
-@container (max-height: 33rem) {
+@container (max-height: 30rem) and (min-height: 481px) {
   .round-live[data-view='desktop'] .round-column > * {
     flex: none;
   }
@@ -178,9 +182,9 @@
   }
 }
 
-/* The closest guesses (./closest.css) on a desktop at large text (a result page under 50 rem
-   wide; 53 rem at the least on a desktop at 100 %): the name whole, the words under it. */
-@container (max-width: 50rem) {
+/* The closest guesses (./closest.css) on a desktop at large text (a result page at most 50 rem
+   wide and yet more than 800 px, so never at 100 %): the name whole, the words under it. */
+@container (max-width: 50rem) and (min-width: 801px) {
   .match-result-page .round-closest-row.round-closest-row {
     flex-wrap: wrap;
   }
